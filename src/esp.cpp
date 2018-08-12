@@ -1,6 +1,7 @@
 #include "esp.hpp"
 #include "io/io.hpp"
 #include "records.hpp"
+#include "record/group.hpp"
 #include "record/io.hpp"
 #include "record/rec_of.hpp"
 #include <array>
@@ -8,29 +9,6 @@
 #include <iostream>
 #include <ostream>
 #include <string>
-
-std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
-  os.write(grp.type.data(), 4);
-  os.write(reinterpret_cast<const char *>(&grp.groupSize), 4);
-  os.write(reinterpret_cast<const char *>(&grp.label), 4);
-  os.write(reinterpret_cast<const char *>(&grp.groupType), 4);
-  os.write(reinterpret_cast<const char *>(&grp.stamp), 4);
-
-  return os;
-}
-
-std::istream &record::operator>>(std::istream &is, Group &grp) {
-  char type[5]{};
-  if (!io::safeRead(is, type, 4) || grp.type != type) {
-    throw RecordNotFoundError(grp.type, type);
-  }
-  readOrThrow(is, &grp.groupSize, 4, "GRUP");
-  readOrThrow(is, &grp.label, 4, "GRUP");
-  readOrThrow(is, &grp.groupType, 4, "GRUP");
-  readOrThrow(is, &grp.stamp, 4, "GRUP");
-
-  return is;
-}
 
 Esp::Esp(std::istream &is) {
   // First is always a TES4 record
@@ -120,6 +98,72 @@ Esp::Esp(std::istream &is) {
           }
         }
         break;
+      }
+    }
+  }
+}
+
+void Esp::parseCell(std::istream &is) {
+  using namespace record;
+  // Expect a CELL record
+  parseRecord<record::CELL>(is);
+
+  // Expect a cell children group, though there exist empty cells
+  // like Hackdirt so this is optional.
+  if (peekGroupType(is) == Group::GroupType::CellChildren) {
+    Group cellChildren;
+    is >> cellChildren;
+
+    std::string recordType;
+
+    // Persistent children group
+    if (peekGroupType(is)
+        == Group::GroupType::CellPersistentChildren) {
+      Group persistentChildren;
+      is >> persistentChildren;
+
+      // Expect REFR, ACHR, or ACRE records describing the
+      // persistent objects, actors, and creatures in the cell,
+      // respectively. This may be empty.
+      while ((recordType = peekRecordType(is)) == "REFR"
+          || recordType == "ACHR" || recordType == "ACRE") {
+        // TODO: REFR, ACHR, ACRE
+        skipRecord(is);
+      }
+    }
+
+    // Visible when distant children group
+    if (peekGroupType(is)
+        == Group::GroupType::CellVisibleDistantChildren) {
+      Group visibleDistantChildren;
+      is >> visibleDistantChildren;
+
+      // Expect as CellPersistentChildren
+      while ((recordType = peekRecordType(is)) == "REFR"
+          || recordType == "ACHR" || recordType == "ACRE") {
+        // TODO: REFR, ACHR, ACRE
+        skipRecord(is);
+      }
+    }
+
+    // Temporary children group
+    if (peekGroupType(is)
+        == Group::GroupType::CellTemporaryChildren) {
+      Group temporaryChildren;
+      is >> temporaryChildren;
+
+      // Unsure if PGRD is usually optional or not, but sometimes
+      // this entire group is empty (e.g. ImperialSewerSystemTG11)
+      if (peekRecordType(is) == "PGRD") {
+        // TODO: PGRD
+        skipRecord(is);
+      }
+
+      // Expect as CellPersistentChildren until next GRUP or CELL
+      while ((recordType = peekRecordType(is)) == "REFR"
+          || recordType == "ACHR" || recordType == "ACRE") {
+        // TODO: REFR, ACHR, ACRE
+        skipRecord(is);
       }
     }
   }

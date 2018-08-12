@@ -7,3 +7,12 @@ std::string record::peekRecordType(std::istream &is) {
   is.seekg(-4, std::istream::cur);
   return std::string(type);
 }
+
+void record::skipRecord(std::istream &is) {
+  char type[4]{};
+  is.read(type, 4);
+  uint32_t size;
+  is.read(reinterpret_cast<char *>(&size), 4);
+  //std::clog << "Skipping " << type << " (" << 12 + size << ") bytes\n";
+  is.seekg(12 + size, std::istream::cur);
+}

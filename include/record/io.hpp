@@ -51,6 +51,8 @@ inline void readRecord(std::istream &is,
   }
 }
 
+void skipRecord(std::istream &is);
+
 namespace raw {
 
 // These read and write raw (sub)records as bytes to and from streams. This will

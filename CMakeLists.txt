@@ -24,7 +24,7 @@ add_executable(OpenOblivion
         include/io/io.hpp
         include/io/string.hpp
         include/io/read_bytes.hpp
-        include/io/write_bytes.hpp include/record/exceptions.hpp include/record/rec_of.hpp include/record/tuplifiable.hpp include/record/io.hpp include/record/size_of.hpp include/record/subrecord.hpp)
+        include/io/write_bytes.hpp include/record/exceptions.hpp include/record/rec_of.hpp include/record/tuplifiable.hpp include/record/io.hpp include/record/size_of.hpp include/record/subrecord.hpp include/record/group.hpp src/record/group.cpp)
 target_include_directories(OpenOblivion PUBLIC include)
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
