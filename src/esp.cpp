@@ -4,8 +4,8 @@
 #include <array>
 #include <iostream>
 #include "esp.hpp"
-#include "io_util.hpp"
 #include "records.hpp"
+#include "io/io.hpp"
 
 std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
   os.write(grp.type.data(), 4);
@@ -19,7 +19,7 @@ std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
 
 std::istream &record::operator>>(std::istream &is, Group &grp) {
   char type[5]{};
-  if (!safeRead(is, type, 4) || grp.type != type) {
+  if (!io::safeRead(is, type, 4) || grp.type != type) {
     throw RecordNotFoundError(grp.type, type);
   }
   readOrThrow(is, &grp.groupSize, 4, "GRUP");
@@ -37,7 +37,7 @@ Esp::Esp(std::istream &is) {
   is >> rec;
 
   // Now we expect a collection of top groups
-  while (peekRecordType(is) == "GRUP") {
+  while (record::peekRecordType(is) == "GRUP") {
     record::Group topGrp;
     is >> topGrp;
 

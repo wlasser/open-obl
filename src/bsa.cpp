@@ -7,7 +7,8 @@
 #include <zlib.h>
 
 #include "bsa.hpp"
-#include "io_util.hpp"
+#include "io/string.hpp"
+#include "io/io.hpp"
 
 uint64_t bsa::genHash(const std::string &path, bool isFolder) {
   uint64_t hash = 0;
@@ -79,7 +80,7 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) {
   // Skip over full path if given
   if (static_cast<bool>(owner.archiveFlags
       & bsa::BSAReader::ArchiveFlag::RetainFileNames)) {
-    readBString(owner.is);
+    io::readBString(owner.is);
   }
   // Get size of uncompressed data if compressed
   if (file.compressed) {
@@ -100,25 +101,26 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) {
 
 bool bsa::BSAReader::readHeader() {
   char fileId[4]{};
-  if (!safeRead(is, fileId, 4) || strcmp(fileId, FILE_ID) != 0) return false;
+  if (!io::safeRead(is, fileId, 4) || strcmp(fileId, FILE_ID) != 0)
+    return false;
 
   uint32_t version = 0;
-  if (!safeRead(is, &version, 4) || version != VERSION) return false;
+  if (!io::safeRead(is, &version, 4) || version != VERSION) return false;
 
   uint32_t offset = 0;
-  if (!safeRead(is, &offset, 4) || offset != OFFSET) return false;
+  if (!io::safeRead(is, &offset, 4) || offset != OFFSET) return false;
 
   uint32_t flags = 0;
-  if (!safeRead(is, &flags, 4)) return false;
+  if (!io::safeRead(is, &flags, 4)) return false;
   archiveFlags = static_cast<ArchiveFlag>(flags & 127u);
 
-  if (!safeRead(is, &folderCount, 4)) return false;
-  if (!safeRead(is, &fileCount, 4)) return false;
-  if (!safeRead(is, &totalFolderNameLength, 4)) return false;
-  if (!safeRead(is, &totalFileNameLength, 4)) return false;
+  if (!io::safeRead(is, &folderCount, 4)) return false;
+  if (!io::safeRead(is, &fileCount, 4)) return false;
+  if (!io::safeRead(is, &totalFolderNameLength, 4)) return false;
+  if (!io::safeRead(is, &totalFileNameLength, 4)) return false;
 
   flags = 0;
-  if (!safeRead(is, &flags, 4)) return false;
+  if (!io::safeRead(is, &flags, 4)) return false;
   fileFlags = static_cast<FileFlag>(flags & 511u);
 
   return true;
@@ -136,11 +138,11 @@ bool bsa::BSAReader::readRecords() {
     uint64_t hash = 0;
     uint32_t count = 0;
     uint32_t offset = 0;
-    if (!safeRead(is, &hash, 8)) return false;
-    if (!safeRead(is, &count, 4)) return false;
+    if (!io::safeRead(is, &hash, 8)) return false;
+    if (!io::safeRead(is, &count, 4)) return false;
     // This include totalFileNameLength for some reason, so it
     // will need to be subtracted
-    if (!safeRead(is, &offset, 4)) return false;
+    if (!io::safeRead(is, &offset, 4)) return false;
 
     // Jump to file record block
     FolderRecord folderRecord = {};
@@ -149,7 +151,7 @@ bool bsa::BSAReader::readRecords() {
 
     // Read folder name if available
     if (static_cast<bool>(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
-      folderRecord.name = readBzString(is);
+      folderRecord.name = io::readBzString(is);
     }
 
     for (uint32_t j = 0; j < count; ++j) {
@@ -157,9 +159,9 @@ bool bsa::BSAReader::readRecords() {
       uint64_t fileHash = 0;
       uint32_t fileSize = 0;
       uint32_t fileOffset = 0;
-      if (!safeRead(is, &fileHash, 8)) return false;
-      if (!safeRead(is, &fileSize, 4)) return false;
-      if (!safeRead(is, &fileOffset, 4)) return false;
+      if (!io::safeRead(is, &fileHash, 8)) return false;
+      if (!io::safeRead(is, &fileSize, 4)) return false;
+      if (!io::safeRead(is, &fileOffset, 4)) return false;
       // (1<<30) bit toggles compression of the file from default
       bool compressed = (fileSize & (1u << 30u)) != 0;
       compressed ^= static_cast<bool>(archiveFlags & ArchiveFlag::Compressed);

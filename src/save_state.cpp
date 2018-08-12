@@ -4,8 +4,9 @@
 #include <string>
 #include "save_state.hpp"
 #include "formid.hpp"
-#include "io_util.hpp"
 #include "records.hpp"
+#include "record.hpp"
+#include "io/string.hpp"
 
 bool SaveState::saveScreenshotPPM(const char *filename) {
   std::ofstream s(filename);
@@ -36,9 +37,9 @@ SaveState::SaveState(std::istream &s) {
   s.read(reinterpret_cast<char *>(&saveHeaderSize), sizeof(saveHeaderSize));
   s.read(reinterpret_cast<char *>(&saveNum), sizeof(saveNum));
 
-  pcName = readBzString(s);
+  pcName = io::readBzString(s);
   s.read(reinterpret_cast<char *>(&pcLevel), sizeof(pcLevel));
-  pcLocationStr = readBzString(s);
+  pcLocationStr = io::readBzString(s);
   s.read(reinterpret_cast<char *>(&gameDays), sizeof(float));
   s.read(reinterpret_cast<char *>(&gameTicks), sizeof(gameTicks));
   s.read(reinterpret_cast<char *>(&gameTime), SystemTimeSize);
@@ -54,7 +55,7 @@ SaveState::SaveState(std::istream &s) {
   /// Plugins
   s.read(reinterpret_cast<char *>(&pluginsNum), 1);
   for (int i = 0; i < pluginsNum; ++i) {
-    plugins.push_back(readBString(s));
+    plugins.push_back(io::readBString(s));
   }
 
   /// Globals
@@ -104,9 +105,9 @@ SaveState::SaveState(std::istream &s) {
   s.read(reinterpret_cast<char *>(&createdNum), sizeof(createdNum));
 
   for (uint32_t i = 0; i < createdNum; ++i) {
+    using namespace record;
     // Sometimes there is a single null byte
     std::string type = peekRecordType(s);
-    using namespace record;
     if (type == "ALCH") {
       ALCH rec(raw::ALCH(), ALCH::Flag::None, 0, 0);
       s >> rec;

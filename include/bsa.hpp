@@ -6,11 +6,11 @@
 #include <memory>
 #include <map>
 
-#include "io_util.hpp"
+#include "io/memstream.hpp"
 
 namespace bsa {
 
-class FileData : public memstream {
+class FileData : public io::memstream {
  private:
   std::unique_ptr<uint8_t> ptr;
   std::size_t l;

@@ -12,7 +12,9 @@
 #include "actor_value.hpp"
 #include "formid.hpp"
 #include "magic_effects.hpp"
-#include "io_util.hpp"
+#include "io/io.hpp"
+#include "io/write_bytes.hpp"
+#include "io/read_bytes.hpp"
 
 namespace record {
 
@@ -30,12 +32,16 @@ class RecordNotFoundError : public std::runtime_error {
                              + std::string(actual)) {}
 };
 
+// Peek at the next 4 bytes. If they are a valid (sub)record identified then
+// return it, otherwise return an empty string.
+std::string peekRecordType(std::istream &);
+
 template<class T>
 inline void readOrThrow(std::istream &is,
                         T *data,
                         std::size_t size,
                         const std::string &recordType) {
-  if (!safeRead(is, data, size)) throw RecordReadError(recordType);
+  if (!io::safeRead(is, data, size)) throw RecordReadError(recordType);
 }
 
 inline void peekOrThrow(std::istream &is, const std::string &expected) {
@@ -161,14 +167,14 @@ namespace raw {
 template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
                                                                T>::value>>
 std::ostream &write(std::ostream &os, const T &t, std::size_t /*size*/) {
-  writeBytes(os, t);
+  io::writeBytes(os, t);
   return os;
 }
 
 template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
                                                                T>::value>>
 std::istream &read(std::istream &is, T &t, std::size_t size) {
-  if (size != 0) readBytes(is, t);
+  if (size != 0) io::readBytes(is, t);
   return is;
 }
 
@@ -176,14 +182,14 @@ template<class ...T>
 std::ostream &write(std::ostream &os,
                     const Tuplifiable<T...> &t,
                     std::size_t /*size*/) {
-  std::apply([&os](const auto &...x) { (writeBytes(os, *x), ...); },
+  std::apply([&os](const auto &...x) { (io::writeBytes(os, *x), ...); },
              t.asTuple());
   return os;
 }
 
 template<class ...T>
 std::istream &read(std::istream &is, Tuplifiable<T...> &t, std::size_t size) {
-  std::apply([&is](auto ...x) { (readBytes(is, *x), ...); }, t.asTuple());
+  std::apply([&is](auto ...x) { (io::readBytes(is, *x), ...); }, t.asTuple());
   return is;
 }
 } // namespace raw
@@ -218,7 +224,7 @@ template<class T, uint32_t c>
 std::ostream &operator<<(std::ostream &os, const Subrecord<T, c> &record) {
   auto size = record.size();
   os.write(record.type.c_str(), 4);
-  writeBytes(os, size);
+  io::writeBytes(os, size);
   raw::write(os, record.data, size);
 
   return os;
@@ -231,7 +237,7 @@ std::istream &operator>>(std::istream &is, Subrecord<T, c> &record) {
   if (record.type != type) throw RecordNotFoundError(record.type, type);
 
   uint16_t size = 0;
-  readBytes(is, size);
+  io::readBytes(is, size);
   raw::read(is, record.data, size);
 
   return is;
@@ -301,10 +307,10 @@ template<class T, uint32_t c>
 std::ostream &operator<<(std::ostream &os, const Record<T, c> &record) {
   uint32_t size = record.size();
   os.write(record.type.data(), 4);
-  writeBytes(os, size);
-  writeBytes(os, record.flags);
-  writeBytes(os, record.id);
-  writeBytes(os, record.versionControlInfo);
+  io::writeBytes(os, size);
+  io::writeBytes(os, record.flags);
+  io::writeBytes(os, record.id);
+  io::writeBytes(os, record.versionControlInfo);
   raw::write(os, record.data, size);
 
   return os;
@@ -317,10 +323,10 @@ std::istream &operator>>(std::istream &is, Record<T, c> &record) {
   if (record.type != type) throw RecordNotFoundError(record.type, type);
 
   uint32_t size;
-  readBytes(is, size);
-  readBytes(is, record.flags);
-  readBytes(is, record.id);
-  readBytes(is, record.versionControlInfo);
+  io::readBytes(is, size);
+  io::readBytes(is, record.flags);
+  io::readBytes(is, record.id);
+  io::readBytes(is, record.versionControlInfo);
   raw::read(is, record.data, size);
 
   return is;

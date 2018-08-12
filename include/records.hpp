@@ -14,7 +14,6 @@
 #include "actor_value.hpp"
 #include "formid.hpp"
 #include "magic_effects.hpp"
-#include "io_util.hpp"
 #include "attribute.hpp"
 
 namespace record {

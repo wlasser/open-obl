@@ -1,10 +1,14 @@
 #include "record.hpp"
 #include "records.hpp"
+#include "io/write_bytes.hpp"
+#include "io/read_bytes.hpp"
 #include <iostream>
 #include <memory>
 #include <set>
 
 namespace record {
+
+using namespace io;
 
 // XCLR specialization
 template<>

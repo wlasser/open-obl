@@ -6,7 +6,6 @@
 #include <iostream>
 #include <optional>
 #include "formid.hpp"
-#include "io_util.hpp"
 #include "records.hpp"
 
 namespace record {

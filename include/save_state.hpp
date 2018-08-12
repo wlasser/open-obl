@@ -7,7 +7,6 @@
 #include <vector>
 #include "system_time.hpp"
 #include "formid.hpp"
-#include "io_util.hpp"
 
 class SaveState {
 

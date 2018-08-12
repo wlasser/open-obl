@@ -13,11 +13,18 @@ add_executable(OpenOblivion
         src/main.cpp
         src/bsa.cpp
         src/esp.cpp
-        src/io_util.cpp
         src/records.cpp
         src/save_state.cpp
         src/system_time.cpp
-        src/app.cpp)
+        src/app.cpp
+        src/io/string.cpp
+        src/io/read_bytes.cpp
+        src/record.cpp
+        include/io/memstream.hpp
+        include/io/io.hpp
+        include/io/string.hpp
+        include/io/read_bytes.hpp
+        include/io/write_bytes.hpp)
 target_include_directories(OpenOblivion PUBLIC include)
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
