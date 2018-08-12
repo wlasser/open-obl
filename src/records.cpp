@@ -1235,6 +1235,38 @@ std::istream &raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
   return is;
 }
 
+// STAT specialization
+template<>
+uint32_t STAT::size() const {
+  return data.editorID.entireSize() + data.modelFilename.entireSize()
+      + data.boundRadius.entireSize()
+      + (data.textureHash ? data.textureHash->entireSize() : 0u);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::STAT &t,
+                         std::size_t /*size*/) {
+  os << t.editorID << t.modelFilename << t.boundRadius;
+  if (t.textureHash) os << t.textureHash.value();
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
+  // There are a few corrupted records making this harder than it needs to be:
+  // ARVineRising02 has no MODL, MODB, or MODT
+  // Empty STAT (size 0) after PalaceDRug01
+  if (size == 0) return is;
+  readRecord(is, t.editorID, "EDID");
+  if (peekRecordType(is) != "MODL") return is;
+  readRecord(is, t.modelFilename, "MODL");
+  readRecord(is, t.boundRadius, "MODB");
+  readRecord(is, t.textureHash, "MODT");
+
+  return is;
+}
+
 // CELL specialization
 template<>
 uint32_t CELL::size() const {

@@ -91,6 +91,8 @@ Esp::Esp(std::istream &is) {
               break;
             case "LTEX"_rec: parseRecord<record::LTEX>(is);
               break;
+            case "STAT"_rec: parseRecord<record::STAT>(is);
+              break;
             case "ALCH"_rec: parseRecord<record::ALCH>(is);
               break;
             default: skipRecord(is);

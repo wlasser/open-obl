@@ -954,6 +954,13 @@ struct LTEX {
   std::vector<record::GNAM> potentialGrasses{};
 };
 
+struct STAT {
+  record::EDID editorID{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+};
+
 struct ENCH {
   record::EDID editorID{};
   std::optional<record::FULL> name{};
@@ -1006,6 +1013,7 @@ using SOUN = Record<raw::SOUN, "SOUN"_rec>;
 using SKIL = Record<raw::SKIL, "SKIL"_rec>;
 using MGEF = Record<raw::MGEF, "MGEF"_rec>;
 using LTEX = Record<raw::LTEX, "LTEX"_rec>;
+using STAT = Record<raw::STAT, "STAT"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 
@@ -1022,6 +1030,7 @@ DECLARE_SPECIALIZED_RECORD(SOUN);
 DECLARE_SPECIALIZED_RECORD(SKIL);
 DECLARE_SPECIALIZED_RECORD(MGEF);
 DECLARE_SPECIALIZED_RECORD(LTEX);
+DECLARE_SPECIALIZED_RECORD(STAT);
 // TODO: DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 
