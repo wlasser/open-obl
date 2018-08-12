@@ -1,20 +1,22 @@
 #ifndef RECORDS_HPP
 #define RECORDS_HPP
 
-#include <string>
-#include <cstring>
+#include "actor_value.hpp"
+#include "attribute.hpp"
+#include "formid.hpp"
+#include "magic_effects.hpp"
+#include "record/io.hpp"
+#include "record/record.hpp"
+#include "record/subrecord.hpp"
+#include "record/tuplifiable.hpp"
+#include <array>
 #include <istream>
 #include <ostream>
 #include <optional>
+#include <string>
+#include <tuple>
 #include <variant>
 #include <vector>
-#include <array>
-#include <tuple>
-#include "record.hpp"
-#include "actor_value.hpp"
-#include "formid.hpp"
-#include "magic_effects.hpp"
-#include "attribute.hpp"
 
 namespace record {
 

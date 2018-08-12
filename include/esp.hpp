@@ -1,6 +1,7 @@
 #ifndef ESP_HPP
 #define ESP_HPP
 
+#include "record/io.hpp"
 #include <istream>
 #include <ostream>
 #include <iostream>

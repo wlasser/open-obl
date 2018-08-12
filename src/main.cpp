@@ -6,7 +6,7 @@
 
 #include "save_state.hpp"
 #include "records.hpp"
-#include "record.hpp"
+#include "record/record.hpp"
 #include "bsa.hpp"
 #include "esp.hpp"
 #include "app.hpp"

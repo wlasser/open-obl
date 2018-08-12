@@ -5,7 +5,7 @@
 #include "save_state.hpp"
 #include "formid.hpp"
 #include "records.hpp"
-#include "record.hpp"
+#include "record/record.hpp"
 #include "io/string.hpp"
 
 bool SaveState::saveScreenshotPPM(const char *filename) {

@@ -1,4 +1,4 @@
-#include "record.hpp"
+#include "record/io.hpp"
 
 std::string record::peekRecordType(std::istream &is) {
   // Peek at the next 4 bytes
