@@ -1,0 +1,6 @@
+Data/
+cmake-build-*/
+obse_*/
+
+.idea/
+tags
