@@ -9,22 +9,42 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 
 file(COPY ${OGRE_CONFIG_DIR}/resources.cfg DESTINATION ${CMAKE_BINARY_DIR})
 
-add_executable(OpenOblivion
-        src/main.cpp
+add_executable(OpenOblivion)
+target_sources(OpenOblivion PRIVATE
+        src/app.cpp
         src/bsa.cpp
         src/esp.cpp
-        src/records.cpp
-        src/save_state.cpp
-        src/system_time.cpp
-        src/app.cpp
+        src/main.cpp
         src/io/string.cpp
         src/io/read_bytes.cpp
+        src/records.cpp
+        src/record/group.cpp
         src/record/io.cpp
+        src/save_state.cpp
+        src/system_time.cpp)
+target_sources(OpenOblivion PRIVATE
+        include/actor_value.hpp
+        include/app.hpp
+        include/attribute.hpp
+        include/bsa.hpp
+        include/esp.hpp
+        include/formid.hpp
         include/io/memstream.hpp
         include/io/io.hpp
         include/io/string.hpp
         include/io/read_bytes.hpp
-        include/io/write_bytes.hpp include/record/exceptions.hpp include/record/rec_of.hpp include/record/tuplifiable.hpp include/record/io.hpp include/record/size_of.hpp include/record/subrecord.hpp include/record/group.hpp src/record/group.cpp)
+        include/io/write_bytes.hpp
+        include/magic_effects.hpp
+        include/records.hpp
+        include/record/exceptions.hpp
+        include/record/group.hpp
+        include/record/io.hpp
+        include/record/rec_of.hpp
+        include/record/size_of.hpp
+        include/record/subrecord.hpp
+        include/record/tuplifiable.hpp
+        include/save_state.hpp
+        include/system_time.hpp)
 target_include_directories(OpenOblivion PUBLIC include)
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
