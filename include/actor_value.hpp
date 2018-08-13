@@ -1,5 +1,5 @@
-#ifndef ACTOR_VALUE_HPP
-#define ACTOR_VALUE_HPP
+#ifndef OPENOBLIVION_ACTOR_VALUE_HPP
+#define OPENOBLIVION_ACTOR_VALUE_HPP
 
 #include <cstdint>
 
@@ -112,4 +112,4 @@ enum class SkillIndex : int8_t {
   Speechcraft = 20
 };
 
-#endif // ACTOR_VALUE_HPP
+#endif // OPENOBLIVION_ACTOR_VALUE_HPP

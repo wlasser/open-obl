@@ -1,5 +1,5 @@
-#ifndef RECORDS_HPP
-#define RECORDS_HPP
+#ifndef OPENOBLIVION_RECORDS_HPP
+#define OPENOBLIVION_RECORDS_HPP
 
 #include "actor_value.hpp"
 #include "attribute.hpp"
@@ -1036,4 +1036,4 @@ DECLARE_SPECIALIZED_RECORD(CELL);
 
 } // namespace record
 
-#endif // RECORDS_HPP
+#endif // OPENOBLIVION_RECORDS_HPP

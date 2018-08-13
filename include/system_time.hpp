@@ -1,5 +1,5 @@
-#ifndef SYSTEM_TIME_HPP
-#define SYSTEM_TIME_HPP
+#ifndef OPENOBLIVION_SYSTEM_TIME_HPP
+#define OPENOBLIVION_SYSTEM_TIME_HPP
 
 #include <sstream>
 #include <iomanip>
@@ -18,4 +18,4 @@ static const std::size_t SystemTimeSize = 8 * sizeof(uint16_t);
 
 std::string systemTimeToISO8601(const struct SystemTime &);
 
-#endif /* SYSTEM_TIME_HPP */
+#endif // OPENOBLIVION_SYSTEM_TIME_HPP

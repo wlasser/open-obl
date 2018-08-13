@@ -1,5 +1,5 @@
-#ifndef APP_HPP
-#define APP_HPP
+#ifndef OPENOBLIVION_APP_HPP
+#define OPENOBLIVION_APP_HPP
 
 #include <Ogre.h>
 #include <Bites/OgreApplicationContext.h>
@@ -16,4 +16,4 @@ class App : public OgreBites::ApplicationContext,
   bool keyPressed(const OgreBites::KeyboardEvent &event) override;
 };
 
-#endif /* APP_HPP */
+#endif // OPENOBLIVION_APP_HPP

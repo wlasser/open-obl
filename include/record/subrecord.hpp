@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SUBRECORD_HPP
-#define OPENOBLIVION_SUBRECORD_HPP
+#ifndef OPENOBLIVION_RECORD_SUBRECORD_HPP
+#define OPENOBLIVION_RECORD_SUBRECORD_HPP
 
 #include "io/write_bytes.hpp"
 #include "io/read_bytes.hpp"
@@ -89,4 +89,4 @@ const std::string Subrecord<std::string, c>::type = recOf<c>();
 
 } // namespace record
 
-#endif //OPENOBLIVION_SUBRECORD_HPP
+#endif //OPENOBLIVION_RECORD_SUBRECORD_HPP

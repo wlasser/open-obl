@@ -1,5 +1,5 @@
-#ifndef ATTRIBUTES_HPP
-#define ATTRIBUTES_HPP
+#ifndef OPENOBLIVION_ATTRIBUTES_HPP
+#define OPENOBLIVION_ATTRIBUTES_HPP
 
 #include <cstdint>
 
@@ -14,4 +14,4 @@ enum class Attribute : uint32_t {
   Luck = 7u
 };
 
-#endif /* ATTRIBUTES_HPP */
+#endif // OPENOBLIVION_ATTRIBUTES_HPP

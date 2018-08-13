@@ -1,5 +1,5 @@
-#ifndef RECORD_HPP
-#define RECORD_HPP
+#ifndef OPENOBLIVION_RECORD_RECORD_HPP
+#define OPENOBLIVION_RECORD_RECORD_HPP
 
 #include "formid.hpp"
 #include "io/write_bytes.hpp"
@@ -83,4 +83,4 @@ std::istream &operator>>(std::istream &is, Record<T, c> &record) {
 
 } // namespace record
 
-#endif // RECORD_HPP
+#endif // OPENOBLIVION_RECORD_RECORD_HPP

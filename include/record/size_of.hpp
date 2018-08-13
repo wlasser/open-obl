@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SIZE_OF_HPP
-#define OPENOBLIVION_SIZE_OF_HPP
+#ifndef OPENOBLIVION_RECORD_SIZE_OF_HPP
+#define OPENOBLIVION_RECORD_SIZE_OF_HPP
 
 #include "record/tuplifiable.hpp"
 #include <array>
@@ -64,4 +64,4 @@ inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
 
 } // namespace record
 
-#endif //OPENOBLIVION_SIZE_OF_HPP
+#endif //OPENOBLIVION_RECORD_SIZE_OF_HPP

@@ -1,5 +1,5 @@
-#ifndef MAGIC_EFFECTS_HPP
-#define MAGIC_EFFECTS_HPP
+#ifndef OPENOBLIVION_MAGIC_EFFECTS_HPP
+#define OPENOBLIVION_MAGIC_EFFECTS_HPP
 
 #include <cstdint>
 #include <array>
@@ -15,4 +15,4 @@ enum class MagicSchool : uint32_t {
   Restoration = 5
 };
 
-#endif // MAGIC_EFFECTS_HPP
+#endif // OPENOBLIVION_MAGIC_EFFECTS_HPP

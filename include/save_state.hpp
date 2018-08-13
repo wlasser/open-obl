@@ -1,5 +1,5 @@
-#ifndef SAVE_STATE_HPP
-#define SAVE_STATE_HPP
+#ifndef OPENOBLIVION_SAVE_STATE_HPP
+#define OPENOBLIVION_SAVE_STATE_HPP
 
 #include <string>
 #include <cctype>
@@ -120,4 +120,4 @@ class SaveState {
   bool saveScreenshotPPM(const char *filename);
 };
 
-#endif // SAVE_STATE_HPP
+#endif // OPENOBLIVION_SAVE_STATE_HPP

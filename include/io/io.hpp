@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_IO_HPP
-#define OPENOBLIVION_IO_HPP
+#ifndef OPENOBLIVION_IO_IO_HPP
+#define OPENOBLIVION_IO_IO_HPP
 
 #include <istream>
 #include <stdexcept>
@@ -36,4 +36,4 @@ class IOReadError : public std::runtime_error {
 
 } // namespace io
 
-#endif //OPENOBLIVION_IO_HPP
+#endif //OPENOBLIVION_IO_IO_HPP

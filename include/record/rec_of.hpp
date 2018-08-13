@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_REC_OF_HPP
-#define OPENOBLIVION_REC_OF_HPP
+#ifndef OPENOBLIVION_RECORD_REC_OF_HPP
+#define OPENOBLIVION_RECORD_REC_OF_HPP
 
 #include <array>
 #include <cstdint>
@@ -37,4 +37,4 @@ const char *recOf() {
 
 } // namespace record
 
-#endif //OPENOBLIVION_REC_OF_HPP
+#endif //OPENOBLIVION_RECORD_REC_OF_HPP

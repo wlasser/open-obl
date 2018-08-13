@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_READ_BYTES_HPP
-#define OPENOBLIVION_READ_BYTES_HPP
+#ifndef OPENOBLIVION_IO_READ_BYTES_HPP
+#define OPENOBLIVION_IO_READ_BYTES_HPP
 
 #include "io.hpp"
 #include <array>
@@ -52,4 +52,4 @@ void readBytes(std::istream &is, std::tuple<T...> &data) {
 
 } // namespace io
 
-#endif //OPENOBLIVION_READ_BYTES_HPP
+#endif //OPENOBLIVION_IO_READ_BYTES_HPP

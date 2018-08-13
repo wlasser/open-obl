@@ -1,5 +1,5 @@
-#ifndef BSA_HPP
-#define BSA_HPP
+#ifndef OPENOBLIVION_BSA_HPP
+#define OPENOBLIVION_BSA_HPP
 
 #include <fstream>
 #include <string>
@@ -116,4 +116,4 @@ inline BSAReader::ArchiveFlag operator&(BSAReader::ArchiveFlag a,
 }
 }
 
-#endif // BSA_HPP
+#endif // OPENOBLIVION_BSA_HPP

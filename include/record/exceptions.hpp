@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_EXCEPTIONS_HPP
-#define OPENOBLIVION_EXCEPTIONS_HPP
+#ifndef OPENOBLIVION_RECORD_EXCEPTIONS_HPP
+#define OPENOBLIVION_RECORD_EXCEPTIONS_HPP
 
 #include <stdexcept>
 #include <string>
@@ -22,4 +22,4 @@ class RecordNotFoundError : public std::runtime_error {
 
 } // namespace record
 
-#endif //OPENOBLIVION_EXCEPTIONS_HPP
+#endif //OPENOBLIVION_RECORD_EXCEPTIONS_HPP

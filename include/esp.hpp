@@ -1,5 +1,5 @@
-#ifndef ESP_HPP
-#define ESP_HPP
+#ifndef OPENOBLIVION_ESP_HPP
+#define OPENOBLIVION_ESP_HPP
 
 #include <istream>
 #include <iostream>
@@ -35,4 +35,4 @@ class Esp {
   void parseCell(std::istream &is);
 };
 
-#endif // ESP_HPP
+#endif // OPENOBLIVION_ESP_HPP

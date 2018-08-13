@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_STRING_HPP
-#define OPENOBLIVION_STRING_HPP
+#ifndef OPENOBLIVION_IO_STRING_HPP
+#define OPENOBLIVION_IO_STRING_HPP
 
 #include <string>
 #include <istream>
@@ -15,4 +15,4 @@ std::string readBString(std::istream &);
 
 } // namespace io
 
-#endif //OPENOBLIVION_STRING_HPP
+#endif //OPENOBLIVION_IO_STRING_HPP
