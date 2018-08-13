@@ -35,6 +35,10 @@ target_sources(OpenOblivion PRIVATE
         include/io/read_bytes.hpp
         include/io/write_bytes.hpp
         include/magic_effects.hpp
+        include/nif/basic.hpp
+        include/nif/compound.hpp
+        include/nif/enum.hpp
+        include/nif/versionable.hpp
         include/records.hpp
         include/record/exceptions.hpp
         include/record/group.hpp
