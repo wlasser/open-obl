@@ -41,11 +41,19 @@ using Float = float;
 struct HeaderString {
   std::string str;
 };
+std::istream &operator>>(std::istream &is, HeaderString &t) {
+  std::getline(is, t.str, '\n');
+  return is;
+}
 
 // Newline-terminated string
 struct LineString {
   std::string str;
 };
+std::istream &operator>>(std::istream &is, LineString &t) {
+  std::getline(is, t.str, '\n');
+  return is;
+}
 
 // Points to an object further up in the hierarchy
 template<class T>

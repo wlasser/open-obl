@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_NIF_VERSIONABLE_HPP
 #define OPENOBLIVION_NIF_VERSIONABLE_HPP
 
+#include "io/read_bytes.hpp"
 #include <array>
 #include <optional>
 #include <stdexcept>
@@ -82,20 +83,23 @@ class Versionable {
     const std::optional<Version> upperBound =
         (ver2 == Unbounded ? std::nullopt : std::make_optional(ver2));
 
-    constexpr bool verify(Version version) {
+    constexpr bool verify(Version version) const {
       return (ver1 ? (ver1 <= version) : true)
           && (ver2 ? (version <= ver2) : true);
     }
 
    public:
-    explicit constexpr VersionOptional(Version version) noexcept :
-        version(version), opt() {}
-    constexpr VersionOptional(Version version, T &&value) :
-        version(version), opt(std::forward(value)) {}
 
-    VersionOptional &operator=(std::nullopt_t) noexcept {
-      opt = std::nullopt;
-      return *this;
+    explicit constexpr VersionOptional(Version version) noexcept :
+        version(version) {
+      if (verify(version)) opt = std::make_optional<T>();
+      else opt = std::nullopt;
+    }
+
+    constexpr VersionOptional(Version version, T &&value) :
+        version(version) {
+      if (verify(version)) opt = std::make_optional(value);
+      else opt = std::nullopt;
     }
 
     VersionOptional &operator=(T &&value) {
@@ -124,11 +128,11 @@ class Versionable {
     }
 
     constexpr explicit operator bool() const noexcept {
-      return verify(version) && opt;
+      return verify(version);
     }
 
     constexpr bool has_value() const noexcept {
-      return verify(version) && opt.has_value();
+      return verify(version);
     }
 
     constexpr const T *operator->() const {
@@ -154,16 +158,25 @@ class Versionable {
     constexpr T &&operator*() &&{
       return opt.operator*();
     }
-  };
 
- public:
+    friend std::istream &operator>>(std::istream &is,
+                                    VersionOptional<T, ver1, ver2> &t) {
+      if (t) is >> t.value();
+      return is;
+    }
+  }; // class VersionOptional
 
   explicit Versionable(Version version) : version(version) {}
+
+  template<class T, Version ver1, Version ver2>
+  friend std::istream &operator>>(std::istream &, T &);
+
+  template<class T, Version ver1, Version ver2>
+  friend void ::io::readBytes(std::istream &,
+                              VersionOptional<T, ver1, ver2> &);
 };
 
-namespace literals {
-
-inline constexpr Version operator ""_ver(const char *str, std::size_t size) {
+constexpr Version verOf(const char *str, std::size_t size) {
   Version version = 0;
 
   // Current position in str
@@ -196,7 +209,23 @@ inline constexpr Version operator ""_ver(const char *str, std::size_t size) {
   return version;
 }
 
+namespace literals {
+
+constexpr Version operator ""_ver(const char *str, std::size_t size) {
+  return verOf(str, size);
+}
+
 } // namespace literal
 } // namespace nif
+
+namespace io {
+
+template<class T, nif::Version ver1, nif::Version ver2>
+void readBytes(std::istream &is,
+               nif::Versionable::VersionOptional<T, ver1, ver2> &t) {
+  if (t) io::readBytes(is, t.value());
+}
+
+} // namespace io
 
 #endif // OPENOBLIVION_NIF_VERSIONABLE_HPP

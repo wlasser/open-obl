@@ -38,6 +38,7 @@ target_sources(OpenOblivion PRIVATE
         include/nif/basic.hpp
         include/nif/compound.hpp
         include/nif/enum.hpp
+        include/nif/nif.hpp
         include/nif/versionable.hpp
         include/records.hpp
         include/record/exceptions.hpp
