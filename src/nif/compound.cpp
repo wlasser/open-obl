@@ -1,4 +1,5 @@
 #include "nif/compound.hpp"
+#include <variant>
 
 std::istream &nif::compound::operator>>(std::istream &is, SizedString &t) {
   io::readBytes(is, t.length);
@@ -111,6 +112,76 @@ std::istream &nif::compound::operator>>(std::istream &is, ExportInfo &t) {
   is >> t.author;
   is >> t.processScript;
   is >> t.exportScript;
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, NiPlane &t) {
+  is >> t.normal;
+  io::readBytes(is, t.constant);
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, NiBound &t) {
+  is >> t.center;
+  io::readBytes(is, t.radius);
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, BoxBV &t) {
+  is >> t.center;
+  for (int i = 0; i < 3; ++i) is >> t.axis[i];
+  is >> t.extent;
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, CapsuleBV &t) {
+  is >> t.center;
+  is >> t.origin;
+  io::readBytes(is, t.extent);
+  io::readBytes(is, t.radius);
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, UnionBV &t) {
+  io::readBytes(is, t.numBoundingVolumes);
+  t.boundingVolumes.reserve(t.numBoundingVolumes);
+  for (auto i = 0; i < t.numBoundingVolumes; ++i) {
+    t.boundingVolumes.emplace_back<BoundingVolume>({});
+    is >> t.boundingVolumes.back();
+  }
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, HalfSpaceBV &t) {
+  is >> t.plane;
+  is >> t.center;
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, EmptyBV &t) {
+  return is;
+}
+
+std::istream &nif::compound::operator>>(std::istream &is, BoundingVolume &t) {
+  io::readBytes(is, t.collisionType);
+  switch (t.collisionType) {
+    case Enum::BoundVolumeType::BASE_BV:t.collision = NiBound{};
+      is >> std::get<0>(t.collision);
+      break;
+    case Enum::BoundVolumeType::BOX_BV:t.collision = BoxBV{};
+      is >> std::get<1>(t.collision);
+      break;
+    case Enum::BoundVolumeType::CAPSULE_BV:t.collision = CapsuleBV{};
+      is >> std::get<2>(t.collision);
+      break;
+    case Enum::BoundVolumeType::UNION_BV:t.collision = UnionBV{};
+      is >> std::get<4>(t.collision);
+      break;
+    case Enum::BoundVolumeType::HALFSPACE_BV:t.collision = HalfSpaceBV{};
+      is >> std::get<5>(t.collision);
+      break;
+    default: break;
+  }
   return is;
 }
 

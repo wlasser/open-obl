@@ -34,7 +34,7 @@ using Short = int16_t;
 enum class BlockTypeIndex : uint16_t {};
 using Char = char;
 using FileVersion = Version;
-enum class Flags : uint16_t;
+using Flags = uint16_t;
 using Float = float;
 
 // Newline-terminated string
@@ -55,8 +55,10 @@ class Ptr {
 
 // Points to an object further down in the hierarchy.
 // Can be null.
-enum class Ref : int32_t {
-  Null = -1
+template<class T>
+class Ref {
+  static const int32_t Null = -1;
+  int32_t val{};
 };
 enum class StringOffset : uint32_t;
 enum class StringIndex : uint32_t;

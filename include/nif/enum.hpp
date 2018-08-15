@@ -110,6 +110,15 @@ enum class EndianType : uint8_t {
   ENDIAN_LITTLE = 1
 };
 
+enum class BoundVolumeType : uint32_t {
+  BASE_BV = 0xffffffff,
+  SPHERE_BV = 0,
+  BOX_BV = 1,
+  CAPSULE_BV = 2,
+  UNION_BV = 4,
+  HALFSPACE_BV = 5
+};
+
 } // namespace Enum
 } // namespace nif
 

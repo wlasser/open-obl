@@ -6,6 +6,7 @@
 #include "nif/enum.hpp"
 #include "nif/versionable.hpp"
 #include <array>
+#include <variant>
 #include <vector>
 
 namespace nif {
@@ -222,6 +223,48 @@ struct ExportInfo {
   ShortString exportScript{};
 };
 
+struct NiPlane {
+  Vector3 normal;
+  basic::Float constant;
+};
+
+struct NiBound {
+  Vector3 center;
+  basic::Float radius;
+};
+
+struct BoxBV {
+  Vector3 center{};
+  std::array<Vector3, 3> axis{};
+  Vector3 extent{};
+};
+
+struct CapsuleBV {
+  Vector3 center{};
+  Vector3 origin{};
+  basic::Float extent{};
+  basic::Float radius{};
+};
+
+struct BoundingVolume;
+
+struct UnionBV {
+  basic::UInt numBoundingVolumes;
+  std::vector<BoundingVolume> boundingVolumes;
+};
+
+struct HalfSpaceBV {
+  NiPlane plane{};
+  Vector3 center{};
+};
+
+struct EmptyBV {};
+struct BoundingVolume {
+  Enum::BoundVolumeType collisionType{};
+  std::variant<NiBound, BoxBV, CapsuleBV, EmptyBV, UnionBV, HalfSpaceBV>
+      collision{};
+};
+
 struct Header : Versionable {
   // Should be 'NetImmerse File Format x.x.x.x' for ver < 10.0.1.2
   // Should be 'Gamebryo File Format x.x.x.x' for ver > 10.1.0.0
@@ -351,6 +394,14 @@ std::istream &operator>>(std::istream &is, NodeSet<NiNode> &t) {
 }
 std::istream &operator>>(std::istream &is, ShortString &t);
 std::istream &operator>>(std::istream &is, ExportInfo &t);
+std::istream &operator>>(std::istream &is, NiPlane &t);
+std::istream &operator>>(std::istream &is, NiBound &t);
+std::istream &operator>>(std::istream &is, BoxBV &t);
+std::istream &operator>>(std::istream &is, CapsuleBV &t);
+std::istream &operator>>(std::istream &is, UnionBV &t);
+std::istream &operator>>(std::istream &is, HalfSpaceBV &t);
+std::istream &operator>>(std::istream &is, EmptyBV &t);
+std::istream &operator>>(std::istream &is, BoundingVolume &t);
 std::istream &operator>>(std::istream &is, Header &t);
 
 } // namespace compound

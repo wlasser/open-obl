@@ -35,6 +35,7 @@ target_sources(OpenOblivion PRIVATE
         include/formid.hpp
         include/io/memstream.hpp
         include/io/io.hpp
+        include/io/niobject.hpp
         include/io/string.hpp
         include/io/read_bytes.hpp
         include/io/write_bytes.hpp
