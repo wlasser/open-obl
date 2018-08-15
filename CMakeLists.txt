@@ -17,6 +17,9 @@ target_sources(OpenOblivion PRIVATE
         src/main.cpp
         src/io/string.cpp
         src/io/read_bytes.cpp
+        src/nif/basic.cpp
+        src/nif/compound.cpp
+        src/nif/nif.cpp
         src/records.cpp
         src/record/group.cpp
         src/record/io.cpp
