@@ -15,6 +15,7 @@ target_sources(OpenOblivion PRIVATE
         src/bsa.cpp
         src/esp.cpp
         src/main.cpp
+        src/io/io.cpp
         src/io/string.cpp
         src/io/read_bytes.cpp
         src/nif/basic.cpp

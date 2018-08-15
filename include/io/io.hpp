@@ -14,15 +14,7 @@ inline bool safeRead(std::istream &is, T *data, std::size_t size) {
   return is.rdstate() == std::ios::goodbit;
 }
 
-inline std::string decodeIosState(std::ios_base::iostate state) {
-  switch (state) {
-    case std::ios::goodbit: return "goodbit";
-    case std::ios::badbit: return "badbit";
-    case std::ios::failbit: return "failbit";
-    case std::ios::eofbit: return "eofbit";
-    default: return "unknown";
-  }
-}
+std::string decodeIosState(std::ios_base::iostate state);
 
 class IOReadError : public std::runtime_error {
  public:
