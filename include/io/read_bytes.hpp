@@ -10,6 +10,7 @@
 #include <tuple>
 #include <typeinfo>
 #include <utility>
+#include <vector>
 
 namespace io {
 
@@ -48,6 +49,15 @@ void readBytes(std::istream &is, std::pair<T, S> &data) {
 template<class ... T>
 void readBytes(std::istream &is, std::tuple<T...> &data) {
   std::apply([&is](auto &...x) { (readBytes(is, x), ...); }, data);
+}
+
+template<class T>
+void readBytes(std::istream &is, std::vector<T> &data, std::size_t length) {
+  data.reserve(length);
+  for (std::size_t i = 0; i < length; ++i) {
+    data.template emplace_back<T>({});
+    readBytes(is, data.back());
+  }
 }
 
 } // namespace io

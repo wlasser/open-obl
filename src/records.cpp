@@ -28,12 +28,8 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XCLR &t, std::size_t size) {
-  t.regions.reserve(size / sizeof(FormID));
-  for (std::size_t i = 0; i < size / sizeof(FormID); ++i) {
-    FormID r{};
-    readBytes(is, r);
-    t.regions.push_back(r);
-  }
+  const std::size_t length = size / sizeof(FormID);
+  io::readBytes(is, t.regions, length);
   return is;
 }
 
@@ -81,12 +77,8 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::HNAM &t, std::size_t size) {
-  t.hair.reserve(size / sizeof(FormID));
-  for (std::size_t i = 0; i < size / sizeof(FormID); ++i) {
-    FormID r;
-    readBytes(is, r);
-    t.hair.push_back(r);
-  }
+  const std::size_t length = size / sizeof(FormID);
+  io::readBytes(is, t.hair, length);
   return is;
 }
 
@@ -108,12 +100,8 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ENAM &t, std::size_t size) {
-  t.eyes.reserve(size / sizeof(FormID));
-  for (std::size_t i = 0; i < size / sizeof(FormID); ++i) {
-    FormID r;
-    readBytes(is, r);
-    t.eyes.push_back(r);
-  }
+  const std::size_t length = size / sizeof(FormID);
+  io::readBytes(is, t.eyes, length);
   return is;
 }
 
@@ -135,11 +123,8 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ESCE &t, std::size_t size) {
-  t.effects.reserve(size / sizeof(EffectID));
-  for (std::size_t i = 0; i < size / sizeof(EffectID); ++i) {
-    t.effects.emplace_back();
-    readBytes(is, t.effects.back());
-  }
+  const std::size_t length = size / sizeof(EffectID);
+  io::readBytes(is, t.effects, length);
   return is;
 }
 

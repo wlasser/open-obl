@@ -2,11 +2,7 @@
 
 std::istream &nif::compound::operator>>(std::istream &is, SizedString &t) {
   io::readBytes(is, t.length);
-  for (basic::UInt i = 0; i < t.length; ++i) {
-    basic::Char c{};
-    io::readBytes(is, c);
-    t.value.push_back(c);
-  }
+  io::readBytes(is, t.value, t.length);
   return is;
 }
 
@@ -18,11 +14,7 @@ std::istream &nif::compound::operator>>(std::istream &is, String &t) {
 
 std::istream &nif::compound::operator>>(std::istream &is, ByteArray &t) {
   io::readBytes(is, t.dataSize);
-  for (basic::UInt i = 0; i < t.dataSize; ++i) {
-    basic::Byte b{};
-    io::readBytes(is, b);
-    t.data.push_back(b);
-  }
+  io::readBytes(is, t.data, t.dataSize);
   return is;
 }
 
@@ -35,12 +27,7 @@ std::istream &nif::compound::operator>>(std::istream &is, ByteMatrix &t) {
   // nesting arr2 in arr1.
   for (basic::UInt i = 0; i < t.dataSize2; ++i) {
     std::vector<basic::Byte> row{};
-    row.reserve(t.dataSize1);
-    for (basic::UInt j = 0; j < t.dataSize1; ++j) {
-      basic::Byte b{};
-      io::readBytes(is, b);
-      row.push_back(b);
-    }
+    io::readBytes(is, row, t.dataSize1);
     t.data.push_back(row);
   }
 
@@ -62,12 +49,7 @@ std::istream &nif::compound::operator>>(std::istream &is, LODRange &t) {
 
 std::istream &nif::compound::operator>>(std::istream &is, MatchGroup &t) {
   io::readBytes(is, t.numVertices);
-  t.vertexIndices.reserve(t.numVertices);
-  for (basic::UShort i = 0; i < t.numVertices; ++i) {
-    basic::UShort u{};
-    io::readBytes(is, u);
-    t.vertexIndices.push_back(u);
-  }
+  io::readBytes(is, t.vertexIndices, t.numVertices);
   return is;
 }
 
@@ -121,13 +103,7 @@ std::istream &nif::compound::operator>>(std::istream &is, MipMap &t) {
 
 std::istream &nif::compound::operator>>(std::istream &is, ShortString &t) {
   io::readBytes(is, t.length);
-  auto len = static_cast<std::uint8_t>(t.length);
-  t.value.reserve(len);
-  for (typeof(len) i = 0; i < len; ++i) {
-    basic::Char c{};
-    io::readBytes(is, c);
-    t.value.push_back(c);
-  }
+  io::readBytes(is, t.value, static_cast<std::size_t>(t.length));
   return is;
 }
 
@@ -175,21 +151,11 @@ std::istream &nif::compound::operator>>(std::istream &is, Header &t) {
   }
 
   if (t.blockTypeIndices) {
-    t.blockTypeIndices->reserve(t.numBlocks.value());
-    for (basic::ULittle32 i = 0; i < t.numBlocks.value(); ++i) {
-      basic::BlockTypeIndex b{};
-      io::readBytes(is, b);
-      t.blockTypeIndices->push_back(b);
-    }
+    io::readBytes(is, t.blockTypeIndices.value(), t.numBlocks.value());
   }
 
   if (t.blockSizes) {
-    t.blockSizes->reserve(t.numBlocks.value());
-    for (basic::ULittle32 i = 0; i < t.numBlocks.value(); ++i) {
-      basic::UInt s{};
-      io::readBytes(is, s);
-      t.blockSizes->push_back(s);
-    }
+    io::readBytes(is, t.blockSizes.value(), t.numBlocks.value());
   }
 
   io::readBytes(is, t.numStrings);
@@ -207,12 +173,7 @@ std::istream &nif::compound::operator>>(std::istream &is, Header &t) {
   io::readBytes(is, t.numGroups);
 
   if (t.groups) {
-    t.groups->reserve(t.numGroups.value());
-    for (basic::UInt i = 0; i < t.numGroups.value(); ++i) {
-      basic::UInt g{};
-      io::readBytes(is, g);
-      t.groups->push_back(g);
-    }
+    io::readBytes(is, t.groups.value(), t.numGroups.value());
   }
 
   return is;
