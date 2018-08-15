@@ -13,14 +13,17 @@ class memstream : public std::istream {
     membuf(const uint8_t *p, std::size_t l) {
       setg((char *) (p), (char *) (p), (char *) (p) + l);
     }
+    pos_type seekpos(pos_type pos, std::ios_base::openmode which) override {
+      setg(eback(), eback() + pos, egptr());
+      return gptr() - eback();
+    }
   };
 
   membuf buffer;
 
  public:
-  memstream(const uint8_t *p, std::size_t l) :
-      std::istream(&buffer),
-      buffer(p, l) {
+  memstream(const uint8_t *p, std::size_t l)
+      : std::istream(&buffer), buffer(p, l) {
     rdbuf(&buffer);
   }
 };
