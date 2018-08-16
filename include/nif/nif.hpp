@@ -2,6 +2,7 @@
 #define OPENOBLIVION_NIF_NIF_HPP
 
 #include "nif/compound.hpp"
+#include "nif/niobject.hpp"
 #include <array>
 #include <istream>
 #include <iostream>
@@ -11,12 +12,11 @@
 namespace nif {
 
 class NifModel {
- public:
+ private:
   using Copyright = std::array<std::string, 3>;
 
- private:
   Version version{};
-  std::size_t numBlocks{};
+  std::vector<std::unique_ptr<nif::NiObject>> blocks{};
   std::vector<std::string> blockTypes{};
   std::size_t numGroups{};
   std::vector<uint32_t> groups{};
