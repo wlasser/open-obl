@@ -9,53 +9,72 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 
 file(COPY ${OGRE_CONFIG_DIR}/resources.cfg DESTINATION ${CMAKE_BINARY_DIR})
 
+# IO library
+add_library(OpenOblivionIO OBJECT)
+target_include_directories(OpenOblivionIO PUBLIC include)
+target_sources(OpenOblivionIO PUBLIC
+        src/io/io.cpp
+        src/io/read_bytes.cpp
+        src/io/string.cpp
+        include/io/io.hpp
+        include/io/memstream.hpp
+        include/io/read_bytes.hpp
+        include/io/string.hpp
+        include/io/write_bytes.hpp)
+
+# Nif library
+add_library(OpenOblivionNif OBJECT)
+target_include_directories(OpenOblivionNif PUBLIC include)
+target_sources(OpenOblivionNif PUBLIC
+        $<TARGET_OBJECTS:OpenOblivionIO>
+        src/nif/basic.cpp
+        src/nif/compound.cpp
+        src/nif/nif.cpp
+        include/nif/basic.hpp
+        include/nif/compound.hpp
+        include/nif/enum.hpp
+        include/nif/nif
+        include/nif/niobject.hpp
+        include/nif/versionable.hpp)
+
+# Record library
+add_library(OpenOblivionRecord OBJECT)
+target_include_directories(OpenOblivionRecord PUBLIC include)
+target_sources(OpenOblivionRecord PUBLIC
+        $<TARGET_OBJECTS:OpenOblivionIO>
+        src/record/group.cpp
+        src/record/io.cpp
+        include/record/exceptions.hpp
+        include/record/group.hpp
+        include/record/io.hpp
+        include/record/rec_of.hpp
+        include/record/record.hpp
+        include/record/size_of.hpp
+        include/record/subrecord.hpp
+        include/record/tuplifiable.hpp)
+
 add_executable(OpenOblivion)
+target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
+        $<TARGET_OBJECTS:OpenOblivionIO>
+        $<TARGET_OBJECTS:OpenOblivionNif>
+        $<TARGET_OBJECTS:OpenOblivionRecord>
         src/app.cpp
         src/bsa.cpp
         src/esp.cpp
         src/main.cpp
-        src/io/io.cpp
-        src/io/string.cpp
-        src/io/read_bytes.cpp
-        src/nif/basic.cpp
-        src/nif/compound.cpp
-        src/nif/nif.cpp
         src/records.cpp
-        src/record/group.cpp
-        src/record/io.cpp
         src/save_state.cpp
-        src/system_time.cpp)
-target_sources(OpenOblivion PRIVATE
+        src/system_time.cpp
         include/actor_value.hpp
         include/app.hpp
         include/attribute.hpp
         include/bsa.hpp
         include/esp.hpp
         include/formid.hpp
-        include/io/memstream.hpp
-        include/io/io.hpp
-        include/io/string.hpp
-        include/io/read_bytes.hpp
-        include/io/write_bytes.hpp
         include/magic_effects.hpp
-        include/nif/basic.hpp
-        include/nif/compound.hpp
-        include/nif/enum.hpp
-        include/nif/nif.hpp
-        include/nif/niobject.hpp
-        include/nif/versionable.hpp
-        include/records.hpp
-        include/record/exceptions.hpp
-        include/record/group.hpp
-        include/record/io.hpp
-        include/record/rec_of.hpp
-        include/record/size_of.hpp
-        include/record/subrecord.hpp
-        include/record/tuplifiable.hpp
         include/save_state.hpp
         include/system_time.hpp)
-target_include_directories(OpenOblivion PUBLIC include)
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE ${ZLIB_LIBRARIES} ${OGRE_LIBRARIES})
