@@ -78,3 +78,13 @@ target_sources(OpenOblivion PRIVATE
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE ${ZLIB_LIBRARIES} ${OGRE_LIBRARIES})
+
+add_library(Catch INTERFACE)
+target_include_directories(Catch INTERFACE lib/catch)
+
+add_executable(Test test/tests.cpp)
+target_include_directories(Test PRIVATE include)
+target_sources(Test PRIVATE
+        $<TARGET_OBJECTS:OpenOblivionIO>
+        test/io/write_bytes.cpp)
+target_link_libraries(Test PRIVATE Catch)
