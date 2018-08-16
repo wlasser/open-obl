@@ -87,16 +87,15 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) {
     owner.is.read(reinterpret_cast<char *>(&uncompressedSize), 4);
   }
   // Read data and uncompress if necessary
-  auto data = new uint8_t[uncompressedSize];
+  auto data = std::make_unique<uint8_t[]>(uncompressedSize);
   if (file.compressed) {
-    auto compressedData = new unsigned char[size];
-    owner.is.read(reinterpret_cast<char *>(compressedData), size);
-    uncompress(data, &uncompressedSize, compressedData, size);
+    auto compressedData = std::make_unique<unsigned char[]>(size);
+    owner.is.read(reinterpret_cast<char *>(compressedData.get()), size);
+    uncompress(data.get(), &uncompressedSize, compressedData.get(), size);
   } else {
-    owner.is.read(reinterpret_cast<char *>(data), size);
+    owner.is.read(reinterpret_cast<char *>(data.get()), size);
   }
-  return std::make_unique<bsa::FileData>(std::unique_ptr<uint8_t>(data),
-                                         uncompressedSize);
+  return std::make_unique<bsa::FileData>(std::move(data), uncompressedSize);
 }
 
 bool bsa::BSAReader::readHeader() {

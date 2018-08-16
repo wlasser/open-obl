@@ -12,16 +12,19 @@ namespace bsa {
 
 class FileData : public io::memstream {
  private:
-  std::unique_ptr<uint8_t> ptr;
+  std::unique_ptr<uint8_t[]> ptr;
   std::size_t l;
  public:
   std::size_t size() { return l; }
-  FileData(std::unique_ptr<uint8_t> p, std::size_t l) :
+  FileData(std::unique_ptr<uint8_t[]> p, std::size_t l) :
       memstream(p.get(), l), ptr(std::move(p)), l(l) {}
 };
 
 uint64_t genHash(const std::string &, bool);
 
+// TODO: Allow const access
+// TODO: Allow std::string access
+// TODO: Update implementation to use io::readBytes over io::safeRead
 class BSAReader {
  public:
   enum class ArchiveFlag : uint32_t {
