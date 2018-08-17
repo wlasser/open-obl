@@ -7,10 +7,11 @@
 #include <zlib.h>
 
 #include "bsa.hpp"
-#include "io/string.hpp"
 #include "io/io.hpp"
+#include "io/read_bytes.hpp"
+#include "io/string.hpp"
 
-uint64_t bsa::genHash(const std::string &path, bool isFolder) {
+uint64_t bsa::genHash(std::string path, bool isFolder) {
   uint64_t hash = 0;
   uint32_t hash2 = 0;
   // Transform to a lowercase win path
@@ -58,14 +59,14 @@ uint64_t bsa::genHash(const std::string &path, bool isFolder) {
 }
 
 bsa::BSAReader::FolderAccessor
-bsa::BSAReader::operator[](const char *folder) const {
-  return bsa::BSAReader::FolderAccessor(bsa::genHash(std::string(folder), true),
+bsa::BSAReader::operator[](std::string folder) const {
+  return bsa::BSAReader::FolderAccessor(bsa::genHash(std::move(folder), true),
                                         *this);
 }
 
 const std::unique_ptr<bsa::FileData>
-bsa::BSAReader::FolderAccessor::operator[](const char *file) const {
-  return (*this)[bsa::genHash(std::string(file), false)];
+bsa::BSAReader::FolderAccessor::operator[](std::string file) const {
+  return (*this)[bsa::genHash(std::move(file), false)];
 }
 
 const std::unique_ptr<bsa::FileData>
@@ -74,7 +75,7 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   const FileRecord &file = folder.files.at(fileHash);
   // Unset bits higher than the toggle compression bit
   uint32_t size = file.size & ~(3u << 30u);
-  unsigned long uncompressedSize = size;
+  uint32_t uncompressedSize = size;
   // Jump to the data
   owner.is.seekg(file.offset);
   // Skip over full path if given
@@ -84,14 +85,19 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   }
   // Get size of uncompressed data if compressed
   if (file.compressed) {
-    owner.is.read(reinterpret_cast<char *>(&uncompressedSize), 4);
+    io::readBytes(owner.is, uncompressedSize);
   }
   // Read data and uncompress if necessary
   auto data = std::make_unique<uint8_t[]>(uncompressedSize);
   if (file.compressed) {
+    // Blame ZLib for all the casts. unsigned char[] is required for the data,
+    // but char* is required for reading. unsigned long is required for the
+    // uncompressed size, but is > 32 bits on some systems, and the BSA requires
+    // a 32 bit uncompressed size.
     auto compressedData = std::make_unique<unsigned char[]>(size);
     owner.is.read(reinterpret_cast<char *>(compressedData.get()), size);
-    uncompress(data.get(), &uncompressedSize, compressedData.get(), size);
+    auto zlibUncompressedSize = static_cast<unsigned long>(uncompressedSize);
+    uncompress(data.get(), &zlibUncompressedSize, compressedData.get(), size);
   } else {
     owner.is.read(reinterpret_cast<char *>(data.get()), size);
   }
@@ -104,23 +110,21 @@ bool bsa::BSAReader::readHeader() {
     return false;
 
   uint32_t version = 0;
-  if (!io::safeRead(is, &version, 4) || version != VERSION) return false;
+  io::readBytes(is, version);
+  if (version != VERSION) return false;
 
   uint32_t offset = 0;
-  if (!io::safeRead(is, &offset, 4) || offset != OFFSET) return false;
+  io::readBytes(is, offset);
+  if (offset != OFFSET) return false;
 
-  uint32_t flags = 0;
-  if (!io::safeRead(is, &flags, 4)) return false;
-  archiveFlags = static_cast<ArchiveFlag>(flags & 127u);
+  io::readBytes(is, archiveFlags);
 
-  if (!io::safeRead(is, &folderCount, 4)) return false;
-  if (!io::safeRead(is, &fileCount, 4)) return false;
-  if (!io::safeRead(is, &totalFolderNameLength, 4)) return false;
-  if (!io::safeRead(is, &totalFileNameLength, 4)) return false;
+  io::readBytes(is, folderCount);
+  io::readBytes(is, fileCount);
+  io::readBytes(is, totalFolderNameLength);
+  io::readBytes(is, totalFileNameLength);
 
-  flags = 0;
-  if (!io::safeRead(is, &flags, 4)) return false;
-  fileFlags = static_cast<FileFlag>(flags & 511u);
+  io::readBytes(is, fileFlags);
 
   return true;
 }
@@ -137,11 +141,11 @@ bool bsa::BSAReader::readRecords() {
     uint64_t hash = 0;
     uint32_t count = 0;
     uint32_t offset = 0;
-    if (!io::safeRead(is, &hash, 8)) return false;
-    if (!io::safeRead(is, &count, 4)) return false;
-    // This include totalFileNameLength for some reason, so it
+    io::readBytes(is, hash);
+    io::readBytes(is, count);
+    // This includes totalFileNameLength for some reason, so it
     // will need to be subtracted
-    if (!io::safeRead(is, &offset, 4)) return false;
+    io::readBytes(is, offset);
 
     // Jump to file record block
     FolderRecord folderRecord = {};
@@ -158,9 +162,9 @@ bool bsa::BSAReader::readRecords() {
       uint64_t fileHash = 0;
       uint32_t fileSize = 0;
       uint32_t fileOffset = 0;
-      if (!io::safeRead(is, &fileHash, 8)) return false;
-      if (!io::safeRead(is, &fileSize, 4)) return false;
-      if (!io::safeRead(is, &fileOffset, 4)) return false;
+      io::readBytes(is, fileHash);
+      io::readBytes(is, fileSize);
+      io::readBytes(is, fileOffset);
       // (1<<30) bit toggles compression of the file from default
       bool compressed = (fileSize & (1u << 30u)) != 0;
       compressed ^= static_cast<bool>(archiveFlags & ArchiveFlag::Compressed);
@@ -189,23 +193,13 @@ bool bsa::BSAReader::readFileNames() {
   // hash order.
   for (auto &record : folderRecords) {
     for (auto &file : record.second.files) {
-      // File names are null-terminated strings. There might be
-      // a better way of doing this but for now seek to the next
-      // null to find the length, allocate, jump back, then read.
-      auto pos = is.tellg();
-      while (is.get() != '\0') {}
-      auto len = is.tellg() - pos;
-      is.seekg(pos);
-      auto str = new char[len];
-      is.read(str, len);
-      file.second.name = std::string(str);
-      delete[] str;
+      io::readBytes(is, file.second.name);
     }
   }
   return true;
 }
 
-bsa::BSAReader::BSAReader(const char *filename) : is(filename) {
+bsa::BSAReader::BSAReader(std::string filename) : is(filename) {
   readHeader();
   readRecords();
   if (static_cast<bool>(archiveFlags & ArchiveFlag::HasFileNames)) {

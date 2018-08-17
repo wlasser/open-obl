@@ -20,11 +20,8 @@ class FileData : public io::memstream {
       memstream(p.get(), l), ptr(std::move(p)), l(l) {}
 };
 
-uint64_t genHash(const std::string &, bool);
+uint64_t genHash(std::string, bool);
 
-// TODO: Allow const access
-// TODO: Allow std::string access
-// TODO: Update implementation to use io::readBytes over io::safeRead
 class BSAReader {
  public:
   enum class ArchiveFlag : uint32_t {
@@ -74,7 +71,7 @@ class BSAReader {
         hash(hash), owner(owner) {}
    public:
     const std::unique_ptr<FileData> operator[](uint64_t) const;
-    const std::unique_ptr<FileData> operator[](const char *file) const;
+    const std::unique_ptr<FileData> operator[](std::string file) const;
   };
 
  public:
@@ -99,12 +96,12 @@ class BSAReader {
   bool readFileNames();
 
  public:
-  explicit BSAReader(const char *);
+  explicit BSAReader(std::string);
 
   inline FolderAccessor operator[](uint64_t hash) const {
     return FolderAccessor(hash, *this);
   }
-  FolderAccessor operator[](const char *) const;
+  FolderAccessor operator[](std::string) const;
 };
 
 inline BSAReader::ArchiveFlag operator|(BSAReader::ArchiveFlag a,
