@@ -1,14 +1,23 @@
 #ifndef OPENOBLIVION_BSA_HPP
 #define OPENOBLIVION_BSA_HPP
 
+#include <algorithm>
+#include <iterator>
 #include <fstream>
 #include <string>
 #include <memory>
 #include <map>
+#include <vector>
 
 #include "io/memstream.hpp"
 
 namespace bsa {
+
+namespace impl {
+
+class BSAIterator;
+
+} // namespace impl
 
 class FileData : public io::memstream {
  private:
@@ -47,6 +56,9 @@ class BSAReader {
     Fonts = 1u << 7u,
     Misc = 1u << 8u
   };
+
+  using iterator = impl::BSAIterator;
+  friend impl::BSAIterator;
 
  private:
 
@@ -89,7 +101,10 @@ class BSAReader {
   uint32_t totalFileNameLength;
   FileFlag fileFlags;
 
-  std::map<uint64_t, FolderRecord> folderRecords;
+ private:
+
+  using RecordMap = std::map<uint64_t, FolderRecord>;
+  RecordMap folderRecords;
   mutable std::ifstream is;
   bool readHeader();
   bool readRecords();
@@ -97,6 +112,11 @@ class BSAReader {
 
  public:
   explicit BSAReader(std::string);
+
+  bool contains(std::string folder, std::string file) const;
+
+  iterator begin() const;
+  iterator end() const;
 
   inline FolderAccessor operator[](uint64_t hash) const {
     return FolderAccessor(hash, *this);
@@ -114,6 +134,52 @@ inline BSAReader::ArchiveFlag operator&(BSAReader::ArchiveFlag a,
   return static_cast<BSAReader::ArchiveFlag>(static_cast<uint32_t>(a)
       & static_cast<uint32_t>(b));
 }
-}
+
+// Public version of BSAReader::FolderRecord, for iterating.
+// I am unsatisfied with how the filenames are duplicated in memory between
+// these records and the existing private ones.
+struct FolderRecord {
+  std::string name;
+  std::vector<std::string> files;
+};
+
+namespace impl {
+
+class BSAIterator {
+ public:
+  // Iterator traits
+  using value_type = bsa::FolderRecord;
+  using difference_type = std::ptrdiff_t;
+  using pointer = value_type *const;
+  using reference = const value_type &;
+  using iterator_category = std::bidirectional_iterator_tag;
+
+  explicit BSAIterator(BSAReader::RecordMap::const_iterator currentRecord,
+                       bool isEnd = false) : currentRecord(currentRecord) {
+    if (!isEnd) updateCurrentPublicRecord();
+  }
+
+  reference operator*() const;
+  pointer operator->() const;
+
+  BSAIterator &operator++();
+  const BSAIterator operator++(int);
+  BSAIterator &operator--();
+  const BSAIterator operator--(int);
+
+  bool operator==(const BSAIterator &rhs);
+  bool operator!=(const BSAIterator &rhs) {
+    return !operator==(rhs);
+  }
+
+ private:
+  BSAReader::RecordMap::const_iterator currentRecord{};
+  mutable bsa::FolderRecord currentPublicRecord{};
+
+  reference updateCurrentPublicRecord() const;
+};
+
+} // namespace impl
+} // namespace bsa
 
 #endif // OPENOBLIVION_BSA_HPP

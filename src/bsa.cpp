@@ -206,3 +206,70 @@ bsa::BSAReader::BSAReader(std::string filename) : is(filename) {
     readFileNames();
   }
 }
+
+bool bsa::BSAReader::contains(std::string folder, std::string file) const {
+  auto folderHash = bsa::genHash(std::move(folder), true);
+  auto folderRecord = folderRecords.find(folderHash);
+  if (folderRecord == folderRecords.end()) return false;
+
+  auto fileHash = bsa::genHash(std::move(file), false);
+  const auto &files = folderRecord->second.files;
+  return files.find(fileHash) != files.end();
+}
+
+bsa::BSAReader::iterator bsa::BSAReader::begin() const {
+  return bsa::BSAReader::iterator{folderRecords.begin()};
+}
+
+bsa::BSAReader::iterator bsa::BSAReader::end() const {
+  return bsa::BSAReader::iterator{folderRecords.end(), true};
+}
+
+namespace bsa::impl {
+
+BSAIterator::reference BSAIterator::updateCurrentPublicRecord() const {
+  currentPublicRecord.name = currentRecord->second.name;
+  currentPublicRecord.files.clear();
+  for (const auto&[hash, record] : currentRecord->second.files) {
+    currentPublicRecord.files.push_back(record.name);
+  }
+  return currentPublicRecord;
+}
+
+BSAIterator::reference BSAIterator::operator*() const {
+  updateCurrentPublicRecord();
+  return currentPublicRecord;
+}
+
+BSAIterator::pointer BSAIterator::operator->() const {
+  updateCurrentPublicRecord();
+  return &currentPublicRecord;
+}
+
+BSAIterator &BSAIterator::operator++() {
+  ++currentRecord;
+  return *this;
+}
+
+const BSAIterator BSAIterator::operator++(int) {
+  auto tmp = *this;
+  ++currentRecord;
+  return tmp;
+}
+
+BSAIterator &BSAIterator::operator--() {
+  --currentRecord;
+  return *this;
+}
+
+const BSAIterator BSAIterator::operator--(int) {
+  auto tmp = *this;
+  --currentRecord;
+  return tmp;
+}
+
+bool BSAIterator::operator==(const BSAIterator &other) {
+  return currentRecord == other.currentRecord;
+}
+
+} // namespace bsa::impl
