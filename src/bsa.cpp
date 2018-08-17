@@ -58,18 +58,18 @@ uint64_t bsa::genHash(const std::string &path, bool isFolder) {
 }
 
 bsa::BSAReader::FolderAccessor
-bsa::BSAReader::operator[](const char *folder) {
+bsa::BSAReader::operator[](const char *folder) const {
   return bsa::BSAReader::FolderAccessor(bsa::genHash(std::string(folder), true),
                                         *this);
 }
 
-std::unique_ptr<bsa::FileData>
-bsa::BSAReader::FolderAccessor::operator[](const char *file) {
+const std::unique_ptr<bsa::FileData>
+bsa::BSAReader::FolderAccessor::operator[](const char *file) const {
   return (*this)[bsa::genHash(std::string(file), false)];
 }
 
-std::unique_ptr<bsa::FileData>
-bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) {
+const std::unique_ptr<bsa::FileData>
+bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   const FolderRecord &folder = owner.folderRecords.at(hash);
   const FileRecord &file = folder.files.at(fileHash);
   // Unset bits higher than the toggle compression bit

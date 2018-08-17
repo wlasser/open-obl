@@ -69,12 +69,12 @@ class BSAReader {
     friend BSAReader;
    private:
     uint64_t hash;
-    BSAReader &owner;
-    FolderAccessor(uint64_t hash, BSAReader &owner) :
+    const BSAReader &owner;
+    FolderAccessor(uint64_t hash, const BSAReader &owner) :
         hash(hash), owner(owner) {}
    public:
-    std::unique_ptr<FileData> operator[](uint64_t);
-    std::unique_ptr<FileData> operator[](const char *file);
+    const std::unique_ptr<FileData> operator[](uint64_t) const;
+    const std::unique_ptr<FileData> operator[](const char *file) const;
   };
 
  public:
@@ -93,7 +93,7 @@ class BSAReader {
   FileFlag fileFlags;
 
   std::map<uint64_t, FolderRecord> folderRecords;
-  std::ifstream is;
+  mutable std::ifstream is;
   bool readHeader();
   bool readRecords();
   bool readFileNames();
@@ -101,10 +101,10 @@ class BSAReader {
  public:
   explicit BSAReader(const char *);
 
-  inline FolderAccessor operator[](uint64_t hash) {
+  inline FolderAccessor operator[](uint64_t hash) const {
     return FolderAccessor(hash, *this);
   }
-  FolderAccessor operator[](const char *);
+  FolderAccessor operator[](const char *) const;
 };
 
 inline BSAReader::ArchiveFlag operator|(BSAReader::ArchiveFlag a,
