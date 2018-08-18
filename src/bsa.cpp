@@ -11,6 +11,7 @@
 #include "io/read_bytes.hpp"
 #include "io/string.hpp"
 
+// TODO: Use std::filesystem::path
 uint64_t bsa::genHash(std::string path, bool isFolder) {
   uint64_t hash = 0;
   uint32_t hash2 = 0;
@@ -22,7 +23,9 @@ uint64_t bsa::genHash(std::string path, bool isFolder) {
                        c == '/' ? '\\' : c));
                  });
   // Presence of a . does not imply a file e.g. /foo.bar/baz is a
-  // valid folder
+  // valid folder. Moreover folders should not have a trailing slash, if they do
+  // then we ignore it.
+  if (isFolder && str.back() == '\\') str.pop_back();
   const auto begin = str.begin();
   auto end = str.end();
   const auto extPos = (isFolder ? end : begin + str.find_last_of('.'));
@@ -154,7 +157,11 @@ bool bsa::BSAReader::readRecords() {
 
     // Read folder name if available
     if (static_cast<bool>(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
-      folderRecord.name = io::readBzString(is);
+      auto path = io::readBzString(is);
+      folderRecord.name = path;
+      // Transform Win path to *nix path
+      std::transform(path.begin(), path.end(), folderRecord.name.begin(),
+                     [](unsigned char c) { return c == '\\' ? '/' : c; });
     }
 
     for (uint32_t j = 0; j < count; ++j) {
