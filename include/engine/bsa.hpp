@@ -6,7 +6,7 @@
 
 namespace engine {
 
-class BSAArchiveFactory : Ogre::ArchiveFactory {
+class BSAArchiveFactory : public Ogre::ArchiveFactory {
  public:
   ~BSAArchiveFactory() override = default;
 
