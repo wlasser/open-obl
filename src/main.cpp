@@ -1,4 +1,6 @@
+#include <cxxopts.hpp>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
@@ -27,12 +29,11 @@ void testEsmLoading() {
 
 void testBsaLoading() {
   bsa::BSAReader bsaReader("Data/Oblivion - Meshes.bsa");
-  std::cout << static_cast<uint32_t>(bsaReader.archiveFlags) << '\n';
   auto is = bsaReader["meshes/clothes/robeuc01/f"]["robeuc01f.nif"];
-  auto data = std::unique_ptr<char[]>(new char[is->size()]);
-  is->read(data.get(), is->size());
+  auto data = std::unique_ptr<char[]>(new char[is.size()]);
+  is.read(data.get(), is.size());
   std::ofstream of("test.nif", std::ios::binary);
-  of.write(data.get(), is->size());
+  of.write(data.get(), is.size());
 }
 
 void testApp() {

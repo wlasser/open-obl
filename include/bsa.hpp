@@ -25,8 +25,12 @@ class FileData : public io::memstream {
   std::size_t l;
  public:
   std::size_t size() { return l; }
-  FileData(std::unique_ptr<uint8_t[]> p, std::size_t l) :
+
+  FileData(std::unique_ptr<uint8_t[]> p, std::size_t l) noexcept :
       memstream(p.get(), l), ptr(std::move(p)), l(l) {}
+
+  FileData(FileData &&other) noexcept :
+      FileData(std::move(other.ptr), other.l) {}
 };
 
 uint64_t genHash(std::string, bool);
@@ -82,8 +86,8 @@ class BSAReader {
     FolderAccessor(uint64_t hash, const BSAReader &owner) :
         hash(hash), owner(owner) {}
    public:
-    const std::unique_ptr<FileData> operator[](uint64_t) const;
-    const std::unique_ptr<FileData> operator[](std::string file) const;
+    FileData operator[](uint64_t) const;
+    FileData operator[](std::string file) const;
   };
 
  public:

@@ -64,12 +64,12 @@ bsa::BSAReader::operator[](std::string folder) const {
                                         *this);
 }
 
-const std::unique_ptr<bsa::FileData>
+bsa::FileData
 bsa::BSAReader::FolderAccessor::operator[](std::string file) const {
   return (*this)[bsa::genHash(std::move(file), false)];
 }
 
-const std::unique_ptr<bsa::FileData>
+bsa::FileData
 bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   const FolderRecord &folder = owner.folderRecords.at(hash);
   const FileRecord &file = folder.files.at(fileHash);
@@ -101,7 +101,7 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   } else {
     owner.is.read(reinterpret_cast<char *>(data.get()), size);
   }
-  return std::make_unique<bsa::FileData>(std::move(data), uncompressedSize);
+  return bsa::FileData{std::move(data), uncompressedSize};
 }
 
 bool bsa::BSAReader::readHeader() {
