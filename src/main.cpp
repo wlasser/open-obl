@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <string>
 
+#include "nif/nif.hpp"
 #include "save_state.hpp"
 #include "records.hpp"
 #include "record/record.hpp"
@@ -43,8 +44,28 @@ void testApp() {
   app.closeApp();
 }
 
-int main() {
-  testEsmLoading();
+void extractNif(bsa::BSAReader &reader,
+                const std::string &folder,
+                const std::string &file,
+                const std::string &destination) {
+  auto is = reader[folder][file];
+  auto data = std::unique_ptr<char[]>(new char[is.size()]);
+  is.read(data.get(), is.size());
+  std::ofstream of(destination, std::ios::binary);
+  of.write(data.get(), is.size());
+}
 
+void checkNif(bsa::BSAReader &reader,
+              const std::string &folder,
+              const std::string &file) {
+  std::filesystem::path fileName{file};
+  if (fileName.extension() != ".nif") return;
+  auto is = reader[folder][file];
+  std::clog << "Loading " << folder << "\\" << file << '\n';
+  nif::NifModel model{is};
+}
+
+int main() {
+  testApp();
   return 0;
 }

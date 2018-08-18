@@ -7,8 +7,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 
-file(COPY ${OGRE_CONFIG_DIR}/resources.cfg DESTINATION ${CMAKE_BINARY_DIR})
-
 # IO library
 add_library(OpenOblivionIO OBJECT)
 target_include_directories(OpenOblivionIO PUBLIC include)
