@@ -61,6 +61,7 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionRecord>
         src/app.cpp
         src/bsa.cpp
+        src/engine/bsa.cpp
         src/esp.cpp
         src/main.cpp
         src/records.cpp
@@ -70,6 +71,7 @@ target_sources(OpenOblivion PRIVATE
         include/app.hpp
         include/attribute.hpp
         include/bsa.hpp
+        include/engine/bsa.hpp
         include/esp.hpp
         include/formid.hpp
         include/magic_effects.hpp
@@ -77,7 +79,10 @@ target_sources(OpenOblivion PRIVATE
         include/system_time.hpp)
 
 target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
-target_link_libraries(OpenOblivion PRIVATE ${ZLIB_LIBRARIES} ${OGRE_LIBRARIES})
+target_link_libraries(OpenOblivion PRIVATE
+        ${ZLIB_LIBRARIES}
+        ${OGRE_LIBRARIES}
+        stdc++fs)
 
 add_library(Catch INTERFACE)
 target_include_directories(Catch INTERFACE lib/catch)
