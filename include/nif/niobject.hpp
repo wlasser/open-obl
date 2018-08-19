@@ -153,6 +153,76 @@ struct NiNode : NiAVObject {
 
   explicit NiNode(Version version) : NiAVObject(version) {}
 };
+
+struct NiGeometryData : NiObject, Versionable {
+  VersionOptional<basic::Int, "10.1.0.114"_ver, Unbounded> groupID{version};
+
+  explicit NiGeometryData(Version version) : Versionable(version) {}
+};
+
+struct NiSkinPartition : NiObject {
+  basic::UInt numSkinPartitionBlocks{};
+  std::vector<compound::SkinPartition> skinPartitionBlocks{};
+};
+
+struct NiSkinData : NiObject, Versionable {
+  compound::NiTransform skinTransform{};
+
+  basic::UInt numBones{};
+
+  // Optionally link an NiSkinPartition for hardware-acceleration info
+  VersionOptional<basic::Ref<NiSkinPartition>, "4.0.0.2"_ver, "10.1.0.0"_ver>
+      skinPartition{version};
+
+  VersionOptional<basic::Bool, "4.2.1.0"_ver, Unbounded>
+      hasVertexWeights{version, true};
+
+  struct BoneData {
+    // Offset of the skin from this bone in the bind position
+    compound::NiTransform skinTransform{};
+    compound::Vector3 boundingSphereOffset{};
+    basic::Float boundingSphereRadius{};
+    basic::UShort numVertices{};
+    // Present if hasVertexWeights is true or absent
+    std::vector<compound::BoneVertData> vertexWeights{};
+  };
+  // Contains offset data for each node the skin is influenced by
+  // arg = hasVertexWeights
+  std::vector<BoneData> boneList{};
+};
+
+struct NiSkinInstance : NiObject, Versionable {
+  basic::Ref<NiSkinData> data{};
+
+  VersionOptional<basic::Ref<NiSkinPartition>, "10.1.0.101"_ver, Unbounded>
+      skinPartition{version};
+
+  basic::Ptr<NiNode> skeletonRoot{};
+  basic::UInt numBones{};
+  std::vector<basic::Ptr<NiNode>> bones{};
+
+  explicit NiSkinInstance(Version version) : Versionable(version) {}
+};
+
+struct NiGeometry : NiAVObject {
+  basic::Ref<NiGeometryData> data{};
+
+  VersionOptional<basic::Ref<NiSkinInstance>, "3.3.0.13"_ver, Unbounded>
+      skinInstance{version};
+
+  VersionOptional<compound::MaterialData, "10.0.1.0"_ver, Unbounded>
+      materialData{version};
+
+  explicit NiGeometry(Version version) : NiAVObject(version) {}
+};
+
+struct NiTriBasedGeom : NiGeometry {
+  ~NiTriBasedGeom() override = 0;
+};
+inline NiTriBasedGeom::~NiTriBasedGeom() = default;
+
+struct NiTriShape : NiTriBasedGeom {};
+
 } // namespace nif
 
 #endif // OPENOBLIVION_NIF_NIOBJECT_HPP

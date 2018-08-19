@@ -334,6 +334,71 @@ struct Header : Versionable {
   explicit Header(uint32_t version) : Versionable(version) {}
 };
 
+struct MaterialData {
+  basic::Bool hasShader{};
+  std::string shaderName{};
+  // -1 means default shader implementation
+  basic::Int shaderExtraData{};
+};
+
+struct Triangle {
+  // 3 vertex indices
+  basic::UShort v1;
+  basic::UShort v2;
+  basic::UShort v3;
+};
+
+// ver > 4.2.1.0
+struct SkinPartition : Versionable {
+  basic::UShort numVertices{};
+  // Calculated
+  basic::UShort numTriangles{};
+  basic::UShort numBones{};
+  // 0 if submesh is not stripped
+  basic::UShort numStrips{};
+  basic::UShort numWeightsPerVertex{};
+  std::vector<basic::UShort> bones{};
+
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasVertexMap{version};
+  // Maps the weight/influence lists in this submesh to the vertices in the
+  // shape being skinned. Vertex map was compulsory before 10.1.0.0.
+  std::vector<basic::UShort> vertexMap{};
+
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
+      hasVertexWeights{version};
+  // arr1 = numVertices, arr2 = numWeightsPerVertex
+  // Vertex weights were compulsory before 10.1.0.0.
+  std::vector<std::vector<basic::Float>> vertexWeights{};
+
+  std::vector<basic::UShort> stripLengths{};
+
+  // Do we have strips/triangles data?
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasFaces{version};
+  // arr1 = numStrips, arr2 = stripLengths for the corresponding strip
+  // Strips were compulsory before 10.1.0.0, provided numStrips != 0
+  std::vector<std::vector<basic::UShort>> strips{};
+  // Triangles were compulsory before 10.1.0.0, and are only used if
+  // numStrips == 0
+  std::vector<compound::Triangle> triangles{};
+
+  basic::Bool hasBoneIndices{};
+  // arr1 = numVertices, arr2 = numWeightsPerVertex
+  std::vector<std::vector<basic::Byte>> boneIndices{};
+
+  explicit SkinPartition(Version version) : Versionable(version) {}
+};
+
+struct BoneVertData {
+  basic::UShort index;
+  basic::Float weight;
+};
+
+struct NiTransform {
+  Matrix33 rotation{};
+  Vector3 translation{};
+  basic::Float scale = 1.0f;
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, String &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
@@ -403,6 +468,11 @@ std::istream &operator>>(std::istream &is, HalfSpaceBV &t);
 std::istream &operator>>(std::istream &is, EmptyBV &t);
 std::istream &operator>>(std::istream &is, BoundingVolume &t);
 std::istream &operator>>(std::istream &is, Header &t);
+std::istream &operator>>(std::istream &is, MaterialData &t);
+std::istream &operator>>(std::istream &is, Triangle &t);
+std::istream &operator>>(std::istream &is, SkinPartition &t);
+std::istream &operator>>(std::istream &is, BoneVertData &t);
+std::istream &operator>>(std::istream &is, NiTransform &t);
 
 } // namespace compound
 } // namespace nif

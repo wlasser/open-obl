@@ -1,25 +1,27 @@
 #include "nif/compound.hpp"
 #include <variant>
 
-std::istream &nif::compound::operator>>(std::istream &is, SizedString &t) {
+namespace nif::compound {
+
+std::istream &operator>>(std::istream &is, SizedString &t) {
   io::readBytes(is, t.length);
   io::readBytes(is, t.value, t.length);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, String &t) {
+std::istream &operator>>(std::istream &is, String &t) {
   is >> t.string;
   io::readBytes(is, t.index);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, ByteArray &t) {
+std::istream &operator>>(std::istream &is, ByteArray &t) {
   io::readBytes(is, t.dataSize);
   io::readBytes(is, t.data, t.dataSize);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, ByteMatrix &t) {
+std::istream &operator>>(std::istream &is, ByteMatrix &t) {
   io::readBytes(is, t.dataSize1);
   io::readBytes(is, t.dataSize2);
 
@@ -35,26 +37,26 @@ std::istream &nif::compound::operator>>(std::istream &is, ByteMatrix &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, FilePath &t) {
+std::istream &operator>>(std::istream &is, FilePath &t) {
   is >> t.string;
   io::readBytes(is, t.index);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, LODRange &t) {
+std::istream &operator>>(std::istream &is, LODRange &t) {
   io::readBytes(is, t.nearExtent);
   io::readBytes(is, t.farExtent);
   io::readBytes(is, t.unknown);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, MatchGroup &t) {
+std::istream &operator>>(std::istream &is, MatchGroup &t) {
   io::readBytes(is, t.numVertices);
   io::readBytes(is, t.vertexIndices, t.numVertices);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Quaternion &t) {
+std::istream &operator>>(std::istream &is, Quaternion &t) {
   io::readBytes(is, t.w);
   io::readBytes(is, t.x);
   io::readBytes(is, t.y);
@@ -62,7 +64,7 @@ std::istream &nif::compound::operator>>(std::istream &is, Quaternion &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, hkQuaternion &t) {
+std::istream &operator>>(std::istream &is, hkQuaternion &t) {
   io::readBytes(is, t.x);
   io::readBytes(is, t.y);
   io::readBytes(is, t.z);
@@ -70,71 +72,71 @@ std::istream &nif::compound::operator>>(std::istream &is, hkQuaternion &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Matrix22 &t) {
+std::istream &operator>>(std::istream &is, Matrix22 &t) {
   io::readBytes(is, t);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Matrix33 &t) {
+std::istream &operator>>(std::istream &is, Matrix33 &t) {
   io::readBytes(is, t);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Matrix34 &t) {
+std::istream &operator>>(std::istream &is, Matrix34 &t) {
   io::readBytes(is, t);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Matrix44 &t) {
+std::istream &operator>>(std::istream &is, Matrix44 &t) {
   io::readBytes(is, t);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, hkMatrix3 &t) {
+std::istream &operator>>(std::istream &is, hkMatrix3 &t) {
   io::readBytes(is, t);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, MipMap &t) {
+std::istream &operator>>(std::istream &is, MipMap &t) {
   io::readBytes(is, t.width);
   io::readBytes(is, t.height);
   io::readBytes(is, t.offset);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, ShortString &t) {
+std::istream &operator>>(std::istream &is, ShortString &t) {
   io::readBytes(is, t.length);
   io::readBytes(is, t.value, static_cast<std::size_t>(t.length));
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, ExportInfo &t) {
+std::istream &operator>>(std::istream &is, ExportInfo &t) {
   is >> t.author;
   is >> t.processScript;
   is >> t.exportScript;
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, NiPlane &t) {
+std::istream &operator>>(std::istream &is, NiPlane &t) {
   is >> t.normal;
   io::readBytes(is, t.constant);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, NiBound &t) {
+std::istream &operator>>(std::istream &is, NiBound &t) {
   is >> t.center;
   io::readBytes(is, t.radius);
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, BoxBV &t) {
+std::istream &operator>>(std::istream &is, BoxBV &t) {
   is >> t.center;
   for (int i = 0; i < 3; ++i) is >> t.axis[i];
   is >> t.extent;
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, CapsuleBV &t) {
+std::istream &operator>>(std::istream &is, CapsuleBV &t) {
   is >> t.center;
   is >> t.origin;
   io::readBytes(is, t.extent);
@@ -142,7 +144,7 @@ std::istream &nif::compound::operator>>(std::istream &is, CapsuleBV &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, UnionBV &t) {
+std::istream &operator>>(std::istream &is, UnionBV &t) {
   io::readBytes(is, t.numBoundingVolumes);
   t.boundingVolumes.reserve(t.numBoundingVolumes);
   for (auto i = 0; i < t.numBoundingVolumes; ++i) {
@@ -152,17 +154,17 @@ std::istream &nif::compound::operator>>(std::istream &is, UnionBV &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, HalfSpaceBV &t) {
+std::istream &operator>>(std::istream &is, HalfSpaceBV &t) {
   is >> t.plane;
   is >> t.center;
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, EmptyBV &t) {
+std::istream &operator>>(std::istream &is, EmptyBV &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, BoundingVolume &t) {
+std::istream &operator>>(std::istream &is, BoundingVolume &t) {
   io::readBytes(is, t.collisionType);
   switch (t.collisionType) {
     case Enum::BoundVolumeType::BASE_BV:t.collision = NiBound{};
@@ -185,7 +187,7 @@ std::istream &nif::compound::operator>>(std::istream &is, BoundingVolume &t) {
   return is;
 }
 
-std::istream &nif::compound::operator>>(std::istream &is, Header &t) {
+std::istream &operator>>(std::istream &is, Header &t) {
   is >> t.headerString;
   if (t.copyright) {
     for (int i = 0; i < 3; ++i) {
@@ -249,3 +251,86 @@ std::istream &nif::compound::operator>>(std::istream &is, Header &t) {
 
   return is;
 }
+
+std::istream &operator>>(std::istream &is, MaterialData &t) {
+  io::readBytes(is, t.hasShader);
+  is >> t.shaderName;
+  io::readBytes(is, t.shaderExtraData);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, Triangle &t) {
+  io::readBytes(is, t.v1);
+  io::readBytes(is, t.v2);
+  io::readBytes(is, t.v3);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, SkinPartition &t) {
+  io::readBytes(is, t.numVertices);
+  io::readBytes(is, t.numTriangles);
+  io::readBytes(is, t.numBones);
+  io::readBytes(is, t.numStrips);
+  io::readBytes(is, t.numWeightsPerVertex);
+  io::readBytes(is, t.bones, t.numBones);
+
+  io::readBytes(is, t.hasVertexMap);
+  if ((t.hasVertexMap && *t.hasVertexMap) || !t.hasVertexMap) {
+    io::readBytes(is, t.vertexMap, t.numVertices);
+  }
+
+  io::readBytes(is, t.hasVertexWeights);
+  if ((t.hasVertexWeights && *t.hasVertexWeights) || !t.hasVertexWeights) {
+    for (auto i = 0; i < t.numVertices; ++i) {
+      std::vector<basic::Float> row{};
+      io::readBytes(is, row, t.numWeightsPerVertex);
+      t.vertexWeights.push_back(row);
+    }
+  }
+
+  io::readBytes(is, t.stripLengths, t.numStrips);
+
+  io::readBytes(is, t.hasFaces);
+  if ((t.hasFaces && *t.hasFaces) || !t.hasFaces) {
+    if (t.numStrips == 0) {
+      t.triangles.reserve(t.numTriangles);
+      for (auto i = 0; i < t.numTriangles; ++i) {
+        t.triangles.emplace_back();
+        is >> t.triangles.back();
+      }
+    } else {
+      for (auto i = 0; i < t.numStrips; ++i) {
+        std::vector<basic::UShort> row{};
+        io::readBytes(is, row, t.stripLengths[i]);
+        t.strips.push_back(row);
+      }
+    }
+  }
+
+  io::readBytes(is, t.hasBoneIndices);
+  for (auto i = 0; i < t.numVertices; ++i) {
+    std::vector<basic::Byte> row{};
+    io::readBytes(is, row, t.numWeightsPerVertex);
+    t.boneIndices.push_back(row);
+  }
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, BoneVertData &t) {
+  io::readBytes(is, t.index);
+  io::readBytes(is, t.weight);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, NiTransform &t) {
+  io::readBytes(is, t.rotation);
+  io::readBytes(is, t.translation);
+  io::readBytes(is, t.scale);
+  return is;
+}
+
+} // namespace nif::compound
