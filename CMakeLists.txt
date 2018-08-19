@@ -60,6 +60,7 @@ target_sources(OpenOblivion PRIVATE
         src/app.cpp
         src/bsa.cpp
         src/engine/bsa.cpp
+        src/engine/nif_loader.cpp
         src/esp.cpp
         src/main.cpp
         src/records.cpp
@@ -70,6 +71,7 @@ target_sources(OpenOblivion PRIVATE
         include/attribute.hpp
         include/bsa.hpp
         include/engine/bsa.hpp
+        include/engine/nif_loader.hpp
         include/esp.hpp
         include/formid.hpp
         include/magic_effects.hpp
