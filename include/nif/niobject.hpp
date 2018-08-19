@@ -87,6 +87,7 @@ inline NiObjectNet::~NiObjectNet() = default;
 
 struct NiProperty : NiObjectNet {
   void read(std::istream &is) override;
+  explicit NiProperty(Version version) : NiObjectNet(version) {}
   ~NiProperty() override = 0;
 };
 inline NiProperty::~NiProperty() = default;
@@ -236,11 +237,13 @@ struct NiGeometry : NiAVObject {
 
 struct NiTriBasedGeom : NiGeometry {
   void read(std::istream &is) override;
+  explicit NiTriBasedGeom(Version version) : NiGeometry(version) {}
   ~NiTriBasedGeom() override = 0;
 };
 inline NiTriBasedGeom::~NiTriBasedGeom() = default;
 
 struct NiTriShape : NiTriBasedGeom {
+  explicit NiTriShape(Version version) : NiTriBasedGeom(version) {}
   void read(std::istream &is) override;
 };
 
