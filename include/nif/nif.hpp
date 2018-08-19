@@ -16,6 +16,9 @@ class NifModel {
   using Copyright = std::array<std::string, 3>;
 
   Version version{};
+  std::optional<Version> userVersion{};
+  std::optional<Version> userVersion2{};
+
   std::vector<std::unique_ptr<nif::NiObject>> blocks{};
   std::vector<std::string> blockTypes{};
   std::size_t numGroups{};
@@ -23,6 +26,18 @@ class NifModel {
 
  public:
   explicit NifModel(std::istream &is);
+
+  Version getVersion() {
+    return version;
+  }
+
+  std::optional<Version> getUserVersion() {
+    return userVersion;
+  }
+
+  std::optional<Version> getUserVersion2() {
+    return userVersion2;
+  }
 };
 
 } // namespace nif

@@ -29,6 +29,13 @@ nif::NifModel::NifModel(std::istream &is) {
   compound::Header header{version};
   is >> header;
 
+  if (header.userVer) {
+    userVersion = header.userVer.value();
+  }
+  if (header.bsStreamHeader.userVersion2 != 0) {
+    userVersion2 = header.bsStreamHeader.userVersion2;
+  }
+
   if (!header.numBlocks || header.numBlocks.value() == 0) {
     // File is empty, we can stop (technically this is ok for sufficiently low
     // versions, but we do not support those)
@@ -47,7 +54,7 @@ nif::NifModel::NifModel(std::istream &is) {
     // In this case, the block types are written directly before their data,
     // similar to an esp file.
     // TODO: This is not an error
-    throw std::runtime_error("nif file has no block types");
+    //throw std::runtime_error("nif file has no block types");
   }
   if (header.numGroups && header.groups) {
     for (const auto &group : header.groups.value()) {
