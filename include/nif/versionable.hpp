@@ -111,7 +111,7 @@ class Versionable {
       if (verify(version)) return opt.value();
       else throw std::bad_optional_access();
     }
-
+    static const int32_t Null = -1;
     constexpr const T &value() const &{
       if (verify(version)) return opt.value();
       else throw std::bad_optional_access();

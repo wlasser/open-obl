@@ -4,6 +4,7 @@
 #include "nif/basic.hpp"
 #include "nif/compound.hpp"
 #include "nif/versionable.hpp"
+#include <istream>
 #include <limits>
 #include <tuple>
 
@@ -13,16 +14,18 @@ using namespace nif::literals;
 
 struct NiObject {
   virtual ~NiObject() = 0;
+  virtual void read(std::istream &) = 0;
 };
 inline NiObject::~NiObject() = default;
+inline void NiObject::read(std::istream &) {}
 
 struct NiExtraData : NiObject, Versionable {
-
   VersionOptional<std::string, "10.0.1.0"_ver, Unbounded> name{version};
 
   VersionOptional<basic::Ref<NiExtraData>, Unbounded, "4.2.2.0"_ver>
       next{version};
 
+  void read(std::istream &is) override;
   explicit NiExtraData(Version version) : Versionable(version) {}
 };
 
@@ -52,6 +55,7 @@ struct NiTimeController : NiObject {
   basic::Float stopTime = std::numeric_limits<float>::min();
   basic::Ptr<NiObjectNet> controllerTarget{};
 
+  void read(std::istream &is) override;
   ~NiTimeController() override = 0;
 };
 inline NiTimeController::~NiTimeController() = default;
@@ -75,12 +79,14 @@ struct NiObjectNet : NiObject, Versionable {
   VersionOptional<basic::Ref<NiTimeController>, "3.0.0.0"_ver, Unbounded>
       controller{version};
 
+  void read(std::istream &is) override;
   explicit NiObjectNet(Version version) : Versionable(version) {}
   ~NiObjectNet() override = 0;
 };
 inline NiObjectNet::~NiObjectNet() = default;
 
 struct NiProperty : NiObjectNet {
+  void read(std::istream &is) override;
   ~NiProperty() override = 0;
 };
 inline NiProperty::~NiProperty() = default;
@@ -110,6 +116,7 @@ struct NiAVObject : NiObjectNet {
   VersionOptional<basic::Ref<NiCollisionObject>, "10.0.1.0"_ver, Unbounded>
       collisionObject{version};
 
+  void read(std::istream &is) override;
   explicit NiAVObject(Version version) : NiObjectNet(version) {}
   ~NiAVObject() override = 0;
 };
@@ -117,6 +124,7 @@ inline NiAVObject::~NiAVObject() = default;
 
 struct NiCollisionObject : NiObject {
   basic::Ptr<NiAVObject> target{};
+  void read(std::istream &is) override;
 };
 
 struct NiNode;
@@ -138,6 +146,7 @@ struct NiDynamicEffect : NiAVObject {
   basic::UInt numAffectedNodes{version};
   std::vector<basic::Ptr<NiNode>> affectedNodes{version};
 
+  void read(std::istream &is) override;
   explicit NiDynamicEffect(Version version) : NiAVObject(version) {}
   ~NiDynamicEffect() override = 0;
 };
@@ -151,18 +160,22 @@ struct NiNode : NiAVObject {
   basic::UInt numEffects{};
   std::vector<basic::Ref<NiDynamicEffect>> effects{};
 
+  void read(std::istream &is) override;
   explicit NiNode(Version version) : NiAVObject(version) {}
 };
 
+// TODO: Finish writing NiGeometryData
 struct NiGeometryData : NiObject, Versionable {
   VersionOptional<basic::Int, "10.1.0.114"_ver, Unbounded> groupID{version};
 
   explicit NiGeometryData(Version version) : Versionable(version) {}
 };
 
-struct NiSkinPartition : NiObject {
+struct NiSkinPartition : NiObject, Versionable {
   basic::UInt numSkinPartitionBlocks{};
   std::vector<compound::SkinPartition> skinPartitionBlocks{};
+  void read(std::istream &is) override;
+  explicit NiSkinPartition(Version version) : Versionable(version) {}
 };
 
 struct NiSkinData : NiObject, Versionable {
@@ -189,6 +202,9 @@ struct NiSkinData : NiObject, Versionable {
   // Contains offset data for each node the skin is influenced by
   // arg = hasVertexWeights
   std::vector<BoneData> boneList{};
+
+  void read(std::istream &is) override;
+  explicit NiSkinData(Version version) : Versionable(version) {}
 };
 
 struct NiSkinInstance : NiObject, Versionable {
@@ -201,6 +217,7 @@ struct NiSkinInstance : NiObject, Versionable {
   basic::UInt numBones{};
   std::vector<basic::Ptr<NiNode>> bones{};
 
+  void read(std::istream &is) override;
   explicit NiSkinInstance(Version version) : Versionable(version) {}
 };
 
@@ -213,15 +230,19 @@ struct NiGeometry : NiAVObject {
   VersionOptional<compound::MaterialData, "10.0.1.0"_ver, Unbounded>
       materialData{version};
 
+  void read(std::istream &is) override;
   explicit NiGeometry(Version version) : NiAVObject(version) {}
 };
 
 struct NiTriBasedGeom : NiGeometry {
+  void read(std::istream &is) override;
   ~NiTriBasedGeom() override = 0;
 };
 inline NiTriBasedGeom::~NiTriBasedGeom() = default;
 
-struct NiTriShape : NiTriBasedGeom {};
+struct NiTriShape : NiTriBasedGeom {
+  void read(std::istream &is) override;
+};
 
 } // namespace nif
 

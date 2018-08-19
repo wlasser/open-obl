@@ -31,7 +31,7 @@ using ULittle32 = uint32_t;
 using UShort = uint16_t;
 using Int = int32_t;
 using Short = int16_t;
-enum class BlockTypeIndex : uint16_t {};
+using BlockTypeIndex = uint16_t;
 using Char = char;
 using FileVersion = Version;
 using Flags = uint16_t;
@@ -50,15 +50,26 @@ struct LineString {
 // Points to an object further up in the hierarchy
 template<class T>
 class Ptr {
+ private:
   int32_t val{};
+  friend std::istream &operator>>(std::istream &is, Ptr<T> &t) {
+    io::readBytes(is, t.val);
+    return is;
+  }
 };
 
 // Points to an object further down in the hierarchy.
 // Can be null.
 template<class T>
 class Ref {
-  static const int32_t Null = -1;
+ private:
   int32_t val{};
+ public:
+  static const int32_t Null = -1;
+  friend std::istream &operator>>(std::istream &is, Ref<T> &t) {
+    io::readBytes(is, t.val);
+    return is;
+  }
 };
 enum class StringOffset : uint32_t;
 enum class StringIndex : uint32_t;
