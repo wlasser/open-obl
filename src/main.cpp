@@ -1,4 +1,5 @@
 #include <cxxopts.hpp>
+#include <OgreMesh.h>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -6,7 +7,7 @@
 #include <iomanip>
 #include <string>
 
-#include "nif/nif.hpp"
+#include "engine/nif_loader.hpp"
 #include "save_state.hpp"
 #include "records.hpp"
 #include "record/record.hpp"
@@ -62,8 +63,7 @@ void checkNif(bsa::BSAReader &reader,
   if (fileName.extension() != ".nif") return;
   auto is = reader[folder][file];
   std::clog << "Loading " << folder << "/" << file << '\n';
-  nif::NifModel model{is};
-  std::cout << model.version;
+  // TODO: Use NifLoader here
 }
 
 int main() {
