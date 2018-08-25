@@ -61,11 +61,14 @@ void checkNif(bsa::BSAReader &reader,
   std::filesystem::path fileName{file};
   if (fileName.extension() != ".nif") return;
   auto is = reader[folder][file];
-  std::clog << "Loading " << folder << "\\" << file << '\n';
+  std::clog << "Loading " << folder << "/" << file << '\n';
   nif::NifModel model{is};
+  std::cout << model.version;
 }
 
 int main() {
-  testApp();
+  //testApp();
+  bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
+  checkNif(reader, "meshes/clothes/robeuc01/f", "robeuc01f.nif");
   return 0;
 }

@@ -1,4 +1,5 @@
 #include "nif/nif.hpp"
+#include <boost/graph/adjacency_list.hpp>
 
 nif::NifModel::NifModel(std::istream &is) {
   // To instantiate a header we need a version, but we don't know the version
@@ -41,26 +42,59 @@ nif::NifModel::NifModel(std::istream &is) {
     // versions, but we do not support those)
     return;
   }
+
   auto numBlocks = header.numBlocks.value();
 
   if (header.numBlockTypes && header.blockTypes) {
-    blockTypes.reserve(header.numBlockTypes.value());
+    possibleBlockTypes.reserve(header.numBlockTypes.value());
     for (const auto &blockType : header.blockTypes.value()) {
-      auto blockTypeString = std::string(blockType.value.begin(),
-                                         blockType.value.end());
-      blockTypes.push_back(blockTypeString);
+      possibleBlockTypes.emplace_back(blockType.value.begin(),
+                                      blockType.value.end());
     }
   } else {
     // In this case, the block types are written directly before their data,
     // similar to an esp file.
     // TODO: This is not an error
-    //throw std::runtime_error("nif file has no block types");
+    throw std::runtime_error("nif file has no block types");
   }
+
+  if (header.blockTypeIndices) {
+    blockTypes.reserve(header.numBlocks.value());
+    for (auto i = 0; i < numBlocks; ++i) {
+      std::size_t index = (*header.blockTypeIndices)[i];
+      blockTypes.push_back(&possibleBlockTypes[index]);
+    }
+  }
+
   if (header.numGroups && header.groups) {
     for (const auto &group : header.groups.value()) {
       groups.push_back(group);
     }
   } else {
     // Unsure precisely what groups are used for, so this is not an error
+  }
+
+  // The rest of the file is a series of NiObjects whose types are given in the
+  // corresponding entries of blockTypes.
+  blocks = BlockGraph(numBlocks);
+  for (auto i = 0; i < numBlocks; ++i) {
+    auto blockType = *blockTypes[i];
+    if (blockType == "NiNode") {
+      auto niNode = std::make_shared<NiNode>(version);
+      niNode->read(is);
+      for (const auto &child : niNode->children) {
+        // TODO: Check that child is a valid reference.
+        auto parent = static_cast<BlockGraph::vertex_descriptor>(i);
+        addEdge(parent, child);
+      }
+      blocks[i] = std::move(niNode);
+    } else if (blockType == "NiTriShape") {
+      auto niTriShape = std::make_shared<NiTriShape>(version);
+      niTriShape->read(is);
+      blocks[i] = std::move(niTriShape);
+    } else {
+      // TODO: Implement the other blocks
+      break;
+    }
   }
 }

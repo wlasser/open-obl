@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
+find_package(Boost 1.67 REQUIRED)
 
 # IO library
 add_library(OpenOblivionIO OBJECT)
@@ -79,7 +80,9 @@ target_sources(OpenOblivion PRIVATE
         include/save_state.hpp
         include/system_time.hpp)
 
-target_include_directories(OpenOblivion PRIVATE ${ZLIB_INCLUDE_DIRS})
+target_include_directories(OpenOblivion PRIVATE
+        ${ZLIB_INCLUDE_DIRS}
+        ${Boost_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE
         ${ZLIB_LIBRARIES}
         ${OGRE_LIBRARIES}

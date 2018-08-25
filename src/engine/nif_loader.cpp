@@ -62,7 +62,17 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   auto ogreDataStreamBuffer = OgreDataStreamWrapper{ogreDataStream};
   std::istream is{&ogreDataStreamBuffer};
 
-  nif::NifModel nifModel(is);
+  const nif::NifModel nifModel(is);
+
+  for (auto i : nifModel.blocks.vertex_set()) {
+    const auto &block = *nifModel.blocks[i];
+    const auto &blockType = *nifModel.blockTypes[i];
+    if (blockType == "NiNode") {
+
+    } else if (blockType == "NiTriShape") {
+
+    }
+  }
 }
 
 } // namespace engine
