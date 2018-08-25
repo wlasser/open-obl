@@ -165,10 +165,71 @@ struct NiNode : NiAVObject {
   explicit NiNode(Version version) : NiAVObject(version) {}
 };
 
-// TODO: Finish writing NiGeometryData
+struct AbstractAdditionalGeometryData : NiObject {
+  void read(std::istream &is) override;
+  ~AbstractAdditionalGeometryData() override = 0;
+};
+inline AbstractAdditionalGeometryData::~AbstractAdditionalGeometryData() = default;
+
+struct NiAdditionalGeometryData : AbstractAdditionalGeometryData {
+  basic::UShort numVertices{};
+
+  basic::UInt numBlockInfos{};
+  std::vector<compound::AdditionalDataInfo> blockInfos{};
+
+  basic::Int numBlocks{};
+  std::vector<compound::AdditionalDataBlock> blocks{};
+
+  void read(std::istream &is) override;
+};
+
 struct NiGeometryData : NiObject, Versionable {
   VersionOptional<basic::Int, "10.1.0.114"_ver, Unbounded> groupID{version};
 
+  basic::UShort numVertices{};
+
+  // Used with NiCollision objects with OBB or TRI is set
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> keepFlags{version};
+
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded>
+      compressFlags{version};
+
+  basic::Bool hasVertices = true;
+  std::vector<compound::Vector3> vertices{};
+
+  VersionOptional<Enum::VectorFlags, "10.0.1.0"_ver, Unbounded>
+      vectorFlags{version};
+
+  basic::Bool hasNormals{};
+  std::vector<compound::Vector3> normals{};
+
+  // if (hasNormals && (vectorFlags & VF_Has_Tangents))
+  std::vector<compound::Vector3> tangents{};
+  std::vector<compound::Vector3> bitangents{};
+
+  // Bounding box center and maximum distance from center to any vertex
+  compound::Vector3 center{};
+  basic::Float radius{};
+
+  basic::Bool hasVertexColors{};
+  std::vector<compound::Color4> vertexColors{};
+
+  // Top 10 bits are flags. Bit 12 is set if tangents or bitangents are present.
+  VersionOptional<basic::UShort, Unbounded, "4.2.2.0"_ver> numUVSets{version};
+
+  VersionOptional<basic::Bool, Unbounded, "4.0.0.2"_ver> hasUV{version};
+
+  // Texture coordinates with OpenGL convention
+  // arr1 = (numUVSets & 63) | (vectorFlags & 63), arr2 = numVertices
+  std::vector<std::vector<compound::TexCoord>> uvSets{};
+
+  VersionOptional<Enum::ConsistencyType, "10.0.1.0"_ver, Unbounded>
+      consistencyFlags{version, Enum::ConsistencyType::CT_MUTABLE};
+
+  VersionOptional<basic::Ref<AbstractAdditionalGeometryData>, "20.0.0.0.4"_ver, Unbounded>
+      additionalData{version};
+
+  void read(std::istream &is) override;
   explicit NiGeometryData(Version version) : Versionable(version) {}
 };
 

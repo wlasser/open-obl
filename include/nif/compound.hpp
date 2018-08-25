@@ -399,6 +399,37 @@ struct NiTransform {
   basic::Float scale = 1.0f;
 };
 
+// OpenGL texture coordinates. Origin is in the bottom left corner.
+struct TexCoord {
+  basic::Float u = 0.0f;
+  basic::Float v = 0.0f;
+};
+
+struct AdditionalDataInfo {
+  basic::Int dataType{};
+  basic::Int numChannelBytesPerElement{};
+  // numVertices * numChannelBytesPerElement
+  basic::Int numChannelBytes{};
+  // Sum of numChannelBytesPerElement over all blockInfos
+  basic::Int numTotalBytesPerElement{};
+  // Block in which the channel is stored
+  basic::Int blockIndex{};
+  // Sum of all numChannelBytesPerElement over all preceding blockInfos
+  basic::Int channelOffset{};
+  basic::Byte unknown{};
+};
+
+struct AdditionalDataBlock {
+  basic::Bool hasData{};
+  basic::Int blockSize{};
+  basic::Int numBlocks{};
+  std::vector<basic::Int> blockOffsets{};
+  basic::Int numData{};
+  std::vector<basic::Int> dataSizes{};
+  // arr1 = numData, arr2 = blockSize
+  std::vector<std::vector<basic::Byte>> data{};
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, String &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
@@ -473,6 +504,9 @@ std::istream &operator>>(std::istream &is, Triangle &t);
 std::istream &operator>>(std::istream &is, SkinPartition &t);
 std::istream &operator>>(std::istream &is, BoneVertData &t);
 std::istream &operator>>(std::istream &is, NiTransform &t);
+std::istream &operator>>(std::istream &is, TexCoord &t);
+std::istream &operator>>(std::istream &is, AdditionalDataInfo &t);
+std::istream &operator>>(std::istream &is, AdditionalDataBlock &t);
 
 } // namespace compound
 } // namespace nif

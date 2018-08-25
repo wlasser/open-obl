@@ -145,4 +145,95 @@ void NiTriShape::read(std::istream &is) {
   NiTriBasedGeom::read(is);
 }
 
+void AbstractAdditionalGeometryData::read(std::istream &is) {
+  NiObject::read(is);
+}
+
+void NiAdditionalGeometryData::read(std::istream &is) {
+  AbstractAdditionalGeometryData::read(is);
+  io::readBytes(is, numVertices);
+
+  io::readBytes(is, numBlockInfos);
+  blockInfos.reserve(numBlockInfos);
+  for (auto i = 0; i < numBlockInfos; ++i) {
+    blockInfos.emplace_back();
+    is >> blockInfos.back();
+  }
+
+  io::readBytes(is, numBlocks);
+  blocks.reserve(static_cast<std::size_t>(numBlocks));
+  for (auto i = 0; i < numBlocks; ++i) {
+    blocks.emplace_back();
+    is >> blocks.back();
+  }
+}
+
+void NiGeometryData::read(std::istream &is) {
+  NiObject::read(is);
+
+  io::readBytes(is, groupID);
+  io::readBytes(is, numVertices);
+  io::readBytes(is, keepFlags);
+  io::readBytes(is, compressFlags);
+
+  io::readBytes(is, hasVertices);
+  vertices.reserve(numVertices);
+  for (auto i = 0; i < numVertices; ++i) {
+    vertices.emplace_back();
+    is >> vertices.back();
+  }
+
+  io::readBytes(is, vectorFlags);
+
+  io::readBytes(is, hasNormals);
+  normals.reserve(numVertices);
+  for (auto i = 0; i < numVertices; ++i) {
+    normals.emplace_back();
+    is >> normals.back();
+  }
+
+  if (hasNormals && vectorFlags
+      && static_cast<uint16_t>(*vectorFlags
+          & Enum::VectorFlags::VF_Has_Tangents) != 0) {
+    tangents.reserve(numVertices);
+    for (auto i = 0; i < numVertices; ++i) {
+      tangents.emplace_back();
+      is >> tangents.back();
+    }
+
+    bitangents.reserve(numVertices);
+    for (auto i = 0; i < numVertices; ++i) {
+      bitangents.emplace_back();
+      is >> bitangents.back();
+    }
+  }
+
+  is >> center;
+  io::readBytes(is, radius);
+
+  io::readBytes(is, hasVertexColors);
+  vertexColors.reserve(numVertices);
+  for (auto i = 0; i < numVertices; ++i) {
+    vertexColors.emplace_back();
+    is >> vertexColors.back();
+  }
+
+  io::readBytes(is, numUVSets);
+  io::readBytes(is, hasUV);
+  if (numUVSets && hasUV) {
+    std::size_t arr1 = static_cast<uint16_t>(*numUVSets & 0b11111)
+        | static_cast<uint16_t>(*vectorFlags & Enum::VectorFlags::VF_UV_MASK);
+    for (auto i = 0; i < arr1; ++i) {
+      std::vector<compound::TexCoord> row{};
+      for (auto j = 0; j < numVertices; ++j) {
+        row.emplace_back();
+        is >> row.back();
+      }
+      uvSets.push_back(row);
+    }
+  }
+
+  io::readBytes(is, consistencyFlags);
+  io::readBytes(is, additionalData);
+}
 } // namespace nif

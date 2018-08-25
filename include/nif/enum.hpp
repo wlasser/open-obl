@@ -119,6 +119,49 @@ enum class BoundVolumeType : uint32_t {
   HALFSPACE_BV = 5
 };
 
+enum class VectorFlags : uint16_t {
+  NONE = 0x0000,
+  VF_UV_1 = 0x0001,
+  VF_UV_2 = 0x0002,
+  VF_UV_4 = 0x0004,
+  VF_UV_8 = 0x0008,
+  VF_UV_16 = 0x0010,
+  VF_UV_32 = 0x0020,
+  VF_Unk64 = 0x0040,
+  VF_Unk128 = 0x0080,
+  VF_Unk256 = 0x0100,
+  VF_Unk512 = 0x0200,
+  VF_Unk1024 = 0x0400,
+  VF_Unk2048 = 0x0800,
+  VF_Has_Tangents = 0x1000,
+  VF_Unk8192 = 0x2000,
+  VF_Unk16384 = 0x4000,
+  VF_Unk32768 = 0x8000,
+  VF_UV_MASK = VF_UV_1 | VF_UV_2 | VF_UV_4 | VF_UV_8 | VF_UV_16 | VF_UV_32
+};
+inline constexpr VectorFlags operator|(VectorFlags a, VectorFlags b) {
+  return VectorFlags(static_cast<uint16_t>(a) | static_cast<uint16_t>(b));
+}
+inline constexpr VectorFlags operator&(VectorFlags a, VectorFlags b) {
+  return VectorFlags(static_cast<uint16_t>(a) & static_cast<uint16_t>(b));
+}
+
+// Controls volatility of mesh. Lower 12 bits are used at runtime.
+enum class ConsistencyType : uint16_t {
+  CT_MUTABLE = 0x0000,
+  CT_STATIC = 0x4000,
+  CT_VOLATILE = 0x8000,
+  mask = 0b1111000000000000
+};
+inline constexpr ConsistencyType operator|(ConsistencyType a,
+                                           ConsistencyType b) {
+  return ConsistencyType(static_cast<uint16_t>(a) | static_cast<uint16_t>(b));
+}
+inline constexpr ConsistencyType operator&(ConsistencyType a,
+                                           ConsistencyType b) {
+  return ConsistencyType(static_cast<uint16_t>(a) & static_cast<uint16_t>(b));
+}
+
 } // namespace Enum
 } // namespace nif
 

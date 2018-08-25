@@ -330,6 +330,41 @@ std::istream &operator>>(std::istream &is, NiTransform &t) {
   io::readBytes(is, t.rotation);
   io::readBytes(is, t.translation);
   io::readBytes(is, t.scale);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, TexCoord &t) {
+  io::readBytes(is, t.u);
+  io::readBytes(is, t.v);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, AdditionalDataInfo &t) {
+  io::readBytes(is, t.dataType);
+  io::readBytes(is, t.numChannelBytesPerElement);
+  io::readBytes(is, t.numChannelBytes);
+  io::readBytes(is, t.numTotalBytesPerElement);
+  io::readBytes(is, t.blockIndex);
+  io::readBytes(is, t.channelOffset);
+  io::readBytes(is, t.unknown);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, AdditionalDataBlock &t) {
+  io::readBytes(is, t.hasData);
+  io::readBytes(is, t.blockSize);
+  io::readBytes(is, t.numBlocks);
+  io::readBytes(is, t.blockOffsets, static_cast<std::size_t>(t.numBlocks));
+  io::readBytes(is, t.numData);
+  io::readBytes(is, t.dataSizes, static_cast<std::size_t>(t.numData));
+  for (auto i = 0; i < t.numData; ++i) {
+    std::vector<basic::Byte> row{};
+    io::readBytes(is, row, static_cast<std::size_t>(t.blockSize));
+    t.data.push_back(row);
+  }
   return is;
 }
 
