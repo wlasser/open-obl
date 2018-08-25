@@ -6,6 +6,7 @@
 namespace engine {
 
 class NifLoader : public Ogre::ManualResourceLoader {
+ public:
   void loadResource(Ogre::Resource *resource) override;
   //void prepareResource(Ogre::Resource *resource) override;
 };
