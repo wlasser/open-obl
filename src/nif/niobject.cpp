@@ -21,7 +21,7 @@ void NiTimeController::read(std::istream &is) {
 
 void NiObjectNet::read(std::istream &is) {
   NiObject::read(is);
-  io::readBytes(is, name);
+  is >> name;
   is >> extraData;
   io::readBytes(is, extraDataArrayLength);
   if (extraDataArrayLength && extraDataArray) {
@@ -41,7 +41,9 @@ void NiProperty::read(std::istream &is) {
 void NiAVObject::read(std::istream &is) {
   NiObjectNet::read(is);
   io::readBytes(is, flags);
-  is >> translation >> rotation >> scale >> velocity;
+  is >> translation >> rotation;
+  io::readBytes(is, scale);
+  is >> velocity;
   io::readBytes(is, numProperties);
   properties.reserve(numProperties);
   for (auto i = 0; i < numProperties; ++i) {

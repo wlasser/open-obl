@@ -70,6 +70,9 @@ class Ref {
     io::readBytes(is, t.val);
     return is;
   }
+  explicit operator int32_t() const {
+    return val;
+  }
 };
 enum class StringOffset : uint32_t;
 enum class StringIndex : uint32_t;

@@ -62,7 +62,7 @@ inline NiTimeController::~NiTimeController() = default;
 
 struct NiObjectNet : NiObject, Versionable {
 
-  std::string name{};
+  compound::SizedString name{};
 
   // Here, extraData entry has a link to another extraData entry,
   // i.e. extraData is as linked list.
