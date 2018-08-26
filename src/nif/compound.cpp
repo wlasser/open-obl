@@ -341,6 +341,38 @@ std::istream &operator>>(std::istream &is, TexCoord &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, TexDesc &t) {
+  is >> t.source;
+  io::readBytes(is, t.clampMode);
+  io::readBytes(is, t.filterMode);
+  io::readBytes(is, t.uvSet);
+  io::readBytes(is, t.ps2L);
+  io::readBytes(is, t.ps2K);
+  io::readBytes(is, t.unknown);
+  io::readBytes(is, t.hasTextureTransform);
+
+  if (t.hasTextureTransform && *t.hasTextureTransform) {
+    TexDesc::NiTextureTransform trans{};
+    is >> trans.translation >> trans.scale;
+    io::readBytes(is, trans.rotation);
+    io::readBytes(is, trans.transformMethod);
+    is >> trans.center;
+    t.textureTransform = trans;
+  }
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, ShaderTexDesc &t) {
+  io::readBytes(is, t.hasMap);
+  if (t.hasMap) {
+    ShaderTexDesc::Map map{t.version};
+    is >> map.map;
+    io::readBytes(is, map.mapID);
+    t.map.emplace(map);
+  }
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, AdditionalDataInfo &t) {
   io::readBytes(is, t.dataType);
   io::readBytes(is, t.numChannelBytesPerElement);

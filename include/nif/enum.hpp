@@ -162,6 +162,46 @@ inline constexpr ConsistencyType operator&(ConsistencyType a,
   return ConsistencyType(static_cast<uint16_t>(a) & static_cast<uint16_t>(b));
 }
 
+// Vertex color blend mode with filtered texture color.
+enum class ApplyMode : uint32_t {
+  APPLY_REPLACE = 0,
+  APPLY_DECAL = 1,
+  APPLY_MODULATE = 2,
+  APPLY_HILIGHT = 3,
+  APPLY_HILIGHT2 = 4
+};
+
+enum class TexClampMode : uint32_t {
+  CLAMP_S_CLAMP_T = 0,
+  CLAMP_S_WRAP_T = 1,
+  WRAP_S_CLAMP_T = 2,
+  WRAP_S_WRAP_T = 3
+};
+
+enum class TexFilterMode : uint32_t {
+  FILTER_NEAREST = 0,
+  FILTER_BILERP = 1,
+  FILTER_TRILERP = 2,
+  FILTER_NEAREST_MIPNEAREST = 3,
+  FILTER_NEAREST_MIPLERP = 4,
+  FILTER_BILERP_MIPNEAREST = 5,
+  FILTER_ANISOTROPIC = 6
+};
+
+// Order of application of transformation matrices.
+// From parent TexDesc:
+// T = translation, S = scale, R = rotation, C = center
+// Others:
+// F = inverse of v axis with a positive translation of 1 unit along v.
+enum class TransformMethod : uint32_t {
+  // C * R * C^(-1) * T * S
+      MayaDeprecated = 0,
+  // C * S * R * T * C^(-1)
+      Max = 1,
+  // C * R * C^(-1) * F * T * S
+      Maya = 2
+};
+
 } // namespace Enum
 } // namespace nif
 

@@ -10,6 +10,9 @@
 #include <vector>
 
 namespace nif {
+
+struct NiSourceTexture;
+
 namespace compound {
 
 using namespace nif::literals;
@@ -405,6 +408,44 @@ struct TexCoord {
   basic::Float v = 0.0f;
 };
 
+struct TexDesc : Versionable {
+  basic::Ref<NiSourceTexture> source{};
+  Enum::TexClampMode clampMode{Enum::TexClampMode::WRAP_S_WRAP_T};
+  Enum::TexFilterMode filterMode{Enum::TexFilterMode::FILTER_TRILERP};
+  // Texture coordinate set in parent NiGeometryData that this slot uses
+  basic::UInt uvSet{0};
+
+  // Mipmap modifiers?
+  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2L{version};
+  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2K{version};
+
+  VersionOptional<basic::UShort, Unbounded, "4.0.1.12"_ver> unknown{version};
+
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
+      hasTextureTransform{version, false};
+  struct NiTextureTransform {
+    TexCoord translation{};
+    TexCoord scale{1.0f, 1.0f};
+    basic::Float rotation{0.0f};
+    Enum::TransformMethod transformMethod{};
+    TexCoord center{};
+  };
+  std::optional<NiTextureTransform> textureTransform{};
+
+  explicit TexDesc(Version version) : Versionable(version) {}
+};
+
+struct ShaderTexDesc : Versionable {
+  basic::Bool hasMap{};
+  struct Map : Versionable {
+    TexDesc map{version};
+    basic::UInt mapID{};
+    explicit Map(Version version) : Versionable(version) {}
+  };
+  std::optional<Map> map{version};
+  explicit ShaderTexDesc(Version version) : Versionable(version) {}
+};
+
 struct AdditionalDataInfo {
   basic::Int dataType{};
   basic::Int numChannelBytesPerElement{};
@@ -505,6 +546,8 @@ std::istream &operator>>(std::istream &is, SkinPartition &t);
 std::istream &operator>>(std::istream &is, BoneVertData &t);
 std::istream &operator>>(std::istream &is, NiTransform &t);
 std::istream &operator>>(std::istream &is, TexCoord &t);
+std::istream &operator>>(std::istream &is, TexDesc &t);
+std::istream &operator>>(std::istream &is, ShaderTexDesc &t);
 std::istream &operator>>(std::istream &is, AdditionalDataInfo &t);
 std::istream &operator>>(std::istream &is, AdditionalDataBlock &t);
 

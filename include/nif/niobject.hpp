@@ -29,6 +29,14 @@ struct NiExtraData : NiObject, Versionable {
   explicit NiExtraData(Version version) : Versionable(version) {}
 };
 
+// Used to store tangents and bitangents
+struct NiBinaryExtraData : NiExtraData {
+  compound::ByteArray data{};
+
+  void read(std::istream &is) override;
+  explicit NiBinaryExtraData(Version version) : NiExtraData(version) {}
+};
+
 struct NiObjectNet;
 
 struct NiTimeController : NiObject {
@@ -91,6 +99,85 @@ struct NiProperty : NiObjectNet {
   ~NiProperty() override = 0;
 };
 inline NiProperty::~NiProperty() = default;
+
+struct NiMaterialProperty : NiProperty {
+  VersionOptional<basic::Flags, "3.0.0.0"_ver, "10.0.1.2"_ver> flags{version};
+
+  // userVer < 26
+  compound::Color3 ambientColor{1.0f, 1.0f, 1.0f};
+  // userVer < 26
+  compound::Color3 diffuseColor{1.0f, 1.0f, 1.0f};
+  compound::Color3 specularColor{1.0f, 1.0f, 1.0f};
+  compound::Color3 emissiveColor{0.0f, 0.0f, 0.0f};
+  basic::Float glossiness = 10.0f;
+  // If not 1.0f, use NiAlphaProperty in the parent NiTriShape
+  basic::Float alpha = 1.0f;
+  // userVer > 21
+  basic::Float emissiveMultiplier = 1.0f;
+
+  void read(std::istream &is) override;
+  explicit NiMaterialProperty(Version version) : NiProperty(version) {}
+};
+
+struct NiTexturingProperty : NiProperty {
+  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{version};
+
+  VersionOptional<Enum::ApplyMode, "3.3.0.13"_ver, "20.1.0.1"_ver>
+      applyMode{version};
+
+  basic::UInt textureCount{};
+
+  basic::Bool hasBaseTexture{};
+  compound::TexDesc baseTexture{version};
+
+  basic::Bool hasDarkTexture{};
+  compound::TexDesc darkTexture{version};
+
+  basic::Bool hasDetailTexture{};
+  compound::TexDesc detailTexture{version};
+
+  basic::Bool hasGlossTexture{};
+  compound::TexDesc glossTexture{version};
+
+  basic::Bool hasGlowTexture{};
+  compound::TexDesc glowTexture{version};
+
+  // textureCount > 5
+  VersionOptional<basic::Bool, "3.3.0.13"_ver, Unbounded>
+      hasBumpTexture{version};
+  struct BumpInfo : Versionable {
+    compound::TexDesc bumpTexture{version};
+    basic::Float lumaScale{};
+    basic::Float lumaOffset{};
+    compound::Matrix22 matrix{};
+    explicit BumpInfo(Version version) : Versionable(version) {}
+  };
+  std::optional<BumpInfo> bumpTextureData{version};
+
+  // textureCount > 6
+  basic::Bool hasDecal0Texture{};
+  compound::TexDesc decal0Texture{version};
+
+  // textureCount > 7
+  basic::Bool hasDecal1Texture{};
+  compound::TexDesc decal1Texture{version};
+
+  // textureCount > 8
+  basic::Bool hasDecal2Texture{};
+  compound::TexDesc decal2Texture{version};
+
+  // textureCount > 9
+  basic::Bool hasDecal3Texture{};
+  compound::TexDesc decal3Texture{version};
+
+  VersionOptional<basic::UInt, "10.0.1.0"_ver, Unbounded>
+      numShaderTextures{version};
+  VersionOptional<std::vector<compound::ShaderTexDesc>, "10.0.1.0"_ver, Unbounded>
+      shaderTextures{version};
+
+  void read(std::istream &is) override;
+  explicit NiTexturingProperty(Version version) : NiProperty(version) {}
+};
 
 struct NiCollisionObject;
 

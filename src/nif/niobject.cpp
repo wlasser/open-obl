@@ -9,6 +9,11 @@ void NiExtraData::read(std::istream &is) {
   is >> next;
 }
 
+void NiBinaryExtraData::read(std::istream &is) {
+  NiExtraData::read(is);
+  is >> data;
+}
+
 void NiTimeController::read(std::istream &is) {
   NiObject::read(is);
   io::readBytes(is, flags);
@@ -36,6 +41,75 @@ void NiObjectNet::read(std::istream &is) {
 
 void NiProperty::read(std::istream &is) {
   NiObjectNet::read(is);
+}
+
+void NiMaterialProperty::read(std::istream &is) {
+  NiProperty::read(is);
+  io::readBytes(is, flags);
+  is >> ambientColor >> diffuseColor >> specularColor >> emissiveColor;
+  io::readBytes(is, glossiness);
+  io::readBytes(is, alpha);
+}
+
+void NiTexturingProperty::read(std::istream &is) {
+  io::readBytes(is, flags);
+  io::readBytes(is, applyMode);
+  io::readBytes(is, textureCount);
+
+  io::readBytes(is, hasBaseTexture);
+  if (hasBaseTexture) is >> baseTexture;
+
+  io::readBytes(is, hasDarkTexture);
+  if (hasDarkTexture) is >> darkTexture;
+
+  io::readBytes(is, hasDetailTexture);
+  if (hasDetailTexture) is >> detailTexture;
+
+  io::readBytes(is, hasGlossTexture);
+  if (hasGlossTexture) is >> glossTexture;
+
+  io::readBytes(is, hasGlowTexture);
+  if (hasGlowTexture) is >> glowTexture;
+
+  if (textureCount > 5) {
+    io::readBytes(is, hasBumpTexture);
+    if (hasBumpTexture && *hasBumpTexture) {
+      BumpInfo bumpInfo{version};
+      is >> bumpInfo.bumpTexture;
+      io::readBytes(is, bumpInfo.lumaScale);
+      io::readBytes(is, bumpInfo.lumaOffset);
+      is >> bumpInfo.matrix;
+      bumpTextureData.emplace(bumpInfo);
+    }
+  }
+
+  if (textureCount > 6) {
+    io::readBytes(is, hasDecal0Texture);
+    if (hasDecal0Texture) is >> decal0Texture;
+  }
+
+  if (textureCount > 7) {
+    io::readBytes(is, hasDecal1Texture);
+    if (hasDecal1Texture) is >> decal1Texture;
+  }
+
+  if (textureCount > 8) {
+    io::readBytes(is, hasDecal2Texture);
+    if (hasDecal2Texture) is >> decal2Texture;
+  }
+
+  if (textureCount > 9) {
+    io::readBytes(is, hasDecal3Texture);
+    if (hasDecal3Texture) is >> decal3Texture;
+  }
+
+  io::readBytes(is, numShaderTextures);
+  if (numShaderTextures && shaderTextures) {
+    for (auto i = 0; i < *numShaderTextures; ++i) {
+      shaderTextures->emplace_back(version);
+      is >> shaderTextures->back();
+    }
+  }
 }
 
 void NiAVObject::read(std::istream &is) {
