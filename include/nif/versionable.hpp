@@ -6,16 +6,35 @@
 #include <optional>
 #include <stdexcept>
 
+// Nif files are heavily versioned, with different parts appearing only under
+// certain version constraints. To supply these version constraints, one derives
+// from the Versionable class and wraps any versioned members in a
+// VersionOptional. These check the actual runtime version against the version
+// constraints and do nothing in cases where the constraints are not satisfied.
 namespace nif {
-
+// Version information in nif files is given as a sequence of 4 chunks
+// separated by '.', such as '20.0.0.5' or '10.1.0.101'. They are ordered in the
+// same way as semver, so that version 'a' is newer/greater than version 'b'
+// iff there is some chunk in 'a' that is greater than the corresponding
+// chunk in 'b', and every chunk to the left is the same in both 'a'
+// and 'b'. Thus '10.1.2.101 > 10.1.2.100 > 10.1.1.200 > 9.5.5.5` and so on.
+//
+// The version chunks are allowed to be any nonnegative integer less than
+// 256, so fit in a single byte. By concatenating the version numbers so that
+// the left-most chunk is the most-significant byte one obtains a bijection
+// between nif versions and 4-byte integers. For example, '20.0.0.5' becomes
+// the integer 0x14000005. Versions are therefore stored with type uint32_t.
 using Version = uint32_t;
 
+// Compute the number of digits in the decimal expansion of chunk.
 constexpr std::size_t chunkLength(uint8_t chunk) {
   if (chunk < 10) return 1;
   else if (chunk < 100) return 2;
   else return 3;
 }
 
+// Compute the number of characters (not including the null-terminator) of the
+// string representation of ver.
 constexpr std::size_t versionLength(Version ver) {
   return 3 + chunkLength(static_cast<uint8_t>((ver & 0xff000000) >> 24))
       + chunkLength(static_cast<uint8_t>((ver & 0x00ff0000) >> 16))
@@ -23,6 +42,12 @@ constexpr std::size_t versionLength(Version ver) {
       + chunkLength(static_cast<uint8_t>((ver & 0x000000ff)));
 }
 
+// Return the string representation of ver. To save dynamically allocating
+// memory, which would then have to be deleted by the client, a char array
+// with static storage duration is constructed and returned. By making this a
+// function template, each instantiation has a different static char array,
+// preventing conflict.
+// TODO: Why is this not std::string verOf(Version ver)
 template<Version ver>
 const char *verOf() {
   // Since we have to use a static, this computation only needs to be done once
@@ -64,23 +89,38 @@ const char *verOf() {
   return v.data();
 }
 
+// Any class representing a versioned component of a nif file should derive from
+// this class. It is intended that the derived class have a constructor taking
+// a Version used to construct the Versionable. The Version is not marked const
+// to facilitate move semantics, although it is not intended to be modified.
 class Versionable {
  public:
-
+  // Used in VersionOptional to denote that a lower or upper version requirement
+  // is missing.
   static const Version Unbounded = 0xffffffff;
-
-  const Version version;
+  // TODO: compound::Header is preventing this from being protected with complicated versioning
+  /*const*/ Version version;
 
  protected:
-
+  // Every versioned component should be wrapped in a VersionOptional, which has
+  // two version requirement bounds ver1 and ver2. The VersionOptional must be
+  // given a Version on construction (it is intended that the parent
+  // Versionable's version be used, though this is not required) which is
+  // compared against the version requirement
+  // ver1 <= version && version <= ver2
+  // on each operation. If ver1 or ver2 is marked as Unbounded, then that
+  // constraint is ignored. If the requirement is not satisfied, then the
+  // VersionOptional cannot be assigned to or accessed, and is 'inactive'.
+  // Attempting to access an inactive VersionOptional throws
+  // std::bad_optional_access.
   template<class T, Version ver1, Version ver2>
   class VersionOptional {
    private:
-    const Version version;
+    /*const*/ Version version;
     std::optional<T> opt;
-    const std::optional<Version> lowerBound =
+    /*const*/ std::optional<Version> lowerBound =
         (ver1 == Unbounded ? std::nullopt : std::make_optional(ver1));
-    const std::optional<Version> upperBound =
+    /*const*/ std::optional<Version> upperBound =
         (ver2 == Unbounded ? std::nullopt : std::make_optional(ver2));
 
     constexpr bool verify(Version version) const {
@@ -95,6 +135,11 @@ class Versionable {
       if (verify(version)) opt = std::make_optional<T>();
       else opt = std::nullopt;
     }
+
+    constexpr VersionOptional(const VersionOptional &other) = default;
+    constexpr VersionOptional &operator=(const VersionOptional &other) = default;
+    constexpr VersionOptional(VersionOptional &&other) noexcept = default;
+    constexpr VersionOptional &operator=(VersionOptional &&other) noexcept = default;
 
     constexpr VersionOptional(Version version, T &&value) :
         version(version) {
@@ -111,7 +156,7 @@ class Versionable {
       if (verify(version)) return opt.value();
       else throw std::bad_optional_access();
     }
-    static const int32_t Null = -1;
+
     constexpr const T &value() const &{
       if (verify(version)) return opt.value();
       else throw std::bad_optional_access();
@@ -168,6 +213,11 @@ class Versionable {
 
   explicit Versionable(Version version) : version(version) {}
 
+  constexpr Versionable(const Versionable &other) = default;
+  Versionable &operator=(const Versionable &other) = default;
+  constexpr Versionable(Versionable &&other) noexcept = default;
+  Versionable &operator=(Versionable &&other) noexcept = default;
+
   template<class T, Version ver1, Version ver2>
   friend std::istream &operator>>(std::istream &, T &);
 
@@ -176,6 +226,7 @@ class Versionable {
                               VersionOptional<T, ver1, ver2> &);
 };
 
+// Convert a version string into its integer representation.
 constexpr Version verOf(const char *str, std::size_t size) {
   Version version = 0;
 
