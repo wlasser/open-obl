@@ -37,6 +37,50 @@ struct NiBinaryExtraData : NiExtraData {
   explicit NiBinaryExtraData(Version version) : NiExtraData(version) {}
 };
 
+struct NiIntegerExtraData : NiExtraData {
+  basic::UInt data{};
+
+  void read(std::istream &is) override;
+  explicit NiIntegerExtraData(Version version) : NiExtraData(version) {}
+};
+
+struct NiStringExtraData : NiExtraData {
+  // Length of following string + 4
+  VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver>
+      bytesRemaining{version};
+
+  compound::String data{version};
+
+  void read(std::istream &is) override;
+  explicit NiStringExtraData(Version version) : NiExtraData(version) {}
+};
+
+struct BSXFlags : NiIntegerExtraData {
+  enum class Flags : uint32_t {
+    bAnimated = 0,
+    bHavok = 1,
+    bRagdoll = 1 << 1,
+    bComplex = 1 << 2,
+    bAddon = 1 << 3,
+    bEditorMarker = 1 << 4,
+    bDynamic = 1 << 5,
+    bArticulated = 1 << 6,
+    bIKTarget = 1 << 7,
+    bExternalEmit = 1 << 8,
+    bMagicShaderParticles = 1 << 9,
+    bLights = 1 << 10,
+    bBreakable = 1 << 11,
+    bSearchedBreakable = 1 << 12
+  };
+  // Data is stored in NiIntegerExtraData::data
+  void read(std::istream &is) override;
+  explicit BSXFlags(Version version) : NiIntegerExtraData(version) {}
+};
+inline constexpr BSXFlags::Flags operator|(BSXFlags::Flags a,
+                                           BSXFlags::Flags b) {
+  return BSXFlags::Flags(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+}
+
 struct NiObjectNet;
 
 struct NiTimeController : NiObject {

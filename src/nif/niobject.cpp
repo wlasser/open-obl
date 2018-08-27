@@ -14,6 +14,21 @@ void NiBinaryExtraData::read(std::istream &is) {
   is >> data;
 }
 
+void NiIntegerExtraData::read(std::istream &is) {
+  NiExtraData::read(is);
+  io::readBytes(is, data);
+}
+
+void NiStringExtraData::read(std::istream &is) {
+  NiExtraData::read(is);
+  io::readBytes(is, bytesRemaining);
+  is >> data;
+}
+
+void BSXFlags::read(std::istream &is) {
+  NiIntegerExtraData::read(is);
+}
+
 void NiTimeController::read(std::istream &is) {
   NiObject::read(is);
   io::readBytes(is, flags);
