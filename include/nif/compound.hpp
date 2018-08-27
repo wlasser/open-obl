@@ -529,9 +529,8 @@ std::istream &operator>>(std::istream &is, NodeSet<NiNode> &t) {
   io::readBytes(is, t.numNodes);
   t.nodes.reserve(t.numNodes);
   for (basic::UInt i = 0; i < t.numNodes; ++i) {
-    basic::Ptr<NiNode> node{};
-    io::readBytes(node.val);
-    t.nodes.push_back(node);
+    t.nodes.emplace_back();
+    is >> t.nodes.back();
   }
   return is;
 }
