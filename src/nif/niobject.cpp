@@ -310,4 +310,22 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, consistencyFlags);
   io::readBytes(is, additionalData);
 }
+
+void NiSourceTexture::read(std::istream &is) {
+  io::readBytes(is, useExternal);
+
+  if (useExternal) {
+    auto texFile = textureFileData.emplace<ExternalTextureFile>(version);
+    is >> texFile.filename >> texFile.unknownRef;
+  } else {
+    auto texFile = textureFileData.emplace<InternalTextureFile>(version);
+    io::readBytes(is, texFile.unknownByte);
+    is >> texFile.filename;
+  }
+
+  is >> formatPrefs;
+  io::readBytes(is, isStatic);
+  io::readBytes(is, directRender);
+}
+
 } // namespace nif

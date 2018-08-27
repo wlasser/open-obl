@@ -471,6 +471,12 @@ struct AdditionalDataBlock {
   std::vector<std::vector<basic::Byte>> data{};
 };
 
+struct FormatPrefs {
+  Enum::PixelLayout pixelLayout{};
+  Enum::MipMapFormat mipMapFormat{Enum::MipMapFormat::MIP_FMT_DEFAULT};
+  Enum::AlphaFormat alphaFormat{Enum::AlphaFormat::ALPHA_DEFAULT};
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, String &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
@@ -550,6 +556,7 @@ std::istream &operator>>(std::istream &is, TexDesc &t);
 std::istream &operator>>(std::istream &is, ShaderTexDesc &t);
 std::istream &operator>>(std::istream &is, AdditionalDataInfo &t);
 std::istream &operator>>(std::istream &is, AdditionalDataBlock &t);
+std::istream &operator>>(std::istream &is, FormatPrefs &t);
 
 } // namespace compound
 } // namespace nif

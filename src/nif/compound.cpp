@@ -400,4 +400,12 @@ std::istream &operator>>(std::istream &is, AdditionalDataBlock &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, FormatPrefs &t) {
+  io::readBytes(is, t.pixelLayout);
+  io::readBytes(is, t.mipMapFormat);
+  io::readBytes(is, t.alphaFormat);
+
+  return is;
+}
+
 } // namespace nif::compound

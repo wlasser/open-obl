@@ -395,6 +395,50 @@ struct NiTriShape : NiTriBasedGeom {
   void read(std::istream &is) override;
 };
 
+struct NiTexture : NiObjectNet {
+  explicit NiTexture(Version version) : NiObjectNet(version) {}
+  ~NiTexture() override = 0;
+};
+inline NiTexture::~NiTexture() = default;
+
+struct NiSourceTexture : NiTexture {
+  struct ExternalTextureFile : Versionable {
+    compound::FilePath filename{version};
+
+    VersionOptional<basic::Ref<NiObject>, "10.1.0.0"_ver, Unbounded>
+        unknownRef{version};
+
+    explicit ExternalTextureFile(Version version) : Versionable(version) {}
+  };
+
+  struct InternalTextureFile : Versionable {
+    VersionOptional<basic::Byte, Unbounded, "10.0.1.0"_ver>
+        unknownByte{version};
+
+    VersionOptional<compound::FilePath, "10.1.0.0"_ver, Unbounded>
+        filename{version, compound::FilePath{version}};
+
+    // TODO: Support NiPixelFormat. I think it might never be used?
+    // basic::Ref<NiPixelFormat> pixelData{};
+
+    explicit InternalTextureFile(Version version) : Versionable(version) {}
+  };
+
+  basic::Bool useExternal{true};
+
+  std::variant<ExternalTextureFile, InternalTextureFile>
+      textureFileData{ExternalTextureFile{version}};
+
+  compound::FormatPrefs formatPrefs{};
+
+  basic::Bool isStatic{true};
+
+  VersionOptional<basic::Bool, "10.1.0.103"_ver, Unbounded>
+      directRender{version};
+
+  void read(std::istream &is) override;
+  explicit NiSourceTexture(Version version) : NiTexture(version) {}
+};
 } // namespace nif
 
 #endif // OPENOBLIVION_NIF_NIOBJECT_HPP

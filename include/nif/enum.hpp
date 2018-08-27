@@ -202,6 +202,39 @@ enum class TransformMethod : uint32_t {
       Maya = 2
 };
 
+enum class PixelLayout : uint32_t {
+  PXLAY_PALETTIZED_8 = 0,
+  PXLAY_HIGH_COLOR_16 = 1,
+  PXLAY_TRUE_COLOR_32 = 2,
+  PXLAY_COMPRESSED = 3,
+  PXLAY_BUMPMAP = 4,
+  PXLAY_PALETTIZED_4 = 5,
+  PXLAY_DEFAULT = 6,
+  PXLAY_SINGLE_COLOR_8 = 7,
+  PXLAY_SINGLE_COLOR_16 = 8,
+  PXLAY_SINGLE_COLOR_32 = 9,
+  PXLAY_DOUBLE_COLOR_32 = 10,
+  PXLAY_DOUBLE_COLOR_64 = 11,
+  PXLAY_FLOAT_COLOR_32 = 12,
+  PXLAY_FLOAT_COLOR_64 = 13,
+  PXLAY_FLOAT_COLOR_128 = 14,
+  PXLAY_SINGLE_COLOR_4 = 15,
+  PXLAY_DEPTH_24_X8 = 16
+};
+
+enum class MipMapFormat : uint32_t {
+  MIP_FMT_NO = 0,
+  MIP_FMT_YES = 1,
+  MIP_FMT_DEFAULT = 2
+};
+
+enum class AlphaFormat : uint32_t {
+  ALPHA_NONE,
+  ALPHA_BINARY,
+  ALPHA_SMOOTH,
+  ALPHA_DEFAULT
+};
+
 } // namespace Enum
 } // namespace nif
 
