@@ -36,10 +36,10 @@ constexpr std::size_t chunkLength(uint8_t chunk) {
 // Compute the number of characters (not including the null-terminator) of the
 // string representation of ver.
 constexpr std::size_t versionLength(Version ver) {
-  return 3 + chunkLength(static_cast<uint8_t>((ver & 0xff000000) >> 24))
-      + chunkLength(static_cast<uint8_t>((ver & 0x00ff0000) >> 16))
-      + chunkLength(static_cast<uint8_t>((ver & 0x0000ff00) >> 8))
-      + chunkLength(static_cast<uint8_t>((ver & 0x000000ff)));
+  return 3 + chunkLength(static_cast<uint8_t>((ver & 0xff000000u) >> 24u))
+      + chunkLength(static_cast<uint8_t>((ver & 0x00ff0000u) >> 16u))
+      + chunkLength(static_cast<uint8_t>((ver & 0x0000ff00u) >> 8u))
+      + chunkLength(static_cast<uint8_t>((ver & 0x000000ffu)));
 }
 
 // Return the string representation of ver. To save dynamically allocating
@@ -60,8 +60,8 @@ const char *verOf() {
   // For each chunk
   for (int i = 0; i < 4; ++i) {
     // Grab the chunk
-    int shift = 8 * (3 - i);
-    auto chunk = static_cast<uint8_t>((ver & (0xff << shift)) >> shift);
+    auto shift = static_cast<unsigned int>(8 * (3 - i));
+    auto chunk = static_cast<uint8_t>((ver & (0xffu << shift)) >> shift);
 
     // Populate v with the decimal digits of the chunk. Since we're only dealing
     // with individual bytes this is simpler to just unroll into the three
@@ -97,7 +97,7 @@ class Versionable {
  public:
   // Used in VersionOptional to denote that a lower or upper version requirement
   // is missing.
-  static const Version Unbounded = 0xffffffff;
+  static const Version Unbounded = 0xffffffffu;
   // TODO: compound::Header is preventing this from being protected with complicated versioning
   /*const*/ Version version;
 
@@ -221,7 +221,7 @@ class Versionable {
   template<class T, Version ver1, Version ver2>
   friend std::istream &operator>>(std::istream &, T &);
 
-  template<class T, Version ver1, Version ver2>
+  template<class T, nif::Version ver1, nif::Version ver2>
   friend void ::io::readBytes(std::istream &,
                               VersionOptional<T, ver1, ver2> &);
 };
@@ -234,7 +234,7 @@ constexpr Version verOf(const char *str, std::size_t size) {
   std::size_t pos = 0;
 
   // For each chunk
-  for (auto i = 0; i <= 3; ++i) {
+  for (int i = 0; i <= 3; ++i) {
     uint8_t value = 0;
 
     for (; !(str[pos] == '.' || (i == 3 && pos >= size)); ++pos) {
@@ -252,7 +252,7 @@ constexpr Version verOf(const char *str, std::size_t size) {
       value = static_cast<uint8_t>(newValue);
     }
     // Add to the version
-    version = (version << 8) + value;
+    version = (version << 8u) + value;
     // Increase offset to compensate for '.'
     pos += 1;
   }
