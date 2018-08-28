@@ -326,7 +326,13 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, additionalData);
 }
 
+void NiTexture::read(std::istream &is) {
+  NiObjectNet::read(is);
+}
+
 void NiSourceTexture::read(std::istream &is) {
+  NiTexture::read(is);
+
   io::readBytes(is, useExternal);
 
   if (useExternal) {

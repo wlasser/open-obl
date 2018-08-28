@@ -440,6 +440,7 @@ struct NiTriShape : NiTriBasedGeom {
 };
 
 struct NiTexture : NiObjectNet {
+  void read(std::istream &is) override;
   explicit NiTexture(Version version) : NiObjectNet(version) {}
   ~NiTexture() override = 0;
 };
