@@ -27,9 +27,11 @@ target_include_directories(OpenOblivionNif PUBLIC include)
 target_sources(OpenOblivionNif PUBLIC
         $<TARGET_OBJECTS:OpenOblivionIO>
         src/nif/basic.cpp
+        src/nif/bhk.cpp
         src/nif/compound.cpp
         src/nif/niobject.cpp
         include/nif/basic.hpp
+        include/nif/bhk.hpp
         include/nif/compound.hpp
         include/nif/enum.hpp
         include/nif/niobject.hpp

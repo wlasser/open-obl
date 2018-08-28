@@ -235,6 +235,13 @@ enum class AlphaFormat : uint32_t {
   ALPHA_DEFAULT
 };
 
+enum class BroadPhaseType : uint8_t {
+  BROAD_PHASE_INVALID = 0,
+  BROAD_PHASE_ENTITY = 1,
+  BROAD_PHASE_PHANTOM = 2,
+  BROAD_PHASE_BORDER = 3
+};
+
 } // namespace Enum
 } // namespace nif
 

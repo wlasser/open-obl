@@ -402,6 +402,66 @@ struct NiTransform {
   basic::Float scale = 1.0f;
 };
 
+struct HavokFilter {
+  // userVer2 < 16
+  Enum::OblivionLayer layer{Enum::OblivionLayer::OL_STATIC};
+  enum class Flags : uint8_t {
+    NONE = 0,
+    SCALED = 1u << 5u,
+    NO_COLLISION = 1u << 6u,
+    LINK = 1u << 7u
+  };
+  enum class Part : uint8_t {
+    OTHER = 0,
+    HEAD = 1,
+    BODY = 2,
+    SPINE1 = 3,
+    SPINE2 = 4,
+    LUPPERARM = 5,
+    LFOREARM = 6,
+    LHAND = 7,
+    LTHIGH = 8,
+    LCALF = 9,
+    LFOOT = 10,
+    RUPPERARM = 11,
+    RFOREARM = 12,
+    RHAND = 13,
+    RTHIGH = 14,
+    RCALF = 15,
+    RFOOT = 16,
+    TAIL = 17,
+    SHIELD = 18,
+    QUIVER = 19,
+    WEAPON = 20,
+    PONYTAIL = 21,
+    WING = 22,
+    PACK = 23,
+    CHAIN = 24,
+    ADDONHEAD = 25,
+    ADDONCHEST = 26,
+    ADDONARM = 27,
+    ADDONLEG = 28
+  };
+  // 3 bits only
+  Flags flags = Flags::NONE;
+  // 5 bits only
+  Part part = Part::OTHER;
+  basic::UShort group{};
+};
+
+struct HavokMaterial : Versionable {
+  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknown{version};
+  Enum::OblivionHavokMaterial material{};
+
+  explicit HavokMaterial(Version version) : Versionable(version) {}
+};
+
+struct hkWorldObjCinfoProperty {
+  basic::UInt data{};
+  basic::UInt size{};
+  basic::UInt capacityAndFlags{0x80000000};
+};
+
 // OpenGL texture coordinates. Origin is in the bottom left corner.
 struct TexCoord {
   basic::Float u = 0.0f;
@@ -550,6 +610,9 @@ std::istream &operator>>(std::istream &is, Triangle &t);
 std::istream &operator>>(std::istream &is, SkinPartition &t);
 std::istream &operator>>(std::istream &is, BoneVertData &t);
 std::istream &operator>>(std::istream &is, NiTransform &t);
+std::istream &operator>>(std::istream &is, HavokFilter &t);
+std::istream &operator>>(std::istream &is, HavokMaterial &t);
+std::istream &operator>>(std::istream &is, hkWorldObjCinfoProperty &t);
 std::istream &operator>>(std::istream &is, TexCoord &t);
 std::istream &operator>>(std::istream &is, TexDesc &t);
 std::istream &operator>>(std::istream &is, ShaderTexDesc &t);

@@ -334,6 +334,31 @@ std::istream &operator>>(std::istream &is, NiTransform &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, HavokFilter &t) {
+  uint8_t flagsAndPart{0};
+  io::readBytes(is, flagsAndPart);
+  t.flags = HavokFilter::Flags(flagsAndPart & 0b11100000u);
+  t.part = HavokFilter::Part(flagsAndPart & 0b00011111u);
+  io::readBytes(is, t.group);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, HavokMaterial &t) {
+  io::readBytes(is, t.unknown);
+  io::readBytes(is, t.material);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, hkWorldObjCinfoProperty &t) {
+  io::readBytes(is, t.data);
+  io::readBytes(is, t.size);
+  io::readBytes(is, t.capacityAndFlags);
+
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, TexCoord &t) {
   io::readBytes(is, t.u);
   io::readBytes(is, t.v);

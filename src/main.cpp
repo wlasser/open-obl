@@ -68,7 +68,6 @@ void checkNif(bsa::BSAReader &reader,
 
 int main() {
   //testApp();
-  bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
-  checkNif(reader, "meshes/clothes/robeuc01/f", "robeuc01f.nif");
+  //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   return 0;
 }
