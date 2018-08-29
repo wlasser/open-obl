@@ -21,6 +21,7 @@ using namespace nif::literals;
 struct SizedString {
   basic::UInt length{};
   std::vector<basic::Char> value{};
+  std::string str() const;
 };
 
 struct String : Versionable {

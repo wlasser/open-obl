@@ -3,6 +3,10 @@
 
 namespace nif::compound {
 
+std::string SizedString::str() const {
+  return std::string(value.begin(), value.end());
+}
+
 std::istream &operator>>(std::istream &is, SizedString &t) {
   io::readBytes(is, t.length);
   io::readBytes(is, t.value, t.length);
