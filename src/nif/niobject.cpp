@@ -326,6 +326,30 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, additionalData);
 }
 
+void NiTriBasedGeomData::read(std::istream &is) {
+  NiGeometryData::read(is);
+  io::readBytes(is, numTriangles);
+}
+
+void NiTriShapeData::read(std::istream &is) {
+  NiTriBasedGeomData::read(is);
+
+  io::readBytes(is, numTrianglePoints);
+  io::readBytes(is, hasTriangles);
+  triangles.reserve(numTriangles);
+  for (basic::UShort i = 0; i < numTriangles; ++i) {
+    triangles.emplace_back();
+    is >> triangles.back();
+  }
+
+  io::readBytes(is, numMatchGroups);
+  matchGroups.reserve(numMatchGroups);
+  for (basic::UShort i = 0; i < numMatchGroups; ++i) {
+    matchGroups.emplace_back();
+    is >> matchGroups.back();
+  }
+}
+
 void NiTexture::read(std::istream &is) {
   NiObjectNet::read(is);
 }

@@ -364,6 +364,29 @@ struct NiGeometryData : NiObject, Versionable {
   explicit NiGeometryData(Version version) : Versionable(version) {}
 };
 
+struct NiTriBasedGeomData : NiGeometryData {
+  basic::UShort numTriangles{};
+
+  void read(std::istream &is) override;
+  explicit NiTriBasedGeomData(Version version) : NiGeometryData(version) {}
+  ~NiTriBasedGeomData() override = 0;
+};
+inline NiTriBasedGeomData::~NiTriBasedGeomData() = default;
+
+struct NiTriShapeData : NiTriBasedGeomData {
+  basic::UInt numTrianglePoints{};
+
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasTriangles{version};
+  std::vector<compound::Triangle> triangles{};
+
+  // Number of shared normal groups
+  basic::UShort numMatchGroups{};
+  std::vector<compound::MatchGroup> matchGroups{};
+
+  void read(std::istream &is) override;
+  explicit NiTriShapeData(Version version) : NiTriBasedGeomData(version) {}
+};
+
 struct NiSkinPartition : NiObject, Versionable {
   basic::UInt numSkinPartitionBlocks{};
   std::vector<compound::SkinPartition> skinPartitionBlocks{};
