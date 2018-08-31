@@ -244,7 +244,7 @@ void BSADataStream::seek(std::size_t pos) {
 }
 
 void BSADataStream::skip(long count) {
-  fileData->seekg(fileData->tellg() + count);
+  fileData->seekg(count, std::ios_base::cur);
 }
 
 std::size_t BSADataStream::tell() const {
