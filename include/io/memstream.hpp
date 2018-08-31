@@ -13,9 +13,25 @@ class memstream : public std::istream {
     membuf(const uint8_t *p, std::size_t l) {
       setg((char *) (p), (char *) (p), (char *) (p) + l);
     }
+
     pos_type seekpos(pos_type pos, std::ios_base::openmode which) override {
-      setg(eback(), eback() + pos, egptr());
-      return gptr() - eback();
+      return seekoff(pos, std::ios_base::beg, which);
+    }
+
+    pos_type seekoff(off_type off, std::ios_base::seekdir dir,
+                     std::ios_base::openmode which) override {
+      switch (dir) {
+        case std::ios_base::beg:setg(eback(), eback() + off, egptr());
+          break;
+        case std::ios_base::cur:setg(eback(), gptr() + off, egptr());
+          break;
+        case std::ios_base::end:setg(eback(), egptr() + off, egptr());
+          break;
+        default: return pos_type(off_type(-1));
+      }
+      auto offset = off_type(gptr() - eback());
+      auto ret = pos_type(gptr() - eback());
+      return ret;
     }
   };
 
