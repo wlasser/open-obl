@@ -15,7 +15,6 @@ namespace engine {
 class OgreDataStreamWrapper : public std::streambuf {
  private:
   std::shared_ptr<Ogre::DataStream> ogreDataStream{};
-  int_type lastCh{};
 
  protected:
   int_type underflow() override;
@@ -24,7 +23,7 @@ class OgreDataStreamWrapper : public std::streambuf {
 
  public:
   explicit OgreDataStreamWrapper(std::shared_ptr<Ogre::DataStream> ogreDataStream)
-      : ogreDataStream(std::move(ogreDataStream)) {}
+      : std::streambuf(), ogreDataStream(std::move(ogreDataStream)) {}
 };
 
 } // namespace engine
