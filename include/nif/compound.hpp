@@ -351,6 +351,7 @@ struct Triangle {
   basic::UShort v2;
   basic::UShort v3;
 };
+static_assert(sizeof(Triangle) == 6, "Triangle must have no padding");
 
 // ver > 4.2.1.0
 struct SkinPartition : Versionable {

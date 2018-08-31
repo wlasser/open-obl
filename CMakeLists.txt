@@ -74,6 +74,7 @@ target_sources(OpenOblivion PRIVATE
         include/attribute.hpp
         include/bsa.hpp
         include/engine/bsa.hpp
+        include/engine/conversions.hpp
         include/engine/nif_loader.hpp
         include/engine/ogre_data_stream_wrapper.hpp
         include/esp.hpp

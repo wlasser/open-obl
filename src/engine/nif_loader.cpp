@@ -1,3 +1,4 @@
+#include "engine/conversions.hpp"
 #include "engine/nif_loader.hpp"
 #include "engine/ogre_data_stream_wrapper.hpp"
 #include "io/memstream.hpp"
@@ -5,13 +6,15 @@
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 
+#include <OgreHardwareBufferManager.h>
 #include <OgreMesh.h>
 #include <OgreResourceGroupManager.h>
-#include <streambuf>
+#include <OgreSubMesh.h>
 
 namespace engine {
 
 nif::Version NifLoader::peekVersion(std::istream &is) {
+  auto startPos = is.tellg();
   nif::basic::HeaderString headerVersion{};
   is >> headerVersion;
 
@@ -33,7 +36,7 @@ nif::Version NifLoader::peekVersion(std::istream &is) {
   auto lastWordPos = headerVersion.str.find_last_of(' ');
   auto versionString =
       headerVersion.str.substr(lastWordPos + 1, std::string::npos);
-  is.seekg(0);
+  is.seekg(startPos);
   return nif::verOf(versionString.c_str(), versionString.length());
 }
 
@@ -107,26 +110,160 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   // have children, so the blocks form a forest (i.e. a set of trees).
   // The vertex index of each block in the tree will be the same as its index
   // in the nif file. There is an edge from block A to block B if B is a child
-  // of A.
+  // of A. Because the blocks can have references and pointers to other blocks,
+  // it is simplest to perform two passes; the first pass reads the data, the
+  // second constructs the mesh.
   BlockGraph blocks{numBlocks};
-  for (auto i = 0; i < numBlocks; ++i) {
+  for (unsigned long i = 0; i < numBlocks; ++i) {
     auto &blockType = *blockTypes[i];
     if (blockType == "NiNode") {
-      auto niNode = std::make_shared<NiNode>(nifVersion);
-      niNode->read(is);
-      for (const auto &child : niNode->children) {
+      auto block = std::make_shared<NiNode>(nifVersion);
+      block->read(is);
+      for (const auto &child : block->children) {
         // TODO: Check that the child is a valid reference.
-        auto parent = static_cast<BlockGraph::vertex_descriptor>(i);
-        addEdge(blocks, parent, child);
+        addEdge(blocks, i, child);
       }
-      blocks[i] = std::move(niNode);
+      blocks[i] = std::move(block);
     } else if (blockType == "NiTriShape") {
-      auto niTriShape = std::make_shared<NiTriShape>(nifVersion);
-      niTriShape->read(is);
-      blocks[i] = std::move(niTriShape);
+      addVertex<NiTriShape>(blocks, i, nifVersion, is);
+    } else if (blockType == "NiTriShapeData") {
+      addVertex<NiTriShapeData>(blocks, i, nifVersion, is);
     } else {
       // TODO: Implement the other blocks
       break;
+    }
+  }
+
+  // The second pass is over the block graph
+  for (const auto &index : blocks.vertex_set()) {
+    auto niObject = blocks[index];
+    auto &blockType = *blockTypes[index];
+    if (blockType == "NiTriShape") {
+      auto block = dynamic_cast<NiTriShape *>(niObject.get());
+
+      // NiTriShape blocks determine discrete pieces of geometry with a single
+      // material and texture, and so translate to Ogre::SubMesh objects.
+      auto submesh = mesh->createSubMesh(block->name.str());
+      submesh->useSharedVertices = false;
+
+      // Ogre::SubMeshes cannot have transformations applied to them (that is
+      // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
+      // information manually.
+      Ogre::Vector3 translation = conversions::fromNif(block->translation);
+      Ogre::Matrix3 rotation = conversions::fromNif(block->rotation);
+      float scale = block->scale;
+
+      // Follow the reference to the actual geometry data
+      auto dataRef = static_cast<int32_t>(block->data);
+      auto data = dynamic_cast<NiTriShapeData *>(blocks[dataRef].get());
+
+      // It seems that Ogre expects this to be heap allocated, and will
+      // deallocate it when the mesh is unloaded. Still, it makes me uneasy.
+      submesh->vertexData = new Ogre::VertexData();
+      submesh->vertexData->vertexCount = data->numVertices;
+      auto vertDecl = submesh->vertexData->vertexDeclaration;
+      auto vertBind = submesh->vertexData->vertexBufferBinding;
+      auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+
+      // Specify the order of data in the vertex buffer. This is per vertex,
+      // so the vertices, normals etc will have to be interleaved in the buffer.
+      std::size_t offset{0};
+      const unsigned short source{0};
+      if (data->hasVertices) {
+        vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+                             Ogre::VES_POSITION);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+      }
+      // TODO: Blend weights
+      if (data->hasNormals) {
+        vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+                             Ogre::VES_NORMAL);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+      }
+      // TODO: Diffuse color
+      // TODO: Specular color
+      if (!data->uvSets.empty()) {
+        vertDecl->addElement(source, offset, Ogre::VET_FLOAT2,
+                             Ogre::VES_TEXTURE_COORDINATES);
+        offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+      }
+
+      // The final vertex buffer is the transpose of the block matrix
+      // v1  v3  v3 ...
+      // n1  n2  n3 ...
+      // uv1 uv2 uv3 ...
+      // ...
+      // where v1 is a column vector of the first vertex position components,
+      // and so on with a row for each of the elements of the vertex
+      // declaration.
+      // TODO: Is there an efficient transpose algorithm to make this abstraction worthwhile?
+      std::vector<float> vertexBuffer(offset * data->numVertices);
+      std::size_t localOffset{0};
+      if (data->hasVertices) {
+        auto it = vertexBuffer.begin();
+        for (const auto &vertex : data->vertices) {
+          *it = vertex.x;
+          *(it + 1) = vertex.y;
+          *(it + 2) = vertex.z;
+          it += offset;
+        }
+        localOffset += 3;
+      }
+      // TODO: Blend weights
+      if (data->hasNormals) {
+        auto it = vertexBuffer.begin() + localOffset;
+        for (const auto &normal : data->normals) {
+          *it = normal.x;
+          *(it + 1) = normal.y;
+          *(it + 2) = normal.z;
+          it += offset;
+        }
+        localOffset += 3;
+      }
+      // TODO: Diffuse color
+      // TODO: Specular color
+      if (!data->uvSets.empty()) {
+        auto it = vertexBuffer.begin() + localOffset;
+        // TODO: Support more than one UV set?
+        for (const auto &uv : data->uvSets[0]) {
+          *it = uv.u;
+          *(it + 1) = uv.v;
+          it += offset;
+        }
+        localOffset += 2;
+      }
+
+      // We can assume that compound::Triangle has no padding and std::vector
+      // is sequential, so can avoid copying the faces.
+      auto indexBuffer = reinterpret_cast<uint16_t *>(data->triangles.data());
+
+      // Copy the vertex buffer into a hardware buffer, and link the buffer to
+      // the vertex declaration.
+      auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
+      auto hwVertexBuffer = hwBufPtr->createVertexBuffer(offset,
+                                                         data->numVertices,
+                                                         usage);
+      hwVertexBuffer->writeData(0,
+                                hwVertexBuffer->getSizeInBytes(),
+                                vertexBuffer.data(),
+                                true);
+      vertBind->setBinding(source, hwVertexBuffer);
+
+      // Copy the triangle (index) buffer into a hardware buffer.
+      auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
+      std::size_t numIndices = 3u * data->numTriangles;
+      auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype,
+                                                       numIndices,
+                                                       usage);
+      hwIndexBuffer->writeData(0,
+                               hwIndexBuffer->getSizeInBytes(),
+                               indexBuffer,
+                               true);
+
+      // Give the submesh the index data
+      submesh->indexData->indexBuffer = hwIndexBuffer;
+      submesh->indexData->indexCount = numIndices;
+      submesh->indexData->indexStart = 0;
     }
   }
 }
