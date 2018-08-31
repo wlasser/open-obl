@@ -20,6 +20,9 @@ class OgreDataStreamWrapper : public std::streambuf {
   int_type underflow() override;
   int_type uflow() override;
   int_type pbackfail(int_type) override;
+  pos_type seekpos(pos_type, std::ios_base::openmode) override;
+  pos_type seekoff(off_type, std::ios_base::seekdir,
+                   std::ios_base::openmode) override;
 
  public:
   explicit OgreDataStreamWrapper(std::shared_ptr<Ogre::DataStream> ogreDataStream)
