@@ -29,9 +29,7 @@ class memstream : public std::istream {
           break;
         default: return pos_type(off_type(-1));
       }
-      auto offset = off_type(gptr() - eback());
-      auto ret = pos_type(gptr() - eback());
-      return ret;
+      return pos_type(gptr() - eback());
     }
   };
 
