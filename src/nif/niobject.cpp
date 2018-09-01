@@ -203,7 +203,7 @@ void NiSkinData::read(std::istream &is) {
     is >> bone.skinTransform >> bone.boundingSphereOffset;
     io::readBytes(is, bone.boundingSphereRadius);
     io::readBytes(is, bone.numVertices);
-    if (hasVertexWeights) {
+    if ((hasVertexWeights && *hasVertexWeights) || !hasVertexWeights) {
       bone.vertexWeights.reserve(bone.numVertices);
       for (auto j = 0; j < bone.numVertices; ++j) {
         bone.vertexWeights.emplace_back();
@@ -216,7 +216,9 @@ void NiSkinData::read(std::istream &is) {
 
 void NiSkinInstance::read(std::istream &is) {
   NiObject::read(is);
-  is >> skinPartition >> skeletonRoot;
+  is >> data;
+  is >> skinPartition;
+  is >> skeletonRoot;
   io::readBytes(is, numBones);
   bones.reserve(numBones);
   for (auto i = 0; i < numBones; ++i) {

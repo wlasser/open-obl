@@ -283,9 +283,8 @@ std::istream &operator>>(std::istream &is, SkinPartition &t) {
   io::readBytes(is, t.hasVertexWeights);
   if ((t.hasVertexWeights && *t.hasVertexWeights) || !t.hasVertexWeights) {
     for (auto i = 0; i < t.numVertices; ++i) {
-      std::vector<basic::Float> row{};
-      io::readBytes(is, row, t.numWeightsPerVertex);
-      t.vertexWeights.push_back(row);
+      t.vertexWeights.emplace_back();
+      io::readBytes(is, t.vertexWeights.back(), t.numWeightsPerVertex);
     }
   }
 
@@ -301,18 +300,16 @@ std::istream &operator>>(std::istream &is, SkinPartition &t) {
       }
     } else {
       for (auto i = 0; i < t.numStrips; ++i) {
-        std::vector<basic::UShort> row{};
-        io::readBytes(is, row, t.stripLengths[i]);
-        t.strips.push_back(row);
+        t.strips.emplace_back();
+        io::readBytes(is, t.strips.back(), t.stripLengths[i]);
       }
     }
   }
 
   io::readBytes(is, t.hasBoneIndices);
   for (auto i = 0; i < t.numVertices; ++i) {
-    std::vector<basic::Byte> row{};
-    io::readBytes(is, row, t.numWeightsPerVertex);
-    t.boneIndices.push_back(row);
+    t.boneIndices.emplace_back();
+    io::readBytes(is, t.boneIndices.back(), t.numWeightsPerVertex);
   }
 
   return is;
