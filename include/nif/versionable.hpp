@@ -257,6 +257,12 @@ constexpr Version verOf(const char *str, std::size_t size) {
     pos += 1;
   }
 
+  // If we are not at the end of the string, then the version is too long
+  // and must be invalid.
+  if (pos <= size) {
+    throw std::range_error("version is too long, maybe too many chunks?");
+  }
+
   return version;
 }
 
