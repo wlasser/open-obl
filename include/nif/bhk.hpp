@@ -7,6 +7,7 @@
 #include "nif/versionable.hpp"
 #include <array>
 #include <istream>
+#include <vector>
 
 namespace nif::bhk {
 namespace Enum {

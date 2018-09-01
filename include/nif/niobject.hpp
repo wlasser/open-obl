@@ -7,6 +7,7 @@
 #include <istream>
 #include <limits>
 #include <tuple>
+#include <vector>
 
 namespace nif {
 

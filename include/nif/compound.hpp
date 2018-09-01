@@ -6,6 +6,7 @@
 #include "nif/enum.hpp"
 #include "nif/versionable.hpp"
 #include <array>
+#include <string>
 #include <variant>
 #include <vector>
 
