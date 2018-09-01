@@ -7,9 +7,11 @@
 #include "nif/niobject.hpp"
 
 #include <OgreHardwareBufferManager.h>
+#include <OgreLogManager.h>
 #include <OgreMesh.h>
 #include <OgreResourceGroupManager.h>
 #include <OgreSubMesh.h>
+#include <map>
 
 namespace engine {
 
@@ -41,6 +43,7 @@ nif::Version NifLoader::peekVersion(std::istream &is) {
 }
 
 void NifLoader::loadResource(Ogre::Resource *resource) {
+  auto &logger = Ogre::LogManager::getSingleton();
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);
@@ -105,6 +108,39 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
     groups = *header.groups;
   }
 
+  // Forgive me for this. Instead of doing an if-else over every block type,
+  // calling addVertex() with identical arguments and duplication the if
+  // condition in the template argument, we just query a map of member function
+  // pointers. The macro helps writing the block type twice.
+  // we use a map from
+  typedef void(NifLoader::*addVertex_t)(BlockGraph &,
+                                        BlockGraph::vertex_descriptor,
+                                        nif::Version,
+                                        std::istream &);
+  std::map<std::string, addVertex_t> blockAddVertexMap{};
+
+#define ENGINE_NIF_LOADER_ADD_BLOCK(blockType) \
+    blockAddVertexMap.emplace(#blockType, &NifLoader::addVertex<blockType>);
+
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiExtraData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiBinaryExtraData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiIntegerExtraData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiStringExtraData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(BSXFlags);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiMaterialProperty);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiTexturingProperty);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiCollisionObject);
+  //ENGINE_NIF_LOADER_ADD_BLOCK(NiNode);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiAdditionalGeometryData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiGeometryData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiTriShapeData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiSkinPartition);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiSkinData);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiSkinInstance);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiGeometry);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiTriShape);
+  ENGINE_NIF_LOADER_ADD_BLOCK(NiSourceTexture);
+
   // The rest of the file is a series of NiObjects, called blocks, whose types
   // are given in the corresponding entries of blockTypes. Some of the blocks
   // have children, so the blocks form a forest (i.e. a set of trees).
@@ -116,7 +152,16 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   BlockGraph blocks{numBlocks};
   for (unsigned long i = 0; i < numBlocks; ++i) {
     auto &blockType = *blockTypes[i];
-    if (blockType == "NiNode") {
+    auto vertexAdder = blockAddVertexMap.find(blockType);
+    if (vertexAdder != blockAddVertexMap.end()) {
+      const auto &func = vertexAdder->second;
+      (this->*func)(blocks, i, nifVersion, is);
+      logger.logMessage(std::string("Read block ")
+                            .append(std::to_string(i))
+                            .append(" (")
+                            .append(blockType)
+                            .append(")"));
+    } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
       block->read(is);
       for (const auto &child : block->children) {
@@ -124,10 +169,6 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
         addEdge(blocks, i, child);
       }
       blocks[i] = std::move(block);
-    } else if (blockType == "NiTriShape") {
-      addVertex<NiTriShape>(blocks, i, nifVersion, is);
-    } else if (blockType == "NiTriShapeData") {
-      addVertex<NiTriShapeData>(blocks, i, nifVersion, is);
     } else {
       // TODO: Implement the other blocks
       break;

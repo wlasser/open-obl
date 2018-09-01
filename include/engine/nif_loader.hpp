@@ -51,7 +51,12 @@ void NifLoader::addEdge(BlockGraph &blocks,
 template<class T>
 void NifLoader::addVertex(BlockGraph &blocks, BlockGraph::vertex_descriptor u,
                           nif::Version nifVersion, std::istream &is) {
-  auto block = std::make_shared<T>(nifVersion);
+  std::shared_ptr<T> block{};
+  if constexpr (std::is_base_of_v<nif::Versionable, T>) {
+    block = std::make_shared<T>(nifVersion);
+  } else {
+    block = std::make_shared<T>();
+  }
   block->read(is);
   blocks[u] = std::move(block);
 }
