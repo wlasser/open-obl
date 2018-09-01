@@ -329,6 +329,7 @@ struct NiGeometryData : NiObject, Versionable {
   basic::Bool hasVertices = true;
   std::vector<compound::Vector3> vertices{};
 
+  // Lower 5 bits replace numUVSets
   VersionOptional<Enum::VectorFlags, "10.0.1.0"_ver, Unbounded>
       vectorFlags{version};
 
@@ -346,7 +347,6 @@ struct NiGeometryData : NiObject, Versionable {
   basic::Bool hasVertexColors{};
   std::vector<compound::Color4> vertexColors{};
 
-  // Top 10 bits are flags. Bit 12 is set if tangents or bitangents are present.
   VersionOptional<basic::UShort, Unbounded, "4.2.2.0"_ver> numUVSets{version};
 
   VersionOptional<basic::Bool, Unbounded, "4.0.0.2"_ver> hasUV{version};
@@ -358,7 +358,7 @@ struct NiGeometryData : NiObject, Versionable {
   VersionOptional<Enum::ConsistencyType, "10.0.1.0"_ver, Unbounded>
       consistencyFlags{version, Enum::ConsistencyType::CT_MUTABLE};
 
-  VersionOptional<basic::Ref<AbstractAdditionalGeometryData>, "20.0.0.0.4"_ver, Unbounded>
+  VersionOptional<basic::Ref<AbstractAdditionalGeometryData>, "20.0.0.4"_ver, Unbounded>
       additionalData{version};
 
   void read(std::istream &is) override;

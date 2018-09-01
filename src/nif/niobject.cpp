@@ -5,7 +5,7 @@ namespace nif {
 
 void NiExtraData::read(std::istream &is) {
   NiObject::read(is);
-  io::readBytes(is, name);
+  is >> name;
   is >> next;
 }
 
@@ -51,7 +51,7 @@ void NiObjectNet::read(std::istream &is) {
       is >> extraDataArray->back();
     }
   }
-  io::readBytes(is, controller);
+  is >> controller;
 }
 
 void NiProperty::read(std::istream &is) {
@@ -61,12 +61,16 @@ void NiProperty::read(std::istream &is) {
 void NiMaterialProperty::read(std::istream &is) {
   NiProperty::read(is);
   io::readBytes(is, flags);
-  is >> ambientColor >> diffuseColor >> specularColor >> emissiveColor;
+  is >> ambientColor;
+  is >> diffuseColor;
+  is >> specularColor;
+  is >> emissiveColor;
   io::readBytes(is, glossiness);
   io::readBytes(is, alpha);
 }
 
 void NiTexturingProperty::read(std::istream &is) {
+  NiProperty::read(is);
   io::readBytes(is, flags);
   io::readBytes(is, applyMode);
   io::readBytes(is, textureCount);
@@ -223,7 +227,9 @@ void NiSkinInstance::read(std::istream &is) {
 
 void NiGeometry::read(std::istream &is) {
   NiAVObject::read(is);
-  is >> data >> skinInstance >> materialData;
+  is >> data;
+  is >> skinInstance;
+  is >> materialData;
 }
 
 void NiTriBasedGeom::read(std::istream &is) {
@@ -301,29 +307,37 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, radius);
 
   io::readBytes(is, hasVertexColors);
-  vertexColors.reserve(numVertices);
-  for (auto i = 0; i < numVertices; ++i) {
-    vertexColors.emplace_back();
-    is >> vertexColors.back();
+  if (hasVertexColors) {
+    vertexColors.reserve(numVertices);
+    for (auto i = 0; i < numVertices; ++i) {
+      vertexColors.emplace_back();
+      is >> vertexColors.back();
+    }
   }
 
   io::readBytes(is, numUVSets);
   io::readBytes(is, hasUV);
-  if (numUVSets && hasUV) {
-    std::size_t arr1 = static_cast<uint16_t>(*numUVSets & 0b11111)
-        | static_cast<uint16_t>(*vectorFlags & Enum::VectorFlags::VF_UV_MASK);
-    for (auto i = 0; i < arr1; ++i) {
-      std::vector<compound::TexCoord> row{};
-      for (auto j = 0; j < numVertices; ++j) {
-        row.emplace_back();
-        is >> row.back();
-      }
-      uvSets.push_back(row);
+  // First array dimension is the number of uv sets. For high versions this is
+  // the lower 5 bits of vectorFlags, for low versions this is the lower 5 bits
+  // of numUVSets. Since hasUV is present only if numUVSets is, and
+  // hasUV == (numUVSets != 0), we can ignore hasUV.
+  uint16_t arr1{};
+  if (vectorFlags) {
+    arr1 = static_cast<uint16_t>(*vectorFlags & Enum::VectorFlags::VF_UV_MASK);
+  } else if (numUVSets) {
+    arr1 = *numUVSets & 0b11111;
+  }
+  for (auto i = 0; i < arr1; ++i) {
+    std::vector<compound::TexCoord> row{};
+    for (auto j = 0; j < numVertices; ++j) {
+      row.emplace_back();
+      is >> row.back();
     }
+    uvSets.push_back(row);
   }
 
   io::readBytes(is, consistencyFlags);
-  io::readBytes(is, additionalData);
+  is >> additionalData;
 }
 
 void NiTriBasedGeomData::read(std::istream &is) {
@@ -360,10 +374,13 @@ void NiSourceTexture::read(std::istream &is) {
   io::readBytes(is, useExternal);
 
   if (useExternal) {
-    auto texFile = textureFileData.emplace<ExternalTextureFile>(version);
-    is >> texFile.filename >> texFile.unknownRef;
+    ExternalTextureFile &texFile =
+        textureFileData.emplace<ExternalTextureFile>(version);
+    is >> texFile.filename;
+    is >> texFile.unknownRef;
   } else {
-    auto texFile = textureFileData.emplace<InternalTextureFile>(version);
+    InternalTextureFile &texFile =
+        textureFileData.emplace<InternalTextureFile>(version);
     io::readBytes(is, texFile.unknownByte);
     is >> texFile.filename;
   }

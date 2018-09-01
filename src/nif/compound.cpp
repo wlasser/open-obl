@@ -251,8 +251,10 @@ std::istream &operator>>(std::istream &is, Header &t) {
 
 std::istream &operator>>(std::istream &is, MaterialData &t) {
   io::readBytes(is, t.hasShader);
-  is >> t.shaderName;
-  io::readBytes(is, t.shaderExtraData);
+  if (t.hasShader) {
+    is >> t.shaderName;
+    io::readBytes(is, t.shaderExtraData);
+  }
 
   return is;
 }
