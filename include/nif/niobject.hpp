@@ -21,7 +21,8 @@ inline NiObject::~NiObject() = default;
 inline void NiObject::read(std::istream &) {}
 
 struct NiExtraData : NiObject, Versionable {
-  VersionOptional<std::string, "10.0.1.0"_ver, Unbounded> name{version};
+  VersionOptional<compound::SizedString, "10.0.1.0"_ver, Unbounded>
+      name{version};
 
   VersionOptional<basic::Ref<NiExtraData>, Unbounded, "4.2.2.0"_ver>
       next{version};
@@ -50,7 +51,7 @@ struct NiStringExtraData : NiExtraData {
   VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver>
       bytesRemaining{version};
 
-  compound::String data{version};
+  compound::SizedString data{};
 
   void read(std::istream &is) override;
   explicit NiStringExtraData(Version version) : NiExtraData(version) {}
@@ -114,7 +115,6 @@ struct NiTimeController : NiObject {
 inline NiTimeController::~NiTimeController() = default;
 
 struct NiObjectNet : NiObject, Versionable {
-
   compound::SizedString name{};
 
   // Here, extraData entry has a link to another extraData entry,

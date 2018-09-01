@@ -25,12 +25,6 @@ struct SizedString {
   std::string str() const;
 };
 
-struct String : Versionable {
-  VersionOptional<SizedString, Unbounded, "20.0.0.5"_ver> string{version};
-  VersionOptional<basic::StringIndex, "20.1.0.3"_ver, Unbounded> index{version};
-  explicit String(uint32_t version) : Versionable(version) {}
-};
-
 struct ByteArray {
   basic::UInt dataSize{};
   std::vector<basic::Byte> data{};
@@ -64,8 +58,7 @@ using Color4 = Color4T<basic::Float>;
 using ByteColor4 = Color4T<basic::Byte>;
 
 struct FilePath : Versionable {
-  VersionOptional<SizedString, Unbounded, "20.0.0.5"_ver> string{version};
-  VersionOptional<basic::StringIndex, "20.1.0.3"_ver, Unbounded> index{version};
+  SizedString string{};
   explicit FilePath(uint32_t version) : Versionable(version) {}
 };
 
@@ -541,7 +534,6 @@ struct FormatPrefs {
 };
 
 std::istream &operator>>(std::istream &is, SizedString &t);
-std::istream &operator>>(std::istream &is, String &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
 std::istream &operator>>(std::istream &is, ByteMatrix &t);
 template<class T>

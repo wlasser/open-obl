@@ -13,12 +13,6 @@ std::istream &operator>>(std::istream &is, SizedString &t) {
   return is;
 }
 
-std::istream &operator>>(std::istream &is, String &t) {
-  is >> t.string;
-  io::readBytes(is, t.index);
-  return is;
-}
-
 std::istream &operator>>(std::istream &is, ByteArray &t) {
   io::readBytes(is, t.dataSize);
   io::readBytes(is, t.data, t.dataSize);
@@ -43,7 +37,6 @@ std::istream &operator>>(std::istream &is, ByteMatrix &t) {
 
 std::istream &operator>>(std::istream &is, FilePath &t) {
   is >> t.string;
-  io::readBytes(is, t.index);
   return is;
 }
 
