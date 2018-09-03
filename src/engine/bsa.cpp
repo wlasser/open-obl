@@ -1,5 +1,6 @@
 #include "bsa.hpp"
 #include "engine/bsa.hpp"
+#include "engine/ogre_stream_wrappers.hpp"
 #include <ctime>
 #include <filesystem>
 #include <functional>
@@ -11,6 +12,7 @@ namespace {
 
 class BSAArchive : public Ogre::Archive {
  private:
+  using BSAArchiveStream = OgreStandardStream<bsa::FileData>;
   // BSAReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.
@@ -56,26 +58,6 @@ class BSAArchive : public Ogre::Archive {
                            bool readOnly) const override;
 };
 
-class BSADataStream : public Ogre::DataStream {
- private:
-  // FileData is not closeable since it uses RAII. Why would you want an object
-  // in an unusable but defined state? We use an optional to simulate this.
-  // TODO: Check this state in most operations and throw a custom error
-  // Ogre requires tell to be const, because obviously checking the stream
-  // position doesn't modify the data, but for std::istream, the corresponding
-  // tellg *does* modify the stream by setting failbit/badbit. Hence 'mutable'.
-  // TODO: Replace bsa::FileData with its unique_ptr and a position indicator
-  mutable std::optional<bsa::FileData> fileData;
- public:
-  BSADataStream(const Ogre::String &name, bsa::FileData &&fileData);
-  ~BSADataStream() override;
-  void close() override;
-  bool eof() const override;
-  std::size_t read(void *buf, std::size_t count) override;
-  void seek(std::size_t pos) override;
-  void skip(long count) override;
-  std::size_t tell() const override;
-};
 }
 
 template<class T>
@@ -200,7 +182,7 @@ Ogre::DataStreamPtr BSAArchive::open(const Ogre::String &filename,
   auto path = std::filesystem::path(filename);
   auto file = path.filename();
   auto folder = path.remove_filename();
-  return std::make_shared<BSADataStream>(filename, (*reader)[folder][file]);
+  return std::make_shared<BSAArchiveStream>(filename, (*reader)[folder][file]);
 }
 
 std::time_t BSAArchive::getModifiedTime(const Ogre::String &filename) const {
@@ -216,39 +198,6 @@ bool BSAArchive::isCaseSensitive() const {
 
 bool BSAArchive::isReadOnly() const {
   return true;
-}
-
-BSADataStream::BSADataStream(const Ogre::String &name,
-                             bsa::FileData &&fileData)
-    : Ogre::DataStream(name), fileData(std::move(fileData)) {}
-
-BSADataStream::~BSADataStream() = default;
-
-void BSADataStream::close() {
-  fileData.reset();
-}
-
-bool BSADataStream::eof() const {
-  return !fileData || fileData->eof();
-}
-
-std::size_t BSADataStream::read(void *buf, std::size_t count) {
-  fileData->read(static_cast<char *>(buf), count);
-  // cppreference: "Except in the constructors of std::streambuf, negative
-  // values of std::streamsize are never used."
-  return static_cast<std::size_t>(fileData->gcount());
-}
-
-void BSADataStream::seek(std::size_t pos) {
-  fileData->seekg(pos);
-}
-
-void BSADataStream::skip(long count) {
-  fileData->seekg(count, std::ios_base::cur);
-}
-
-std::size_t BSADataStream::tell() const {
-  return static_cast<std::size_t>(fileData->tellg());
 }
 
 Ogre::Archive *BSAArchiveFactory::createInstance(const Ogre::String &name,

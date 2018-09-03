@@ -1,8 +1,15 @@
-#include "engine/ogre_data_stream_wrapper.hpp"
+#include "engine/ogre_stream_wrappers.hpp"
+#include <OgreDataStream.h>
+#include <fstream>
+#include <istream>
+#include <streambuf>
 
 namespace engine {
 
-auto OgreDataStreamWrapper::underflow() -> int_type {
+OgreDataStreambuf::OgreDataStreambuf(std::shared_ptr<Ogre::DataStream> ogreDataStream)
+    : std::streambuf(), ogreDataStream(std::move(ogreDataStream)) {}
+
+auto OgreDataStreambuf::underflow() -> int_type {
   if (ogreDataStream->eof()) return traits_type::eof();
   char_type ch{};
   ogreDataStream->read(&ch, 1);
@@ -10,14 +17,14 @@ auto OgreDataStreamWrapper::underflow() -> int_type {
   return traits_type::to_int_type(ch);
 }
 
-auto OgreDataStreamWrapper::uflow() -> int_type {
+auto OgreDataStreambuf::uflow() -> int_type {
   if (ogreDataStream->eof()) return traits_type::eof();
   char_type ch{};
   ogreDataStream->read(&ch, 1);
   return traits_type::to_int_type(ch);
 }
 
-auto OgreDataStreamWrapper::pbackfail(int_type c) -> int_type {
+auto OgreDataStreambuf::pbackfail(int_type c) -> int_type {
   if (ogreDataStream->tell() == 0) return traits_type::eof();
   ogreDataStream->skip(-1);
   int_type lastCh{};
@@ -27,17 +34,17 @@ auto OgreDataStreamWrapper::pbackfail(int_type c) -> int_type {
   return c == traits_type::eof() ? traits_type::not_eof(c) : c;
 }
 
-auto OgreDataStreamWrapper::seekpos(pos_type pos,
-                                    std::ios_base::openmode which) -> pos_type {
+auto OgreDataStreambuf::seekpos(pos_type pos,
+                                std::ios_base::openmode which) -> pos_type {
   return seekoff(off_type(pos), std::ios_base::beg, which);
 }
 
-auto OgreDataStreamWrapper::seekoff(off_type off, std::ios_base::seekdir dir,
-                                    std::ios_base::openmode which) -> pos_type {
+auto OgreDataStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
+                                std::ios_base::openmode which) -> pos_type {
   switch (dir) {
     case std::ios_base::beg:
-      ogreDataStream
-          ->seek(off < 0 ? 0u : static_cast<std::size_t>(pos_type(off)));
+      if (off < 0) ogreDataStream->seek(0u);
+      else ogreDataStream->seek(static_cast<std::size_t>(pos_type(off)));
       break;
     case std::ios_base::cur:ogreDataStream->skip(off);
       break;
@@ -46,6 +53,11 @@ auto OgreDataStreamWrapper::seekoff(off_type off, std::ios_base::seekdir dir,
     default:return pos_type(off_type(-1));
   }
   return ogreDataStream->tell();
+}
+
+template<>
+void OgreStandardStream<std::ifstream>::close() {
+  stream.close();
 }
 
 } // namespace engine

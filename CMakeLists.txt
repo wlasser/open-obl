@@ -63,7 +63,7 @@ target_sources(OpenOblivion PRIVATE
         src/bsa.cpp
         src/engine/bsa.cpp
         src/engine/nif_loader.cpp
-        src/engine/ogre_data_stream_wrapper.cpp
+        src/engine/ogre_stream_wrappers.cpp
         src/esp.cpp
         src/main.cpp
         src/records.cpp
@@ -76,7 +76,7 @@ target_sources(OpenOblivion PRIVATE
         include/engine/bsa.hpp
         include/engine/conversions.hpp
         include/engine/nif_loader.hpp
-        include/engine/ogre_data_stream_wrapper.hpp
+        include/engine/ogre_stream_wrappers.hpp
         include/esp.hpp
         include/formid.hpp
         include/magic_effects.hpp
