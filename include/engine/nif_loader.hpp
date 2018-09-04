@@ -27,7 +27,6 @@ class NifLoader : public Ogre::ManualResourceLoader {
                                         BlockGraph::vertex_descriptor,
                                         nif::Version,
                                         std::istream &);
-  const static std::map<std::string, addVertex_t> blockAddVertexMap;
 
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
 

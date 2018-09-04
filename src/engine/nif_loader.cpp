@@ -20,29 +20,6 @@
 
 namespace engine {
 
-const std::map<std::string, NifLoader::addVertex_t>
-    NifLoader::blockAddVertexMap{
-    {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
-    {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
-    {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
-    {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
-    {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
-    {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
-    {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
-    {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
-    // NiNode
-    {"NiAdditionalGeometryData",
-     &NifLoader::addVertex<nif::NiAdditionalGeometryData>},
-    {"NiGeometryData", &NifLoader::addVertex<nif::NiGeometryData>},
-    {"NiTriShapeData", &NifLoader::addVertex<nif::NiTriShapeData>},
-    {"NiSkinPartition", &NifLoader::addVertex<nif::NiSkinPartition>},
-    {"NiSkinData", &NifLoader::addVertex<nif::NiSkinData>},
-    {"NiSkinInstance", &NifLoader::addVertex<nif::NiSkinInstance>},
-    {"NiGeometry", &NifLoader::addVertex<nif::NiGeometry>},
-    {"NiTriShape", &NifLoader::addVertex<nif::NiTriShape>},
-    {"NiSourceTexture", &NifLoader::addVertex<nif::NiSourceTexture>}
-};
-
 nif::Version NifLoader::peekVersion(std::istream &is) {
   auto startPos = is.tellg();
   nif::basic::HeaderString headerVersion{};
@@ -124,6 +101,28 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is,
   if (header.groups) {
     groups = *header.groups;
   }
+
+  const std::map<std::string, NifLoader::addVertex_t> blockAddVertexMap{
+      {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
+      {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
+      {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
+      {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
+      {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
+      {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
+      {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
+      {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
+      // NiNode
+      {"NiAdditionalGeometryData",
+       &NifLoader::addVertex<nif::NiAdditionalGeometryData>},
+      {"NiGeometryData", &NifLoader::addVertex<nif::NiGeometryData>},
+      {"NiTriShapeData", &NifLoader::addVertex<nif::NiTriShapeData>},
+      {"NiSkinPartition", &NifLoader::addVertex<nif::NiSkinPartition>},
+      {"NiSkinData", &NifLoader::addVertex<nif::NiSkinData>},
+      {"NiSkinInstance", &NifLoader::addVertex<nif::NiSkinInstance>},
+      {"NiGeometry", &NifLoader::addVertex<nif::NiGeometry>},
+      {"NiTriShape", &NifLoader::addVertex<nif::NiTriShape>},
+      {"NiSourceTexture", &NifLoader::addVertex<nif::NiSourceTexture>}
+  };
 
   // The rest of the file is a series of NiObjects, called blocks, whose types
   // are given in the corresponding entries of blockTypes. Some of the blocks
