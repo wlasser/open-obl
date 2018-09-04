@@ -245,7 +245,8 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
   if (data->hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : data->vertices) {
-      auto v = scale * rotation * conversions::fromNif(vertex) + translation;
+      auto v = conversions::fromBSCoordinates(
+          scale * rotation * conversions::fromNif(vertex) + translation);
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
@@ -264,7 +265,8 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
   if (data->hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : data->normals) {
-      auto n = rotation * conversions::fromNif(normal) + translation;
+      auto n = conversions::fromBSCoordinates(
+          rotation * conversions::fromNif(normal));
       *it = n.x;
       *(it + 1) = n.y;
       *(it + 2) = n.z;

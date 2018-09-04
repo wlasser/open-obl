@@ -26,6 +26,17 @@ Ogre::ColourValue fromNif(const nif::compound::Color4 &c) {
   return Ogre::ColourValue(c.r, c.g, c.b, c.a);
 }
 
+Ogre::Vector3 fromBSCoordinates(const Ogre::Vector3 &v) {
+  return {v.x, v.z, -v.y};
+}
+
+Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
+  const Ogre::Matrix3 C = {1, 0, 0,
+                           0, 0, 1,
+                           0, -1, 0};
+  return C * m * C.transpose();
+}
+
 } // namespace engine::conversions
 
 #endif //OPENOBLIVION_ENGINE_CONVERSIONS_HPP

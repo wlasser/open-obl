@@ -94,14 +94,14 @@ void App::setup() {
   auto meshEntityNode = rootNode->createChildSceneNode();
   meshEntityNode->attachObject(meshEntity);
   meshEntityNode->setPosition(0.0f, 0.0f, 0.0f);
-  meshEntity->setMaterialName("texturePlaneMaterial");
+  //meshEntity->setMaterialName("texturePlaneMaterial");
 
   auto bbMin = meshEntity->getBoundingBox().getMinimum();
   auto bbMax = meshEntity->getBoundingBox().getMaximum();
   std::clog << "(" << bbMin.x << ", " << bbMin.y << ", " << bbMin.z << ")\n";
   std::clog << "(" << bbMax.x << ", " << bbMax.y << ", " << bbMax.z << ")\n";
-  cameraNode->setPosition(0, 100, 80);
-  cameraNode->lookAt({0, 0, 80}, Ogre::Node::TS_WORLD);
+  cameraNode->setPosition(0, 80, -100);
+  cameraNode->lookAt({0, 80, 0}, Ogre::Node::TS_WORLD);
 }
 
 bool App::keyPressed(const OgreBites::KeyboardEvent &event) {
