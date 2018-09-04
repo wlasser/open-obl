@@ -246,17 +246,18 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
   if (data->hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : data->vertices) {
-      *it = vertex.x;
-      *(it + 1) = vertex.y;
-      *(it + 2) = vertex.z;
+      auto v = scale * rotation * conversions::fromNif(vertex) + translation;
+      *it = v.x;
+      *(it + 1) = v.y;
+      *(it + 2) = v.z;
       it += offset;
       // While we're iterating, check if we need to enlarge the bounding box
-      if (vertex.x < boundingBoxMin.x) boundingBoxMin.x = vertex.x;
-      else if (vertex.x > boundingBoxMax.x) boundingBoxMax.x = vertex.x;
-      if (vertex.y < boundingBoxMin.y) boundingBoxMin.y = vertex.y;
-      else if (vertex.y > boundingBoxMax.y) boundingBoxMax.y = vertex.y;
-      if (vertex.z < boundingBoxMin.z) boundingBoxMin.z = vertex.z;
-      else if (vertex.z > boundingBoxMax.z) boundingBoxMax.z = vertex.z;
+      if (v.x < boundingBoxMin.x) boundingBoxMin.x = v.x;
+      else if (v.x > boundingBoxMax.x) boundingBoxMax.x = v.x;
+      if (v.y < boundingBoxMin.y) boundingBoxMin.y = v.y;
+      else if (v.y > boundingBoxMax.y) boundingBoxMax.y = v.y;
+      if (v.z < boundingBoxMin.z) boundingBoxMin.z = v.z;
+      else if (v.z > boundingBoxMax.z) boundingBoxMax.z = v.z;
     }
     localOffset += 3;
   }
@@ -264,9 +265,10 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
   if (data->hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : data->normals) {
-      *it = normal.x;
-      *(it + 1) = normal.y;
-      *(it + 2) = normal.z;
+      auto n = rotation * conversions::fromNif(normal) + translation;
+      *it = n.x;
+      *(it + 1) = n.y;
+      *(it + 2) = n.z;
       it += offset;
     }
     localOffset += 3;
