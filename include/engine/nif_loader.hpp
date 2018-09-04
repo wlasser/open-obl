@@ -4,8 +4,12 @@
 #include "nif/niobject.hpp"
 #include "nif/versionable.hpp"
 #include <boost/graph/adjacency_list.hpp>
+#include <OgreLogManager.h>
 #include <OgreResource.h>
+#include <istream>
+#include <map>
 #include <memory>
+#include <string>
 
 namespace engine {
 
@@ -16,6 +20,16 @@ class NifLoader : public Ogre::ManualResourceLoader {
   using Block = std::shared_ptr<nif::NiObject>;
   using BlockGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                            boost::bidirectionalS, Block>;
+
+  // Used for much briefer addition of vertices to a block graph, saving a large
+  // if-else over the block type.
+  typedef void(NifLoader::*addVertex_t)(BlockGraph &,
+                                        BlockGraph::vertex_descriptor,
+                                        nif::Version,
+                                        std::istream &);
+  const static std::map<std::string, addVertex_t> blockAddVertexMap;
+
+  Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
 
   // Add an edge from u to v. Does not check that v is a valid reference.
   template<class T>
@@ -33,6 +47,16 @@ class NifLoader : public Ogre::ManualResourceLoader {
   // header independently, grabs the version, then jumps back so that the header
   // can be read properly.
   nif::Version peekVersion(std::istream &);
+
+  BlockGraph createBlockGraph(std::istream &is, Ogre::Mesh *mesh);
+
+  // TODO: Use some kind of polymorphism here
+  Ogre::AxisAlignedBox parseNiTriShape(nif::NiTriShape *block,
+                                       const BlockGraph &blocks,
+                                       Ogre::Mesh *mesh);
+  void parseNiMaterialProperty(nif::NiMaterialProperty *block,
+                               const BlockGraph &blocks,
+                               Ogre::Mesh *mesh);
 
  public:
   void loadResource(Ogre::Resource *resource) override;
