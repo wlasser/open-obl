@@ -47,7 +47,7 @@ class NifLoader : public Ogre::ManualResourceLoader {
   // can be read properly.
   nif::Version peekVersion(std::istream &);
 
-  BlockGraph createBlockGraph(std::istream &is, Ogre::Mesh *mesh);
+  BlockGraph createBlockGraph(std::istream &is);
 
   // TODO: Use some kind of polymorphism here
   Ogre::AxisAlignedBox parseNiTriShape(nif::NiTriShape *block,

@@ -47,8 +47,7 @@ nif::Version NifLoader::peekVersion(std::istream &is) {
   return nif::verOf(versionString.c_str(), versionString.length());
 }
 
-NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is,
-                                                  Ogre::Mesh *mesh) {
+NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   using namespace nif;
 
   Version nifVersion = peekVersion(is);
@@ -382,41 +381,22 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   auto ogreDataStreamBuffer = OgreDataStreambuf{ogreDataStream};
   std::istream is{&ogreDataStreamBuffer};
 
-  auto blocks = createBlockGraph(is, mesh);
+  auto blocks = createBlockGraph(is);
 
-  Ogre::Vector3 boundingBoxMin{
-      std::numeric_limits<float>::max(),
-      std::numeric_limits<float>::max(),
-      std::numeric_limits<float>::max()
-  };
-  Ogre::Vector3 boundingBoxMax{
-      std::numeric_limits<float>::min(),
-      std::numeric_limits<float>::min(),
-      std::numeric_limits<float>::min()
-  };
+  Ogre::AxisAlignedBox boundingBox{};
 
   // The second pass is over the block graph
   for (const auto &index : blocks.vertex_set()) {
-    auto niObject = blocks[index];
-    if (auto block = dynamic_cast<nif::NiTriShape *>(niObject.get())) {
+    auto niObject = blocks[index].get();
+    if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
       auto bbox = parseNiTriShape(block, blocks, mesh);
-
-      auto min = bbox.getMinimum();
-      boundingBoxMin.x = std::min(boundingBoxMin.x, min.x);
-      boundingBoxMin.y = std::min(boundingBoxMin.y, min.y);
-      boundingBoxMin.z = std::min(boundingBoxMin.z, min.z);
-
-      auto max = bbox.getMaximum();
-      boundingBoxMax.x = std::max(boundingBoxMax.x, max.x);
-      boundingBoxMax.y = std::max(boundingBoxMax.y, max.y);
-      boundingBoxMax.z = std::max(boundingBoxMax.z, max.z);
-    } else if (auto
-        block = dynamic_cast<nif::NiMaterialProperty *>(niObject.get())) {
+      boundingBox.merge(bbox);
+    } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
       parseNiMaterialProperty(block, blocks, mesh);
     }
   }
 
-  mesh->_setBounds(Ogre::AxisAlignedBox(boundingBoxMin, boundingBoxMax));
+  mesh->_setBounds(boundingBox);
 }
 
 } // namespace engine
