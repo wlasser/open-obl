@@ -39,17 +39,17 @@ struct ByteMatrix {
 
 template<class T>
 struct Color3T {
-  T r;
-  T g;
-  T b;
+  T r{};
+  T g{};
+  T b{};
 };
 
 template<class T>
 struct Color4T {
-  T r;
-  T g;
-  T b;
-  T a;
+  T r{};
+  T g{};
+  T b{};
+  T a{};
 };
 
 using Color3 = Color3T<basic::Float>;
