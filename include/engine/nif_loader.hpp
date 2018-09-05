@@ -65,29 +65,50 @@ class NifLoader : public Ogre::ManualResourceLoader {
 
 // When constructing the mesh we want to iterate over the block graph, but
 // because of references and pointers we will have to jump around and load
-// things out of order when needed. By using a std::set we get efficient
-// checking if a block has been loaded, and can remove blocks once loaded to
-// avoid loading the same block twice. Since nif files can potentially have
-// cycles (not sure if this happens in practice) we tag each vertex with an
-// inProgress flag. If we go to load a vertex and find it inProgress, then there
-// is a cycle.
+// things out of order when needed. To detect cycles and ensure that some blocks
+// are only loaded once, we tag each block with a LoadStatus.
 class NifLoaderState {
  private:
-  // Used to keep track of which blocks have been loaded and are currently
-  // being loaded.
+  // Used to tag blocks to keep track of loading.
   enum class LoadStatus {
     Unloaded,
     Loading,
     Loaded
   };
+
+  // A block and its load status. Blocks can be implicitly promoted to
+  // unloaded TaggedBlocks, used in construction of the block graph.
   struct TaggedBlock {
     NifLoader::Block block{};
     LoadStatus tag{LoadStatus::Unloaded};
 
     // NOLINTNEXTLINE(google-explicit-constructor)
     TaggedBlock(NifLoader::Block block) : block(std::move(block)) {}
+    // Required by BlockGraph
     TaggedBlock() = default;
   };
+
+  // Used for RAII management of block load status. Should be constructed with
+  // the tag of the block that is being loaded at the same scope of the block,
+  // so that it goes out of scope when the block has finished loading.
+  // Automatically detects cycles.
+  class Tagger {
+    LoadStatus &tag;
+   public:
+    explicit Tagger(LoadStatus &tag) : tag{tag} {
+      switch (tag) {
+        case LoadStatus::Unloaded: tag = LoadStatus::Loading;
+          break;
+        case LoadStatus::Loading:
+          throw std::runtime_error("Cycle detected while loading nif file");
+        default:break;
+      }
+    }
+    ~Tagger() {
+      tag = LoadStatus::Loaded;
+    }
+  };
+
   using TaggedBlockGraph = boost::adjacency_list<boost::vecS,
                                                  boost::vecS,
                                                  boost::bidirectionalS,

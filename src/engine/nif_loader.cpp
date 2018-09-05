@@ -355,9 +355,8 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   // material and texture, and so translate to Ogre::SubMesh objects.
   // If a submesh with this name already exists, then it is either already
   // loaded or in the process of loading.
-  if (tag == LoadStatus::Loading) {
-    throw std::runtime_error("Cycle detected while loading nif file");
-  } else if (tag == LoadStatus::Loaded) {
+  Tagger tagger{tag};
+  if (tag == LoadStatus::Loaded) {
     auto submesh = mesh->getSubMesh(block->name.str());
     if (submesh) {
       // TODO: How to get the bounding box once the submesh has been created?
@@ -368,9 +367,22 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
     }
   }
   auto submesh = mesh->createSubMesh(block->name.str());
-  tag = LoadStatus::Loading;
 
   submesh->useSharedVertices = false;
+
+  for (const auto &property : block->properties) {
+    auto propertyRef = static_cast<int32_t>(property);
+    // TODO: Check this is a valid reference
+    auto &taggedPropertyBlock = blocks[propertyRef];
+    auto &propertyTag = taggedPropertyBlock.tag;
+    if (auto niMaterialProperty =
+        dynamic_cast<nif::NiMaterialProperty *>(taggedPropertyBlock.block
+            .get())) {
+      auto material = parseNiMaterialProperty(niMaterialProperty, propertyTag);
+      propertyTag = LoadStatus::Loaded;
+      submesh->setMaterialName(material->getName(), material->getGroup());
+    }
+  }
 
   // Ogre::SubMeshes cannot have transformations applied to them (that is
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
@@ -382,15 +394,12 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   Ogre::Matrix4 transformation{};
   transformation.makeTransform(translation, scale, rotation);
 
-  // Follow the reference to the actual geometry data
   auto dataRef = static_cast<int32_t>(block->data);
   // TODO: Check this is a valid reference
-  auto &taggedBlock = blocks[dataRef];
-  auto data = dynamic_cast<nif::NiTriShapeData *>(taggedBlock.block.get());
-  auto &dataTag = taggedBlock.tag;
-  if (dataTag == LoadStatus::Loading) {
-    throw std::runtime_error("Cycle detected while loading nif file");
-  } else if (dataTag == LoadStatus::Loaded) {
+  auto &taggedDataBlock = blocks[dataRef];
+  auto data = dynamic_cast<nif::NiTriShapeData *>(taggedDataBlock.block.get());
+  Tagger dataTagger{taggedDataBlock.tag};
+  if (taggedDataBlock.tag == LoadStatus::Loaded) {
     return {submesh, getBoundingBox(data, transformation)};
   }
 
@@ -407,8 +416,6 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   submesh->vertexData = vertexData.release();
   submesh->indexData = indexData.release();
 
-  dataTag = LoadStatus::Loaded;
-
   return {submesh, getBoundingBox(data, transformation)};
 }
 
@@ -416,6 +423,19 @@ std::shared_ptr<Ogre::Material>
 NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
                                         LoadStatus &tag) {
   auto &materialManager = Ogre::MaterialManager::getSingleton();
+
+  Tagger tagger{tag};
+  if (tag == LoadStatus::Loaded) {
+    auto material = materialManager.getByName(block->name.str(),
+                                              mesh->getGroup());
+    if (material) {
+      return material;
+    } else {
+      throw std::runtime_error(
+          "NiMaterialProperty marked as loaded but material does not exist");
+    }
+  }
+
   auto material = materialManager.create(block->name.str(), mesh->getGroup());
 
   auto technique = material->getTechnique(0);
@@ -455,10 +475,8 @@ NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
     if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
       auto boundedSubmesh = parseNiTriShape(block, tag);
       boundingBox.merge(boundedSubmesh.bbox);
-      tag = LoadStatus::Loaded;
     } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
       parseNiMaterialProperty(block, tag);
-      tag = LoadStatus::Loaded;
     }
 
     mesh->_setBounds(boundingBox);
@@ -479,7 +497,7 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
 
   auto blocks = createBlockGraph(is);
 
-  NifLoaderState instance(mesh, std::move(blocks));
+  NifLoaderState instance(mesh, blocks);
 }
 
 } // namespace engine
