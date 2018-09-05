@@ -6,6 +6,7 @@
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 
+#include <boost/graph/copy.hpp>
 #include <OgreHardwareBufferManager.h>
 #include <OgreLogManager.h>
 #include <OgreMaterial.h>
@@ -17,6 +18,7 @@
 #include <OgreTechnique.h>
 #include <algorithm>
 #include <map>
+#include <set>
 
 namespace engine {
 
@@ -101,14 +103,17 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
     groups = *header.groups;
   }
 
-  const std::map<std::string, NifLoader::addVertex_t> blockAddVertexMap{
+  const std::map<std::string, addVertex_t> blockAddVertexMap{
       {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
       {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
-      {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
+      {"NiIntegerExtraData",
+       &NifLoader::addVertex<nif::NiIntegerExtraData>},
       {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
       {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
-      {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
-      {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
+      {"NiMaterialProperty",
+       &NifLoader::addVertex<nif::NiMaterialProperty>},
+      {"NiTexturingProperty",
+       &NifLoader::addVertex<nif::NiTexturingProperty>},
       {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
       // NiNode
       {"NiAdditionalGeometryData",
@@ -163,12 +168,27 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   return blocks;
 }
 
-Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
-                                                const BlockGraph &blocks,
-                                                Ogre::Mesh *mesh) {
+NifLoaderState::BoundedSubmesh
+NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   // NiTriShape blocks determine discrete pieces of geometry with a single
   // material and texture, and so translate to Ogre::SubMesh objects.
+  // If a submesh with this name already exists, then it is either already
+  // loaded or in the process of loading.
+  if (tag == LoadStatus::Loading) {
+    throw std::runtime_error("Cycle detected while loading nif file");
+  } else if (tag == LoadStatus::Loaded) {
+    auto submesh = mesh->getSubMesh(block->name.str());
+    if (submesh) {
+      // TODO: How to get the bounding box once the submesh has been created?
+      return {submesh, {}};
+    } else {
+      throw std::runtime_error(
+          "NiTriShape marked as loaded but submesh does not exist");
+    }
+  }
   auto submesh = mesh->createSubMesh(block->name.str());
+  tag = LoadStatus::Loading;
+
   submesh->useSharedVertices = false;
 
   // Ogre::SubMeshes cannot have transformations applied to them (that is
@@ -194,7 +214,7 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
 
   // Follow the reference to the actual geometry data
   auto dataRef = static_cast<int32_t>(block->data);
-  auto data = dynamic_cast<nif::NiTriShapeData *>(blocks[dataRef].get());
+  auto data = dynamic_cast<nif::NiTriShapeData *>(blocks[dataRef].block.get());
 
   // It seems that Ogre expects this to be heap allocated, and will
   // deallocate it when the mesh is unloaded. Still, it makes me uneasy.
@@ -342,12 +362,12 @@ Ogre::AxisAlignedBox NifLoader::parseNiTriShape(nif::NiTriShape *block,
   submesh->indexData->indexCount = numIndices;
   submesh->indexData->indexStart = 0;
 
-  return Ogre::AxisAlignedBox(boundingBoxMin, boundingBoxMax);
+  return {submesh, Ogre::AxisAlignedBox(boundingBoxMin, boundingBoxMax)};
 }
 
-void NifLoader::parseNiMaterialProperty(nif::NiMaterialProperty *block,
-                                        const engine::NifLoader::BlockGraph &blocks,
-                                        Ogre::Mesh *mesh) {
+std::shared_ptr<Ogre::Material>
+NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
+                                        LoadStatus &tag) {
   auto &materialManager = Ogre::MaterialManager::getSingleton();
   auto material = materialManager.create(block->name.str(), mesh->getGroup());
 
@@ -368,10 +388,35 @@ void NifLoader::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 
   // TODO: How to convert from nif glossiness to Ogre shininess?
   pass->setShininess(block->glossiness);
+
+  return material;
+}
+
+NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
+                               NifLoader::BlockGraph untaggedBlocks)
+    : mesh(mesh) {
+
+  boost::copy_graph(untaggedBlocks, blocks);
+
+  Ogre::AxisAlignedBox boundingBox{};
+
+  for (const auto &vertex : blocks.vertex_set()) {
+    auto taggedNiObject = blocks[vertex];
+    const auto &niObject = taggedNiObject.block.get();
+    auto &tag = taggedNiObject.tag;
+
+    if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
+      auto boundedSubmesh = parseNiTriShape(block, tag);
+      boundingBox.merge(boundedSubmesh.bbox);
+    } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
+      parseNiMaterialProperty(block, tag);
+    }
+
+    mesh->_setBounds(boundingBox);
+  }
 }
 
 void NifLoader::loadResource(Ogre::Resource *resource) {
-  auto &logger = Ogre::LogManager::getSingleton();
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);
@@ -385,20 +430,7 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
 
   auto blocks = createBlockGraph(is);
 
-  Ogre::AxisAlignedBox boundingBox{};
-
-  // The second pass is over the block graph
-  for (const auto &index : blocks.vertex_set()) {
-    auto niObject = blocks[index].get();
-    if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
-      auto bbox = parseNiTriShape(block, blocks, mesh);
-      boundingBox.merge(bbox);
-    } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
-      parseNiMaterialProperty(block, blocks, mesh);
-    }
-  }
-
-  mesh->_setBounds(boundingBox);
+  NifLoaderState instance(mesh, std::move(blocks));
 }
 
 } // namespace engine
