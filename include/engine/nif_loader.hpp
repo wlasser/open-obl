@@ -104,6 +104,18 @@ class NifLoaderState {
   std::shared_ptr<Ogre::Material>
   parseNiMaterialProperty(nif::NiMaterialProperty *block, LoadStatus &tag);
 
+  // Reads vertex, normal, and texcoord data from NiTriShapeData and prepares it
+  // for rendering.
+  std::unique_ptr<Ogre::VertexData>
+  generateVertexData(nif::NiTriShapeData *block, Ogre::Matrix4 transformation);
+
+  // Reads triangle data from NiTriShapeData and prepares it for rendering.
+  std::unique_ptr<Ogre::IndexData>
+  generateIndexData(nif::NiTriShapeData *block);
+
+  Ogre::AxisAlignedBox getBoundingBox(nif::NiTriShapeData *block,
+                                      Ogre::Matrix4 transformation);
+
   Ogre::Mesh *mesh;
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
 

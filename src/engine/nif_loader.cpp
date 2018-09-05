@@ -168,6 +168,187 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   return blocks;
 }
 
+Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiTriShapeData *block,
+                                                    Ogre::Matrix4 transformation) {
+  const auto fltMin = std::numeric_limits<float>::min();
+  const auto fltMax = std::numeric_limits<float>::max();
+  Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
+  Ogre::Vector3 bboxMax{fltMin, fltMin, fltMin};
+
+  if (!block->hasVertices || block->vertices.empty()) return {};
+
+  for (const auto &vertex : block->vertices) {
+    auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
+    auto v = conversions::fromBSCoordinates(bsV.xyz());
+    if (v.x < bboxMin.x) bboxMin.x = v.x;
+    else if (v.x > bboxMax.x) bboxMax.x = v.x;
+    if (v.y < bboxMin.y) bboxMin.y = v.y;
+    else if (v.y > bboxMax.y) bboxMax.y = v.y;
+    if (v.z < bboxMin.z) bboxMin.z = v.z;
+    else if (v.z > bboxMax.z) bboxMax.z = v.z;
+  }
+  return {bboxMin, bboxMax};
+}
+
+std::unique_ptr<Ogre::VertexData>
+NifLoaderState::generateVertexData(nif::NiTriShapeData *block,
+                                   Ogre::Matrix4 transformation) {
+  // Ogre expects a heap allocated raw pointer, but to improve exception safety
+  // we construct an unique_ptr then relinquish control of it to Ogre.
+  auto vertexData = std::make_unique<Ogre::VertexData>();
+  vertexData->vertexCount = block->numVertices;
+  auto vertDecl = vertexData->vertexDeclaration;
+  auto vertBind = vertexData->vertexBufferBinding;
+  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+
+  // Specify the order of data in the vertex buffer. This is per vertex,
+  // so the vertices, normals etc will have to be interleaved in the buffer.
+  std::size_t offset{0};
+  std::size_t bytesPerVertex{0};
+  const unsigned short source{0};
+  if (block->hasVertices) {
+    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+                         Ogre::VES_POSITION);
+    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+    offset += 3;
+  }
+  // TODO: Blend weights
+  if (block->hasNormals) {
+    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+                         Ogre::VES_NORMAL);
+    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+    offset += 3;
+  }
+  // TODO: Diffuse color
+  // TODO: Specular color
+  if (!block->uvSets.empty()) {
+    vertDecl->addElement(source, offset, Ogre::VET_FLOAT2,
+                         Ogre::VES_TEXTURE_COORDINATES);
+    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+    offset += 2;
+  }
+
+  // The final vertex buffer is the transpose of the block matrix
+  // v1  v3  v3 ...
+  // n1  n2  n3 ...
+  // uv1 uv2 uv3 ...
+  // ...
+  // where v1 is a column vector of the first vertex position components,
+  // and so on with a row for each of the elements of the vertex
+  // declaration.
+  // TODO: Is there an efficient transpose algorithm to make this abstraction worthwhile?
+  std::vector<float> vertexBuffer(offset * block->numVertices);
+  std::size_t localOffset{0};
+  if (block->hasVertices) {
+    auto it = vertexBuffer.begin();
+    for (const auto &vertex : block->vertices) {
+      auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
+      auto v = conversions::fromBSCoordinates(bsV.xyz());
+      *it = v.x;
+      *(it + 1) = v.y;
+      *(it + 2) = v.z;
+      it += offset;
+    }
+    localOffset += 3;
+  }
+  // TODO: Blend weights
+  if (block->hasNormals) {
+    // Normal vectors are not translated and transform with the inverse
+    // transpose of the transformation matrix
+    auto normalTransformation = transformation;
+    normalTransformation.setTrans(Ogre::Vector3::ZERO);
+    normalTransformation = normalTransformation.inverse().transpose();
+    auto it = vertexBuffer.begin() + localOffset;
+    for (const auto &normal : block->normals) {
+      auto bsN =
+          normalTransformation * Ogre::Vector4(conversions::fromNif(normal));
+      auto n = conversions::fromBSCoordinates(bsN.xyz());
+      *it = n.x;
+      *(it + 1) = n.y;
+      *(it + 2) = n.z;
+      it += offset;
+    }
+    localOffset += 3;
+  }
+  // TODO: Diffuse color
+  // TODO: Specular color
+  if (!block->uvSets.empty()) {
+    auto it = vertexBuffer.begin() + localOffset;
+    // TODO: Support more than one UV set?
+    for (const auto &uv : block->uvSets[0]) {
+      *it = uv.u;
+      *(it + 1) = uv.v;
+      it += offset;
+    }
+    localOffset += 2;
+  }
+
+  // Ogre expects an anticlockwise winding order
+  if (block->hasNormals) {
+    for (const auto &tri : block->triangles) {
+      using conversions::fromNif;
+      // Compute the triangle normal
+      auto v1 = fromNif(block->vertices[tri.v1]);
+      auto v2 = fromNif(block->vertices[tri.v2]);
+      auto v3 = fromNif(block->vertices[tri.v3]);
+      auto expected = (v2 - v1).crossProduct(v3 - v1);
+      // Estimate the triangle normal from the vertex normals
+      auto n1 = fromNif(block->normals[tri.v1]);
+      auto n2 = fromNif(block->normals[tri.v2]);
+      auto n3 = fromNif(block->normals[tri.v3]);
+      auto actual = (n1 + n2 + n3) / 3.0f;
+      // Coordinate system is right-handed so this is positive for an
+      // anticlockwise winding order and negative for a clockwise order.
+      if (expected.dotProduct(actual) < 0.0f) {
+        logger.logMessage(Ogre::LogMessageLevel::LML_WARNING,
+                          "Clockwise triangle winding order, expected anticlockwise");
+      }
+    }
+  }
+
+  // Copy the vertex buffer into a hardware buffer, and link the buffer to
+  // the vertex declaration.
+  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
+  auto hwVertexBuffer = hwBufPtr->createVertexBuffer(bytesPerVertex,
+                                                     block->numVertices,
+                                                     usage);
+  hwVertexBuffer->writeData(0,
+                            hwVertexBuffer->getSizeInBytes(),
+                            vertexBuffer.data(),
+                            true);
+  vertBind->setBinding(source, hwVertexBuffer);
+
+  return vertexData;
+}
+
+std::unique_ptr<Ogre::IndexData>
+NifLoaderState::generateIndexData(nif::NiTriShapeData *block) {
+  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+
+  // We can assume that compound::Triangle has no padding and std::vector
+  // is sequential, so can avoid copying the faces.
+  auto indexBuffer = reinterpret_cast<uint16_t *>(block->triangles.data());
+
+  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
+  auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
+  std::size_t numIndices = 3u * block->numTriangles;
+
+  // Copy the triangle (index) buffer into a hardware buffer.
+  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype,
+                                                   numIndices,
+                                                   usage);
+  hwIndexBuffer->writeData(0,
+                           hwIndexBuffer->getSizeInBytes(),
+                           indexBuffer,
+                           true);
+
+  auto indexData = std::make_unique<Ogre::IndexData>();
+  indexData->indexBuffer = hwIndexBuffer;
+  indexData->indexCount = numIndices;
+  indexData->indexStart = 0;
+  return indexData;
+}
+
 NifLoaderState::BoundedSubmesh
 NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   // NiTriShape blocks determine discrete pieces of geometry with a single
@@ -194,175 +375,41 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   // Ogre::SubMeshes cannot have transformations applied to them (that is
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
   // information manually.
-  Ogre::Vector3 translation = conversions::fromNif(block->translation);
-  Ogre::Matrix3 rotation = conversions::fromNif(block->rotation);
-  float scale = block->scale;
-
-  // Ogre requires a bounding box for the mesh. Since we have to iterate over
-  // the vertices anyway, we can compute it easily by tracking the min and max
-  // of the x, y, z coordinates of all the vertices in all the blocks.
-  Ogre::Vector3 boundingBoxMin{
-      std::numeric_limits<float>::max(),
-      std::numeric_limits<float>::max(),
-      std::numeric_limits<float>::max()
-  };
-  Ogre::Vector3 boundingBoxMax{
-      std::numeric_limits<float>::min(),
-      std::numeric_limits<float>::min(),
-      std::numeric_limits<float>::min()
-  };
+  Ogre::Vector3 translation{conversions::fromNif(block->translation)};
+  Ogre::Matrix3 rotationMatrix{conversions::fromNif(block->rotation)};
+  Ogre::Quaternion rotation{rotationMatrix};
+  Ogre::Vector3 scale{block->scale, block->scale, block->scale};
+  Ogre::Matrix4 transformation{};
+  transformation.makeTransform(translation, scale, rotation);
 
   // Follow the reference to the actual geometry data
   auto dataRef = static_cast<int32_t>(block->data);
-  auto data = dynamic_cast<nif::NiTriShapeData *>(blocks[dataRef].block.get());
-
-  // It seems that Ogre expects this to be heap allocated, and will
-  // deallocate it when the mesh is unloaded. Still, it makes me uneasy.
-  submesh->vertexData = new Ogre::VertexData();
-  submesh->vertexData->vertexCount = data->numVertices;
-  auto vertDecl = submesh->vertexData->vertexDeclaration;
-  auto vertBind = submesh->vertexData->vertexBufferBinding;
-  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
-
-  // Specify the order of data in the vertex buffer. This is per vertex,
-  // so the vertices, normals etc will have to be interleaved in the buffer.
-  std::size_t offset{0};
-  std::size_t bytesPerVertex{0};
-  const unsigned short source{0};
-  if (data->hasVertices) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
-                         Ogre::VES_POSITION);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
-  // TODO: Blend weights
-  if (data->hasNormals) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
-                         Ogre::VES_NORMAL);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
-  // TODO: Diffuse color
-  // TODO: Specular color
-  if (!data->uvSets.empty()) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT2,
-                         Ogre::VES_TEXTURE_COORDINATES);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
-    offset += 2;
+  // TODO: Check this is a valid reference
+  auto &taggedBlock = blocks[dataRef];
+  auto data = dynamic_cast<nif::NiTriShapeData *>(taggedBlock.block.get());
+  auto &dataTag = taggedBlock.tag;
+  if (dataTag == LoadStatus::Loading) {
+    throw std::runtime_error("Cycle detected while loading nif file");
+  } else if (dataTag == LoadStatus::Loaded) {
+    return {submesh, getBoundingBox(data, transformation)};
   }
 
-  // The final vertex buffer is the transpose of the block matrix
-  // v1  v3  v3 ...
-  // n1  n2  n3 ...
-  // uv1 uv2 uv3 ...
-  // ...
-  // where v1 is a column vector of the first vertex position components,
-  // and so on with a row for each of the elements of the vertex
-  // declaration.
-  // TODO: Is there an efficient transpose algorithm to make this abstraction worthwhile?
-  std::vector<float> vertexBuffer(offset * data->numVertices);
-  std::size_t localOffset{0};
-  if (data->hasVertices) {
-    auto it = vertexBuffer.begin();
-    for (const auto &vertex : data->vertices) {
-      auto v = conversions::fromBSCoordinates(
-          scale * rotation * conversions::fromNif(vertex) + translation);
-      *it = v.x;
-      *(it + 1) = v.y;
-      *(it + 2) = v.z;
-      it += offset;
-      // While we're iterating, check if we need to enlarge the bounding box
-      if (v.x < boundingBoxMin.x) boundingBoxMin.x = v.x;
-      else if (v.x > boundingBoxMax.x) boundingBoxMax.x = v.x;
-      if (v.y < boundingBoxMin.y) boundingBoxMin.y = v.y;
-      else if (v.y > boundingBoxMax.y) boundingBoxMax.y = v.y;
-      if (v.z < boundingBoxMin.z) boundingBoxMin.z = v.z;
-      else if (v.z > boundingBoxMax.z) boundingBoxMax.z = v.z;
-    }
-    localOffset += 3;
-  }
-  // TODO: Blend weights
-  if (data->hasNormals) {
-    auto it = vertexBuffer.begin() + localOffset;
-    for (const auto &normal : data->normals) {
-      auto n = conversions::fromBSCoordinates(
-          rotation * conversions::fromNif(normal));
-      *it = n.x;
-      *(it + 1) = n.y;
-      *(it + 2) = n.z;
-      it += offset;
-    }
-    localOffset += 3;
-  }
-  // TODO: Diffuse color
-  // TODO: Specular color
-  if (!data->uvSets.empty()) {
-    auto it = vertexBuffer.begin() + localOffset;
-    // TODO: Support more than one UV set?
-    for (const auto &uv : data->uvSets[0]) {
-      *it = uv.u;
-      *(it + 1) = uv.v;
-      it += offset;
-    }
-    localOffset += 2;
-  }
+  auto vertexData = generateVertexData(data, transformation);
+  auto indexData = generateIndexData(data);
 
-  // We can assume that compound::Triangle has no padding and std::vector
-  // is sequential, so can avoid copying the faces.
-  auto indexBuffer = reinterpret_cast<uint16_t *>(data->triangles.data());
+  // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
+  // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
+  // create index data on the stack and copy it over. Instead we do a Bad Thing,
+  // deleting the submesh's indexData and replacing it with our own.
+  delete submesh->indexData;
 
-  // Ogre expects an anticlockwise winding order
-  if (data->hasNormals) {
-    for (const auto &tri : data->triangles) {
-      using conversions::fromNif;
-      // Compute the triangle normal
-      auto v1 = fromNif(data->vertices[tri.v1]);
-      auto v2 = fromNif(data->vertices[tri.v2]);
-      auto v3 = fromNif(data->vertices[tri.v3]);
-      auto expected = (v2 - v1).crossProduct(v3 - v1);
-      // Estimate the triangle normal from the vertex normals
-      auto n1 = fromNif(data->normals[tri.v1]);
-      auto n2 = fromNif(data->normals[tri.v2]);
-      auto n3 = fromNif(data->normals[tri.v3]);
-      auto actual = (n1 + n2 + n3) / 3.0f;
-      // Coordinate system is right-handed so this is positive for an
-      // anticlockwise winding order and negative for a clockwise order.
-      if (expected.dotProduct(actual) < 0.0f) {
-        logger.logMessage(Ogre::LogMessageLevel::LML_WARNING,
-                          "Clockwise triangle winding order, expected anticlockwise");
-      }
-    }
-  }
+  // Transfer ownership to Ogre
+  submesh->vertexData = vertexData.release();
+  submesh->indexData = indexData.release();
 
-  // Copy the vertex buffer into a hardware buffer, and link the buffer to
-  // the vertex declaration.
-  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-  auto hwVertexBuffer = hwBufPtr->createVertexBuffer(bytesPerVertex,
-                                                     data->numVertices,
-                                                     usage);
-  hwVertexBuffer->writeData(0,
-                            hwVertexBuffer->getSizeInBytes(),
-                            vertexBuffer.data(),
-                            true);
-  vertBind->setBinding(source, hwVertexBuffer);
+  dataTag = LoadStatus::Loaded;
 
-  // Copy the triangle (index) buffer into a hardware buffer.
-  auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
-  std::size_t numIndices = 3u * data->numTriangles;
-  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype,
-                                                   numIndices,
-                                                   usage);
-  hwIndexBuffer->writeData(0,
-                           hwIndexBuffer->getSizeInBytes(),
-                           indexBuffer,
-                           true);
-
-  // Give the submesh the index data
-  submesh->indexData->indexBuffer = hwIndexBuffer;
-  submesh->indexData->indexCount = numIndices;
-  submesh->indexData->indexStart = 0;
-
-  return {submesh, Ogre::AxisAlignedBox(boundingBoxMin, boundingBoxMax)};
+  return {submesh, getBoundingBox(data, transformation)};
 }
 
 std::shared_ptr<Ogre::Material>
@@ -408,8 +455,10 @@ NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
     if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
       auto boundedSubmesh = parseNiTriShape(block, tag);
       boundingBox.merge(boundedSubmesh.bbox);
+      tag = LoadStatus::Loaded;
     } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
       parseNiMaterialProperty(block, tag);
+      tag = LoadStatus::Loaded;
     }
 
     mesh->_setBounds(boundingBox);
