@@ -500,5 +500,84 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   NifLoaderState instance(mesh, blocks);
 }
 
+void NifLoader::dumpAsObj(std::istream &in, std::ostream &out) {
+  std::vector<Ogre::Vector3> vertices;
+  std::vector<Ogre::Vector3> normals;
+  std::vector<Ogre::Vector2> uvs;
+  std::vector<Ogre::Vector<3, std::size_t>> tris;
+  std::size_t offset = 0;
+
+  auto blocks = createBlockGraph(in);
+
+  for (const auto &blockVertex : blocks.vertex_set()) {
+    auto block = blocks[blockVertex].get();
+    if (auto niTriShape = dynamic_cast<nif::NiTriShape *>(block)) {
+      Ogre::Vector3 translation{conversions::fromNif(niTriShape->translation)};
+      Ogre::Matrix3 rotationMatrix{conversions::fromNif(niTriShape->rotation)};
+      Ogre::Quaternion rotation{rotationMatrix};
+      Ogre::Vector3 scale{
+          niTriShape->scale,
+          niTriShape->scale,
+          niTriShape->scale
+      };
+      Ogre::Vector3 invScale{
+          1.0f / niTriShape->scale,
+          1.0f / niTriShape->scale,
+          1.0f / niTriShape->scale
+      };
+      Ogre::Matrix4 transformation{};
+      transformation.makeTransform(translation, scale, rotation);
+      Ogre::Matrix4 normalTransformation{};
+      normalTransformation.makeTransform(Ogre::Vector3::ZERO,
+                                         invScale,
+                                         rotation);
+
+      auto dataRef = static_cast<int32_t>(niTriShape->data);
+      auto data = dynamic_cast<nif::NiTriShapeData *>(blocks[dataRef].get());
+
+      for (const auto &vertex : data->vertices) {
+        auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
+        auto v = conversions::fromBSCoordinates(bsV.xyz());
+        vertices.push_back(v);
+      }
+
+      for (const auto &normal : data->normals) {
+        auto bsN =
+            normalTransformation * Ogre::Vector4(conversions::fromNif(normal));
+        auto n = conversions::fromBSCoordinates(bsN.xyz());
+        normals.push_back(n);
+      }
+
+      for (const auto &uv : data->uvSets[0]) {
+        uvs.emplace_back(uv.u, uv.v);
+      }
+
+      for (const auto &tri : data->triangles) {
+        tris.emplace_back(tri.v1 + offset + 1,
+                          tri.v2 + offset + 1,
+                          tri.v3 + offset + 1);
+      }
+      offset += data->numVertices;
+    }
+  }
+
+  for (const auto &v : vertices) {
+    out << "v " << v.x << " " << v.y << " " << v.z << '\n';
+  }
+
+  for (const auto &n : normals) {
+    out << "vn " << n.x << " " << n.y << " " << n.z << '\n';
+  }
+
+  for (const auto &uv : uvs) {
+    out << "vt " << uv.x << " " << uv.y << "\n";
+  }
+
+  for (const auto &tri : tris) {
+    out << "f " << tri[0] << '/' << tri[0] << '/' << tri[0]
+        << " " << tri[1] << '/' << tri[1] << '/' << tri[1]
+        << " " << tri[2] << '/' << tri[2] << '/' << tri[2] << '\n';
+  }
+}
 } // namespace engine
 

@@ -10,6 +10,7 @@
 #include <istream>
 #include <map>
 #include <memory>
+#include <ostream>
 #include <string>
 
 namespace engine {
@@ -61,6 +62,10 @@ class NifLoader : public Ogre::ManualResourceLoader {
  public:
   void loadResource(Ogre::Resource *resource) override;
   //void prepareResource(Ogre::Resource *resource) override;
+
+  // Read the nif file from the input stream and dump to the output stream in
+  // obj format. Used for debugging.
+  void dumpAsObj(std::istream &in, std::ostream &out);
 };
 
 // When constructing the mesh we want to iterate over the block graph, but

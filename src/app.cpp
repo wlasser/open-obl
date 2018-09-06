@@ -4,6 +4,7 @@
 #include <OgreShaderGenerator.h>
 #include <iostream>
 #include <istream>
+#include <fstream>
 
 void App::setup() {
   OgreBites::ApplicationContext::setup();
@@ -40,6 +41,13 @@ void App::setup() {
 
   addInputListener(this);
 
+  auto ogreDataStream =
+      resourceGroupManager->openResource(robeMeshName, resourceGroup);
+  auto ogreDataStreamBuffer = engine::OgreDataStreambuf{ogreDataStream};
+  std::istream is{&ogreDataStreamBuffer};
+  std::ofstream out{"dump.obj", std::ios_base::binary};
+  nifLoader.dumpAsObj(is, out);
+
   auto root = getRoot();
 
   auto sceneManager = root->createSceneManager();
@@ -47,11 +55,16 @@ void App::setup() {
 
   auto shaderGen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
   shaderGen->addSceneManager(sceneManager);
+  //auto schemeRenderState = shaderGen->getRenderState(
+  //    Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
+  //auto perPixelLightingModel = shaderGen->createSubRenderState(
+  //    Ogre::RTShader::PerPixelLighting::Type);
+  //schemeRenderState->addTemplateSubRenderState(perPixelLightingModel);
 
   auto light = sceneManager->createLight("MainLight");
   auto lightNode = rootNode->createChildSceneNode();
   lightNode->setPosition(0, 100, 80);
-  lightNode->attachObject(light);
+  //lightNode->attachObject(light);
 
   cameraNode = rootNode->createChildSceneNode();
   cameraNode->setPosition(0, 0, 10);
