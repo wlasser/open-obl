@@ -6,6 +6,7 @@
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 
+#include <boost/format.hpp>
 #include <boost/graph/copy.hpp>
 #include <OgreHardwareBufferManager.h>
 #include <OgreLogManager.h>
@@ -36,9 +37,9 @@ nif::Version NifLoader::peekVersion(std::istream &is) {
   auto formatName = headerVersion.str.substr(0, firstWordPos);
   if (formatName != "Gamebryo" && formatName != "NetImmerse") {
     is.seekg(0);
-    throw std::runtime_error(std::string(
-        "Invalid nif header. Expected 'NetImmerse' or 'Gamebryo', found ")
-                                 .append(formatName));
+    throw std::runtime_error(boost::str(boost::format(
+        "Invalid nif header. Expected 'NetImmerse' or 'Gamebryo', found %s")
+                                            % formatName));
   }
 
   // Now proceed with finding the version

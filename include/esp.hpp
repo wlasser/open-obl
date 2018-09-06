@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ESP_HPP
 #define OPENOBLIVION_ESP_HPP
 
+#include <io/io.hpp>
 #include <istream>
 #include <iostream>
 
@@ -13,20 +14,8 @@ class Esp {
     T rec;
     is >> rec;
     bool isOk = is.rdstate() == std::ios::goodbit;
-    if (!isOk) {
-      std::clog << "read failed: ";
-      switch (is.rdstate()) {
-        case std::ios::goodbit: std::clog << "goodbit\n";
-          break;
-        case std::ios::badbit: std::clog << "badbit\n";
-          break;
-        case std::ios::failbit: std::clog << "failbit\n";
-          break;
-        case std::ios::eofbit: std::clog << "eofbit\n";
-          break;
-        default: std::clog << "unknown\n";
-          break;
-      }
+    if (!is.good()) {
+      std::clog << "read failed: " << io::decodeIosState(is.rdstate());
     }
     std::cout << rec << "\n<CLEAR>\n";
     return isOk;
