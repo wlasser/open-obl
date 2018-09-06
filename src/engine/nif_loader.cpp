@@ -207,14 +207,14 @@ NifLoaderState::generateVertexData(nif::NiTriShapeData *block,
   std::size_t bytesPerVertex{0};
   const unsigned short source{0};
   if (block->hasVertices) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
                          Ogre::VES_POSITION);
     bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
     offset += 3;
   }
   // TODO: Blend weights
   if (block->hasNormals) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT3,
+    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
                          Ogre::VES_NORMAL);
     bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
     offset += 3;
@@ -222,8 +222,8 @@ NifLoaderState::generateVertexData(nif::NiTriShapeData *block,
   // TODO: Diffuse color
   // TODO: Specular color
   if (!block->uvSets.empty()) {
-    vertDecl->addElement(source, offset, Ogre::VET_FLOAT2,
-                         Ogre::VES_TEXTURE_COORDINATES);
+    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT2,
+                         Ogre::VES_TEXTURE_COORDINATES, 0);
     bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
     offset += 2;
   }

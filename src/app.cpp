@@ -63,8 +63,8 @@ void App::setup() {
 
   auto light = sceneManager->createLight("MainLight");
   auto lightNode = rootNode->createChildSceneNode();
-  lightNode->setPosition(0, 100, 80);
-  //lightNode->attachObject(light);
+  lightNode->attachObject(light);
+  lightNode->setPosition(50, 100, -100);
 
   cameraNode = rootNode->createChildSceneNode();
   cameraNode->setPosition(0, 0, 10);
