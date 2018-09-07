@@ -130,6 +130,33 @@ class NifLoaderState {
   std::shared_ptr<Ogre::Material>
   parseNiMaterialProperty(nif::NiMaterialProperty *block, LoadStatus &tag);
 
+  struct TextureFamily {
+    using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
+    TexturePtr base{};
+    TexturePtr dark{};
+    TexturePtr detail{};
+    TexturePtr gloss{};
+    TexturePtr glow{};
+    // Bump textures are treated differently and we use normal maps anyway
+    /* TexturePtr bump{}; */
+    std::vector<TexturePtr> decals{};
+  };
+  // See parseTexDesc for why the pass is necessary.
+  TextureFamily
+  parseNiTexturingProperty(nif::NiTexturingProperty *block, LoadStatus &tag,
+                           Ogre::Pass *pass);
+
+  // When setting the texture name of a texture unit, Ogre looks up and loads
+  // the texture using the resource group of its parent. Thus contrary to what
+  // addTextureUnitState seems to suggest, one should not create a
+  // Ogre::TextureUnitState with a nullptr parent, and we have to supply the
+  // parent pass here.
+  std::unique_ptr<Ogre::TextureUnitState>
+  parseTexDesc(nif::compound::TexDesc *tex, Ogre::Pass *parent);
+
+  void parseNiSourceTexture(nif::NiSourceTexture *block, LoadStatus &tag,
+                            Ogre::TextureUnitState *tex);
+
   // Reads vertex, normal, and texcoord data from NiTriShapeData and prepares it
   // for rendering.
   std::unique_ptr<Ogre::VertexData>
