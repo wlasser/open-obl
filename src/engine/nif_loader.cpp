@@ -160,7 +160,9 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
           boost::format("Read block %d (NiNode)") % i));
     } else {
       // TODO: Implement the other blocks
-      break;
+      throw std::runtime_error(boost::str(
+          boost::format("Found unsupported block type %s, cannot continue")
+              % blockType));
     }
   }
 
