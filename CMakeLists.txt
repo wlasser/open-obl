@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivion)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug")
 
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
@@ -63,6 +63,7 @@ target_sources(OpenOblivion PRIVATE
         src/bsa.cpp
         src/engine/bsa.cpp
         src/engine/nif_loader.cpp
+        src/engine/nif_loader_state.cpp
         src/engine/ogre_stream_wrappers.cpp
         src/esp.cpp
         src/main.cpp
@@ -76,6 +77,7 @@ target_sources(OpenOblivion PRIVATE
         include/engine/bsa.hpp
         include/engine/conversions.hpp
         include/engine/nif_loader.hpp
+        include/engine/nif_loader_state.hpp
         include/engine/ogre_stream_wrappers.hpp
         include/esp.hpp
         include/formid.hpp
