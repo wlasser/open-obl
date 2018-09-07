@@ -12,8 +12,6 @@ void App::setup() {
   auto logger = Ogre::LogManager::getSingletonPtr();
   auto archiveManager = Ogre::ArchiveManager::getSingletonPtr();
   auto resourceGroupManager = Ogre::ResourceGroupManager::getSingletonPtr();
-  auto meshManager = Ogre::MeshManager::getSingletonPtr();
-  auto materialManager = Ogre::MaterialManager::getSingletonPtr();
   auto nifLoader = engine::NifLoader();
 
   auto textureArchiveName = "./Data/Oblivion - Textures - Compressed.bsa";
@@ -21,7 +19,6 @@ void App::setup() {
 
   auto resourceGroup = "OOResource";
 
-  auto robeTextureName = "textures/clothes/robeuc01/robeuc01.dds";
   auto robeMeshName = "meshes/clothes/robeuc01/f/robeuc01f.nif";
 
   resourceGroupManager->createResourceGroup(resourceGroup);
@@ -32,21 +29,12 @@ void App::setup() {
   resourceGroupManager->addResourceLocation(textureArchiveName, "BSA",
                                             resourceGroup);
 
-  resourceGroupManager->declareResource(robeTextureName, "Texture",
-                                        resourceGroup);
   resourceGroupManager->declareResource(robeMeshName, "Mesh",
                                         resourceGroup, &nifLoader);
 
   resourceGroupManager->initialiseResourceGroup(resourceGroup);
 
   addInputListener(this);
-
-  auto ogreDataStream =
-      resourceGroupManager->openResource(robeMeshName, resourceGroup);
-  auto ogreDataStreamBuffer = engine::OgreDataStreambuf{ogreDataStream};
-  std::istream is{&ogreDataStreamBuffer};
-  std::ofstream out{"dump.obj", std::ios_base::binary};
-  nifLoader.dumpAsObj(is, out);
 
   auto root = getRoot();
 
@@ -55,11 +43,6 @@ void App::setup() {
 
   auto shaderGen = Ogre::RTShader::ShaderGenerator::getSingletonPtr();
   shaderGen->addSceneManager(sceneManager);
-  //auto schemeRenderState = shaderGen->getRenderState(
-  //    Ogre::RTShader::ShaderGenerator::DEFAULT_SCHEME_NAME);
-  //auto perPixelLightingModel = shaderGen->createSubRenderState(
-  //    Ogre::RTShader::PerPixelLighting::Type);
-  //schemeRenderState->addTemplateSubRenderState(perPixelLightingModel);
 
   auto light = sceneManager->createLight("MainLight");
   auto lightNode = rootNode->createChildSceneNode();
@@ -77,37 +60,10 @@ void App::setup() {
   cameraMan = std::make_unique<OgreBites::CameraMan>(cameraNode);
   cameraMan->setStyle(OgreBites::CameraStyle::CS_FREELOOK);
 
-  Ogre::Plane texturePlane{Ogre::Vector3::UNIT_Z, 0};
-  meshManager->createPlane("texturePlane",
-                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                           texturePlane,
-                           4, 4, 4, 4,
-                           true,
-                           1, 1.0f, 1.0f,
-                           Ogre::Vector3::UNIT_Y);
-  auto texturePlaneMaterial = materialManager->create(
-      "texturePlaneMaterial",
-      Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-  {
-    auto technique = texturePlaneMaterial->getTechnique(0);
-    auto pass = technique->getPass(0);
-    pass->setAmbient(0.5f, 0.5, 0.5f);
-    pass->setDiffuse(1.0f, 1.0f, 1.0f, 1.0f);
-    pass->setTextureFiltering(Ogre::TextureFilterOptions::TFO_TRILINEAR);
-    auto textureUnit = pass->createTextureUnitState(robeTextureName);
-  }
-  texturePlaneMaterial->load();
-
-  auto texturePlaneEntity = sceneManager->createEntity("texturePlane");
-  texturePlaneEntity->setMaterialName("texturePlaneMaterial");
-  auto texturePlaneEntityNode = rootNode->createChildSceneNode();
-  //texturePlaneEntityNode->attachObject(texturePlaneEntity);
-
   auto meshEntity = sceneManager->createEntity(robeMeshName);
   auto meshEntityNode = rootNode->createChildSceneNode();
   meshEntityNode->attachObject(meshEntity);
   meshEntityNode->setPosition(0.0f, 0.0f, 0.0f);
-  //meshEntity->setMaterialName("texturePlaneMaterial");
 
   auto bbMin = meshEntity->getBoundingBox().getMinimum();
   auto bbMax = meshEntity->getBoundingBox().getMaximum();
