@@ -146,11 +146,8 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func = vertexAdder->second;
       (this->*func)(blocks, i, nifVersion, is);
-      logger.logMessage(std::string("Read block ")
-                            .append(std::to_string(i))
-                            .append(" (")
-                            .append(blockType)
-                            .append(")"));
+      logger.logMessage(boost::str(
+          boost::format("Read block %d (%i)") % i % blockType));
     } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
       block->read(is);
@@ -159,9 +156,8 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
         addEdge(blocks, i, child);
       }
       blocks[i] = std::move(block);
-      logger.logMessage(std::string("Read block ")
-                            .append(std::to_string(i))
-                            .append(" (NiNode)"));
+      logger.logMessage(boost::str(
+          boost::format("Read block %d (NiNode)") % i));
     } else {
       // TODO: Implement the other blocks
       break;
@@ -249,22 +245,24 @@ void NifLoader::dumpAsObj(std::istream &in, std::ostream &out) {
     }
   }
 
+  auto vFmt = boost::format("v %f %f %f\n");
   for (const auto &v : vertices) {
-    out << "v " << v.x << " " << v.y << " " << v.z << '\n';
+    out << (vFmt % v.x % v.y % v.z);
   }
 
+  auto vnFmt = boost::format("vn %f %f %f\n");
   for (const auto &n : normals) {
-    out << "vn " << n.x << " " << n.y << " " << n.z << '\n';
+    out << (vnFmt % n.x % n.y % n.z);
   }
 
+  auto vtFmt = boost::format("vt %f %f\n");
   for (const auto &uv : uvs) {
-    out << "vt " << uv.x << " " << uv.y << "\n";
+    out << (vtFmt % uv.x % uv.y);
   }
 
+  auto fFmt = boost::format("f %1%/%1%/%1% %2%/%2%/%2% %3%/%3%/%3%\n");
   for (const auto &tri : tris) {
-    out << "f " << tri[0] << '/' << tri[0] << '/' << tri[0]
-        << " " << tri[1] << '/' << tri[1] << '/' << tri[1]
-        << " " << tri[2] << '/' << tri[2] << '/' << tri[2] << '\n';
+    out << (fFmt % tri[0] % tri[1] % tri[2]);
   }
 }
 } // namespace engine
