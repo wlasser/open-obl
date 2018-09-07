@@ -241,50 +241,55 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   // have different parents then they must be different textures. This means
   // that we have to be much more careful about what being 'loaded' means, and
   // can only load a texture if there is a material to couple it to.
-  // For simplicity, we will assume that textures and materials come in
-  // unique pairs. TODO: Make textures independent of materials.
-  auto taggedMaterialIt =
-      std::find_if(block->properties.begin(),
-                   block->properties.end(),
-                   [&](const auto &property) {
-                     // TODO: Check this is a valid reference
-                     auto ref = static_cast<int32_t>(property);
-                     auto ptr = blocks[ref].block.get();
-                     return dynamic_cast<nif::NiMaterialProperty *>(ptr);
-                   });
-  auto taggedTexturingIt =
-      std::find_if(block->properties.begin(),
-                   block->properties.end(),
-                   [&](const auto &property) {
-                     // TODO: Check this is a valid reference
-                     auto ref = static_cast<int32_t>(property);
-                     auto ptr = blocks[ref].block.get();
-                     return dynamic_cast<nif::NiTexturingProperty *>(ptr);
+  // For simplicity, we assume that the same material will not be given
+  // multiple textures in the same mesh. Multiple materials are allowed to share
+  // the same texture, however. This is only reasonable because materials are
+  // mesh-local.
+
+  // Find the material property, if any
+  auto taggedMatIt =
+      std::find_if(block->properties.begin(), block->properties.end(),
+                   [this](const auto &property) {
+                     return getBlock<nif::NiMaterialProperty>(
+                         property);
                    });
 
-  if (taggedMaterialIt != block->properties.end()) {
-    auto &taggedMaterial = blocks[static_cast<int32_t>(*taggedMaterialIt)];
-    auto materialBlock =
-        dynamic_cast<nif::NiMaterialProperty *>(taggedMaterial.block.get());
-    auto &materialTag = taggedMaterial.tag;
-    auto material = parseNiMaterialProperty(materialBlock, materialTag);
-    auto pass = material->getTechnique(0)->getPass(0);
+  // Find the texturing property, if any
+  auto taggedTexIt =
+      std::find_if(block->properties.begin(), block->properties.end(),
+                   [this](const auto &property) {
+                     return getBlock<nif::NiTexturingProperty>(property);
+                   });
 
-    submesh->setMaterialName(material->getName(), material->getGroup());
+  // It is ok to have a material but no texture
+  if (taggedMatIt != block->properties.end()) {
+    auto &taggedMat = blocks[static_cast<int32_t>(*taggedMatIt)];
+    auto matBlock =
+        dynamic_cast<nif::NiMaterialProperty *>(taggedMat.block.get());
+    auto &matTag = taggedMat.tag;
 
-    if (taggedTexturingIt != block->properties.end()) {
-      auto &taggedTexturing = blocks[static_cast<int32_t>(*taggedTexturingIt)];
-      auto texturingBlock =
-          dynamic_cast<nif::NiTexturingProperty *>(taggedTexturing.block.get());
-      auto &texturingTag = taggedTexturing.tag;
-      // We are assuming textures and materials come in unique pairs, so if this
-      // texture has already been loaded, then it must have been attached to its
-      // parent material already and so we can stop here. If we don't assume
-      // this, then the material may end up with multiple copies of the same
-      // texture overlaid, which causes visual problems.
-      if (texturingTag == LoadStatus::Unloaded) {
-        auto family = parseNiTexturingProperty(texturingBlock, texturingTag,
-                                               pass);
+    // If the material has already been loaded, then by the assumption that each
+    // material has a unique texture (if any), the associated texture must
+    // already have been loaded and attached to the material. We can load the
+    // material (presumably from a cache) and skip the texture loading.
+    // Without this assumption we would have to clone the material and attach
+    // the new texture.
+    if (matTag == LoadStatus::Loaded) {
+      auto material = parseNiMaterialProperty(matBlock, matTag);
+      submesh->setMaterialName(material->getName(), material->getGroup());
+    } else {
+      auto material = parseNiMaterialProperty(matBlock, matTag);
+      submesh->setMaterialName(material->getName(), material->getGroup());
+      auto pass = material->getTechnique(0)->getPass(0);
+
+      // The texture may or may not have already been loaded, but it has
+      // definitely not been attached to the material.
+      if (taggedTexIt != block->properties.end()) {
+        auto &taggedTex = blocks[static_cast<int32_t>(*taggedTexIt)];
+        auto texBlock =
+            dynamic_cast<nif::NiTexturingProperty *>(taggedTex.block.get());
+        auto &texTag = taggedTex.tag;
+        auto family = parseNiTexturingProperty(texBlock, texTag, pass);
         if (family.base) {
           pass->addTextureUnitState(family.base.release());
         }
@@ -334,9 +339,12 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   auto &materialManager = Ogre::MaterialManager::getSingleton();
 
   Tagger tagger{tag};
+  // Nif materials are intended to have mesh-local names. We cannot guarantee
+  // that the mesh's group is unique, so we prepend the mesh name.
+  std::string meshName = mesh->getName();
+  std::string materialName = meshName.append("\\").append(block->name.str());
   if (tag == LoadStatus::Loaded) {
-    auto material = materialManager.getByName(block->name.str(),
-                                              mesh->getGroup());
+    auto material = materialManager.getByName(materialName, mesh->getGroup());
     if (material) {
       return material;
     } else {
@@ -345,7 +353,7 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
     }
   }
 
-  auto material = materialManager.create(block->name.str(), mesh->getGroup());
+  auto material = materialManager.create(materialName, mesh->getGroup());
 
   auto technique = material->getTechnique(0);
   auto pass = technique->getPass(0);

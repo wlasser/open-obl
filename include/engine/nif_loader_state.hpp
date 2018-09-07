@@ -2,8 +2,9 @@
 #define OPENOBLIVION_ENGINE_NIF_LOADER_STATE_HPP
 
 #include "engine/nif_loader.hpp"
-#include "nif/niobject.hpp"
+#include "nif/basic.hpp"
 #include "nif/compound.hpp"
+#include "nif/niobject.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <OgreAxisAlignedBox.h>
 #include <OgreLogManager.h>
@@ -71,6 +72,15 @@ class NifLoaderState {
                                                  TaggedBlock>;
 
   TaggedBlockGraph blocks;
+
+  template<class T, class S>
+  T *getBlock(nif::basic::Ref<S> ref) {
+    auto val = static_cast<int32_t>(ref);
+    if (val < 0 || val >= blocks.vertex_set().size()) {
+      throw std::out_of_range("Nonexistent reference");
+    }
+    return dynamic_cast<T *>(blocks[val].block.get());
+  }
 
   struct BoundedSubmesh {
     Ogre::SubMesh *submesh{};
