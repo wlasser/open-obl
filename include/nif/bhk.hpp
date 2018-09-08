@@ -11,7 +11,74 @@
 
 namespace nif::hk {
 struct PackedNiTriStripsData;
-}
+
+namespace Enum {
+
+enum class ConstraintType : uint32_t {
+  BallAndSocket = 0,
+  Hinge = 1,
+  LimitedHinge = 2,
+  Prismatic = 6,
+  Ragdoll = 7,
+  StiffSpring = 8,
+  Malleable = 13
+};
+
+enum class DeactivatorType : uint8_t {
+  DEACTIVATOR_INVALID = 0,
+  DEACTIVATOR_NEVER = 1,
+  DEACTIVATOR_SPATIAL = 2
+};
+
+enum class MotionType : uint8_t {
+  MO_SYS_INVALID = 0,
+  MO_SYS_DYNAMIC = 1,
+  MO_SYS_SPHERE_INERTIA = 2,
+  MO_SYS_SPHERE_STABILIZED = 3,
+  MO_SYS_BOX_INERTIA = 4,
+  MO_SYS_BOX_STABILIZED = 5,
+  // Infinite mass when viewed by the rest of the system
+      MO_SYS_KEYFRAMED = 6,
+  MO_SYS_FIXED = 7,
+  MO_SYS_THIN_BOX = 8,
+  MO_SYS_CHARACTER = 9
+};
+
+// MO_QUAL_FIXED and MO_QUAL_KEYFRAMED cannot interact
+// MO_QUAL_DEBRIS can interpenetrate but responds to bullets
+// MO_QUAL_CRITICAL cannot interpenetrate
+// MO_QUAL_MOVING can interpenetrate with MO_QUAL_MOVING and MO_QUAL_DEBRIS
+enum class QualityType : uint8_t {
+  MO_QUAL_INVALID = 0,
+  MO_QUAL_FIXED = 1,
+  MO_QUAL_KEYFRAMED = 2,
+  MO_QUAL_DEBRIS = 3,
+  MO_QUAL_MOVING = 4,
+  MO_QUAL_CRITICAL = 5,
+  MO_QUAL_BULLET = 6,
+  MO_QUAL_USER = 7,
+  MO_QUAL_CHARACTER = 8,
+  MO_QUAL_KEYFRAMED_REPORT = 9
+};
+
+enum class ResponseType : uint8_t {
+  RESPONSE_INVALID = 0,
+  RESPONSE_SIMPLE_CONTACT = 1,
+  RESPONSE_REPORTING = 2,
+  RESPONSE_NONE = 3
+};
+
+enum class SolverDeactivation : uint8_t {
+  SOLVER_DEACTIVATION_INVALID = 0,
+  SOLVER_DEACTIVATION_OFF = 1,
+  SOLVER_DEACTIVATION_LOW = 2,
+  SOLVER_DEACTIVATION_MEDIUM = 3,
+  SOLVER_DEACTIVATION_HIGH = 4,
+  SOLVER_DEACTIVATION_MAX = 5
+};
+} // namespace Enum
+
+} // namespace nif::hk
 
 namespace nif::bhk {
 namespace Enum {
@@ -149,7 +216,8 @@ inline BvTreeShape::~BvTreeShape() = default;
 // MOPP = Memory Optimized Partial Polytope
 struct MoppBvTreeShape : BvTreeShape, Versionable {
   basic::Ref<Shape> shape{};
-  std::array<basic::UInt, 3> unused{};
+  compound::HavokMaterial material{version};
+  std::array<basic::UInt, 2> unused{};
   basic::Float shapeScale{1.0f};
   // Calculated
   basic::UInt moppDataSize{};
@@ -235,6 +303,86 @@ struct Entity : WorldObject {
   ~Entity() override = 0;
 };
 inline Entity::~Entity() = default;
+
+// Ignores rotation and translation
+struct RigidBody : Entity {
+  hk::Enum::ResponseType
+      collisionResponse{hk::Enum::ResponseType::RESPONSE_SIMPLE_CONTACT};
+  basic::Byte unusedByte1{};
+
+  // Callback is raised every processContactCallbackDelay frames
+  basic::UShort processContactCallbackDelay{0xffff};
+
+  VersionOptional<basic::UInt, "10.1.0.0"_ver, Unbounded> unknownInt1{version};
+
+  VersionOptional<compound::HavokFilter, "10.1.0.0"_ver, Unbounded>
+      havokFilterCopy{version};
+
+  VersionOptional<std::array<basic::Byte, 4>, "10.1.0.0"_ver, Unbounded>
+      unused2{version};
+
+  VersionOptional<hk::Enum::ResponseType, "10.1.0.0"_ver, Unbounded>
+      collisionResponse2
+      {version, hk::Enum::ResponseType::RESPONSE_SIMPLE_CONTACT};
+
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> unusedByte2{version};
+
+  VersionOptional<basic::UShort, "10.1.0.0"_ver, Unbounded>
+      processContactCallbackDelay2{version, 0xffff};
+
+  // userVer2 <= 34
+  basic::UInt unknownInt2{};
+
+  compound::Vector4 translation{};
+  compound::hkQuaternion rotation{};
+  compound::Vector4 linearVelocity{};
+  compound::Vector4 angularVelocity{};
+  compound::hkMatrix3 inertiaTensor{};
+  compound::Vector4 center{};
+  // Zero is immovable (kg)
+  basic::Float mass{1.0f};
+  // 0.1f = remove 10% of linear velocity per second
+  basic::Float linearDamping{0.1f};
+  // 0.05f = remove 5% of angular velocity per second
+  basic::Float angularDamping{0.05f};
+  basic::Float friction{0.5f};
+  basic::Float restitution{0.4f};
+
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      maxLinearVelocity{version, 104.4f};
+
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      maxAngularVelocity{version, 31.57f};
+
+  // userVer2 != 130
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      penetrationDepth{version, 0.15f};
+
+  hk::Enum::MotionType motionSystem{hk::Enum::MotionType::MO_SYS_DYNAMIC};
+  // userVer2 <= 34
+  hk::Enum::DeactivatorType
+      deactivatorType{hk::Enum::DeactivatorType::DEACTIVATOR_NEVER};
+  hk::Enum::SolverDeactivation
+      solverDeactivation{hk::Enum::SolverDeactivation::SOLVER_DEACTIVATION_OFF};
+  hk::Enum::QualityType qualityType{hk::Enum::QualityType::MO_QUAL_FIXED};
+
+  std::array<basic::Byte, 12> unknownBytes1{};
+
+  basic::UInt numConstraints{};
+  std::vector<basic::Ref < Serializable>> constraints{};
+
+  // 1 = respond to wind
+  basic::UInt bodyFlags{};
+
+  void read(std::istream &is) override;
+  explicit RigidBody(Version version) : Entity(version) {}
+};
+
+// Doesn't ignore rotation and translation
+struct RigidBodyT : RigidBody {
+  void read(std::istream &is) override;
+  explicit RigidBodyT(Version version) : RigidBody(version) {}
+};
 
 struct NiCollisionObject : nif::NiCollisionObject {
   Enum::COFlags flags{}; // = 1

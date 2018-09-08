@@ -331,6 +331,7 @@ std::istream &operator>>(std::istream &is, NiTransform &t) {
 }
 
 std::istream &operator>>(std::istream &is, HavokFilter &t) {
+  io::readBytes(is, t.layer);
   uint8_t flagsAndPart{0};
   io::readBytes(is, flagsAndPart);
   t.flags = HavokFilter::Flags(flagsAndPart & 0b11100000u);

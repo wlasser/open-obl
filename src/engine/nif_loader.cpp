@@ -142,6 +142,11 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
       {"bhkMoppBvTreeShape", &NifLoader::addVertex<nif::bhk::MoppBvTreeShape>},
       {"bhkPackedNiTriStripsShape",
        &NifLoader::addVertex<nif::bhk::PackedNiTriStripsShape>},
+      {"bhkSimpleShapePhantom",
+       &NifLoader::addVertex<nif::bhk::SimpleShapePhantom>},
+      {"bhkRigidBody", &NifLoader::addVertex<nif::bhk::RigidBody>},
+      {"bhkRigidBodyT", &NifLoader::addVertex<nif::bhk::RigidBodyT>},
+      {"bhkCollisionObject", &NifLoader::addVertex<nif::bhk::CollisionObject>},
       {"hkPackedNiTriStripsData",
        &NifLoader::addVertex<nif::hk::PackedNiTriStripsData>},
   };

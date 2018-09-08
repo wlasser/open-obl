@@ -89,6 +89,7 @@ void BvTreeShape::read(std::istream &is) {
 void MoppBvTreeShape::read(std::istream &is) {
   BvTreeShape::read(is);
   is >> shape;
+  is >> material;
   io::readBytes(is, unused);
   io::readBytes(is, shapeScale);
   io::readBytes(is, moppDataSize);
@@ -150,6 +151,50 @@ void SimpleShapePhantom::read(std::istream &is) {
 
 void Entity::read(std::istream &is) {
   WorldObject::read(is);
+}
+
+void RigidBody::read(std::istream &is) {
+  Entity::read(is);
+  io::readBytes(is, collisionResponse);
+  io::readBytes(is, unusedByte1);
+  io::readBytes(is, processContactCallbackDelay);
+  io::readBytes(is, unknownInt1);
+  is >> havokFilterCopy;
+  io::readBytes(is, unused2);
+  io::readBytes(is, collisionResponse2);
+  io::readBytes(is, unusedByte2);
+  io::readBytes(is, processContactCallbackDelay2);
+  io::readBytes(is, unknownInt2);
+  is >> translation;
+  is >> rotation;
+  is >> linearVelocity;
+  is >> angularVelocity;
+  is >> inertiaTensor;
+  is >> center;
+  io::readBytes(is, mass);
+  io::readBytes(is, linearDamping);
+  io::readBytes(is, angularDamping);
+  io::readBytes(is, friction);
+  io::readBytes(is, restitution);
+  io::readBytes(is, maxLinearVelocity);
+  io::readBytes(is, maxAngularVelocity);
+  io::readBytes(is, penetrationDepth);
+  io::readBytes(is, motionSystem);
+  io::readBytes(is, deactivatorType);
+  io::readBytes(is, solverDeactivation);
+  io::readBytes(is, qualityType);
+  io::readBytes(is, unknownBytes1);
+  io::readBytes(is, numConstraints);
+  constraints.reserve(numConstraints);
+  for (auto i = 0; i < numConstraints; ++i) {
+    constraints.emplace_back();
+    is >> constraints.back();
+  }
+  io::readBytes(is, bodyFlags);
+}
+
+void RigidBodyT::read(std::istream &is) {
+  RigidBody::read(is);
 }
 
 void NiCollisionObject::read(std::istream &is) {
