@@ -270,6 +270,17 @@ enum class StencilDrawMode : uint32_t {
   DRAW_BOTH
 };
 
+enum class VertMode : uint32_t {
+  VERT_MODE_SRC_IGNORE = 0,
+  VERT_MODE_SRC_EMISSIVE = 1,
+  VERT_MODE_SRC_AMB_DIF = 2
+};
+
+enum class LightMode : uint32_t {
+  LIGHT_MODE_EMISSIVE = 0,
+  LIGHT_MODE_EMI_AMB_DIF = 1
+};
+
 } // namespace Enum
 } // namespace nif
 

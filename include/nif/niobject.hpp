@@ -239,6 +239,15 @@ struct NiStencilProperty : NiProperty {
   explicit NiStencilProperty(Version version) : NiProperty(version) {}
 };
 
+struct NiVertexColorProperty : NiProperty {
+  basic::Flags flags{};
+  Enum::VertMode vertexMode{Enum::VertMode::VERT_MODE_SRC_AMB_DIF};
+  Enum::LightMode lightMode{Enum::LightMode::LIGHT_MODE_EMI_AMB_DIF};
+
+  void read(std::istream &is) override;
+  explicit NiVertexColorProperty(Version version) : NiProperty(version) {}
+};
+
 struct NiCollisionObject;
 
 struct NiAVObject : NiObjectNet {
@@ -403,6 +412,18 @@ struct NiTriShapeData : NiTriBasedGeomData {
   explicit NiTriShapeData(Version version) : NiTriBasedGeomData(version) {}
 };
 
+struct NiTriStripsData : NiTriBasedGeomData {
+  basic::UShort numStrips{};
+  std::vector<basic::UShort> stripLengths{};
+
+  VersionOptional<basic::Bool, "10.0.1.3"_ver, Unbounded> hasPoints{version};
+  // arr1 = numStrips, arr2 = stripLengths
+  std::vector<std::vector<basic::UShort>> points{};
+
+  void read(std::istream &is) override;
+  explicit NiTriStripsData(Version version) : NiTriBasedGeomData(version) {}
+};
+
 struct NiSkinPartition : NiObject, Versionable {
   basic::UInt numSkinPartitionBlocks{};
   std::vector<compound::SkinPartition> skinPartitionBlocks{};
@@ -476,6 +497,11 @@ inline NiTriBasedGeom::~NiTriBasedGeom() = default;
 struct NiTriShape : NiTriBasedGeom {
   explicit NiTriShape(Version version) : NiTriBasedGeom(version) {}
   void read(std::istream &is) override;
+};
+
+struct NiTriStrips : NiTriBasedGeom {
+  void read(std::istream &is) override;
+  explicit NiTriStrips(Version version) : NiTriBasedGeom(version) {}
 };
 
 struct NiTexture : NiObjectNet {

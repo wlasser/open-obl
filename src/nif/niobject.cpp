@@ -144,6 +144,13 @@ void NiStencilProperty::read(std::istream &is) {
   io::readBytes(is, drawMode);
 }
 
+void NiVertexColorProperty::read(std::istream &is) {
+  NiProperty::read(is);
+  io::readBytes(is, flags);
+  io::readBytes(is, vertexMode);
+  io::readBytes(is, lightMode);
+}
+
 void NiAVObject::read(std::istream &is) {
   NiObjectNet::read(is);
   io::readBytes(is, flags);
@@ -252,6 +259,10 @@ void NiTriBasedGeom::read(std::istream &is) {
 }
 
 void NiTriShape::read(std::istream &is) {
+  NiTriBasedGeom::read(is);
+}
+
+void NiTriStrips::read(std::istream &is) {
   NiTriBasedGeom::read(is);
 }
 
@@ -376,6 +387,21 @@ void NiTriShapeData::read(std::istream &is) {
   for (basic::UShort i = 0; i < numMatchGroups; ++i) {
     matchGroups.emplace_back();
     is >> matchGroups.back();
+  }
+}
+
+void NiTriStripsData::read(std::istream &is) {
+  NiTriBasedGeomData::read(is);
+  io::readBytes(is, numStrips);
+  io::readBytes(is, stripLengths, numStrips);
+
+  io::readBytes(is, hasPoints);
+  if ((hasPoints && *hasPoints) || !hasPoints) {
+    points.reserve(numStrips);
+    for (auto i = 0; i < numStrips; ++i) {
+      points.emplace_back();
+      io::readBytes(is, points.back(), stripLengths[i]);
+    }
   }
 }
 
