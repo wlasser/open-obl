@@ -109,14 +109,12 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   const std::map<std::string, addVertex_t> blockAddVertexMap{
       {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
       {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
-      {"NiIntegerExtraData",
-       &NifLoader::addVertex<nif::NiIntegerExtraData>},
+      {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
       {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
       {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
-      {"NiMaterialProperty",
-       &NifLoader::addVertex<nif::NiMaterialProperty>},
-      {"NiTexturingProperty",
-       &NifLoader::addVertex<nif::NiTexturingProperty>},
+      {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
+      {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
+      {"NiStencilProperty", &NifLoader::addVertex<nif::NiStencilProperty>},
       {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
       // NiNode
       {"NiAdditionalGeometryData",

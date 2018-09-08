@@ -242,6 +242,34 @@ enum class BroadPhaseType : uint8_t {
   BROAD_PHASE_BORDER = 3
 };
 
+// Test ref op buf with op given by enum code
+enum class StencilCompareMode : uint32_t {
+  TEST_NEVER = 0, // Always test false, ignore ref
+  TEST_LESS,
+  TEST_EQUAL,
+  TEST_LESS_EQUAL,
+  TEST_GREATER,
+  TEST_NOT_EQUAL,
+  TEST_GREATER_EQUAL,
+  TEST_ALWAYS // Always test true, ignore buf
+};
+
+enum class StencilAction : uint32_t {
+  ACTION_KEEP = 0,
+  ACTION_ZERO,
+  ACTION_REPLACE,
+  ACTION_INCREMENT,
+  ACTION_DECREMENT,
+  ACTION_INVERT
+};
+
+enum class StencilDrawMode : uint32_t {
+  DRAW_CCW_OR_BOTH = 0,
+  DRAW_CCW,
+  DRAW_CW,
+  DRAW_BOTH
+};
+
 } // namespace Enum
 } // namespace nif
 

@@ -131,6 +131,19 @@ void NiTexturingProperty::read(std::istream &is) {
   }
 }
 
+void NiStencilProperty::read(std::istream &is) {
+  NiProperty::read(is);
+  io::readBytes(is, flags);
+  io::readBytes(is, stencilEnabled);
+  io::readBytes(is, stencilFunction);
+  io::readBytes(is, stencilRef);
+  io::readBytes(is, stencilMask);
+  io::readBytes(is, failAction);
+  io::readBytes(is, zfailAction);
+  io::readBytes(is, passAction);
+  io::readBytes(is, drawMode);
+}
+
 void NiAVObject::read(std::istream &is) {
   NiObjectNet::read(is);
   io::readBytes(is, flags);

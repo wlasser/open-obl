@@ -224,6 +224,21 @@ struct NiTexturingProperty : NiProperty {
   explicit NiTexturingProperty(Version version) : NiProperty(version) {}
 };
 
+struct NiStencilProperty : NiProperty {
+  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{version};
+  basic::Bool stencilEnabled{};
+  Enum::StencilCompareMode stencilFunction{};
+  basic::UInt stencilRef{};
+  basic::UInt stencilMask{0xffffffff};
+  Enum::StencilAction failAction{};
+  Enum::StencilAction zfailAction{};
+  Enum::StencilAction passAction{};
+  Enum::StencilDrawMode drawMode{Enum::StencilDrawMode::DRAW_BOTH};
+
+  void read(std::istream &is) override;
+  explicit NiStencilProperty(Version version) : NiProperty(version) {}
+};
+
 struct NiCollisionObject;
 
 struct NiAVObject : NiObjectNet {
