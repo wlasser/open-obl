@@ -27,13 +27,14 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace engine {
 
-Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiTriShapeData *block,
+Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
                                                     Ogre::Matrix4 transformation) {
   const auto fltMin = std::numeric_limits<float>::min();
   const auto fltMax = std::numeric_limits<float>::max();
@@ -55,8 +56,34 @@ Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiTriShapeData *block,
   return {bboxMin, bboxMax};
 }
 
+bool NifLoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
+                                       Ogre::Vector3 v2, Ogre::Vector3 n2,
+                                       Ogre::Vector3 v3, Ogre::Vector3 n3) {
+  auto expected = (v2 - v1).crossProduct(v3 - v1);
+  auto actual = (n1 + n2 + n3) / 3.0f;
+  // Coordinate system is right-handed so this is positive for an
+  // anticlockwise winding order and negative for a clockwise order.
+  return expected.dotProduct(actual) > 0.0f;
+}
+
+long NifLoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
+  assert(block->hasNormals);
+  using conversions::fromNif;
+
+  return std::count_if(block->triangles.begin(), block->triangles.end(),
+                       [&](const auto &tri) {
+                         return isWindingOrderCCW(
+                             fromNif(block->vertices[tri.v1]),
+                             fromNif(block->normals[tri.v1]),
+                             fromNif(block->vertices[tri.v2]),
+                             fromNif(block->normals[tri.v2]),
+                             fromNif(block->vertices[tri.v3]),
+                             fromNif(block->normals[tri.v3]));
+                       });
+}
+
 std::unique_ptr<Ogre::VertexData>
-NifLoaderState::generateVertexData(nif::NiTriShapeData *block,
+NifLoaderState::generateVertexData(nif::NiGeometryData *block,
                                    Ogre::Matrix4 transformation) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
@@ -148,28 +175,6 @@ NifLoaderState::generateVertexData(nif::NiTriShapeData *block,
     localOffset += 2;
   }
 
-  // Ogre expects an anticlockwise winding order
-  if (block->hasNormals) {
-    for (const auto &tri : block->triangles) {
-      using conversions::fromNif;
-      // Compute the triangle normal
-      auto v1 = fromNif(block->vertices[tri.v1]);
-      auto v2 = fromNif(block->vertices[tri.v2]);
-      auto v3 = fromNif(block->vertices[tri.v3]);
-      auto expected = (v2 - v1).crossProduct(v3 - v1);
-      // Estimate the triangle normal from the vertex normals
-      auto n1 = fromNif(block->normals[tri.v1]);
-      auto n2 = fromNif(block->normals[tri.v2]);
-      auto n3 = fromNif(block->normals[tri.v3]);
-      auto actual = (n1 + n2 + n3) / 3.0f;
-      // Coordinate system is right-handed so this is positive for an
-      // anticlockwise winding order and negative for a clockwise order.
-      if (expected.dotProduct(actual) < 0.0f) {
-        logger.logMessage(Ogre::LogMessageLevel::LML_WARNING,
-                          "Clockwise triangle winding order, expected anticlockwise");
-      }
-    }
-  }
 
   // Copy the vertex buffer into a hardware buffer, and link the buffer to
   // the vertex declaration.
@@ -199,9 +204,7 @@ NifLoaderState::generateIndexData(nif::NiTriShapeData *block) {
   std::size_t numIndices = 3u * block->numTriangles;
 
   // Copy the triangle (index) buffer into a hardware buffer.
-  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype,
-                                                   numIndices,
-                                                   usage);
+  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype, numIndices, usage);
   hwIndexBuffer->writeData(0,
                            hwIndexBuffer->getSizeInBytes(),
                            indexBuffer,
@@ -214,9 +217,33 @@ NifLoaderState::generateIndexData(nif::NiTriShapeData *block) {
   return indexData;
 }
 
+std::unique_ptr<Ogre::IndexData>
+NifLoaderState::generateIndexData(nif::NiTriStripsData *block) {
+  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+
+  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
+  auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
+  std::size_t numIndices = std::accumulate(block->stripLengths.begin(),
+                                           block->stripLengths.end(), 0u);
+
+  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype, numIndices, usage);
+  std::size_t offset = 0;
+  for (const auto &strip : block->points) {
+    hwIndexBuffer->writeData(offset, 2u * strip.size(), &strip[0], true);
+    offset += 2u * strip.size();
+  }
+
+  auto indexData = std::make_unique<Ogre::IndexData>();
+  indexData->indexBuffer = hwIndexBuffer;
+  indexData->indexCount = numIndices;
+  indexData->indexStart = 0;
+  return indexData;
+}
+
 NifLoaderState::BoundedSubmesh
-NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
-  // NiTriShape blocks determine discrete pieces of geometry with a single
+NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
+                                    LoadStatus &tag) {
+  // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
   // material and texture, and so translate to Ogre::SubMesh objects.
   // If a submesh with this name already exists, then it is either already
   // loaded or in the process of loading.
@@ -228,7 +255,7 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
       return {submesh, {}};
     } else {
       throw std::runtime_error(
-          "NiTriShape marked as loaded but submesh does not exist");
+          "NiTriBasedGeom marked as loaded but submesh does not exist");
     }
   }
   auto submesh = mesh->createSubMesh(block->name.str());
@@ -250,8 +277,7 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   auto taggedMatIt =
       std::find_if(block->properties.begin(), block->properties.end(),
                    [this](const auto &property) {
-                     return getBlock<nif::NiMaterialProperty>(
-                         property);
+                     return getBlock<nif::NiMaterialProperty>(property);
                    });
 
   // Find the texturing property, if any
@@ -309,16 +335,31 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   transformation.makeTransform(translation, scale, rotation);
 
   auto dataRef = static_cast<int32_t>(block->data);
-  // TODO: Check this is a valid reference
+  if (dataRef < 0 || dataRef >= blocks.vertex_set().size()) {
+    throw std::out_of_range("Nonexistent reference");
+  }
   auto &taggedDataBlock = blocks[dataRef];
-  auto data = dynamic_cast<nif::NiTriShapeData *>(taggedDataBlock.block.get());
-  Tagger dataTagger{taggedDataBlock.tag};
+  auto dataBlock = taggedDataBlock.block.get();
+  auto geometryData = dynamic_cast<nif::NiGeometryData *>(dataBlock);
   if (taggedDataBlock.tag == LoadStatus::Loaded) {
-    return {submesh, getBoundingBox(data, transformation)};
+    auto bbox = getBoundingBox(geometryData, transformation);
+    return {submesh, bbox};
   }
 
-  auto vertexData = generateVertexData(data, transformation);
-  auto indexData = generateIndexData(data);
+  std::unique_ptr<Ogre::IndexData> indexData{};
+  Tagger dataTagger{taggedDataBlock.tag};
+
+  // TODO: Replace this with a virtual function somehow?
+  if (auto triShapeData = dynamic_cast<nif::NiTriShapeData *>(dataBlock)) {
+    indexData = generateIndexData(triShapeData);
+    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+  } else if (auto triStripsData =
+      dynamic_cast<nif::NiTriStripsData *>(dataBlock)) {
+    indexData = generateIndexData(triStripsData);
+    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+  }
+
+  auto vertexData = generateVertexData(geometryData, transformation);
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
   // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
@@ -330,7 +371,7 @@ NifLoaderState::parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag) {
   submesh->vertexData = vertexData.release();
   submesh->indexData = indexData.release();
 
-  return {submesh, getBoundingBox(data, transformation)};
+  return {submesh, getBoundingBox(geometryData, transformation)};
 }
 
 std::shared_ptr<Ogre::Material>
@@ -613,11 +654,9 @@ NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
     const auto &niObject = taggedNiObject.block.get();
     auto &tag = taggedNiObject.tag;
 
-    if (auto block = dynamic_cast<nif::NiTriShape *>(niObject)) {
-      auto boundedSubmesh = parseNiTriShape(block, tag);
-      boundingBox.merge(boundedSubmesh.bbox);
-    } else if (auto block = dynamic_cast<nif::NiMaterialProperty *>(niObject)) {
-      parseNiMaterialProperty(block, tag);
+    if (auto niTriBasedGeom = dynamic_cast<nif::NiTriBasedGeom *>(niObject)) {
+      auto[submesh, bbox] = parseNiTriBasedGeom(niTriBasedGeom, tag);
+      boundingBox.merge(bbox);
     }
 
     mesh->_setBounds(boundingBox);

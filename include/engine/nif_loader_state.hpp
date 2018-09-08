@@ -86,7 +86,8 @@ class NifLoaderState {
     Ogre::SubMesh *submesh{};
     Ogre::AxisAlignedBox bbox{};
   };
-  BoundedSubmesh parseNiTriShape(nif::NiTriShape *block, LoadStatus &tag);
+  BoundedSubmesh parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
+                                     LoadStatus &tag);
 
   std::shared_ptr<Ogre::Material>
   parseNiMaterialProperty(nif::NiMaterialProperty *block, LoadStatus &tag);
@@ -118,16 +119,31 @@ class NifLoaderState {
   void parseNiSourceTexture(nif::NiSourceTexture *block, LoadStatus &tag,
                             Ogre::TextureUnitState *tex);
 
-  // Reads vertex, normal, and texcoord data from NiTriShapeData and prepares it
+  // Returns true if the triangle has a counterclockwise winding order, and
+  // false otherwise
+  bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
+                         Ogre::Vector3 v2, Ogre::Vector3 n2,
+                         Ogre::Vector3 v3, Ogre::Vector3 n3);
+
+  // Return the number of triangles with a counterclockwise winding order.
+  // The mesh should have normals.
+  long numCCWTriangles(nif::NiTriShapeData *block);
+
+  // Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
   // for rendering.
   std::unique_ptr<Ogre::VertexData>
-  generateVertexData(nif::NiTriShapeData *block, Ogre::Matrix4 transformation);
+  generateVertexData(nif::NiGeometryData *block, Ogre::Matrix4 transformation);
 
   // Reads triangle data from NiTriShapeData and prepares it for rendering.
   std::unique_ptr<Ogre::IndexData>
   generateIndexData(nif::NiTriShapeData *block);
 
-  Ogre::AxisAlignedBox getBoundingBox(nif::NiTriShapeData *block,
+  // Reads triangle strip data from NiTriStripsData and prepares it for
+  // rendering.
+  std::unique_ptr<Ogre::IndexData>
+  generateIndexData(nif::NiTriStripsData *block);
+
+  Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
                                       Ogre::Matrix4 transformation);
 
   Ogre::Mesh *mesh;
