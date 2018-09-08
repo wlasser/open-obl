@@ -533,6 +533,19 @@ struct FormatPrefs {
   Enum::AlphaFormat alphaFormat{Enum::AlphaFormat::ALPHA_DEFAULT};
 };
 
+struct TriangleData {
+  Triangle triangle{};
+  basic::UShort weldingInfo{};
+  Vector3 normal{};
+};
+
+struct OblivionSubShape : Versionable {
+  HavokFilter havokFilter{};
+  basic::UInt numVertices{};
+  HavokMaterial havokMaterial{version};
+  explicit OblivionSubShape(Version version) : Versionable(version) {}
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
 std::istream &operator>>(std::istream &is, ByteMatrix &t);
@@ -614,6 +627,8 @@ std::istream &operator>>(std::istream &is, ShaderTexDesc &t);
 std::istream &operator>>(std::istream &is, AdditionalDataInfo &t);
 std::istream &operator>>(std::istream &is, AdditionalDataBlock &t);
 std::istream &operator>>(std::istream &is, FormatPrefs &t);
+std::istream &operator>>(std::istream &is, TriangleData &t);
+std::istream &operator>>(std::istream &is, OblivionSubShape &t);
 
 } // namespace compound
 } // namespace nif

@@ -429,4 +429,20 @@ std::istream &operator>>(std::istream &is, FormatPrefs &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, TriangleData &t) {
+  is >> t.triangle;
+  io::readBytes(is, t.weldingInfo);
+  is >> t.normal;
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, OblivionSubShape &t) {
+  is >> t.havokFilter;
+  io::readBytes(is, t.numVertices);
+  is >> t.havokMaterial;
+
+  return is;
+}
+
 } // namespace nif::compound

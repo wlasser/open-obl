@@ -9,6 +9,10 @@
 #include <istream>
 #include <vector>
 
+namespace nif::hk {
+struct PackedNiTriStripsData;
+}
+
 namespace nif::bhk {
 namespace Enum {
 
@@ -121,6 +125,72 @@ struct ConvexVerticesShape : ConvexShape {
   explicit ConvexVerticesShape(Version version) : ConvexShape(version) {}
 };
 
+struct ConvexTransformShape : TransformShape {
+  void read(std::istream &is) override;
+  explicit ConvexTransformShape(Version version) : TransformShape(version) {}
+};
+
+struct ConvexSweepShape : Shape, Versionable {
+  basic::Ref<Shape> shape{};
+  compound::HavokMaterial material{version};
+  basic::Float radius{};
+  compound::Vector3 unknown{};
+
+  void read(std::istream &is) override;
+  explicit ConvexSweepShape(Version version) : Versionable(version) {}
+};
+
+struct BvTreeShape : Shape {
+  void read(std::istream &is) override;
+  ~BvTreeShape() override = 0;
+};
+inline BvTreeShape::~BvTreeShape() = default;
+
+// MOPP = Memory Optimized Partial Polytope
+struct MoppBvTreeShape : BvTreeShape, Versionable {
+  basic::Ref<Shape> shape{};
+  std::array<basic::UInt, 3> unused{};
+  basic::Float shapeScale{1.0f};
+  // Calculated
+  basic::UInt moppDataSize{};
+
+  // Minimum of all vertices in the packed shape along each axis, minus 0.1
+  VersionOptional<compound::Vector3, "10.1.0.0"_ver, Unbounded> origin{version};
+
+  // Quantization factor is 2^16 / scale. Should be 2^16 * 254 / (size + 0.2),
+  // with size the largest dimension of the bbox of the packed shape.
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded> scale{version};
+
+  std::vector<basic::Byte> moppData{};
+
+  void read(std::istream &is) override;
+  explicit MoppBvTreeShape(Version version) : Versionable(version) {}
+};
+
+struct ShapeCollection : Shape {
+  void read(std::istream &is) override;
+  ~ShapeCollection() override = 0;
+};
+inline ShapeCollection::~ShapeCollection() = default;
+
+struct PackedNiTriStripsShape : ShapeCollection, Versionable {
+  basic::UShort numSubShapes{};
+  std::vector<nif::compound::OblivionSubShape> subShapes{};
+
+  basic::UInt userData{};
+  basic::UInt unused1{};
+  basic::Float radius{0.1f};
+  basic::UInt unused2{};
+  compound::Vector4 scale{1.0f, 1.0f, 1.0f, 0.0f};
+  basic::Float radiusCopy{radius};
+  compound::Vector4 scaleCopy{scale};
+
+  basic::Ref<nif::hk::PackedNiTriStripsData> data{};
+
+  void read(std::istream &is) override;
+  explicit PackedNiTriStripsShape(Version version) : Versionable(version) {}
+};
+
 struct WorldObject : Serializable, Versionable {
   basic::Ref<Shape> shape{};
   VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknownInt{version};
@@ -180,5 +250,18 @@ struct CollisionObject : NiCollisionObject {
 };
 
 } // namespace nif::bhk
+
+namespace nif::hk {
+
+struct PackedNiTriStripsData : nif::bhk::ShapeCollection {
+  basic::UInt numTriangles{};
+  std::vector<nif::compound::TriangleData> triangles{};
+
+  basic::UInt numVertices{};
+  std::vector<compound::Vector3> vertices{};
+
+  void read(std::istream &is) override;
+};
+} // namespace nif::hk
 
 #endif //OPENOBLIVION_NIF_BHK_HPP

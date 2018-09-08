@@ -4,6 +4,7 @@
 #include "engine/ogre_stream_wrappers.hpp"
 #include "io/memstream.hpp"
 #include "nif/basic.hpp"
+#include "nif/bhk.hpp"
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 
@@ -22,6 +23,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <nif/bhk.hpp>
 
 namespace engine {
 
@@ -126,7 +128,22 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
       {"NiSkinInstance", &NifLoader::addVertex<nif::NiSkinInstance>},
       {"NiGeometry", &NifLoader::addVertex<nif::NiGeometry>},
       {"NiTriShape", &NifLoader::addVertex<nif::NiTriShape>},
-      {"NiSourceTexture", &NifLoader::addVertex<nif::NiSourceTexture>}
+      {"NiSourceTexture", &NifLoader::addVertex<nif::NiSourceTexture>},
+      {"bhkTransformShape", &NifLoader::addVertex<nif::bhk::TransformShape>},
+      {"bhkSphereShape", &NifLoader::addVertex<nif::bhk::SphereShape>},
+      {"bhkCapsuleShape", &NifLoader::addVertex<nif::bhk::CapsuleShape>},
+      {"bhkBoxShape", &NifLoader::addVertex<nif::bhk::BoxShape>},
+      {"bhkConvexVerticesShape",
+       &NifLoader::addVertex<nif::bhk::ConvexVerticesShape>},
+      {"bhkConvexTransformShape",
+       &NifLoader::addVertex<nif::bhk::ConvexTransformShape>},
+      {"bhkConvexSweepShape",
+       &NifLoader::addVertex<nif::bhk::ConvexSweepShape>},
+      {"bhkMoppBvTreeShape", &NifLoader::addVertex<nif::bhk::MoppBvTreeShape>},
+      {"bhkPackedNiTriStripsShape",
+       &NifLoader::addVertex<nif::bhk::PackedNiTriStripsShape>},
+      {"hkPackedNiTriStripsData",
+       &NifLoader::addVertex<nif::hk::PackedNiTriStripsData>},
   };
 
   // The rest of the file is a series of NiObjects, called blocks, whose types
