@@ -170,7 +170,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func = vertexAdder->second;
       (this->*func)(blocks, i, nifVersion, is);
-      logger.logMessage(boost::str(
+      logger->logMessage(boost::str(
           boost::format("Read block %d (%i)") % i % blockType));
     } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
@@ -180,7 +180,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
         addEdge(blocks, i, child);
       }
       blocks[i] = std::move(block);
-      logger.logMessage(boost::str(
+      logger->logMessage(boost::str(
           boost::format("Read block %d (NiNode)") % i));
     } else {
       // TODO: Implement the other blocks
@@ -194,6 +194,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
 }
 
 void NifLoader::loadResource(Ogre::Resource *resource) {
+  if (!logger) logger = Ogre::LogManager::getSingletonPtr();
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);

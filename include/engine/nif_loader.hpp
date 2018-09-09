@@ -59,7 +59,7 @@ class NifLoader : public Ogre::ManualResourceLoader {
 
   BlockGraph createBlockGraph(std::istream &is);
 
-  Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
+  Ogre::LogManager *logger{nullptr};
 
  public:
   void loadResource(Ogre::Resource *resource) override;

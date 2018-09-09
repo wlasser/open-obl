@@ -7,13 +7,13 @@
 #include <iomanip>
 #include <string>
 
+#include "engine/application.hpp"
 #include "engine/nif_loader.hpp"
 #include "save_state.hpp"
 #include "records.hpp"
 #include "record/record.hpp"
 #include "bsa.hpp"
 #include "esp.hpp"
-#include "app.hpp"
 
 void testSaveLoading() {
   std::ifstream pcSaveStream("saves/marie.ess", std::ios::binary);
@@ -38,11 +38,10 @@ void testBsaLoading() {
   of.write(data.get(), is.size());
 }
 
-void testApp() {
-  App app;
-  app.initApp();
+void testApplication() {
+  engine::Application app("Open Oblivion");
+  app.getRoot()->addFrameListener(&app);
   app.getRoot()->startRendering();
-  app.closeApp();
 }
 
 void extractNif(bsa::BSAReader &reader,
@@ -63,11 +62,11 @@ void checkNif(bsa::BSAReader &reader,
   if (fileName.extension() != ".nif") return;
   auto is = reader[folder][file];
   std::clog << "Loading " << folder << "/" << file << '\n';
-  // TODO: Use NifLoader here
+  // TODO: Use NifLoaderState here
 }
 
 int main() {
-  testApp();
+  testApplication();
   //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   return 0;
 }

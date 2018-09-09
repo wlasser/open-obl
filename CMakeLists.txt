@@ -3,8 +3,10 @@ project(OpenOblivion)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug")
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/modules")
 
 find_package(ZLIB 1.2.11 REQUIRED)
+find_package(SDL2 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
 find_package(Boost 1.67 REQUIRED)
 
@@ -59,8 +61,8 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionIO>
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
-        src/app.cpp
         src/bsa.cpp
+        src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/nif_loader.cpp
         src/engine/nif_loader_state.cpp
@@ -71,9 +73,9 @@ target_sources(OpenOblivion PRIVATE
         src/save_state.cpp
         src/system_time.cpp
         include/actor_value.hpp
-        include/app.hpp
         include/attribute.hpp
         include/bsa.hpp
+        include/engine/application.hpp
         include/engine/bsa.hpp
         include/engine/conversions.hpp
         include/engine/nif_loader.hpp
@@ -87,10 +89,12 @@ target_sources(OpenOblivion PRIVATE
 
 target_include_directories(OpenOblivion PRIVATE
         ${ZLIB_INCLUDE_DIRS}
+        ${SDL2_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE
         ${ZLIB_LIBRARIES}
         ${OGRE_LIBRARIES}
+        ${SDL2_LIBRARY}
         stdc++fs)
 
 add_library(Catch INTERFACE)
