@@ -429,8 +429,10 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
   auto fsParams = pass->getFragmentProgramParameters();
   fsParams->setNamedConstant("diffuseMap", 0);
-  fsParams->setNamedAutoConstant("lightPosition",
-                                 AutoConst::ACT_LIGHT_POSITION, 0);
+  fsParams->setNamedAutoConstant("lightPositionArray",
+                                 AutoConst::ACT_LIGHT_POSITION_ARRAY, 4);
+  fsParams->setNamedAutoConstant("lightDiffuseArray",
+                                 AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY, 4);
 
   return material;
 }

@@ -151,8 +151,14 @@ Application::Application(std::string windowName) : FrameListener() {
   // Construct a test scene
   auto *light = scnMgr->createLight("TestLight");
   auto *lightNode = rootNode->createChildSceneNode();
-  lightNode->setPosition(50.0f, 300.0f, -100.0f);
+  lightNode->setPosition(50.0f, 400.0f, -100.0f);
   lightNode->attachObject(light);
+
+  auto *light2 = scnMgr->createLight("TestLight2");
+  light2->setDiffuseColour(Ogre::ColourValue(0.5f, 0.4f, 0.3f) * 0.5f);
+  auto *light2Node = rootNode->createChildSceneNode();
+  light2Node->setPosition(-50.0f, 100.0f, -100.0f);
+  light2Node->attachObject(light2);
 
   auto *camera = scnMgr->createCamera("TestCamera");
   camera->setNearClipDistance(1.0f);
