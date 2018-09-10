@@ -1,0 +1,9 @@
+vertex_program genericMaterial_vs_glsl glsl
+{
+    source genericMaterial_vs.glsl
+}
+
+fragment_program genericMaterial_fs_glsl glsl
+{
+    source genericMaterial_fs.glsl
+}

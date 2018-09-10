@@ -414,6 +414,24 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   // TODO: How to convert from nif glossiness to Ogre shininess?
   pass->setShininess(block->glossiness);
 
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
+  pass->setVertexProgram("genericMaterial_vs_glsl", true);
+  auto vsParams = pass->getVertexProgramParameters();
+  vsParams->setNamedAutoConstant("world",
+                                 AutoConst::ACT_WORLD_MATRIX);
+  vsParams->setNamedAutoConstant("worldInverseTranspose",
+                                 AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
+  vsParams->setNamedAutoConstant("worldViewProj",
+                                 AutoConst::ACT_WORLDVIEWPROJ_MATRIX);
+  vsParams->setNamedAutoConstant("viewPos",
+                                 AutoConst::ACT_CAMERA_POSITION);
+
+  pass->setFragmentProgram("genericMaterial_fs_glsl", true);
+  auto fsParams = pass->getFragmentProgramParameters();
+  fsParams->setNamedConstant("diffuseMap", 0);
+  fsParams->setNamedAutoConstant("lightPosition",
+                                 AutoConst::ACT_LIGHT_POSITION, 0);
+
   return material;
 }
 

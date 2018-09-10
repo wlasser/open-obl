@@ -46,20 +46,22 @@ Application::Application(std::string windowName) : FrameListener() {
   // Set up the logger
   logger = Ogre::LogManager::getSingletonPtr();
 
-  // List the available render systems
-  logger->logMessage("Available render systems are:");
-  auto renderSystemFmt = boost::format(" - %s\n");
-  for (const auto &renderSystem : ogreRoot->getAvailableRenderers()) {
-    logger->logMessage(boost::str(renderSystemFmt % renderSystem->getName()));
-  }
 
   // Choose a render system
-  std::string renderSystemName = "OpenGL Rendering Subsystem";
+  std::string renderSystemName = "OpenGL 3+ Rendering Subsystem";
   if (auto *renderSystem = ogreRoot->getRenderSystemByName(renderSystemName)) {
     ogreRoot->setRenderSystem(renderSystem);
   } else {
-    throw std::runtime_error(boost::str(
-        boost::format("Render system %s not found") % renderSystemName));
+    // List the available render systems
+    auto notFound = boost::str(boost::format("Render system %s not found")
+                                   % renderSystemName);
+    logger->logMessage(notFound);
+    logger->logMessage("Available render systems are:");
+    auto renderSystemFmt = boost::format(" - %s");
+    for (const auto &system : ogreRoot->getAvailableRenderers()) {
+      logger->logMessage(boost::str(renderSystemFmt % system->getName()));
+    }
+    throw std::runtime_error(notFound);
   }
 
   // Initialise the rendering component of Ogre
@@ -102,7 +104,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // Favour reading from the filesystem (so that mods can overwrite data), then
   // register all bsa files in the data folder. This allows mods to use their
   // own bsa files, if they want.
-  resGrpMgr.addResourceLocation("./Data", "FileSystem", resourceGroup);
+  resGrpMgr.addResourceLocation("./Data", "FileSystem", resourceGroup, true);
   //for (const auto &entry : std::filesystem::directory_iterator("./Data")) {
   //  if (entry.is_regular_file() && entry.path().extension() == ".bsa") {
   //    resGrpMgr.addResourceLocation(entry.path(), "BSA", resourceGroup);
@@ -125,6 +127,19 @@ Application::Application(std::string windowName) : FrameListener() {
   };
   for (const auto &path : testMeshes) {
     resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+  }
+
+  // Declare the shader programs
+  resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
+  auto shaderDir = std::filesystem::directory_iterator("./shaders");
+  std::map<std::string, std::string> shaderParams = {
+      {"language", "GLSL"}
+  };
+  for (const auto &entry : shaderDir) {
+    if (entry.is_regular_file() && entry.path().extension() == ".glsl") {
+      //    resGrpMgr.declareResource(entry.path(), "HighLevelGpuProgram",
+      //                              resourceGroup, shaderParams);
+    }
   }
 
   resGrpMgr.initialiseAllResourceGroups();
