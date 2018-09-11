@@ -24,6 +24,8 @@ void main() {
     vec3 diffuseColor = pow(texture2D(diffuseMap, TexCoord).xyz, vec3(gamma));
 
     vec3 normal = texture2D(normalMap, TexCoord).xyz;
+    // Convert from dx to gl by flipping the green channel
+    normal.y = 1.0f - normal.y;
     // Transform normal from [0, 1] -> [-1, 1]
     normal = normalize(normal * 2.0f - 1.0f);
     // Transform normal into world space
