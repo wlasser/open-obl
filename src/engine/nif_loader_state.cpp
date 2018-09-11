@@ -523,6 +523,12 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
                                  AutoConst::ACT_LIGHT_POSITION_ARRAY, 4);
   fsParams->setNamedAutoConstant("lightDiffuseArray",
                                  AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY, 4);
+  fsParams->setNamedAutoConstant("matShininess",
+                                 AutoConst::ACT_SURFACE_SHININESS);
+  fsParams->setNamedAutoConstant("matDiffuse",
+                                 AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
+  fsParams->setNamedAutoConstant("matSpecular",
+                                 AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
 
   return material;
 }

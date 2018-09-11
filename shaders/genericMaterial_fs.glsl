@@ -11,11 +11,18 @@ uniform sampler2D normalMap;
 uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 
+uniform float matShininess;
+uniform vec3 matDiffuse;
+uniform vec3 matSpecular;
+
 out vec4 FragColor;
 
 void main() {
     float gamma = 2.2f;
+
+    // Undo gamma correction of texture so it is correct later
     vec3 diffuseColor = pow(texture2D(diffuseMap, TexCoord).xyz, vec3(gamma));
+
     vec3 normal = texture2D(normalMap, TexCoord).xyz;
     // Transform normal from [0, 1] -> [-1, 1]
     normal = normalize(normal * 2.0f - 1.0f);
@@ -30,12 +37,12 @@ void main() {
         vec3 reflectDir = reflect(-lightDir, normal);
 
         float diff = max(dot(normal, lightDir), 0.0f);
-        vec3 diffuse = diff * diffuseColor * lightDiffuseArray[i].xyz;
+        vec3 diffuse = diff * diffuseColor * matDiffuse;
 
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 10);
-        vec3 specular = 0.5f * spec * lightDiffuseArray[i].xyz;
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0f), matShininess);
+        vec3 specular = 0.5f * spec * matSpecular;
 
-        lighting += (specular + diffuse);
+        lighting += (specular + diffuse) * lightDiffuseArray[i].xyz;
     }
 
     vec3 fragColor = pow(lighting, vec3(1.0f / gamma));
