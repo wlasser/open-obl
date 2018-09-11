@@ -25,6 +25,8 @@
 #include <OgreVector4.h>
 #include <OgreVertexIndexData.h>
 #include <algorithm>
+#include <cstring>
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -84,7 +86,9 @@ long NifLoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
 
 std::unique_ptr<Ogre::VertexData>
 NifLoaderState::generateVertexData(nif::NiGeometryData *block,
-                                   Ogre::Matrix4 transformation) {
+                                   Ogre::Matrix4 transformation,
+                                   std::vector<nif::compound::Vector3> *bitangents,
+                                   std::vector<nif::compound::Vector3> *tangents) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
   auto vertexData = std::make_unique<Ogre::VertexData>();
@@ -119,6 +123,25 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
     bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
     offset += 2;
   }
+  if (bitangents) {
+    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                         Ogre::VES_BINORMAL);
+    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+    offset += 3;
+  }
+  if (tangents) {
+    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                         Ogre::VES_TANGENT);
+    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+    offset += 3;
+  }
+
+  // Normal vectors are not translated and transform with the inverse
+  // transpose of the transformation matrix. We will also need this for tangents
+  // and bitangents so we compute it now.
+  auto normalTransformation = transformation;
+  normalTransformation.setTrans(Ogre::Vector3::ZERO);
+  normalTransformation = normalTransformation.inverse().transpose();
 
   // The final vertex buffer is the transpose of the block matrix
   // v1  v3  v3 ...
@@ -145,11 +168,6 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
   }
   // TODO: Blend weights
   if (block->hasNormals) {
-    // Normal vectors are not translated and transform with the inverse
-    // transpose of the transformation matrix
-    auto normalTransformation = transformation;
-    normalTransformation.setTrans(Ogre::Vector3::ZERO);
-    normalTransformation = normalTransformation.inverse().transpose();
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block->normals) {
       auto bsN =
@@ -173,6 +191,32 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
       it += offset;
     }
     localOffset += 2;
+  }
+  if (bitangents) {
+    auto it = vertexBuffer.begin() + localOffset;
+    for (const auto &bitangent : *bitangents) {
+      auto bsBt =
+          normalTransformation * Ogre::Vector4(conversions::fromNif(bitangent));
+      auto bt = conversions::fromBSCoordinates(bsBt.xyz());
+      *it = bt.x;
+      *(it + 1) = bt.y;
+      *(it + 2) = bt.z;
+      it += offset;
+    }
+    localOffset += 3;
+  }
+  if (tangents) {
+    auto it = vertexBuffer.begin() + localOffset;
+    for (const auto &tangent : *tangents) {
+      auto bsT =
+          normalTransformation * Ogre::Vector4(conversions::fromNif(tangent));
+      auto t = conversions::fromBSCoordinates(bsT.xyz());
+      *it = t.x;
+      *(it + 1) = t.y;
+      *(it + 2) = t.z;
+      it += offset;
+    }
+    localOffset += 3;
   }
 
 
@@ -262,6 +306,47 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
 
   submesh->useSharedVertices = false;
 
+  std::vector<nif::compound::Vector3> bitangents{};
+  std::vector<nif::compound::Vector3> tangents{};
+
+  // For normal mapping we need tangent and bitangent information given inside
+  // an NiBinaryExtraData block. For low versions, the extra data is arranged
+  // like a linked list, and for high versions it's an array.
+  // TODO: Support the linked list version
+  if (block->extraDataArray) {
+    auto xtraIt = block->extraDataArray->begin();
+    do {
+      xtraIt = std::find_if(xtraIt, block->extraDataArray->end(),
+                            [this](const auto &xtraData) {
+                              return getBlock<nif::NiBinaryExtraData>(xtraData);
+                            });
+      if (xtraIt == block->extraDataArray->end()) break;
+
+      auto taggedXtraData = blocks[static_cast<int32_t>(*xtraIt)];
+      auto xtraData = dynamic_cast<nif::NiBinaryExtraData *>(
+          taggedXtraData.block.get());
+      auto &xtraDataTag = taggedXtraData.tag;
+
+      if (xtraData->name) {
+        std::string name = xtraData->name->str();
+        // Tangent data should begin with "Tangent space"
+        if (name.find("Tangent space") == 0) {
+          // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
+          // We need both the number of bytes in each list, and the number of
+          // vertices
+          std::size_t numBytes = xtraData->data.dataSize / 2;
+          std::size_t numVertices = numBytes / (3 * sizeof(float));
+          bitangents.resize(numVertices);
+          tangents.resize(numVertices);
+          // Poor naming choices, maybe?
+          std::memcpy(bitangents.data(), xtraData->data.data.data() + numBytes,
+                      numBytes);
+          std::memcpy(tangents.data(), xtraData->data.data.data(), numBytes);
+        }
+      }
+    } while (++xtraIt != block->extraDataArray->end());
+  }
+
   // Here we have a slight problem with loading; For nif files, materials and
   // textures are independent and can be assigned independently to blocks. In
   // Ogre however, a texture has to have a parent material, and if two textures
@@ -318,6 +403,9 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
         auto family = parseNiTexturingProperty(texBlock, texTag, pass);
         if (family.base) {
           pass->addTextureUnitState(family.base.release());
+          if (family.normal) {
+            pass->addTextureUnitState(family.normal.release());
+          }
         }
         // TODO: Support more than base textures
       }
@@ -359,7 +447,8 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
     submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
   }
 
-  auto vertexData = generateVertexData(geometryData, transformation);
+  auto vertexData = generateVertexData(geometryData, transformation,
+                                       &bitangents, &tangents);
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
   // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
@@ -429,6 +518,7 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
   auto fsParams = pass->getFragmentProgramParameters();
   fsParams->setNamedConstant("diffuseMap", 0);
+  fsParams->setNamedConstant("normalMap", 1);
   fsParams->setNamedAutoConstant("lightPositionArray",
                                  AutoConst::ACT_LIGHT_POSITION_ARRAY, 4);
   fsParams->setNamedAutoConstant("lightDiffuseArray",
@@ -439,7 +529,7 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 
 std::unique_ptr<Ogre::TextureUnitState>
 NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
-                             Ogre::Pass *parent) {
+                             Ogre::Pass *parent, bool isNormalMap) {
   auto textureUnit = std::make_unique<Ogre::TextureUnitState>(parent);
 
   switch (tex->clampMode) {
@@ -561,20 +651,30 @@ NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
   TaggedBlock taggedSource = blocks[sourceRef];
   LoadStatus &sourceTag = taggedSource.tag;
   auto source = dynamic_cast<nif::NiSourceTexture *>(taggedSource.block.get());
-  parseNiSourceTexture(source, sourceTag, textureUnit.get());
+  parseNiSourceTexture(source, sourceTag, textureUnit.get(), isNormalMap);
 
   return textureUnit;
 }
 
 void NifLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
                                           LoadStatus &tag,
-                                          Ogre::TextureUnitState *tex) {
+                                          Ogre::TextureUnitState *tex,
+                                          bool isNormalMap) {
   Tagger tagger{tag};
 
   if (block->useExternal) {
     using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
     auto &texFile = std::get<ExternalTextureFile>(block->textureFileData);
     std::string str = texFile.filename.string.str();
+    if (isNormalMap) {
+      // Append '_n' to the filename, preserving the extension
+      std::filesystem::path path(str);
+      auto extension = path.extension();
+      path.replace_extension("");
+      path += "_n";
+      path += extension;
+      str = path;
+    }
     // It is necessary to normalize the path because Ogre doesn't actually ask
     // the archive whether the file exists or not, it just checks against all
     // the filenames with a direct comparison.
@@ -632,6 +732,7 @@ NifLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
 
   if (block->hasBaseTexture) {
     family.base = parseTexDesc(&block->baseTexture, pass);
+    family.normal = parseTexDesc(&block->baseTexture, pass, true);
   }
   if (block->hasDarkTexture) {
     family.dark = parseTexDesc(&block->darkTexture, pass);

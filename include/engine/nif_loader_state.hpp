@@ -95,6 +95,7 @@ class NifLoaderState {
   struct TextureFamily {
     using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
     TexturePtr base{};
+    TexturePtr normal{};
     TexturePtr dark{};
     TexturePtr detail{};
     TexturePtr gloss{};
@@ -105,7 +106,8 @@ class NifLoaderState {
   };
   // See parseTexDesc for why the pass is necessary.
   TextureFamily
-  parseNiTexturingProperty(nif::NiTexturingProperty *block, LoadStatus &tag,
+  parseNiTexturingProperty(nif::NiTexturingProperty *block,
+                           LoadStatus &tag,
                            Ogre::Pass *pass);
 
   // When setting the texture name of a texture unit, Ogre looks up and loads
@@ -114,10 +116,14 @@ class NifLoaderState {
   // Ogre::TextureUnitState with a nullptr parent, and we have to supply the
   // parent pass here.
   std::unique_ptr<Ogre::TextureUnitState>
-  parseTexDesc(nif::compound::TexDesc *tex, Ogre::Pass *parent);
+  parseTexDesc(nif::compound::TexDesc *tex,
+               Ogre::Pass *parent,
+               bool isNormalMap = false);
 
-  void parseNiSourceTexture(nif::NiSourceTexture *block, LoadStatus &tag,
-                            Ogre::TextureUnitState *tex);
+  void parseNiSourceTexture(nif::NiSourceTexture *block,
+                            LoadStatus &tag,
+                            Ogre::TextureUnitState *tex,
+                            bool isNormalMap = false);
 
   // Returns true if the triangle has a counterclockwise winding order, and
   // false otherwise
@@ -132,7 +138,9 @@ class NifLoaderState {
   // Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
   // for rendering.
   std::unique_ptr<Ogre::VertexData>
-  generateVertexData(nif::NiGeometryData *block, Ogre::Matrix4 transformation);
+  generateVertexData(nif::NiGeometryData *block, Ogre::Matrix4 transformation,
+                     std::vector<nif::compound::Vector3> *bitangents,
+                     std::vector<nif::compound::Vector3> *tangents);
 
   // Reads triangle data from NiTriShapeData and prepares it for rendering.
   std::unique_ptr<Ogre::IndexData>
