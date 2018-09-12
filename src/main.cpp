@@ -22,13 +22,16 @@ void testSaveLoading() {
 
 struct NullProcessor {
   template<class R>
-  void process(const R &record) {}
+  void readRecord(std::istream &is) {
+    (void) record::skipRecord(is);
+  }
 };
 
 struct LogProcessor {
   template<class R>
-  void process(const R &record) {
-    std::clog << "<rec>" << record << "</rec>\n";
+  void readRecord(std::istream &is) {
+    auto rec = record::readRecord<R>(is);
+    std::clog << "<rec>" << rec << "</rec>\n";
   }
 };
 
@@ -41,7 +44,7 @@ void testEsmLoading() {
     std::cerr << std::string("Failed to open file: ") << strerror(errno);
     return;
   }
-  Esp esm(esmStream, logProcessor);
+  esp::readEsp(esmStream, nullProcessor);
 }
 
 void testBsaLoading() {
