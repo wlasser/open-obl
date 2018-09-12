@@ -129,8 +129,12 @@ void Esp::parseCell(std::istream &is) {
       // respectively. This may be empty.
       while ((recordType = peekRecordType(is)) == "REFR"
           || recordType == "ACHR" || recordType == "ACRE") {
-        // TODO: REFR, ACHR, ACRE
-        skipRecord(is);
+        // TODO: ACHR, ACRE
+        if (recordType == "REFR") {
+          parseRecord<record::REFR>(is);
+        } else {
+          skipRecord(is);
+        }
       }
     }
 
@@ -143,8 +147,12 @@ void Esp::parseCell(std::istream &is) {
       // Expect as CellPersistentChildren
       while ((recordType = peekRecordType(is)) == "REFR"
           || recordType == "ACHR" || recordType == "ACRE") {
-        // TODO: REFR, ACHR, ACRE
-        skipRecord(is);
+        // TODO: ACHR, ACRE
+        if (recordType == "REFR") {
+          parseRecord<record::REFR>(is);
+        } else {
+          skipRecord(is);
+        }
       }
     }
 
@@ -164,8 +172,12 @@ void Esp::parseCell(std::istream &is) {
       // Expect as CellPersistentChildren until next GRUP or CELL
       while ((recordType = peekRecordType(is)) == "REFR"
           || recordType == "ACHR" || recordType == "ACRE") {
-        // TODO: REFR, ACHR, ACRE
-        skipRecord(is);
+        // TODO: ACHR, ACRE
+        if (recordType == "REFR") {
+          parseRecord<record::REFR>(is);
+        } else {
+          skipRecord(is);
+        }
       }
     }
   }

@@ -136,6 +136,32 @@ using XCCM = FormID;
 using XCWT = FormID;
 // The water height in a cell
 using XCLW = float;
+// Base object formid
+using NAME = FormID;
+// Denotes the reference as a marker?
+using XMRK = std::tuple<>;
+// Uniform scaling factor for placed references
+using XSCL = float;
+// Target reference
+using XTRG = FormID;
+// Distant lod data
+using XLOD = std::array<float, 3>;
+// Enchanted weapon charge
+using XCHG = float;
+// Placed armor or weapon health. This is displayed and editable as a float
+// in the construction set, but is only saved as an integer.
+using XHLT = int32_t;
+// Cell formid, only used in testing cells, associated to XMarkers.
+using XPCI = FormID;
+// Placed leveled creature level modifier
+using XLCM = int32_t;
+// Reference to a door with a random teleport target which can use this door as
+// an output.
+using XRTM = FormID;
+// Number of copies of an item
+using XCNT = int32_t;
+// Open by default. Its presence implies true.
+using ONAM = std::tuple<>;
 
 // Facial and body part indices
 enum class INDX_FACE : uint32_t {
@@ -204,6 +230,114 @@ enum class XCMT : uint8_t {
   Default = 0,
   Public = 1u,
   Dungeon = 2u
+};
+
+// Map marker flags
+enum class FNAM_REFR : uint8_t {
+  None = 0,
+  Visible = 1u,
+  CanTravelTo = 1u << 1u
+};
+inline constexpr FNAM_REFR operator|(FNAM_REFR a, FNAM_REFR b) {
+  return FNAM_REFR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+
+// TODO: Find the remaining values of this
+enum class XACT : uint32_t {
+  None = 0,
+  OpenByDefault = 0x0du
+};
+
+// Map marker location type
+enum class TNAM : uint16_t {
+  None = 0,
+  Camp = 1u,
+  Cave = 2u,
+  City = 3u,
+  ElvenRuin = 4u,
+  FortRuin = 5u,
+  Mine = 6u,
+  Landmark = 7u,
+  Tavern = 8u,
+  Settlement = 9u,
+  DaedricShrine = 10u,
+  OblivionGate = 11u,
+  Door = 12u
+};
+
+// Soul contained in soul gem
+enum class XSOL : uint8_t {
+  None = 0,
+  Petty = 1u,
+  Lesser = 2u,
+  Common = 3u,
+  Greater = 4u,
+  Grand = 5u
+};
+
+// Speed tree information TODO: Support trees
+struct XSED {
+  uint16_t size{};
+};
+
+// Ragdoll data
+struct XRGD {
+  std::vector<uint8_t> bytes{};
+};
+
+// Locked door/container information
+struct XLOC {
+  enum class Flag : uint32_t {
+    None = 0,
+    LeveledLock = 4u
+  };
+  // 0-100, 100 = needs a key
+  uint32_t lockLevel{};
+  // 0 if no key
+  FormID key{};
+  // Unknown four bytes sometimes present
+  uint32_t unused{};
+  Flag flags = Flag::None;
+};
+inline constexpr XLOC::Flag operator|(XLOC::Flag a, XLOC::Flag b) {
+  return XLOC::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+}
+
+struct XESP {
+  enum class Flag : uint32_t {
+    None = 0,
+    SetEnableStateToOppositeOfParent = 1u
+  };
+  FormID parent{};
+  Flag flags{Flag::None};
+};
+inline constexpr XESP::Flag operator|(XESP::Flag a, XESP::Flag b) {
+  return static_cast<XESP::Flag>(static_cast<uint32_t>(a)
+      | static_cast<uint32_t>(b));
+}
+
+// Teleport information for a door
+struct XTEL : Tuplifiable<FormID, float, float, float, float, float, float> {
+  FormID destinationID{};
+  // Destination position
+  float x{};
+  float y{};
+  float z{};
+  // Destination angle
+  float aX{};
+  float aY{};
+  float aZ{};
+  MAKE_AS_TUPLE(&destinationID, &x, &y, &z, &aX, &aY, &aZ);
+};
+
+struct DATA_REFR : Tuplifiable<float, float, float, float, float, float> {
+  float x{};
+  float y{};
+  float z{};
+  float aX{};
+  float aY{};
+  float aZ{};
+  MAKE_AS_TUPLE(&x, &y, &z, &aX, &aY, &aZ);
 };
 
 // Coordinates of an exterior cell
@@ -669,7 +803,28 @@ using XCMT = Subrecord<raw::XCMT, "XCMT"_rec>;
 using XCLC = Subrecord<raw::XCLC, "XCLC"_rec>;
 using XCLR = Subrecord<raw::XCLR, "XCLR"_rec>;
 using XCLL = Subrecord<raw::XCLL, "XCLL"_rec>;
+using NAME = Subrecord<raw::NAME, "NAME"_rec>;
+using XMRK = Subrecord<raw::XMRK, "XMRK"_rec>;
+using XSCL = Subrecord<raw::XSCL, "XSCL"_rec>;
+using XTEL = Subrecord<raw::XTEL, "XTEL"_rec>;
+using XTRG = Subrecord<raw::XTRG, "XTRG"_rec>;
+using XSED = Subrecord<raw::XSED, "XSED"_rec>;
+using XLOD = Subrecord<raw::XLOD, "XLOD"_rec>;
+using XCHG = Subrecord<raw::XCHG, "XCHG"_rec>;
+using XHLT = Subrecord<raw::XHLT, "XHLT"_rec>;
+using XPCI = Subrecord<raw::XPCI, "XPCI"_rec>;
+using XLCM = Subrecord<raw::XLCM, "XLCM"_rec>;
+using XESP = Subrecord<raw::XESP, "XESP"_rec>;
+using XLOC = Subrecord<raw::XLOC, "XLOC"_rec>;
+using XRTM = Subrecord<raw::XRTM, "XRTM"_rec>;
+using XACT = Subrecord<raw::XACT, "XACT"_rec>;
+using XCNT = Subrecord<raw::XCNT, "XCNT"_rec>;
+using TNAM = Subrecord<raw::TNAM, "TNAM"_rec>;
+using ONAM = Subrecord<raw::ONAM, "ONAM"_rec>;
+using XRGD = Subrecord<raw::XRGD, "XRGD"_rec>;
+using XSOL = Subrecord<raw::XSOL, "XSOL"_rec>;
 
+using DATA_REFR = Subrecord<raw::DATA_REFR, "DATA"_rec>;
 using DATA_CELL = Subrecord<raw::DATA_CELL, "DATA"_rec>;
 using ENIT_ENCH = Subrecord<raw::ENIT_ENCH, "ENIT"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
@@ -687,6 +842,7 @@ using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
 
 using FNAM_GLOB = Subrecord<raw::FNAM_GLOB, "FNAM"_rec>;
 using FNAM_FACT = Subrecord<raw::FNAM_FACT, "FNAM"_rec>;
+using FNAM_REFR = Subrecord<raw::FNAM_REFR, "FNAM"_rec>;
 using CNAM_TES4 = Subrecord<raw::CNAM_TES4, "CNAM"_rec>;
 using CNAM_FACT = Subrecord<raw::CNAM_FACT, "CNAM"_rec>;
 using CNAM_RACE = Subrecord<raw::CNAM_RACE, "CNAM"_rec>;
@@ -731,6 +887,10 @@ DECLARE_SPECIALIZED_SUBRECORD(ENIT);
 DECLARE_SPECIALIZED_SUBRECORD(EFIT);
 DECLARE_SPECIALIZED_SUBRECORD(SCIT);
 DECLARE_SPECIALIZED_SUBRECORD(XCLR);
+DECLARE_SPECIALIZED_SUBRECORD(XRGD);
+DECLARE_SPECIALIZED_SUBRECORD(XLOC);
+DECLARE_SPECIALIZED_SUBRECORD(XESP);
+DECLARE_SPECIALIZED_SUBRECORD(XSED);
 
 namespace raw {
 // Potion
@@ -998,6 +1158,58 @@ struct CELL {
   std::optional<record::XCLR> regions{};
   std::optional<record::XCLC> grid{};
 };
+
+// Unsure about the ordering in esm files
+struct REFR {
+  std::optional<record::EDID> editorID{};
+  record::NAME baseID{};
+  std::optional<record::DESC> description{};
+  std::optional<record::XSCL> scale{};
+
+  std::optional<record::XESP> parent{};
+  std::optional<record::XTRG> target{};
+
+  std::optional<record::XPCI> unusedCellID{};
+  std::optional<record::FULL> unusedCellName{};
+
+  std::optional<record::XACT> action{};
+  std::optional<record::XRGD> ragdollData{};
+
+  // if (marker)
+  std::optional<record::XMRK> mapMarker{};
+  std::optional<record::FNAM_REFR> mapFlags{};
+  std::optional<record::TNAM> markerType{};
+
+  // if (ownable)
+  std::optional<record::XOWN> owner{};
+  std::optional<record::XGLB> ownershipGlobal{};
+  std::optional<record::XRNK> ownershipRank{};
+
+  // if (door)
+  std::optional<record::XTEL> teleport{};
+  std::optional<record::XRTM> teleportParent{};
+  std::optional<record::ONAM> openByDefault{};
+
+  // if (locked)
+  std::optional<record::XLOC> lockInfo{};
+
+  // if (tree) ?
+  std::optional<record::XSED> speedTree{};
+  std::optional<record::XLOD> lod{};
+
+  // if (leveledCreature)
+  std::optional<record::XLCM> levelModifier{};
+
+  // if (item)
+  std::optional<record::XCNT> count{};
+
+  // if (soulgem)
+  std::optional<record::XSOL> soul{};
+
+  // TODO: Finish
+  record::DATA_REFR positionRotation{};
+};
+
 } // namespace raw
 
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
@@ -1016,6 +1228,7 @@ using LTEX = Record<raw::LTEX, "LTEX"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
+using REFR = Record<raw::REFR, "REFR"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(TES4);
@@ -1033,6 +1246,7 @@ DECLARE_SPECIALIZED_RECORD(LTEX);
 DECLARE_SPECIALIZED_RECORD(STAT);
 // TODO: DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
+DECLARE_SPECIALIZED_RECORD(REFR);
 
 } // namespace record
 

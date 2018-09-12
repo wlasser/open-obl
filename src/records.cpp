@@ -10,6 +10,106 @@ namespace record {
 
 using namespace io;
 
+// XSED specialization
+template<>
+uint16_t XSED::size() const {
+  return data.size;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::XSED &t,
+                         std::size_t size) {
+  for (auto i = 0; i < size; ++i) {
+    os.put(0);
+  }
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is,
+                        raw::XSED &t,
+                        std::size_t size) {
+  t.size = size;
+  is.seekg(size, std::ios_base::cur);
+  return is;
+}
+
+// XRGD specialization
+template<>
+uint16_t XRGD::size() const {
+  return data.bytes.size() * 1u;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::XRGD &t,
+                         std::size_t /*size*/) {
+  for (const auto byte : t.bytes) {
+    writeBytes(os, byte);
+  }
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::XRGD &t, std::size_t size) {
+  const std::size_t length = size / 1u;
+  readBytes(is, t.bytes, length);
+  return is;
+}
+
+// XLOC specicalization
+template<>
+uint16_t XLOC::size() const {
+  return 4u + sizeof(FormID) + 4u;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::XLOC &t,
+                         std::size_t /*size*/) {
+  writeBytes(os, t.lockLevel);
+  writeBytes(os, t.key);
+  //writeBytes(os, t.unused);
+  writeBytes(os, t.flags);
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is,
+                        raw::XLOC &t,
+                        std::size_t size) {
+  readBytes(is, t.lockLevel);
+  readBytes(is, t.key);
+  if (size == 16) readBytes(is, t.unused);
+  readBytes(is, t.flags);
+  return is;
+}
+
+// XESP specialization
+template<>
+uint16_t XESP::size() const {
+  return sizeof(FormID) + sizeof(raw::XESP::Flag);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::XESP &t,
+                         std::size_t /*size*/) {
+  writeBytes(os, t.parent);
+  writeBytes(os, t.flags);
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is,
+                        raw::XESP &t,
+                        std::size_t /*size*/) {
+  readBytes(is, t.parent);
+  readBytes(is, t.flags);
+  return is;
+}
+
 // XCLR specialization
 template<>
 uint16_t XCLR::size() const {
@@ -1333,4 +1433,146 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
   }
   return is;
 }
+
+// REFR specialization
+template<>
+uint32_t REFR::size() const {
+  return data.baseID.entireSize()
+      + (data.editorID ? data.editorID->entireSize() : 0u)
+      + (data.description ? data.description->entireSize() : 0u)
+      + (data.scale ? data.scale->entireSize() : 0u)
+      + (data.parent ? data.parent->entireSize() : 0u)
+      + (data.target ? data.target->entireSize() : 0u)
+      + (data.unusedCellID ? data.unusedCellID->entireSize() : 0u)
+      + (data.unusedCellName ? data.unusedCellName->entireSize() : 0u)
+      + (data.action ? data.action->entireSize() : 0u)
+      + (data.ragdollData ? data.ragdollData->entireSize() : 0u)
+      + (data.mapMarker ? data.mapFlags->entireSize() : 0u)
+      + (data.mapFlags ? data.mapFlags->entireSize() : 0u)
+      + (data.markerType ? data.markerType->entireSize() : 0u)
+      + (data.owner ? data.owner->entireSize() : 0u)
+      + (data.ownershipGlobal ? data.ownershipGlobal->entireSize() : 0u)
+      + (data.ownershipRank ? data.ownershipRank->entireSize() : 0u)
+      + (data.teleport ? data.teleport->entireSize() : 0u)
+      + (data.teleportParent ? data.teleportParent->entireSize() : 0u)
+      + (data.openByDefault ? data.openByDefault->entireSize() : 0u)
+      + (data.lockInfo ? data.lockInfo->entireSize() : 0u)
+      + (data.speedTree ? data.speedTree->entireSize() : 0u)
+      + (data.lod ? data.lod->entireSize() : 0u)
+      + (data.levelModifier ? data.levelModifier->entireSize() : 0u)
+      + (data.count ? data.count->entireSize() : 0u)
+      + (data.soul ? data.soul->entireSize() : 0u)
+      + data.positionRotation.entireSize();
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR &t,
+                         std::size_t size) {
+  os << t.baseID;
+  if (t.editorID) os << *t.editorID;
+  if (t.description) os << *t.description;
+  if (t.scale) os << *t.scale;
+  if (t.parent) os << *t.parent;
+  if (t.target) os << *t.target;
+  if (t.unusedCellID) os << *t.unusedCellID;
+  if (t.unusedCellName) os << *t.unusedCellName;
+  if (t.action) os << *t.action;
+  if (t.ragdollData) os << *t.ragdollData;
+  if (t.mapMarker) os << *t.mapMarker;
+  if (t.mapFlags) os << *t.mapFlags;
+  if (t.markerType) os << *t.markerType;
+  if (t.owner) os << *t.owner;
+  if (t.ownershipGlobal) os << *t.ownershipGlobal;
+  if (t.ownershipRank) os << *t.ownershipRank;
+  if (t.teleport) os << *t.teleport;
+  if (t.teleportParent) os << *t.teleportParent;
+  if (t.openByDefault) os << *t.openByDefault;
+  if (t.lockInfo) os << *t.lockInfo;
+  if (t.speedTree) os << *t.speedTree;
+  if (t.lod) os << *t.lod;
+  if (t.levelModifier) os << *t.levelModifier;
+  if (t.count) os << *t.count;
+  if (t.soul) os << *t.soul;
+  os << t.positionRotation;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is,
+                        raw::REFR &t,
+                        std::size_t size) {
+
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.baseID, "NAME");
+  std::set<std::string> possibleSubrecords = {
+      "DESC", "XSCL", "XESP", "XTRG",
+      "XPCI", "FULL", "XACT", "XRGD", "XMRK",
+      "FNAM", "TNAM", "XOWN", "XGLB", "XRNK",
+      "XTEL", "XRTM", "ONAM", "XLOC", "XSED",
+      "XLOD", "XLCM", "XCNT", "XSOL"
+  };
+  std::string rec;
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    if (rec.length() != 4) {
+      throw std::runtime_error(
+          std::string("Expected a subrecord type, found ").append(rec));
+    }
+    std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
+    switch (recOf(recordArray)) {
+      case "DESC"_rec:readRecord(is, t.description, "DESC");
+        break;
+      case "XSCL"_rec:readRecord(is, t.scale, "XSCL");
+        break;
+      case "XESP"_rec:readRecord(is, t.parent, "XESP");
+        break;
+      case "XTRG"_rec:readRecord(is, t.target, "XTRG");
+        break;
+      case "XPCI"_rec:readRecord(is, t.unusedCellID, "XPCI");
+        break;
+      case "FULL"_rec:readRecord(is, t.unusedCellName, "FULL");
+        break;
+      case "XACT"_rec:readRecord(is, t.action, "XACT");
+        break;
+      case "XRGD"_rec:readRecord(is, t.ragdollData, "XRGD");
+        break;
+      case "XMRK"_rec:readRecord(is, t.mapMarker, "XMRK");
+        break;
+      case "FNAM"_rec:readRecord(is, t.mapFlags, "FNAM");
+        break;
+      case "TNAM"_rec:readRecord(is, t.markerType, "TNAM");
+        break;
+      case "XOWN"_rec:readRecord(is, t.owner, "XOWN");
+        break;
+      case "XGLB"_rec:readRecord(is, t.ownershipGlobal, "XGLB");
+        break;
+      case "XRNK"_rec:readRecord(is, t.ownershipRank, "XRNK");
+        break;
+      case "XTEL"_rec:readRecord(is, t.teleport, "XTEL");
+        break;
+      case "XRTM"_rec:readRecord(is, t.teleportParent, "XRTM");
+        break;
+      case "ONAM"_rec:readRecord(is, t.openByDefault, "ONAM");
+        break;
+      case "XLOC"_rec:readRecord(is, t.lockInfo, "XLOC");
+        break;
+      case "XSED"_rec:readRecord(is, t.speedTree, "XSED");
+        break;
+      case "XLOD"_rec:readRecord(is, t.lod, "XLOD");
+        break;
+      case "XLCM"_rec:readRecord(is, t.levelModifier, "XLCM");
+        break;
+      case "XCNT"_rec:readRecord(is, t.count, "XCNT");
+        break;
+      case "XSOL"_rec:readRecord(is, t.soul, "XSOL");
+        break;
+      default:break;
+    }
+  }
+
+  readRecord(is, t.positionRotation, "DATA");
+  return is;
+}
+
 } // namespace record
