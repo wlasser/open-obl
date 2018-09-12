@@ -6,6 +6,7 @@
 #include "io/write_bytes.hpp"
 #include "record/exceptions.hpp"
 #include "record/tuplifiable.hpp"
+#include "record/record_header.hpp"
 #include <istream>
 #include <optional>
 #include <ostream>
@@ -15,10 +16,13 @@
 
 namespace record {
 
-// Peek at the next 4 bytes. If they are a valid (sub)record identified then
-// return it, otherwise return an empty string.
+// Peek at the next 4 bytes and return them as a string
+// TODO: Is it worth the string construction? Could return a uint32_t directly.
 std::string peekRecordType(std::istream &);
 
+// Read the type `T` of size `size` into `data`, throwing if an io error occurs.
+// Intended to be called by a function reading a (sub)record, whereupon
+// `recordType` should be the type of the sub(record) being read.
 template<class T>
 inline void readOrThrow(std::istream &is,
                         T *data,
@@ -27,17 +31,28 @@ inline void readOrThrow(std::istream &is,
   if (!io::safeRead(is, data, size)) throw RecordReadError(recordType);
 }
 
+// Call `peekRecordType` and throw if the returned type is not `expected`
 inline void peekOrThrow(std::istream &is, const std::string &expected) {
   const std::string peeked = peekRecordType(is);
   if (peeked != expected) throw RecordNotFoundError(expected, peeked);
 }
 
+// Read the (sub)record of the `expected` type into `t` and throw if the actual
+// type is not the `expected` one.
+// This function is not really needed. `expected` is already known by `t.type`,
+// and for `T` a Record or Subrecord (as it should be) >> is specified to throw
+// if the type is not the expected one, so the peek is not even necessary.
+// The only advantage seems to be that we get the strong exception guarantee
+// (provided string construction doesn't throw) by using `peekOrThrow`, which
+// >> by itself does not provide. This is a flaw of >> however, I think.
+// TODO: This is a useless wrapper around `>>`, remove it.
 template<class T>
 inline void readRecord(std::istream &is, T &t, const std::string &expected) {
   peekOrThrow(is, expected);
   is >> t;
 }
 
+// If the next record is `expected` then read it, otherwise null the optional.
 template<class T>
 inline void readRecord(std::istream &is,
                        std::optional<T> &t,
@@ -51,7 +66,24 @@ inline void readRecord(std::istream &is,
   }
 }
 
-void skipRecord(std::istream &is);
+// Read the next record of type `T`, throwing if the type is unexpected or
+// there's an io error.
+template<class T>
+T readRecord(std::istream &is) {
+  T rec;
+  is >> rec;
+  if (!is.good()) throw io::IOReadError(rec.type, is.rdstate());
+  return rec;
+}
+
+// Read the header of the next record and place `is` just before the body.
+// Does not check that `is` is pointing to a record.
+RecordHeader readRecordHeader(std::istream &is);
+// Skip the next record, returning its header.
+// Does not check that `is` is pointing to a record.
+RecordHeader skipRecord(std::istream &is);
+// Skip the next group.
+// Does not check that `is` is pointing to a group.
 void skipGroup(std::istream &is);
 
 namespace raw {

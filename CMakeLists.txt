@@ -51,6 +51,7 @@ target_sources(OpenOblivionRecord PUBLIC
         include/record/io.hpp
         include/record/rec_of.hpp
         include/record/record.hpp
+        include/record/record_header.hpp
         include/record/size_of.hpp
         include/record/subrecord.hpp
         include/record/tuplifiable.hpp)

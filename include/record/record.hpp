@@ -5,6 +5,7 @@
 #include "io/write_bytes.hpp"
 #include "io/read_bytes.hpp"
 #include "record/exceptions.hpp"
+#include "record/record_header.hpp"
 #include "record/rec_of.hpp"
 #include "record/io.hpp"
 #include "record/size_of.hpp"
@@ -24,19 +25,7 @@ class Record {
   uint32_t size() const {
     return static_cast<uint32_t>(data.size());
   }
-  enum class Flag : uint32_t {
-    None = 0,
-    ESM = 0x00000001,
-    Deleted = 0x00000020,
-    CastsShadows = 0x00000200,
-    QuestOrPersistent = 0x00000400,
-    InitiallyDisabled = 0x00000800,
-    Ignored = 0x00001000,
-    VisibleWhenDistant = 0x00008000,
-    OffLimits = 0x00020000,
-    Compressed = 0x00040000,
-    CantWait = 0x00080000
-  };
+  using Flag = record::RecordFlag;
   Flag flags = Flag::None;
   FormID id = 0;
   // Version control info. This is bugged in the original implementation, with

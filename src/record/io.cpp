@@ -8,13 +8,18 @@ std::string record::peekRecordType(std::istream &is) {
   return std::string(type);
 }
 
-void record::skipRecord(std::istream &is) {
-  char type[4]{};
-  is.read(type, 4);
-  uint32_t size;
-  is.read(reinterpret_cast<char *>(&size), 4);
-  //std::clog << "Skipping " << type << " (" << 12 + size << ") bytes\n";
-  is.seekg(12 + size, std::istream::cur);
+record::RecordHeader record::readRecordHeader(std::istream &is) {
+  record::RecordHeader result{};
+  is.read(reinterpret_cast<char *>(&result), 16);
+  // Skip the versionControlInfo we're ignoring
+  is.seekg(4, std::istream::cur);
+  return result;
+}
+
+record::RecordHeader record::skipRecord(std::istream &is) {
+  auto header = readRecordHeader(is);
+  is.seekg(header.size, std::ios_base::cur);
+  return header;
 }
 
 void record::skipGroup(std::istream &is) {
