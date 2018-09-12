@@ -20,13 +20,28 @@ void testSaveLoading() {
   SaveState pcSave(pcSaveStream);
 }
 
+struct NullProcessor {
+  template<class R>
+  void process(const R &record) {}
+};
+
+struct LogProcessor {
+  template<class R>
+  void process(const R &record) {
+    std::clog << "<rec>" << record << "</rec>\n";
+  }
+};
+
+NullProcessor nullProcessor;
+LogProcessor logProcessor;
+
 void testEsmLoading() {
   std::ifstream esmStream("Data/Oblivion.esm", std::ios::binary);
   if (!esmStream.is_open()) {
     std::cerr << std::string("Failed to open file: ") << strerror(errno);
     return;
   }
-  Esp esm(esmStream);
+  Esp esm(esmStream, logProcessor);
 }
 
 void testBsaLoading() {
@@ -66,7 +81,8 @@ void checkNif(bsa::BSAReader &reader,
 }
 
 int main() {
-  testApplication();
+  //testApplication();
+  testEsmLoading();
   //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   return 0;
 }

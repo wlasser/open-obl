@@ -52,6 +52,7 @@ inline void readRecord(std::istream &is,
 }
 
 void skipRecord(std::istream &is);
+void skipGroup(std::istream &is);
 
 namespace raw {
 

@@ -16,3 +16,12 @@ void record::skipRecord(std::istream &is) {
   //std::clog << "Skipping " << type << " (" << 12 + size << ") bytes\n";
   is.seekg(12 + size, std::istream::cur);
 }
+
+void record::skipGroup(std::istream &is) {
+  char type[4]{};
+  is.read(type, 4);
+  uint32_t size;
+  is.read(reinterpret_cast<char *>(&size), 4);
+  // Group size includes the header, unlike records and subrecords
+  is.seekg(size - 8, std::istream::cur);
+}
