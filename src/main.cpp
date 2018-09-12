@@ -27,6 +27,8 @@ struct NullProcessor {
   }
 };
 
+NullProcessor nullProcessor;
+
 struct LogProcessor {
   template<class R>
   void readRecord(std::istream &is) {
@@ -35,8 +37,13 @@ struct LogProcessor {
   }
 };
 
-NullProcessor nullProcessor;
 LogProcessor logProcessor;
+
+template<>
+void NullProcessor::readRecord<record::CELL>(std::istream &is) {
+  (void) record::skipRecord(is);
+  esp::readCellChildren(is, nullProcessor, nullProcessor, nullProcessor);
+}
 
 void testEsmLoading() {
   std::ifstream esmStream("Data/Oblivion.esm", std::ios::binary);

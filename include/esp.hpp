@@ -11,27 +11,61 @@
 #include <ostream>
 #include <string>
 
+// The functions in this file handle reading an esp (or esm) file.
+// Since these files can be quite large, it is not necessarily practical to
+// load the entire file into memory. Broadly speaking, the global parsing of the
+// file is handled by these functions, whereas the local parsing is delegated to
+// an instance of a Processor type.
+//
+// A Processor is required to implement a function template
+// ```
+// template<class T> void readRecord(std::istream &is)
+// ```
+// for each type `T` arising from the class template `record::Record`.
+// Instantiations of this function template are invoked by the caller when a
+// record of type `T` is encountered in the esp file, with `is` positioned at
+// the beginning of the record header. Expect in the cases noted below,
+// `readRecord` should leave `is` one byte after the end of the record upon
+// returning. To ensure that this happens, it is recommended that the caller use
+// the functions `record::readRecord` and `record::skipRecord`. These correctly
+// advance `is` and return a `record::Record` or `record::RecordHeader`
+// respectively.
+//
+// If a group in the esp file is being read, then `readRecord` is guaranteed to
+// be invoked for every record in the group in the order that it appears,
+// expect in the groups CELL, WRLD, and DIAL. Some of the entries in these
+// groups contain a list of child groups, which the Processor may handle
+// differently.
+//
+// When a CELL record appears, it is (almost) always followed by a CellChildren
+// subgroup. It is expected that `readRecord<CELL>` read (or skip) both the CELL
+// record and all its children. The `readCellChildren` method assists with this.
 namespace esp {
 
 // Read an entire esp file from the beginning, delegating the actual reading
-// to the `processor`. The `processor` should have a function template
-// template<class T> void readRecord(std::istream &is);
-// which reads the next record, having type `T`, from the stream. `readEsp`
-// guarantees that `is` will always be positioned before a record of type `T`,
-// and requires that `is` be positioned immediately after that record when
-// `processor.readRecord` returns.
-// Broadly speaking it is expected that Processors will want to either read the
-// entire record and process/cache it, or will want to make note of the record
-// location and skip it until it is needed in the future. For these purposes
-// one should use the `record::readRecord` and `record::skipRecord` functions
-// respectively, then process the returned record/header. By using these
-// functions one guarantees that `is` will be positioned correctly on return.
+// to the `processor`
 template<class Processor>
 void readEsp(std::istream &is, Processor &processor);
 
-template<class Processor>
-void readCellChildren(std::istream &is, Processor &processor);
+// This function reads the CellChildren subgroup following a CELL record.
+// The reading of the PersistentChildren, VisibleDistantChildren, and
+// TemporaryChildren are delegated to the corresponding processors. The first
+// two processors must be able to read REFR, ACHR, and ACRE. The third processor
+// must be able to read REFR, ACHR, ACRE, and PGRD records. If the parent CELL
+// is part of an exterior cell, then the third processor must also be able to
+// read LAND records.
+// Note that in rare cases, a CELL may not have any children, in which case
+// this function does nothing.
+template<class PersistentProcessor,
+    class VisibleDistantProcessor,
+    class TemporaryProcessor>
+void readCellChildren(std::istream &is,
+                      PersistentProcessor &persistentProcessor,
+                      VisibleDistantProcessor &visibleDistantProcessor,
+                      TemporaryProcessor &temporaryProcessor);
 
+// Read an individual subgroup of a CellChildren subgroup, namely a
+// PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
 template<class Processor>
 void parseCellChildrenBlock(std::istream &is, Processor &processor);
 
@@ -77,11 +111,6 @@ void readEsp(std::istream &is, Processor &processor) {
             while (peekRecordType(is) == "CELL") {
               processor.template readRecord<record::CELL>(is);
 
-              // Expect a cell children group, though there exist empty cells,
-              // like Hackdirt, so this is optional.
-              if (peekGroupType(is) == Group::GroupType::CellChildren) {
-                readCellChildren(is, processor);
-              }
             }
           }
         }
@@ -130,9 +159,18 @@ void readEsp(std::istream &is, Processor &processor) {
   }
 }
 
-template<class Processor>
-void readCellChildren(std::istream &is, Processor &processor) {
+template<class PersistentProcessor,
+    class VisibleDistantProcessor,
+    class TemporaryProcessor>
+void readCellChildren(std::istream &is,
+                      PersistentProcessor &persistentProcessor,
+                      VisibleDistantProcessor &visibleDistantProcessor,
+                      TemporaryProcessor &temporaryProcessor) {
   using namespace record;
+
+  // Expect a cell children group, though there exist empty cells,
+  // like Hackdirt, so this is optional.
+  if (peekGroupType(is) != Group::GroupType::CellChildren) return;
 
   Group cellChildren;
   is >> cellChildren;
@@ -141,14 +179,14 @@ void readCellChildren(std::istream &is, Processor &processor) {
     Group persistentChildren;
     is >> persistentChildren;
 
-    parseCellChildrenBlock(is, processor);
+    parseCellChildrenBlock(is, persistentProcessor);
   }
 
   if (peekGroupType(is) == Group::GroupType::CellVisibleDistantChildren) {
     Group visibleDistantChildren;
     is >> visibleDistantChildren;
 
-    parseCellChildrenBlock(is, processor);
+    parseCellChildrenBlock(is, visibleDistantProcessor);
   }
 
   if (peekGroupType(is) == Group::GroupType::CellTemporaryChildren) {
@@ -162,7 +200,7 @@ void readCellChildren(std::istream &is, Processor &processor) {
       (void) skipRecord(is);
     }
 
-    parseCellChildrenBlock(is, processor);
+    parseCellChildrenBlock(is, temporaryProcessor);
   }
 }
 
