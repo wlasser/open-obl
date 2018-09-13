@@ -469,10 +469,18 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   auto &materialManager = Ogre::MaterialManager::getSingleton();
 
   Tagger tagger{tag};
-  // Nif materials are intended to have mesh-local names. We cannot guarantee
-  // that the mesh's group is unique, so we prepend the mesh name.
+  // Materials should be nif local, so a reasonable strategy would be name the
+  // Ogre::Material by the mesh name followed by the nif material name.
+  // Unfortunately, nif material names are not necessarily unique, even within
+  // a nif file. We therefore resort to using the block index.
+  // TODO: This is way more work than we need to do here
+  auto it = std::find_if(blocks.vertex_set().begin(), blocks.vertex_set().end(),
+                         [this, &block](auto i) {
+                           return blocks[i].block.get() == block;
+                         });
+
   std::string meshName = mesh->getName();
-  std::string materialName = meshName.append("\\").append(block->name.str());
+  std::string materialName = meshName.append("/").append(std::to_string(*it));
   if (tag == LoadStatus::Loaded) {
     auto material = materialManager.getByName(materialName, mesh->getGroup());
     if (material) {
