@@ -248,6 +248,51 @@ struct NiVertexColorProperty : NiProperty {
   explicit NiVertexColorProperty(Version version) : NiProperty(version) {}
 };
 
+struct NiAlphaProperty : NiProperty {
+  enum class BlendMode : uint8_t {
+    GL_ONE = 0,
+    GL_ZERO = 1u,
+    GL_SRC_COLOR = 2u,
+    GL_ONE_MINUS_SRC_COLOR = 3u,
+    GL_DST_COLOR = 4u,
+    GL_ONE_MINUS_DST_COLOR = 5u,
+    GL_SRC_ALPHA = 6u,
+    GL_ONE_MINUS_SRC_ALPHA = 7u,
+    GL_DST_ALPHA = 8u,
+    GL_ONE_MINUS_DST_ALPHA = 9u,
+    GL_SRC_ALPHA_SATURATE = 10u
+  };
+  enum class TestMode : uint8_t {
+    GL_ALWAYS = 0,
+    GL_LESS = 1u,
+    GL_EQUAL = 2u,
+    GL_LEQUAL = 3u,
+    GL_GREATER = 4u,
+    GL_NOTEQUAL = 5u,
+    GL_GEQUAL = 6u,
+    GL_NEVER = 7u
+  };
+  // The flags are stored in a uint16_t but split up as below. Default is
+  // 0b00'0'100'1'0111'0110'0
+  // bit 0
+  bool alphaBlendingEnabled{false};
+  // bit 1-4
+  BlendMode sourceBlendMode{BlendMode::GL_SRC_ALPHA};
+  // bit 5-8
+  BlendMode destinationBlendMode{BlendMode::GL_ONE_MINUS_SRC_ALPHA};
+  // bit 9
+  bool alphaTestEnabled{true};
+  // bit 10-12
+  TestMode alphaTestMode{TestMode::GL_GREATER};
+  // bit 13
+  bool disableTriangleSorting{false};
+
+  uint8_t threshold{};
+
+  void read(std::istream &is) override;
+  explicit NiAlphaProperty(Version version) : NiProperty(version) {}
+};
+
 struct NiCollisionObject;
 
 struct NiAVObject : NiObjectNet {

@@ -119,6 +119,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
       {"NiStencilProperty", &NifLoader::addVertex<nif::NiStencilProperty>},
       {"NiVertexColorProperty",
        &NifLoader::addVertex<nif::NiVertexColorProperty>},
+      {"NiAlphaProperty", &NifLoader::addVertex<nif::NiAlphaProperty>},
       {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
       // NiNode
       {"NiAdditionalGeometryData",

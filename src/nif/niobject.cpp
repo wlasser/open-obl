@@ -151,6 +151,23 @@ void NiVertexColorProperty::read(std::istream &is) {
   io::readBytes(is, lightMode);
 }
 
+void NiAlphaProperty::read(std::istream &is) {
+  NiProperty::read(is);
+  uint16_t flags{};
+  io::readBytes(is, flags);
+  alphaBlendingEnabled = (flags & 0b1) != 0;
+  sourceBlendMode =
+      BlendMode(static_cast<uint8_t>((flags & 0b1111'0) >> 1));
+  destinationBlendMode =
+      BlendMode(static_cast<uint8_t>((flags & 0b1111'0000'0) >> 5));
+  alphaTestEnabled = (flags & 0b1'0000'0000'0) != 0;
+  alphaTestMode =
+      TestMode(static_cast<uint8_t>((flags & 0b111'0'0000'0000'0)) >> 10);
+  disableTriangleSorting = (flags & 0b1'000'0'0000'0000'0) != 0;
+
+  io::readBytes(is, threshold);
+}
+
 void NiAVObject::read(std::istream &is) {
   NiObjectNet::read(is);
   io::readBytes(is, flags);
