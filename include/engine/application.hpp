@@ -2,7 +2,9 @@
 #define OPENOBLIVION_ENGINE_APPLICATION_HPP
 
 #include "engine/bsa.hpp"
+#include "engine/cell_manager.hpp"
 #include "engine/nif_loader.hpp"
+#include "engine/static_manager.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
 #include <SDL2/SDL.h>
@@ -43,6 +45,11 @@ class Application : public Ogre::FrameListener {
  private:
   // This must have a longer lifetime than ogreRoot
   std::unique_ptr<engine::BSAArchiveFactory> bsaArchiveFactory{};
+
+  std::unique_ptr<engine::StaticManager> staticMgr{};
+  std::unique_ptr<engine::InteriorCellManager> interiorCellMgr{};
+
+  std::ifstream esmStream;
 
   std::unique_ptr<Ogre::Root> ogreRoot{};
   Ogre::LogManager *logger{};

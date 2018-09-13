@@ -199,6 +199,9 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
   // TODO: Handle this properly
   assert(mesh != nullptr);
 
+  logger->logMessage(boost::str(
+      boost::format("Loading %s") % resource->getName()));
+
   // TODO: If the mesh doesn't exist, dynamically generate a placeholder
   auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
       ->openResource(mesh->getName(), mesh->getGroup());

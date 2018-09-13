@@ -30,6 +30,12 @@ inline Ogre::Vector3 fromBSCoordinates(const Ogre::Vector3 &v) {
   return {v.x, v.z, -v.y};
 }
 
+inline Ogre::Quaternion fromBSCoordinates(const Ogre::Quaternion &q) {
+  // BS coordinates also flip rotations, so that a positive rotation is
+  // clockwise, not counterclockwise.
+  return {-q.x, -q.z, q.y, q.w};
+}
+
 inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
   const Ogre::Matrix3 C = {1, 0, 0,
                            0, 0, 1,

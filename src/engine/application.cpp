@@ -1,6 +1,12 @@
 #include "engine/application.hpp"
+#include "engine/cell_manager.hpp"
+#include "engine/initial_processor.hpp"
+#include "engine/static_manager.hpp"
+#include "esp.hpp"
 #include "SDL.h"
 #include "SDL_syswm.h"
+#include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <filesystem>
 #include <map>
@@ -122,12 +128,35 @@ Application::Application(std::string windowName) : FrameListener() {
   // to declare every nif file now, before initialising the resource group.
   // Since there are ~20000 nif files in the base game alone, ideally we would
   // not declare every single nif file.
-  std::vector<std::filesystem::path> testMeshes = {
-      "meshes/architecture/daedricstatues/daedricshrineazura01.nif"
+  auto meshList =
+      archiveMgr.load("./Data/Oblivion - Meshes.bsa", "BSA", true)->list();
+  for (const auto &filename : *meshList) {
+    // Convert from win to nix
+    std::string tmp(filename);
+    std::transform(filename.begin(), filename.end(), tmp.begin(),
+                   [](unsigned char c) -> unsigned char {
+                     return static_cast<unsigned char>(std::tolower(
+                         c == '\\' ? '/' : c));
+                   });
+    std::filesystem::path path(tmp);
+    if (path.extension() == ".nif") {
+      resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+    }
+  }
+
+  logger->logMessage("Declared mesh files");
+
+  // There are also several preprogrammed nif files built into the engine that
+  // are not stored in BSA files. They are not displayed in the main game and so
+  // do not need mesh information. Instead of creating an entirely new Archive
+  // type for these builtins, we just add some empty nif files to the filesystem
+  std::vector<std::filesystem::path> builtinMeshes = {
   };
-  for (const auto &path : testMeshes) {
+  for (const auto &path : builtinMeshes) {
     resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
   }
+
+  logger->logMessage("Declared builtin mesh files");
 
   // Declare the shader programs
   resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
@@ -142,43 +171,77 @@ Application::Application(std::string windowName) : FrameListener() {
     }
   }
 
+  logger->logMessage("Declared shader files");
+
   resGrpMgr.initialiseAllResourceGroups();
 
   // Create a scene manager
   auto *scnMgr = ogreRoot->createSceneManager();
   auto *rootNode = scnMgr->getRootSceneNode();
 
-  // Construct a test scene
-  auto *light = scnMgr->createLight("TestLight");
-  auto *lightNode = rootNode->createChildSceneNode();
-  lightNode->setPosition(50.0f, 400.0f, -100.0f);
-  lightNode->attachObject(light);
+  // Open the main esm
+  esmStream = std::ifstream("Data/Oblivion.esm", std::ios::binary);
+  if (!esmStream.is_open()) {
+    throw std::runtime_error("Failed to open esm");
+  }
+  logger->logMessage("Opened Oblivion.esm");
 
-  auto *light2 = scnMgr->createLight("TestLight2");
-  light2->setDiffuseColour(Ogre::ColourValue(0.5f, 0.4f, 0.3f) * 0.5f);
-  auto *light2Node = rootNode->createChildSceneNode();
-  light2Node->setPosition(-50.0f, 100.0f, -100.0f);
-  light2Node->attachObject(light2);
+  // Create the engine managers
+  staticMgr = std::make_unique<StaticManager>();
+  interiorCellMgr = std::make_unique<InteriorCellManager>(esmStream,
+                                                          staticMgr.get());
 
-  auto *camera = scnMgr->createCamera("TestCamera");
+  // Read the main esm
+  InitialProcessor initialProcessor(staticMgr.get(), interiorCellMgr.get());
+  esp::readEsp(esmStream, initialProcessor);
+
+  logger->logMessage("Read Oblivion.esm");
+
+  // Load a test cell
+  auto cell = interiorCellMgr->get(0x00'031b59, scnMgr);
+  logger->logMessage("Loaded test cell");
+
+  auto *camera = scnMgr->createCamera("PlayerCamera");
   camera->setNearClipDistance(1.0f);
   camera->setAutoAspectRatio(true);
   ogreWindow->addViewport(camera);
   auto *cameraNode = rootNode->createChildSceneNode();
-  cameraNode->setPosition(0.0f, 80.0f, -800.0f);
-  cameraNode->lookAt({0.0f, 80.0f, 0.0f}, Ogre::Node::TS_WORLD);
+  cameraNode->setPosition(0.0f, 80.0f, 0.0f);
   cameraNode->attachObject(camera);
 
-  auto *testMesh = scnMgr->createEntity(testMeshes.front());
-  auto *testMeshNode = rootNode->createChildSceneNode();
-  testMeshNode->setPosition(0.0f, 0.0f, 0.0f);
-  testMeshNode->attachObject(testMesh);
+  if (false) {
+    // Construct a test scene
+    auto *light = scnMgr->createLight("TestLight");
+    auto *lightNode = rootNode->createChildSceneNode();
+    lightNode->setPosition(50.0f, 400.0f, -100.0f);
+    lightNode->attachObject(light);
 
-  auto vec3Fmt = boost::format("(%f, %f, %f)");
-  auto bbMin = testMesh->getBoundingBox().getMinimum();
-  auto bbMax = testMesh->getBoundingBox().getMaximum();
-  logger->logMessage(boost::str(vec3Fmt % bbMin.x % bbMin.y % bbMin.z));
-  logger->logMessage(boost::str(vec3Fmt % bbMax.x % bbMax.y % bbMax.z));
+    auto *light2 = scnMgr->createLight("TestLight2");
+    light2->setDiffuseColour(Ogre::ColourValue(0.5f, 0.4f, 0.3f) * 0.5f);
+    auto *light2Node = rootNode->createChildSceneNode();
+    light2Node->setPosition(-50.0f, 100.0f, -100.0f);
+    light2Node->attachObject(light2);
+
+    auto *camera = scnMgr->createCamera("TestCamera");
+    camera->setNearClipDistance(1.0f);
+    camera->setAutoAspectRatio(true);
+    ogreWindow->addViewport(camera);
+    auto *cameraNode = rootNode->createChildSceneNode();
+    cameraNode->setPosition(0.0f, 80.0f, -800.0f);
+    cameraNode->lookAt({0.0f, 80.0f, 0.0f}, Ogre::Node::TS_WORLD);
+    cameraNode->attachObject(camera);
+
+    auto *testMesh = scnMgr->createEntity(builtinMeshes.back());
+    auto *testMeshNode = rootNode->createChildSceneNode();
+    testMeshNode->setPosition(0.0f, 0.0f, 0.0f);
+    testMeshNode->attachObject(testMesh);
+
+    auto vec3Fmt = boost::format("(%f, %f, %f)");
+    auto bbMin = testMesh->getBoundingBox().getMinimum();
+    auto bbMax = testMesh->getBoundingBox().getMaximum();
+    logger->logMessage(boost::str(vec3Fmt % bbMin.x % bbMin.y % bbMin.z));
+    logger->logMessage(boost::str(vec3Fmt % bbMax.x % bbMax.y % bbMax.z));
+  }
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {

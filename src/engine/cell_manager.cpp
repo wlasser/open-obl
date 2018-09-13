@@ -1,0 +1,71 @@
+#include "engine/cell_manager.hpp"
+#include "engine/conversions.hpp"
+#include "esp.hpp"
+#include "formid.hpp"
+#include "records.hpp"
+#include <OgreSceneNode.h>
+
+namespace engine {
+
+record::CELL *InteriorCellManager::peek(FormID baseID) {
+  auto entry = cells.find(baseID);
+  if (entry != cells.end()) return entry->second.record.get();
+  else return nullptr;
+}
+
+std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID,
+                                                       Ogre::SceneManager *mgr) {
+  // Try to find an InteriorCellEntry with the given baseID. Since every cell
+  // should have an entry by now, if no entry exists then we can give up.
+  auto entry = cells.find(baseID);
+  if (entry == cells.end()) return nullptr;
+
+  // If this cell has been loaded before and is still loaded, then we can return
+  // a new shared_ptr to it.
+  auto &cell = entry->second.cell;
+  if (!cell.expired()) return cell.lock();
+
+  // Otherwise we have to create a new shared_ptr and load the cell.
+  auto ptr = std::make_shared<InteriorCell>();
+  ptr->scnMgr = mgr;
+  cell = std::weak_ptr(ptr);
+
+  // Fill in the scene data from the cell record, which we already have.
+  auto &rec = entry->second.record;
+  ptr->name = (rec->data.name ? rec->data.name->data : "");
+  if (auto lighting = rec->data.lighting) {
+    auto ambient = lighting->data.ambient;
+    ptr->ambientLight.setAsRGBA(ambient.v);
+    ptr->scnMgr->setAmbientLight(ptr->ambientLight);
+
+    // TODO: Directional lighting, fog, water, etc
+  }
+
+  Processor processor(ptr.get(), staticMgr);
+
+  // TODO: Lock a mutex here
+  is.seekg(entry->second.tell);
+  (void) record::skipRecord(is);
+  esp::readCellChildren(is, processor, processor, processor);
+
+  return ptr;
+}
+
+template<>
+void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) {
+  auto ref = record::readRecord<record::REFR>(is);
+  if (auto *statEntity = staticMgr->get(ref.data.baseID.data, cell->scnMgr)) {
+    auto *node = cell->scnMgr->getRootSceneNode()->createChildSceneNode();
+    node->attachObject(statEntity);
+    auto &data = ref.data.positionRotation.data;
+    node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
+    if (ref.data.scale) {
+      float scale = ref.data.scale->data;
+      node->setScale(scale, scale, scale);
+    }
+    node->setOrientation(conversions::fromBSCoordinates(
+        Ogre::Quaternion(data.aX, data.aY, data.aZ, 1.0f)));
+  }
+}
+
+} // namespace engine

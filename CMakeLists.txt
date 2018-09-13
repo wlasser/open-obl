@@ -65,6 +65,8 @@ target_sources(OpenOblivion PRIVATE
         src/bsa.cpp
         src/engine/application.cpp
         src/engine/bsa.cpp
+        src/engine/cell_manager.cpp
+        src/engine/initial_processor.cpp
         src/engine/nif_loader.cpp
         src/engine/nif_loader_state.cpp
         src/engine/ogre_stream_wrappers.cpp
@@ -77,10 +79,13 @@ target_sources(OpenOblivion PRIVATE
         include/bsa.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
+        include/engine/cell_manager.hpp
         include/engine/conversions.hpp
+        include/engine/initial_processor.hpp
         include/engine/nif_loader.hpp
         include/engine/nif_loader_state.hpp
         include/engine/ogre_stream_wrappers.hpp
+        include/engine/static_manager.hpp
         include/esp.hpp
         include/formid.hpp
         include/magic_effects.hpp
