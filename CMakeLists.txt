@@ -7,7 +7,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/modules")
 
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 REQUIRED)
-find_package(OGRE 1.11 REQUIRED COMPONENTS Bites RTShaderSystem)
+find_package(OGRE 1.11 REQUIRED COMPONENTS)
 find_package(Boost 1.67 REQUIRED)
 
 # IO library
