@@ -133,7 +133,7 @@ class Versionable {
 
     explicit constexpr VersionOptional(Version version) noexcept :
         version(version) {
-      if (verify(version)) opt = std::make_optional<T>();
+      if (verify(version)) opt.template emplace<T>({});
       else opt = std::nullopt;
     }
 
@@ -147,6 +147,8 @@ class Versionable {
       if (verify(version)) opt = std::make_optional(value);
       else opt = std::nullopt;
     }
+
+    // TODO: Converting constructors
 
     VersionOptional &operator=(T &&value) {
       if (verify(version)) opt = value;
