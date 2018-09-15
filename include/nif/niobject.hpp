@@ -69,6 +69,7 @@ struct NiKeyframeData : NiObject, Versionable {
 
 struct NiTransformData : NiKeyframeData {
   void read(std::istream &is) override;
+  explicit NiTransformData(Version version) : NiKeyframeData(version) {}
 };
 
 struct NiPosData : NiObject {
@@ -282,6 +283,7 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
   explicit NiBlendInterpolator(Version version) : Versionable(version) {}
   ~NiBlendInterpolator() override = 0;
 };
+inline NiBlendInterpolator::~NiBlendInterpolator() = default;
 
 struct BSXFlags : NiIntegerExtraData {
   enum class Flags : uint32_t {

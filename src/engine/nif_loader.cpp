@@ -109,17 +109,35 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   }
 
   const std::map<std::string, addVertex_t> blockAddVertexMap{
+      {"NiFloatData", &NifLoader::addVertex<nif::NiFloatData>},
+      {"NiKeyframeData", &NifLoader::addVertex<nif::NiKeyframeData>},
+      {"NiTransformData", &NifLoader::addVertex<nif::NiTransformData>},
+      {"NiPosData", &NifLoader::addVertex<nif::NiPosData>},
+      {"NiStringPalette", &NifLoader::addVertex<nif::NiStringPalette>},
       {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
       {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
       {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
       {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
+      {"NiTextKeyExtraData", &NifLoader::addVertex<nif::NiTextKeyExtraData>},
+      {"NiFloatInterpolator", &NifLoader::addVertex<nif::NiFloatInterpolator>},
+      {"NiTransformInterpolator",
+       &NifLoader::addVertex<nif::NiTransformInterpolator>},
+      {"NiPoint3Interpolator",
+       &NifLoader::addVertex<nif::NiPoint3Interpolator>},
       {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
+      {"NiSequence", &NifLoader::addVertex<nif::NiSequence>},
+      {"NiControllerSequence",
+       &NifLoader::addVertex<nif::NiControllerSequence>},
+      {"NiDefaultAVObjectPalette",
+       &NifLoader::addVertex<nif::NiDefaultAVObjectPalette>},
+      {"NiControllerManager", &NifLoader::addVertex<nif::NiControllerManager>},
       {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
       {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
       {"NiStencilProperty", &NifLoader::addVertex<nif::NiStencilProperty>},
       {"NiVertexColorProperty",
        &NifLoader::addVertex<nif::NiVertexColorProperty>},
       {"NiAlphaProperty", &NifLoader::addVertex<nif::NiAlphaProperty>},
+      {"NiSpecularProperty", &NifLoader::addVertex<nif::NiSpecularProperty>},
       {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
       // NiNode
       {"NiAdditionalGeometryData",
@@ -177,8 +195,10 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
       auto block = std::make_shared<NiNode>(nifVersion);
       block->read(is);
       for (const auto &child : block->children) {
-        // TODO: Check that the child is a valid reference.
-        addEdge(blocks, i, child);
+        auto childInt = static_cast<int32_t>(child);
+        if (childInt > 0 && childInt < numBlocks) {
+          addEdge(blocks, i, child);
+        }
       }
       blocks[i] = std::move(block);
       logger->logMessage(boost::str(
