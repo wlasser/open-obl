@@ -13,6 +13,11 @@
 namespace nif {
 
 struct NiSourceTexture;
+struct NiInterpolator;
+struct NiTimeController;
+struct NiBlendInterpolator;
+struct NiStringPalette;
+struct NiAVObject;
 
 namespace compound {
 
@@ -23,6 +28,13 @@ struct SizedString {
   basic::UInt length{};
   std::vector<basic::Char> value{};
   std::string str() const;
+};
+
+struct StringPalette {
+  // A list of null-terminated strings
+  SizedString palette{};
+  // palette.length
+  basic::UInt length{};
 };
 
 struct ByteArray {
@@ -398,6 +410,16 @@ struct NiTransform {
   basic::Float scale = 1.0f;
 };
 
+struct NiQuatTransform : Versionable {
+  Vector3 translation{};
+  Quaternion rotation{};
+  basic::Float scale{1.0f};
+  VersionOptional<std::array<basic::Bool, 3>, Unbounded, "10.1.0.109"_ver>
+      trsValid{version};
+
+  explicit NiQuatTransform(Version version) : Versionable(version) {}
+};
+
 struct HavokFilter {
   // userVer2 < 16
   Enum::OblivionLayer layer{Enum::OblivionLayer::OL_STATIC};
@@ -546,7 +568,137 @@ struct OblivionSubShape : Versionable {
   explicit OblivionSubShape(Version version) : Versionable(version) {}
 };
 
+struct TBC {
+  basic::Float tension{};
+  basic::Float bias{};
+  basic::Float continuity{};
+};
+
+// Key supporting interpolation. Defaults to linear interpolation
+template<class T, Enum::KeyType Arg>
+struct Key {
+  basic::Float time{};
+  T value{};
+};
+
+// Has forward and backward tangents
+template<class T>
+struct Key<T, Enum::KeyType::QUADRATIC_KEY> {
+  basic::Float time{};
+  T value{};
+  T forward{};
+  T backward{};
+};
+
+// Has tension, bias, and continuity
+template<class T>
+struct Key<T, Enum::KeyType::TBC_KEY> {
+  basic::Float time{};
+  TBC tbc{};
+};
+
+template<>
+struct Key<Quaternion, Enum::KeyType::TBC_KEY> {
+  basic::Float time{};
+  Quaternion value{};
+  TBC tbc{};
+};
+
+template<Enum::KeyType Arg>
+using QuatKey = Key<Quaternion, Arg>;
+
+template<class T>
+struct KeyGroup {
+  template<Enum::KeyType Arg>
+  using KeysVector = std::vector<Key<T, Arg>>;
+
+  basic::UInt numKeys{};
+  // if (numKeys != 0)
+  Enum::KeyType interpolation{};
+  // arg = interpolation
+  std::variant<KeysVector<Enum::KeyType::NONE>,
+               KeysVector<Enum::KeyType::LINEAR_KEY>,
+               KeysVector<Enum::KeyType::QUADRATIC_KEY>,
+               KeysVector<Enum::KeyType::TBC_KEY>,
+               KeysVector<Enum::KeyType::XYZ_ROTATION_KEY>,
+               KeysVector<Enum::KeyType::CONST_KEY>> keys{};
+
+  template<std::size_t I>
+  void readKeys(std::istream &is) {
+    auto v = keys.template emplace<I>(numKeys);
+    // TODO: This is not robust. What if T is std::array, or std::string?
+    if constexpr (std::is_integral_v<T>) {
+      for (auto &key : v) io::readBytes(is, key);
+    } else {
+      for (auto &key : v) is >> key;
+    }
+  }
+};
+
+struct ControlledBlock : Versionable {
+  VersionOptional<compound::SizedString, Unbounded, "10.1.0.103"_ver>
+      targetName{version};
+
+  VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.106"_ver, Unbounded>
+      interpolator{version};
+
+  basic::Ref<NiTimeController> controller{};
+
+  VersionOptional<basic::Ref<NiBlendInterpolator>, "10.1.0.104"_ver,
+                                                   "10.1.0.110"_ver>
+      blendInterpolator{version};
+
+  VersionOptional<basic::UShort, "10.1.0.104"_ver, "10.1.0.110"_ver>
+      blendIndex{version};
+
+  // userVer2 > 0
+  VersionOptional<basic::Byte, "10.1.0.106"_ver, Unbounded> priority{version};
+
+  struct IDTag {
+    // Name of animated NiAVObject
+    compound::SizedString nodeName{};
+    compound::SizedString propertyType{};
+    compound::SizedString controllerType{};
+    compound::SizedString controllerID{};
+    compound::SizedString interpolatorID{};
+    IDTag() = default;
+  };
+  VersionOptional<IDTag, "10.1.0.104"_ver, "10.1.0.113"_ver> idTag{version};
+
+  struct Palette {
+    basic::Ref<NiStringPalette> stringPalette{};
+    basic::StringOffset nodeNameOffset{};
+    basic::StringOffset propertyTypeOffset{};
+    basic::StringOffset controllerTypeOffset{};
+    basic::StringOffset controllerIDOffset{};
+    basic::StringOffset interpolatorIDOffset{};
+    Palette() = default;
+  };
+  VersionOptional<Palette, "10.2.0.0"_ver, "20.1.0.0"_ver> palette{version};
+
+  explicit ControlledBlock(Version version) : Versionable(version) {}
+};
+
+struct AVObject {
+  compound::SizedString name{};
+  basic::Ptr<NiAVObject> avObject{};
+};
+
+struct InterpBlendItem : Versionable {
+  basic::Ref<NiInterpolator> interpolator{};
+  basic::Float weight{};
+  basic::Float normalizedWeight{};
+
+  VersionEither<basic::Int, basic::Byte, "10.1.0.110"_ver, Unbounded>
+      priority{version};
+
+  basic::Float easeSpinner{};
+
+  explicit InterpBlendItem(Version version) : Versionable(version) {}
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
+std::istream &operator>>(std::istream &is, StringPalette &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
 std::istream &operator>>(std::istream &is, ByteMatrix &t);
 template<class T>
@@ -618,6 +770,7 @@ std::istream &operator>>(std::istream &is, Triangle &t);
 std::istream &operator>>(std::istream &is, SkinPartition &t);
 std::istream &operator>>(std::istream &is, BoneVertData &t);
 std::istream &operator>>(std::istream &is, NiTransform &t);
+std::istream &operator>>(std::istream &is, NiQuatTransform &t);
 std::istream &operator>>(std::istream &is, HavokFilter &t);
 std::istream &operator>>(std::istream &is, HavokMaterial &t);
 std::istream &operator>>(std::istream &is, hkWorldObjCinfoProperty &t);
@@ -629,6 +782,59 @@ std::istream &operator>>(std::istream &is, AdditionalDataBlock &t);
 std::istream &operator>>(std::istream &is, FormatPrefs &t);
 std::istream &operator>>(std::istream &is, TriangleData &t);
 std::istream &operator>>(std::istream &is, OblivionSubShape &t);
+std::istream &operator>>(std::istream &is, TBC &t);
+template<class T, Enum::KeyType Arg>
+std::istream &operator>>(std::istream &is, Key<T, Arg> &t) {
+  io::readBytes(is, t.time);
+  is >> t.value;
+  return is;
+}
+template<class T>
+std::istream &operator>>(std::istream &is,
+                         Key<T, Enum::KeyType::QUADRATIC_KEY> &t) {
+  io::readBytes(is, t.time);
+  is >> t.value;
+  is >> t.forward;
+  is >> t.backward;
+  return is;
+}
+template<class T>
+std::istream &operator>>(std::istream &is, Key<T, Enum::KeyType::TBC_KEY> &t) {
+  io::readBytes(is, t.time);
+  is >> t.tbc;
+  return is;
+}
+std::istream &operator>>(std::istream &is,
+                         Key<Quaternion, Enum::KeyType::TBC_KEY> &t);
+template<class T>
+std::istream &operator>>(std::istream &is, KeyGroup<T> &t) {
+  io::readBytes(is, t.numKeys);
+  if (t.numKeys != 0) {
+    io::readBytes(is, t.interpolation);
+    switch (static_cast<uint32_t>(t.interpolation)) {
+      case 0: t.template readKeys<0>(is);
+        break;
+      case 1: t.template readKeys<1>(is);
+        break;
+      case 2: t.template readKeys<2>(is);
+        break;
+      case 3: t.template readKeys<3>(is);
+        break;
+      case 4: t.template readKeys<4>(is);
+        break;
+      case 5: t.template readKeys<5>(is);
+        break;
+      default:
+        throw std::runtime_error(boost::str(
+            boost::format("Expected a KeyType, found %d") %
+                static_cast<uint32_t>(t.interpolation)));
+    }
+  }
+  return is;
+}
+std::istream &operator>>(std::istream &is, ControlledBlock &t);
+std::istream &operator>>(std::istream &is, AVObject &t);
+std::istream &operator>>(std::istream &is, InterpBlendItem &t);
 
 } // namespace compound
 } // namespace nif

@@ -3,6 +3,52 @@
 
 namespace nif {
 
+void NiFloatData::read(std::istream &is) {
+  NiObject::read(is);
+  is >> keys;
+}
+
+void NiKeyframeData::read(std::istream &is) {
+  NiObject::read(is);
+  io::readBytes(is, numRotationKeys);
+  if (numRotationKeys != 0) {
+    io::readBytes(is, rotationType);
+    switch (static_cast<std::size_t>(rotationType)) {
+      case 0: readKeys<0>(is);
+        break;
+      case 1: readKeys<1>(is);
+        break;
+      case 2: readKeys<2>(is);
+        break;
+      case 3: readKeys<3>(is);
+        break;
+      case 4: io::readBytes(is, order);
+        for (int i = 0; i < 3; ++i) is >> xyzRotations[i];
+        break;
+      default:
+        throw std::runtime_error(boost::str(
+            boost::format("Expected a KeyType, found %d") %
+                static_cast<uint32_t>(rotationType)));
+    }
+  }
+  is >> translations;
+  is >> scales;
+}
+
+void NiTransformData::read(std::istream &is) {
+  NiKeyframeData::read(is);
+}
+
+void NiPosData::read(std::istream &is) {
+  NiObject::read(is);
+  is >> data;
+}
+
+void NiStringPalette::read(std::istream &is) {
+  NiObject::read(is);
+  is >> palette;
+}
+
 void NiExtraData::read(std::istream &is) {
   NiObject::read(is);
   is >> name;
@@ -25,8 +71,140 @@ void NiStringExtraData::read(std::istream &is) {
   is >> data;
 }
 
+void NiTextKeyExtraData::read(std::istream &is) {
+  NiExtraData::read(is);
+  io::readBytes(is, unknownInt1);
+  io::readBytes(is, numTextKeys);
+  textKeys.reserve(numTextKeys);
+  for (auto i = 0; i < numTextKeys; ++i) is >> textKeys.emplace_back();
+}
+
+void NiInterpolator::read(std::istream &is) {
+  NiObject::read(is);
+}
+
+void NiKeyBasedInterpolator::read(std::istream &is) {
+  NiInterpolator::read(is);
+}
+
+void NiFloatInterpolator::read(std::istream &is) {
+  NiKeyBasedInterpolator::read(is);
+  io::readBytes(is, value);
+  is >> data;
+}
+
+void NiTransformInterpolator::read(std::istream &is) {
+  NiKeyBasedInterpolator::read(is);
+  is >> transform;
+  is >> data;
+}
+
+void NiPoint3Interpolator::read(std::istream &is) {
+  NiKeyBasedInterpolator::read(is);
+  is >> value;
+  is >> data;
+}
+
+void NiBlendInterpolator::read(std::istream &is) {
+  NiInterpolator::read(is);
+  io::readBytes(is, flags);
+  is >> arrayParams;
+  if (weightThresholdR) io::readBytes(is, *weightThresholdR);
+  if (unmanagedData && flags && (static_cast<uint8_t>(*flags) & 1) == 0) {
+    io::readBytes(is, unmanagedData->interpCount);
+    io::readBytes(is, unmanagedData->singleIndex);
+    io::readBytes(is, unmanagedData->highPriority);
+    io::readBytes(is, unmanagedData->nextHighPriority);
+    io::readBytes(is, unmanagedData->singleTime);
+    io::readBytes(is, unmanagedData->highWeightsSum);
+    io::readBytes(is, unmanagedData->nextHighWeightsSum);
+    io::readBytes(is, unmanagedData->highEaseSpinner);
+    // TODO: Visit
+    if (arrayParams) {
+      auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
+      unmanagedData->interpArrayItems.reserve(size);
+      for (auto i = 0; i < size; ++i) {
+        is >> unmanagedData->interpArrayItems.emplace_back(version);
+      }
+    } else {
+      auto size = arrayParams.value<false>().arraySize;
+      unmanagedData->interpArrayItems.reserve(size);
+      for (auto i = 0; i < size; ++i) {
+        is >> unmanagedData->interpArrayItems.emplace_back(version);
+      }
+    }
+  }
+
+  if (interpArrayItems) {
+    // TODO: Visit
+    if (arrayParams) {
+      auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
+      interpArrayItems->reserve(size);
+      for (auto i = 0; i < size; ++i) {
+        is >> interpArrayItems->emplace_back(version);
+      }
+    } else {
+      auto size = arrayParams.value<false>().arraySize;
+      interpArrayItems->reserve(size);
+      for (auto i = 0; i < size; ++i) {
+        is >> interpArrayItems->emplace_back(version);
+      }
+    }
+  }
+
+  io::readBytes(is, managerControlled);
+  if (weightThresholdL) io::readBytes(is, *weightThresholdL);
+  io::readBytes(is, onlyUseHeighestWeight);
+  io::readBytes(is, interpCount);
+  io::readBytes(is, singleIndex);
+  is >> singleInterpolator;
+  io::readBytes(is, singleTime);
+  io::readBytes(is, highPriority);
+  io::readBytes(is, nextHighPriority);
+}
+
 void BSXFlags::read(std::istream &is) {
   NiIntegerExtraData::read(is);
+}
+
+void NiSequence::read(std::istream &is) {
+  NiObject::read(is);
+  is >> name;
+  is >> accumRootName;
+  is >> textKeys;
+  io::readBytes(is, numControlledBlocks);
+  io::readBytes(is, arrayGrowBy);
+  controlledBlocks.reserve(numControlledBlocks);
+  for (auto i = 0; i < numControlledBlocks; ++i) {
+    is >> controlledBlocks.emplace_back(version);
+  }
+}
+
+void NiControllerSequence::read(std::istream &is) {
+  NiSequence::read(is);
+  io::readBytes(is, weight);
+  is >> textKeys;
+  io::readBytes(is, cycleType);
+  io::readBytes(is, frequency);
+  io::readBytes(is, phase);
+  io::readBytes(is, startTime);
+  io::readBytes(is, stopTime);
+  io::readBytes(is, playBackwards);
+  is >> manager;
+  is >> accumRootName;
+  is >> stringPalette;
+}
+
+void NiAVObjectPalette::read(std::istream &is) {
+  NiObject::read(is);
+}
+
+void NiDefaultAVObjectPalette::read(std::istream &is) {
+  NiAVObjectPalette::read(is);
+  is >> scene;
+  io::readBytes(is, numObjects);
+  objects.assign(numObjects, {});
+  for (auto &obj : objects) is >> obj;
 }
 
 void NiTimeController::read(std::istream &is) {
@@ -37,6 +215,14 @@ void NiTimeController::read(std::istream &is) {
   io::readBytes(is, startTime);
   io::readBytes(is, stopTime);
   io::readBytes(is, controllerTarget);
+}
+
+void NiControllerManager::read(std::istream &is) {
+  NiTimeController::read(is);
+  io::readBytes(is, cumulative);
+  io::readBytes(is, numControllerSequences);
+  controllerSequences.assign(numControllerSequences, {});
+  for (auto &seq : controllerSequences) is >> seq;
 }
 
 void NiObjectNet::read(std::istream &is) {
@@ -166,6 +352,11 @@ void NiAlphaProperty::read(std::istream &is) {
   disableTriangleSorting = (flags & 0b1'000'0'0000'0000'0) != 0;
 
   io::readBytes(is, threshold);
+}
+
+void NiSpecularProperty::read(std::istream &is) {
+  NiProperty::read(is);
+  io::readBytes(is, flags);
 }
 
 void NiAVObject::read(std::istream &is) {

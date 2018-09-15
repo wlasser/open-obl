@@ -281,6 +281,26 @@ enum class LightMode : uint32_t {
   LIGHT_MODE_EMI_AMB_DIF = 1
 };
 
+enum class CycleType : uint32_t {
+  CYCLE_LOOP = 0,
+  CYCLE_REVERSE = 1,
+  CYCLE_CLAMP = 2
+};
+
+enum class KeyType : uint32_t {
+  NONE = 0,
+  LINEAR_KEY = 1,
+  QUADRATIC_KEY = 2,
+  TBC_KEY = 3,
+  XYZ_ROTATION_KEY = 4,
+  CONST_KEY = 5
+};
+
+enum class InterpBlendFlags : uint8_t {
+  NONE = 0,
+  MANAGER_CONTROLLED = 1
+};
+
 } // namespace Enum
 } // namespace nif
 

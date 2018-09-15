@@ -13,6 +13,12 @@ std::istream &operator>>(std::istream &is, SizedString &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, StringPalette &t) {
+  is >> t.palette;
+  is >> t.length;
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, ByteArray &t) {
   io::readBytes(is, t.dataSize);
   io::readBytes(is, t.data, t.dataSize);
@@ -330,6 +336,15 @@ std::istream &operator>>(std::istream &is, NiTransform &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, NiQuatTransform &t) {
+  is >> t.translation;
+  is >> t.rotation;
+  io::readBytes(is, t.scale);
+  io::readBytes(is, t.trsValid);
+
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, HavokFilter &t) {
   io::readBytes(is, t.layer);
   uint8_t flagsAndPart{0};
@@ -442,6 +457,65 @@ std::istream &operator>>(std::istream &is, OblivionSubShape &t) {
   is >> t.havokFilter;
   io::readBytes(is, t.numVertices);
   is >> t.havokMaterial;
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, TBC &t) {
+  io::readBytes(is, t.tension);
+  io::readBytes(is, t.bias);
+  io::readBytes(is, t.continuity);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is,
+                         Key<Quaternion, Enum::KeyType::TBC_KEY> &t) {
+  io::readBytes(is, t.time);
+  is >> t.value;
+  is >> t.tbc;
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, ControlledBlock &t) {
+  is >> t.targetName;
+  is >> t.interpolator;
+  is >> t.controller;
+  is >> t.blendInterpolator;
+  io::readBytes(is, t.blendIndex);
+  io::readBytes(is, t.priority);
+  if (t.idTag) {
+    is >> t.idTag->nodeName;
+    is >> t.idTag->propertyType;
+    is >> t.idTag->controllerType;
+    is >> t.idTag->controllerID;
+    is >> t.idTag->interpolatorID;
+  }
+  if (t.palette) {
+    is >> t.palette->stringPalette;
+    io::readBytes(is, t.palette->nodeNameOffset);
+    io::readBytes(is, t.palette->propertyTypeOffset);
+    io::readBytes(is, t.palette->controllerTypeOffset);
+    io::readBytes(is, t.palette->controllerIDOffset);
+    io::readBytes(is, t.palette->interpolatorIDOffset);
+  }
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, AVObject &t) {
+  is >> t.name;
+  is >> t.avObject;
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, InterpBlendItem &t) {
+  is >> t.interpolator;
+  io::readBytes(is, t.weight);
+  io::readBytes(is, t.normalizedWeight);
+  io::readBytes(is, t.priority);
+  io::readBytes(is, t.easeSpinner);
 
   return is;
 }

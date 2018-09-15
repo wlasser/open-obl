@@ -20,6 +20,69 @@ struct NiObject {
 inline NiObject::~NiObject() = default;
 inline void NiObject::read(std::istream &) {}
 
+struct NiFloatData : NiObject {
+  compound::KeyGroup<basic::Float> keys{};
+
+  void read(std::istream &is) override;
+};
+
+struct NiKeyframeData : NiObject, Versionable {
+  template<Enum::KeyType Arg>
+  using KeysVector = std::vector<compound::QuatKey<Arg>>;
+
+  // If rotationType == 4 then this must be 1, and the actual number of keys is
+  // stored in xyzRotations
+  basic::UInt numRotationKeys{};
+
+  // if (numRotationKeys != 0)
+  // Value of 4 => separate xyz, not quaternions
+  Enum::KeyType rotationType{};
+
+  // if (rotationType != 4)
+  // arg = rotationType
+  std::variant<KeysVector<Enum::KeyType::NONE>,
+               KeysVector<Enum::KeyType::LINEAR_KEY>,
+               KeysVector<Enum::KeyType::QUADRATIC_KEY>,
+               KeysVector<Enum::KeyType::TBC_KEY>,
+               KeysVector<Enum::KeyType::XYZ_ROTATION_KEY>,
+               KeysVector<Enum::KeyType::CONST_KEY>> quaternionKeys{};
+
+  template<std::size_t I>
+  void readKeys(std::istream &is) {
+    auto v = quaternionKeys.template emplace<I>(numRotationKeys);
+    for (auto &key : v) is >> key;
+  }
+
+  // if (rotationType == 4)
+  VersionOptional<basic::Float, Unbounded, "10.1.0.0"_ver> order{version};
+
+  // if (rotationType == 4)
+  std::array<compound::KeyGroup<basic::Float>, 3> xyzRotations{};
+
+  compound::KeyGroup<compound::Vector3> translations{};
+
+  compound::KeyGroup<basic::Float> scales{};
+
+  void read(std::istream &is) override;
+  explicit NiKeyframeData(Version version) : Versionable(version) {}
+};
+
+struct NiTransformData : NiKeyframeData {
+  void read(std::istream &is) override;
+};
+
+struct NiPosData : NiObject {
+  compound::KeyGroup<compound::Vector3> data{};
+
+  void read(std::istream &is) override;
+};
+
+struct NiStringPalette : NiObject {
+  compound::StringPalette palette{};
+
+  void read(std::istream &is) override;
+};
+
 struct NiExtraData : NiObject, Versionable {
   VersionOptional<compound::SizedString, "10.0.1.0"_ver, Unbounded>
       name{version};
@@ -57,6 +120,169 @@ struct NiStringExtraData : NiExtraData {
   explicit NiStringExtraData(Version version) : NiExtraData(version) {}
 };
 
+struct NiTextKeyExtraData : NiExtraData {
+  VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver> unknownInt1{version};
+
+  basic::UInt numTextKeys{};
+
+  std::vector<compound::Key<compound::SizedString, Enum::KeyType::LINEAR_KEY>>
+      textKeys{};
+
+  void read(std::istream &is) override;
+  explicit NiTextKeyExtraData(Version version) : NiExtraData(version) {}
+};
+
+struct NiInterpolator : NiObject {
+  void read(std::istream &is) override;
+  ~NiInterpolator() override = 0;
+};
+inline NiInterpolator::~NiInterpolator() = default;
+
+struct NiKeyBasedInterpolator : NiInterpolator {
+  void read(std::istream &is) override;
+  ~NiKeyBasedInterpolator() override = 0;
+};
+inline NiKeyBasedInterpolator::~NiKeyBasedInterpolator() = default;
+
+struct NiFloatInterpolator : NiKeyBasedInterpolator {
+  basic::Float value{std::numeric_limits<float>::min()};
+  basic::Ref<NiFloatData> data{};
+
+  void read(std::istream &is) override;
+};
+
+struct NiTransformInterpolator : NiKeyBasedInterpolator, Versionable {
+  compound::NiQuatTransform transform{version};
+  basic::Ref<NiTransformData> data{};
+
+  void read(std::istream &is) override;
+  explicit NiTransformInterpolator(Version version) : Versionable(version) {}
+};
+
+struct NiPoint3Interpolator : NiKeyBasedInterpolator {
+  compound::Vector3 value{std::numeric_limits<float>::min(),
+                          std::numeric_limits<float>::min(),
+                          std::numeric_limits<float>::min()};
+  basic::Ref<NiPosData> data{};
+
+  void read(std::istream &is) override;
+};
+
+struct NiBlendInterpolator : NiInterpolator, Versionable {
+  // This is always present, with the same type, but changes location based on
+  // the version. This version should be written to internally, io should use
+  // the versioned components.
+  basic::Float weightThreshold{};
+
+  VersionOptional<Enum::InterpBlendFlags, "10.1.0.112"_ver, Unbounded>
+      flags{version};
+
+  struct ArrayParamsL {
+    basic::UShort arraySize{};
+    basic::UShort arrayGrowBy{};
+    friend std::istream &operator>>(std::istream &is, ArrayParamsL &t) {
+      io::readBytes(is, t.arraySize);
+      io::readBytes(is, t.arrayGrowBy);
+      return is;
+    }
+  };
+  struct ArrayParamsR {
+    basic::Byte arraySize;
+    friend std::istream &operator>>(std::istream &is, ArrayParamsR &t) {
+      io::readBytes(is, t.arraySize);
+      return is;
+    }
+  };
+  VersionEither<ArrayParamsL, ArrayParamsR, "10.1.0.110"_ver, Unbounded>
+      arrayParams{version};
+
+ protected:
+  VersionOptional<basic::Float *, "10.1.0.112"_ver, Unbounded>
+      weightThresholdR{version, &weightThreshold};
+ public:
+
+  struct UnmanagedData {
+    basic::Byte interpCount{};
+    basic::Byte singleIndex{0xff};
+    basic::Char highPriority{std::numeric_limits<basic::Char>::min()};
+    basic::Char nextHighPriority{std::numeric_limits<basic::Char>::min()};
+    basic::Float singleTime{std::numeric_limits<basic::Float>::min()};
+    basic::Float highWeightsSum{std::numeric_limits<basic::Float>::min()};
+    basic::Float nextHighWeightsSum{std::numeric_limits<basic::Float>::min()};
+    basic::Float highEaseSpinner{std::numeric_limits<basic::Float>::min()};
+    std::vector<compound::InterpBlendItem> interpArrayItems{};
+  };
+  // if (flags & 1) == 0
+  VersionOptional<UnmanagedData, "10.1.0.112"_ver, Unbounded>
+      unmanagedData{version};
+
+  VersionOptional<std::vector<compound::InterpBlendItem>,
+      Unbounded, "10.1.0.111"_ver>
+      interpArrayItems{version};
+
+  VersionOptional<basic::Bool, Unbounded, "10.1.0.111"_ver>
+      managerControlled{version};
+
+ protected:
+  VersionOptional<basic::Float *, Unbounded, "10.1.0.111"_ver>
+      weightThresholdL{version, &weightThreshold};
+ public:
+
+  VersionOptional<basic::Bool, Unbounded, "10.1.0.111"_ver>
+      onlyUseHeighestWeight{version};
+
+  VersionOptional<VersionEither<basic::UShort,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>, Unbounded, "10.1.0.111"_ver>
+      interpCount{version,
+                  VersionEither<basic::UShort,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>(version)};
+
+  VersionOptional<VersionEither<basic::UShort,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>, Unbounded, "10.1.0.111"_ver>
+      singleIndex{version,
+                  VersionEither<basic::UShort,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>(version)};
+
+  VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.108"_ver,
+                                              "10.1.0.111"_ver>
+      singleInterpolator{version};
+
+  VersionOptional<basic::Float, "10.1.0.108"_ver, "10.1.0.111"_ver>
+      singleTime{version};
+
+  VersionOptional<VersionEither<basic::Int,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>, Unbounded, "10.1.0.111"_ver>
+      highPriority{version,
+                   VersionEither<basic::Int,
+                                 basic::Byte,
+                                 "10.1.0.110"_ver,
+                                 Unbounded>(version)};
+
+  VersionOptional<VersionEither<basic::Int,
+                                basic::Byte,
+                                "10.1.0.110"_ver,
+                                Unbounded>, Unbounded, "10.1.0.111"_ver>
+      nextHighPriority{version,
+                       VersionEither<basic::Int,
+                                     basic::Byte,
+                                     "10.1.0.110"_ver,
+                                     Unbounded>(version)};
+
+  void read(std::istream &is) override;
+  explicit NiBlendInterpolator(Version version) : Versionable(version) {}
+  ~NiBlendInterpolator() override = 0;
+};
+
 struct BSXFlags : NiIntegerExtraData {
   enum class Flags : uint32_t {
     bAnimated = 0,
@@ -83,10 +309,85 @@ inline constexpr BSXFlags::Flags operator|(BSXFlags::Flags a,
   return BSXFlags::Flags(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 
+struct NiSequence : NiObject, Versionable {
+  compound::SizedString name{};
+
+  VersionOptional<compound::SizedString, Unbounded, "10.1.0.103"_ver>
+      accumRootName{version};
+
+  VersionOptional<basic::Ref<NiTextKeyExtraData>, Unbounded, "10.1.0.103"_ver>
+      textKeys{version};
+
+  basic::UInt numControlledBlocks{};
+
+  VersionOptional<basic::UInt, "10.1.0.106"_ver, Unbounded>
+      arrayGrowBy{version};
+
+  std::vector<compound::ControlledBlock> controlledBlocks{};
+
+  void read(std::istream &is) override;
+  explicit NiSequence(Version version) : Versionable(version) {}
+};
+
+struct NiControllerManager;
+
+struct NiControllerSequence : NiSequence {
+  VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
+      weight{version, 1.0f};
+
+  VersionOptional<basic::Ref<NiTextKeyExtraData>, "10.1.0.106"_ver, Unbounded>
+      textKeys{version};
+
+  VersionOptional<Enum::CycleType, "10.1.0.106"_ver, Unbounded>
+      cycleType{version};
+
+  VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
+      frequency{version, 1.0f};
+
+  VersionOptional<basic::Float, "10.1.0.106"_ver, "10.4.0.1"_ver>
+      phase{version};
+
+  VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
+      startTime{version, std::numeric_limits<float>::max()};
+
+  VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
+      stopTime{version, std::numeric_limits<float>::min()};
+
+  VersionOptional<basic::Bool, "10.1.0.106"_ver, "10.1.0.106"_ver>
+      playBackwards{version};
+
+  VersionOptional<basic::Ptr<NiControllerManager>, "10.1.0.106"_ver, Unbounded>
+      manager{version};
+
+  VersionOptional<compound::SizedString, "10.1.0.106"_ver, Unbounded>
+      accumRootName{version};
+
+  VersionOptional<basic::Ref<NiStringPalette>, "10.1.0.113"_ver, "20.1.0.0"_ver>
+      stringPalette{version};
+
+  void read(std::istream &is) override;
+  explicit NiControllerSequence(Version version) : NiSequence(version) {}
+};
+
+struct NiAVObjectPalette : NiObject {
+  void read(std::istream &is) override;
+  ~NiAVObjectPalette() override = 0;
+};
+inline NiAVObjectPalette::~NiAVObjectPalette() = default;
+
+struct NiAVObject;
+
+struct NiDefaultAVObjectPalette : NiAVObjectPalette {
+  basic::Ptr<NiAVObject> scene{};
+  basic::UInt numObjects{};
+  std::vector<compound::AVObject> objects{};
+
+  void read(std::istream &is) override;
+};
+
 struct NiObjectNet;
 
 struct NiTimeController : NiObject {
-
   basic::Ref<NiTimeController> next{};
 
   // If Reverse and Clamp are unset, then Loop
@@ -113,6 +414,16 @@ struct NiTimeController : NiObject {
   ~NiTimeController() override = 0;
 };
 inline NiTimeController::~NiTimeController() = default;
+
+struct NiControllerManager : NiTimeController {
+  // If enabled the manager treats all sequence data as absolute, not relative
+  basic::Bool cumulative{};
+  basic::UInt numControllerSequences{};
+  std::vector<basic::Ref<NiControllerSequence>> controllerSequences{};
+  basic::Ref<NiDefaultAVObjectPalette> objectPalette{};
+
+  void read(std::istream &is) override;
+};
 
 struct NiObjectNet : NiObject, Versionable {
   compound::SizedString name{};
@@ -291,6 +602,17 @@ struct NiAlphaProperty : NiProperty {
 
   void read(std::istream &is) override;
   explicit NiAlphaProperty(Version version) : NiProperty(version) {}
+};
+
+struct NiSpecularProperty : NiProperty {
+  enum class Flags : basic::Flags {
+    DisableSpecular = 0,
+    EnableSpecular = 1u
+  };
+  Flags flags{Flags::EnableSpecular};
+
+  void read(std::istream &is) override;
+  explicit NiSpecularProperty(Version version) : NiProperty(version) {}
 };
 
 struct NiCollisionObject;
