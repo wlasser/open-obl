@@ -54,30 +54,22 @@ void testEsmLoading() {
   esp::readEsp(esmStream, nullProcessor);
 }
 
-void testBsaLoading() {
-  bsa::BSAReader bsaReader("Data/Oblivion - Meshes.bsa");
-  auto is = bsaReader["meshes/clothes/robeuc01/f"]["robeuc01f.nif"];
-  auto data = std::unique_ptr<char[]>(new char[is.size()]);
-  is.read(data.get(), is.size());
-  std::ofstream of("test.nif", std::ios::binary);
-  of.write(data.get(), is.size());
-}
-
 void testApplication() {
   engine::Application app("Open Oblivion");
   app.getRoot()->addFrameListener(&app);
   app.getRoot()->startRendering();
 }
 
-void extractNif(bsa::BSAReader &reader,
-                const std::string &folder,
-                const std::string &file,
-                const std::string &destination) {
+void saveFromBSA(bsa::BSAReader &reader,
+                 const std::filesystem::path &folder,
+                 const std::filesystem::path &file,
+                 const std::filesystem::path &destination) {
   auto is = reader[folder][file];
-  auto data = std::unique_ptr<char[]>(new char[is.size()]);
-  is.read(data.get(), is.size());
+  auto size = is.size();
+  std::vector<char> data(size);
+  is.read(data.data(), size);
   std::ofstream of(destination, std::ios::binary);
-  of.write(data.get(), is.size());
+  of.write(data.data(), size);
 }
 
 void checkNif(bsa::BSAReader &reader,
@@ -91,8 +83,11 @@ void checkNif(bsa::BSAReader &reader,
 }
 
 int main() {
-  //testApplication();
-  testEsmLoading();
+  //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
+  //saveFromBSA(reader, "meshes", "markerxheading.nif",
+  //            "meshes/markerxheading.nif");
+  testApplication();
+  //testEsmLoading();
   //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   return 0;
 }
