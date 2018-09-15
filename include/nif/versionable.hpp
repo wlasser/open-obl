@@ -264,7 +264,22 @@ class Versionable {
     }
 
     template<bool b>
-    constexpr auto &value() {
+    constexpr auto &value() &{
+      return std::get<static_cast<std::size_t>(b)>(var);
+    }
+
+    template<bool b>
+    constexpr const auto &value() const &{
+      return std::get<static_cast<std::size_t>(b)>(var);
+    }
+
+    template<bool b>
+    constexpr auto &&value() &&{
+      return std::get<static_cast<std::size_t>(b)>(var);
+    }
+
+    template<bool b>
+    constexpr const auto &&value() const &&{
       return std::get<static_cast<std::size_t>(b)>(var);
     }
 
