@@ -38,7 +38,7 @@ namespace engine {
 
 Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
                                                     Ogre::Matrix4 transformation) {
-  const auto fltMin = std::numeric_limits<float>::min();
+  const auto fltMin = std::numeric_limits<float>::lowest();
   const auto fltMax = std::numeric_limits<float>::max();
   Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
   Ogre::Vector3 bboxMax{fltMin, fltMin, fltMin};
@@ -48,12 +48,13 @@ Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
   for (const auto &vertex : block->vertices) {
     auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
     auto v = conversions::fromBSCoordinates(bsV.xyz());
+    // NB: Cannot use else if, both branches apply if the mesh is flat
     if (v.x < bboxMin.x) bboxMin.x = v.x;
-    else if (v.x > bboxMax.x) bboxMax.x = v.x;
+    if (v.x > bboxMax.x) bboxMax.x = v.x;
     if (v.y < bboxMin.y) bboxMin.y = v.y;
-    else if (v.y > bboxMax.y) bboxMax.y = v.y;
+    if (v.y > bboxMax.y) bboxMax.y = v.y;
     if (v.z < bboxMin.z) bboxMin.z = v.z;
-    else if (v.z > bboxMax.z) bboxMax.z = v.z;
+    if (v.z > bboxMax.z) bboxMax.z = v.z;
   }
   return {bboxMin, bboxMax};
 }
