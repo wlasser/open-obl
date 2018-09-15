@@ -301,6 +301,13 @@ enum class InterpBlendFlags : uint8_t {
   MANAGER_CONTROLLED = 1
 };
 
+enum class MaterialColor : uint16_t {
+  TC_AMBIENT = 0,
+  TC_DIFFUSE = 1,
+  TC_SPECULAR = 2,
+  TC_SELF_ILLUM = 3
+};
+
 } // namespace Enum
 } // namespace nif
 

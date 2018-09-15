@@ -146,7 +146,7 @@ struct NiKeyBasedInterpolator : NiInterpolator {
 inline NiKeyBasedInterpolator::~NiKeyBasedInterpolator() = default;
 
 struct NiFloatInterpolator : NiKeyBasedInterpolator {
-  basic::Float value{std::numeric_limits<float>::min()};
+  basic::Float value{std::numeric_limits<float>::lowest()};
   basic::Ref<NiFloatData> data{};
 
   void read(std::istream &is) override;
@@ -161,9 +161,9 @@ struct NiTransformInterpolator : NiKeyBasedInterpolator, Versionable {
 };
 
 struct NiPoint3Interpolator : NiKeyBasedInterpolator {
-  compound::Vector3 value{std::numeric_limits<float>::min(),
-                          std::numeric_limits<float>::min(),
-                          std::numeric_limits<float>::min()};
+  compound::Vector3 value{std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest()};
   basic::Ref<NiPosData> data{};
 
   void read(std::istream &is) override;
@@ -205,12 +205,13 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
   struct UnmanagedData {
     basic::Byte interpCount{};
     basic::Byte singleIndex{0xff};
-    basic::Char highPriority{std::numeric_limits<basic::Char>::min()};
-    basic::Char nextHighPriority{std::numeric_limits<basic::Char>::min()};
-    basic::Float singleTime{std::numeric_limits<basic::Float>::min()};
-    basic::Float highWeightsSum{std::numeric_limits<basic::Float>::min()};
-    basic::Float nextHighWeightsSum{std::numeric_limits<basic::Float>::min()};
-    basic::Float highEaseSpinner{std::numeric_limits<basic::Float>::min()};
+    basic::Char highPriority{std::numeric_limits<basic::Char>::lowest()};
+    basic::Char nextHighPriority{std::numeric_limits<basic::Char>::lowest()};
+    basic::Float singleTime{std::numeric_limits<basic::Float>::lowest()};
+    basic::Float highWeightsSum{std::numeric_limits<basic::Float>::lowest()};
+    basic::Float
+        nextHighWeightsSum{std::numeric_limits<basic::Float>::lowest()};
+    basic::Float highEaseSpinner{std::numeric_limits<basic::Float>::lowest()};
     std::vector<compound::InterpBlendItem> interpArrayItems{};
   };
   // if (flags & 1) == 0
@@ -285,6 +286,16 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
 };
 inline NiBlendInterpolator::~NiBlendInterpolator() = default;
 
+struct NiBlendPoint3Interpolator : NiBlendInterpolator {
+  compound::Vector3 value{std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest(),
+                          std::numeric_limits<float>::lowest()};
+
+  void read(std::istream &is) override;
+  explicit NiBlendPoint3Interpolator(Version version)
+      : NiBlendInterpolator(version) {}
+};
+
 struct BSXFlags : NiIntegerExtraData {
   enum class Flags : uint32_t {
     bAnimated = 0,
@@ -353,7 +364,7 @@ struct NiControllerSequence : NiSequence {
       startTime{version, std::numeric_limits<float>::max()};
 
   VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
-      stopTime{version, std::numeric_limits<float>::min()};
+      stopTime{version, std::numeric_limits<float>::lowest()};
 
   VersionOptional<basic::Bool, "10.1.0.106"_ver, "10.1.0.106"_ver>
       playBackwards{version};
@@ -409,13 +420,63 @@ struct NiTimeController : NiObject {
   basic::Float frequency = 1.0f;
   basic::Float phase = 0.0f;
   basic::Float startTime = std::numeric_limits<float>::max();
-  basic::Float stopTime = std::numeric_limits<float>::min();
+  basic::Float stopTime = std::numeric_limits<float>::lowest();
   basic::Ptr<NiObjectNet> controllerTarget{};
 
   void read(std::istream &is) override;
   ~NiTimeController() override = 0;
 };
 inline NiTimeController::~NiTimeController() = default;
+
+struct NiInterpController : NiTimeController, Versionable {
+  VersionOptional<basic::Bool, "10.1.0.104"_ver, "10.1.0.108"_ver>
+      managerControlled{version};
+
+  void read(std::istream &is) override;
+  explicit NiInterpController(Version version) : Versionable(version) {}
+  ~NiInterpController() override = 0;
+};
+inline NiInterpController::~NiInterpController() = default;
+
+struct NiMultiTargetTransformController : NiInterpController {
+  basic::UShort numExtraTargets{};
+  std::vector<basic::Ptr<NiAVObject>> extraTargets{};
+
+  void read(std::istream &is) override;
+  explicit NiMultiTargetTransformController(Version version)
+      : NiInterpController(version) {}
+};
+
+struct NiSingleInterpController : NiInterpController {
+  VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.104"_ver, Unbounded>
+      interpolator{version};
+
+  void read(std::istream &is) override;
+  explicit NiSingleInterpController(Version version)
+      : NiInterpController(version) {}
+  ~NiSingleInterpController() override = 0;
+};
+inline NiSingleInterpController::~NiSingleInterpController() = default;
+
+struct NiPoint3InterpController : NiSingleInterpController {
+  void read(std::istream &is) override;
+  explicit NiPoint3InterpController(Version version) : NiSingleInterpController(
+      version) {}
+  ~NiPoint3InterpController() override = 0;
+};
+inline NiPoint3InterpController::~NiPoint3InterpController() = default;
+
+struct NiMaterialColorController : NiPoint3InterpController {
+  VersionOptional<Enum::MaterialColor, "10.1.0.0"_ver, Unbounded>
+      targetColor{version};
+
+  VersionOptional<basic::Ref<NiPosData>, Unbounded, "10.1.0.103"_ver>
+      data{version};
+
+  void read(std::istream &is) override;
+  explicit NiMaterialColorController(Version version)
+      : NiPoint3InterpController(version) {}
+};
 
 struct NiControllerManager : NiTimeController {
   // If enabled the manager treats all sequence data as absolute, not relative

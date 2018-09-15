@@ -15,7 +15,7 @@ std::istream &operator>>(std::istream &is, SizedString &t) {
 
 std::istream &operator>>(std::istream &is, StringPalette &t) {
   is >> t.palette;
-  is >> t.length;
+  io::readBytes(is, t.length);
   return is;
 }
 

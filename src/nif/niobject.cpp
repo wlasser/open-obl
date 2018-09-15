@@ -109,7 +109,7 @@ void NiBlendInterpolator::read(std::istream &is) {
   NiInterpolator::read(is);
   io::readBytes(is, flags);
   is >> arrayParams;
-  if (weightThresholdR) io::readBytes(is, *weightThresholdR);
+  if (weightThresholdR) io::readBytes(is, **weightThresholdR);
   if (unmanagedData && flags && (static_cast<uint8_t>(*flags) & 1) == 0) {
     io::readBytes(is, unmanagedData->interpCount);
     io::readBytes(is, unmanagedData->singleIndex);
@@ -153,7 +153,7 @@ void NiBlendInterpolator::read(std::istream &is) {
   }
 
   io::readBytes(is, managerControlled);
-  if (weightThresholdL) io::readBytes(is, *weightThresholdL);
+  if (weightThresholdL) io::readBytes(is, **weightThresholdL);
   io::readBytes(is, onlyUseHeighestWeight);
   io::readBytes(is, interpCount);
   io::readBytes(is, singleIndex);
@@ -161,6 +161,11 @@ void NiBlendInterpolator::read(std::istream &is) {
   io::readBytes(is, singleTime);
   io::readBytes(is, highPriority);
   io::readBytes(is, nextHighPriority);
+}
+
+void NiBlendPoint3Interpolator::read(std::istream &is) {
+  NiBlendInterpolator::read(is);
+  is >> value;
 }
 
 void BSXFlags::read(std::istream &is) {
@@ -209,6 +214,7 @@ void NiDefaultAVObjectPalette::read(std::istream &is) {
 
 void NiTimeController::read(std::istream &is) {
   NiObject::read(is);
+  is >> next;
   io::readBytes(is, flags);
   io::readBytes(is, frequency);
   io::readBytes(is, phase);
@@ -217,12 +223,40 @@ void NiTimeController::read(std::istream &is) {
   io::readBytes(is, controllerTarget);
 }
 
+void NiInterpController::read(std::istream &is) {
+  NiTimeController::read(is);
+  io::readBytes(is, managerControlled);
+}
+
+void NiMultiTargetTransformController::read(std::istream &is) {
+  NiInterpController::read(is);
+  io::readBytes(is, numExtraTargets);
+  extraTargets.reserve(numExtraTargets);
+  for (auto i = 0; i < numExtraTargets; ++i) is >> extraTargets.emplace_back();
+}
+
+void NiSingleInterpController::read(std::istream &is) {
+  NiInterpController::read(is);
+  is >> interpolator;
+}
+
+void NiPoint3InterpController::read(std::istream &is) {
+  NiSingleInterpController::read(is);
+}
+
+void NiMaterialColorController::read(std::istream &is) {
+  NiPoint3InterpController::read(is);
+  io::readBytes(is, targetColor);
+  is >> data;
+}
+
 void NiControllerManager::read(std::istream &is) {
   NiTimeController::read(is);
   io::readBytes(is, cumulative);
   io::readBytes(is, numControllerSequences);
   controllerSequences.assign(numControllerSequences, {});
   for (auto &seq : controllerSequences) is >> seq;
+  is >> objectPalette;
 }
 
 void NiObjectNet::read(std::istream &is) {
