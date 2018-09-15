@@ -5,6 +5,7 @@
 #include <array>
 #include <optional>
 #include <stdexcept>
+#include <variant>
 
 // Nif files are heavily versioned, with different parts appearing only under
 // certain version constraints. To supply these version constraints, one derives
@@ -211,6 +212,77 @@ class Versionable {
     }
   }; // class VersionOptional
 
+  // Sometimes a versioned component is always present, but changes type based
+  // on version. This class functions like VersionOptional but presents as type
+  // R when the version requirement is satisfied, and as type L otherwise.
+  template<class L, class R, Version ver1, Version ver2>
+  class VersionEither {
+   private:
+    /*const*/ Version version;
+    std::variant<L, R> var;
+    /*const*/ std::optional<Version> lowerBound =
+        (ver1 == Unbounded ? std::nullopt : std::make_optional(ver1));
+    /*const*/ std::optional<Version> upperBound =
+        (ver2 == Unbounded ? std::nullopt : std::make_optional(ver2));
+
+    constexpr bool verify(Version version) const {
+      return (ver1 ? (ver1 <= version) : true)
+          && (ver2 ? (version <= ver2) : true);
+    }
+
+   public:
+    explicit constexpr VersionEither(Version version) :
+        version(version), var(L()) {
+      if (verify(version)) var.template emplace<R>();
+      else var.template emplace<L>();
+    }
+
+    constexpr VersionEither(const VersionEither &other) = default;
+    constexpr VersionEither &operator=(const VersionEither &other) = default;
+    constexpr VersionEither(VersionEither &&other) noexcept = default;
+    constexpr VersionEither &operator=(VersionEither &&other) noexcept = default;
+
+    constexpr VersionEither(Version version, L &&value) : version(version) {
+      if (!verify(version)) var = value;
+    }
+
+    constexpr VersionEither(Version version, R &&value) : version(version) {
+      if (verify(version)) var = value;
+    }
+
+    template<class T>
+    VersionEither &operator=(T &&value) {
+      if (verify(version)) std::get<R>(var) = std::forward<T>(value);
+      else std::get<L>(var) = std::forward<T>(value);
+      return *this;
+    }
+
+    constexpr explicit operator bool() const noexcept {
+      return verify(version);
+    }
+
+    template<bool b>
+    constexpr auto &value() {
+      return std::get<static_cast<std::size_t>(b)>(var);
+    }
+
+    template<class T, class FL, class FR>
+    constexpr T fold(FL &&fl, FR &&fr) {
+      if (verify(version)) {
+        return std::invoke(std::forward<FR>(fr), std::get<R>(var));
+      } else {
+        return std::invoke(std::forward<FL>(fl), std::get<L>(var));
+      }
+    }
+
+    friend std::istream &operator>>(std::istream &is,
+                                    VersionEither<L, R, ver1, ver2> &t) {
+      if (t) is >> std::get<R>(t.var);
+      else is >> std::get<L>(t.var);
+      return is;
+    }
+  }; // class VersionEither
+
   explicit Versionable(Version version) : version(version) {}
 
   constexpr Versionable(const Versionable &other) = default;
@@ -224,6 +296,10 @@ class Versionable {
   template<class T, nif::Version ver1, nif::Version ver2>
   friend void ::io::readBytes(std::istream &,
                               VersionOptional<T, ver1, ver2> &);
+
+  template<class L, class R, nif::Version ver1, nif::Version ver2>
+  friend void ::io::readBytes(std::istream &,
+                              VersionEither<L, R, ver1, ver2> &);
 };
 
 // Convert a version string into its integer representation.
@@ -281,6 +357,13 @@ template<class T, nif::Version ver1, nif::Version ver2>
 void readBytes(std::istream &is,
                nif::Versionable::VersionOptional<T, ver1, ver2> &t) {
   if (t) io::readBytes(is, t.value());
+}
+
+template<class L, class R, nif::Version ver1, nif::Version ver2>
+void readBytes(std::istream &is,
+               nif::Versionable::VersionEither<L, R, ver1, ver2> &t) {
+  if (t) io::readBytes(is, t.template value<true>());
+  else io::readBytes(is, t.template value<false>());
 }
 
 } // namespace io
