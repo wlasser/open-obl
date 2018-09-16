@@ -93,6 +93,9 @@ Application::Application(std::string windowName) : FrameListener() {
   }
   auto parent = std::to_string(sdlWindowInfo.info.x11.window);
 
+  // Make cursor behaviour more sensible
+  SDL_SetRelativeMouseMode(SDL_TRUE);
+
   std::map<std::string, std::string> params = {
       {"parentWindowHandle", parent}
   };
@@ -191,20 +194,13 @@ Application::Application(std::string windowName) : FrameListener() {
   auto cell = interiorCellMgr->get(0x00'031b59, scnMgr);
   logger->logMessage("Loaded test cell");
 
-  auto *camera = scnMgr->createCamera("PlayerCamera");
-  camera->setNearClipDistance(1.0f);
-  camera->setAutoAspectRatio(true);
-  ogreWindow->addViewport(camera);
-  auto *cameraNode = rootNode->createChildSceneNode();
-  cameraNode->setPosition(conversions::fromBSCoordinates(
+  playerController = std::make_unique<engine::PlayerController>(scnMgr);
+  ogreWindow->addViewport(playerController->getCamera());
+  playerController->moveTo(conversions::fromBSCoordinates(
       {200.0f, -347.0f, -460.0f}));
-  cameraNode->attachObject(camera);
-  cameraNode->rotate(Ogre::Vector3::UNIT_Y,
-                     Ogre::Degree(90.0f),
-                     Ogre::SceneNode::TS_WORLD);
 
   auto *light = scnMgr->createLight("TestLight");
-  auto *lightNode = cameraNode->createChildSceneNode();
+  auto *lightNode = playerController->getCameraNode()->createChildSceneNode();
   lightNode->attachObject(light);
 }
 
@@ -212,17 +208,87 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   SDL_Event sdlEvent;
   while (SDL_PollEvent(&sdlEvent)) {
     switch (sdlEvent.type) {
+
       case SDL_QUIT:ogreRoot->queueEndRendering();
         break;
+
+      case SDL_KEYDOWN:if (sdlEvent.key.repeat) break;
+        switch (sdlEvent.key.keysym.sym) {
+          case SDLK_ESCAPE:ogreRoot->queueEndRendering();
+            break;
+          case SDLK_a: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Left, true, 0.0f});
+            break;
+          }
+          case SDLK_d: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Right, true, 0.0f});
+            break;
+          }
+          case SDLK_w: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Forward, true, 0.0f});
+            break;
+          }
+          case SDLK_s: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Backward, true, 0.0f});
+            break;
+          }
+          default:break;
+        }
+        break;
+
+      case SDL_KEYUP:if (sdlEvent.key.repeat) break;
+        switch (sdlEvent.key.keysym.sym) {
+          case SDLK_a: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Left, false, 0.0f});
+            break;
+          }
+          case SDLK_d: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Right, false, 0.0f});
+            break;
+          }
+          case SDLK_w: {
+            playerController->sendEvent(
+                {PlayerController::MoveEvent::Forward, false, 0.0f});
+            break;
+            case SDLK_s: {
+              playerController->sendEvent(
+                  {PlayerController::MoveEvent::Backward, false, 0.0f});
+              break;
+            }
+          }
+          default:break;
+        }
+        break;
+
+      case SDL_MOUSEMOTION: {
+        playerController->sendEvent(PlayerController::MoveEvent(
+            PlayerController::MoveEvent::Pitch,
+            true,
+            sdlEvent.motion.yrel));
+        playerController->sendEvent(PlayerController::MoveEvent(
+            PlayerController::MoveEvent::Yaw,
+            true,
+            sdlEvent.motion.xrel));
+        break;
+      }
       case SDL_WINDOWEVENT:
         if (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED) {
           ogreWindow->resize(static_cast<unsigned int>(sdlEvent.window.data1),
                              static_cast<unsigned int>(sdlEvent.window.data2));
           ogreWindow->windowMovedOrResized();
         }
-      default: break;
+      default:break;
     }
   }
+
+  playerController->update(event.timeSinceLastFrame);
+
   return true;
 }
 

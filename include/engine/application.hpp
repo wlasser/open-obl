@@ -4,6 +4,7 @@
 #include "engine/bsa.hpp"
 #include "engine/cell_manager.hpp"
 #include "engine/nif_loader.hpp"
+#include "engine/player_controller.hpp"
 #include "engine/static_manager.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
@@ -61,7 +62,7 @@ class Application : public Ogre::FrameListener {
   NifLoader nifLoader{};
   const std::string resourceGroup = "OOResource";
 
-  Ogre::SceneNode *pcCameraNode{};
+  std::unique_ptr<engine::PlayerController> playerController{};
 
  public:
   explicit Application(std::string windowName);

@@ -70,6 +70,7 @@ target_sources(OpenOblivion PRIVATE
         src/engine/nif_loader.cpp
         src/engine/nif_loader_state.cpp
         src/engine/ogre_stream_wrappers.cpp
+        src/engine/player_controller.cpp
         src/main.cpp
         src/records.cpp
         src/save_state.cpp
@@ -85,6 +86,7 @@ target_sources(OpenOblivion PRIVATE
         include/engine/nif_loader.hpp
         include/engine/nif_loader_state.hpp
         include/engine/ogre_stream_wrappers.hpp
+        include/engine/player_controller.hpp
         include/engine/static_manager.hpp
         include/esp.hpp
         include/formid.hpp
