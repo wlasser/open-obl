@@ -426,7 +426,8 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
   // information manually.
   Ogre::Vector3 translation{conversions::fromNif(block->translation)};
-  Ogre::Matrix3 rotationMatrix{conversions::fromNif(block->rotation)};
+  Ogre::Matrix3 rotationMatrix{conversions::fromBSCoordinates(
+      conversions::fromNif(block->rotation))};
   Ogre::Quaternion rotation{rotationMatrix};
   Ogre::Vector3 scale{block->scale, block->scale, block->scale};
   Ogre::Matrix4 transformation{};
