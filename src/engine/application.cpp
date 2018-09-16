@@ -1,5 +1,6 @@
 #include "engine/application.hpp"
 #include "engine/cell_manager.hpp"
+#include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
 #include "engine/static_manager.hpp"
 #include "esp.hpp"
@@ -195,42 +196,16 @@ Application::Application(std::string windowName) : FrameListener() {
   camera->setAutoAspectRatio(true);
   ogreWindow->addViewport(camera);
   auto *cameraNode = rootNode->createChildSceneNode();
-  cameraNode->setPosition(0.0f, 80.0f, 0.0f);
+  cameraNode->setPosition(conversions::fromBSCoordinates(
+      {200.0f, -347.0f, -460.0f}));
   cameraNode->attachObject(camera);
+  cameraNode->rotate(Ogre::Vector3::UNIT_Y,
+                     Ogre::Degree(90.0f),
+                     Ogre::SceneNode::TS_WORLD);
 
-  if (false) {
-    // Construct a test scene
-    auto *light = scnMgr->createLight("TestLight");
-    auto *lightNode = rootNode->createChildSceneNode();
-    lightNode->setPosition(50.0f, 400.0f, -100.0f);
-    lightNode->attachObject(light);
-
-    auto *light2 = scnMgr->createLight("TestLight2");
-    light2->setDiffuseColour(Ogre::ColourValue(0.5f, 0.4f, 0.3f) * 0.5f);
-    auto *light2Node = rootNode->createChildSceneNode();
-    light2Node->setPosition(-50.0f, 100.0f, -100.0f);
-    light2Node->attachObject(light2);
-
-    auto *camera = scnMgr->createCamera("TestCamera");
-    camera->setNearClipDistance(1.0f);
-    camera->setAutoAspectRatio(true);
-    ogreWindow->addViewport(camera);
-    auto *cameraNode = rootNode->createChildSceneNode();
-    cameraNode->setPosition(0.0f, 80.0f, -800.0f);
-    cameraNode->lookAt({0.0f, 80.0f, 0.0f}, Ogre::Node::TS_WORLD);
-    cameraNode->attachObject(camera);
-
-    auto *testMesh = scnMgr->createEntity(builtinMeshes.back());
-    auto *testMeshNode = rootNode->createChildSceneNode();
-    testMeshNode->setPosition(0.0f, 0.0f, 0.0f);
-    testMeshNode->attachObject(testMesh);
-
-    auto vec3Fmt = boost::format("(%f, %f, %f)");
-    auto bbMin = testMesh->getBoundingBox().getMinimum();
-    auto bbMax = testMesh->getBoundingBox().getMaximum();
-    logger->logMessage(boost::str(vec3Fmt % bbMin.x % bbMin.y % bbMin.z));
-    logger->logMessage(boost::str(vec3Fmt % bbMax.x % bbMax.y % bbMax.z));
-  }
+  auto *light = scnMgr->createLight("TestLight");
+  auto *lightNode = cameraNode->createChildSceneNode();
+  lightNode->attachObject(light);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
