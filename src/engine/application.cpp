@@ -53,7 +53,6 @@ Application::Application(std::string windowName) : FrameListener() {
   // Set up the logger
   logger = Ogre::LogManager::getSingletonPtr();
 
-
   // Choose a render system
   std::string renderSystemName = "OpenGL 3+ Rendering Subsystem";
   if (auto *renderSystem = ogreRoot->getRenderSystemByName(renderSystemName)) {
@@ -94,11 +93,12 @@ Application::Application(std::string windowName) : FrameListener() {
   auto parent = std::to_string(sdlWindowInfo.info.x11.window);
 
   // Make cursor behaviour more sensible
-  SDL_SetRelativeMouseMode(SDL_TRUE);
+  if (SDL_SetRelativeMouseMode(SDL_TRUE)) {
+    throw std::runtime_error(boost::str(
+        boost::format("SDL_SetRelativeMouseMode failed: %s") % SDL_GetError()));
+  }
 
-  std::map<std::string, std::string> params = {
-      {"parentWindowHandle", parent}
-  };
+  std::map<std::string, std::string> params = {{"parentWindowHandle", parent}};
   ogreWindow = makeOgreWindow(ogreRoot.get(), windowName, windowWidth,
                               windowHeight, &params);
 
@@ -128,13 +128,8 @@ Application::Application(std::string windowName) : FrameListener() {
     resGrpMgr.addResourceLocation(entry, "BSA", resourceGroup);
   }
 
-  // Because nif files need to be loaded with a manual resource loader, we need
-  // to declare every nif file now, before initialising the resource group.
-  // Since there are ~20000 nif files in the base game alone, ideally we would
-  // not declare every single nif file.
   auto meshList = archiveMgr.load(testBSAs[0], "BSA", true)->list();
   for (const auto &filename : *meshList) {
-    // Convert from win to nix
     std::filesystem::path path{conversions::normalizePath(filename)};
     if (path.extension() == ".nif") {
       resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
@@ -153,24 +148,12 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Declare the shader programs
   resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
-  auto shaderDir = std::filesystem::directory_iterator("./shaders");
-  std::map<std::string, std::string> shaderParams = {
-      {"language", "GLSL"}
-  };
-  for (const auto &entry : shaderDir) {
-    if (entry.is_regular_file() && entry.path().extension() == ".glsl") {
-      //    resGrpMgr.declareResource(entry.path(), "HighLevelGpuProgram",
-      //                              resourceGroup, shaderParams);
-    }
-  }
-
   logger->logMessage("Declared shader files");
 
   resGrpMgr.initialiseAllResourceGroups();
 
   // Create a scene manager
   auto *scnMgr = ogreRoot->createSceneManager();
-  auto *rootNode = scnMgr->getRootSceneNode();
 
   // Open the main esm
   esmStream = std::ifstream("Data/Oblivion.esm", std::ios::binary);
@@ -187,7 +170,6 @@ Application::Application(std::string windowName) : FrameListener() {
   // Read the main esm
   InitialProcessor initialProcessor(staticMgr.get(), interiorCellMgr.get());
   esp::readEsp(esmStream, initialProcessor);
-
   logger->logMessage("Read Oblivion.esm");
 
   // Load a test cell
