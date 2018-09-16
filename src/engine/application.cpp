@@ -128,35 +128,24 @@ Application::Application(std::string windowName) : FrameListener() {
   // to declare every nif file now, before initialising the resource group.
   // Since there are ~20000 nif files in the base game alone, ideally we would
   // not declare every single nif file.
-  auto meshList =
-      archiveMgr.load("./Data/Oblivion - Meshes.bsa", "BSA", true)->list();
+  auto meshList = archiveMgr.load(testBSAs[0], "BSA", true)->list();
   for (const auto &filename : *meshList) {
     // Convert from win to nix
-    std::string tmp(filename);
-    std::transform(filename.begin(), filename.end(), tmp.begin(),
-                   [](unsigned char c) -> unsigned char {
-                     return static_cast<unsigned char>(std::tolower(
-                         c == '\\' ? '/' : c));
-                   });
-    std::filesystem::path path(tmp);
+    std::filesystem::path path{conversions::normalizePath(filename)};
     if (path.extension() == ".nif") {
       resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
     }
   }
-
   logger->logMessage("Declared mesh files");
 
-  // There are also several preprogrammed nif files built into the engine that
-  // are not stored in BSA files. They are not displayed in the main game and so
-  // do not need mesh information. Instead of creating an entirely new Archive
-  // type for these builtins, we just add some empty nif files to the filesystem
-  std::vector<std::filesystem::path> builtinMeshes = {
-  };
-  for (const auto &path : builtinMeshes) {
-    resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+  auto textureList = archiveMgr.load(testBSAs[1], "BSA", true)->list();
+  for (const auto &filename : *textureList) {
+    std::filesystem::path path{conversions::normalizePath(filename)};
+    if (path.extension() == ".dds") {
+      resGrpMgr.declareResource(path, "Texture", resourceGroup);
+    }
   }
-
-  logger->logMessage("Declared builtin mesh files");
+  logger->logMessage("Declared texture files");
 
   // Declare the shader programs
   resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);

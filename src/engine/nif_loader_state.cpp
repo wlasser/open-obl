@@ -20,6 +20,7 @@
 #include <OgreQuaternion.h>
 #include <OgreSubMesh.h>
 #include <OgreTechnique.h>
+#include <OgreTextureManager.h>
 #include <OgreTextureUnitState.h>
 #include <OgreVector3.h>
 #include <OgreVector4.h>
@@ -83,6 +84,14 @@ long NifLoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
                              fromNif(block->vertices[tri.v3]),
                              fromNif(block->normals[tri.v3]));
                        });
+}
+
+std::filesystem::path NifLoaderState::toNormalMap(std::filesystem::path texFile) {
+  auto extension = texFile.extension();
+  texFile.replace_extension("");
+  texFile += "_n";
+  texFile += extension;
+  return texFile;
 }
 
 std::unique_ptr<Ogre::VertexData>
@@ -544,7 +553,8 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 
 std::unique_ptr<Ogre::TextureUnitState>
 NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
-                             Ogre::Pass *parent, bool isNormalMap) {
+                             Ogre::Pass *parent,
+                             const std::optional<std::string> &textureOverride) {
   auto textureUnit = std::make_unique<Ogre::TextureUnitState>(parent);
 
   switch (tex->clampMode) {
@@ -666,7 +676,7 @@ NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
   TaggedBlock taggedSource = blocks[sourceRef];
   LoadStatus &sourceTag = taggedSource.tag;
   auto source = dynamic_cast<nif::NiSourceTexture *>(taggedSource.block.get());
-  parseNiSourceTexture(source, sourceTag, textureUnit.get(), isNormalMap);
+  parseNiSourceTexture(source, sourceTag, textureUnit.get(), textureOverride);
 
   return textureUnit;
 }
@@ -674,35 +684,18 @@ NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
 void NifLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
                                           LoadStatus &tag,
                                           Ogre::TextureUnitState *tex,
-                                          bool isNormalMap) {
+                                          const std::optional<std::string> &textureOverride) {
   Tagger tagger{tag};
 
   if (block->useExternal) {
     using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
     auto &texFile = std::get<ExternalTextureFile>(block->textureFileData);
-    std::string str = texFile.filename.string.str();
-    if (isNormalMap) {
-      // Append '_n' to the filename, preserving the extension
-      std::filesystem::path path(str);
-      auto extension = path.extension();
-      path.replace_extension("");
-      path += "_n";
-      path += extension;
-      str = path;
+    if (textureOverride) {
+      tex->setTextureName(*textureOverride);
+    } else {
+      tex->setTextureName(conversions::normalizePath(
+          texFile.filename.string.str()));
     }
-    // It is necessary to normalize the path because Ogre doesn't actually ask
-    // the archive whether the file exists or not, it just checks against all
-    // the filenames with a direct comparison.
-    // TODO: Pull this into a function
-    std::string filename(str);
-    std::transform(str.begin(), str.end(), filename.begin(),
-                   [](unsigned char c) {
-                     return static_cast<unsigned char>(std::tolower(
-                         c == '\\' ? '/' : c));
-                   });
-    // This actually looks up filename in the resource manager and complains if
-    // the resource doesn't exist.
-    tex->setTextureName(filename);
   } else {
     // We do not support internal textures, see InternalTextureFile comments
     logger.logMessage("Nif internal texture files are unsupported");
@@ -747,7 +740,16 @@ NifLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
 
   if (block->hasBaseTexture) {
     family.base = parseTexDesc(&block->baseTexture, pass);
-    family.normal = parseTexDesc(&block->baseTexture, pass, true);
+    // Normal mapping is automatically turned on if a normal map exists. If one
+    // doesn't exist, then we use a flat normal map.
+    auto &texMgr = Ogre::TextureManager::getSingleton();
+    if (auto normalMap = toNormalMap(family.base->getTextureName());
+        texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
+      family.normal = parseTexDesc(&block->baseTexture, pass, normalMap);
+    } else {
+      family.normal = parseTexDesc(&block->baseTexture, pass,
+                                   "textures/flat_n.dds");
+    }
   }
   if (block->hasDarkTexture) {
     family.dark = parseTexDesc(&block->darkTexture, pass);

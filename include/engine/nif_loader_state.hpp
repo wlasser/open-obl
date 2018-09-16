@@ -14,6 +14,7 @@
 #include <OgreSubMesh.h>
 #include <OgreTextureUnitState.h>
 #include <OgreVertexIndexData.h>
+#include <filesystem>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -118,12 +119,12 @@ class NifLoaderState {
   std::unique_ptr<Ogre::TextureUnitState>
   parseTexDesc(nif::compound::TexDesc *tex,
                Ogre::Pass *parent,
-               bool isNormalMap = false);
+               const std::optional<std::string> &textureOverride = {});
 
   void parseNiSourceTexture(nif::NiSourceTexture *block,
                             LoadStatus &tag,
                             Ogre::TextureUnitState *tex,
-                            bool isNormalMap = false);
+                            const std::optional<std::string> &textureOverride = {});
 
   // Returns true if the triangle has a counterclockwise winding order, and
   // false otherwise
@@ -153,6 +154,9 @@ class NifLoaderState {
 
   Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
                                       Ogre::Matrix4 transformation);
+
+  // Append '_n' to the filename, preserving the extension
+  std::filesystem::path toNormalMap(std::filesystem::path texFile);
 
   Ogre::Mesh *mesh;
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};

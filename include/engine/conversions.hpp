@@ -5,6 +5,7 @@
 #include <OgreColourValue.h>
 #include <OgreMatrix3.h>
 #include <OgreVector.h>
+#include <filesystem>
 
 namespace engine::conversions {
 
@@ -41,6 +42,16 @@ inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
                            0, 0, 1,
                            0, -1, 0};
   return C * m * C.transpose();
+}
+
+// Convert a windows path to a lowercase nix path
+inline std::string normalizePath(std::string path) {
+  std::string out(path);
+  std::transform(path.begin(), path.end(), out.begin(),
+                 [](unsigned char c) {
+                   return std::tolower(c == '\\' ? '/' : c);
+                 });
+  return out;
 }
 
 } // namespace engine::conversions

@@ -34,20 +34,26 @@ void main() {
     vec3 lighting = vec3(0.0f, 0.0f, 0.0f);
     vec3 viewDir = normalize(ViewPos - FragPos);
 
+    vec3 ambient = diffuseColor * vec3(0.1f, 0.1f, 0.1f);
+
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
         vec3 reflectDir = reflect(-lightDir, normal);
+
+        float lightDistance = length(lightPositionArray[i].xyz - FragPos);
+        float attenuation = 1.0f / (1.0f + 0.0014f * lightDistance
+            + 0.000007f * lightDistance * lightDistance);
 
         float diff = max(dot(normal, lightDir), 0.0f);
         vec3 diffuse = diff * diffuseColor * matDiffuse;
 
         float spec = pow(max(dot(viewDir, reflectDir), 0.0f), matShininess);
-        vec3 specular = 0.5f * spec * matSpecular;
+        vec3 specular = 0.1f * spec * matSpecular;
 
-        lighting += (specular + diffuse) * lightDiffuseArray[i].xyz;
+        lighting += (specular + diffuse) * lightDiffuseArray[i].xyz * attenuation;
     }
 
-    vec3 fragColor = pow(lighting, vec3(1.0f / gamma));
+    vec3 fragColor = pow(min(ambient + lighting, 1.0f), vec3(1.0f / gamma));
 
     FragColor = vec4(fragColor, 1.0f);
 }
