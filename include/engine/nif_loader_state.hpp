@@ -38,7 +38,7 @@ class NifLoaderState {
   // unloaded TaggedBlocks, used in construction of the block graph.
   struct TaggedBlock {
     NifLoader::Block block{};
-    LoadStatus tag{LoadStatus::Unloaded};
+    mutable LoadStatus tag{LoadStatus::Unloaded};
 
     // NOLINTNEXTLINE(google-explicit-constructor)
     TaggedBlock(NifLoader::Block block) : block(std::move(block)) {}
@@ -72,6 +72,28 @@ class NifLoaderState {
                                                  boost::bidirectionalS,
                                                  TaggedBlock>;
 
+  struct DFSVisitor {
+    using Graph = TaggedBlockGraph;
+    using vertex_descriptor = Graph::vertex_descriptor;
+    using edge_descriptor = Graph::edge_descriptor;
+
+    void initialize_vertex(vertex_descriptor v, const Graph &g) {}
+    void start_vertex(vertex_descriptor v, const Graph &g);
+    void discover_vertex(vertex_descriptor v, const Graph &g);
+    void examine_edge(edge_descriptor e, const Graph &g) {}
+    void tree_edge(edge_descriptor e, const Graph &g) {}
+    void back_edge(edge_descriptor e, const Graph &g) {}
+    void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
+    void finish_edge(edge_descriptor e, const Graph &g) {}
+    void finish_vertex(vertex_descriptor v, const Graph &g);
+
+    explicit DFSVisitor(NifLoaderState &state) : state(state) {}
+
+   private:
+    Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
+    NifLoaderState &state;
+  };
+
   TaggedBlockGraph blocks;
 
   template<class T, class S>
@@ -88,7 +110,8 @@ class NifLoaderState {
     Ogre::AxisAlignedBox bbox{};
   };
   BoundedSubmesh parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
-                                     LoadStatus &tag);
+                                     LoadStatus &tag,
+                                     const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
   parseNiMaterialProperty(nif::NiMaterialProperty *block, LoadStatus &tag);
@@ -157,6 +180,8 @@ class NifLoaderState {
 
   // Append '_n' to the filename, preserving the extension
   std::filesystem::path toNormalMap(std::filesystem::path texFile);
+
+  Ogre::Matrix4 getTransform(nif::NiAVObject *block);
 
   Ogre::Mesh *mesh;
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};

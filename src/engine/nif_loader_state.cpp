@@ -6,6 +6,7 @@
 #include "nif/compound.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
+#include <boost/graph/depth_first_search.hpp>
 #include <OgreAxisAlignedBox.h>
 #include <OgreHardwareBufferManager.h>
 #include <OgreHardwareIndexBuffer.h>
@@ -39,6 +40,7 @@ namespace engine {
 
 Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
                                                     Ogre::Matrix4 transformation) {
+  using namespace conversions;
   const auto fltMin = std::numeric_limits<float>::lowest();
   const auto fltMax = std::numeric_limits<float>::max();
   Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
@@ -47,8 +49,8 @@ Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
   if (!block->hasVertices || block->vertices.empty()) return {};
 
   for (const auto &vertex : block->vertices) {
-    auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
-    auto v = conversions::fromBSCoordinates(bsV.xyz());
+    Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+    auto v = transformation * ogreV;
     // NB: Cannot use else if, both branches apply if the mesh is flat
     if (v.x < bboxMin.x) bboxMin.x = v.x;
     if (v.x > bboxMax.x) bboxMax.x = v.x;
@@ -92,6 +94,20 @@ std::filesystem::path NifLoaderState::toNormalMap(std::filesystem::path texFile)
   texFile += "_n";
   texFile += extension;
   return texFile;
+}
+
+Ogre::Matrix4 NifLoaderState::getTransform(nif::NiAVObject *block) {
+  using namespace conversions;
+  Ogre::Vector3 translation{fromBSCoordinates(fromNif(block->translation))};
+
+  Ogre::Matrix3 rotationMatrix{fromBSCoordinates(fromNif(block->rotation))};
+  Ogre::Quaternion rotation{rotationMatrix.transpose()};
+
+  Ogre::Vector3 scale{block->scale, block->scale, block->scale};
+
+  Ogre::Matrix4 trans{};
+  trans.makeTransform(translation, scale, rotation);
+  return trans;
 }
 
 std::unique_ptr<Ogre::VertexData>
@@ -167,8 +183,9 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
   if (block->hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : block->vertices) {
-      auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
-      auto v = conversions::fromBSCoordinates(bsV.xyz());
+      using namespace conversions;
+      Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+      auto v = transformation * ogreV;
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
@@ -180,9 +197,9 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
   if (block->hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block->normals) {
-      auto bsN =
-          normalTransformation * Ogre::Vector4(conversions::fromNif(normal));
-      auto n = conversions::fromBSCoordinates(bsN.xyz());
+      using namespace conversions;
+      Ogre::Vector4 ogreN{fromBSCoordinates(fromNif(normal))};
+      auto n = normalTransformation * ogreN;
       *it = n.x;
       *(it + 1) = n.y;
       *(it + 2) = n.z;
@@ -205,9 +222,9 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
   if (bitangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
-      auto bsBt =
-          normalTransformation * Ogre::Vector4(conversions::fromNif(bitangent));
-      auto bt = conversions::fromBSCoordinates(bsBt.xyz());
+      using namespace conversions;
+      Ogre::Vector4 ogreBt{fromBSCoordinates(fromNif(bitangent))};
+      auto bt = normalTransformation * ogreBt;
       *it = bt.x;
       *(it + 1) = bt.y;
       *(it + 2) = bt.z;
@@ -218,9 +235,9 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
   if (tangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
-      auto bsT =
-          normalTransformation * Ogre::Vector4(conversions::fromNif(tangent));
-      auto t = conversions::fromBSCoordinates(bsT.xyz());
+      using namespace conversions;
+      Ogre::Vector4 ogreT{fromBSCoordinates(fromNif(tangent))};
+      auto t = normalTransformation * ogreT;
       *it = t.x;
       *(it + 1) = t.y;
       *(it + 2) = t.z;
@@ -228,7 +245,6 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
     }
     localOffset += 3;
   }
-
 
   // Copy the vertex buffer into a hardware buffer, and link the buffer to
   // the vertex declaration.
@@ -296,7 +312,8 @@ NifLoaderState::generateIndexData(nif::NiTriStripsData *block) {
 
 NifLoaderState::BoundedSubmesh
 NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
-                                    LoadStatus &tag) {
+                                    LoadStatus &tag,
+                                    const Ogre::Matrix4 &transform) {
   // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
   // material and texture, and so translate to Ogre::SubMesh objects.
   // If a submesh with this name already exists, then it is either already
@@ -425,13 +442,7 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   // Ogre::SubMeshes cannot have transformations applied to them (that is
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
   // information manually.
-  Ogre::Vector3 translation{conversions::fromNif(block->translation)};
-  Ogre::Matrix3 rotationMatrix{conversions::fromBSCoordinates(
-      conversions::fromNif(block->rotation))};
-  Ogre::Quaternion rotation{rotationMatrix};
-  Ogre::Vector3 scale{block->scale, block->scale, block->scale};
-  Ogre::Matrix4 transformation{};
-  transformation.makeTransform(translation, scale, rotation);
+  auto totalTrans = transform * getTransform(block);
 
   auto dataRef = static_cast<int32_t>(block->data);
   if (dataRef < 0 || dataRef >= blocks.vertex_set().size()) {
@@ -441,7 +452,7 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   auto dataBlock = taggedDataBlock.block.get();
   auto geometryData = dynamic_cast<nif::NiGeometryData *>(dataBlock);
   if (taggedDataBlock.tag == LoadStatus::Loaded) {
-    auto bbox = getBoundingBox(geometryData, transformation);
+    auto bbox = getBoundingBox(geometryData, totalTrans);
     return {submesh, bbox};
   }
 
@@ -458,7 +469,7 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
     submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
   }
 
-  auto vertexData = generateVertexData(geometryData, transformation,
+  auto vertexData = generateVertexData(geometryData, totalTrans,
                                        &bitangents, &tangents);
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
@@ -471,7 +482,7 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   submesh->vertexData = vertexData.release();
   submesh->indexData = indexData.release();
 
-  return {submesh, getBoundingBox(geometryData, transformation)};
+  return {submesh, getBoundingBox(geometryData, totalTrans)};
 }
 
 std::shared_ptr<Ogre::Material>
@@ -780,25 +791,61 @@ NifLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
   return family;
 }
 
+void NifLoaderState::DFSVisitor::start_vertex(vertex_descriptor v,
+                                              const Graph &g) {
+  // This is a new connected component so we need to reset the transformation to
+  // the identity. NB: This vertex will still be discovered so setting the
+  // transformation to the vertex's will result in it being applied twice.
+  transform = Ogre::Matrix4::IDENTITY;
+}
+
+void NifLoaderState::DFSVisitor::discover_vertex(vertex_descriptor v,
+                                                 const Graph &g) {
+  auto &taggedNiObject = g[v];
+  auto *niObject = taggedNiObject.block.get();
+  auto &tag = taggedNiObject.tag;
+
+  if (auto niTriBasedGeom = dynamic_cast<nif::NiTriBasedGeom *>(niObject)) {
+    state.logger.logMessage(boost::str(
+        boost::format("Loading block %d (NiTriBasedGeom)") % v));
+    state.logger.logMessage("Current transform is:");
+    const auto &t = transform;
+    auto fmt = boost::format("[%f, %f, %f, %f]");
+    for (int i = 0; i < 4; ++i) {
+      state.logger.logMessage(boost::str(
+          fmt % t[i][0] % t[i][1] % t[i][2] % t[i][3]));
+    }
+
+    auto[submesh, subBbox] = state.parseNiTriBasedGeom(niTriBasedGeom, tag,
+                                                       transform);
+    auto bbox = state.mesh->getBounds();
+    bbox.merge(subBbox);
+    state.mesh->_setBounds(bbox);
+  } else if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
+    // Child node transformations are applied first?
+    transform = transform * state.getTransform(niNode);
+  }
+}
+
+void NifLoaderState::DFSVisitor::finish_vertex(vertex_descriptor v,
+                                               const Graph &g) {
+  auto *niObject = g[v].block.get();
+
+  if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
+    auto trans = state.getTransform(niNode);
+    transform = transform * trans.inverse();
+  }
+}
+
 NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
                                NifLoader::BlockGraph untaggedBlocks)
     : mesh(mesh) {
 
   boost::copy_graph(untaggedBlocks, blocks);
-
-  Ogre::AxisAlignedBox boundingBox{};
-
-  for (const auto &vertex : blocks.vertex_set()) {
-    auto taggedNiObject = blocks[vertex];
-    const auto &niObject = taggedNiObject.block.get();
-    auto &tag = taggedNiObject.tag;
-
-    if (auto niTriBasedGeom = dynamic_cast<nif::NiTriBasedGeom *>(niObject)) {
-      auto[submesh, bbox] = parseNiTriBasedGeom(niTriBasedGeom, tag);
-      boundingBox.merge(bbox);
-    }
-
-    mesh->_setBounds(boundingBox);
-  }
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
+  boost::depth_first_search(blocks, DFSVisitor(*this),
+                            boost::make_iterator_property_map(colorMap.begin(),
+                                                              boost::get(boost::vertex_index,
+                                                                         blocks)));
 }
 } // namespace engine

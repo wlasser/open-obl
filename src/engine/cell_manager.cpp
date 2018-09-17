@@ -63,15 +63,13 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
       float scale = ref.data.scale->data;
       node->setScale(scale, scale, scale);
     }
-    node->rotate(Ogre::Vector3::UNIT_Y,
-                 Ogre::Radian(-data.aZ),
-                 Ogre::SceneNode::TS_WORLD);
-    node->rotate(Ogre::Vector3::UNIT_Z,
-                 Ogre::Radian(data.aY),
-                 Ogre::SceneNode::TS_WORLD);
-    node->rotate(Ogre::Vector3::UNIT_X,
-                 Ogre::Radian(-data.aX),
-                 Ogre::SceneNode::TS_WORLD);
+    Ogre::Matrix3 rotX, rotY, rotZ;
+    rotX.FromAngleAxis(Ogre::Vector3::UNIT_X, Ogre::Radian(-data.aX));
+    rotY.FromAngleAxis(Ogre::Vector3::UNIT_Y, Ogre::Radian(-data.aY));
+    rotZ.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-data.aZ));
+    auto rotMat = conversions::fromBSCoordinates(rotX * rotY * rotZ);
+    Ogre::Quaternion rotation{rotMat};
+    node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
   }
 }
 
