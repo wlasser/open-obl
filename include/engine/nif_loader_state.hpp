@@ -40,6 +40,10 @@ struct TaggedBlock {
   TaggedBlock() = default;
 };
 
+// When constructing the mesh we want to iterate over the block graph, but
+// because of references and pointers we will have to jump around and load
+// things out of order when needed. To detect cycles and ensure that some blocks
+// are only loaded once, we tag each block with a LoadStatus.
 using TaggedBlockGraph = boost::adjacency_list<boost::vecS,
                                                boost::vecS,
                                                boost::bidirectionalS,
@@ -52,43 +56,62 @@ using TaggedBlockGraph = boost::adjacency_list<boost::vecS,
 class Tagger {
   LoadStatus &tag;
  public:
-  explicit Tagger(LoadStatus &tag) : tag{tag} {
-    switch (tag) {
-      case LoadStatus::Unloaded: tag = LoadStatus::Loading;
-        break;
-      case LoadStatus::Loading:
-        throw std::runtime_error("Cycle detected while loading nif file");
-      default:break;
-    }
-  }
-  ~Tagger() {
-    tag = LoadStatus::Loaded;
-  }
+  explicit Tagger(LoadStatus &tag);
+  ~Tagger();
 };
 
-// When constructing the mesh we want to iterate over the block graph, but
-// because of references and pointers we will have to jump around and load
-// things out of order when needed. To detect cycles and ensure that some blocks
-// are only loaded once, we tag each block with a LoadStatus.
+// Ogre::SubMeshes do not store bounding box information, only Ogre::Meshes do,
+// but we need it to compute the overall bounding box.
+struct BoundedSubmesh {
+  Ogre::SubMesh *submesh{};
+  Ogre::AxisAlignedBox bbox{};
+};
+
+// We need an Ogre::Material to apply a texture to, but in nif files the two are
+// completely separate. We use this structure as a temporary owner for the
+// textures before passing control to Ogre when a material is available.
+struct TextureFamily {
+  using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
+  TexturePtr base{};
+  TexturePtr normal{};
+  TexturePtr dark{};
+  TexturePtr detail{};
+  TexturePtr gloss{};
+  TexturePtr glow{};
+  // Bump textures are treated differently and we use normal maps anyway
+  /* TexturePtr bump{}; */
+  std::vector<TexturePtr> decals{};
+};
+
+// Compute the minimum bounding box of the vertices in the block, subject to the
+// given Ogre-coordinate transformation
+Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
+                                    Ogre::Matrix4 transformation);
+
+// Returns true if the triangle has a counterclockwise winding order, and
+// false otherwise
+bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
+                       Ogre::Vector3 v2, Ogre::Vector3 n2,
+                       Ogre::Vector3 v3, Ogre::Vector3 n3);
+
+// Return the number of triangles with a counterclockwise winding order.
+// The mesh should have normals.
+long numCCWTriangles(nif::NiTriShapeData *block);
+
+// Append '_n' to the filename, preserving the extension
+std::filesystem::path toNormalMap(std::filesystem::path texFile);
+
+// Convert the translation, rotation, and scale parameters into Ogre coordinates
+// and return a combined transformation matrix.
+Ogre::Matrix4 getTransform(nif::NiAVObject *block);
+
 class LoaderState {
  private:
-  friend class DFSVisitor;
-
-  TaggedBlockGraph blocks;
+  friend class TBGVisitor;
 
   template<class T, class S>
-  T *getBlock(nif::basic::Ref<S> ref) {
-    auto val = static_cast<int32_t>(ref);
-    if (val < 0 || val >= blocks.vertex_set().size()) {
-      throw std::out_of_range("Nonexistent reference");
-    }
-    return dynamic_cast<T *>(blocks[val].block.get());
-  }
+  T *getBlock(nif::basic::Ref<S> ref);
 
-  struct BoundedSubmesh {
-    Ogre::SubMesh *submesh{};
-    Ogre::AxisAlignedBox bbox{};
-  };
   BoundedSubmesh parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
                                      LoadStatus &tag,
                                      const Ogre::Matrix4 &transform);
@@ -97,18 +120,6 @@ class LoaderState {
   parseNiMaterialProperty(nif::NiMaterialProperty *block,
                           LoadStatus &tag);
 
-  struct TextureFamily {
-    using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
-    TexturePtr base{};
-    TexturePtr normal{};
-    TexturePtr dark{};
-    TexturePtr detail{};
-    TexturePtr gloss{};
-    TexturePtr glow{};
-    // Bump textures are treated differently and we use normal maps anyway
-    /* TexturePtr bump{}; */
-    std::vector<TexturePtr> decals{};
-  };
   // See parseTexDesc for why the pass is necessary.
   TextureFamily
   parseNiTexturingProperty(nif::NiTexturingProperty *block,
@@ -130,16 +141,6 @@ class LoaderState {
                             Ogre::TextureUnitState *tex,
                             const std::optional<std::string> &textureOverride = {});
 
-  // Returns true if the triangle has a counterclockwise winding order, and
-  // false otherwise
-  bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
-                         Ogre::Vector3 v2, Ogre::Vector3 n2,
-                         Ogre::Vector3 v3, Ogre::Vector3 n3);
-
-  // Return the number of triangles with a counterclockwise winding order.
-  // The mesh should have normals.
-  long numCCWTriangles(nif::NiTriShapeData *block);
-
   // Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
   // for rendering.
   std::unique_ptr<Ogre::VertexData>
@@ -156,14 +157,7 @@ class LoaderState {
   std::unique_ptr<Ogre::IndexData>
   generateIndexData(nif::NiTriStripsData *block);
 
-  Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
-                                      Ogre::Matrix4 transformation);
-
-  // Append '_n' to the filename, preserving the extension
-  std::filesystem::path toNormalMap(std::filesystem::path texFile);
-
-  Ogre::Matrix4 getTransform(nif::NiAVObject *block);
-
+  TaggedBlockGraph blocks;
   Ogre::Mesh *mesh;
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
 
@@ -171,7 +165,7 @@ class LoaderState {
   explicit LoaderState(Ogre::Mesh *mesh, BlockGraph blocks);
 };
 
-struct DFSVisitor {
+struct TBGVisitor {
   using Graph = TaggedBlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
@@ -186,12 +180,21 @@ struct DFSVisitor {
   void finish_edge(edge_descriptor e, const Graph &g) {}
   void finish_vertex(vertex_descriptor v, const Graph &g);
 
-  explicit DFSVisitor(LoaderState &state) : state(state) {}
+  explicit TBGVisitor(LoaderState &state) : state(state) {}
 
  private:
   Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
   LoaderState &state;
 };
+
+template<class T, class S>
+T *LoaderState::getBlock(nif::basic::Ref<S> ref) {
+  auto val = static_cast<int32_t>(ref);
+  if (val < 0 || val >= blocks.vertex_set().size()) {
+    throw std::out_of_range("Nonexistent reference");
+  }
+  return dynamic_cast<T *>(blocks[val].block.get());
+}
 
 } // namespace engine::nifloader
 

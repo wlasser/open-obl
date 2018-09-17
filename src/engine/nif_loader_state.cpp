@@ -38,8 +38,22 @@
 
 namespace engine::nifloader {
 
-Ogre::AxisAlignedBox LoaderState::getBoundingBox(nif::NiGeometryData *block,
-                                                    Ogre::Matrix4 transformation) {
+Tagger::Tagger(LoadStatus &tag) : tag(tag) {
+  switch (tag) {
+    case LoadStatus::Unloaded:tag = LoadStatus::Loading;
+      break;
+    case LoadStatus::Loading:
+      throw std::runtime_error("Cycle detected while loading nif file");
+    default: break;
+  }
+}
+
+Tagger::~Tagger() {
+  tag = LoadStatus::Loaded;
+}
+
+Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
+                                    Ogre::Matrix4 transformation) {
   using namespace conversions;
   const auto fltMin = std::numeric_limits<float>::lowest();
   const auto fltMax = std::numeric_limits<float>::max();
@@ -62,9 +76,9 @@ Ogre::AxisAlignedBox LoaderState::getBoundingBox(nif::NiGeometryData *block,
   return {bboxMin, bboxMax};
 }
 
-bool LoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
-                                    Ogre::Vector3 v2, Ogre::Vector3 n2,
-                                    Ogre::Vector3 v3, Ogre::Vector3 n3) {
+bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
+                       Ogre::Vector3 v2, Ogre::Vector3 n2,
+                       Ogre::Vector3 v3, Ogre::Vector3 n3) {
   auto expected = (v2 - v1).crossProduct(v3 - v1);
   auto actual = (n1 + n2 + n3) / 3.0f;
   // Coordinate system is right-handed so this is positive for an
@@ -72,10 +86,9 @@ bool LoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
   return expected.dotProduct(actual) > 0.0f;
 }
 
-long LoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
+long numCCWTriangles(nif::NiTriShapeData *block) {
   assert(block->hasNormals);
   using conversions::fromNif;
-
   return std::count_if(block->triangles.begin(), block->triangles.end(),
                        [&](const auto &tri) {
                          return isWindingOrderCCW(
@@ -88,7 +101,7 @@ long LoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
                        });
 }
 
-std::filesystem::path LoaderState::toNormalMap(std::filesystem::path texFile) {
+std::filesystem::path toNormalMap(std::filesystem::path texFile) {
   auto extension = texFile.extension();
   texFile.replace_extension("");
   texFile += "_n";
@@ -96,7 +109,7 @@ std::filesystem::path LoaderState::toNormalMap(std::filesystem::path texFile) {
   return texFile;
 }
 
-Ogre::Matrix4 LoaderState::getTransform(nif::NiAVObject *block) {
+Ogre::Matrix4 getTransform(nif::NiAVObject *block) {
   using namespace conversions;
   Ogre::Vector3 translation{fromBSCoordinates(fromNif(block->translation))};
 
@@ -310,10 +323,10 @@ LoaderState::generateIndexData(nif::NiTriStripsData *block) {
   return indexData;
 }
 
-LoaderState::BoundedSubmesh
+BoundedSubmesh
 LoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
-                                    LoadStatus &tag,
-                                    const Ogre::Matrix4 &transform) {
+                                 LoadStatus &tag,
+                                 const Ogre::Matrix4 &transform) {
   // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
   // material and texture, and so translate to Ogre::SubMesh objects.
   // If a submesh with this name already exists, then it is either already
@@ -740,9 +753,9 @@ void LoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
   // All textures are direct since we don't support internal textures
 }
 
-LoaderState::TextureFamily
+TextureFamily
 LoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
-                                         LoadStatus &tag, Ogre::Pass *pass) {
+                                      LoadStatus &tag, Ogre::Pass *pass) {
   Tagger tagger{tag};
 
   // Nif ApplyMode is for vertex colors, which are currently unsupported
@@ -791,14 +804,28 @@ LoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
   return family;
 }
 
-void DFSVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
-  // This is a new connected component so we need to reset the transformation to
-  // the identity. NB: This vertex will still be discovered so setting the
-  // transformation to the vertex's will result in it being applied twice.
+LoaderState::LoaderState(Ogre::Mesh *mesh, BlockGraph untaggedBlocks)
+    : mesh(mesh) {
+  boost::copy_graph(untaggedBlocks, blocks);
+
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
+  auto propertyMap = boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, blocks));
+
+  boost::depth_first_search(blocks, TBGVisitor(*this), propertyMap);
+}
+
+// This is a new connected component so we need to reset the transformation to
+// the identity. NB: This vertex will still be discovered so setting the
+// transformation to the vertex's will result in it being applied twice.
+void TBGVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
   transform = Ogre::Matrix4::IDENTITY;
 }
 
-void DFSVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
+// If this vertex corresponds to a geometry block, then load it with the current
+// transformation. If it's an NiNode, update the current transformation so that
+// this child transformation occurs before any parent ones.
+void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &taggedNiObject = g[v];
   auto *niObject = taggedNiObject.block.get();
   auto &tag = taggedNiObject.tag;
@@ -810,28 +837,16 @@ void DFSVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
     bbox.merge(subBbox);
     state.mesh->_setBounds(bbox);
   } else if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
-    // Child node transformations are applied first?
-    transform = transform * state.getTransform(niNode);
+    transform = transform * getTransform(niNode);
   }
 }
 
-void DFSVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
+// If we have finished reading an NiNode, then we can remove its transformation.
+void TBGVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
   auto *niObject = g[v].block.get();
-
   if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
-    auto trans = state.getTransform(niNode);
-    transform = transform * trans.inverse();
+    transform = transform * getTransform(niNode).inverse();
   }
 }
 
-LoaderState::LoaderState(Ogre::Mesh *mesh, BlockGraph untaggedBlocks)
-    : mesh(mesh) {
-
-  boost::copy_graph(untaggedBlocks, blocks);
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  boost::depth_first_search(blocks, DFSVisitor(*this),
-                            boost::make_iterator_property_map(colorMap.begin(),
-                                                              boost::get(boost::vertex_index,
-                                                                         blocks)));
-}
 } // namespace engine::nifloader
