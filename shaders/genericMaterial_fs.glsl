@@ -47,8 +47,9 @@ void main() {
         float diff = max(dot(normal, lightDir), 0.0f);
         vec3 diffuse = diff * diffuseColor * matDiffuse;
 
-        float spec = pow(max(dot(viewDir, reflectDir), 0.0f), matShininess);
-        vec3 specular = 0.1f * spec * matSpecular;
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
+        vec3 specular = 0.25f * spec * matSpecular;
 
         lighting += (specular + diffuse) * lightDiffuseArray[i].xyz * attenuation;
     }
