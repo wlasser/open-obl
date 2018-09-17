@@ -42,6 +42,11 @@ template<class T>
 void addVertex(BlockGraph &blocks, BlockGraph::vertex_descriptor u,
                nif::Version nifVersion, std::istream &is);
 
+using AddVertexMap = std::map<std::string, decltype(&addVertex<nif::NiNode>)>;
+const AddVertexMap &getAddVertexMap();
+
+BlockGraph createBlockGraph(std::istream &is);
+
 // Handles custom loading of Nif files for Ogre. Each instance of this class is
 // expected to load more than one nif file, so it cannot really be stateful.
 // This class therefore handles the IO portion of loading, then constructs a
@@ -49,15 +54,6 @@ void addVertex(BlockGraph &blocks, BlockGraph::vertex_descriptor u,
 class Loader : public Ogre::ManualResourceLoader {
  private:
   friend class LoaderState;
-
-  // Used for much briefer addition of vertices to a block graph, saving a large
-  // if-else over the block type.
-  using addVertex_t = void (*)(BlockGraph &,
-                               BlockGraph::vertex_descriptor,
-                               nif::Version,
-                               std::istream &);
-
-  BlockGraph createBlockGraph(std::istream &is);
 
   Ogre::LogManager *logger{nullptr};
 

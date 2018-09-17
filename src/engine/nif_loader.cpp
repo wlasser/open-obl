@@ -54,28 +54,77 @@ nif::Version peekVersion(std::istream &is) {
   return nif::verOf(versionString.c_str(), versionString.length());
 }
 
-BlockGraph Loader::createBlockGraph(std::istream &is) {
+const AddVertexMap &getAddVertexMap() {
+  const static AddVertexMap map{
+      {"NiFloatData", &addVertex<nif::NiFloatData>},
+      {"NiKeyframeData", &addVertex<nif::NiKeyframeData>},
+      {"NiTransformData", &addVertex<nif::NiTransformData>},
+      {"NiPosData", &addVertex<nif::NiPosData>},
+      {"NiStringPalette", &addVertex<nif::NiStringPalette>},
+      {"NiExtraData", &addVertex<nif::NiExtraData>},
+      {"NiBinaryExtraData", &addVertex<nif::NiBinaryExtraData>},
+      {"NiIntegerExtraData", &addVertex<nif::NiIntegerExtraData>},
+      {"NiStringExtraData", &addVertex<nif::NiStringExtraData>},
+      {"NiTextKeyExtraData", &addVertex<nif::NiTextKeyExtraData>},
+      {"NiFloatInterpolator", &addVertex<nif::NiFloatInterpolator>},
+      {"NiTransformInterpolator", &addVertex<nif::NiTransformInterpolator>},
+      {"NiPoint3Interpolator", &addVertex<nif::NiPoint3Interpolator>},
+      {"NiBlendPoint3Interpolator", &addVertex<nif::NiBlendPoint3Interpolator>},
+      {"BSXFlags", &addVertex<nif::BSXFlags>},
+      {"NiSequence", &addVertex<nif::NiSequence>},
+      {"NiControllerSequence", &addVertex<nif::NiControllerSequence>},
+      {"NiDefaultAVObjectPalette", &addVertex<nif::NiDefaultAVObjectPalette>},
+      {"NiMultiTargetTransformController",
+       &addVertex<nif::NiMultiTargetTransformController>},
+      {"NiMaterialColorController", &addVertex<nif::NiMaterialColorController>},
+      {"NiControllerManager", &addVertex<nif::NiControllerManager>},
+      {"NiMaterialProperty", &addVertex<nif::NiMaterialProperty>},
+      {"NiTexturingProperty", &addVertex<nif::NiTexturingProperty>},
+      {"NiStencilProperty", &addVertex<nif::NiStencilProperty>},
+      {"NiVertexColorProperty", &addVertex<nif::NiVertexColorProperty>},
+      {"NiAlphaProperty", &addVertex<nif::NiAlphaProperty>},
+      {"NiSpecularProperty", &addVertex<nif::NiSpecularProperty>},
+      {"NiCollisionObject", &addVertex<nif::NiCollisionObject>},
+      /*{"NiNode", &addVertex<nif::NiNode>},*/
+      {"NiAdditionalGeometryData", &addVertex<nif::NiAdditionalGeometryData>},
+      {"NiGeometryData", &addVertex<nif::NiGeometryData>},
+      {"NiTriShapeData", &addVertex<nif::NiTriShapeData>},
+      {"NiTriStripsData", &addVertex<nif::NiTriStripsData>},
+      {"NiSkinPartition", &addVertex<nif::NiSkinPartition>},
+      {"NiSkinData", &addVertex<nif::NiSkinData>},
+      {"NiSkinInstance", &addVertex<nif::NiSkinInstance>},
+      {"NiGeometry", &addVertex<nif::NiGeometry>},
+      {"NiTriShape", &addVertex<nif::NiTriShape>},
+      {"NiTriStrips", &addVertex<nif::NiTriStrips>},
+      {"NiSourceTexture", &addVertex<nif::NiSourceTexture>},
+      {"bhkTransformShape", &addVertex<nif::bhk::TransformShape>},
+      {"bhkSphereShape", &addVertex<nif::bhk::SphereShape>},
+      {"bhkCapsuleShape", &addVertex<nif::bhk::CapsuleShape>},
+      {"bhkBoxShape", &addVertex<nif::bhk::BoxShape>},
+      {"bhkConvexVerticesShape", &addVertex<nif::bhk::ConvexVerticesShape>},
+      {"bhkConvexTransformShape", &addVertex<nif::bhk::ConvexTransformShape>},
+      {"bhkConvexSweepShape", &addVertex<nif::bhk::ConvexSweepShape>},
+      {"bhkMoppBvTreeShape", &addVertex<nif::bhk::MoppBvTreeShape>},
+      {"bhkPackedNiTriStripsShape",
+       &addVertex<nif::bhk::PackedNiTriStripsShape>},
+      {"bhkSimpleShapePhantom", &addVertex<nif::bhk::SimpleShapePhantom>},
+      {"bhkRigidBody", &addVertex<nif::bhk::RigidBody>},
+      {"bhkRigidBodyT", &addVertex<nif::bhk::RigidBodyT>},
+      {"bhkCollisionObject", &addVertex<nif::bhk::CollisionObject>},
+      {"hkPackedNiTriStripsData", &addVertex<nif::hk::PackedNiTriStripsData>},
+  };
+  return map;
+}
+
+BlockGraph createBlockGraph(std::istream &is) {
   using namespace nif;
 
   Version nifVersion = peekVersion(is);
-
   compound::Header header{nifVersion};
   is >> header;
 
-  std::optional<Version> userVersion{};
-  if (header.userVer) {
-    userVersion = *header.userVer;
-  }
-
-  std::optional<Version> userVersion2{};
-  if (header.bsStreamHeader.userVersion2 != 0) {
-    userVersion2 = header.bsStreamHeader.userVersion2;
-  }
-
   if (!header.numBlocks || *header.numBlocks == 0) {
-    // File is empty, we can stop. Technically this is ok for sufficiently low
-    // versions, but we do not support those.
-    // TODO: Make sure resource is in a usable state
+    // File is empty, we can stop
     return BlockGraph{};
   }
   auto numBlocks = *header.numBlocks;
@@ -108,77 +157,7 @@ BlockGraph Loader::createBlockGraph(std::istream &is) {
     groups = *header.groups;
   }
 
-  const std::map<std::string, addVertex_t> blockAddVertexMap{
-      {"NiFloatData", &addVertex<nif::NiFloatData>},
-      {"NiKeyframeData", &addVertex<nif::NiKeyframeData>},
-      {"NiTransformData", &addVertex<nif::NiTransformData>},
-      {"NiPosData", &addVertex<nif::NiPosData>},
-      {"NiStringPalette", &addVertex<nif::NiStringPalette>},
-      {"NiExtraData", &addVertex<nif::NiExtraData>},
-      {"NiBinaryExtraData", &addVertex<nif::NiBinaryExtraData>},
-      {"NiIntegerExtraData", &addVertex<nif::NiIntegerExtraData>},
-      {"NiStringExtraData", &addVertex<nif::NiStringExtraData>},
-      {"NiTextKeyExtraData", &addVertex<nif::NiTextKeyExtraData>},
-      {"NiFloatInterpolator", &addVertex<nif::NiFloatInterpolator>},
-      {"NiTransformInterpolator",
-       &addVertex<nif::NiTransformInterpolator>},
-      {"NiPoint3Interpolator",
-       &addVertex<nif::NiPoint3Interpolator>},
-      {"NiBlendPoint3Interpolator",
-       &addVertex<nif::NiBlendPoint3Interpolator>},
-      {"BSXFlags", &addVertex<nif::BSXFlags>},
-      {"NiSequence", &addVertex<nif::NiSequence>},
-      {"NiControllerSequence",
-       &addVertex<nif::NiControllerSequence>},
-      {"NiDefaultAVObjectPalette",
-       &addVertex<nif::NiDefaultAVObjectPalette>},
-      {"NiMultiTargetTransformController",
-       &addVertex<nif::NiMultiTargetTransformController>},
-      {"NiMaterialColorController",
-       &addVertex<nif::NiMaterialColorController>},
-      {"NiControllerManager", &addVertex<nif::NiControllerManager>},
-      {"NiMaterialProperty", &addVertex<nif::NiMaterialProperty>},
-      {"NiTexturingProperty", &addVertex<nif::NiTexturingProperty>},
-      {"NiStencilProperty", &addVertex<nif::NiStencilProperty>},
-      {"NiVertexColorProperty",
-       &addVertex<nif::NiVertexColorProperty>},
-      {"NiAlphaProperty", &addVertex<nif::NiAlphaProperty>},
-      {"NiSpecularProperty", &addVertex<nif::NiSpecularProperty>},
-      {"NiCollisionObject", &addVertex<nif::NiCollisionObject>},
-      // NiNode
-      {"NiAdditionalGeometryData",
-       &addVertex<nif::NiAdditionalGeometryData>},
-      {"NiGeometryData", &addVertex<nif::NiGeometryData>},
-      {"NiTriShapeData", &addVertex<nif::NiTriShapeData>},
-      {"NiTriStripsData", &addVertex<nif::NiTriStripsData>},
-      {"NiSkinPartition", &addVertex<nif::NiSkinPartition>},
-      {"NiSkinData", &addVertex<nif::NiSkinData>},
-      {"NiSkinInstance", &addVertex<nif::NiSkinInstance>},
-      {"NiGeometry", &addVertex<nif::NiGeometry>},
-      {"NiTriShape", &addVertex<nif::NiTriShape>},
-      {"NiTriStrips", &addVertex<nif::NiTriStrips>},
-      {"NiSourceTexture", &addVertex<nif::NiSourceTexture>},
-      {"bhkTransformShape", &addVertex<nif::bhk::TransformShape>},
-      {"bhkSphereShape", &addVertex<nif::bhk::SphereShape>},
-      {"bhkCapsuleShape", &addVertex<nif::bhk::CapsuleShape>},
-      {"bhkBoxShape", &addVertex<nif::bhk::BoxShape>},
-      {"bhkConvexVerticesShape",
-       &addVertex<nif::bhk::ConvexVerticesShape>},
-      {"bhkConvexTransformShape",
-       &addVertex<nif::bhk::ConvexTransformShape>},
-      {"bhkConvexSweepShape",
-       &addVertex<nif::bhk::ConvexSweepShape>},
-      {"bhkMoppBvTreeShape", &addVertex<nif::bhk::MoppBvTreeShape>},
-      {"bhkPackedNiTriStripsShape",
-       &addVertex<nif::bhk::PackedNiTriStripsShape>},
-      {"bhkSimpleShapePhantom",
-       &addVertex<nif::bhk::SimpleShapePhantom>},
-      {"bhkRigidBody", &addVertex<nif::bhk::RigidBody>},
-      {"bhkRigidBodyT", &addVertex<nif::bhk::RigidBodyT>},
-      {"bhkCollisionObject", &addVertex<nif::bhk::CollisionObject>},
-      {"hkPackedNiTriStripsData",
-       &addVertex<nif::hk::PackedNiTriStripsData>},
-  };
+  const auto &blockAddVertexMap = getAddVertexMap();
 
   // The rest of the file is a series of NiObjects, called blocks, whose types
   // are given in the corresponding entries of blockTypes. Some of the blocks
@@ -195,7 +174,7 @@ BlockGraph Loader::createBlockGraph(std::istream &is) {
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func = vertexAdder->second;
       std::invoke(func, blocks, i, nifVersion, is);
-      logger->logMessage(boost::str(
+      Ogre::LogManager::getSingleton().logMessage(boost::str(
           boost::format("Read block %d (%i)") % i % blockType));
     } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
@@ -207,7 +186,7 @@ BlockGraph Loader::createBlockGraph(std::istream &is) {
         }
       }
       blocks[i] = std::move(block);
-      logger->logMessage(boost::str(
+      Ogre::LogManager::getSingleton().logMessage(boost::str(
           boost::format("Read block %d (NiNode)") % i));
     } else {
       // TODO: Implement the other blocks
