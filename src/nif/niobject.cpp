@@ -540,35 +540,27 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, compressFlags);
 
   io::readBytes(is, hasVertices);
-  vertices.reserve(numVertices);
-  for (auto i = 0; i < numVertices; ++i) {
-    vertices.emplace_back();
-    is >> vertices.back();
-  }
+  vertices.assign(numVertices, {});
+  is.read(reinterpret_cast<char *>(vertices.data()),
+          numVertices * sizeof(nif::compound::Vector3));
 
   io::readBytes(is, vectorFlags);
 
   io::readBytes(is, hasNormals);
-  normals.reserve(numVertices);
-  for (auto i = 0; i < numVertices; ++i) {
-    normals.emplace_back();
-    is >> normals.back();
-  }
+  normals.assign(numVertices, {});
+  is.read(reinterpret_cast<char *>(normals.data()),
+          numVertices * sizeof(nif::compound::Vector3));
 
   if (hasNormals && vectorFlags
       && static_cast<uint16_t>(*vectorFlags
           & Enum::VectorFlags::VF_Has_Tangents) != 0) {
-    tangents.reserve(numVertices);
-    for (auto i = 0; i < numVertices; ++i) {
-      tangents.emplace_back();
-      is >> tangents.back();
-    }
+    tangents.assign(numVertices, {});
+    is.read(reinterpret_cast<char *>(tangents.data()),
+            numVertices * sizeof(nif::compound::Vector3));
 
-    bitangents.reserve(numVertices);
-    for (auto i = 0; i < numVertices; ++i) {
-      bitangents.emplace_back();
-      is >> bitangents.back();
-    }
+    bitangents.assign(numVertices, {});
+    is.read(reinterpret_cast<char *>(bitangents.data()),
+            numVertices * sizeof(nif::compound::Vector3));
   }
 
   is >> center;
@@ -576,11 +568,9 @@ void NiGeometryData::read(std::istream &is) {
 
   io::readBytes(is, hasVertexColors);
   if (hasVertexColors) {
-    vertexColors.reserve(numVertices);
-    for (auto i = 0; i < numVertices; ++i) {
-      vertexColors.emplace_back();
-      is >> vertexColors.back();
-    }
+    vertexColors.assign(numVertices, {});
+    is.read(reinterpret_cast<char *>(vertexColors.data()),
+            numVertices * sizeof(nif::compound::Color4));
   }
 
   io::readBytes(is, numUVSets);
