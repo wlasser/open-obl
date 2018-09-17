@@ -59,7 +59,7 @@ class Application : public Ogre::FrameListener {
   SDLWindowPtr sdlWindow{nullptr, nullptr};
   OgreWindowPtr ogreWindow;
 
-  NifLoader nifLoader{};
+  nifloader::Loader nifLoader{};
   const std::string resourceGroup = "OOResource";
 
   std::unique_ptr<engine::PlayerController> playerController{};

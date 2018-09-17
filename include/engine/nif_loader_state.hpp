@@ -19,80 +19,60 @@
 #include <stdexcept>
 #include <vector>
 
-namespace engine {
+namespace engine::nifloader {
+
+// Used to tag blocks to keep track of loading.
+enum class LoadStatus {
+  Unloaded,
+  Loading,
+  Loaded
+};
+
+// A block and its load status. Blocks can be implicitly promoted to
+// unloaded TaggedBlocks, used in construction of the block graph.
+struct TaggedBlock {
+  Block block{};
+  mutable LoadStatus tag{LoadStatus::Unloaded};
+
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  TaggedBlock(Block block) : block(std::move(block)) {}
+  // Required by BlockGraph
+  TaggedBlock() = default;
+};
+
+using TaggedBlockGraph = boost::adjacency_list<boost::vecS,
+                                               boost::vecS,
+                                               boost::bidirectionalS,
+                                               TaggedBlock>;
+
+// Used for RAII management of block load status. Should be constructed with
+// the tag of the block that is being loaded at the same scope of the block,
+// so that it goes out of scope when the block has finished loading.
+// Automatically detects cycles.
+class Tagger {
+  LoadStatus &tag;
+ public:
+  explicit Tagger(LoadStatus &tag) : tag{tag} {
+    switch (tag) {
+      case LoadStatus::Unloaded: tag = LoadStatus::Loading;
+        break;
+      case LoadStatus::Loading:
+        throw std::runtime_error("Cycle detected while loading nif file");
+      default:break;
+    }
+  }
+  ~Tagger() {
+    tag = LoadStatus::Loaded;
+  }
+};
 
 // When constructing the mesh we want to iterate over the block graph, but
 // because of references and pointers we will have to jump around and load
 // things out of order when needed. To detect cycles and ensure that some blocks
 // are only loaded once, we tag each block with a LoadStatus.
-class NifLoaderState {
+class LoaderState {
  private:
-  // Used to tag blocks to keep track of loading.
-  enum class LoadStatus {
-    Unloaded,
-    Loading,
-    Loaded
-  };
-
-  // A block and its load status. Blocks can be implicitly promoted to
-  // unloaded TaggedBlocks, used in construction of the block graph.
-  struct TaggedBlock {
-    NifLoader::Block block{};
-    mutable LoadStatus tag{LoadStatus::Unloaded};
-
-    // NOLINTNEXTLINE(google-explicit-constructor)
-    TaggedBlock(NifLoader::Block block) : block(std::move(block)) {}
-    // Required by BlockGraph
-    TaggedBlock() = default;
-  };
-
-  // Used for RAII management of block load status. Should be constructed with
-  // the tag of the block that is being loaded at the same scope of the block,
-  // so that it goes out of scope when the block has finished loading.
-  // Automatically detects cycles.
-  class Tagger {
-    LoadStatus &tag;
-   public:
-    explicit Tagger(LoadStatus &tag) : tag{tag} {
-      switch (tag) {
-        case LoadStatus::Unloaded: tag = LoadStatus::Loading;
-          break;
-        case LoadStatus::Loading:
-          throw std::runtime_error("Cycle detected while loading nif file");
-        default:break;
-      }
-    }
-    ~Tagger() {
-      tag = LoadStatus::Loaded;
-    }
-  };
-
-  using TaggedBlockGraph = boost::adjacency_list<boost::vecS,
-                                                 boost::vecS,
-                                                 boost::bidirectionalS,
-                                                 TaggedBlock>;
-
-  struct DFSVisitor {
-    using Graph = TaggedBlockGraph;
-    using vertex_descriptor = Graph::vertex_descriptor;
-    using edge_descriptor = Graph::edge_descriptor;
-
-    void initialize_vertex(vertex_descriptor v, const Graph &g) {}
-    void start_vertex(vertex_descriptor v, const Graph &g);
-    void discover_vertex(vertex_descriptor v, const Graph &g);
-    void examine_edge(edge_descriptor e, const Graph &g) {}
-    void tree_edge(edge_descriptor e, const Graph &g) {}
-    void back_edge(edge_descriptor e, const Graph &g) {}
-    void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
-    void finish_edge(edge_descriptor e, const Graph &g) {}
-    void finish_vertex(vertex_descriptor v, const Graph &g);
-
-    explicit DFSVisitor(NifLoaderState &state) : state(state) {}
-
-   private:
-    Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
-    NifLoaderState &state;
-  };
+  friend class DFSVisitor;
 
   TaggedBlockGraph blocks;
 
@@ -114,7 +94,8 @@ class NifLoaderState {
                                      const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
-  parseNiMaterialProperty(nif::NiMaterialProperty *block, LoadStatus &tag);
+  parseNiMaterialProperty(nif::NiMaterialProperty *block,
+                          LoadStatus &tag);
 
   struct TextureFamily {
     using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
@@ -187,9 +168,31 @@ class NifLoaderState {
   Ogre::LogManager &logger{Ogre::LogManager::getSingleton()};
 
  public:
-  explicit NifLoaderState(Ogre::Mesh *mesh, NifLoader::BlockGraph blocks);
+  explicit LoaderState(Ogre::Mesh *mesh, BlockGraph blocks);
 };
 
-} // namespace engine
+struct DFSVisitor {
+  using Graph = TaggedBlockGraph;
+  using vertex_descriptor = Graph::vertex_descriptor;
+  using edge_descriptor = Graph::edge_descriptor;
+
+  void initialize_vertex(vertex_descriptor v, const Graph &g) {}
+  void start_vertex(vertex_descriptor v, const Graph &g);
+  void discover_vertex(vertex_descriptor v, const Graph &g);
+  void examine_edge(edge_descriptor e, const Graph &g) {}
+  void tree_edge(edge_descriptor e, const Graph &g) {}
+  void back_edge(edge_descriptor e, const Graph &g) {}
+  void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
+  void finish_edge(edge_descriptor e, const Graph &g) {}
+  void finish_vertex(vertex_descriptor v, const Graph &g);
+
+  explicit DFSVisitor(LoaderState &state) : state(state) {}
+
+ private:
+  Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
+  LoaderState &state;
+};
+
+} // namespace engine::nifloader
 
 #endif // OPENOBLIVION_ENGINE_NIF_LOADER_STATE_HPP

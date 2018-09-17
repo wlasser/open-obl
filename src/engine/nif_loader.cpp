@@ -25,9 +25,9 @@
 #include <string>
 #include <nif/bhk.hpp>
 
-namespace engine {
+namespace engine::nifloader {
 
-nif::Version NifLoader::peekVersion(std::istream &is) {
+nif::Version peekVersion(std::istream &is) {
   auto startPos = is.tellg();
   nif::basic::HeaderString headerVersion{};
   is >> headerVersion;
@@ -54,7 +54,7 @@ nif::Version NifLoader::peekVersion(std::istream &is) {
   return nif::verOf(versionString.c_str(), versionString.length());
 }
 
-NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
+BlockGraph Loader::createBlockGraph(std::istream &is) {
   using namespace nif;
 
   Version nifVersion = peekVersion(is);
@@ -109,75 +109,75 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   }
 
   const std::map<std::string, addVertex_t> blockAddVertexMap{
-      {"NiFloatData", &NifLoader::addVertex<nif::NiFloatData>},
-      {"NiKeyframeData", &NifLoader::addVertex<nif::NiKeyframeData>},
-      {"NiTransformData", &NifLoader::addVertex<nif::NiTransformData>},
-      {"NiPosData", &NifLoader::addVertex<nif::NiPosData>},
-      {"NiStringPalette", &NifLoader::addVertex<nif::NiStringPalette>},
-      {"NiExtraData", &NifLoader::addVertex<nif::NiExtraData>},
-      {"NiBinaryExtraData", &NifLoader::addVertex<nif::NiBinaryExtraData>},
-      {"NiIntegerExtraData", &NifLoader::addVertex<nif::NiIntegerExtraData>},
-      {"NiStringExtraData", &NifLoader::addVertex<nif::NiStringExtraData>},
-      {"NiTextKeyExtraData", &NifLoader::addVertex<nif::NiTextKeyExtraData>},
-      {"NiFloatInterpolator", &NifLoader::addVertex<nif::NiFloatInterpolator>},
+      {"NiFloatData", &addVertex<nif::NiFloatData>},
+      {"NiKeyframeData", &addVertex<nif::NiKeyframeData>},
+      {"NiTransformData", &addVertex<nif::NiTransformData>},
+      {"NiPosData", &addVertex<nif::NiPosData>},
+      {"NiStringPalette", &addVertex<nif::NiStringPalette>},
+      {"NiExtraData", &addVertex<nif::NiExtraData>},
+      {"NiBinaryExtraData", &addVertex<nif::NiBinaryExtraData>},
+      {"NiIntegerExtraData", &addVertex<nif::NiIntegerExtraData>},
+      {"NiStringExtraData", &addVertex<nif::NiStringExtraData>},
+      {"NiTextKeyExtraData", &addVertex<nif::NiTextKeyExtraData>},
+      {"NiFloatInterpolator", &addVertex<nif::NiFloatInterpolator>},
       {"NiTransformInterpolator",
-       &NifLoader::addVertex<nif::NiTransformInterpolator>},
+       &addVertex<nif::NiTransformInterpolator>},
       {"NiPoint3Interpolator",
-       &NifLoader::addVertex<nif::NiPoint3Interpolator>},
+       &addVertex<nif::NiPoint3Interpolator>},
       {"NiBlendPoint3Interpolator",
-       &NifLoader::addVertex<nif::NiBlendPoint3Interpolator>},
-      {"BSXFlags", &NifLoader::addVertex<nif::BSXFlags>},
-      {"NiSequence", &NifLoader::addVertex<nif::NiSequence>},
+       &addVertex<nif::NiBlendPoint3Interpolator>},
+      {"BSXFlags", &addVertex<nif::BSXFlags>},
+      {"NiSequence", &addVertex<nif::NiSequence>},
       {"NiControllerSequence",
-       &NifLoader::addVertex<nif::NiControllerSequence>},
+       &addVertex<nif::NiControllerSequence>},
       {"NiDefaultAVObjectPalette",
-       &NifLoader::addVertex<nif::NiDefaultAVObjectPalette>},
+       &addVertex<nif::NiDefaultAVObjectPalette>},
       {"NiMultiTargetTransformController",
-       &NifLoader::addVertex<nif::NiMultiTargetTransformController>},
+       &addVertex<nif::NiMultiTargetTransformController>},
       {"NiMaterialColorController",
-       &NifLoader::addVertex<nif::NiMaterialColorController>},
-      {"NiControllerManager", &NifLoader::addVertex<nif::NiControllerManager>},
-      {"NiMaterialProperty", &NifLoader::addVertex<nif::NiMaterialProperty>},
-      {"NiTexturingProperty", &NifLoader::addVertex<nif::NiTexturingProperty>},
-      {"NiStencilProperty", &NifLoader::addVertex<nif::NiStencilProperty>},
+       &addVertex<nif::NiMaterialColorController>},
+      {"NiControllerManager", &addVertex<nif::NiControllerManager>},
+      {"NiMaterialProperty", &addVertex<nif::NiMaterialProperty>},
+      {"NiTexturingProperty", &addVertex<nif::NiTexturingProperty>},
+      {"NiStencilProperty", &addVertex<nif::NiStencilProperty>},
       {"NiVertexColorProperty",
-       &NifLoader::addVertex<nif::NiVertexColorProperty>},
-      {"NiAlphaProperty", &NifLoader::addVertex<nif::NiAlphaProperty>},
-      {"NiSpecularProperty", &NifLoader::addVertex<nif::NiSpecularProperty>},
-      {"NiCollisionObject", &NifLoader::addVertex<nif::NiCollisionObject>},
+       &addVertex<nif::NiVertexColorProperty>},
+      {"NiAlphaProperty", &addVertex<nif::NiAlphaProperty>},
+      {"NiSpecularProperty", &addVertex<nif::NiSpecularProperty>},
+      {"NiCollisionObject", &addVertex<nif::NiCollisionObject>},
       // NiNode
       {"NiAdditionalGeometryData",
-       &NifLoader::addVertex<nif::NiAdditionalGeometryData>},
-      {"NiGeometryData", &NifLoader::addVertex<nif::NiGeometryData>},
-      {"NiTriShapeData", &NifLoader::addVertex<nif::NiTriShapeData>},
-      {"NiTriStripsData", &NifLoader::addVertex<nif::NiTriStripsData>},
-      {"NiSkinPartition", &NifLoader::addVertex<nif::NiSkinPartition>},
-      {"NiSkinData", &NifLoader::addVertex<nif::NiSkinData>},
-      {"NiSkinInstance", &NifLoader::addVertex<nif::NiSkinInstance>},
-      {"NiGeometry", &NifLoader::addVertex<nif::NiGeometry>},
-      {"NiTriShape", &NifLoader::addVertex<nif::NiTriShape>},
-      {"NiTriStrips", &NifLoader::addVertex<nif::NiTriStrips>},
-      {"NiSourceTexture", &NifLoader::addVertex<nif::NiSourceTexture>},
-      {"bhkTransformShape", &NifLoader::addVertex<nif::bhk::TransformShape>},
-      {"bhkSphereShape", &NifLoader::addVertex<nif::bhk::SphereShape>},
-      {"bhkCapsuleShape", &NifLoader::addVertex<nif::bhk::CapsuleShape>},
-      {"bhkBoxShape", &NifLoader::addVertex<nif::bhk::BoxShape>},
+       &addVertex<nif::NiAdditionalGeometryData>},
+      {"NiGeometryData", &addVertex<nif::NiGeometryData>},
+      {"NiTriShapeData", &addVertex<nif::NiTriShapeData>},
+      {"NiTriStripsData", &addVertex<nif::NiTriStripsData>},
+      {"NiSkinPartition", &addVertex<nif::NiSkinPartition>},
+      {"NiSkinData", &addVertex<nif::NiSkinData>},
+      {"NiSkinInstance", &addVertex<nif::NiSkinInstance>},
+      {"NiGeometry", &addVertex<nif::NiGeometry>},
+      {"NiTriShape", &addVertex<nif::NiTriShape>},
+      {"NiTriStrips", &addVertex<nif::NiTriStrips>},
+      {"NiSourceTexture", &addVertex<nif::NiSourceTexture>},
+      {"bhkTransformShape", &addVertex<nif::bhk::TransformShape>},
+      {"bhkSphereShape", &addVertex<nif::bhk::SphereShape>},
+      {"bhkCapsuleShape", &addVertex<nif::bhk::CapsuleShape>},
+      {"bhkBoxShape", &addVertex<nif::bhk::BoxShape>},
       {"bhkConvexVerticesShape",
-       &NifLoader::addVertex<nif::bhk::ConvexVerticesShape>},
+       &addVertex<nif::bhk::ConvexVerticesShape>},
       {"bhkConvexTransformShape",
-       &NifLoader::addVertex<nif::bhk::ConvexTransformShape>},
+       &addVertex<nif::bhk::ConvexTransformShape>},
       {"bhkConvexSweepShape",
-       &NifLoader::addVertex<nif::bhk::ConvexSweepShape>},
-      {"bhkMoppBvTreeShape", &NifLoader::addVertex<nif::bhk::MoppBvTreeShape>},
+       &addVertex<nif::bhk::ConvexSweepShape>},
+      {"bhkMoppBvTreeShape", &addVertex<nif::bhk::MoppBvTreeShape>},
       {"bhkPackedNiTriStripsShape",
-       &NifLoader::addVertex<nif::bhk::PackedNiTriStripsShape>},
+       &addVertex<nif::bhk::PackedNiTriStripsShape>},
       {"bhkSimpleShapePhantom",
-       &NifLoader::addVertex<nif::bhk::SimpleShapePhantom>},
-      {"bhkRigidBody", &NifLoader::addVertex<nif::bhk::RigidBody>},
-      {"bhkRigidBodyT", &NifLoader::addVertex<nif::bhk::RigidBodyT>},
-      {"bhkCollisionObject", &NifLoader::addVertex<nif::bhk::CollisionObject>},
+       &addVertex<nif::bhk::SimpleShapePhantom>},
+      {"bhkRigidBody", &addVertex<nif::bhk::RigidBody>},
+      {"bhkRigidBodyT", &addVertex<nif::bhk::RigidBodyT>},
+      {"bhkCollisionObject", &addVertex<nif::bhk::CollisionObject>},
       {"hkPackedNiTriStripsData",
-       &NifLoader::addVertex<nif::hk::PackedNiTriStripsData>},
+       &addVertex<nif::hk::PackedNiTriStripsData>},
   };
 
   // The rest of the file is a series of NiObjects, called blocks, whose types
@@ -194,7 +194,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
     auto vertexAdder = blockAddVertexMap.find(blockType);
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func = vertexAdder->second;
-      (this->*func)(blocks, i, nifVersion, is);
+      std::invoke(func, blocks, i, nifVersion, is);
       logger->logMessage(boost::str(
           boost::format("Read block %d (%i)") % i % blockType));
     } else if (blockType == "NiNode") {
@@ -220,7 +220,7 @@ NifLoader::BlockGraph NifLoader::createBlockGraph(std::istream &is) {
   return blocks;
 }
 
-void NifLoader::loadResource(Ogre::Resource *resource) {
+void Loader::loadResource(Ogre::Resource *resource) {
   if (!logger) logger = Ogre::LogManager::getSingletonPtr();
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
@@ -238,89 +238,8 @@ void NifLoader::loadResource(Ogre::Resource *resource) {
 
   auto blocks = createBlockGraph(is);
 
-  NifLoaderState instance(mesh, blocks);
+  LoaderState instance(mesh, blocks);
 }
 
-void NifLoader::dumpAsObj(std::istream &in, std::ostream &out) {
-  std::vector<Ogre::Vector3> vertices;
-  std::vector<Ogre::Vector3> normals;
-  std::vector<Ogre::Vector2> uvs;
-  std::vector<Ogre::Vector<3, std::size_t>> tris;
-  std::size_t offset = 0;
-
-  auto blocks = createBlockGraph(in);
-
-  for (const auto &blockVertex : blocks.vertex_set()) {
-    auto block = blocks[blockVertex].get();
-    if (auto niTriShape = dynamic_cast<nif::NiTriShape *>(block)) {
-      Ogre::Vector3 translation{conversions::fromNif(niTriShape->translation)};
-      Ogre::Matrix3 rotationMatrix{conversions::fromNif(niTriShape->rotation)};
-      Ogre::Quaternion rotation{rotationMatrix};
-      Ogre::Vector3 scale{
-          niTriShape->scale,
-          niTriShape->scale,
-          niTriShape->scale
-      };
-      Ogre::Vector3 invScale{
-          1.0f / niTriShape->scale,
-          1.0f / niTriShape->scale,
-          1.0f / niTriShape->scale
-      };
-      Ogre::Matrix4 transformation{};
-      transformation.makeTransform(translation, scale, rotation);
-      Ogre::Matrix4 normalTransformation{};
-      normalTransformation.makeTransform(Ogre::Vector3::ZERO,
-                                         invScale,
-                                         rotation);
-
-      auto dataRef = static_cast<int32_t>(niTriShape->data);
-      auto data = dynamic_cast<nif::NiTriShapeData *>(blocks[dataRef].get());
-
-      for (const auto &vertex : data->vertices) {
-        auto bsV = transformation * Ogre::Vector4(conversions::fromNif(vertex));
-        auto v = conversions::fromBSCoordinates(bsV.xyz());
-        vertices.push_back(v);
-      }
-
-      for (const auto &normal : data->normals) {
-        auto bsN =
-            normalTransformation * Ogre::Vector4(conversions::fromNif(normal));
-        auto n = conversions::fromBSCoordinates(bsN.xyz());
-        normals.push_back(n);
-      }
-
-      for (const auto &uv : data->uvSets[0]) {
-        uvs.emplace_back(uv.u, uv.v);
-      }
-
-      for (const auto &tri : data->triangles) {
-        tris.emplace_back(tri.v1 + offset + 1,
-                          tri.v2 + offset + 1,
-                          tri.v3 + offset + 1);
-      }
-      offset += data->numVertices;
-    }
-  }
-
-  auto vFmt = boost::format("v %f %f %f\n");
-  for (const auto &v : vertices) {
-    out << (vFmt % v.x % v.y % v.z);
-  }
-
-  auto vnFmt = boost::format("vn %f %f %f\n");
-  for (const auto &n : normals) {
-    out << (vnFmt % n.x % n.y % n.z);
-  }
-
-  auto vtFmt = boost::format("vt %f %f\n");
-  for (const auto &uv : uvs) {
-    out << (vtFmt % uv.x % uv.y);
-  }
-
-  auto fFmt = boost::format("f %1%/%1%/%1% %2%/%2%/%2% %3%/%3%/%3%\n");
-  for (const auto &tri : tris) {
-    out << (fFmt % tri[0] % tri[1] % tri[2]);
-  }
-}
-} // namespace engine
+} // namespace engine::nifloader
 

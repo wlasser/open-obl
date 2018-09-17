@@ -36,9 +36,9 @@
 #include <string>
 #include <vector>
 
-namespace engine {
+namespace engine::nifloader {
 
-Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
+Ogre::AxisAlignedBox LoaderState::getBoundingBox(nif::NiGeometryData *block,
                                                     Ogre::Matrix4 transformation) {
   using namespace conversions;
   const auto fltMin = std::numeric_limits<float>::lowest();
@@ -62,9 +62,9 @@ Ogre::AxisAlignedBox NifLoaderState::getBoundingBox(nif::NiGeometryData *block,
   return {bboxMin, bboxMax};
 }
 
-bool NifLoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
-                                       Ogre::Vector3 v2, Ogre::Vector3 n2,
-                                       Ogre::Vector3 v3, Ogre::Vector3 n3) {
+bool LoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
+                                    Ogre::Vector3 v2, Ogre::Vector3 n2,
+                                    Ogre::Vector3 v3, Ogre::Vector3 n3) {
   auto expected = (v2 - v1).crossProduct(v3 - v1);
   auto actual = (n1 + n2 + n3) / 3.0f;
   // Coordinate system is right-handed so this is positive for an
@@ -72,7 +72,7 @@ bool NifLoaderState::isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
   return expected.dotProduct(actual) > 0.0f;
 }
 
-long NifLoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
+long LoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
   assert(block->hasNormals);
   using conversions::fromNif;
 
@@ -88,7 +88,7 @@ long NifLoaderState::numCCWTriangles(nif::NiTriShapeData *block) {
                        });
 }
 
-std::filesystem::path NifLoaderState::toNormalMap(std::filesystem::path texFile) {
+std::filesystem::path LoaderState::toNormalMap(std::filesystem::path texFile) {
   auto extension = texFile.extension();
   texFile.replace_extension("");
   texFile += "_n";
@@ -96,7 +96,7 @@ std::filesystem::path NifLoaderState::toNormalMap(std::filesystem::path texFile)
   return texFile;
 }
 
-Ogre::Matrix4 NifLoaderState::getTransform(nif::NiAVObject *block) {
+Ogre::Matrix4 LoaderState::getTransform(nif::NiAVObject *block) {
   using namespace conversions;
   Ogre::Vector3 translation{fromBSCoordinates(fromNif(block->translation))};
 
@@ -111,10 +111,10 @@ Ogre::Matrix4 NifLoaderState::getTransform(nif::NiAVObject *block) {
 }
 
 std::unique_ptr<Ogre::VertexData>
-NifLoaderState::generateVertexData(nif::NiGeometryData *block,
-                                   Ogre::Matrix4 transformation,
-                                   std::vector<nif::compound::Vector3> *bitangents,
-                                   std::vector<nif::compound::Vector3> *tangents) {
+LoaderState::generateVertexData(nif::NiGeometryData *block,
+                                Ogre::Matrix4 transformation,
+                                std::vector<nif::compound::Vector3> *bitangents,
+                                std::vector<nif::compound::Vector3> *tangents) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
   auto vertexData = std::make_unique<Ogre::VertexData>();
@@ -262,7 +262,7 @@ NifLoaderState::generateVertexData(nif::NiGeometryData *block,
 }
 
 std::unique_ptr<Ogre::IndexData>
-NifLoaderState::generateIndexData(nif::NiTriShapeData *block) {
+LoaderState::generateIndexData(nif::NiTriShapeData *block) {
   auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
 
   // We can assume that compound::Triangle has no padding and std::vector
@@ -288,7 +288,7 @@ NifLoaderState::generateIndexData(nif::NiTriShapeData *block) {
 }
 
 std::unique_ptr<Ogre::IndexData>
-NifLoaderState::generateIndexData(nif::NiTriStripsData *block) {
+LoaderState::generateIndexData(nif::NiTriStripsData *block) {
   auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
 
   auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
@@ -310,8 +310,8 @@ NifLoaderState::generateIndexData(nif::NiTriStripsData *block) {
   return indexData;
 }
 
-NifLoaderState::BoundedSubmesh
-NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
+LoaderState::BoundedSubmesh
+LoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
                                     LoadStatus &tag,
                                     const Ogre::Matrix4 &transform) {
   // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
@@ -486,8 +486,8 @@ NifLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
 }
 
 std::shared_ptr<Ogre::Material>
-NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
-                                        LoadStatus &tag) {
+LoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
+                                     LoadStatus &tag) {
   auto &materialManager = Ogre::MaterialManager::getSingleton();
 
   Tagger tagger{tag};
@@ -564,9 +564,9 @@ NifLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 }
 
 std::unique_ptr<Ogre::TextureUnitState>
-NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
-                             Ogre::Pass *parent,
-                             const std::optional<std::string> &textureOverride) {
+LoaderState::parseTexDesc(nif::compound::TexDesc *tex,
+                          Ogre::Pass *parent,
+                          const std::optional<std::string> &textureOverride) {
   auto textureUnit = std::make_unique<Ogre::TextureUnitState>(parent);
 
   switch (tex->clampMode) {
@@ -693,10 +693,10 @@ NifLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
   return textureUnit;
 }
 
-void NifLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
-                                          LoadStatus &tag,
-                                          Ogre::TextureUnitState *tex,
-                                          const std::optional<std::string> &textureOverride) {
+void LoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
+                                       LoadStatus &tag,
+                                       Ogre::TextureUnitState *tex,
+                                       const std::optional<std::string> &textureOverride) {
   Tagger tagger{tag};
 
   if (block->useExternal) {
@@ -740,8 +740,8 @@ void NifLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
   // All textures are direct since we don't support internal textures
 }
 
-NifLoaderState::TextureFamily
-NifLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
+LoaderState::TextureFamily
+LoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
                                          LoadStatus &tag, Ogre::Pass *pass) {
   Tagger tagger{tag};
 
@@ -791,31 +791,19 @@ NifLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
   return family;
 }
 
-void NifLoaderState::DFSVisitor::start_vertex(vertex_descriptor v,
-                                              const Graph &g) {
+void DFSVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
   // This is a new connected component so we need to reset the transformation to
   // the identity. NB: This vertex will still be discovered so setting the
   // transformation to the vertex's will result in it being applied twice.
   transform = Ogre::Matrix4::IDENTITY;
 }
 
-void NifLoaderState::DFSVisitor::discover_vertex(vertex_descriptor v,
-                                                 const Graph &g) {
+void DFSVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &taggedNiObject = g[v];
   auto *niObject = taggedNiObject.block.get();
   auto &tag = taggedNiObject.tag;
 
   if (auto niTriBasedGeom = dynamic_cast<nif::NiTriBasedGeom *>(niObject)) {
-    state.logger.logMessage(boost::str(
-        boost::format("Loading block %d (NiTriBasedGeom)") % v));
-    state.logger.logMessage("Current transform is:");
-    const auto &t = transform;
-    auto fmt = boost::format("[%f, %f, %f, %f]");
-    for (int i = 0; i < 4; ++i) {
-      state.logger.logMessage(boost::str(
-          fmt % t[i][0] % t[i][1] % t[i][2] % t[i][3]));
-    }
-
     auto[submesh, subBbox] = state.parseNiTriBasedGeom(niTriBasedGeom, tag,
                                                        transform);
     auto bbox = state.mesh->getBounds();
@@ -827,8 +815,7 @@ void NifLoaderState::DFSVisitor::discover_vertex(vertex_descriptor v,
   }
 }
 
-void NifLoaderState::DFSVisitor::finish_vertex(vertex_descriptor v,
-                                               const Graph &g) {
+void DFSVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
   auto *niObject = g[v].block.get();
 
   if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
@@ -837,8 +824,7 @@ void NifLoaderState::DFSVisitor::finish_vertex(vertex_descriptor v,
   }
 }
 
-NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
-                               NifLoader::BlockGraph untaggedBlocks)
+LoaderState::LoaderState(Ogre::Mesh *mesh, BlockGraph untaggedBlocks)
     : mesh(mesh) {
 
   boost::copy_graph(untaggedBlocks, blocks);
@@ -848,4 +834,4 @@ NifLoaderState::NifLoaderState(Ogre::Mesh *mesh,
                                                               boost::get(boost::vertex_index,
                                                                          blocks)));
 }
-} // namespace engine
+} // namespace engine::nifloader
