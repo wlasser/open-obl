@@ -141,39 +141,44 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
   std::size_t offset{0};
   std::size_t bytesPerVertex{0};
   const unsigned short source{0};
-  if (block->hasVertices) {
-    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                         Ogre::VES_POSITION);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
+
+  // Vertices
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                       Ogre::VES_POSITION);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  offset += 3;
+
   // TODO: Blend weights
-  if (block->hasNormals) {
-    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                         Ogre::VES_NORMAL);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
-  // TODO: Diffuse color
-  // TODO: Specular color
-  if (!block->uvSets.empty()) {
-    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT2,
-                         Ogre::VES_TEXTURE_COORDINATES, 0);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
-    offset += 2;
-  }
-  if (bitangents) {
-    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                         Ogre::VES_BINORMAL);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
-  if (tangents) {
-    vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                         Ogre::VES_TANGENT);
-    bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
-    offset += 3;
-  }
+
+  // Normals
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                       Ogre::VES_NORMAL);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  offset += 3;
+
+  // Vertex colours
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                       Ogre::VES_DIFFUSE);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  offset += 3;
+
+  // UVs
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT2,
+                       Ogre::VES_TEXTURE_COORDINATES, 0);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+  offset += 2;
+
+  // Bitangents
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                       Ogre::VES_BINORMAL);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  offset += 3;
+
+  // Tangents
+  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
+                       Ogre::VES_TANGENT);
+  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  offset += 3;
 
   // Normal vectors are not translated and transform with the inverse
   // transpose of the transformation matrix. We will also need this for tangents
@@ -193,6 +198,8 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
   // TODO: Is there an efficient transpose algorithm to make this abstraction worthwhile?
   std::vector<float> vertexBuffer(offset * block->numVertices);
   std::size_t localOffset{0};
+
+  // Vertices
   if (block->hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : block->vertices) {
@@ -205,8 +212,13 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
       it += offset;
     }
     localOffset += 3;
+  } else {
+    throw std::runtime_error("NiGeometryData has no vertices");
   }
+
   // TODO: Blend weights
+
+  // Normals
   if (block->hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block->normals) {
@@ -219,9 +231,33 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
       it += offset;
     }
     localOffset += 3;
+  } else {
+    throw std::runtime_error("NiGeometryData has no normals");
   }
-  // TODO: Diffuse color
-  // TODO: Specular color
+
+  // Vertex colours
+  if (block->hasVertexColors) {
+    auto it = vertexBuffer.begin() + localOffset;
+    for (const auto &col : block->vertexColors) {
+      *it = col.r;
+      *(it + 1) = col.g;
+      *(it + 2) = col.b;
+      it += offset;
+    }
+    localOffset += 3;
+  } else {
+    // If a mesh doesn't have any vertex colours then we default to white
+    auto it = vertexBuffer.begin() + localOffset;
+    for (int i = 0; i < block->numVertices; ++i) {
+      *it = 1.0f;
+      *(it + 1) = 1.0f;
+      *(it + 2) = 1.0f;
+      it += offset;
+    }
+    localOffset += 3;
+  }
+
+  // UVs
   if (!block->uvSets.empty()) {
     auto it = vertexBuffer.begin() + localOffset;
     // TODO: Support more than one UV set?
@@ -232,6 +268,8 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
     }
     localOffset += 2;
   }
+
+  // Bitangents
   if (bitangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
@@ -244,7 +282,11 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
       it += offset;
     }
     localOffset += 3;
+  } else {
+    // TODO: Compute the bitangents if they don't exist
   }
+
+  // Tangents
   if (tangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
@@ -257,6 +299,8 @@ LoaderState::generateVertexData(nif::NiGeometryData *block,
       it += offset;
     }
     localOffset += 3;
+  } else {
+    // TODO: Compute the tangents if they don't exist
   }
 
   // Copy the vertex buffer into a hardware buffer, and link the buffer to

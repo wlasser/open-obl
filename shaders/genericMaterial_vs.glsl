@@ -1,6 +1,7 @@
 #version 330 core
 attribute vec4 vertex;
 attribute vec3 normal;
+attribute vec4 colour;
 attribute vec4 uv0;
 attribute vec3 tangent;
 attribute vec3 binormal;
@@ -9,6 +10,7 @@ out mat3 TBN;
 out vec2 TexCoord;
 out vec3 FragPos;
 out vec3 ViewPos;
+out vec3 VertexCol;
 
 uniform mat4 worldViewProj;
 uniform mat4 worldInverseTranspose;
@@ -24,4 +26,5 @@ void main() {
     TexCoord = uv0.xy;
     FragPos = vec3(world * vertex);
     ViewPos = viewPos.xyz;
+    VertexCol = colour.rgb;
 }

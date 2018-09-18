@@ -3,6 +3,7 @@ in mat3 TBN;
 in vec2 TexCoord;
 in vec3 FragPos;
 in vec3 ViewPos;
+in vec3 VertexCol;
 
 #define MAX_LIGHTS 8
 
@@ -22,7 +23,7 @@ void main() {
     float gamma = 2.2f;
 
     // Undo gamma correction of texture so it is correct later
-    vec3 diffuseColor = pow(texture2D(diffuseMap, TexCoord).xyz, vec3(gamma));
+    vec3 diffuseColor = pow(texture2D(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
 
     vec3 normal = texture2D(normalMap, TexCoord).xyz;
     // Convert from dx to gl by flipping the green channel
@@ -54,7 +55,7 @@ void main() {
         float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
         vec3 specular = 0.25f * spec * matSpecular;
 
-        lighting += (specular + diffuse) * lightDiffuse * attenuation;
+        lighting += (specular + diffuse) * lightDiffuse * VertexCol * attenuation;
     }
 
     vec3 fragColor = pow(min(ambient + lighting, 1.0f), vec3(1.0f / gamma));
