@@ -10,6 +10,7 @@ uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
+uniform vec4 lightAttenuationArray[MAX_LIGHTS];
 
 uniform float matShininess;
 uniform vec3 matDiffuse;
@@ -34,15 +35,17 @@ void main() {
     vec3 lighting = vec3(0.0f, 0.0f, 0.0f);
     vec3 viewDir = normalize(ViewPos - FragPos);
 
-    vec3 ambient = diffuseColor * vec3(0.1f, 0.1f, 0.1f);
+    vec3 ambient = diffuseColor * vec3(1.0f, 1.0f, 1.0f) * 25.0f / 255.0f;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
         vec3 reflectDir = reflect(-lightDir, normal);
-
         float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-        float attenuation = 1.0f / (1.0f + 0.0014f * lightDistance
-            + 0.000007f * lightDistance * lightDistance);
+        float attenuation = 1.0f / (1.0f
+            + lightAttenuationArray[i].z * lightDistance
+            + lightAttenuationArray[i].w * lightDistance * lightDistance);
+
+        vec3 lightDiffuse = pow(lightDiffuseArray[i].xyz, vec3(gamma));
 
         float diff = max(dot(normal, lightDir), 0.0f);
         vec3 diffuse = diff * diffuseColor * matDiffuse;
@@ -51,7 +54,7 @@ void main() {
         float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
         vec3 specular = 0.25f * spec * matSpecular;
 
-        lighting += (specular + diffuse) * lightDiffuseArray[i].xyz * attenuation;
+        lighting += (specular + diffuse) * lightDiffuse * attenuation;
     }
 
     vec3 fragColor = pow(min(ambient + lighting, 1.0f), vec3(1.0f / gamma));

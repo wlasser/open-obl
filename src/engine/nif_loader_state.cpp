@@ -569,6 +569,9 @@ LoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   fsParams->setNamedAutoConstant("lightDiffuseArray",
                                  AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
                                  numLights);
+  fsParams->setNamedAutoConstant("lightAttenuationArray",
+                                 AutoConst::ACT_LIGHT_ATTENUATION_ARRAY,
+                                 numLights);
   fsParams->setNamedAutoConstant("matShininess",
                                  AutoConst::ACT_SURFACE_SHININESS);
   fsParams->setNamedAutoConstant("matDiffuse",

@@ -9,10 +9,11 @@ Ogre::Light *engine::LightManager::get(FormID baseID, Ogre::SceneManager *mgr) {
 
     light->setDiffuseColour(rec.color);
     light->setSpecularColour(rec.color);
+    // TODO: These could do with more tuning
     light->setAttenuation(rec.radius,
                           1.0f,
-                          0.0f,
-                          80.0f / (rec.radius * rec.radius));
+                          0.25f / rec.radius,
+                          10.0f / (rec.radius * rec.radius));
     light->setPowerScale(rec.fadeValue);
 
     auto spotLightFlag =
