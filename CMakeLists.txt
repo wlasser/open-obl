@@ -71,6 +71,7 @@ target_sources(OpenOblivion PRIVATE
         src/engine/nif_loader_state.cpp
         src/engine/ogre_stream_wrappers.cpp
         src/engine/player_controller.cpp
+        src/formid.cpp
         src/main.cpp
         src/records.cpp
         src/save_state.cpp
