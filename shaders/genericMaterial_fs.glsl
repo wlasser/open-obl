@@ -4,7 +4,7 @@ in vec2 TexCoord;
 in vec3 FragPos;
 in vec3 ViewPos;
 
-#define MAX_LIGHTS 4
+#define MAX_LIGHTS 8
 
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;

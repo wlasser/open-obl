@@ -470,6 +470,43 @@ std::istream &raw::read(std::istream &is, raw::DATA_GMST &t, std::size_t size) {
   return is;
 }
 
+// DATA_LIGH specialization
+template<>
+uint16_t DATA_LIGH::size() const {
+  return 32u;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os, const raw::DATA_LIGH &t,
+                         std::size_t /*size*/) {
+  writeBytes(os, t.time);
+  writeBytes(os, t.radius);
+  writeBytes(os, t.color);
+  writeBytes(os, t.flags);
+  writeBytes(os, t.falloffExponent);
+  writeBytes(os, t.fov);
+  writeBytes(os, t.value);
+  writeBytes(os, t.weight);
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
+  readBytes(is, t.time);
+  readBytes(is, t.radius);
+  readBytes(is, t.color);
+  readBytes(is, t.flags);
+  if (size == 32) {
+    readBytes(is, t.falloffExponent);
+    readBytes(is, t.fov);
+  }
+  readBytes(is, t.value);
+  readBytes(is, t.weight);
+
+  return is;
+}
+
 // EFID specialization
 template<>
 uint16_t EFID::size() const {
@@ -1572,6 +1609,75 @@ std::istream &raw::read(std::istream &is,
   }
 
   readRecord(is, t.positionRotation, "DATA");
+  return is;
+}
+
+// LIGH specialization
+template<>
+uint32_t LIGH::size() const {
+  return data.editorID.entireSize()
+      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
+      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
+      + (data.textureHash ? data.textureHash->entireSize() : 0u)
+      + (data.itemScript ? data.itemScript->entireSize() : 0u)
+      + (data.name ? data.name->entireSize() : 0u)
+      + (data.icon ? data.icon->entireSize() : 0u)
+      + data.data.entireSize()
+      + (data.fadeValue ? data.fadeValue->entireSize() : 0u)
+      + (data.sound ? data.sound->entireSize() : 0u);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os, const raw::LIGH &t,
+                         std::size_t/*size*/) {
+  os << t.editorID;
+  if (t.modelFilename) os << *t.modelFilename;
+  if (t.boundRadius) os << *t.boundRadius;
+  if (t.textureHash) os << *t.textureHash;
+  if (t.itemScript) os << *t.itemScript;
+  if (t.name) os << *t.name;
+  if (t.icon) os << *t.icon;
+  os << t.data;
+  if (t.fadeValue) os << *t.fadeValue;
+  if (t.sound) os << *t.sound;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  std::set<std::string> possibleSubrecords = {
+      "MODL", "MODB", "MODT", "SCRI", "FULL", "ICON"
+  };
+  std::string rec;
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    if (rec.length() != 4) {
+      throw std::runtime_error(
+          std::string("Expected a subrecord type, found ").append(rec));
+    }
+    std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
+    switch (recOf(recordArray)) {
+      case "MODL"_rec:readRecord(is, t.modelFilename, "MODL");
+        break;
+      case "MODB"_rec:readRecord(is, t.boundRadius, "MODB");
+        break;
+      case "MODT"_rec:readRecord(is, t.textureHash, "MODT");
+        break;
+      case "SCRI"_rec:readRecord(is, t.itemScript, "SCRI");
+        break;
+      case "FULL"_rec:readRecord(is, t.name, "FULL");
+        break;
+      case "ICON"_rec:readRecord(is, t.icon, "ICON");
+        break;
+      default:break;
+    }
+  }
+
+  readRecord(is, t.data, "DATA");
+  readRecord(is, t.fadeValue, "FNAM");
+  readRecord(is, t.sound, "SNAM");
+
   return is;
 }
 

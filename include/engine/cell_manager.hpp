@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 #define OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 
+#include "engine/light_manager.hpp"
 #include "engine/static_manager.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
@@ -33,11 +34,16 @@ class InteriorCellManager {
   class Processor {
    private:
     InteriorCell *cell;
+    LightManager *lightMgr;
     StaticManager *staticMgr;
 
    public:
-    explicit Processor(InteriorCell *cell, StaticManager *staticMgr) :
-        cell(cell), staticMgr(staticMgr) {}
+    explicit Processor(InteriorCell *cell,
+                       LightManager *lightMgr,
+                       StaticManager *staticMgr) :
+        cell(cell),
+        lightMgr(lightMgr),
+        staticMgr(staticMgr) {}
 
     template<class R>
     void readRecord(std::istream &is) {
@@ -46,13 +52,18 @@ class InteriorCellManager {
   };
 
   std::istream &is;
+  LightManager *lightMgr;
   StaticManager *staticMgr;
   std::unordered_map<FormID, InteriorCellEntry> cells{};
   friend class InitialProcessor;
 
  public:
-  explicit InteriorCellManager(std::istream &is, StaticManager *staticMgr) :
-      is(is), staticMgr(staticMgr) {}
+  explicit InteriorCellManager(std::istream &is,
+                               LightManager *lightMgr,
+                               StaticManager *staticMgr) :
+      is(is),
+      lightMgr(lightMgr),
+      staticMgr(staticMgr) {}
   record::CELL *peek(FormID baseID);
   std::shared_ptr<InteriorCell> get(FormID baseID, Ogre::SceneManager *mgr);
 };

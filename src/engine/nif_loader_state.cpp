@@ -560,12 +560,15 @@ LoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
   auto fsParams = pass->getFragmentProgramParameters();
+  const int numLights = 8;
   fsParams->setNamedConstant("diffuseMap", 0);
   fsParams->setNamedConstant("normalMap", 1);
   fsParams->setNamedAutoConstant("lightPositionArray",
-                                 AutoConst::ACT_LIGHT_POSITION_ARRAY, 4);
+                                 AutoConst::ACT_LIGHT_POSITION_ARRAY,
+                                 numLights);
   fsParams->setNamedAutoConstant("lightDiffuseArray",
-                                 AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY, 4);
+                                 AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
+                                 numLights);
   fsParams->setNamedAutoConstant("matShininess",
                                  AutoConst::ACT_SURFACE_SHININESS);
   fsParams->setNamedAutoConstant("matDiffuse",

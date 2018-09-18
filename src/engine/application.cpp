@@ -163,12 +163,16 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->logMessage("Opened Oblivion.esm");
 
   // Create the engine managers
+  lightMgr = std::make_unique<LightManager>();
   staticMgr = std::make_unique<StaticManager>();
   interiorCellMgr = std::make_unique<InteriorCellManager>(esmStream,
+                                                          lightMgr.get(),
                                                           staticMgr.get());
 
   // Read the main esm
-  InitialProcessor initialProcessor(staticMgr.get(), interiorCellMgr.get());
+  InitialProcessor initialProcessor(lightMgr.get(),
+                                    staticMgr.get(),
+                                    interiorCellMgr.get());
   esp::readEsp(esmStream, initialProcessor);
   logger->logMessage("Read Oblivion.esm");
 
@@ -180,10 +184,6 @@ Application::Application(std::string windowName) : FrameListener() {
   ogreWindow->addViewport(playerController->getCamera());
   playerController->moveTo(conversions::fromBSCoordinates(
       {200.0f, -347.0f, -460.0f}));
-
-  auto *light = scnMgr->createLight("TestLight");
-  auto *lightNode = playerController->getCameraNode()->createChildSceneNode();
-  lightNode->attachObject(light);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {

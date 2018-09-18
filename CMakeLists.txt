@@ -67,6 +67,7 @@ target_sources(OpenOblivion PRIVATE
         src/engine/bsa.cpp
         src/engine/cell_manager.cpp
         src/engine/initial_processor.cpp
+        src/engine/light_manager.cpp
         src/engine/nif_loader.cpp
         src/engine/nif_loader_state.cpp
         src/engine/ogre_stream_wrappers.cpp
@@ -84,6 +85,7 @@ target_sources(OpenOblivion PRIVATE
         include/engine/cell_manager.hpp
         include/engine/conversions.hpp
         include/engine/initial_processor.hpp
+        include/engine/light_manager.hpp
         include/engine/nif_loader.hpp
         include/engine/nif_loader_state.hpp
         include/engine/ogre_stream_wrappers.hpp

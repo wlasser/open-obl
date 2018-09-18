@@ -3,6 +3,7 @@
 
 #include "engine/bsa.hpp"
 #include "engine/cell_manager.hpp"
+#include "engine/light_manager.hpp"
 #include "engine/nif_loader.hpp"
 #include "engine/player_controller.hpp"
 #include "engine/static_manager.hpp"
@@ -47,6 +48,7 @@ class Application : public Ogre::FrameListener {
   // This must have a longer lifetime than ogreRoot
   std::unique_ptr<engine::BSAArchiveFactory> bsaArchiveFactory{};
 
+  std::unique_ptr<engine::LightManager> lightMgr{};
   std::unique_ptr<engine::StaticManager> staticMgr{};
   std::unique_ptr<engine::InteriorCellManager> interiorCellMgr{};
 

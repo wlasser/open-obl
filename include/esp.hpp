@@ -146,6 +146,8 @@ void readEsp(std::istream &is, Processor &processor) {
               break;
             case "LTEX"_rec: processor.template readRecord<record::LTEX>(is);
               break;
+            case "LIGH"_rec: processor.template readRecord<record::LIGH>(is);
+              break;
             case "STAT"_rec: processor.template readRecord<record::STAT>(is);
               break;
             case "ALCH"_rec: processor.template readRecord<record::ALCH>(is);

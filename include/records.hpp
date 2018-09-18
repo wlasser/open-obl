@@ -162,6 +162,20 @@ using XRTM = FormID;
 using XCNT = int32_t;
 // Open by default. Its presence implies true.
 using ONAM = std::tuple<>;
+// Light fade value
+using FNAM_LIGH = float;
+// Sound to play for a light
+using SNAM_LIGH = FormID;
+
+union Color {
+  uint32_t v;
+  struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t unused;
+  };
+};
 
 // Facial and body part indices
 enum class INDX_FACE : uint32_t {
@@ -275,6 +289,44 @@ enum class XSOL : uint8_t {
   Grand = 5u
 };
 
+// Lighting data
+struct DATA_LIGH {
+  enum class Flag : uint32_t {
+    None = 0u,
+    Dynamic = 1u,
+    CanBeCarried = 1u << 1u,
+    Negative = 1u << 2u,
+    Flicker = 1u << 3u,
+    OffByDefault = 1u << 5u,
+    FlickerSlow = 1u << 6u,
+    Pulse = 1u << 7u,
+    PulseSlow = 1u << 8u,
+    SpotLight = 1u << 9u,
+    SpotShadow = 1u << 10u
+  };
+  // Duration time in seconds for a carried light. -1 for no duration.
+  int32_t time{};
+  // Light radius in world units
+  uint32_t radius{};
+  // Light color
+  Color color{};
+  Flag flags = Flag::None;
+  float falloffExponent{1.0f};
+  // Spotlight field of view in degrees
+  float fov{90.0f};
+  // Item properties for carried lights
+  uint32_t value{};
+  float weight{};
+};
+inline constexpr DATA_LIGH::Flag operator|(DATA_LIGH::Flag a,
+                                           DATA_LIGH::Flag b) {
+  return DATA_LIGH::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+}
+inline constexpr DATA_LIGH::Flag operator&(DATA_LIGH::Flag a,
+                                           DATA_LIGH::Flag b) {
+  return DATA_LIGH::Flag(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+}
+
 // Speed tree information TODO: Support trees
 struct XSED {
   uint16_t size{};
@@ -350,16 +402,6 @@ struct XCLC : Tuplifiable<uint32_t, uint32_t> {
 // The regions containing the cell
 struct XCLR {
   std::vector<FormID> regions;
-};
-
-union Color {
-  uint32_t v;
-  struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t unused;
-  };
 };
 
 // Interior cell lighting
@@ -839,14 +881,17 @@ using FNAM_SOUN = Subrecord<raw::FNAM_SOUN, "FNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using FNAM_RACE = Subrecord<raw::FNAM_RACE, "FNAM"_rec>;
 using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
+using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 
 using FNAM_GLOB = Subrecord<raw::FNAM_GLOB, "FNAM"_rec>;
 using FNAM_FACT = Subrecord<raw::FNAM_FACT, "FNAM"_rec>;
 using FNAM_REFR = Subrecord<raw::FNAM_REFR, "FNAM"_rec>;
+using FNAM_LIGH = Subrecord<raw::FNAM_LIGH, "FNAM"_rec>;
 using CNAM_TES4 = Subrecord<raw::CNAM_TES4, "CNAM"_rec>;
 using CNAM_FACT = Subrecord<raw::CNAM_FACT, "CNAM"_rec>;
 using CNAM_RACE = Subrecord<raw::CNAM_RACE, "CNAM"_rec>;
 
+using DATA_LIGH = Subrecord<raw::DATA_LIGH, "DATA"_rec>;
 using DATA_ALCH = Subrecord<raw::DATA_ALCH, "DATA"_rec>;
 using DATA_TES4 = Subrecord<raw::DATA_TES4, "DATA"_rec>;
 using DATA_MGEF = Subrecord<raw::DATA_MGEF, "DATA"_rec>;
@@ -873,6 +918,7 @@ DECLARE_SPECIALIZED_SUBRECORD(DATA_MGEF);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_RACE);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_CLAS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GMST);
+DECLARE_SPECIALIZED_SUBRECORD(DATA_LIGH);
 
 DECLARE_SPECIALIZED_SUBRECORD(HNAM);
 DECLARE_SPECIALIZED_SUBRECORD(ENAM);
@@ -1210,6 +1256,19 @@ struct REFR {
   record::DATA_REFR positionRotation{};
 };
 
+struct LIGH {
+  record::EDID editorID{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> itemScript{};
+  std::optional<record::FULL> name{};
+  std::optional<record::ICON> icon{};
+  record::DATA_LIGH data{};
+  std::optional<record::FNAM_LIGH> fadeValue{};
+  std::optional<record::SNAM_LIGH> sound{};
+};
+
 } // namespace raw
 
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
@@ -1229,6 +1288,7 @@ using STAT = Record<raw::STAT, "STAT"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using REFR = Record<raw::REFR, "REFR"_rec>;
+using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(TES4);
@@ -1247,6 +1307,7 @@ DECLARE_SPECIALIZED_RECORD(STAT);
 // TODO: DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 DECLARE_SPECIALIZED_RECORD(REFR);
+DECLARE_SPECIALIZED_RECORD(LIGH);
 
 } // namespace record
 
