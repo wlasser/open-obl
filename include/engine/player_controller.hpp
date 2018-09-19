@@ -6,6 +6,7 @@
 #include <OgreSceneNode.h>
 #include <OgreCamera.h>
 #include <array>
+#include "conversions.hpp"
 
 namespace engine {
 
@@ -41,7 +42,20 @@ class PlayerController {
   void update(float elapsed);
 
  private:
-  const float speed{300.0f};
+  const float fMoveCharWalkMin{90.0f};
+  const float fMoveCharWalkMax{130.0f};
+  const float fMoveRunMult{3.0f};
+  const float fMoveRunAthleticsMult{1.0f};
+  float speedAttribute{50.0f};
+  float athleticsSkill{50.0f};
+  float moveTypeModifier
+      {fMoveRunMult + fMoveRunAthleticsMult * athleticsSkill / 100.0f};
+  float baseSpeed{fMoveCharWalkMin
+                      + (fMoveCharWalkMax - fMoveCharWalkMin) * speedAttribute
+                          / 100.0f};
+  const float
+      speed{moveTypeModifier * baseSpeed * conversions::metersPerUnit<float>};
+
   Ogre::Radian pitch{0.0f};
   Ogre::Radian yaw{0.0f};
   Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};

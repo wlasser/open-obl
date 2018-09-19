@@ -9,6 +9,13 @@
 
 namespace engine::conversions {
 
+// Game data uses 'u' has a unit of distance, with 64 u = 1 yd, but Bullet works
+// best with (needs?) SI units. By definition, 1 yd = 0.9144 m.
+template<class T>
+constexpr T unitsPerMeter = T(64.0L / 0.9144L);
+template<class T>
+constexpr T metersPerUnit = T(0.9144L / 64.0L);
+
 inline Ogre::Vector3 fromNif(const nif::compound::Vector3 &v) {
   return Ogre::Vector3{v.x, v.y, v.z};
 }
@@ -28,7 +35,7 @@ inline Ogre::ColourValue fromNif(const nif::compound::Color4 &c) {
 }
 
 inline Ogre::Vector3 fromBSCoordinates(const Ogre::Vector3 &v) {
-  return {v.x, v.z, -v.y};
+  return metersPerUnit<Ogre::Real> * Ogre::Vector3{v.x, v.z, -v.y};
 }
 
 inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {

@@ -13,8 +13,8 @@ engine::LightMesh engine::LightManager::get(FormID baseID,
     // TODO: These could do with more tuning
     light->setAttenuation(rec.radius,
                           1.0f,
-                          0.25f / rec.radius,
-                          10.0f / (rec.radius * rec.radius));
+                          350.0f / rec.radius,
+                          1200.0f / (rec.radius * rec.radius));
     light->setPowerScale(rec.fadeValue);
 
     Ogre::Entity *mesh = nullptr;

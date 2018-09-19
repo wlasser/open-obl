@@ -22,23 +22,23 @@ Ogre::SceneNode *PlayerController::getCameraNode() {
 void PlayerController::sendEvent(const MoveEvent &event) {
   switch (event.type) {
     case MoveEvent::Left: {
-      if (event.down) localVelocity.x -= speed;
-      else localVelocity.x += speed;
+      if (event.down) localVelocity.x -= 1.0f;
+      else localVelocity.x += 1.0f;
       break;
     }
     case MoveEvent::Right: {
-      if (event.down) localVelocity.x -= -speed;
-      else localVelocity.x += -speed;
+      if (event.down) localVelocity.x -= -1.0f;
+      else localVelocity.x += -1.0f;
       break;
     }
     case MoveEvent::Forward: {
-      if (event.down) localVelocity.z -= speed;
-      else localVelocity.z += speed;
+      if (event.down) localVelocity.z -= 1.0f;
+      else localVelocity.z += 1.0f;
       break;
     }
     case MoveEvent::Backward: {
-      if (event.down) localVelocity.z -= -speed * 2.0f / 3.0f;
-      else localVelocity.z += -speed * 2.0f / 3.0f;
+      if (event.down) localVelocity.z -= -1.0f;
+      else localVelocity.z += -1.0f;
       break;
     }
     case MoveEvent::Pitch: {
@@ -68,9 +68,11 @@ void PlayerController::update(float elapsed) {
   auto axes = cameraNode->getLocalAxes();
   // TODO: Is this normalization necessary or is axes already in SO(3)?
   axes = (1.0f / axes.determinant()) * axes;
-  cameraNode->translate(axes,
-                        localVelocity * elapsed,
-                        Ogre::SceneNode::TS_WORLD);
+  if (auto length = localVelocity.length() > 0.01f) {
+    cameraNode->translate(axes,
+                          localVelocity / length * speed * elapsed,
+                          Ogre::SceneNode::TS_WORLD);
+  }
 }
 
 } // namespace engine
