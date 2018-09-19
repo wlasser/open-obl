@@ -21,12 +21,16 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID,
   if (entry == cells.end()) return nullptr;
 
   // If this cell has been loaded before and is still loaded, then we can return
-  // a new shared_ptr to it.
+  // a new shared_ptr to it. Also update the currently loaded cell
   auto &cell = entry->second.cell;
-  if (!cell.expired()) return cell.lock();
+  if (!cell.expired()) {
+    strategy->notify(cell.lock());
+    return cell.lock();
+  }
 
   // Otherwise we have to create a new shared_ptr and load the cell.
   auto ptr = std::make_shared<InteriorCell>();
+  strategy->notify(ptr);
   ptr->scnMgr = mgr;
   cell = std::weak_ptr(ptr);
 

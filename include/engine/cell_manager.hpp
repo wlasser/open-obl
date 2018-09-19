@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 #define OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 
+#include "engine/keep_strategy.hpp"
 #include "engine/light_manager.hpp"
 #include "engine/static_manager.hpp"
 #include "formid.hpp"
@@ -29,7 +30,17 @@ struct InteriorCellEntry {
   // TODO: Constructors?
 };
 
+// We want the cell manager to be able to decide to keep some cells loaded if
+// they are accessed frequently, or have just been accessed, etc. This means the
+// manager must have sole or shared ownership of the cells. Since it is possible
+// for NPCs to navigate through cells and follow the player, the AI code in
+// particular needs to be able to force cells to remain (at least partially)
+// loaded. Thus we cannot allow loading a new cell to unconditionally delete an
+// old one; it may still be in use. We therefore require shared ownership.
 class InteriorCellManager {
+ public:
+  using Strategy = strategy::KeepStrategy<InteriorCell>;
+
  private:
   class Processor {
    private:
@@ -55,15 +66,19 @@ class InteriorCellManager {
   LightManager *lightMgr;
   StaticManager *staticMgr;
   std::unordered_map<FormID, InteriorCellEntry> cells{};
+  std::unique_ptr<Strategy> strategy;
   friend class InitialProcessor;
 
  public:
   explicit InteriorCellManager(std::istream &is,
                                LightManager *lightMgr,
-                               StaticManager *staticMgr) :
+                               StaticManager *staticMgr,
+                               std::unique_ptr<Strategy> &&strategy) :
       is(is),
       lightMgr(lightMgr),
-      staticMgr(staticMgr) {}
+      staticMgr(staticMgr),
+      strategy(std::move(strategy)) {}
+
   record::CELL *peek(FormID baseID);
   std::shared_ptr<InteriorCell> get(FormID baseID, Ogre::SceneManager *mgr);
 };

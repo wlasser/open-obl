@@ -9,6 +9,7 @@ find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS)
 find_package(Boost 1.67 REQUIRED)
+find_package(Bullet 2.85 REQUIRED)
 
 # IO library
 add_library(OpenOblivionIO OBJECT)
@@ -85,6 +86,7 @@ target_sources(OpenOblivion PRIVATE
         include/engine/cell_manager.hpp
         include/engine/conversions.hpp
         include/engine/initial_processor.hpp
+        include/engine/keep_strategy.hpp
         include/engine/light_manager.hpp
         include/engine/nif_loader.hpp
         include/engine/nif_loader_state.hpp
@@ -100,11 +102,13 @@ target_sources(OpenOblivion PRIVATE
 target_include_directories(OpenOblivion PRIVATE
         ${ZLIB_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIR}
-        ${Boost_INCLUDE_DIRS})
+        ${Boost_INCLUDE_DIRS}
+        ${BULLET_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE
         ${ZLIB_LIBRARIES}
         ${OGRE_LIBRARIES}
         ${SDL2_LIBRARY}
+        ${BULLET_LIBRARIES}
         stdc++fs)
 
 add_library(Catch INTERFACE)

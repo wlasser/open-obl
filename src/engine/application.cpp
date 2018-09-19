@@ -2,6 +2,7 @@
 #include "engine/cell_manager.hpp"
 #include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
+#include "engine/keep_strategy.hpp"
 #include "engine/static_manager.hpp"
 #include "esp.hpp"
 #include "SDL.h"
@@ -165,9 +166,11 @@ Application::Application(std::string windowName) : FrameListener() {
   // Create the engine managers
   lightMgr = std::make_unique<LightManager>();
   staticMgr = std::make_unique<StaticManager>();
-  interiorCellMgr = std::make_unique<InteriorCellManager>(esmStream,
-                                                          lightMgr.get(),
-                                                          staticMgr.get());
+  interiorCellMgr = std::make_unique<InteriorCellManager>(
+      esmStream,
+      lightMgr.get(),
+      staticMgr.get(),
+      std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm
   InitialProcessor initialProcessor(lightMgr.get(),
