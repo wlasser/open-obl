@@ -1,6 +1,7 @@
 #include "engine/light_manager.hpp"
 
-Ogre::Light *engine::LightManager::get(FormID baseID, Ogre::SceneManager *mgr) {
+engine::LightMesh engine::LightManager::get(FormID baseID,
+                                            Ogre::SceneManager *mgr) {
   auto entry = lights.find(baseID);
   if (entry != lights.end()) {
     const auto &rec = entry->second;
@@ -15,6 +16,9 @@ Ogre::Light *engine::LightManager::get(FormID baseID, Ogre::SceneManager *mgr) {
                           0.25f / rec.radius,
                           10.0f / (rec.radius * rec.radius));
     light->setPowerScale(rec.fadeValue);
+
+    Ogre::Entity *mesh = nullptr;
+    if (!rec.modelFilename.empty()) mesh = mgr->createEntity(rec.modelFilename);
 
     auto spotLightFlag =
         LightEntry::Flag::SpotLight | LightEntry::Flag::SpotShadow;
@@ -31,6 +35,6 @@ Ogre::Light *engine::LightManager::get(FormID baseID, Ogre::SceneManager *mgr) {
       light->setType(Ogre::Light::LightTypes::LT_POINT);
     }
 
-    return light;
-  } else return nullptr;
+    return {light, mesh};
+  } else return {};
 }

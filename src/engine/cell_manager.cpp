@@ -55,11 +55,15 @@ template<>
 void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) {
   auto ref = record::readRecord<record::REFR>(is);
   auto *node = cell->scnMgr->getRootSceneNode()->createChildSceneNode();
+  auto id = ref.data.baseID.data;
 
-  if (auto *statEntity = staticMgr->get(ref.data.baseID.data, cell->scnMgr)) {
+  if (auto *statEntity = staticMgr->get(id, cell->scnMgr)) {
     node->attachObject(statEntity);
-  } else if (auto *light = lightMgr->get(ref.data.baseID.data, cell->scnMgr)) {
+  } else if (auto[light, mesh] = lightMgr->get(id, cell->scnMgr); light) {
     node->attachObject(light);
+    if (mesh) {
+      node->createChildSceneNode()->attachObject(mesh);
+    }
   } else {
     cell->scnMgr->destroySceneNode(node);
     return;

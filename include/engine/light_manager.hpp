@@ -31,6 +31,11 @@ struct LightItemEntry : LightEntry {
   float weight{};
 };
 
+struct LightMesh {
+  Ogre::Light *light{nullptr};
+  Ogre::Entity *mesh{nullptr};
+};
+
 class LightManager {
  private:
   std::unordered_map<FormID, LightEntry> lights{};
@@ -38,7 +43,7 @@ class LightManager {
   friend class InitialProcessor;
 
  public:
-  Ogre::Light *get(FormID baseID, Ogre::SceneManager *mgr);
+  LightMesh get(FormID baseID, Ogre::SceneManager *mgr);
 };
 
 } // namespace engine
