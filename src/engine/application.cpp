@@ -180,10 +180,10 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->logMessage("Read Oblivion.esm");
 
   // Load a test cell
-  auto cell = interiorCellMgr->get(0x00'031b59, scnMgr);
+  auto cell = interiorCellMgr->get(0x00'031b59);
   logger->logMessage("Loaded test cell");
 
-  playerController = std::make_unique<engine::PlayerController>(scnMgr);
+  playerController = std::make_unique<engine::PlayerController>(cell->scnMgr);
   ogreWindow->addViewport(playerController->getCamera());
   playerController->moveTo(conversions::fromBSCoordinates(
       {200.0f, -347.0f, -460.0f}));

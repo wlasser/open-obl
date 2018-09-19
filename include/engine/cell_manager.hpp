@@ -9,6 +9,7 @@
 #include "records.hpp"
 #include <OgreColourValue.h>
 #include <OgreLight.h>
+#include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <memory>
 #include <string>
@@ -21,6 +22,12 @@ struct InteriorCell {
   Ogre::ColourValue ambientLight{};
   Ogre::Light *directionalLight{};
   Ogre::SceneManager *scnMgr{};
+  InteriorCell() : scnMgr(Ogre::Root::getSingletonPtr()
+                              ->createSceneManager()) {}
+  ~InteriorCell() {
+    auto root = Ogre::Root::getSingletonPtr();
+    if (root) root->destroySceneManager(scnMgr);
+  }
 };
 
 struct InteriorCellEntry {
@@ -80,7 +87,7 @@ class InteriorCellManager {
       strategy(std::move(strategy)) {}
 
   record::CELL *peek(FormID baseID);
-  std::shared_ptr<InteriorCell> get(FormID baseID, Ogre::SceneManager *mgr);
+  std::shared_ptr<InteriorCell> get(FormID baseID);
 };
 
 template<>

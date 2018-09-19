@@ -4,6 +4,7 @@
 #include "formid.hpp"
 #include "records.hpp"
 #include <OgreSceneNode.h>
+#include <OgreRoot.h>
 
 namespace engine {
 
@@ -13,8 +14,7 @@ record::CELL *InteriorCellManager::peek(FormID baseID) {
   else return nullptr;
 }
 
-std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID,
-                                                       Ogre::SceneManager *mgr) {
+std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
   // Try to find an InteriorCellEntry with the given baseID. Since every cell
   // should have an entry by now, if no entry exists then we can give up.
   auto entry = cells.find(baseID);
@@ -31,7 +31,6 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID,
   // Otherwise we have to create a new shared_ptr and load the cell.
   auto ptr = std::make_shared<InteriorCell>();
   strategy->notify(ptr);
-  ptr->scnMgr = mgr;
   cell = std::weak_ptr(ptr);
 
   // Fill in the scene data from the cell record, which we already have.
