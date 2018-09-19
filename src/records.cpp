@@ -4,11 +4,40 @@
 #include "io/read_bytes.hpp"
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <set>
 
 namespace record {
 
 using namespace io;
+
+// SPIT specialization
+template<>
+uint16_t SPIT::size() const {
+  return 16u;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::SPIT &t,
+                         std::size_t /*size*/) {
+  writeBytes(os, t.type);
+  writeBytes(os, t.cost);
+  writeBytes(os, t.level);
+  writeBytes(os, t.flags);
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
+  readBytes(is, t.type);
+  readBytes(is, t.cost);
+  readBytes(is, t.level);
+  readBytes(is, t.flags);
+
+  return is;
+}
 
 // XSED specialization
 template<>
@@ -726,75 +755,77 @@ std::istream &raw::read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
   return is;
 }
 
+// Effect members
+uint32_t raw::Effect::size() const {
+  return name.entireSize() + data.entireSize()
+      + (script ? (script->data.entireSize() + script->name.entireSize()) : 0u);
+}
+
+void raw::Effect::read(std::istream &is) {
+  is >> name >> data;
+  if (peekRecordType(is) == "SCIT") {
+    ScriptEffectData sed{};
+    is >> sed.data >> sed.name;
+    script.emplace(std::move(sed));
+  }
+}
+
+void raw::Effect::write(std::ostream &os) const {
+  os << name << data;
+  if (script) os << script->data << script->name;
+}
+
+bool raw::Effect::isNext(std::istream &is) {
+  return peekRecordType(is) == "EFID";
+}
+
 // ALCH specialization
 template<>
 uint32_t ALCH::size() const {
-  uint32_t size = data.itemName.entireSize()
+  return (data.editorID ? data.editorID->entireSize() : 0u)
+      + data.itemName.entireSize()
       + data.modelFilename.entireSize()
-      + data.boundRadius.entireSize()
-      + data.iconFilename.entireSize()
+      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
+      + (data.textureHash ? data.textureHash->entireSize() : 0u)
+      + (data.iconFilename ? data.iconFilename->entireSize() : 0u)
+      + (data.itemScript ? data.itemScript->entireSize() : 0u)
       + data.itemWeight.entireSize()
-      + data.itemValue.entireSize();
-  if (!data.editorID.data.empty()) {
-    size += data.editorID.entireSize();
-  }
-  if (!data.textureHash.data.records.empty()) {
-    size += data.textureHash.entireSize();
-  }
-  if (data.itemScript.data != 0) {
-    size += data.itemScript.entireSize();
-  }
-  for (const auto &effect : data.effects) {
-    size += effect.magicEffectID.entireSize()
-        + effect.magicEffect.entireSize();
-    if (recOf(effect.magicEffectID.data) == "SEFF"_rec) {
-      size += effect.scriptEffect.entireSize()
-          + effect.scriptEffectName.entireSize();
-    }
-  }
-  return size;
+      + data.itemValue.entireSize()
+      + std::accumulate(data.effects.begin(), data.effects.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.size();
+                        });
 }
 
 template<>
 std::ostream &raw::write(std::ostream &os,
                          const raw::ALCH &t,
                          std::size_t /*size*/) {
-  if (!t.editorID.data.empty()) os << t.editorID;
-  os << t.itemName << t.modelFilename << t.boundRadius;
-  if (!t.textureHash.data.records.empty()) os << t.textureHash;
-  os << t.iconFilename;
-  if (t.itemScript.data) os << t.itemScript;
+  if (t.editorID) os << *t.editorID;
+  os << t.itemName << t.modelFilename;
+  if (t.boundRadius) os << *t.boundRadius;
+  if (t.textureHash) os << *t.textureHash;
+  if (t.iconFilename) os << *t.iconFilename;
+  if (t.itemScript) os << *t.itemScript;
   os << t.itemWeight << t.itemValue;
-  for (const auto &effect : t.effects) {
-    os << effect.magicEffectID << effect.magicEffect;
-    if (recOf(effect.magicEffectID.data) == "SEFF"_rec) {
-      os << effect.scriptEffect << effect.scriptEffectName;
-    }
-  }
+  for (const auto &effect : t.effects) effect.write(os);
+
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
-  if (peekRecordType(is) == "EDID") is >> t.editorID;
-  if (peekRecordType(is) == "FULL") is >> t.itemName;
-  if (peekRecordType(is) == "MODL") is >> t.modelFilename;
-  if (peekRecordType(is) == "MODB") is >> t.boundRadius;
-  if (peekRecordType(is) == "MODT") is >> t.textureHash;
-  if (peekRecordType(is) == "ICON") is >> t.iconFilename;
-  if (peekRecordType(is) == "SCRI") is >> t.itemScript;
-  if (peekRecordType(is) == "DATA") is >> t.itemWeight;
-  if (peekRecordType(is) == "ENIT") is >> t.itemValue;
-  while (peekRecordType(is) == "EFID") {
-    raw::ALCH::AlchEffect effect;
-    is >> effect.magicEffectID;
-    if (peekRecordType(is) == "EFIT") is >> effect.magicEffect;
-    if (recOf(effect.magicEffectID.data) == "SEFF"_rec) {
-      if (peekRecordType(is) == "SCIT") is >> effect.scriptEffect;
-      if (peekRecordType(is) == "FULL") is >> effect.scriptEffectName;
-    }
-    t.effects.emplace_back(effect);
-  }
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.itemName, "FULL");
+  readRecord(is, t.modelFilename, "MODL");
+  readRecord(is, t.boundRadius, "MODB");
+  readRecord(is, t.textureHash, "MODT");
+  readRecord(is, t.iconFilename, "ICON");
+  readRecord(is, t.itemScript, "SCRI");
+  readRecord(is, t.itemWeight, "DATA");
+  readRecord(is, t.itemValue, "ENIT");
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
   return is;
 }
 
@@ -1387,6 +1418,72 @@ std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
   readRecord(is, t.textureHash, "MODT");
 
   return is;
+}
+
+// ENCH specialization
+template<>
+uint32_t ENCH::size() const {
+  return data.editorID.entireSize()
+      + (data.name ? data.name->entireSize() : 0u)
+      + data.enchantmentData.entireSize()
+      + std::accumulate(data.effects.begin(), data.effects.end(), 0,
+                        [](auto a, const auto &b) {
+                          return a + b.size();
+                        });
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "FULL");
+  readRecord(is, t.enchantmentData, "DATA");
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::ENCH &t,
+                         std::size_t /*size*/) {
+  os << t.editorID;
+  if (t.name) os << *t.name;
+  os << t.enchantmentData;
+  for (const auto &effect : t.effects) effect.write(os);
+
+  return os;
+}
+
+// SPEL specialization
+template<>
+uint32_t SPEL::size() const {
+  return data.editorID.entireSize()
+      + data.name.entireSize()
+      + data.data.entireSize()
+      + std::accumulate(data.effects.begin(), data.effects.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.size();
+                        });
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "FULL");
+  readRecord(is, t.data, "SPIT");
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::SPEL &t,
+                         std::size_t /*size*/) {
+  os << t.editorID << t.name << t.data;
+  for (const auto &effect : t.effects) effect.write(os);
+
+  return os;
 }
 
 // CELL specialization

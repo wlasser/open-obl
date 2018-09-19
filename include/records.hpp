@@ -289,6 +289,39 @@ enum class XSOL : uint8_t {
   Grand = 5u
 };
 
+// Spell data
+struct SPIT {
+  enum class Type : uint32_t {
+    Spell = 0,
+    Disease = 1,
+    Power = 2,
+    LesserPower = 3,
+    Ability = 4,
+    Poison = 5
+  };
+  enum class Level : uint32_t {
+    Novice = 0,
+    Apprentice = 1,
+    Journeyman = 2,
+    Expert = 3,
+    Master = 4
+  };
+  enum class Flag : uint32_t {
+    None = 0,
+    NoAuto = 0x1u,
+    NoSilence = 0x8u | 0x2u,
+    PlayerStartSpell = 0x4u,
+    AreaIgnoresLineOfSight = 0x10u,
+    ScriptAlwaysApplies = 0x20u,
+    NoAbsorbReflect = 0x40u,
+    TouchExplodeNoTarget = 0x80u
+  };
+  Type type{Type::Spell};
+  uint32_t cost{};
+  Level level{Level::Novice};
+  Flag flags{Flag::None};
+};
+
 // Lighting data
 struct DATA_LIGH {
   enum class Flag : uint32_t {
@@ -865,6 +898,7 @@ using TNAM = Subrecord<raw::TNAM, "TNAM"_rec>;
 using ONAM = Subrecord<raw::ONAM, "ONAM"_rec>;
 using XRGD = Subrecord<raw::XRGD, "XRGD"_rec>;
 using XSOL = Subrecord<raw::XSOL, "XSOL"_rec>;
+using SPIT = Subrecord<raw::SPIT, "SPIT"_rec>;
 
 using DATA_REFR = Subrecord<raw::DATA_REFR, "DATA"_rec>;
 using DATA_CELL = Subrecord<raw::DATA_CELL, "DATA"_rec>;
@@ -937,31 +971,40 @@ DECLARE_SPECIALIZED_SUBRECORD(XRGD);
 DECLARE_SPECIALIZED_SUBRECORD(XLOC);
 DECLARE_SPECIALIZED_SUBRECORD(XESP);
 DECLARE_SPECIALIZED_SUBRECORD(XSED);
+DECLARE_SPECIALIZED_SUBRECORD(SPIT);
 
 namespace raw {
+
+// This is not a record, but appears multiple times in records with magic
+// effect components, e.g ALCH, ENCH, SPEL
+struct Effect {
+  record::EFID name{};
+  record::EFIT data{};
+  struct ScriptEffectData {
+    // Reverse order compared to Effect
+    record::SCIT data{};
+    record::FULL name{record::FULL("Script Effect")};
+  };
+  std::optional<ScriptEffectData> script{};
+  uint32_t size() const;
+  void read(std::istream &is);
+  void write(std::ostream &os) const;
+  static bool isNext(std::istream &is);
+};
+
 // Potion
 struct ALCH {
-  // Optional (in save games) TODO: Use std::optional?
-  record::EDID editorID{};
+  // Not present in save games for player-made potions and poisons
+  std::optional<record::EDID> editorID{};
   record::FULL itemName{};
   record::MODL modelFilename{};
-  record::MODB boundRadius{};
-  record::MODT textureHash{};
-  record::ICON iconFilename{};
-  // Optional TODO: Use std::optional
-  record::SCRI itemScript{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::ICON> iconFilename{};
+  std::optional<record::SCRI> itemScript{};
   record::DATA_ALCH itemWeight{};
   record::ENIT itemValue{};
-  struct AlchEffect {
-    record::EFID magicEffectID{};
-    record::EFIT magicEffect{};
-    // Optional TODO: Use std::optional
-    record::SCIT scriptEffect{};
-    // Optional TODO: Use std::optional
-    record::FULL scriptEffectName{};
-  };
-  // List of AlchEffects
-  std::vector<AlchEffect> effects{};
+  std::vector<Effect> effects{};
 };
 
 // Full ESM/ESP header
@@ -1171,16 +1214,13 @@ struct ENCH {
   record::EDID editorID{};
   std::optional<record::FULL> name{};
   record::ENIT_ENCH enchantmentData{};
-  struct Effect {
-    record::EFID name{};
-    record::EFIT data{};
-    struct ScriptEffectData {
-      // Reverse order compared to Effect
-      record::SCIT data{};
-      record::FULL name = record::FULL("Script Effect");
-    };
-    std::optional<ScriptEffectData> script{};
-  };
+  std::vector<Effect> effects{};
+};
+
+struct SPEL {
+  record::EDID editorID{};
+  record::FULL name{};
+  record::SPIT data{};
   std::vector<Effect> effects{};
 };
 
@@ -1286,6 +1326,7 @@ using MGEF = Record<raw::MGEF, "MGEF"_rec>;
 using LTEX = Record<raw::LTEX, "LTEX"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
+using SPEL = Record<raw::SPEL, "SPEL"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using REFR = Record<raw::REFR, "REFR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
@@ -1304,7 +1345,8 @@ DECLARE_SPECIALIZED_RECORD(SKIL);
 DECLARE_SPECIALIZED_RECORD(MGEF);
 DECLARE_SPECIALIZED_RECORD(LTEX);
 DECLARE_SPECIALIZED_RECORD(STAT);
-// TODO: DECLARE_SPECIALIZED_RECORD(ENCH);
+DECLARE_SPECIALIZED_RECORD(ENCH);
+DECLARE_SPECIALIZED_RECORD(SPEL);
 DECLARE_SPECIALIZED_RECORD(CELL);
 DECLARE_SPECIALIZED_RECORD(REFR);
 DECLARE_SPECIALIZED_RECORD(LIGH);
