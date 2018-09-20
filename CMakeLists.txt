@@ -57,13 +57,13 @@ target_sources(OpenOblivionRecord PUBLIC
         include/record/subrecord.hpp
         include/record/tuplifiable.hpp)
 
-add_executable(OpenOblivion)
-target_include_directories(OpenOblivion PUBLIC include)
-target_sources(OpenOblivion PRIVATE
+# Engine library
+add_library(OpenOblivionEngine OBJECT)
+target_include_directories(OpenOblivionEngine PUBLIC include)
+target_sources(OpenOblivionEngine PUBLIC
         $<TARGET_OBJECTS:OpenOblivionIO>
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
-        src/bsa.cpp
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/initial_processor.cpp
@@ -73,14 +73,6 @@ target_sources(OpenOblivion PRIVATE
         src/engine/nifloader/loader_state.cpp
         src/engine/ogre/ogre_stream_wrappers.cpp
         src/engine/player_controller.cpp
-        src/formid.cpp
-        src/main.cpp
-        src/records.cpp
-        src/save_state.cpp
-        src/system_time.cpp
-        include/actor_value.hpp
-        include/attribute.hpp
-        include/bsa.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
         include/engine/bullet/configuration.hpp
@@ -93,7 +85,35 @@ target_sources(OpenOblivion PRIVATE
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
         include/engine/ogre/ogre_stream_wrappers.hpp
-        include/engine/player_controller.hpp
+        include/engine/player_controller.hpp)
+
+target_include_directories(OpenOblivionEngine PUBLIC
+        ${SDL2_INCLUDE_DIR}
+        ${Boost_INCLUDE_DIRS}
+        ${BULLET_INCLUDE_DIRS})
+
+target_link_libraries(OpenOblivionEngine PUBLIC
+        ${OGRE_LIBRARIES}
+        ${SDL2_LIBRARY}
+        ${BULLET_LIBRARIES}
+        stdc++fs)
+
+add_executable(OpenOblivion)
+target_include_directories(OpenOblivion PUBLIC include)
+target_sources(OpenOblivion PRIVATE
+        $<TARGET_OBJECTS:OpenOblivionIO>
+        $<TARGET_OBJECTS:OpenOblivionNif>
+        $<TARGET_OBJECTS:OpenOblivionRecord>
+        $<TARGET_OBJECTS:OpenOblivionEngine>
+        src/bsa.cpp
+        src/formid.cpp
+        src/main.cpp
+        src/records.cpp
+        src/save_state.cpp
+        src/system_time.cpp
+        include/actor_value.hpp
+        include/attribute.hpp
+        include/bsa.hpp
         include/esp.hpp
         include/formid.hpp
         include/magic_effects.hpp

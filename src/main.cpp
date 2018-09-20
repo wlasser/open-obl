@@ -1,5 +1,3 @@
-#include <cxxopts.hpp>
-#include <OgreMesh.h>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
