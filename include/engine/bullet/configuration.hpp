@@ -1,0 +1,41 @@
+#ifndef OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP
+#define OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP
+
+#include <btBulletDynamicsCommon.h>
+#include <memory>
+
+namespace engine::bullet {
+
+class Configuration {
+ public:
+  std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration{
+      std::make_unique<btDefaultCollisionConfiguration>()
+  };
+
+  std::unique_ptr<btCollisionDispatcher> dispatcher{
+      std::make_unique<btCollisionDispatcher>(collisionConfiguration.get())
+  };
+
+  std::unique_ptr<btBroadphaseInterface> broadphase{
+      std::make_unique<btDbvtBroadphase>()
+  };
+
+  std::unique_ptr<btSequentialImpulseConstraintSolver> solver{
+      std::make_unique<btSequentialImpulseConstraintSolver>()
+  };
+
+ public:
+  std::unique_ptr<btDiscreteDynamicsWorld> makeDynamicsWorld() {
+    auto world = std::make_unique<btDiscreteDynamicsWorld>(
+        dispatcher.get(),
+        broadphase.get(),
+        solver.get(),
+        collisionConfiguration.get());
+    world->setGravity({0, -9.81f, 0});
+    return world;
+  }
+};
+
+} // namespace engine::bullet
+
+#endif // OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP

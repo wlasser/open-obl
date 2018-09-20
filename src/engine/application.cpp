@@ -103,6 +103,9 @@ Application::Application(std::string windowName) : FrameListener() {
   ogreWindow = makeOgreWindow(ogreRoot.get(), windowName, windowWidth,
                               windowHeight, &params);
 
+  // Construct the Bullet configuration
+  bulletConf = std::make_unique<engine::bullet::Configuration>();
+
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
   resGrpMgr.createResourceGroup(resourceGroup);
@@ -170,6 +173,7 @@ Application::Application(std::string windowName) : FrameListener() {
       esmStream,
       lightMgr.get(),
       staticMgr.get(),
+      bulletConf.get(),
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm

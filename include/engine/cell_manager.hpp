@@ -1,12 +1,14 @@
 #ifndef OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 #define OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
 
+#include "engine/bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
 #include "engine/light_manager.hpp"
 #include "engine/static_manager.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
 #include "records.hpp"
+#include <btBulletDynamicsCommon.h>
 #include <OgreColourValue.h>
 #include <OgreLight.h>
 #include <OgreRoot.h>
@@ -22,8 +24,12 @@ struct InteriorCell {
   Ogre::ColourValue ambientLight{};
   Ogre::Light *directionalLight{};
   Ogre::SceneManager *scnMgr{};
-  InteriorCell() : scnMgr(Ogre::Root::getSingletonPtr()
-                              ->createSceneManager()) {}
+  std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld{};
+
+  explicit InteriorCell(std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld)
+      : scnMgr(Ogre::Root::getSingletonPtr()->createSceneManager()),
+        physicsWorld(std::move(physicsWorld)) {}
+
   ~InteriorCell() {
     auto root = Ogre::Root::getSingletonPtr();
     if (root) root->destroySceneManager(scnMgr);
@@ -72,6 +78,7 @@ class InteriorCellManager {
   std::istream &is;
   LightManager *lightMgr;
   StaticManager *staticMgr;
+  bullet::Configuration *bulletConf;
   std::unordered_map<FormID, InteriorCellEntry> cells{};
   std::unique_ptr<Strategy> strategy;
   friend class InitialProcessor;
@@ -80,10 +87,12 @@ class InteriorCellManager {
   explicit InteriorCellManager(std::istream &is,
                                LightManager *lightMgr,
                                StaticManager *staticMgr,
+                               bullet::Configuration *bulletConf,
                                std::unique_ptr<Strategy> &&strategy) :
       is(is),
       lightMgr(lightMgr),
       staticMgr(staticMgr),
+      bulletConf(bulletConf),
       strategy(std::move(strategy)) {}
 
   record::CELL *peek(FormID baseID);

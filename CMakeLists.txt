@@ -83,6 +83,7 @@ target_sources(OpenOblivion PRIVATE
         include/bsa.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
+        include/engine/bullet/configuration.hpp
         include/engine/cell_manager.hpp
         include/engine/conversions.hpp
         include/engine/initial_processor.hpp

@@ -29,7 +29,7 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
   }
 
   // Otherwise we have to create a new shared_ptr and load the cell.
-  auto ptr = std::make_shared<InteriorCell>();
+  auto ptr = std::make_shared<InteriorCell>(bulletConf->makeDynamicsWorld());
   strategy->notify(ptr);
   cell = std::weak_ptr(ptr);
 

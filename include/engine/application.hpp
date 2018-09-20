@@ -2,6 +2,7 @@
 #define OPENOBLIVION_ENGINE_APPLICATION_HPP
 
 #include "engine/bsa.hpp"
+#include "engine/bullet/configuration.hpp"
 #include "engine/cell_manager.hpp"
 #include "engine/light_manager.hpp"
 #include "engine/nif_loader.hpp"
@@ -64,6 +65,7 @@ class Application : public Ogre::FrameListener {
   nifloader::Loader nifLoader{};
   const std::string resourceGroup = "OOResource";
 
+  std::unique_ptr<engine::bullet::Configuration> bulletConf{};
   std::unique_ptr<engine::PlayerController> playerController{};
 
  public:
