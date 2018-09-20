@@ -3,11 +3,11 @@
 
 #include "engine/bsa.hpp"
 #include "engine/bullet/configuration.hpp"
-#include "engine/cell_manager.hpp"
-#include "engine/light_manager.hpp"
+#include "engine/managers/interior_cell_manager.hpp"
+#include "engine/managers/light_manager.hpp"
+#include "engine/managers/static_manager.hpp"
 #include "engine/nif_loader.hpp"
 #include "engine/player_controller.hpp"
-#include "engine/static_manager.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
 #include <SDL2/SDL.h>

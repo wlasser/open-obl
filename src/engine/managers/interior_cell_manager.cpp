@@ -1,10 +1,10 @@
-#include "engine/cell_manager.hpp"
 #include "engine/conversions.hpp"
+#include "engine/managers/interior_cell_manager.hpp"
 #include "esp.hpp"
 #include "formid.hpp"
 #include "records.hpp"
-#include <OgreSceneNode.h>
 #include <OgreRoot.h>
+#include <OgreSceneNode.h>
 
 namespace engine {
 

@@ -1,10 +1,10 @@
-#ifndef OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
-#define OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
+#ifndef OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
+#define OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
 
 #include "engine/bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
-#include "engine/light_manager.hpp"
-#include "engine/static_manager.hpp"
+#include "engine/managers/light_manager.hpp"
+#include "engine/managers/static_manager.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
 #include "records.hpp"
@@ -104,4 +104,4 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &);
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_CELL_MANAGER_HPP
+#endif // OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP

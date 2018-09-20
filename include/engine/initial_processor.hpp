@@ -1,9 +1,9 @@
 #ifndef OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 #define OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 
-#include "engine/cell_manager.hpp"
-#include "engine/light_manager.hpp"
-#include "engine/static_manager.hpp"
+#include "engine/managers/interior_cell_manager.hpp"
+#include "engine/managers/light_manager.hpp"
+#include "engine/managers/static_manager.hpp"
 #include "record/io.hpp"
 #include "records.hpp"
 

@@ -1,4 +1,4 @@
-#include "engine/light_manager.hpp"
+#include "engine/managers/light_manager.hpp"
 
 engine::LightMesh engine::LightManager::get(FormID baseID,
                                             Ogre::SceneManager *mgr) {
