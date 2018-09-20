@@ -1,6 +1,6 @@
 #include "engine/conversions.hpp"
-#include "engine/nif_loader.hpp"
-#include "engine/nif_loader_state.hpp"
+#include "engine/nifloader/loader.hpp"
+#include "engine/nifloader/loader_state.hpp"
 #include "nif/enum.hpp"
 #include "nif/niobject.hpp"
 #include "nif/compound.hpp"

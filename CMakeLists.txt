@@ -69,9 +69,9 @@ target_sources(OpenOblivion PRIVATE
         src/engine/initial_processor.cpp
         src/engine/managers/interior_cell_manager.cpp
         src/engine/managers/light_manager.cpp
-        src/engine/nif_loader.cpp
-        src/engine/nif_loader_state.cpp
-        src/engine/ogre_stream_wrappers.cpp
+        src/engine/nifloader/loader.cpp
+        src/engine/nifloader/loader_state.cpp
+        src/engine/ogre/ogre_stream_wrappers.cpp
         src/engine/player_controller.cpp
         src/formid.cpp
         src/main.cpp
@@ -90,9 +90,9 @@ target_sources(OpenOblivion PRIVATE
         include/engine/managers/interior_cell_manager.hpp
         include/engine/managers/light_manager.hpp
         include/engine/managers/static_manager.hpp
-        include/engine/nif_loader.hpp
-        include/engine/nif_loader_state.hpp
-        include/engine/ogre_stream_wrappers.hpp
+        include/engine/nifloader/loader.hpp
+        include/engine/nifloader/loader_state.hpp
+        include/engine/ogre/ogre_stream_wrappers.hpp
         include/engine/player_controller.hpp
         include/esp.hpp
         include/formid.hpp

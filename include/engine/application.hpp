@@ -6,7 +6,7 @@
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
-#include "engine/nif_loader.hpp"
+#include "engine/nifloader/loader.hpp"
 #include "engine/player_controller.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>

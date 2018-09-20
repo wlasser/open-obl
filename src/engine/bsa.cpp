@@ -1,6 +1,6 @@
 #include "bsa.hpp"
 #include "engine/bsa.hpp"
-#include "engine/ogre_stream_wrappers.hpp"
+#include "engine/ogre/ogre_stream_wrappers.hpp"
 #include <ctime>
 #include <filesystem>
 #include <functional>

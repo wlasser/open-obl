@@ -1,4 +1,4 @@
-#include "engine/ogre_stream_wrappers.hpp"
+#include "engine/ogre/ogre_stream_wrappers.hpp"
 #include <OgreDataStream.h>
 #include <fstream>
 #include <istream>

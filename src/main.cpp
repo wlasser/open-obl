@@ -8,7 +8,7 @@
 #include <string>
 
 #include "engine/application.hpp"
-#include "engine/nif_loader.hpp"
+#include "engine/nifloader/loader.hpp"
 #include "save_state.hpp"
 #include "records.hpp"
 #include "record/record.hpp"

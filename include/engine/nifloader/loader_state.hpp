@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_NIF_LOADER_STATE_HPP
 #define OPENOBLIVION_ENGINE_NIF_LOADER_STATE_HPP
 
-#include "engine/nif_loader.hpp"
+#include "engine/nifloader/loader.hpp"
 #include "nif/basic.hpp"
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
