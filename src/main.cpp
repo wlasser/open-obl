@@ -1,22 +1,17 @@
-#include <iostream>
-#include <filesystem>
-#include <fstream>
-#include <sstream>
-#include <iomanip>
-#include <string>
-
-#include "engine/application.hpp"
-#include "engine/nifloader/loader.hpp"
-#include "save_state.hpp"
-#include "records.hpp"
-#include "record/record.hpp"
 #include "bsa.hpp"
 #include "esp.hpp"
-
-void testSaveLoading() {
-  std::ifstream pcSaveStream("saves/marie.ess", std::ios::binary);
-  SaveState pcSave(pcSaveStream);
-}
+#include "engine/application.hpp"
+#include "engine/nifloader/loader.hpp"
+#include "records.hpp"
+#include "record/record.hpp"
+#include "save_state.hpp"
+#include <boost/format.hpp>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 struct NullProcessor {
   template<class R>
@@ -43,13 +38,15 @@ void NullProcessor::readRecord<record::CELL>(std::istream &is) {
   esp::readCellChildren(is, nullProcessor, nullProcessor, nullProcessor);
 }
 
-void testEsmLoading() {
+template<class Processor>
+void readMaster(Processor &processor) {
   std::ifstream esmStream("Data/Oblivion.esm", std::ios::binary);
   if (!esmStream.is_open()) {
-    std::cerr << std::string("Failed to open file: ") << strerror(errno);
-    return;
+    throw io::IOReadError(boost::str(
+        boost::format("Failed to open 'Data/Oblivion.esm': %s")
+            % strerror(errno)));
   }
-  esp::readEsp(esmStream, nullProcessor);
+  esp::readEsp(esmStream, processor);
 }
 
 void testApplication() {
@@ -70,22 +67,10 @@ void saveFromBSA(bsa::BSAReader &reader,
   of.write(data.data(), size);
 }
 
-void checkNif(bsa::BSAReader &reader,
-              const std::string &folder,
-              const std::string &file) {
-  std::filesystem::path fileName{file};
-  if (fileName.extension() != ".nif") return;
-  auto is = reader[folder][file];
-  std::clog << "Loading " << folder << "/" << file << '\n';
-  // TODO: Use NifLoaderState here
-}
-
 int main() {
   //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   //saveFromBSA(reader, "meshes", "markerxheading.nif",
   //            "meshes/markerxheading.nif");
   testApplication();
-  //testEsmLoading();
-  //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
   return 0;
 }
