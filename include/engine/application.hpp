@@ -7,6 +7,7 @@
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/loader.hpp"
+#include "engine/ogre/rigid_body_manager.hpp"
 #include "engine/player_controller.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
@@ -63,6 +64,7 @@ class Application : public Ogre::FrameListener {
   OgreWindowPtr ogreWindow;
 
   nifloader::Loader nifLoader{};
+  std::unique_ptr<Ogre::RigidBodyManager> rigidBodyMgr{};
   const std::string resourceGroup = "OOResource";
 
   std::unique_ptr<engine::bullet::Configuration> bulletConf{};

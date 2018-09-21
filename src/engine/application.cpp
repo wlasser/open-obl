@@ -106,6 +106,9 @@ Application::Application(std::string windowName) : FrameListener() {
   // Construct the Bullet configuration
   bulletConf = std::make_unique<engine::bullet::Configuration>();
 
+  // Add the resource managers
+  rigidBodyMgr = std::make_unique<Ogre::RigidBodyManager>();
+
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
   resGrpMgr.createResourceGroup(resourceGroup);
