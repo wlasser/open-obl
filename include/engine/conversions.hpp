@@ -2,6 +2,7 @@
 #define OPENOBLIVION_ENGINE_CONVERSIONS_HPP
 
 #include "nif/compound.hpp"
+#include <btBulletDynamicsCommon.h>
 #include <OgreColourValue.h>
 #include <OgreMatrix3.h>
 #include <OgreVector.h>
@@ -18,6 +19,14 @@ constexpr T metersPerUnit = T(0.9144L / 64.0L);
 
 inline Ogre::Vector3 fromNif(const nif::compound::Vector3 &v) {
   return Ogre::Vector3{v.x, v.y, v.z};
+}
+
+inline Ogre::Vector4 fromNif(const nif::compound::Vector4 &v) {
+  return Ogre::Vector4{v.x, v.y, v.z, v.w};
+}
+
+inline Ogre::Quaternion fromNif(const nif::compound::hkQuaternion &q) {
+  return Ogre::Quaternion{q.x, q.y, q.z, q.w};
 }
 
 inline Ogre::Matrix3 fromNif(const nif::compound::Matrix33 &m) {
@@ -43,6 +52,16 @@ inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
                            0, 0, 1,
                            0, -1, 0};
   return C * m * C.transpose();
+}
+
+inline btVector3 toBullet(const Ogre::Vector3 &v) {
+  return btVector3{v.x, v.y, v.z};
+}
+
+inline btMatrix3x3 toBullet(const Ogre::Matrix3 &m) {
+  return btMatrix3x3{m[0][0], m[0][1], m[0][2],
+                     m[1][0], m[1][1], m[1][2],
+                     m[2][0], m[2][1], m[2][2]};
 }
 
 // Convert a windows path to a lowercase nix path

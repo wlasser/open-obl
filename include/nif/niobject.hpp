@@ -322,6 +322,10 @@ inline constexpr BSXFlags::Flags operator|(BSXFlags::Flags a,
                                            BSXFlags::Flags b) {
   return BSXFlags::Flags(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
+inline constexpr BSXFlags::Flags operator&(BSXFlags::Flags a,
+                                           BSXFlags::Flags b) {
+  return BSXFlags::Flags(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
+}
 
 struct NiSequence : NiObject, Versionable {
   compound::SizedString name{};
