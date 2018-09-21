@@ -298,20 +298,21 @@ struct NiBlendPoint3Interpolator : NiBlendInterpolator {
 
 struct BSXFlags : NiIntegerExtraData {
   enum class Flags : uint32_t {
-    bAnimated = 0,
-    bHavok = 1,
-    bRagdoll = 1 << 1,
-    bComplex = 1 << 2,
-    bAddon = 1 << 3,
-    bEditorMarker = 1 << 4,
-    bDynamic = 1 << 5,
-    bArticulated = 1 << 6,
-    bIKTarget = 1 << 7,
-    bExternalEmit = 1 << 8,
-    bMagicShaderParticles = 1 << 9,
-    bLights = 1 << 10,
-    bBreakable = 1 << 11,
-    bSearchedBreakable = 1 << 12
+    bNone = 0u,
+    bAnimated = 1u << 0u,
+    bHavok = 1u << 1u,
+    bRagdoll = 1u << 2u,
+    bComplex = 1u << 3u,
+    bAddon = 1u << 4u,
+    bEditorMarker = 1u << 5u,
+    bDynamic = 1u << 6u,
+    bArticulated = 1u << 7u,
+    bIKTarget = 1u << 8u,
+    bExternalEmit = 1u << 9u,
+    bMagicShaderParticles = 1u << 10u,
+    bLights = 1u << 11u,
+    bBreakable = 1u << 12u,
+    bSearchedBreakable = 1u << 13u
   };
   // Data is stored in NiIntegerExtraData::data
   void read(std::istream &is) override;
@@ -405,15 +406,15 @@ struct NiTimeController : NiObject {
 
   // If Reverse and Clamp are unset, then Loop
   enum class Flag : basic::Flags {
-    AppTime = 0,
-    AppInit = 1,
-    Reverse = 1 << 1,
-    Clamp = 1 << 2,
-    Active = 1 << 3,
-    PlayBackwards = 1 << 4,
-    IsManagerController = 1 << 5,
-    ComputeScaledTime = 1 << 6,
-    ForceUpdate = 1 << 7
+    AppTime = 0u,
+    AppInit = 1u << 0u,
+    Reverse = 1u << 1u,
+    Clamp = 1u << 2u,
+    Active = 1u << 3u,
+    PlayBackwards = 1u << 4u,
+    IsManagerController = 1u << 5u,
+    ComputeScaledTime = 1u << 6u,
+    ForceUpdate = 1u << 7u
   };
   Flag flags{};
 
