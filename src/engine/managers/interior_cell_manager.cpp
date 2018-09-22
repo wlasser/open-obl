@@ -72,6 +72,9 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
     return;
   }
 
+  // Set the reference id in the user bindings
+  node->getUserObjectBindings().setUserAny(Ogre::Any(ref.id));
+
   auto &data = ref.data.positionRotation.data;
 
   node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
