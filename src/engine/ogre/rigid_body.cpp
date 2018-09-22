@@ -203,7 +203,10 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
     // @formatter:on
 
     Matrix4 scaleMat{};
-    scaleMat.setScale(engine::conversions::fromNif(niTriStrips->scale).xyz());
+    // For some reason the coordinates are scaled down in the nif file by a
+    // factor of 7.
+    scaleMat.setScale(
+        7.0f * engine::conversions::fromNif(niTriStrips->scale).xyz());
     mTransform = mTransform * scaleMat;
     auto collisionShape = parseNiTriStripsData(g, data, dataTag);
     mTransform = mTransform * scaleMat.inverse();
@@ -256,7 +259,10 @@ RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
   vertexBuffer.assign(indexedMesh.m_numVertices * 3u, 0.0f);
   {
     auto it = vertexBuffer.begin();
-    for (const auto &v : block->vertices) {
+    for (const auto &vertex : block->vertices) {
+      using namespace engine::conversions;
+      Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+      auto v = mTransform * ogreV;
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
