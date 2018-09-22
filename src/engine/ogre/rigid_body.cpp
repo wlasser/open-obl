@@ -113,7 +113,7 @@ void RigidBodyNifVisitor::parseWorldObject(const Graph &g,
                                            engine::nifloader::LoadStatus &tag) {
   // TODO: Flags
   auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
-  auto collisionShape = parseShape(g, shape, shapeTag);
+  mRigidBody->mCollisionShape = parseShape(g, shape, shapeTag);
 
   if (auto rigidBody = dynamic_cast<nif::bhk::RigidBody *>(block)) {
     using namespace engine::conversions;
@@ -161,7 +161,7 @@ void RigidBodyNifVisitor::parseWorldObject(const Graph &g,
     // Convert the Ogre parameters to Bullet ones and set up the rigid body
     btVector3 bulletInertia{toBullet(principalMoments)};
     btRigidBody::btRigidBodyConstructionInfo
-        info(mass, nullptr, collisionShape.get(), bulletInertia);
+        info(mass, nullptr, mRigidBody->mCollisionShape.get(), bulletInertia);
     info.m_linearDamping = linearDamping;
     info.m_angularDamping = angularDamping;
     info.m_friction = friction;

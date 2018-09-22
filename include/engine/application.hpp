@@ -50,10 +50,6 @@ class Application : public Ogre::FrameListener {
   // This must have a longer lifetime than ogreRoot
   std::unique_ptr<engine::BSAArchiveFactory> bsaArchiveFactory{};
 
-  std::unique_ptr<engine::LightManager> lightMgr{};
-  std::unique_ptr<engine::StaticManager> staticMgr{};
-  std::unique_ptr<engine::InteriorCellManager> interiorCellMgr{};
-
   std::ifstream esmStream;
 
   std::unique_ptr<Ogre::Root> ogreRoot{};
@@ -63,11 +59,16 @@ class Application : public Ogre::FrameListener {
   SDLWindowPtr sdlWindow{nullptr, nullptr};
   OgreWindowPtr ogreWindow;
 
+  std::unique_ptr<engine::bullet::Configuration> bulletConf{};
+
   nifloader::Loader nifLoader{};
   std::unique_ptr<Ogre::RigidBodyManager> rigidBodyMgr{};
   const std::string resourceGroup = "OOResource";
 
-  std::unique_ptr<engine::bullet::Configuration> bulletConf{};
+  std::unique_ptr<engine::LightManager> lightMgr{};
+  std::unique_ptr<engine::StaticManager> staticMgr{};
+  std::unique_ptr<engine::InteriorCellManager> interiorCellMgr{};
+
   std::unique_ptr<engine::PlayerController> playerController{};
 
  public:

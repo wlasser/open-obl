@@ -24,6 +24,7 @@ struct InteriorCell {
   Ogre::ColourValue ambientLight{};
   Ogre::Light *directionalLight{};
   Ogre::SceneManager *scnMgr{};
+  std::vector<std::shared_ptr<Ogre::RigidBody>> rigidBodies{};
   std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld{};
 
   explicit InteriorCell(std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld)
@@ -33,6 +34,10 @@ struct InteriorCell {
   ~InteriorCell() {
     auto root = Ogre::Root::getSingletonPtr();
     if (root) root->destroySceneManager(scnMgr);
+    for (int i = physicsWorld->getNumCollisionObjects() - 1; i >= 0; --i) {
+      btCollisionObject *obj = physicsWorld->getCollisionObjectArray()[i];
+      physicsWorld->removeCollisionObject(obj);
+    }
   }
 };
 
