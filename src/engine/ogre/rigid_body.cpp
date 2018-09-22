@@ -25,6 +25,10 @@ btRigidBody *RigidBody::getRigidBody() {
   return mRigidBody.get();
 }
 
+btCollisionShape *RigidBody::getCollisionShape() {
+  return mCollisionShape.get();
+}
+
 void RigidBody::loadImpl() {
   auto ogreDataStream = ResourceGroupManager::getSingleton()
       .openResource(mName, mGroup);
@@ -209,7 +213,55 @@ std::unique_ptr<btCollisionShape>
 RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
                                           nif::hk::PackedNiTriStripsData *block,
                                           engine::nifloader::LoadStatus &tag) {
-  // TODO: btBvhTriangleMeshShape only works with static geometry
+  // For static geometry we construct a btBvhTriangleMeshShape using indexed
+  // triangles. Bullet doesn't copy the underlying vertex and index buffers,
+  // so they need to be kept alive for the lifetime of the collision object.
+  btIndexedMesh indexedMesh{};
+
+  indexedMesh.m_numTriangles = block->numTriangles;
+  indexedMesh.m_numVertices = block->numVertices;
+
+  // TODO: Is aligning the triangles to 8-byte boundaries faster than packing?
+  indexedMesh.m_triangleIndexStride = 3 * sizeof(nif::basic::UShort);
+
+  // Vertex data is always in single-precision, regardless of Ogre or Bullet
+  indexedMesh.m_vertexType = PHY_FLOAT;
+  indexedMesh.m_vertexStride = 3 * sizeof(float);
+
+  // Copy into index buffer
+  auto &indexBuffer = mRigidBody->mIndexBuffer;
+  indexBuffer.assign(indexedMesh.m_numTriangles * 3u, 0);
+  for (int i = 0; i < indexBuffer.size(); ++i) {
+    const auto &tri = block->triangles[i].triangle;
+    indexBuffer[i] = tri.v1;
+    indexBuffer[++i] = tri.v2;
+    indexBuffer[++i] = tri.v3;
+  }
+  indexedMesh.m_triangleIndexBase =
+      reinterpret_cast<unsigned char *>(indexBuffer.data());
+
+  // Copy into vertex buffer
+  auto &vertexBuffer = mRigidBody->mVertexBuffer;
+  vertexBuffer.assign(indexedMesh.m_numVertices * 3u, 0.0f);
+  for (int i = 0; i < vertexBuffer.size(); ++i) {
+    const auto &v = block->vertices[i];
+    vertexBuffer[i] = v.x;
+    vertexBuffer[++i] = v.y;
+    vertexBuffer[++i] = v.z;
+  }
+  indexedMesh.m_vertexBase =
+      reinterpret_cast<unsigned char *>(vertexBuffer.data());
+
+  // Construct the actual mesh and give ownership to the rigid body
+  auto collisionMesh = std::make_unique<btTriangleIndexVertexArray>();
+  collisionMesh->addIndexedMesh(indexedMesh, PHY_SHORT);
+  mRigidBody->mCollisionMesh = std::move(collisionMesh);
+
+  return std::make_unique<btBvhTriangleMeshShape>(
+      mRigidBody->mCollisionMesh.get(), false);
+
+  // TODO: Support dynamic concave geometry
+
   return nullptr;
 }
 

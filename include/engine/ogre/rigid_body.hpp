@@ -24,15 +24,29 @@ class RigidBody : public Ogre::Resource {
 
   btRigidBody *getRigidBody();
 
+  btCollisionShape *getCollisionShape();
+
  protected:
   void loadImpl() override;
   void unloadImpl() override;
 
  private:
   friend struct RigidBodyNifVisitor;
+
   // TODO: Use custom allocators
   std::unique_ptr<btRigidBody> mRigidBody{};
+
+  // For performance reasons we don't want to duplicate the collision shape
+  // for multiple instances of the same entity. Ideally therefore this would be
+  // a non-owning pointer into a central store, which would store the collision
+  // shape along with any necessary buffers.
+  // TODO: Centralise the collision shapes and make this non-owning
   std::unique_ptr<btCollisionShape> mCollisionShape{};
+
+  // Necessary for mesh-based collision shapes, Bullet does not take ownership.
+  std::vector<uint16_t> mIndexBuffer{};
+  std::vector<float> mVertexBuffer{};
+  std::unique_ptr<btStridingMeshInterface> mCollisionMesh{};
 };
 
 struct RigidBodyNifVisitor {
