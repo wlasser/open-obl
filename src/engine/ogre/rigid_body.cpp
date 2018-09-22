@@ -30,6 +30,9 @@ btCollisionShape *RigidBody::getCollisionShape() {
 }
 
 void RigidBody::loadImpl() {
+  LogManager::getSingleton().logMessage(boost::str(
+      boost::format("Loading RigidBody %s") % getName()));
+
   auto ogreDataStream = ResourceGroupManager::getSingleton()
       .openResource(mName, mGroup);
 
@@ -51,6 +54,9 @@ void RigidBody::loadImpl() {
       colorMap.begin(), boost::get(boost::vertex_index, blocks));
 
   boost::depth_first_search(blocks, RigidBodyNifVisitor(this), propertyMap);
+
+  LogManager::getSingleton().logMessage(boost::str(
+      boost::format("Loaded RigidBody %s") % getName()));
 }
 
 void RigidBody::unloadImpl() {
@@ -203,9 +209,10 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
     mTransform = mTransform * scaleMat.inverse();
     return collisionShape;
   } else {
-    OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-                "Unknown collision shape",
-                "RigidBodyNifVisitor::parseShape");
+    return nullptr;
+    //OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+    //            "Unknown collision shape",
+    //            "RigidBodyNifVisitor::parseShape");
   }
 }
 
@@ -230,12 +237,16 @@ RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
 
   // Copy into index buffer
   auto &indexBuffer = mRigidBody->mIndexBuffer;
-  indexBuffer.assign(indexedMesh.m_numTriangles * 3u, 0);
-  for (int i = 0; i < indexBuffer.size(); ++i) {
-    const auto &tri = block->triangles[i].triangle;
-    indexBuffer[i] = tri.v1;
-    indexBuffer[++i] = tri.v2;
-    indexBuffer[++i] = tri.v3;
+  indexBuffer.assign(indexedMesh.m_numTriangles * 3u, 0u);
+  {
+    auto it = indexBuffer.begin();
+    for (const auto &triData : block->triangles) {
+      const auto &tri = triData.triangle;
+      *it = tri.v1;
+      *(it + 1) = tri.v2;
+      *(it + 2) = tri.v3;
+      it += 3;
+    }
   }
   indexedMesh.m_triangleIndexBase =
       reinterpret_cast<unsigned char *>(indexBuffer.data());
@@ -243,11 +254,14 @@ RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
   // Copy into vertex buffer
   auto &vertexBuffer = mRigidBody->mVertexBuffer;
   vertexBuffer.assign(indexedMesh.m_numVertices * 3u, 0.0f);
-  for (int i = 0; i < vertexBuffer.size(); ++i) {
-    const auto &v = block->vertices[i];
-    vertexBuffer[i] = v.x;
-    vertexBuffer[++i] = v.y;
-    vertexBuffer[++i] = v.z;
+  {
+    auto it = vertexBuffer.begin();
+    for (const auto &v : block->vertices) {
+      *it = v.x;
+      *(it + 1) = v.y;
+      *(it + 2) = v.z;
+      it += 3;
+    }
   }
   indexedMesh.m_vertexBase =
       reinterpret_cast<unsigned char *>(vertexBuffer.data());
