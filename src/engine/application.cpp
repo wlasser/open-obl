@@ -31,21 +31,6 @@ auto makeSDLWindow(const std::string &windowName, int width, int height,
   return SDLWindowPtr(win, SDL_DestroyWindow);
 }
 
-auto makeOgreWindow(Ogre::Root *root,
-                    const std::string &windowName,
-                    unsigned int width,
-                    unsigned int height,
-                    std::map<std::string, std::string> *params) {
-  auto win = root->createRenderWindow(windowName, width, height, false, params);
-  if (win == nullptr) {
-    throw std::runtime_error("Failed to create Ogre::RenderWindow");
-  }
-
-  return OgreWindowPtr(win, [root](auto *target) {
-    root->destroyRenderTarget(target);
-  });
-}
-
 Application::Application(std::string windowName) : FrameListener() {
   // Start Ogre
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "",
@@ -100,8 +85,8 @@ Application::Application(std::string windowName) : FrameListener() {
   }
 
   std::map<std::string, std::string> params = {{"parentWindowHandle", parent}};
-  ogreWindow = makeOgreWindow(ogreRoot.get(), windowName, windowWidth,
-                              windowHeight, &params);
+  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(), windowName, windowWidth,
+                                      windowHeight, &params);
 
   // Construct the Bullet configuration
   bulletConf = std::make_unique<engine::bullet::Configuration>();

@@ -74,6 +74,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/ogre/ogre_stream_wrappers.cpp
         src/engine/ogre/rigid_body.cpp
         src/engine/ogre/rigid_body_manager.cpp
+        src/engine/ogre/window.cpp
         src/engine/player_controller.cpp
         include/engine/application.hpp
         include/engine/bsa.hpp
@@ -89,6 +90,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/ogre/ogre_stream_wrappers.hpp
         include/engine/ogre/rigid_body.hpp
         include/engine/ogre/rigid_body_manager.hpp
+        include/engine/ogre/window.hpp
         include/engine/player_controller.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC

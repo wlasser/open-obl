@@ -37,7 +37,7 @@ class StaticManager {
       auto retrieveResult = rigidBodyMgr.createOrRetrieve(name, group);
       auto rigidBody =
           std::dynamic_pointer_cast<Ogre::RigidBody>(retrieveResult.first);
-      rigidBody->load(false);
+      if (rigidBody != nullptr) rigidBody->load(false);
 
       return {rigidBody, entity};
     } else return {nullptr, nullptr};

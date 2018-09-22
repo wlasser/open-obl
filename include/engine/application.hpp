@@ -8,6 +8,7 @@
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/loader.hpp"
 #include "engine/ogre/rigid_body_manager.hpp"
+#include "engine/ogre/window.hpp"
 #include "engine/player_controller.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
@@ -33,22 +34,13 @@ struct SDLInit {
 };
 
 using SDLWindowPtr = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
-using OgreWindowPtr = std::unique_ptr<Ogre::RenderWindow,
-                                      std::function<void(Ogre::RenderWindow *)>>;
 
 auto makeSDLWindow(const std::string &windowName, int width, int height,
                    uint32_t flags);
 
-auto makeOgreWindow(Ogre::Root *root,
-                    const std::string &windowName,
-                    unsigned int width,
-                    unsigned int height,
-                    std::map<std::string, std::string> *params);
-
 class Application : public Ogre::FrameListener {
  private:
-  // This must have a longer lifetime than ogreRoot
-  std::unique_ptr<engine::BSAArchiveFactory> bsaArchiveFactory{};
+  std::unique_ptr<BSAArchiveFactory> bsaArchiveFactory{};
 
   std::ifstream esmStream;
 
@@ -57,19 +49,19 @@ class Application : public Ogre::FrameListener {
   SDLInit sdlInit;
 
   SDLWindowPtr sdlWindow{nullptr, nullptr};
-  OgreWindowPtr ogreWindow;
+  Ogre::RenderWindowPtr ogreWindow;
 
-  std::unique_ptr<engine::bullet::Configuration> bulletConf{};
+  std::unique_ptr<bullet::Configuration> bulletConf{};
 
   nifloader::Loader nifLoader{};
   std::unique_ptr<Ogre::RigidBodyManager> rigidBodyMgr{};
   const std::string resourceGroup = "OOResource";
 
-  std::unique_ptr<engine::LightManager> lightMgr{};
-  std::unique_ptr<engine::StaticManager> staticMgr{};
-  std::unique_ptr<engine::InteriorCellManager> interiorCellMgr{};
+  std::unique_ptr<LightManager> lightMgr{};
+  std::unique_ptr<StaticManager> staticMgr{};
+  std::unique_ptr<InteriorCellManager> interiorCellMgr{};
 
-  std::unique_ptr<engine::PlayerController> playerController{};
+  std::unique_ptr<PlayerController> playerController{};
 
  public:
   explicit Application(std::string windowName);
