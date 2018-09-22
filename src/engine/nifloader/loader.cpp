@@ -206,7 +206,7 @@ void Loader::loadResource(Ogre::Resource *resource) {
   assert(mesh != nullptr);
 
   logger->logMessage(boost::str(
-      boost::format("Loading %s") % resource->getName()));
+      boost::format("Loading Mesh %s") % resource->getName()));
 
   // TODO: If the mesh doesn't exist, dynamically generate a placeholder
   auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
@@ -218,6 +218,9 @@ void Loader::loadResource(Ogre::Resource *resource) {
   auto blocks = createBlockGraph(is);
 
   LoaderState instance(mesh, blocks);
+
+  logger->logMessage(boost::str(
+      boost::format("Loaded Mesh %s") % resource->getName()));
 }
 
 } // namespace engine::nifloader
