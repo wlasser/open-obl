@@ -94,46 +94,15 @@ void RigidBodyNifVisitor::parseCollisionObject(const Graph &g,
                                                engine::nifloader::LoadStatus &tag) {
   // TODO: COFlags
   // TODO: target
-  auto worldObjectRef = static_cast<int32_t>(block->body);
-  if (worldObjectRef < 0 || worldObjectRef >= boost::num_vertices(g)) {
-    OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                "Nonexistent reference",
-                "RigidBodyNifVisitor::parseCollisionObject");
-  }
-  auto &taggedWorldObject = g[worldObjectRef];
-  auto &worldObjectTag = taggedWorldObject.tag;
-
-  auto *worldObject =
-      dynamic_cast<nif::bhk::WorldObject *>(taggedWorldObject.block.get());
-  if (worldObject == nullptr) {
-    OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                "CollisionObject.body is not a WorldObject",
-                "RigidBodyNifVisitor::parseCollisionObject");
-  }
-
-  parseWorldObject(g, worldObject, worldObjectTag);
+  auto[worldObj, worldObjTag] = getRef<nif::bhk::WorldObject>(g, block->body);
+  parseWorldObject(g, worldObj, worldObjTag);
 }
 
 void RigidBodyNifVisitor::parseWorldObject(const Graph &g,
                                            nif::bhk::WorldObject *block,
                                            engine::nifloader::LoadStatus &tag) {
   // TODO: Flags
-  auto shapeRef = static_cast<int32_t>(block->shape);
-  if (shapeRef < 0 || shapeRef >= boost::num_vertices(g)) {
-    OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                "Nonexistent reference",
-                "RigidBodyNifVisitor::parseWorldObject");
-  }
-  auto &taggedShape = g[shapeRef];
-  auto &shapeTag = taggedShape.tag;
-
-  auto *shape = dynamic_cast<nif::bhk::Shape *>(taggedShape.block.get());
-  if (shape == nullptr) {
-    OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                "WorldObject.shape is not a Shape",
-                "RigidBodyNifVisitor::parseWorldObject");
-  }
-
+  auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
   auto collisionShape = parseShape(g, shape, shapeTag);
 
   if (auto rigidBody = dynamic_cast<nif::bhk::RigidBody *>(block)) {
@@ -202,20 +171,7 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
     auto material = moppBvTreeShape->material.material;
 
     // Instead of decoding the MOPP data we use the linked shape
-    auto shapeRef = static_cast<int32_t>(moppBvTreeShape->shape);
-    if (shapeRef < 0 || shapeRef >= boost::num_vertices(g)) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor::parseShape");
-    }
-    auto &taggedShape = g[shapeRef];
-    auto &shapeTag = taggedShape.tag;
-    auto *shape = dynamic_cast<nif::bhk::Shape *>(taggedShape.block.get());
-    if (shape == nullptr) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor::parseShape");
-    }
+    auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, moppBvTreeShape->shape);
 
     // Apply the scale and recurse into the linked shape
     // The effort here is to avoid scaling the w component
@@ -231,21 +187,10 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
       dynamic_cast<nif::bhk::PackedNiTriStripsShape *>(block)) {
     // TODO: Subshapes?
 
-    auto dataRef = static_cast<int32_t>(niTriStrips->data);
-    if (dataRef < 0 || dataRef >= boost::num_vertices(g)) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor::parseShape");
-    }
-    auto &taggedData = g[dataRef];
-    auto &dataTag = taggedData.tag;
-    auto *data =
-        dynamic_cast<nif::hk::PackedNiTriStripsData *>(taggedData.block.get());
-    if (data == nullptr) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor::parseShape");
-    }
+    // @formatter:off
+    auto[data, dataTag] =
+        getRef<nif::hk::PackedNiTriStripsData>(g, niTriStrips->data);
+    // @formatter:on
 
     Matrix4 scaleMat{};
     scaleMat.setScale(engine::conversions::fromNif(niTriStrips->scale).xyz());

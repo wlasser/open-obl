@@ -57,6 +57,30 @@ struct RigidBodyNifVisitor {
   RigidBody *mRigidBody{};
   bool mHasHavok{false};
 
+  template<class T>
+  struct RefResult {
+    T *block;
+    engine::nifloader::LoadStatus &tag;
+  };
+
+  template<class U, class T>
+  RefResult<U> getRef(const Graph &g, nif::basic::Ref<T> ref) {
+    auto refInt = static_cast<int32_t>(ref);
+    if (refInt < 0 || refInt >= boost::num_vertices(g)) {
+      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
+                  "Nonexistent reference",
+                  "RigidBodyNifVisitor");
+    }
+    auto &taggedBlock = g[refInt];
+    auto *block = dynamic_cast<U *>(taggedBlock.block.get());
+    if (block == nullptr) {
+      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
+                  "Nonexistent reference",
+                  "RigidBodyNifVisitor");
+    }
+    return {block, taggedBlock.tag};
+  }
+
   void parseCollisionObject(const Graph &g,
                             nif::bhk::CollisionObject *block,
                             engine::nifloader::LoadStatus &tag);
