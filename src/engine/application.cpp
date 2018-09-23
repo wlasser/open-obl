@@ -172,10 +172,11 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->logMessage("Read Oblivion.esm");
 
   // Load a test cell
-  auto cell = interiorCellMgr->get(0x00'031b59);
+  currentCell = interiorCellMgr->get(0x00'031b59);
   logger->logMessage("Loaded test cell");
 
-  playerController = std::make_unique<engine::PlayerController>(cell->scnMgr);
+  playerController =
+      std::make_unique<engine::PlayerController>(currentCell->scnMgr);
   ogreWindow->addViewport(playerController->getCamera());
   playerController->moveTo(conversions::fromBSCoordinates(
       {200.0f, -347.0f, -460.0f}));
@@ -265,6 +266,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   }
 
   playerController->update(event.timeSinceLastFrame);
+
+  currentCell->physicsWorld->stepSimulation(1.0f / 60.0f);
 
   return true;
 }

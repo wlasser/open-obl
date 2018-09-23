@@ -29,6 +29,22 @@ btCollisionShape *RigidBody::getCollisionShape() {
   return mCollisionShape.get();
 }
 
+void RigidBody::bind(SceneNode *node) {
+  // Reset and delete existing state
+  if (mRigidBody) mRigidBody->setMotionState(nullptr);
+  mMotionState.reset(nullptr);
+
+  // Allocate and set new state
+  if (node) {
+    mMotionState = std::make_unique<MotionState>(node);
+    if (mRigidBody) mRigidBody->setMotionState(mMotionState.get());
+  }
+}
+
+void RigidBody::notify() {
+  if (mMotionState) mMotionState->notify();
+}
+
 void RigidBody::loadImpl() {
   LogManager::getSingleton().logMessage(boost::str(
       boost::format("Loading RigidBody %s") % getName()));
@@ -54,6 +70,8 @@ void RigidBody::loadImpl() {
       colorMap.begin(), boost::get(boost::vertex_index, blocks));
 
   boost::depth_first_search(blocks, RigidBodyNifVisitor(this), propertyMap);
+
+  if (mMotionState) mRigidBody->setMotionState(mMotionState.get());
 
   LogManager::getSingleton().logMessage(boost::str(
       boost::format("Loaded RigidBody %s") % getName()));

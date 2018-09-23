@@ -61,6 +61,7 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<StaticManager> staticMgr{};
   std::unique_ptr<InteriorCellManager> interiorCellMgr{};
 
+  std::shared_ptr<InteriorCell> currentCell{};
   std::unique_ptr<PlayerController> playerController{};
 
  public:

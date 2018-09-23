@@ -61,30 +61,15 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
   auto *node = cell->scnMgr->getRootSceneNode()->createChildSceneNode();
   auto id = ref.data.baseID.data;
 
-  if (auto[rigidBody, stat] = staticMgr->get(id, cell->scnMgr); stat) {
-    node->attachObject(stat);
-    if (rigidBody && rigidBody->getRigidBody()) {
-      auto bulletBody = rigidBody->getRigidBody();
-      cell->rigidBodies.push_back(std::move(rigidBody));
-      cell->physicsWorld->addRigidBody(bulletBody);
-    }
-  } else if (auto[light, mesh] = lightMgr->get(id, cell->scnMgr); light) {
-    node->attachObject(light);
-    if (mesh) {
-      node->createChildSceneNode()->attachObject(mesh);
-    }
-  } else {
-    cell->scnMgr->destroySceneNode(node);
-    return;
-  }
-
   // Set the reference id in the user bindings
   node->getUserObjectBindings().setUserAny(Ogre::Any(ref.id));
 
   auto &data = ref.data.positionRotation.data;
 
+  // Set the position
   node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
 
+  // Set the scale
   if (ref.data.scale) {
     float scale = ref.data.scale->data;
     node->setScale(scale, scale, scale);
@@ -102,6 +87,28 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
   auto rotMat = conversions::fromBSCoordinates(rotX * rotY * rotZ);
   Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
+
+  // Construct the actual entities and attach them to the node
+  if (auto[rigidBody, stat] = staticMgr->get(id, cell->scnMgr); stat) {
+    // STAT objects have a Mesh attached to an Entity and an optional RigidBody
+    node->attachObject(stat);
+
+    if (rigidBody && rigidBody->getRigidBody()) {
+      // Bind the rigid body to the scene node
+      rigidBody->bind(node);
+      auto bulletBody = rigidBody->getRigidBody();
+      cell->rigidBodies.push_back(std::move(rigidBody));
+      cell->physicsWorld->addRigidBody(bulletBody);
+    }
+  } else if (auto[light, mesh] = lightMgr->get(id, cell->scnMgr); light) {
+    node->attachObject(light);
+    if (mesh) {
+      node->createChildSceneNode()->attachObject(mesh);
+    }
+  } else {
+    cell->scnMgr->destroySceneNode(node);
+    return;
+  }
 }
 
 } // namespace engine

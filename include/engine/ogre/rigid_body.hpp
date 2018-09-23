@@ -2,6 +2,7 @@
 #define OPENOBLIVION_ENGINE_RIGID_BODY_HPP
 
 #include "engine/nifloader/loader_state.hpp"
+#include "engine/ogre/motion_state.hpp"
 #include "nif/bhk.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <OgreResource.h>
@@ -26,6 +27,17 @@ class RigidBody : public Ogre::Resource {
 
   btCollisionShape *getCollisionShape();
 
+  // Binding to a SceneNode enables automatic synchronization of the RigidBody
+  // position and orientation with the SceneNode's position and orientation.
+  // Transforming a bound SceneNode directly should be avoided, and if necessary
+  // then notify should be called.
+  // Calling bind a second time will release the previously bound node and,
+  // unless the new node is null, will bind to the new one.
+  void bind(SceneNode *node);
+
+  // Tell the physics system that the bound node has been transformed externally
+  void notify();
+
  protected:
   void loadImpl() override;
   void unloadImpl() override;
@@ -47,6 +59,8 @@ class RigidBody : public Ogre::Resource {
   std::vector<uint16_t> mIndexBuffer{};
   std::vector<float> mVertexBuffer{};
   std::unique_ptr<btStridingMeshInterface> mCollisionMesh{};
+
+  std::unique_ptr<MotionState> mMotionState{};
 };
 
 struct RigidBodyNifVisitor {
