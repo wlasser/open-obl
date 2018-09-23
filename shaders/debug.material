@@ -1,0 +1,23 @@
+vertex_program debug_vs_glsl glsl {
+    source debug_vs.glsl
+}
+
+fragment_program debug_fs_glsl glsl {
+    source debug_fs.glsl
+}
+
+material DebugDrawer {
+    technique {
+        pass {
+            vertex_program_ref debug_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+            }
+
+            fragment_program_ref debug_fs_glsl {
+            }
+
+            lighting off
+            ambient vertexcolour
+        }
+    }
+}

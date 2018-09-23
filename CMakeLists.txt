@@ -71,6 +71,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/managers/light_manager.cpp
         src/engine/nifloader/loader.cpp
         src/engine/nifloader/loader_state.cpp
+        src/engine/ogre/debug_drawer.cpp
         src/engine/ogre/motion_state.cpp
         src/engine/ogre/ogre_stream_wrappers.cpp
         src/engine/ogre/rigid_body.cpp
@@ -88,6 +89,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/managers/static_manager.hpp
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
+        include/engine/ogre/debug_drawer.hpp
         include/engine/ogre/motion_state.hpp
         include/engine/ogre/ogre_stream_wrappers.hpp
         include/engine/ogre/rigid_body.hpp
