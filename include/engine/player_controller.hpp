@@ -1,12 +1,11 @@
 #ifndef OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
 #define OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
 
+#include "engine/conversions.hpp"
+#include "engine/ogre/motion_state.hpp"
+#include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
-#include <OgreVector3.h>
-#include <OgreSceneNode.h>
-#include <OgreCamera.h>
 #include <array>
-#include "conversions.hpp"
 
 namespace engine {
 
@@ -32,8 +31,8 @@ class PlayerController {
   explicit PlayerController(Ogre::SceneManager *scnMgr);
 
   Ogre::Camera *getCamera();
-
   Ogre::SceneNode *getCameraNode();
+  btRigidBody *getRigidBody();
 
   void sendEvent(const MoveEvent &event);
 
@@ -59,9 +58,14 @@ class PlayerController {
   Ogre::Radian pitch{0.0f};
   Ogre::Radian yaw{0.0f};
   Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};
+
   Ogre::SceneNode *cameraNode{};
   Ogre::SceneNode *pitchNode{};
   Ogre::Camera *camera{};
+
+  std::unique_ptr<Ogre::MotionState> motionState{};
+  std::unique_ptr<btCollisionShape> collisionShape{};
+  std::unique_ptr<btRigidBody> rigidBody{};
 };
 
 } // namespace engine

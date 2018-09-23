@@ -25,6 +25,7 @@ MotionState &MotionState::operator=(MotionState &&other) noexcept {
 }
 
 void MotionState::getWorldTransform(btTransform &worldTrans) const {
+  worldTrans.setIdentity();
   worldTrans.setOrigin(engine::conversions::toBullet(mPosition));
   worldTrans.setRotation(engine::conversions::toBullet(mOrientation));
 }
@@ -32,6 +33,8 @@ void MotionState::getWorldTransform(btTransform &worldTrans) const {
 void MotionState::setWorldTransform(const btTransform &worldTrans) {
   mPosition = engine::conversions::fromBullet(worldTrans.getOrigin());
   mOrientation = engine::conversions::fromBullet(worldTrans.getRotation());
+  mNode->setPosition(mPosition);
+  mNode->setOrientation(mOrientation);
 }
 
 void MotionState::notify() {

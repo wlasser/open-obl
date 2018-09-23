@@ -177,9 +177,13 @@ Application::Application(std::string windowName) : FrameListener() {
 
   playerController =
       std::make_unique<engine::PlayerController>(currentCell->scnMgr);
+  currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
   ogreWindow->addViewport(playerController->getCamera());
   playerController->moveTo(conversions::fromBSCoordinates(
       {200.0f, -347.0f, -460.0f}));
+  auto playerPos = playerController->getCameraNode()->getPosition();
+  playerPos.y += 4.0f;
+  playerController->moveTo(playerPos);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
@@ -268,6 +272,14 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   playerController->update(event.timeSinceLastFrame);
 
   currentCell->physicsWorld->stepSimulation(1.0f / 60.0f);
+
+  btTransform playerTrans{};
+  playerController->getRigidBody()->getMotionState()
+      ->getWorldTransform(playerTrans);
+  btVector3 playerPos{playerTrans.getOrigin()};
+  logger->logMessage(boost::str(
+      boost::format("(%d, %d, %d)") % playerPos.x() % playerPos.y()
+          % playerPos.z()));
 
   return true;
 }
