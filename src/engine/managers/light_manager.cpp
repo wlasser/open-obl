@@ -1,3 +1,4 @@
+#include <engine/conversions.hpp>
 #include "engine/managers/light_manager.hpp"
 
 engine::LightMesh engine::LightManager::get(FormID baseID,
@@ -11,10 +12,11 @@ engine::LightMesh engine::LightManager::get(FormID baseID,
     light->setDiffuseColour(rec.color);
     light->setSpecularColour(rec.color);
     // TODO: These could do with more tuning
-    light->setAttenuation(rec.radius,
+    auto radius = rec.radius * conversions::metersPerUnit<decltype(rec.radius)>;
+    light->setAttenuation(radius,
                           1.0f,
-                          350.0f / rec.radius,
-                          1200.0f / (rec.radius * rec.radius));
+                          3.0f / radius,
+                          5.0f / (radius * radius));
     light->setPowerScale(rec.fadeValue);
 
     Ogre::Entity *mesh = nullptr;
