@@ -2,7 +2,8 @@
 
 namespace engine {
 
-PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
+PlayerController::PlayerController(Ogre::SceneManager *scnMgr, bool free)
+    : free(free) {
   camera = scnMgr->createCamera("PlayerCamera");
   camera->setNearClipDistance(1.0f);
   camera->setAutoAspectRatio(true);
@@ -12,12 +13,14 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   pitchNode = cameraNode->createChildSceneNode();
   pitchNode->attachObject(camera);
 
-  motionState = std::make_unique<Ogre::MotionState>(cameraNode);
-  collisionShape = std::make_unique<btCapsuleShape>(
-      0.25f, 128.0f * conversions::unitsPerMeter<float>);
-  btRigidBody::btRigidBodyConstructionInfo info(
-      80.0f, motionState.get(), collisionShape.get());
-  rigidBody = std::make_unique<btRigidBody>(info);
+  if (!free) {
+    motionState = std::make_unique<Ogre::MotionState>(cameraNode);
+    collisionShape = std::make_unique<btCapsuleShape>(
+        0.25f, 128.0f * conversions::unitsPerMeter<float>);
+    btRigidBody::btRigidBodyConstructionInfo info(
+        80.0f, motionState.get(), collisionShape.get());
+    rigidBody = std::make_unique<btRigidBody>(info);
+  }
 }
 
 Ogre::Camera *PlayerController::getCamera() {
@@ -29,7 +32,8 @@ Ogre::SceneNode *PlayerController::getCameraNode() {
 }
 
 btRigidBody *PlayerController::getRigidBody() {
-  return rigidBody.get();
+  if (free) return nullptr;
+  else return rigidBody.get();
 }
 
 void PlayerController::sendEvent(const MoveEvent &event) {
@@ -68,25 +72,27 @@ void PlayerController::sendEvent(const MoveEvent &event) {
 
 void PlayerController::moveTo(const Ogre::Vector3 &position) {
   cameraNode->setPosition(position);
-  motionState->notify();
+  if (!free) motionState->notify();
 }
 
 void PlayerController::update(float elapsed) {
-  //cameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
-  //                                            Ogre::Vector3::UNIT_X));
-  pitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
-                                             Ogre::Vector3::UNIT_X));
-  pitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
-  //cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
+  if (free) {
+    cameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
+                                                Ogre::Vector3::UNIT_X));
+    pitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
+                                               Ogre::Vector3::UNIT_X));
+    pitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
+    cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
 
-  //auto axes = cameraNode->getLocalAxes();
-  //// TODO: Is this normalization necessary or is axes already in SO(3)?
-  //axes = (1.0f / axes.determinant()) * axes;
-  //if (auto length = localVelocity.length() > 0.01f) {
-  //  cameraNode->translate(axes,
-  //                        localVelocity / length * speed * elapsed,
-  //                        Ogre::SceneNode::TS_WORLD);
-  //}
+    auto axes = cameraNode->getLocalAxes();
+    // TODO: Is this normalization necessary or is axes already in SO(3)?
+    axes = (1.0f / axes.determinant()) * axes;
+    if (auto length = localVelocity.length() > 0.01f) {
+      cameraNode->translate(axes,
+                            localVelocity / length * speed * elapsed,
+                            Ogre::SceneNode::TS_WORLD);
+    }
+  }
 }
 
 } // namespace engine

@@ -28,7 +28,11 @@ class PlayerController {
         : type(type), down(down), delta(delta) {}
   };
 
-  explicit PlayerController(Ogre::SceneManager *scnMgr);
+  explicit PlayerController(Ogre::SceneManager *scnMgr, bool free = false);
+
+  bool isFree() const {
+    return free;
+  }
 
   Ogre::Camera *getCamera();
   Ogre::SceneNode *getCameraNode();
@@ -62,6 +66,8 @@ class PlayerController {
   Ogre::SceneNode *cameraNode{};
   Ogre::SceneNode *pitchNode{};
   Ogre::Camera *camera{};
+
+  const bool free;
 
   std::unique_ptr<Ogre::MotionState> motionState{};
   std::unique_ptr<btCollisionShape> collisionShape{};

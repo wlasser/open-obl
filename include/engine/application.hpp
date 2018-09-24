@@ -7,6 +7,7 @@
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/loader.hpp"
+#include "engine/ogre/debug_drawer.hpp"
 #include "engine/ogre/rigid_body_manager.hpp"
 #include "engine/ogre/window.hpp"
 #include "engine/player_controller.hpp"
@@ -63,6 +64,7 @@ class Application : public Ogre::FrameListener {
 
   std::shared_ptr<InteriorCell> currentCell{};
   std::unique_ptr<PlayerController> playerController{};
+  std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
 
  public:
   explicit Application(std::string windowName);

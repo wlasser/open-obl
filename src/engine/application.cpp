@@ -176,14 +176,21 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->logMessage("Loaded test cell");
 
   playerController =
-      std::make_unique<engine::PlayerController>(currentCell->scnMgr);
-  currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
+      std::make_unique<engine::PlayerController>(currentCell->scnMgr, true);
+  if (!playerController->isFree()) {
+    currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
+  }
   ogreWindow->addViewport(playerController->getCamera());
-  playerController->moveTo(conversions::fromBSCoordinates(
-      {200.0f, -347.0f, -460.0f}));
-  auto playerPos = playerController->getCameraNode()->getPosition();
-  playerPos.y += 4.0f;
-  playerController->moveTo(playerPos);
+
+  auto startPos = conversions::fromBSCoordinates({200.0f, -347.0f, -460.0f});
+  startPos += 2.0f;
+  playerController->moveTo(startPos);
+
+  debugDrawer = std::make_unique<Ogre::DebugDrawer>(currentCell->scnMgr);
+  currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
+      ->attachObject(debugDrawer->getObject());
+  //currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
+
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
@@ -273,13 +280,11 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
 
   currentCell->physicsWorld->stepSimulation(1.0f / 60.0f);
 
-  btTransform playerTrans{};
-  playerController->getRigidBody()->getMotionState()
-      ->getWorldTransform(playerTrans);
-  btVector3 playerPos{playerTrans.getOrigin()};
-  logger->logMessage(boost::str(
-      boost::format("(%d, %d, %d)") % playerPos.x() % playerPos.y()
-          % playerPos.z()));
+  //debugDrawer->clearLines();
+  //currentCell->physicsWorld->debugDrawWorld();
+  debugDrawer->clearLines();
+  debugDrawer->drawBox({2, -2, 4}, {4, -6, 5}, {1.0f, 0.0f, 0.0f});
+  debugDrawer->build();
 
   return true;
 }
