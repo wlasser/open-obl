@@ -14,6 +14,7 @@
 #include <boost/format.hpp>
 #include <Ogre.h>
 #include <SDL2/SDL.h>
+#include <spdlog/spdlog.h>
 #include <memory>
 #include <string>
 
@@ -45,8 +46,11 @@ class Application : public Ogre::FrameListener {
 
   std::ifstream esmStream;
 
+  std::shared_ptr<spdlog::logger> logger{};
+  std::unique_ptr<Ogre::LogManager> ogreLogger{};
+  std::unique_ptr<Ogre::LogListener> ogreLogListener{};
+
   std::unique_ptr<Ogre::Root> ogreRoot{};
-  Ogre::LogManager *logger{};
   SDLInit sdlInit;
 
   SDLWindowPtr sdlWindow{nullptr, nullptr};

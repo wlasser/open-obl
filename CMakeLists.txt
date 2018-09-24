@@ -11,6 +11,8 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS)
 find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
 
+add_subdirectory(lib/spdlog)
+
 # IO library
 add_library(OpenOblivionIO OBJECT)
 target_include_directories(OpenOblivionIO PUBLIC include)
@@ -94,6 +96,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/ogre/ogre_stream_wrappers.hpp
         include/engine/ogre/rigid_body.hpp
         include/engine/ogre/rigid_body_manager.hpp
+        include/engine/ogre/spdlog_listener.hpp
         include/engine/ogre/window.hpp
         include/engine/player_controller.hpp)
 
@@ -106,6 +109,7 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         ${OGRE_LIBRARIES}
         ${SDL2_LIBRARY}
         ${BULLET_LIBRARIES}
+        spdlog
         stdc++fs)
 
 add_executable(OpenOblivion)
@@ -140,6 +144,7 @@ target_link_libraries(OpenOblivion PRIVATE
         ${OGRE_LIBRARIES}
         ${SDL2_LIBRARY}
         ${BULLET_LIBRARIES}
+        spdlog
         stdc++fs)
 
 add_library(Catch INTERFACE)

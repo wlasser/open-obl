@@ -4,9 +4,12 @@
 #include "engine/keep_strategy.hpp"
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/static_manager.hpp"
+#include "engine/ogre/spdlog_listener.hpp"
 #include "esp.hpp"
 #include "SDL.h"
 #include "SDL_syswm.h"
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
@@ -32,12 +35,26 @@ auto makeSDLWindow(const std::string &windowName, int width, int height,
 }
 
 Application::Application(std::string windowName) : FrameListener() {
-  // Start Ogre
-  ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "",
-                                          "OpenOblivion.log");
+  // Set up the logger. Ogre's logging facilities are pretty good but fall down
+  // when it comes to formatting. Using boost::format gets pretty tedious so
+  // we use spdlog, which has the fmt library built in. Obviously we still want
+  // Ogre's internal log messages though, so we use a LogListener to intercept
+  // the standard Ogre log messages and hand them over to spdlog.
+  auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+      "OpenOblivion.log", true);
+  logger = std::make_shared<spdlog::logger>(
+      "OgreLogger",
+      std::initializer_list<spdlog::sink_ptr>{consoleSink, fileSink});
+  spdlog::register_logger(logger);
 
-  // Set up the logger
-  logger = Ogre::LogManager::getSingletonPtr();
+  ogreLogger = std::make_unique<Ogre::LogManager>();
+  auto *defaultLog = ogreLogger->createLog("DefaultLog", true, true, true);
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>("OgreLogger");
+  defaultLog->addListener(ogreLogListener.get());
+
+  // Start Ogre
+  ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
 
   // Choose a render system
   std::string renderSystemName = "OpenGL 3+ Rendering Subsystem";
@@ -45,15 +62,12 @@ Application::Application(std::string windowName) : FrameListener() {
     ogreRoot->setRenderSystem(renderSystem);
   } else {
     // List the available render systems
-    auto notFound = boost::str(boost::format("Render system %s not found")
-                                   % renderSystemName);
-    logger->logMessage(notFound);
-    logger->logMessage("Available render systems are:");
-    auto renderSystemFmt = boost::format(" - %s");
+    logger->error("Render system {} not found", renderSystemName);
+    logger->info("Available render systems are:");
     for (const auto &system : ogreRoot->getAvailableRenderers()) {
-      logger->logMessage(boost::str(renderSystemFmt % system->getName()));
+      logger->info(" * {}", system->getName());
     }
-    throw std::runtime_error(notFound);
+    throw std::runtime_error("Invalid render system");
   }
 
   // Initialise the rendering component of Ogre
@@ -127,7 +141,7 @@ Application::Application(std::string windowName) : FrameListener() {
       resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
     }
   }
-  logger->logMessage("Declared mesh files");
+  logger->info("Declared mesh files");
 
   auto textureList = archiveMgr.load(testBSAs[1], "BSA", true)->list();
   for (const auto &filename : *textureList) {
@@ -136,11 +150,11 @@ Application::Application(std::string windowName) : FrameListener() {
       resGrpMgr.declareResource(path, "Texture", resourceGroup);
     }
   }
-  logger->logMessage("Declared texture files");
+  logger->info("Declared texture files");
 
   // Declare the shader programs
   resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
-  logger->logMessage("Declared shader files");
+  logger->info("Declared shader files");
 
   resGrpMgr.initialiseAllResourceGroups();
 
@@ -152,7 +166,7 @@ Application::Application(std::string windowName) : FrameListener() {
   if (!esmStream.is_open()) {
     throw std::runtime_error("Failed to open esm");
   }
-  logger->logMessage("Opened Oblivion.esm");
+  logger->info("Opened Oblivion.esm");
 
   // Create the engine managers
   lightMgr = std::make_unique<LightManager>();
@@ -169,11 +183,11 @@ Application::Application(std::string windowName) : FrameListener() {
                                     staticMgr.get(),
                                     interiorCellMgr.get());
   esp::readEsp(esmStream, initialProcessor);
-  logger->logMessage("Read Oblivion.esm");
+  logger->info("Read Oblivion.esm");
 
   // Load a test cell
   currentCell = interiorCellMgr->get(0x00'031b59);
-  logger->logMessage("Loaded test cell");
+  logger->info("Loaded test cell");
 
   playerController =
       std::make_unique<engine::PlayerController>(currentCell->scnMgr, true);
