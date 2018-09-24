@@ -2,10 +2,10 @@
 
 namespace Ogre {
 
-DebugDrawer::DebugDrawer(SceneManager *mgr) {
+DebugDrawer::DebugDrawer(SceneManager *mgr, const String &group) {
   mObject = mgr->createManualObject();
   mObject->setDynamic(true);
-  mObject->begin("DebugDrawer", RenderOperation::OT_LINE_LIST, "OOResource");
+  mObject->begin("DebugDrawer", RenderOperation::OT_LINE_LIST, group);
   mObject->position(Vector3::ZERO);
   mObject->colour(ColourValue::Black);
   mObject->index(0);

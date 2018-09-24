@@ -60,7 +60,6 @@ class Application : public Ogre::FrameListener {
 
   nifloader::Loader nifLoader{};
   std::unique_ptr<Ogre::RigidBodyManager> rigidBodyMgr{};
-  const std::string resourceGroup = "OOResource";
 
   std::unique_ptr<LightManager> lightMgr{};
   std::unique_ptr<StaticManager> staticMgr{};

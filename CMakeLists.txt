@@ -98,7 +98,8 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/ogre/rigid_body_manager.hpp
         include/engine/ogre/spdlog_listener.hpp
         include/engine/ogre/window.hpp
-        include/engine/player_controller.hpp)
+        include/engine/player_controller.hpp
+        include/engine/settings.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC
         ${SDL2_INCLUDE_DIR}

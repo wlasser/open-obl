@@ -8,7 +8,7 @@ namespace Ogre {
 
 class DebugDrawer : public btIDebugDraw {
  public:
-  explicit DebugDrawer(SceneManager *mgr);
+  explicit DebugDrawer(SceneManager *mgr, const String &group);
 
   void drawLine(const Vector3 &from,
                 const Vector3 &to,

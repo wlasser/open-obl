@@ -5,6 +5,7 @@
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/ogre/spdlog_listener.hpp"
+#include "engine/settings.hpp"
 #include "esp.hpp"
 #include "SDL.h"
 #include "SDL_syswm.h"
@@ -54,20 +55,20 @@ Application::Application(std::string windowName) : FrameListener() {
   std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
 
   // Construct the default Ogre logger and register its spdlog listener
-  auto ogreLogger = std::make_shared<spdlog::logger>("Ogre", sinks);
+  auto ogreLogger = std::make_shared<spdlog::logger>(settings::ogreLog, sinks);
   spdlog::register_logger(ogreLogger);
   ogreLogMgr = std::make_unique<Ogre::LogManager>();
   auto *defaultLog = ogreLogMgr->createLog("Default", true, true, true);
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>("Ogre");
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
   defaultLog->addListener(ogreLogListener.get());
 
   // Construct our own logger
-  logger = std::make_shared<spdlog::logger>("OO", sinks);
+  logger = std::make_shared<spdlog::logger>(settings::log, sinks);
   spdlog::register_logger(logger);
 
   // Set the starting logger levels
-  spdlog::get("Ogre")->set_level(spdlog::level::warn);
-  spdlog::get("OO")->set_level(spdlog::level::debug);
+  spdlog::get(settings::ogreLog)->set_level(spdlog::level::warn);
+  spdlog::get(settings::log)->set_level(spdlog::level::debug);
 
   // Start Ogre
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
@@ -125,6 +126,7 @@ Application::Application(std::string windowName) : FrameListener() {
   rigidBodyMgr = std::make_unique<Ogre::RigidBodyManager>();
 
   // Add the main resource group
+  const std::string resourceGroup{settings::resourceGroup};
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
   resGrpMgr.createResourceGroup(resourceGroup);
 
@@ -216,7 +218,8 @@ Application::Application(std::string windowName) : FrameListener() {
   startPos += 2.0f;
   playerController->moveTo(startPos);
 
-  debugDrawer = std::make_unique<Ogre::DebugDrawer>(currentCell->scnMgr);
+  debugDrawer = std::make_unique<Ogre::DebugDrawer>(currentCell->scnMgr,
+                                                    resourceGroup);
   currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
       ->attachObject(debugDrawer->getObject());
   //currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
