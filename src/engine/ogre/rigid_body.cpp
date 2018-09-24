@@ -2,6 +2,7 @@
 #include "engine/nifloader/loader.hpp"
 #include "engine/ogre/rigid_body.hpp"
 #include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "engine/settings.hpp"
 #include "nif/bhk.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/copy.hpp>
@@ -9,6 +10,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
 #include <OgreResourceGroupManager.h>
+#include <spdlog/spdlog.h>
 #include <array>
 
 namespace Ogre {
@@ -46,8 +48,7 @@ void RigidBody::notify() {
 }
 
 void RigidBody::loadImpl() {
-  LogManager::getSingleton().logMessage(boost::str(
-      boost::format("Loading RigidBody %s") % getName()));
+  spdlog::get(engine::settings::ogreLog)->info("RigidBody: {}", getName());
 
   auto ogreDataStream = ResourceGroupManager::getSingleton()
       .openResource(mName, mGroup);
@@ -72,9 +73,6 @@ void RigidBody::loadImpl() {
   boost::depth_first_search(blocks, RigidBodyNifVisitor(this), propertyMap);
 
   if (mMotionState) mRigidBody->setMotionState(mMotionState.get());
-
-  LogManager::getSingleton().logMessage(boost::str(
-      boost::format("Loaded RigidBody %s") % getName()));
 }
 
 void RigidBody::unloadImpl() {

@@ -8,6 +8,7 @@
 #include <OgreAxisAlignedBox.h>
 #include <OgreLogManager.h>
 #include <OgreResource.h>
+#include <spdlog/spdlog.h>
 #include <istream>
 #include <map>
 #include <memory>
@@ -55,7 +56,7 @@ class Loader : public Ogre::ManualResourceLoader {
  private:
   friend class LoaderState;
 
-  Ogre::LogManager *logger{nullptr};
+  std::shared_ptr<spdlog::logger> logger{};
 
  public:
   void loadResource(Ogre::Resource *resource) override;

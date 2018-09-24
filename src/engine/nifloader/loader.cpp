@@ -2,6 +2,7 @@
 #include "engine/nifloader/loader.hpp"
 #include "engine/nifloader/loader_state.hpp"
 #include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "engine/settings.hpp"
 #include "io/memstream.hpp"
 #include "nif/basic.hpp"
 #include "nif/bhk.hpp"
@@ -19,6 +20,7 @@
 #include <OgreResourceGroupManager.h>
 #include <OgreSubMesh.h>
 #include <OgreTechnique.h>
+#include <spdlog/spdlog.h>
 #include <algorithm>
 #include <map>
 #include <set>
@@ -118,6 +120,7 @@ const AddVertexMap &getAddVertexMap() {
 
 BlockGraph createBlockGraph(std::istream &is) {
   using namespace nif;
+  auto logger = spdlog::get(settings::log);
 
   Version nifVersion = peekVersion(is);
   compound::Header header{nifVersion};
@@ -174,8 +177,7 @@ BlockGraph createBlockGraph(std::istream &is) {
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func = vertexAdder->second;
       std::invoke(func, blocks, i, nifVersion, is);
-      Ogre::LogManager::getSingleton().logMessage(boost::str(
-          boost::format("Read block %d (%i)") % i % blockType));
+      logger->trace("Read block {} ({})", i, blockType);
     } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
       block->read(is);
@@ -186,8 +188,7 @@ BlockGraph createBlockGraph(std::istream &is) {
         }
       }
       blocks[i] = std::move(block);
-      Ogre::LogManager::getSingleton().logMessage(boost::str(
-          boost::format("Read block %d (NiNode)") % i));
+      logger->trace("Read block {} (NiNode)", i);
     } else {
       // TODO: Implement the other blocks
       throw std::runtime_error(boost::str(
@@ -200,13 +201,12 @@ BlockGraph createBlockGraph(std::istream &is) {
 }
 
 void Loader::loadResource(Ogre::Resource *resource) {
-  if (!logger) logger = Ogre::LogManager::getSingletonPtr();
+  if (!logger) logger = spdlog::get(settings::ogreLog);
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);
 
-  logger->logMessage(boost::str(
-      boost::format("Loading Mesh %s") % resource->getName()));
+  logger->info("Mesh: {}", resource->getName());
 
   // TODO: If the mesh doesn't exist, dynamically generate a placeholder
   auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
@@ -218,9 +218,6 @@ void Loader::loadResource(Ogre::Resource *resource) {
   auto blocks = createBlockGraph(is);
 
   LoaderState instance(mesh, blocks);
-
-  logger->logMessage(boost::str(
-      boost::format("Loaded Mesh %s") % resource->getName()));
 }
 
 } // namespace engine::nifloader
