@@ -40,18 +40,34 @@ Application::Application(std::string windowName) : FrameListener() {
   // we use spdlog, which has the fmt library built in. Obviously we still want
   // Ogre's internal log messages though, so we use a LogListener to intercept
   // the standard Ogre log messages and hand them over to spdlog.
+
+  // The console gets info and above, in particular not debug
   auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  consoleSink->set_level(spdlog::level::info);
+
+  // The log file gets everything
   auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
       "OpenOblivion.log", true);
-  logger = std::make_shared<spdlog::logger>(
-      "OgreLogger",
-      std::initializer_list<spdlog::sink_ptr>{consoleSink, fileSink});
+  fileSink->set_level(spdlog::level::trace);
+
+  // Every log will write to both the console and the log file
+  std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
+
+  // Construct the default Ogre logger and register its spdlog listener
+  auto ogreLogger = std::make_shared<spdlog::logger>("Ogre", sinks);
+  spdlog::register_logger(ogreLogger);
+  ogreLogMgr = std::make_unique<Ogre::LogManager>();
+  auto *defaultLog = ogreLogMgr->createLog("Default", true, true, true);
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>("Ogre");
+  defaultLog->addListener(ogreLogListener.get());
+
+  // Construct our own logger
+  logger = std::make_shared<spdlog::logger>("OO", sinks);
   spdlog::register_logger(logger);
 
-  ogreLogger = std::make_unique<Ogre::LogManager>();
-  auto *defaultLog = ogreLogger->createLog("DefaultLog", true, true, true);
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>("OgreLogger");
-  defaultLog->addListener(ogreLogListener.get());
+  // Set the starting logger levels
+  spdlog::get("Ogre")->set_level(spdlog::level::warn);
+  spdlog::get("OO")->set_level(spdlog::level::debug);
 
   // Start Ogre
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");

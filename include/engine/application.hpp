@@ -47,7 +47,7 @@ class Application : public Ogre::FrameListener {
   std::ifstream esmStream;
 
   std::shared_ptr<spdlog::logger> logger{};
-  std::unique_ptr<Ogre::LogManager> ogreLogger{};
+  std::unique_ptr<Ogre::LogManager> ogreLogMgr{};
   std::unique_ptr<Ogre::LogListener> ogreLogListener{};
 
   std::unique_ptr<Ogre::Root> ogreRoot{};
