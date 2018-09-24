@@ -89,8 +89,12 @@ void RigidBodyNifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &tag = taggedNiObject.tag;
 
   if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->trace("Parsing block {} (NiNode)", v);
     mTransform = mTransform * engine::nifloader::getTransform(niNode);
   } else if (auto bsxFlags = dynamic_cast<nif::BSXFlags *>(niObject)) {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->trace("Parsing block {} (BSXFlags)", v);
     using Flags = nif::BSXFlags::Flags;
     auto flags = Flags(bsxFlags->data);
     if ((flags & Flags::bHavok) != Flags::bNone) {
@@ -100,11 +104,6 @@ void RigidBodyNifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
       dynamic_cast<nif::bhk::CollisionObject *>(niObject)) {
     if (!mHasHavok) return;
     parseCollisionObject(g, collisionObject, tag);
-  } else if (auto rigidBody = dynamic_cast<nif::bhk::RigidBody *>(niObject)) {
-    if (!mHasHavok) return;
-    // RigidBody ignores the translations and rotations of its parent, whereas
-    // RigidBodyT does not ignore them.
-    bool ignoreRT = (dynamic_cast<nif::bhk::RigidBodyT *>(niObject) == nullptr);
   }
 }
 
@@ -118,75 +117,93 @@ void RigidBodyNifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
 void RigidBodyNifVisitor::parseCollisionObject(const Graph &g,
                                                nif::bhk::CollisionObject *block,
                                                engine::nifloader::LoadStatus &tag) {
+  engine::nifloader::Tagger tagger{tag};
+  mLogger->trace("Parsing block ? (bhkCollisionObject)");
+
   // TODO: COFlags
   // TODO: target
   auto[worldObj, worldObjTag] = getRef<nif::bhk::WorldObject>(g, block->body);
-  parseWorldObject(g, worldObj, worldObjTag);
+  auto[collisionShape, rigidBody] = parseWorldObject(g, worldObj, worldObjTag);
+  if (collisionShape) mRigidBody->mCollisionShape = std::move(collisionShape);
+  if (rigidBody) mRigidBody->mRigidBody = std::move(rigidBody);
 }
 
-void RigidBodyNifVisitor::parseWorldObject(const Graph &g,
-                                           nif::bhk::WorldObject *block,
-                                           engine::nifloader::LoadStatus &tag) {
+std::pair<std::unique_ptr<btCollisionShape>, std::unique_ptr<btRigidBody>>
+RigidBodyNifVisitor::parseWorldObject(const Graph &g,
+                                      nif::bhk::WorldObject *block,
+                                      engine::nifloader::LoadStatus &tag) {
+  engine::nifloader::Tagger tagger{tag};
+  mLogger->trace("Parsing block ? (bhkWorldObject)");
+
   // TODO: Flags
   auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
-  mRigidBody->mCollisionShape = parseShape(g, shape, shapeTag);
+  auto collisionShape = parseShape(g, shape, shapeTag);
 
-  if (auto rigidBody = dynamic_cast<nif::bhk::RigidBody *>(block)) {
-    using namespace engine::conversions;
-    // RigidBody ignores the translations and rotations of its parent, whereas
-    // RigidBodyT does not ignore them.
-    bool ignoreRT = (dynamic_cast<nif::bhk::RigidBodyT *>(block) == nullptr);
-    Matrix4 baseTrans{ignoreRT ? Matrix4::IDENTITY : mTransform};
-
-    // Transformation of the body is always taken into account
-    Matrix4 localTrans{};
-    localTrans.makeTransform(
-        fromNif(rigidBody->translation).xyz(),
-        {1.0f, 1.0f, 1.0f},
-        fromNif(rigidBody->rotation));
-    auto totalTrans = baseTrans * localTrans;
-
-    // This does not seem to affect the translation in any way.
-    // TODO: What is the Havok origin used for?
-    Vector3 origin = fromNif(rigidBody->center).xyz();
-
-    // Bullet needs a diagonalized inertia tensor given as a vector, and the
-    // file stores it as a 3x4 matrix. We ignore the last (w) column and
-    // compute the eigenvalues.
-    const auto &hkI = rigidBody->inertiaTensor;
-    Matrix3 inertiaTensor{hkI.m11, hkI.m12, hkI.m13,
-                          hkI.m21, hkI.m22, hkI.m23,
-                          hkI.m31, hkI.m32, hkI.m33};
-    std::array<Vector3, 3> principalAxes{};
-    Vector3 principalMoments{};
-    inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
-                                      principalAxes.data());
-    // The principal axes for a rotation matrix and we have the diagonalization
-    // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
-    // TODO: Change to principal frame
-
-    // The units for these are the same in Bullet and Havok
-    btScalar mass = rigidBody->mass;
-    btScalar linearDamping = rigidBody->linearDamping;
-    btScalar angularDamping = rigidBody->angularDamping;
-    btScalar friction = rigidBody->friction;
-    btScalar restitution = rigidBody->restitution;
-
-    // TODO: Constraints
-
-    // Convert the Ogre parameters to Bullet ones and set up the rigid body
-    btVector3 bulletInertia{toBullet(principalMoments)};
-    btRigidBody::btRigidBodyConstructionInfo
-        info(mass, nullptr, mRigidBody->mCollisionShape.get(), bulletInertia);
-    info.m_linearDamping = linearDamping;
-    info.m_angularDamping = angularDamping;
-    info.m_friction = friction;
-    info.m_restitution = restitution;
-    info.m_startWorldTransform = btTransform{toBullet(totalTrans.linear()),
-                                             toBullet(totalTrans.getTrans())};
-
-    mRigidBody->mRigidBody = std::make_unique<btRigidBody>(info);
+  std::unique_ptr<btRigidBody> rigidBody{};
+  if (auto body = dynamic_cast<nif::bhk::RigidBody *>(block)) {
+    auto info = generateRigidBodyInfo(body);
+    info.m_collisionShape = collisionShape.get();
+    rigidBody = std::make_unique<btRigidBody>(info);
   }
+  return std::make_pair(std::move(collisionShape), std::move(rigidBody));
+}
+
+btRigidBody::btRigidBodyConstructionInfo
+RigidBodyNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
+  using namespace engine::conversions;
+  // RigidBody ignores the translations and rotations of its parent, whereas
+  // RigidBodyT does not ignore them.
+  bool ignoreRT = (dynamic_cast<nif::bhk::RigidBodyT *>(block) == nullptr);
+  Matrix4 baseTrans{ignoreRT ? Matrix4::IDENTITY : mTransform};
+
+  // Transformation of the body is always taken into account
+  Matrix4 localTrans{};
+  localTrans.makeTransform(
+      fromNif(block->translation).xyz(),
+      {1.0f, 1.0f, 1.0f},
+      fromNif(block->rotation));
+  auto totalTrans = baseTrans * localTrans;
+
+  // This does not seem to affect the translation in any way.
+  // TODO: What is the Havok origin used for?
+  Vector3 origin = fromNif(block->center).xyz();
+
+  // Bullet needs a diagonalized inertia tensor given as a vector, and the
+  // file stores it as a 3x4 matrix. We ignore the last (w) column and
+  // compute the eigenvalues.
+  const auto &hkI = block->inertiaTensor;
+  Matrix3 inertiaTensor{hkI.m11, hkI.m12, hkI.m13,
+                        hkI.m21, hkI.m22, hkI.m23,
+                        hkI.m31, hkI.m32, hkI.m33};
+  std::array<Vector3, 3> principalAxes{};
+  Vector3 principalMoments{};
+  inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
+                                    principalAxes.data());
+  // The principal axes for a rotation matrix and we have the diagonalization
+  // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
+  // TODO: Change to principal frame
+
+  // The units for these are the same in Bullet and Havok
+  btScalar mass = block->mass;
+  btScalar linearDamping = block->linearDamping;
+  btScalar angularDamping = block->angularDamping;
+  btScalar friction = block->friction;
+  btScalar restitution = block->restitution;
+
+  // TODO: Constraints
+
+  // Convert the Ogre parameters to Bullet ones and set up the rigid body
+  btVector3 bulletInertia{toBullet(principalMoments)};
+  btRigidBody::btRigidBodyConstructionInfo
+      info(mass, nullptr, mRigidBody->mCollisionShape.get(), bulletInertia);
+  info.m_linearDamping = linearDamping;
+  info.m_angularDamping = angularDamping;
+  info.m_friction = friction;
+  info.m_restitution = restitution;
+  info.m_startWorldTransform = btTransform{toBullet(totalTrans.linear()),
+                                           toBullet(totalTrans.getTrans())};
+
+  return info;
 }
 
 std::unique_ptr<btCollisionShape>
@@ -194,6 +211,9 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
                                 nif::bhk::Shape *block,
                                 engine::nifloader::LoadStatus &tag) {
   if (auto moppBvTreeShape = dynamic_cast<nif::bhk::MoppBvTreeShape *>(block)) {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->trace("Parsing block ? (bhkMoppBvTreeShape)");
+
     auto material = moppBvTreeShape->material.material;
 
     // Instead of decoding the MOPP data we use the linked shape
@@ -211,6 +231,9 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
     return collisionShape;
   } else if (auto niTriStrips =
       dynamic_cast<nif::bhk::PackedNiTriStripsShape *>(block)) {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->trace("Parsing block ? (bhkPackedNiTriStripsShape)");
+
     // TODO: Subshapes?
 
     // @formatter:off
@@ -228,6 +251,8 @@ RigidBodyNifVisitor::parseShape(const Graph &g,
     mTransform = mTransform * scaleMat.inverse();
     return collisionShape;
   } else {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->warn("Parsing unknown bhkShape");
     return nullptr;
     //OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
     //            "Unknown collision shape",
@@ -239,6 +264,9 @@ std::unique_ptr<btCollisionShape>
 RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
                                           nif::hk::PackedNiTriStripsData *block,
                                           engine::nifloader::LoadStatus &tag) {
+  engine::nifloader::Tagger tagger{tag};
+  mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
+
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
   // so they need to be kept alive for the lifetime of the collision object.

@@ -3,9 +3,11 @@
 
 #include "engine/nifloader/loader_state.hpp"
 #include "engine/ogre/motion_state.hpp"
+#include "engine/settings.hpp"
 #include "nif/bhk.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <OgreResource.h>
+#include <spdlog/spdlog.h>
 #include <memory>
 
 namespace Ogre {
@@ -78,12 +80,14 @@ struct RigidBodyNifVisitor {
   void finish_edge(edge_descriptor e, const Graph &g) {}
   void finish_vertex(vertex_descriptor v, const Graph &g);
 
-  explicit RigidBodyNifVisitor(RigidBody *rigidBody) : mRigidBody(rigidBody) {}
+  explicit RigidBodyNifVisitor(RigidBody *rigidBody)
+      : mRigidBody(rigidBody), mLogger(spdlog::get(engine::settings::log)) {}
 
  private:
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   RigidBody *mRigidBody{};
   bool mHasHavok{false};
+  std::shared_ptr<spdlog::logger> mLogger{};
 
   template<class T>
   struct RefResult {
@@ -113,9 +117,13 @@ struct RigidBodyNifVisitor {
                             nif::bhk::CollisionObject *block,
                             engine::nifloader::LoadStatus &tag);
 
-  void parseWorldObject(const Graph &g,
-                        nif::bhk::WorldObject *block,
-                        engine::nifloader::LoadStatus &tag);
+  std::pair<std::unique_ptr<btCollisionShape>, std::unique_ptr<btRigidBody>>
+  parseWorldObject(const Graph &g,
+                   nif::bhk::WorldObject *block,
+                   engine::nifloader::LoadStatus &tag);
+
+  btRigidBody::btRigidBodyConstructionInfo
+  generateRigidBodyInfo(nif::bhk::RigidBody *block) const;
 
   std::unique_ptr<btCollisionShape>
   parseShape(const Graph &g,
