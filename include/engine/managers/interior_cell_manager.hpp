@@ -30,6 +30,11 @@ struct InteriorCell {
       : scnMgr(Ogre::Root::getSingletonPtr()->createSceneManager()),
         physicsWorld(std::move(physicsWorld)) {}
 
+  InteriorCell(const InteriorCell &other) = delete;
+  InteriorCell &operator=(const InteriorCell &other) = delete;
+  InteriorCell(InteriorCell &&other) = default;
+  InteriorCell &operator=(InteriorCell &&other) = default;
+
   ~InteriorCell() {
     auto root = Ogre::Root::getSingletonPtr();
     if (root) root->destroySceneManager(scnMgr);
