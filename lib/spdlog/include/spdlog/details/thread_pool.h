@@ -64,8 +64,8 @@ struct async_msg
         return *this;
     }
 #else // (_MSC_VER) && _MSC_VER <= 1800
-    async_msg(async_msg &&) = default;
-    async_msg &operator=(async_msg &&) = default;
+    async_msg(async_msg &&other) = default;
+    async_msg &operator=(async_msg &&other) = default;
 #endif
 
     // construct from log_msg with given type
@@ -198,13 +198,6 @@ private:
 
         switch (incoming_async_msg.msg_type)
         {
-        case async_msg_type::log:
-        {
-            log_msg msg;
-            incoming_async_msg.to_log_msg(msg);
-            incoming_async_msg.worker_ptr->backend_log_(msg);
-            return true;
-        }
         case async_msg_type::flush:
         {
             incoming_async_msg.worker_ptr->backend_flush_();
@@ -215,9 +208,16 @@ private:
         {
             return false;
         }
+
+        default:
+        {
+            log_msg msg;
+            incoming_async_msg.to_log_msg(msg);
+            incoming_async_msg.worker_ptr->backend_log_(msg);
+            return true;
         }
-        assert(false && "Unexpected async_msg_type");
-        return true;
+        }
+        return true; // should not be reached
     }
 };
 

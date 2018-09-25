@@ -28,10 +28,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     add_compile_options("-Wall")
     add_compile_options("-Wextra")
-    add_compile_options("-Wconversion")
     add_compile_options("-pedantic")
-    add_compile_options("-Wfatal-errors")
-    
 endif()
 
 #---------------------------------------------------------------------------------------
@@ -45,17 +42,11 @@ include(cmake/sanitizers.cmake)
 add_library(spdlog INTERFACE)
 add_library(spdlog::spdlog ALIAS spdlog)
 
-# Check if spdlog is being used directly or via add_subdirectory
-set(SPDLOG_MASTER_PROJECT OFF)
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(SPDLOG_MASTER_PROJECT ON)
-endif()
-
-option(SPDLOG_BUILD_EXAMPLES "Build examples" ${SPDLOG_MASTER_PROJECT})
-option(SPDLOG_BUILD_BENCH "Build benchmarks" ${SPDLOG_MASTER_PROJECT})
+option(SPDLOG_BUILD_EXAMPLES "Build examples" ON)
+option(SPDLOG_BUILD_BENCH "Build benchmarks" ON)
 
 cmake_dependent_option(SPDLOG_BUILD_TESTING
-    "Build spdlog tests" ${SPDLOG_MASTER_PROJECT}
+    "Build spdlog tests" ON
     "BUILD_TESTING" OFF
 )
 

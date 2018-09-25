@@ -22,8 +22,12 @@ inline void append_str(const std::string &str, fmt::basic_memory_buffer<char, Bu
 template<size_t Buffer_Size>
 inline void append_c_str(const char *c_str, fmt::basic_memory_buffer<char, Buffer_Size> &dest)
 {
-    auto len = std::char_traits<char>::length(c_str);
-    dest.append(c_str, c_str + len);
+    char ch;
+    while ((ch = *c_str) != '\0')
+    {
+        dest.push_back(ch);
+        ++c_str;
+    }
 }
 
 template<size_t Buffer_Size1, size_t Buffer_Size2>
@@ -50,14 +54,14 @@ inline void pad2(int n, fmt::basic_memory_buffer<char, Buffer_Size> &dest)
     }
     if (n > 9) // 10-99
     {
-        dest.push_back(static_cast<char>('0' + n / 10));
-        dest.push_back(static_cast<char>('0' + n % 10));
+        dest.push_back('0' + static_cast<char>(n / 10));
+        dest.push_back('0' + static_cast<char>(n % 10));
         return;
     }
     if (n >= 0) // 0-9
     {
         dest.push_back('0');
-        dest.push_back(static_cast<char>('0' + n));
+        dest.push_back('0' + static_cast<char>(n));
         return;
     }
     // negatives (unlikely, but just in case, let fmt deal with it)
@@ -82,15 +86,15 @@ inline void pad3(int n, fmt::basic_memory_buffer<char, Buffer_Size> &dest)
     if (n > 9) // 10-99
     {
         dest.push_back('0');
-        dest.push_back(static_cast<char>('0' + n / 10));
-        dest.push_back(static_cast<char>('0' + n % 10));
+        dest.push_back('0' + static_cast<char>(n / 10));
+        dest.push_back('0' + static_cast<char>(n % 10));
         return;
     }
     if (n >= 0)
     {
         dest.push_back('0');
         dest.push_back('0');
-        dest.push_back(static_cast<char>('0' + n));
+        dest.push_back('0' + static_cast<char>(n));
         return;
     }
     // negatives (unlikely, but just in case let fmt deal with it)
