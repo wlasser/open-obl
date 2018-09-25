@@ -8,7 +8,6 @@ DebugDrawer::DebugDrawer(SceneManager *mgr, const String &group) {
   mObject->begin("DebugDrawer", RenderOperation::OT_LINE_LIST, group);
   mObject->position(Vector3::ZERO);
   mObject->colour(ColourValue::Black);
-  mObject->index(0);
   mObject->end();
 }
 
@@ -33,8 +32,8 @@ void DebugDrawer::clearLines() {
 
 void DebugDrawer::build() {
   if (!mEnabled) return;
-  mObject->beginUpdate(0);
   mObject->estimateVertexCount(mVertices.size());
+  mObject->beginUpdate(0);
   for (const auto &vertex : mVertices) {
     mObject->position(vertex.pos);
     mObject->colour(vertex.col);
