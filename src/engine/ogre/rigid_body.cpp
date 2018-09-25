@@ -1,37 +1,70 @@
 #include "engine/conversions.hpp"
-#include "engine/nifloader/loader.hpp"
 #include "engine/ogre/rigid_body.hpp"
-#include "engine/ogre/ogre_stream_wrappers.hpp"
-#include "engine/settings.hpp"
-#include "nif/bhk.hpp"
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/copy.hpp>
-#include <boost/graph/depth_first_search.hpp>
-#include <btBulletDynamicsCommon.h>
-#include <Ogre.h>
-#include <OgreResourceGroupManager.h>
-#include <spdlog/spdlog.h>
-#include <array>
+#include "engine/ogre/collision_object_manager.hpp"
 
 namespace Ogre {
 
-RigidBody::RigidBody(Ogre::ResourceManager *creator,
-                     const Ogre::String &name,
-                     Ogre::ResourceHandle handle,
-                     const Ogre::String &group,
-                     bool isManual,
-                     Ogre::ManualResourceLoader *loader)
-    : Resource(creator, name, handle, group, isManual, loader) {}
+void RigidBody::_notifyAttached(Node *parent, bool isTagPoint) {
+  MovableObject::_notifyAttached(parent, isTagPoint);
+  bind(parent);
+}
 
-btRigidBody *RigidBody::getRigidBody() {
+void RigidBody::_notifyMoved() {
+  // Unsure when this is called; only when the position is changed because of a
+  // parent, or even when this->setPosition is called? If the latter, using it
+  // to notify the motion state will cause a cycle
+  // TODO: When is _notifyMoved called, will it create a cycle?
+}
+
+void RigidBody::_updateRenderQueue(RenderQueue *queue) {
+  // This is not renderable
+}
+
+const AxisAlignedBox &RigidBody::getBoundingBox() const {
+  btVector3 min{};
+  btVector3 max{};
+  mRigidBody->getAabb(min, max);
+  mBox.setExtents(engine::conversions::fromBullet(min),
+                  engine::conversions::fromBullet(max));
+  return mBox;
+}
+
+Real RigidBody::getBoundingRadius() const {
+  // If we take a sphere centered at the bounding box center, then by symmetry
+  // the distance from the center to any corner point is constant, and moreover
+  // is the largest distance from the center to any point.
+  auto bbox = getBoundingBox();
+  auto center = bbox.getCenter();
+  return (bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - bbox.getCenter())
+      .length();
+}
+
+const String &RigidBody::getMovableType() const {
+  return mType;
+}
+
+void RigidBody::visitRenderables(Renderable::Visitor *visitor,
+                                 bool debugRenderables) {
+  // This is not renderable
+}
+
+btRigidBody *RigidBody::getRigidBody() const {
   return mRigidBody.get();
 }
 
-btCollisionShape *RigidBody::getCollisionShape() {
-  return mCollisionShape.get();
+RigidBody::RigidBody(const String &name, CollisionObjectPtr collisionObject)
+    : mCollisionObject(std::move(collisionObject)) {
+  mName = name;
+  if (auto *info = mCollisionObject->getRigidBodyInfo()) {
+    mRigidBody = std::make_unique<btRigidBody>(*info);
+  } else {
+    OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
+                "getRigidBodyInfo() == nullptr, cannot create RigidBody",
+                "RigidBody::RigidBody");
+  }
 }
 
-void RigidBody::bind(SceneNode *node) {
+void RigidBody::bind(Node *node) {
   // Reset and delete existing state
   if (mRigidBody) mRigidBody->setMotionState(nullptr);
   mMotionState.reset(nullptr);
@@ -47,286 +80,46 @@ void RigidBody::notify() {
   if (mMotionState) mMotionState->notify();
 }
 
-void RigidBody::loadImpl() {
-  spdlog::get(engine::settings::ogreLog)->info("RigidBody: {}", getName());
-
-  auto ogreDataStream = ResourceGroupManager::getSingleton()
-      .openResource(mName, mGroup);
-
-  if (ogreDataStream == nullptr) {
-    OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND,
-                "Unable to open resource",
-                "RigidBody::load");
-  }
-
-  auto ogreDataStreambuf = engine::OgreDataStreambuf{ogreDataStream};
-  std::istream is{&ogreDataStreambuf};
-
-  auto untaggedBlocks = engine::nifloader::createBlockGraph(is);
-  RigidBodyNifVisitor::Graph blocks{};
-  boost::copy_graph(untaggedBlocks, blocks);
-
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  auto propertyMap = boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, blocks));
-
-  boost::depth_first_search(blocks, RigidBodyNifVisitor(this), propertyMap);
-
-  if (mMotionState) mRigidBody->setMotionState(mMotionState.get());
+void RigidBodyFactory::destroyInstance(MovableObject *obj) {
+  OGRE_DELETE obj;
 }
 
-void RigidBody::unloadImpl() {
-  // TODO: Actually unload the thing
+const String &RigidBodyFactory::getType() const {
+  return mType;
 }
 
-void RigidBodyNifVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
-  mTransform = Ogre::Matrix4::IDENTITY;
-}
+MovableObject *RigidBodyFactory::createInstanceImpl(const String &name,
+                                                    const NameValuePairList *params) {
+  CollisionObjectPtr ptr{};
+  String group = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
 
-void RigidBodyNifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
-  auto &taggedNiObject = g[v];
-  auto *niObject = taggedNiObject.block.get();
-  auto &tag = taggedNiObject.tag;
+  if (params) {
+    auto it = params->find("resourceGroup");
+    if (it != params->end()) group = it->second;
 
-  if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block {} (NiNode)", v);
-    mTransform = mTransform * engine::nifloader::getTransform(niNode);
-  } else if (auto bsxFlags = dynamic_cast<nif::BSXFlags *>(niObject)) {
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block {} (BSXFlags)", v);
-    using Flags = nif::BSXFlags::Flags;
-    auto flags = Flags(bsxFlags->data);
-    if ((flags & Flags::bHavok) != Flags::bNone) {
-      mHasHavok = true;
-    }
-  } else if (auto collisionObject =
-      dynamic_cast<nif::bhk::CollisionObject *>(niObject)) {
-    if (!mHasHavok) return;
-    parseCollisionObject(g, collisionObject, tag);
-  }
-}
-
-void RigidBodyNifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
-  auto *niObject = g[v].block.get();
-  if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
-    mTransform = mTransform * engine::nifloader::getTransform(niNode).inverse();
-  }
-}
-
-void RigidBodyNifVisitor::parseCollisionObject(const Graph &g,
-                                               nif::bhk::CollisionObject *block,
-                                               engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
-  mLogger->trace("Parsing block ? (bhkCollisionObject)");
-
-  // TODO: COFlags
-  // TODO: target
-  auto[worldObj, worldObjTag] = getRef<nif::bhk::WorldObject>(g, block->body);
-  auto[collisionShape, rigidBody] = parseWorldObject(g, worldObj, worldObjTag);
-  if (collisionShape) mRigidBody->mCollisionShape = std::move(collisionShape);
-  if (rigidBody) mRigidBody->mRigidBody = std::move(rigidBody);
-}
-
-std::pair<std::unique_ptr<btCollisionShape>, std::unique_ptr<btRigidBody>>
-RigidBodyNifVisitor::parseWorldObject(const Graph &g,
-                                      nif::bhk::WorldObject *block,
-                                      engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
-  mLogger->trace("Parsing block ? (bhkWorldObject)");
-
-  // TODO: Flags
-  auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
-  auto collisionShape = parseShape(g, shape, shapeTag);
-
-  std::unique_ptr<btRigidBody> rigidBody{};
-  if (auto body = dynamic_cast<nif::bhk::RigidBody *>(block)) {
-    auto info = generateRigidBodyInfo(body);
-    info.m_collisionShape = collisionShape.get();
-    rigidBody = std::make_unique<btRigidBody>(info);
-  }
-  return std::make_pair(std::move(collisionShape), std::move(rigidBody));
-}
-
-btRigidBody::btRigidBodyConstructionInfo
-RigidBodyNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
-  using namespace engine::conversions;
-  // RigidBody ignores the translations and rotations of its parent, whereas
-  // RigidBodyT does not ignore them.
-  bool ignoreRT = (dynamic_cast<nif::bhk::RigidBodyT *>(block) == nullptr);
-  Matrix4 baseTrans{ignoreRT ? Matrix4::IDENTITY : mTransform};
-
-  // Transformation of the body is always taken into account
-  Matrix4 localTrans{};
-  localTrans.makeTransform(
-      fromNif(block->translation).xyz(),
-      {1.0f, 1.0f, 1.0f},
-      fromNif(block->rotation));
-  auto totalTrans = baseTrans * localTrans;
-
-  // This does not seem to affect the translation in any way.
-  // TODO: What is the Havok origin used for?
-  Vector3 origin = fromNif(block->center).xyz();
-
-  // Bullet needs a diagonalized inertia tensor given as a vector, and the
-  // file stores it as a 3x4 matrix. We ignore the last (w) column and
-  // compute the eigenvalues.
-  const auto &hkI = block->inertiaTensor;
-  Matrix3 inertiaTensor{hkI.m11, hkI.m12, hkI.m13,
-                        hkI.m21, hkI.m22, hkI.m23,
-                        hkI.m31, hkI.m32, hkI.m33};
-  std::array<Vector3, 3> principalAxes{};
-  Vector3 principalMoments{};
-  inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
-                                    principalAxes.data());
-  // The principal axes for a rotation matrix and we have the diagonalization
-  // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
-  // TODO: Change to principal frame
-
-  // The units for these are the same in Bullet and Havok
-  btScalar mass = block->mass;
-  btScalar linearDamping = block->linearDamping;
-  btScalar angularDamping = block->angularDamping;
-  btScalar friction = block->friction;
-  btScalar restitution = block->restitution;
-
-  // TODO: Constraints
-
-  // Convert the Ogre parameters to Bullet ones and set up the rigid body
-  btVector3 bulletInertia{toBullet(principalMoments)};
-  btRigidBody::btRigidBodyConstructionInfo
-      info(mass, nullptr, mRigidBody->mCollisionShape.get(), bulletInertia);
-  info.m_linearDamping = linearDamping;
-  info.m_angularDamping = angularDamping;
-  info.m_friction = friction;
-  info.m_restitution = restitution;
-  info.m_startWorldTransform = btTransform{toBullet(totalTrans.linear()),
-                                           toBullet(totalTrans.getTrans())};
-
-  return info;
-}
-
-std::unique_ptr<btCollisionShape>
-RigidBodyNifVisitor::parseShape(const Graph &g,
-                                nif::bhk::Shape *block,
-                                engine::nifloader::LoadStatus &tag) {
-  if (auto moppBvTreeShape = dynamic_cast<nif::bhk::MoppBvTreeShape *>(block)) {
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkMoppBvTreeShape)");
-
-    auto material = moppBvTreeShape->material.material;
-
-    // Instead of decoding the MOPP data we use the linked shape
-    auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, moppBvTreeShape->shape);
-
-    // Apply the scale and recurse into the linked shape
-    // The effort here is to avoid scaling the w component
-    Real scale = moppBvTreeShape->shapeScale;
-    Matrix4 scaleMat{};
-    scaleMat.setScale({scale, scale, scale});
-    mTransform = mTransform * scaleMat;
-    auto collisionShape = parseShape(g, shape, shapeTag);
-    // Don't forget to undo the transform
-    mTransform = mTransform * scaleMat.inverse();
-    return collisionShape;
-  } else if (auto niTriStrips =
-      dynamic_cast<nif::bhk::PackedNiTriStripsShape *>(block)) {
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkPackedNiTriStripsShape)");
-
-    // TODO: Subshapes?
-
-    // @formatter:off
-    auto[data, dataTag] =
-        getRef<nif::hk::PackedNiTriStripsData>(g, niTriStrips->data);
-    // @formatter:on
-
-    Matrix4 scaleMat{};
-    // For some reason the coordinates are scaled down in the nif file by a
-    // factor of 7.
-    scaleMat.setScale(
-        7.0f * engine::conversions::fromNif(niTriStrips->scale).xyz());
-    mTransform = mTransform * scaleMat;
-    auto collisionShape = parseNiTriStripsData(g, data, dataTag);
-    mTransform = mTransform * scaleMat.inverse();
-    return collisionShape;
-  } else {
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->warn("Parsing unknown bhkShape");
-    return nullptr;
-    //OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
-    //            "Unknown collision shape",
-    //            "RigidBodyNifVisitor::parseShape");
-  }
-}
-
-std::unique_ptr<btCollisionShape>
-RigidBodyNifVisitor::parseNiTriStripsData(const Graph &g,
-                                          nif::hk::PackedNiTriStripsData *block,
-                                          engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
-  mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
-
-  // For static geometry we construct a btBvhTriangleMeshShape using indexed
-  // triangles. Bullet doesn't copy the underlying vertex and index buffers,
-  // so they need to be kept alive for the lifetime of the collision object.
-  btIndexedMesh indexedMesh{};
-
-  indexedMesh.m_numTriangles = block->numTriangles;
-  indexedMesh.m_numVertices = block->numVertices;
-
-  // TODO: Is aligning the triangles to 8-byte boundaries faster than packing?
-  indexedMesh.m_triangleIndexStride = 3 * sizeof(nif::basic::UShort);
-
-  // Vertex data is always in single-precision, regardless of Ogre or Bullet
-  indexedMesh.m_vertexType = PHY_FLOAT;
-  indexedMesh.m_vertexStride = 3 * sizeof(float);
-
-  // Copy into index buffer
-  auto &indexBuffer = mRigidBody->mIndexBuffer;
-  indexBuffer.assign(indexedMesh.m_numTriangles * 3u, 0u);
-  {
-    auto it = indexBuffer.begin();
-    for (const auto &triData : block->triangles) {
-      const auto &tri = triData.triangle;
-      *it = tri.v1;
-      *(it + 1) = tri.v2;
-      *(it + 2) = tri.v3;
-      it += 3;
+    it = params->find("collisionObject");
+    if (it != params->end()) {
+      auto retrieveResult = CollisionObjectManager::getSingleton()
+          .createOrRetrieve(it->second, group);
+      ptr = std::dynamic_pointer_cast<CollisionObject>(retrieveResult.first);
+      if (ptr) ptr->load();
     }
   }
-  indexedMesh.m_triangleIndexBase =
-      reinterpret_cast<unsigned char *>(indexBuffer.data());
-
-  // Copy into vertex buffer
-  auto &vertexBuffer = mRigidBody->mVertexBuffer;
-  vertexBuffer.assign(indexedMesh.m_numVertices * 3u, 0.0f);
-  {
-    auto it = vertexBuffer.begin();
-    for (const auto &vertex : block->vertices) {
-      using namespace engine::conversions;
-      Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
-      auto v = mTransform * ogreV;
-      *it = v.x;
-      *(it + 1) = v.y;
-      *(it + 2) = v.z;
-      it += 3;
-    }
+  if (!ptr) {
+    OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
+                "'collisionObject' parameter required when constructing a RigidBody",
+                "RigidBodyFactory::createInstance");
   }
-  indexedMesh.m_vertexBase =
-      reinterpret_cast<unsigned char *>(vertexBuffer.data());
-
-  // Construct the actual mesh and give ownership to the rigid body
-  auto collisionMesh = std::make_unique<btTriangleIndexVertexArray>();
-  collisionMesh->addIndexedMesh(indexedMesh, PHY_SHORT);
-  mRigidBody->mCollisionMesh = std::move(collisionMesh);
-
-  return std::make_unique<btBvhTriangleMeshShape>(
-      mRigidBody->mCollisionMesh.get(), false);
-
-  // TODO: Support dynamic concave geometry
-
-  return nullptr;
+  // It is possible that resource creation succeeded, but resource loading
+  // failed because the CollisionObject could not find any physics data. This is
+  // not exceptional behaviour (markers have no physics data, for instance), but
+  // it clearly makes no sense to proceed with the construction of a RigidBody.
+  // Ogre implicitly assumes that this method never returns nullptr, so we have
+  // no choice but to throw an exception.
+  if (!ptr->getRigidBodyInfo() || !ptr->getCollisionShape()) {
+    throw PartialCollisionObjectException("CollisionObject has no RigidBodyInfo");
+  }
+  return OGRE_NEW RigidBody(name, std::move(ptr));
 }
 
 } // namespace Ogre

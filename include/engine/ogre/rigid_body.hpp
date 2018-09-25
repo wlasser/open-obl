@@ -1,142 +1,88 @@
 #ifndef OPENOBLIVION_ENGINE_RIGID_BODY_HPP
 #define OPENOBLIVION_ENGINE_RIGID_BODY_HPP
 
-#include "engine/nifloader/loader_state.hpp"
+#include "engine/ogre/collision_object.hpp"
 #include "engine/ogre/motion_state.hpp"
-#include "engine/settings.hpp"
-#include "nif/bhk.hpp"
+#include "engine/ogre/spdlog_listener.hpp"
 #include <btBulletDynamicsCommon.h>
-#include <OgreResource.h>
-#include <spdlog/spdlog.h>
-#include <memory>
+#include <OgreMovableObject.h>
+#include <stdexcept>
 
 namespace Ogre {
 
-class RigidBody : public Ogre::Resource {
+class RigidBody : public MovableObject, public MovableObject::Listener {
  public:
-  RigidBody(ResourceManager *creator,
-            const String &name,
-            ResourceHandle handle,
-            const String &group,
-            bool isManual = false,
-            ManualResourceLoader *loader = nullptr);
+  // Passing nullptr means that the node was detached
+  void _notifyAttached(Node *parent, bool isTagPoint) override;
 
-  ~RigidBody() override {
-    unload();
-  }
+  void _notifyMoved() override;
 
-  btRigidBody *getRigidBody();
+  void _updateRenderQueue(RenderQueue *queue) override;
 
-  btCollisionShape *getCollisionShape();
+  const AxisAlignedBox &getBoundingBox() const override;
 
-  // Binding to a SceneNode enables automatic synchronization of the RigidBody
-  // position and orientation with the SceneNode's position and orientation.
-  // Transforming a bound SceneNode directly should be avoided, and if necessary
-  // then notify should be called.
+  Real getBoundingRadius() const override;
+
+  const String &getMovableType() const override;
+
+  void visitRenderables(Renderable::Visitor *visitor,
+                        bool debugRenderables) override;
+
+  ~RigidBody() override = default;
+
+  btRigidBody *getRigidBody() const;
+
+ private:
+  friend class RigidBodyFactory;
+
+  explicit RigidBody(const String &name, CollisionObjectPtr collisionObject);
+
+  CollisionObjectPtr mCollisionObject{};
+  std::unique_ptr<btRigidBody> mRigidBody{};
+  std::unique_ptr<MotionState> mMotionState{};
+  // Needed because getBoundingRadius is const, and demands to return by
+  // const reference.
+  mutable AxisAlignedBox mBox{};
+  const Ogre::String mType = "RigidBody";
+
+  // Binding to a SceneNode enables automatic synchronization of the
+  // CollisionObject position and orientation with the SceneNode's position and
+  // orientation. Transforming a bound SceneNode directly should be avoided, and
+  // if necessary then notify should be called.
   // Calling bind a second time will release the previously bound node and,
   // unless the new node is null, will bind to the new one.
-  void bind(SceneNode *node);
+  void bind(Node *node);
 
   // Tell the physics system that the bound node has been transformed externally
   void notify();
+};
+
+class RigidBodyFactory : public MovableObjectFactory {
+ public:
+  RigidBodyFactory() = default;
+
+  ~RigidBodyFactory() override = default;
+
+  void destroyInstance(MovableObject *obj) override;
+
+  const String &getType() const override;
 
  protected:
-  void loadImpl() override;
-  void unloadImpl() override;
+  MovableObject *createInstanceImpl(const String &name,
+                                    const NameValuePairList *params) override;
 
- private:
-  friend struct RigidBodyNifVisitor;
-
-  // TODO: Use custom allocators
-  std::unique_ptr<btRigidBody> mRigidBody{};
-
-  // For performance reasons we don't want to duplicate the collision shape
-  // for multiple instances of the same entity. Ideally therefore this would be
-  // a non-owning pointer into a central store, which would store the collision
-  // shape along with any necessary buffers.
-  // TODO: Centralise the collision shapes and make this non-owning
-  std::unique_ptr<btCollisionShape> mCollisionShape{};
-
-  // Necessary for mesh-based collision shapes, Bullet does not take ownership.
-  std::vector<uint16_t> mIndexBuffer{};
-  std::vector<float> mVertexBuffer{};
-  std::unique_ptr<btStridingMeshInterface> mCollisionMesh{};
-
-  std::unique_ptr<MotionState> mMotionState{};
+  const String mType = "RigidBody";
 };
 
-struct RigidBodyNifVisitor {
-  using Graph = engine::nifloader::TaggedBlockGraph;
-  using vertex_descriptor = Graph::vertex_descriptor;
-  using edge_descriptor = Graph::edge_descriptor;
-
-  void initialize_vertex(vertex_descriptor v, const Graph &g) {}
-  void start_vertex(vertex_descriptor v, const Graph &g);
-  void discover_vertex(vertex_descriptor v, const Graph &g);
-  void examine_edge(edge_descriptor e, const Graph &g) {}
-  void tree_edge(edge_descriptor e, const Graph &g) {}
-  void back_edge(edge_descriptor e, const Graph &g) {}
-  void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
-  void finish_edge(edge_descriptor e, const Graph &g) {}
-  void finish_vertex(vertex_descriptor v, const Graph &g);
-
-  explicit RigidBodyNifVisitor(RigidBody *rigidBody)
-      : mRigidBody(rigidBody), mLogger(spdlog::get(engine::settings::log)) {}
-
- private:
-  Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
-  RigidBody *mRigidBody{};
-  bool mHasHavok{false};
-  std::shared_ptr<spdlog::logger> mLogger{};
-
-  template<class T>
-  struct RefResult {
-    T *block;
-    engine::nifloader::LoadStatus &tag;
-  };
-
-  template<class U, class T>
-  RefResult<U> getRef(const Graph &g, nif::basic::Ref<T> ref) {
-    auto refInt = static_cast<int32_t>(ref);
-    if (refInt < 0 || refInt >= boost::num_vertices(g)) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor");
-    }
-    auto &taggedBlock = g[refInt];
-    auto *block = dynamic_cast<U *>(taggedBlock.block.get());
-    if (block == nullptr) {
-      OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "RigidBodyNifVisitor");
-    }
-    return {block, taggedBlock.tag};
-  }
-
-  void parseCollisionObject(const Graph &g,
-                            nif::bhk::CollisionObject *block,
-                            engine::nifloader::LoadStatus &tag);
-
-  std::pair<std::unique_ptr<btCollisionShape>, std::unique_ptr<btRigidBody>>
-  parseWorldObject(const Graph &g,
-                   nif::bhk::WorldObject *block,
-                   engine::nifloader::LoadStatus &tag);
-
-  btRigidBody::btRigidBodyConstructionInfo
-  generateRigidBodyInfo(nif::bhk::RigidBody *block) const;
-
-  std::unique_ptr<btCollisionShape>
-  parseShape(const Graph &g,
-             nif::bhk::Shape *block,
-             engine::nifloader::LoadStatus &tag);
-
-  std::unique_ptr<btCollisionShape>
-  parseNiTriStripsData(const Graph &g,
-                       nif::hk::PackedNiTriStripsData *block,
-                       engine::nifloader::LoadStatus &tag);
+// This should only be used by RigidBodyFactory, and is used to signify during
+// RigidBody creation that the CollisionObject specified does not contain
+// sufficient physics data to construct a RigidBody.
+// See RigidBodyFactor::createInstanceImpl.
+// TODO: Make this private and give the derived SceneManager friendship.
+struct PartialCollisionObjectException : virtual std::runtime_error {
+  explicit PartialCollisionObjectException(const std::string &what)
+      : std::runtime_error(what) {}
 };
-
-using RigidBodyPtr = std::shared_ptr<RigidBody>;
 
 } // namespace Ogre
 

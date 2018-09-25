@@ -43,7 +43,7 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
 
     // TODO: Directional lighting, fog, water, etc
   }
-  ptr->physicsWorld->setGravity({0.0f, -9.91f, 0.0f});
+  ptr->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
 
   Processor processor(ptr.get(), lightMgr, staticMgr);
 
@@ -90,15 +90,13 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
 
   // Construct the actual entities and attach them to the node
   if (auto[rigidBody, stat] = staticMgr->get(id, cell->scnMgr); stat) {
-    // STAT objects have a Mesh attached to an Entity and an optional RigidBody
-    node->attachObject(stat);
-
-    if (rigidBody && rigidBody->getRigidBody()) {
-      // Bind the rigid body to the scene node
-      rigidBody->bind(node);
-      auto bulletBody = rigidBody->getRigidBody();
-      cell->rigidBodies.push_back(std::move(rigidBody));
-      cell->physicsWorld->addRigidBody(bulletBody);
+    if (rigidBody) {
+      node->attachObject(rigidBody);
+      node->createChildSceneNode()->attachObject(stat);
+      // TODO: Replace with rigidBody->attach(cell->physicsWorld)
+      cell->physicsWorld->addRigidBody(rigidBody->getRigidBody());
+    } else {
+      node->attachObject(stat);
     }
   } else if (auto[light, mesh] = lightMgr->get(id, cell->scnMgr); light) {
     node->attachObject(light);

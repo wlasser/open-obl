@@ -123,7 +123,11 @@ Application::Application(std::string windowName) : FrameListener() {
   bulletConf = std::make_unique<engine::bullet::Configuration>();
 
   // Add the resource managers
-  rigidBodyMgr = std::make_unique<Ogre::RigidBodyManager>();
+  collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
+
+  // Add the factories
+  rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
+  ogreRoot->addMovableObjectFactory(rigidBodyFactory.get());
 
   // Add the main resource group
   const std::string resourceGroup{settings::resourceGroup};

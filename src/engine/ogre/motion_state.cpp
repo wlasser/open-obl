@@ -3,7 +3,7 @@
 
 namespace Ogre {
 
-MotionState::MotionState(SceneNode *node) : mNode(node) {
+MotionState::MotionState(Node *node) : mNode(node) {
   mPosition = mNode->getPosition();
   mOrientation = mNode->getOrientation();
 }

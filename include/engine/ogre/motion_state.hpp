@@ -15,7 +15,7 @@ namespace Ogre {
 // a MotionState.
 class MotionState : public btMotionState {
  public:
-  explicit MotionState(SceneNode *node);
+  explicit MotionState(Node *node);
 
   MotionState(const MotionState &) = delete;
   MotionState &operator=(const MotionState &) = delete;
@@ -39,7 +39,7 @@ class MotionState : public btMotionState {
   void notify();
 
  private:
-  SceneNode *mNode{};
+  Node *mNode{};
   Vector3 mPosition{};
   Quaternion mOrientation{};
 };

@@ -76,8 +76,9 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/ogre/debug_drawer.cpp
         src/engine/ogre/motion_state.cpp
         src/engine/ogre/ogre_stream_wrappers.cpp
+        src/engine/ogre/collision_object.cpp
+        src/engine/ogre/collision_object_manager.cpp
         src/engine/ogre/rigid_body.cpp
-        src/engine/ogre/rigid_body_manager.cpp
         src/engine/ogre/window.cpp
         src/engine/player_controller.cpp
         include/engine/application.hpp
@@ -94,8 +95,9 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/ogre/debug_drawer.hpp
         include/engine/ogre/motion_state.hpp
         include/engine/ogre/ogre_stream_wrappers.hpp
+        include/engine/ogre/collision_object.hpp
+        include/engine/ogre/collision_object_manager.hpp
         include/engine/ogre/rigid_body.hpp
-        include/engine/ogre/rigid_body_manager.hpp
         include/engine/ogre/spdlog_listener.hpp
         include/engine/ogre/window.hpp
         include/engine/player_controller.hpp

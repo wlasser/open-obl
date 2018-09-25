@@ -8,7 +8,8 @@
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/loader.hpp"
 #include "engine/ogre/debug_drawer.hpp"
-#include "engine/ogre/rigid_body_manager.hpp"
+#include "engine/ogre/collision_object_manager.hpp"
+#include "engine/ogre/rigid_body.hpp"
 #include "engine/ogre/window.hpp"
 #include "engine/player_controller.hpp"
 #include <boost/format.hpp>
@@ -43,6 +44,7 @@ auto makeSDLWindow(const std::string &windowName, int width, int height,
 class Application : public Ogre::FrameListener {
  private:
   std::unique_ptr<BSAArchiveFactory> bsaArchiveFactory{};
+  std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
 
   std::ifstream esmStream;
 
@@ -59,7 +61,7 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   nifloader::Loader nifLoader{};
-  std::unique_ptr<Ogre::RigidBodyManager> rigidBodyMgr{};
+  std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
 
   std::unique_ptr<LightManager> lightMgr{};
   std::unique_ptr<StaticManager> staticMgr{};
