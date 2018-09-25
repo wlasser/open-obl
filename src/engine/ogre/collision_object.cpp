@@ -10,6 +10,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
 #include <OgreResourceGroupManager.h>
+#include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 #include <array>
 
@@ -79,9 +80,11 @@ void CollisionObjectNifVisitor::discover_vertex(vertex_descriptor v,
     engine::nifloader::Tagger tagger{tag};
     mLogger->trace("Parsing block {} (NiNode)", v);
     mTransform = mTransform * engine::nifloader::getTransform(niNode);
+    mLogger->trace(" * New transform = {}", mTransform);
   } else if (auto bsxFlags = dynamic_cast<nif::BSXFlags *>(niObject)) {
     engine::nifloader::Tagger tagger{tag};
     mLogger->trace("Parsing block {} (BSXFlags)", v);
+    mLogger->trace(" * New transform = {}", mTransform);
     using Flags = nif::BSXFlags::Flags;
     auto flags = Flags(bsxFlags->data);
     if ((flags & Flags::bHavok) != Flags::bNone) {
@@ -107,6 +110,7 @@ void CollisionObjectNifVisitor::parseCollisionObject(const Graph &g,
                                                      engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (bhkCollisionObject)");
+  mLogger->trace(" * New transform = {}", mTransform);
 
   // TODO: COFlags
   // TODO: target
@@ -122,6 +126,7 @@ CollisionObjectNifVisitor::parseWorldObject(const Graph &g,
                                             engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (bhkWorldObject)");
+  mLogger->trace(" * New transform = {}", mTransform);
 
   // TODO: Flags
   auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
@@ -144,7 +149,7 @@ CollisionObjectNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) con
   Matrix4 baseTrans{ignoreRT ? Matrix4::IDENTITY : mTransform};
 
   // Transformation of the body is always taken into account
-  Matrix4 localTrans{};
+  Matrix4 localTrans{Matrix4::IDENTITY};
   localTrans.makeTransform(
       fromNif(block->translation).xyz(),
       {1.0f, 1.0f, 1.0f},
@@ -200,6 +205,7 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
   if (auto moppBvTreeShape = dynamic_cast<nif::bhk::MoppBvTreeShape *>(block)) {
     engine::nifloader::Tagger tagger{tag};
     mLogger->trace("Parsing block ? (bhkMoppBvTreeShape)");
+    mLogger->trace(" * New transform = {}", mTransform);
 
     auto material = moppBvTreeShape->material.material;
 
@@ -209,7 +215,7 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
     // Apply the scale and recurse into the linked shape
     // The effort here is to avoid scaling the w component
     Real scale = moppBvTreeShape->shapeScale;
-    Matrix4 scaleMat{};
+    Matrix4 scaleMat{Matrix4::IDENTITY};
     scaleMat.setScale({scale, scale, scale});
     mTransform = mTransform * scaleMat;
     auto collisionShape = parseShape(g, shape, shapeTag);
@@ -220,6 +226,7 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
       dynamic_cast<nif::bhk::PackedNiTriStripsShape *>(block)) {
     engine::nifloader::Tagger tagger{tag};
     mLogger->trace("Parsing block ? (bhkPackedNiTriStripsShape)");
+    mLogger->trace(" * New transform = {}", mTransform);
 
     // TODO: Subshapes?
 
@@ -228,7 +235,7 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
         getRef<nif::hk::PackedNiTriStripsData>(g, niTriStrips->data);
     // @formatter:on
 
-    Matrix4 scaleMat{};
+    Matrix4 scaleMat{Matrix4::IDENTITY};
     // For some reason the coordinates are scaled down in the nif file by a
     // factor of 7.
     scaleMat.setScale(
@@ -253,6 +260,7 @@ CollisionObjectNifVisitor::parseNiTriStripsData(const Graph &g,
                                                 engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
+  mLogger->trace(" * New transform = {}", mTransform);
 
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
@@ -294,6 +302,9 @@ CollisionObjectNifVisitor::parseNiTriStripsData(const Graph &g,
       using namespace engine::conversions;
       Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
       auto v = mTransform * ogreV;
+      mLogger->info(" * ({}, {}, {}) -> ({}, {}, {})",
+                    vertex.x, vertex.y, vertex.z,
+                    v.x, v.y, v.z);
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
