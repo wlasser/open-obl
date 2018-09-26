@@ -72,12 +72,41 @@ void RigidBody::bind(Node *node) {
   // Allocate and set new state
   if (node) {
     mMotionState = std::make_unique<MotionState>(node);
-    if (mRigidBody) mRigidBody->setMotionState(mMotionState.get());
+    if (mRigidBody) {
+      mRigidBody->setMotionState(mMotionState.get());
+      if (node->getScale() != Vector3{1.0f, 1.0f, 1.0f}) {
+        setScale(node->getScale());
+      }
+    }
   }
 }
 
 void RigidBody::notify() {
   if (mMotionState) mMotionState->notify();
+}
+
+void RigidBody::setScale(const Vector3 &scale) {
+  auto localScale = engine::conversions::toBullet(scale);
+
+  if (mCollisionShapeOverride) {
+    mCollisionShapeOverride->setLocalScaling(localScale);
+  } else {
+    btCollisionShape *baseShape = mCollisionObject->getCollisionShape();
+
+    // We can't copy the baseShape in general
+    if (auto *triMesh = dynamic_cast<btBvhTriangleMeshShape *>(baseShape)) {
+      // Construct an instanced shape pointing to the original, but with the
+      // new scale
+      mCollisionShapeOverride =
+          std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
+    } else {
+      // TODO: Scale other collision shapes
+    }
+
+    if (mCollisionShapeOverride) {
+      mRigidBody->setCollisionShape(mCollisionShapeOverride.get());
+    }
+  }
 }
 
 void RigidBodyFactory::destroyInstance(MovableObject *obj) {

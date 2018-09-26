@@ -38,6 +38,10 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   explicit RigidBody(const String &name, CollisionObjectPtr collisionObject);
 
   CollisionObjectPtr mCollisionObject{};
+  // btRigidBody cannot be scaled. In order to scale on a per-instance basis,
+  // we use an override shape copied from the main collision shape and scaled.
+  // This does not need to be used if the scale is non-unity.
+  std::unique_ptr<btCollisionShape> mCollisionShapeOverride{};
   std::unique_ptr<btRigidBody> mRigidBody{};
   std::unique_ptr<MotionState> mMotionState{};
   // Needed because getBoundingRadius is const, and demands to return by
@@ -55,6 +59,11 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
 
   // Tell the physics system that the bound node has been transformed externally
   void notify();
+
+  // Scale the rigid body by scaling the collision shape. If an override is not
+  // already being used, this will create one and notify the rigid body of its
+  // new collision shape.
+  void setScale(const Vector3 &scale);
 };
 
 class RigidBodyFactory : public MovableObjectFactory {
