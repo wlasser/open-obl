@@ -212,14 +212,14 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Loaded test cell");
 
   playerController =
-      std::make_unique<engine::PlayerController>(currentCell->scnMgr, true);
-  if (!playerController->isFree()) {
-    currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
-  }
+      std::make_unique<engine::PlayerController>(currentCell->scnMgr);
+  currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
   ogreWindow->addViewport(playerController->getCamera());
 
-  auto startPos = conversions::fromBSCoordinates({200.0f, -347.0f, -460.0f});
-  startPos += 2.0f;
+  auto startPos = conversions::fromBSCoordinates({-1954.8577f,
+                                                  -473.5773f,
+                                                  -318.9890f});
+  startPos.y += 4.0f;
   playerController->moveTo(startPos);
 
   debugDrawer = std::make_unique<Ogre::DebugDrawer>(currentCell->scnMgr,

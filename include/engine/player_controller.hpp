@@ -28,11 +28,7 @@ class PlayerController {
         : type(type), down(down), delta(delta) {}
   };
 
-  explicit PlayerController(Ogre::SceneManager *scnMgr, bool free = false);
-
-  bool isFree() const {
-    return free;
-  }
+  explicit PlayerController(Ogre::SceneManager *scnMgr);
 
   Ogre::Camera *getCamera();
   Ogre::SceneNode *getCameraNode();
@@ -59,6 +55,8 @@ class PlayerController {
   const float
       speed{moveTypeModifier * baseSpeed * conversions::metersPerUnit<float>};
 
+  const float height = 1.0f * 128 * conversions::metersPerUnit<float>;
+
   Ogre::Radian pitch{0.0f};
   Ogre::Radian yaw{0.0f};
   Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};
@@ -67,8 +65,7 @@ class PlayerController {
   Ogre::SceneNode *pitchNode{};
   Ogre::Camera *camera{};
 
-  const bool free;
-
+  Ogre::SceneNode *bodyNode{};
   std::unique_ptr<Ogre::MotionState> motionState{};
   std::unique_ptr<btCollisionShape> collisionShape{};
   std::unique_ptr<btRigidBody> rigidBody{};
