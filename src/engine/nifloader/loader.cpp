@@ -181,12 +181,52 @@ BlockGraph createBlockGraph(std::istream &is) {
     } else if (blockType == "NiNode") {
       auto block = std::make_shared<NiNode>(nifVersion);
       block->read(is);
+
+      // Make an edge to each child
       for (const auto &child : block->children) {
         auto childInt = static_cast<int32_t>(child);
         if (childInt > 0 && childInt < numBlocks) {
           addEdge(blocks, i, child);
         }
       }
+
+      // Make an edge to each NiExtraData
+      // TODO: Support extra data linked list
+      if (block->extraDataArray) {
+        for (const auto &xtra : *(block->extraDataArray)) {
+          auto xtraInt = static_cast<int32_t>(xtra);
+          if (xtraInt > 0 && xtraInt < numBlocks) {
+            addEdge(blocks, i, xtra);
+          }
+        }
+      }
+
+      // Make an edge to the controller
+      if (block->controller) {
+        auto cont = *(block->controller);
+        auto contInt = static_cast<int32_t>(cont);
+        if (contInt > 0 && contInt < numBlocks) {
+          addEdge(blocks, i, cont);
+        }
+      }
+
+      // Make an edge to each NiProperty
+      for (const auto &prop : block->properties) {
+        auto propInt = static_cast<int32_t>(prop);
+        if (propInt > 0 && propInt < numBlocks) {
+          addEdge(blocks, i, prop);
+        }
+      }
+
+      // Make an edge to the collision object
+      if (block->collisionObject) {
+        auto col = *(block->collisionObject);
+        auto colInt = static_cast<int32_t>(col);
+        if (colInt > 0 && colInt < numBlocks) {
+          addEdge(blocks, i, col);
+        }
+      }
+
       blocks[i] = std::move(block);
       logger->trace("Read block {} (NiNode)", i);
     } else {
