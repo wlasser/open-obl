@@ -69,6 +69,8 @@ class Application : public Ogre::FrameListener {
 
   std::shared_ptr<InteriorCell> currentCell{};
   std::unique_ptr<PlayerController> playerController{};
+
+  bool drawHavok{false};
   std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
 
  public:

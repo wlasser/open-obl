@@ -226,8 +226,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                                     resourceGroup);
   currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
       ->attachObject(debugDrawer->getObject());
-  //currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
-
+  debugDrawer->enable(false);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
@@ -242,6 +241,18 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
         switch (sdlEvent.key.keysym.sym) {
           case SDLK_ESCAPE:ogreRoot->queueEndRendering();
             break;
+          case SDLK_h: {
+            if (drawHavok) {
+              currentCell->physicsWorld->setDebugDrawer(nullptr);
+              debugDrawer->clearLines();
+              debugDrawer->build();
+            } else {
+              currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
+            }
+            drawHavok = !drawHavok;
+            debugDrawer->enable(drawHavok);
+            break;
+          }
           case SDLK_a: {
             playerController->sendEvent(
                 {PlayerController::MoveEvent::Left, true, 0.0f});
@@ -317,11 +328,11 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
 
   currentCell->physicsWorld->stepSimulation(1.0f / 60.0f);
 
-  //debugDrawer->clearLines();
-  //currentCell->physicsWorld->debugDrawWorld();
-  debugDrawer->clearLines();
-  debugDrawer->drawBox({2, -2, 4}, {4, -6, 5}, {1.0f, 0.0f, 0.0f});
-  debugDrawer->build();
+  if (drawHavok) {
+    debugDrawer->clearLines();
+    currentCell->physicsWorld->debugDrawWorld();
+    debugDrawer->build();
+  }
 
   return true;
 }
