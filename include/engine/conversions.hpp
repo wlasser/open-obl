@@ -26,7 +26,7 @@ inline Ogre::Vector4 fromNif(const nif::compound::Vector4 &v) {
 }
 
 inline Ogre::Quaternion fromNif(const nif::compound::hkQuaternion &q) {
-  return Ogre::Quaternion{q.x, q.y, q.z, q.w};
+  return Ogre::Quaternion{q.w, q.x, q.y, q.z};
 }
 
 inline Ogre::Matrix3 fromNif(const nif::compound::Matrix33 &m) {
@@ -52,6 +52,13 @@ inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
                            0, 0, 1,
                            0, -1, 0};
   return C * m * C.transpose();
+}
+
+inline Ogre::Quaternion fromBSCoordinates(const Ogre::Quaternion &m) {
+  // TODO: This is needlessly inefficient
+  Ogre::Matrix3 mat{Ogre::Matrix3::IDENTITY};
+  m.ToRotationMatrix(mat);
+  return Ogre::Quaternion{fromBSCoordinates(mat)};
 }
 
 inline btVector3 toBullet(const Ogre::Vector3 &v) {
