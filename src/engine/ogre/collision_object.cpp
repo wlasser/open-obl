@@ -68,6 +68,7 @@ void CollisionObject::unloadImpl() {
 void CollisionObjectNifVisitor::start_vertex(vertex_descriptor v,
                                              const Graph &g) {
   mTransform = Ogre::Matrix4::IDENTITY;
+  mLogger->trace("Started at root vertex {}, reset transform", v);
 }
 
 void CollisionObjectNifVisitor::discover_vertex(vertex_descriptor v,
@@ -103,6 +104,8 @@ void CollisionObjectNifVisitor::finish_vertex(vertex_descriptor v,
   if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
     mTransform = mTransform * engine::nifloader::getTransform(niNode).inverse();
   }
+  mLogger->trace("Finished block {}", v);
+  mLogger->trace(" * New transform = {}", mTransform);
 }
 
 void CollisionObjectNifVisitor::parseCollisionObject(const Graph &g,
@@ -129,8 +132,23 @@ CollisionObjectNifVisitor::parseWorldObject(const Graph &g,
   mLogger->trace(" * New transform = {}", mTransform);
 
   // TODO: Flags
+
+  Matrix4 localTrans{Matrix4::IDENTITY};
+  if (auto body = dynamic_cast<nif::bhk::RigidBodyT *>(block)) {
+    using namespace engine::conversions;
+    localTrans.makeTransform(
+        fromBSCoordinates(fromNif(body->translation).xyz()),
+        {1.0f, 1.0f, 1.0f},
+        fromBSCoordinates(fromNif(body->rotation)));
+    mLogger->trace(" * Applying RigidBodyT transform {}", localTrans);
+  }
+  mTransform = mTransform * localTrans;
+  // TODO: RigidBody that is not a RigidBodyT
+
   auto[shape, shapeTag] = getRef<nif::bhk::Shape>(g, block->shape);
   auto collisionShape = parseShape(g, shape, shapeTag);
+
+  mTransform = mTransform * localTrans.inverse();
 
   std::unique_ptr<RigidBodyInfo> info{};
   if (auto body = dynamic_cast<nif::bhk::RigidBody *>(block)) {
@@ -143,18 +161,6 @@ CollisionObjectNifVisitor::parseWorldObject(const Graph &g,
 RigidBodyInfo
 CollisionObjectNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
   using namespace engine::conversions;
-  // CollisionObject ignores the translations and rotations of its parent, whereas
-  // RigidBodyT does not ignore them.
-  bool ignoreRT = (dynamic_cast<nif::bhk::RigidBodyT *>(block) == nullptr);
-  Matrix4 baseTrans{ignoreRT ? Matrix4::IDENTITY : mTransform};
-
-  // Transformation of the body is always taken into account
-  Matrix4 localTrans{Matrix4::IDENTITY};
-  localTrans.makeTransform(
-      fromNif(block->translation).xyz(),
-      {1.0f, 1.0f, 1.0f},
-      fromNif(block->rotation));
-  auto totalTrans = baseTrans * localTrans;
 
   // This does not seem to affect the translation in any way.
   // TODO: What is the Havok origin used for?
@@ -187,13 +193,11 @@ CollisionObjectNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) con
   // Convert the Ogre parameters to Bullet ones and set up the rigid body
   btVector3 bulletInertia{toBullet(principalMoments)};
   btRigidBody::btRigidBodyConstructionInfo
-      info(mass, nullptr, mRigidBody->mCollisionShape.get(), bulletInertia);
+      info(mass, nullptr, nullptr, bulletInertia);
   info.m_linearDamping = linearDamping;
   info.m_angularDamping = angularDamping;
   info.m_friction = friction;
   info.m_restitution = restitution;
-  info.m_startWorldTransform = btTransform{toBullet(totalTrans.linear()),
-                                           toBullet(totalTrans.getTrans())};
 
   return info;
 }
@@ -237,12 +241,12 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
 
     Matrix4 scaleMat{Matrix4::IDENTITY};
     // For some reason the coordinates are scaled down in the nif file by a
-    // factor of 7.
-    scaleMat.setScale(
-        7.0f * engine::conversions::fromNif(niTriStrips->scale).xyz());
-    mTransform = mTransform * scaleMat;
+    // factor of 7. This scale needs to also apply to the translation, not
+    // just the linear part.
+    scaleMat.setScale(engine::conversions::fromNif(niTriStrips->scale).xyz());
+    mTransform = mTransform * scaleMat * 7.0f;
     auto collisionShape = parseNiTriStripsData(g, data, dataTag);
-    mTransform = mTransform * scaleMat.inverse();
+    mTransform = mTransform * scaleMat.inverse() * (1.0f / 7.0f);
     return collisionShape;
   } else {
     engine::nifloader::Tagger tagger{tag};
@@ -302,9 +306,6 @@ CollisionObjectNifVisitor::parseNiTriStripsData(const Graph &g,
       using namespace engine::conversions;
       Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
       auto v = mTransform * ogreV;
-      mLogger->info(" * ({}, {}, {}) -> ({}, {}, {})",
-                    vertex.x, vertex.y, vertex.z,
-                    v.x, v.y, v.z);
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
