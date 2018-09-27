@@ -8,6 +8,7 @@
 #include "engine/settings.hpp"
 #include "esp.hpp"
 #include "game_settings.hpp"
+#include <boost/algorithm/string.hpp>
 #include "SDL.h"
 #include "SDL_syswm.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -68,8 +69,8 @@ Application::Application(std::string windowName) : FrameListener() {
   spdlog::register_logger(logger);
 
   // Set the starting logger levels
-  spdlog::get(settings::ogreLog)->set_level(spdlog::level::warn);
-  spdlog::get(settings::log)->set_level(spdlog::level::debug);
+  spdlog::get(settings::ogreLog)->set_level(spdlog::level::trace);
+  spdlog::get(settings::log)->set_level(spdlog::level::trace);
 
   // Load the configuration files
   auto &gameSettings = GameSettings::getSingleton();
@@ -166,56 +167,81 @@ Application::Application(std::string windowName) : FrameListener() {
   bsaArchiveFactory = std::make_unique<engine::BSAArchiveFactory>();
   archiveMgr.addArchiveFactory(bsaArchiveFactory.get());
 
-  // Favour reading from the filesystem (so that mods can overwrite data), then
-  // register all bsa files in the data folder. This allows mods to use their
-  // own bsa files, if they want.
-  resGrpMgr.addResourceLocation("./Data", "FileSystem", resourceGroup, true);
-  //for (const auto &entry : std::filesystem::directory_iterator("./Data")) {
-  //  if (entry.is_regular_file() && entry.path().extension() == ".bsa") {
-  //    resGrpMgr.addResourceLocation(entry.path(), "BSA", resourceGroup);
-  //  }
-  //}
-  std::vector<std::filesystem::path> testBSAs = {
-      "./Data/Oblivion - Meshes.bsa",
-      "./Data/Oblivion - Textures - Compressed.bsa"
-  };
-  for (const auto &entry : testBSAs) {
-    resGrpMgr.addResourceLocation(entry, "BSA", resourceGroup);
-  }
+  // Grab the data folder from the ini file
+  std::filesystem::path masterPath{conversions::normalizePath(
+      gameSettings.get("General.SLocalMasterPath", "Data/"))};
 
-  auto meshList = archiveMgr.load(testBSAs[0], "BSA", true)->list();
-  for (const auto &filename : *meshList) {
-    std::filesystem::path path{conversions::normalizePath(filename)};
-    if (path.extension() == ".nif") {
-      resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+  // Loading from the filesystem is favoured over bsa files so that mods can
+  // replace data. Marking the folder as recursive means that files are
+  // identified by their full path.
+  // The FileSystem archive has platform-dependent behaviour, and in particular
+  // is case-sensitive on *nix, but we need case-insensitivity on all platforms.
+  // Files must therefore have lowercase names to correctly override.
+  // TODO: Replace FileSystem with a case-insensitive version
+  resGrpMgr.addResourceLocation(masterPath, "FileSystem", resourceGroup, true);
+
+  // Get list of bsa files from ini
+  auto bsaList{gameSettings.get("Archive.sArchiveList", "")};
+  std::vector<std::string> bsaNames{};
+
+  // Split them on commas, this leaves trailing whitespace
+  boost::split(bsaNames, bsaList, [](char c) { return c == ','; });
+
+  // Trim the whitespace and append the data folder
+  std::vector<std::filesystem::path> bsaFilenames(bsaNames.size());
+  std::transform(bsaNames.begin(), bsaNames.end(), bsaFilenames.begin(),
+                 [&masterPath](std::string name) {
+                   boost::trim(name);
+                   return masterPath / std::filesystem::path{name};
+                 });
+
+  // Reject any invalid ones and add the others as resource locations
+  for (auto it = bsaFilenames.begin(); it != bsaFilenames.end();) {
+    if (!std::filesystem::is_regular_file(*it)) {
+      std::swap(*it, bsaFilenames.back());
+      bsaFilenames.pop_back();
+    } else {
+      resGrpMgr.addResourceLocation(*it, "BSA", resourceGroup);
+      ++it;
     }
   }
-  logger->info("Declared mesh files");
 
-  auto textureList = archiveMgr.load(testBSAs[1], "BSA", true)->list();
-  for (const auto &filename : *textureList) {
-    std::filesystem::path path{conversions::normalizePath(filename)};
-    if (path.extension() == ".dds") {
-      resGrpMgr.declareResource(path, "Texture", resourceGroup);
+  // Meshes need to be declared explicitly as they use a ManualResourceLoader.
+  // We could just use Archive.SMasterMeshesArchiveFileName, but it is not
+  // guaranteed to match any of Archive.sArchiveList, and also will not work for
+  // any mod bsa files. While we're at it, we'll declare every other recognised
+  // resource too.
+  for (const auto &bsa : bsaFilenames) {
+    Ogre::StringVectorPtr files = archiveMgr.load(bsa, "BSA", true)->list();
+    for (const auto &filename : *files) {
+      std::filesystem::path path{conversions::normalizePath(filename)};
+      auto ext{path.extension()};
+      if (ext == ".nif") {
+        resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+      } else if (ext == ".dds") {
+        resGrpMgr.declareResource(path, "Texture", resourceGroup);
+      }
     }
   }
-  logger->info("Declared texture files");
 
-  // Declare the shader programs
+  // Shaders are not stored in the data folder (mostly for vcs reasons)
   resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
-  logger->info("Declared shader files");
 
+  // All resources have been declared by now, so we can initialise the resource
+  // groups. This won't initialise the default groups.
   resGrpMgr.initialiseAllResourceGroups();
 
   // Create a scene manager
   auto *scnMgr = ogreRoot->createSceneManager();
 
   // Open the main esm
-  esmStream = std::ifstream("Data/Oblivion.esm", std::ios::binary);
+  std::filesystem::path masterEsm{"Oblivion.esm"};
+  esmStream = std::ifstream(masterPath / masterEsm, std::ios::binary);
   if (!esmStream.is_open()) {
-    throw std::runtime_error("Failed to open esm");
+    throw std::runtime_error(boost::str(
+        boost::format("Failed to open %s") % masterEsm.string()));
   }
-  logger->info("Opened Oblivion.esm");
+  logger->info("Opened {}", masterEsm.string());
 
   // Create the engine managers
   lightMgr = std::make_unique<LightManager>();
@@ -232,7 +258,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                     staticMgr.get(),
                                     interiorCellMgr.get());
   esp::readEsp(esmStream, initialProcessor);
-  logger->info("Read Oblivion.esm");
+  logger->info("Read {}", masterEsm.string());
 
   // Load a test cell
   currentCell = interiorCellMgr->get(0x00'031b59);
