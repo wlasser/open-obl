@@ -91,14 +91,19 @@ void RigidBody::setScale(const Vector3 &scale) {
   if (mCollisionShapeOverride) {
     mCollisionShapeOverride->setLocalScaling(localScale);
   } else {
-    btCollisionShape *baseShape = mCollisionObject->getCollisionShape();
+    btCollisionShape *base = mCollisionObject->getCollisionShape();
 
-    // We can't copy the baseShape in general
-    if (auto *triMesh = dynamic_cast<btBvhTriangleMeshShape *>(baseShape)) {
-      // Construct an instanced shape pointing to the original, but with the
-      // new scale
+    // We can't copy the base in general
+    if (auto *triMesh = dynamic_cast<btBvhTriangleMeshShape *>(base)) {
       mCollisionShapeOverride =
           std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
+    } else if (auto *convexHull = dynamic_cast<btConvexHullShape *>(base)) {
+      auto override = std::make_unique<btConvexHullShape>();
+      btVector3 *points = convexHull->getUnscaledPoints();
+      for (int i = 0; i < convexHull->getNumPoints(); ++i) {
+        override->addPoint(*(points + i));
+      }
+      mCollisionShapeOverride = std::move(override);
     } else {
       // TODO: Scale other collision shapes
     }
