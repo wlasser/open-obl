@@ -1,11 +1,27 @@
 #include "engine/player_controller.hpp"
+#include "engine/settings.hpp"
+#include <OgreMath.h>
 
 namespace engine {
 
 PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
+  auto &settings = GameSettings::getSingleton();
+
   camera = scnMgr->createCamera("PlayerCamera");
   camera->setNearClipDistance(0.1f);
-  camera->setAutoAspectRatio(true);
+
+  float screenWidth = settings.iGet("Display.iSize W");
+  float screenHeight = settings.iGet("Display.iSize H");
+  camera->setAspectRatio(screenWidth / screenHeight);
+
+  // We are given the horizontal fov, but can only set the vertical fov.
+  // Internally Ogre probably undoes this operation so this is inefficient and
+  // possibly inaccurate.
+  Ogre::Degree xFov{settings.get<float>("Display.fDefaultFOV", 75.0f)};
+  xFov = Ogre::Math::Clamp(xFov.valueDegrees(), 1.0f, 179.0f);
+  Ogre::Degree yFov{2.0f * Ogre::Math::ATan(
+      1.0f / camera->getAspectRatio() * Ogre::Math::Tan(xFov / 2.0f))};
+  camera->setFOVy(yFov);
 
   bodyNode = scnMgr->getRootSceneNode()->createChildSceneNode();
   cameraNode = bodyNode->createChildSceneNode(
@@ -91,7 +107,8 @@ void PlayerController::update(float elapsed) {
   auto axes = cameraNode->getLocalAxes();
   if (auto length = localVelocity.length() > 0.01f) {
     auto v = rigidBody->getLinearVelocity();
-    auto newV = conversions::toBullet(axes * localVelocity / length * speed);
+    auto newV = conversions::toBullet(
+        axes * localVelocity / length * speed(speedAttribute, athleticsSkill));
     newV.setY(v.y());
     rigidBody->setLinearVelocity(newV);
   } else {

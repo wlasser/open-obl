@@ -3,6 +3,7 @@
 
 #include "engine/conversions.hpp"
 #include "engine/ogre/motion_state.hpp"
+#include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
 #include <array>
@@ -41,19 +42,26 @@ class PlayerController {
   void update(float elapsed);
 
  private:
-  const float fMoveCharWalkMin{90.0f};
-  const float fMoveCharWalkMax{130.0f};
-  const float fMoveRunMult{3.0f};
-  const float fMoveRunAthleticsMult{1.0f};
+  GameSetting<float> fMoveCharWalkMin{"fMoveCharWalkMin", 90.0f};
+  GameSetting<float> fMoveCharWalkMax{"fMoveCharWalkMax", 130.0f};
+  GameSetting<float> fMoveRunMult{"fMoveRunMult", 3.0f};
+  GameSetting<float> fMoveRunAthleticsMult{"fMoveRunAthleticsMult", 1.0f};
   float speedAttribute{50.0f};
   float athleticsSkill{50.0f};
-  float moveTypeModifier
-      {fMoveRunMult + fMoveRunAthleticsMult * athleticsSkill / 100.0f};
-  float baseSpeed{fMoveCharWalkMin
-                      + (fMoveCharWalkMax - fMoveCharWalkMin) * speedAttribute
-                          / 100.0f};
-  const float
-      speed{moveTypeModifier * baseSpeed * conversions::metersPerUnit<float>};
+
+  float moveTypeModifier(float athleticsSkill) {
+    return *fMoveRunMult + *fMoveRunAthleticsMult * athleticsSkill * 0.01f;
+  }
+
+  float baseSpeed(float speedAttribute) {
+    return *fMoveCharWalkMin
+        + (*fMoveCharWalkMax - *fMoveCharWalkMin) * speedAttribute * 0.01f;
+  }
+
+  float speed(float speedAttribute, float athleticsSkill) {
+    return moveTypeModifier(athleticsSkill) * baseSpeed(speedAttribute)
+        * conversions::metersPerUnit<float>;
+  }
 
   const float height = 1.0f * 128 * conversions::metersPerUnit<float>;
 

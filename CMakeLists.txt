@@ -133,6 +133,7 @@ target_sources(OpenOblivion PRIVATE
         include/bsa.hpp
         include/esp.hpp
         include/formid.hpp
+        include/game_settings.hpp
         include/magic_effects.hpp
         include/save_state.hpp
         include/system_time.hpp)

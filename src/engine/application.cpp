@@ -7,6 +7,7 @@
 #include "engine/ogre/spdlog_listener.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
+#include "game_settings.hpp"
 #include "SDL.h"
 #include "SDL_syswm.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -70,6 +71,19 @@ Application::Application(std::string windowName) : FrameListener() {
   spdlog::get(settings::ogreLog)->set_level(spdlog::level::warn);
   spdlog::get(settings::log)->set_level(spdlog::level::debug);
 
+  // Load the configuration files
+  auto &gameSettings = GameSettings::getSingleton();
+  std::filesystem::path defaultIni = "Oblivion_default.ini";
+  std::filesystem::path userIni = "Oblivion.ini";
+  logger->info("Parsing {}", defaultIni.string());
+  gameSettings.load(defaultIni, true);
+  if (std::filesystem::is_regular_file(userIni)) {
+    logger->info("Parsing {}", userIni.string());
+    gameSettings.load("Oblivion.ini", true);
+  } else {
+    logger->warn("User configuration {} not found", userIni.string());
+  }
+
   // Start Ogre
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
 
@@ -93,9 +107,19 @@ Application::Application(std::string windowName) : FrameListener() {
   // Initialise SDL, create an SDL window and Ogre window
   sdlInit = SDLInit();
 
-  const auto windowWidth = 1600;
-  const auto windowHeight = 900;
-  uint32_t flags = SDL_WINDOW_RESIZABLE;
+  const int windowWidth = gameSettings.iGet("Display.iSize W");
+  const int windowHeight = gameSettings.iGet("Display.iSize H");
+  if (windowHeight <= 0 || windowWidth <= 0) {
+    logger->critical("Cannot create a window with width {} and height {}",
+                     windowWidth, windowHeight);
+    logger->critical(
+        "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
+    throw std::runtime_error("Cannot create window with negative size");
+  }
+  uint32_t flags{};
+  if (gameSettings.bGet("Display.bFull Screen")) {
+    flags |= SDL_WINDOW_FULLSCREEN;
+  }
 
   sdlWindow = makeSDLWindow(windowName, windowWidth, windowHeight, flags);
 
@@ -116,8 +140,11 @@ Application::Application(std::string windowName) : FrameListener() {
   }
 
   std::map<std::string, std::string> params = {{"parentWindowHandle", parent}};
-  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(), windowName, windowWidth,
-                                      windowHeight, &params);
+  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
+                                      windowName,
+                                      static_cast<const unsigned>(windowWidth),
+                                      static_cast<const unsigned>(windowHeight),
+                                      &params);
 
   // Construct the Bullet configuration
   bulletConf = std::make_unique<engine::bullet::Configuration>();
