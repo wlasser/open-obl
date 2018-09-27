@@ -256,16 +256,35 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
 
     auto material = convexVerticesShape->material.material;
 
-    mTransform = mTransform * 7.0f;
     auto collisionShape = std::make_unique<btConvexHullShape>();
     for (const auto &vertex : convexVerticesShape->vertices) {
       using namespace engine::conversions;
       Vector4 ogreV{fromBSCoordinates(fromNif(vertex).xyz()), 1.0f};
-      auto v = mTransform * ogreV;
-      mLogger->trace("   - ({}, {}, {})", v.x, v.y, v.z);
+      auto v = mTransform * ogreV * 7.0f;
       collisionShape->addPoint(toBullet(v.xyz()));
     }
-    mTransform = mTransform * (1.0f / 7.0f);
+    return collisionShape;
+  } else if (auto boxShape = dynamic_cast<nif::bhk::BoxShape *>(block)) {
+    engine::nifloader::Tagger tagger{tag};
+    mLogger->trace("Parsing block ? (bhkBoxShape)");
+    mLogger->trace(" * New transform = {}", mTransform);
+
+    auto material = boxShape->material.material;
+
+    // Applying the nif transform may result in a non-axis-aligned box, which
+    // btBoxShape does not support, so we use a btConvexHullShape instead.
+    // If necessary, one could check that the box stays axis-aligned by
+    // extracting the rotation and comparing the volumes of the original
+    // axis-aligned box and the rotated axis-aligned box.
+    using namespace engine::conversions;
+    auto collisionShape = std::make_unique<btConvexHullShape>();
+    Vector3 halfExtents{fromNif(boxShape->dimensions).xyz()};
+    AxisAlignedBox box{halfExtents, halfExtents};
+    for (const auto &corner : box.getAllCorners()) {
+      Vector4 ogreV{fromBSCoordinates(corner), 1.0f};
+      auto v = mTransform * ogreV * 7.0f;
+      collisionShape->addPoint(toBullet(v.xyz()));
+    }
     return collisionShape;
   } else {
     engine::nifloader::Tagger tagger{tag};
