@@ -69,8 +69,8 @@ Application::Application(std::string windowName) : FrameListener() {
   spdlog::register_logger(logger);
 
   // Set the starting logger levels
-  spdlog::get(settings::ogreLog)->set_level(spdlog::level::trace);
-  spdlog::get(settings::log)->set_level(spdlog::level::trace);
+  spdlog::get(settings::ogreLog)->set_level(spdlog::level::warn);
+  spdlog::get(settings::log)->set_level(spdlog::level::info);
 
   // Load the configuration files
   auto &gameSettings = GameSettings::getSingleton();
@@ -83,6 +83,14 @@ Application::Application(std::string windowName) : FrameListener() {
     gameSettings.load("Oblivion.ini", true);
   } else {
     logger->warn("User configuration {} not found", userIni.string());
+  }
+
+  // Override the logger levels with user-provided ones, if any
+  if (auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
+    spdlog::get(settings::ogreLog)->set_level(spdlog::level::from_str(*level));
+  }
+  if (auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
+    spdlog::get(settings::log)->set_level(spdlog::level::from_str(*level));
   }
 
   // Start Ogre
