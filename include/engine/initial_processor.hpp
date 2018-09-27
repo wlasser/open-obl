@@ -38,6 +38,9 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &);
 template<>
 void InitialProcessor::readRecord<record::CELL>(std::istream &);
 
+template<>
+void InitialProcessor::readRecord<record::GMST>(std::istream &);
+
 } // namespace engine
 
 #endif // OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP

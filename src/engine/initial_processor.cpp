@@ -1,3 +1,4 @@
+#include "game_settings.hpp"
 #include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
 #include "record/group.hpp"
@@ -55,6 +56,12 @@ void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
   if (record::peekGroupType(is) == record::Group::GroupType::CellChildren) {
     record::skipGroup(is);
   }
+}
+
+template<>
+void InitialProcessor::readRecord<record::GMST>(std::istream &is) {
+  auto rec = record::readRecord<record::GMST>(is);
+  GameSettings::getSingleton().load(rec, true);
 }
 
 } // namespace engine
