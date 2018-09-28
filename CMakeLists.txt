@@ -11,6 +11,9 @@ find_package(OGRE 1.11 REQUIRED COMPONENTS)
 find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
 
+set(SPDLOG_BUILD_EXAMPLES NO)
+set(SPDLOG_BUILD_TESTING NO)
+set(SPDLOG_BUILD_BENCH NO)
 add_subdirectory(lib/spdlog)
 
 # IO library
