@@ -12,6 +12,8 @@ namespace engine::settings {
 const char *const resourceGroup{"OOResource"};
 const char *const log{"OO"};
 const char *const ogreLog{"Ogre"};
+const char *const defaultIni{"Oblivion_default.ini"};
+const char *const userIni{"Oblivion.ini"};
 
 } // namespace engine::settings
 

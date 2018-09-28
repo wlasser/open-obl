@@ -23,119 +23,31 @@
 
 namespace engine {
 
+namespace fs = std::filesystem;
+
 Application::Application(std::string windowName) : FrameListener() {
-  // Set up the logger. Ogre's logging facilities are pretty good but fall down
-  // when it comes to formatting. Using boost::format gets pretty tedious so
-  // we use spdlog, which has the fmt library built in. Obviously we still want
-  // Ogre's internal log messages though, so we use a LogListener to intercept
-  // the standard Ogre log messages and hand them over to spdlog.
+  createLoggers();
+  logger = spdlog::get(settings::log);
 
-  // The console gets info and above, in particular not debug
-  auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-  consoleSink->set_level(spdlog::level::info);
-
-  // The log file gets everything
-  auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-      "OpenOblivion.log", true);
-  fileSink->set_level(spdlog::level::trace);
-
-  // Every log will write to both the console and the log file
-  std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
-
-  // Construct the default Ogre logger and register its spdlog listener
-  auto ogreLogger = std::make_shared<spdlog::logger>(settings::ogreLog, sinks);
-  spdlog::register_logger(ogreLogger);
-  ogreLogMgr = std::make_unique<Ogre::LogManager>();
-  auto *defaultLog = ogreLogMgr->createLog("Default", true, true, true);
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
-  defaultLog->addListener(ogreLogListener.get());
-
-  // Construct our own logger
-  logger = std::make_shared<spdlog::logger>(settings::log, sinks);
-  spdlog::register_logger(logger);
-
-  // Set the starting logger levels
-  spdlog::get(settings::ogreLog)->set_level(spdlog::level::warn);
-  spdlog::get(settings::log)->set_level(spdlog::level::info);
-
-  // Load the configuration files
+  loadIniConfiguration();
   auto &gameSettings = GameSettings::getSingleton();
-  std::filesystem::path defaultIni = "Oblivion_default.ini";
-  std::filesystem::path userIni = "Oblivion.ini";
-  logger->info("Parsing {}", defaultIni.string());
-  gameSettings.load(defaultIni, true);
-  if (std::filesystem::is_regular_file(userIni)) {
-    logger->info("Parsing {}", userIni.string());
-    gameSettings.load("Oblivion.ini", true);
-  } else {
-    logger->warn("User configuration {} not found", userIni.string());
-  }
 
   // Override the logger levels with user-provided ones, if any
-  if (auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
+  if (const auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
     spdlog::get(settings::ogreLog)->set_level(spdlog::level::from_str(*level));
   }
-  if (auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
+  if (const auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
     spdlog::get(settings::log)->set_level(spdlog::level::from_str(*level));
   }
 
-  // Start Ogre
+  // Start Ogre and set the rendering system
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
-
-  // Choose a render system
-  std::string renderSystemName = "OpenGL 3+ Rendering Subsystem";
-  if (auto *renderSystem = ogreRoot->getRenderSystemByName(renderSystemName)) {
-    ogreRoot->setRenderSystem(renderSystem);
-  } else {
-    // List the available render systems
-    logger->error("Render system {} not found", renderSystemName);
-    logger->info("Available render systems are:");
-    for (const auto &system : ogreRoot->getAvailableRenderers()) {
-      logger->info(" * {}", system->getName());
-    }
-    throw std::runtime_error("Invalid render system");
-  }
-
-  // Initialise the rendering component of Ogre
+  setRenderSystem("OpenGL 3+ Rendering Subsystem");
   ogreRoot->initialise(false);
 
-  // Initialise SDL
+  // Create the window
   sdlInit = sdl::Init();
-
-  // Grab the window dimensions
-  const int windowWidth = gameSettings.iGet("Display.iSize W");
-  const int windowHeight = gameSettings.iGet("Display.iSize H");
-  if (windowHeight <= 0 || windowWidth <= 0) {
-    logger->critical("Cannot create a window with width {} and height {}",
-                     windowWidth, windowHeight);
-    logger->critical(
-        "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
-    throw std::runtime_error("Cannot create window with negative size");
-  }
-
-  // Grab the window settings
-  sdl::WindowFlags windowFlags{};
-  if (gameSettings.bGet("Display.bFull Screen")) {
-    windowFlags |= sdl::WindowFlags::Fullscreen;
-  }
-
-  // Make the window and find its system parent handle
-  sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
-                              windowFlags);
-  auto sdlWindowInfo = sdl::getSysWMInfo(sdlWindow.get());
-  auto parent = sdl::getWindowParent(sdlWindowInfo);
-
-  // Make cursor behaviour more sensible
-  sdl::setRelativeMouseMode(true);
-
-  // Construct a render window with the SDL window as a parent; SDL handles the
-  // window itself, Ogre manages the OpenGL context.
-  std::map<std::string, std::string> params = {{"parentWindowHandle", parent}};
-  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
-                                      windowName,
-                                      static_cast<const unsigned>(windowWidth),
-                                      static_cast<const unsigned>(windowHeight),
-                                      &params);
+  createWindow(windowName);
 
   // Construct the Bullet configuration
   bulletConf = std::make_unique<bullet::Configuration>();
@@ -171,38 +83,18 @@ Application::Application(std::string windowName) : FrameListener() {
   resGrpMgr.addResourceLocation(masterPath, "FileSystem", resourceGroup, true);
 
   // Get list of bsa files from ini
-  auto bsaList{gameSettings.get("Archive.sArchiveList", "")};
-  std::vector<std::string> bsaNames{};
-
-  // Split them on commas, this leaves trailing whitespace
-  boost::split(bsaNames, bsaList, [](char c) { return c == ','; });
-
-  // Trim the whitespace and append the data folder
-  std::vector<std::filesystem::path> bsaFilenames(bsaNames.size());
-  std::transform(bsaNames.begin(), bsaNames.end(), bsaFilenames.begin(),
-                 [&masterPath](std::string name) {
-                   boost::trim(name);
-                   return masterPath / std::filesystem::path{name};
-                 });
-
-  // Reject any invalid ones and add the others as resource locations
-  for (auto it = bsaFilenames.begin(); it != bsaFilenames.end();) {
-    if (!std::filesystem::is_regular_file(*it)) {
-      std::swap(*it, bsaFilenames.back());
-      bsaFilenames.pop_back();
-    } else {
-      resGrpMgr.addResourceLocation(*it, "BSA", resourceGroup);
-      ++it;
-    }
-  }
+  const auto bsaList{gameSettings.get("Archive.sArchiveList", "")};
+  const auto bsaFilenames = parseBSAList(masterPath, bsaList);
 
   // Meshes need to be declared explicitly as they use a ManualResourceLoader.
   // We could just use Archive.SMasterMeshesArchiveFileName, but it is not
   // guaranteed to match any of Archive.sArchiveList, and also will not work for
-  // any mod bsa files. While we're at it, we'll declare every other recognised
-  // resource too.
+  // any mod bsa files. While we're at it, we'll add the bsa files as resource
+  // locations and declare every other recognised resource too.
   for (const auto &bsa : bsaFilenames) {
+    resGrpMgr.addResourceLocation(bsa, "BSA", resourceGroup);
     Ogre::StringVectorPtr files = archiveMgr.load(bsa, "BSA", true)->list();
+
     for (const auto &filename : *files) {
       std::filesystem::path path{conversions::normalizePath(filename)};
       auto ext{path.extension()};
@@ -220,9 +112,6 @@ Application::Application(std::string windowName) : FrameListener() {
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
   resGrpMgr.initialiseAllResourceGroups();
-
-  // Create a scene manager
-  auto *scnMgr = ogreRoot->createSceneManager();
 
   // Open the main esm
   std::filesystem::path masterEsm{"Oblivion.esm"};
@@ -270,6 +159,131 @@ Application::Application(std::string windowName) : FrameListener() {
   currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
       ->attachObject(debugDrawer->getObject());
   debugDrawer->enable(false);
+}
+
+void Application::createLoggers() {
+  // The console gets info and above, in particular not debug
+  auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  consoleSink->set_level(spdlog::level::info);
+
+  // The log file gets everything
+  auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
+      "OpenOblivion.log", true);
+  fileSink->set_level(spdlog::level::trace);
+
+  // Every log will write to both the console and the log file
+  const std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
+
+  // Construct the default Ogre logger and register its spdlog listener
+  auto ogreLogger = std::make_shared<spdlog::logger>(settings::ogreLog, sinks);
+  spdlog::register_logger(ogreLogger);
+  ogreLogMgr = std::make_unique<Ogre::LogManager>();
+  auto *defaultLog = ogreLogMgr->createLog("Default", true, true, true);
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
+  defaultLog->addListener(ogreLogListener.get());
+
+  // Construct our own logger
+  auto logger = std::make_shared<spdlog::logger>(settings::log, sinks);
+  spdlog::register_logger(logger);
+
+  // Set the starting logger levels. These will be modified later according to
+  // user settings, if specified.
+  logger->set_level(spdlog::level::warn);
+  ogreLogger->set_level(spdlog::level::info);
+}
+
+void Application::loadIniConfiguration() {
+  auto &gameSettings = GameSettings::getSingleton();
+
+  logger->info("Parsing {}", settings::defaultIni);
+  gameSettings.load(settings::defaultIni, true);
+
+  if (std::filesystem::is_regular_file(settings::userIni)) {
+    logger->info("Parsing {}", settings::userIni);
+    gameSettings.load(settings::userIni, true);
+  } else {
+    logger->warn("User configuration {} not found", settings::userIni);
+  }
+}
+
+void Application::setRenderSystem(const std::string &systemName) {
+  if (auto *renderSystem = ogreRoot->getRenderSystemByName(systemName)) {
+    ogreRoot->setRenderSystem(renderSystem);
+  } else {
+    // List the available render systems
+    logger->error("Render system {} not found", systemName);
+    logger->info("Available render systems are:");
+    for (const auto &system : ogreRoot->getAvailableRenderers()) {
+      logger->info(" * {}", system->getName());
+    }
+    throw std::runtime_error("Invalid render system");
+  }
+}
+
+void Application::createWindow(const std::string &windowName) {
+  auto &gameSettings = GameSettings::getSingleton();
+
+  // Grab the window dimensions
+  const int windowWidth = gameSettings.iGet("Display.iSize W");
+  const int windowHeight = gameSettings.iGet("Display.iSize H");
+  if (windowHeight <= 0 || windowWidth <= 0) {
+    logger->critical("Cannot create a window with width {} and height {}",
+                     windowWidth, windowHeight);
+    logger->critical(
+        "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
+    throw std::runtime_error("Cannot create window with negative size");
+  }
+
+  // Grab the window settings
+  sdl::WindowFlags windowFlags{};
+  if (gameSettings.bGet("Display.bFull Screen")) {
+    windowFlags |= sdl::WindowFlags::Fullscreen;
+  }
+
+  // Make the window and find its system parent handle
+  sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
+                              windowFlags);
+  const auto sdlWindowInfo = sdl::getSysWMInfo(sdlWindow.get());
+  const auto parent = sdl::getWindowParent(sdlWindowInfo);
+
+  // Make cursor behaviour more sensible
+  sdl::setRelativeMouseMode(true);
+
+  // Construct a render window with the SDL window as a parent; SDL handles the
+  // window itself, Ogre manages the OpenGL context.
+  std::map<std::string, std::string> params = {
+      {"parentWindowHandle", parent}
+  };
+  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
+                                      windowName,
+                                      static_cast<const unsigned>(windowWidth),
+                                      static_cast<const unsigned>(windowHeight),
+                                      &params);
+}
+
+std::vector<fs::path>
+Application::parseBSAList(const fs::path &masterPath, const std::string &list) {
+  std::vector<std::string> names{};
+
+  // Split them on commas, this leaves trailing whitespace
+  boost::split(names, list, [](char c) { return c == ','; });
+
+  // Trim the whitespace and append the data folder
+  std::vector<fs::path> filenames(names.size());
+  std::transform(names.begin(), names.end(), filenames.begin(),
+                 [&masterPath](std::string name) {
+                   boost::trim(name);
+                   return masterPath / fs::path{name};
+                 });
+
+  // Reject any invalid ones
+  filenames.erase(std::remove_if(filenames.begin(), filenames.end(),
+                                 [](const auto &filename) {
+                                   return !fs::is_regular_file(filename);
+                                 }),
+                  filenames.end());
+
+  return filenames;
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {

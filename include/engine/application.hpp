@@ -57,6 +57,23 @@ class Application : public Ogre::FrameListener {
  public:
   explicit Application(std::string windowName);
 
+  // Set up the logger. Ogre's logging facilities are pretty good but fall down
+  // when it comes to formatting. Using boost::format gets pretty tedious so
+  // we use spdlog, which has the fmt library built in. Obviously we still want
+  // Ogre's internal log messages though, so we use a LogListener to intercept
+  // the standard Ogre log messages and hand them over to spdlog.
+  void createLoggers();
+
+  void loadIniConfiguration();
+
+  void setRenderSystem(const std::string &systemName);
+
+  void createWindow(const std::string &windowName);
+
+  std::vector<std::filesystem::path>
+  parseBSAList(const std::filesystem::path &masterPath,
+               const std::string &list);
+
   Ogre::Root *getRoot() {
     return ogreRoot.get();
   }
