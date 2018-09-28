@@ -138,7 +138,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                       &params);
 
   // Construct the Bullet configuration
-  bulletConf = std::make_unique<engine::bullet::Configuration>();
+  bulletConf = std::make_unique<bullet::Configuration>();
 
   // Add the resource managers
   collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();

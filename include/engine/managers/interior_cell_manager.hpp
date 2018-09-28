@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
 #define OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
 
-#include "engine/bullet/configuration.hpp"
+#include "bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"

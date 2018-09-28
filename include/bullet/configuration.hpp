@@ -1,10 +1,10 @@
-#ifndef OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP
-#define OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP
+#ifndef OPENOBLIVION_BULLET_CONFIGURATION_HPP
+#define OPENOBLIVION_BULLET_CONFIGURATION_HPP
 
 #include <btBulletDynamicsCommon.h>
 #include <memory>
 
-namespace engine::bullet {
+namespace bullet {
 
 class Configuration {
  public:
@@ -36,6 +36,6 @@ class Configuration {
   }
 };
 
-} // namespace engine::bullet
+} // namespace bullet
 
-#endif // OPENOBLIVION_ENGINE_BULLET_CONFIGURATION_HPP
+#endif // OPENOBLIVION_BULLET_CONFIGURATION_HPP

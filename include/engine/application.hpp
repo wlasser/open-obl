@@ -2,7 +2,7 @@
 #define OPENOBLIVION_ENGINE_APPLICATION_HPP
 
 #include "engine/bsa.hpp"
-#include "engine/bullet/configuration.hpp"
+#include "bullet/configuration.hpp"
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"

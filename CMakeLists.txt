@@ -87,7 +87,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/player_controller.cpp
         include/engine/application.hpp
         include/engine/bsa.hpp
-        include/engine/bullet/configuration.hpp
+        include/bullet/configuration.hpp
         include/engine/conversions.hpp
         include/sdl/sdl.hpp
         include/engine/initial_processor.hpp
