@@ -286,7 +286,7 @@ Application::parseBSAList(const fs::path &masterPath, const std::string &list) {
   return filenames;
 }
 
-bool Application::frameStarted(const Ogre::FrameEvent &event) {
+void Application::pollEvents() {
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
     switch (sdl::typeOf(sdlEvent)) {
@@ -306,15 +306,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
           }
 
           case sdl::KeyCode::H: {
-            if (drawHavok) {
-              currentCell->physicsWorld->setDebugDrawer(nullptr);
-              debugDrawer->clearLines();
-              debugDrawer->build();
-            } else {
-              currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
-            }
-            drawHavok = !drawHavok;
-            debugDrawer->enable(drawHavok);
+            drawBulletDebug = !drawBulletDebug;
+            enableBulletDebugDraw(drawBulletDebug);
             break;
           }
 
@@ -396,12 +389,27 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
       default:break;
     }
   }
+}
 
+void Application::enableBulletDebugDraw(bool enable) {
+  if (enable) {
+    currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
+  } else {
+    currentCell->physicsWorld->setDebugDrawer(nullptr);
+    debugDrawer->clearLines();
+    debugDrawer->build();
+  }
+
+  debugDrawer->enable(enable);
+}
+
+bool Application::frameStarted(const Ogre::FrameEvent &event) {
+  pollEvents();
   playerController->update(event.timeSinceLastFrame);
 
-  currentCell->physicsWorld->stepSimulation(1.0f / 60.0f);
+  currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
 
-  if (drawHavok) {
+  if (drawBulletDebug) {
     debugDrawer->clearLines();
     currentCell->physicsWorld->debugDrawWorld();
     debugDrawer->build();

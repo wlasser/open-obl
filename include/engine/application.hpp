@@ -51,7 +51,7 @@ class Application : public Ogre::FrameListener {
   std::shared_ptr<InteriorCell> currentCell{};
   std::unique_ptr<PlayerController> playerController{};
 
-  bool drawHavok{false};
+  bool drawBulletDebug{false};
   std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
 
  public:
@@ -73,6 +73,10 @@ class Application : public Ogre::FrameListener {
   std::vector<std::filesystem::path>
   parseBSAList(const std::filesystem::path &masterPath,
                const std::string &list);
+
+  void pollEvents();
+
+  void enableBulletDebugDraw(bool enable);
 
   Ogre::Root *getRoot() {
     return ogreRoot.get();
