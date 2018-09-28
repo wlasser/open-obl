@@ -315,23 +315,23 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
             break;
           }
           case SDLK_a: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Left, true, 0.0f});
+            playerController->handleEvent({MoveEvent::Left, true, 0.0f});
             break;
           }
           case SDLK_d: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Right, true, 0.0f});
+            playerController->handleEvent({MoveEvent::Right, true, 0.0f});
             break;
           }
           case SDLK_w: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Forward, true, 0.0f});
+            playerController->handleEvent({MoveEvent::Forward, true, 0.0f});
             break;
           }
           case SDLK_s: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Backward, true, 0.0f});
+            playerController->handleEvent({MoveEvent::Backward, true, 0.0f});
+            break;
+          }
+          case SDLK_SPACE: {
+            playerController->handleEvent({MoveEvent::Jump, false, 0.0f});
             break;
           }
           default:break;
@@ -341,38 +341,30 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
       case SDL_KEYUP:if (sdlEvent.key.repeat) break;
         switch (sdlEvent.key.keysym.sym) {
           case SDLK_a: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Left, false, 0.0f});
+            playerController->handleEvent({MoveEvent::Left, false, 0.0f});
             break;
           }
           case SDLK_d: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Right, false, 0.0f});
+            playerController->handleEvent({MoveEvent::Right, false, 0.0f});
             break;
           }
           case SDLK_w: {
-            playerController->sendEvent(
-                {PlayerController::MoveEvent::Forward, false, 0.0f});
+            playerController->handleEvent({MoveEvent::Forward, false, 0.0f});
             break;
-            case SDLK_s: {
-              playerController->sendEvent(
-                  {PlayerController::MoveEvent::Backward, false, 0.0f});
-              break;
-            }
+          }
+          case SDLK_s: {
+            playerController->handleEvent({MoveEvent::Backward, false, 0.0f});
+            break;
           }
           default:break;
         }
         break;
 
       case SDL_MOUSEMOTION: {
-        playerController->sendEvent(PlayerController::MoveEvent(
-            PlayerController::MoveEvent::Pitch,
-            true,
-            sdlEvent.motion.yrel));
-        playerController->sendEvent(PlayerController::MoveEvent(
-            PlayerController::MoveEvent::Yaw,
-            true,
-            sdlEvent.motion.xrel));
+        playerController->handleEvent(
+            MoveEvent(MoveEvent::Pitch, true, sdlEvent.motion.yrel));
+        playerController->handleEvent(
+            MoveEvent(MoveEvent::Yaw, true, sdlEvent.motion.xrel));
         break;
       }
       case SDL_WINDOWEVENT:
