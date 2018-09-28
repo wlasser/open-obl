@@ -5,12 +5,12 @@
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/ogre/spdlog_listener.hpp"
+#include "engine/ogre/window.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
 #include "game_settings.hpp"
+#include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
-#include "SDL.h"
-#include "SDL_syswm.h"
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <algorithm>
@@ -22,20 +22,6 @@
 #include <string>
 
 namespace engine {
-
-auto makeSDLWindow(const std::string &windowName, int width, int height,
-                   uint32_t flags) {
-  auto win = SDL_CreateWindow(windowName.c_str(),
-                              SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                              width, height,
-                              flags);
-  if (win == nullptr) {
-    throw std::runtime_error(boost::str(
-        boost::format("SDL_CreateWindow failed: %s") % SDL_GetError()));
-  }
-
-  return SDLWindowPtr(win, SDL_DestroyWindow);
-}
 
 Application::Application(std::string windowName) : FrameListener() {
   // Set up the logger. Ogre's logging facilities are pretty good but fall down
@@ -113,9 +99,10 @@ Application::Application(std::string windowName) : FrameListener() {
   // Initialise the rendering component of Ogre
   ogreRoot->initialise(false);
 
-  // Initialise SDL, create an SDL window and Ogre window
-  sdlInit = SDLInit();
+  // Initialise SDL
+  sdlInit = sdl::Init();
 
+  // Grab the window dimensions
   const int windowWidth = gameSettings.iGet("Display.iSize W");
   const int windowHeight = gameSettings.iGet("Display.iSize H");
   if (windowHeight <= 0 || windowWidth <= 0) {
@@ -125,29 +112,24 @@ Application::Application(std::string windowName) : FrameListener() {
         "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
     throw std::runtime_error("Cannot create window with negative size");
   }
-  uint32_t flags{};
+
+  // Grab the window settings
+  sdl::WindowFlags windowFlags{};
   if (gameSettings.bGet("Display.bFull Screen")) {
-    flags |= SDL_WINDOW_FULLSCREEN;
+    windowFlags |= sdl::WindowFlags::Fullscreen;
   }
 
-  sdlWindow = makeSDLWindow(windowName, windowWidth, windowHeight, flags);
-
-  SDL_SysWMinfo sdlWindowInfo{};
-  // This tells SDL we have version 2, otherwise the next call fails regardless
-  // of the actual SDL version.
-  SDL_VERSION(&sdlWindowInfo.version);
-  if (!SDL_GetWindowWMInfo(sdlWindow.get(), &sdlWindowInfo)) {
-    throw std::runtime_error(boost::str(
-        boost::format("SDL_GetWindowWMInfo failed: %s") % SDL_GetError()));
-  }
-  auto parent = std::to_string(sdlWindowInfo.info.x11.window);
+  // Make the window and find its system parent handle
+  sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
+                              windowFlags);
+  auto sdlWindowInfo = sdl::getSysWMInfo(sdlWindow.get());
+  auto parent = sdl::getWindowParent(sdlWindowInfo);
 
   // Make cursor behaviour more sensible
-  if (SDL_SetRelativeMouseMode(SDL_TRUE)) {
-    throw std::runtime_error(boost::str(
-        boost::format("SDL_SetRelativeMouseMode failed: %s") % SDL_GetError()));
-  }
+  sdl::setRelativeMouseMode(true);
 
+  // Construct a render window with the SDL window as a parent; SDL handles the
+  // window itself, Ogre manages the OpenGL context.
   std::map<std::string, std::string> params = {{"parentWindowHandle", parent}};
   ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
                                       windowName,
@@ -291,18 +273,25 @@ Application::Application(std::string windowName) : FrameListener() {
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
-  SDL_Event sdlEvent;
-  while (SDL_PollEvent(&sdlEvent)) {
-    switch (sdlEvent.type) {
+  sdl::Event sdlEvent;
+  while (sdl::pollEvent(sdlEvent)) {
+    switch (sdl::typeOf(sdlEvent)) {
 
-      case SDL_QUIT:ogreRoot->queueEndRendering();
+      case sdl::EventType::Quit: {
+        ogreRoot->queueEndRendering();
         break;
+      }
 
-      case SDL_KEYDOWN:if (sdlEvent.key.repeat) break;
-        switch (sdlEvent.key.keysym.sym) {
-          case SDLK_ESCAPE:ogreRoot->queueEndRendering();
+      case sdl::EventType::KeyDown: {
+        if (sdlEvent.key.repeat) break;
+        switch (sdl::keyCodeOf(sdlEvent.key)) {
+
+          case sdl::KeyCode::Escape: {
+            ogreRoot->queueEndRendering();
             break;
-          case SDLK_h: {
+          }
+
+          case sdl::KeyCode::H: {
             if (drawHavok) {
               currentCell->physicsWorld->setDebugDrawer(nullptr);
               debugDrawer->clearLines();
@@ -314,65 +303,82 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
             debugDrawer->enable(drawHavok);
             break;
           }
-          case SDLK_a: {
+
+          case sdl::KeyCode::A: {
             playerController->handleEvent({MoveEvent::Left, true, 0.0f});
             break;
           }
-          case SDLK_d: {
+
+          case sdl::KeyCode::D: {
             playerController->handleEvent({MoveEvent::Right, true, 0.0f});
             break;
           }
-          case SDLK_w: {
+
+          case sdl::KeyCode::W: {
             playerController->handleEvent({MoveEvent::Forward, true, 0.0f});
             break;
           }
-          case SDLK_s: {
+
+          case sdl::KeyCode::S: {
             playerController->handleEvent({MoveEvent::Backward, true, 0.0f});
             break;
           }
-          case SDLK_SPACE: {
+
+          case sdl::KeyCode::Space: {
             playerController->handleEvent({MoveEvent::Jump, false, 0.0f});
             break;
           }
+
           default:break;
         }
         break;
+      }
 
-      case SDL_KEYUP:if (sdlEvent.key.repeat) break;
-        switch (sdlEvent.key.keysym.sym) {
-          case SDLK_a: {
+      case sdl::EventType::KeyUp: {
+        if (sdlEvent.key.repeat) break;
+        switch (sdl::keyCodeOf(sdlEvent.key)) {
+
+          case sdl::KeyCode::A: {
             playerController->handleEvent({MoveEvent::Left, false, 0.0f});
             break;
           }
-          case SDLK_d: {
+
+          case sdl::KeyCode::D: {
             playerController->handleEvent({MoveEvent::Right, false, 0.0f});
             break;
           }
-          case SDLK_w: {
+
+          case sdl::KeyCode::W: {
             playerController->handleEvent({MoveEvent::Forward, false, 0.0f});
             break;
           }
-          case SDLK_s: {
+
+          case sdl::KeyCode::S: {
             playerController->handleEvent({MoveEvent::Backward, false, 0.0f});
             break;
           }
           default:break;
         }
         break;
+      }
 
-      case SDL_MOUSEMOTION: {
+      case sdl::EventType::MouseMotion: {
         playerController->handleEvent(
             MoveEvent(MoveEvent::Pitch, true, sdlEvent.motion.yrel));
         playerController->handleEvent(
             MoveEvent(MoveEvent::Yaw, true, sdlEvent.motion.xrel));
         break;
       }
-      case SDL_WINDOWEVENT:
-        if (sdlEvent.window.event == SDL_WINDOWEVENT_RESIZED) {
+
+      case sdl::EventType::WindowEvent: {
+        if (sdl::typeOf(sdlEvent.window) == sdl::WindowEventType::Resized) {
           ogreWindow->resize(static_cast<unsigned int>(sdlEvent.window.data1),
                              static_cast<unsigned int>(sdlEvent.window.data2));
           ogreWindow->windowMovedOrResized();
         }
+        break;
+      }
+
       default:break;
     }
   }

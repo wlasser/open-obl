@@ -71,6 +71,7 @@ target_sources(OpenOblivionEngine PUBLIC
         $<TARGET_OBJECTS:OpenOblivionRecord>
         src/engine/application.cpp
         src/engine/bsa.cpp
+        src/sdl/sdl.cpp
         src/engine/initial_processor.cpp
         src/engine/managers/interior_cell_manager.cpp
         src/engine/managers/light_manager.cpp
@@ -88,6 +89,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/bsa.hpp
         include/engine/bullet/configuration.hpp
         include/engine/conversions.hpp
+        include/sdl/sdl.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
         include/engine/managers/interior_cell_manager.hpp

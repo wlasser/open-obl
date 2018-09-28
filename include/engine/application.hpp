@@ -12,6 +12,7 @@
 #include "engine/ogre/rigid_body.hpp"
 #include "engine/ogre/window.hpp"
 #include "engine/player_controller.hpp"
+#include "sdl/sdl.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
 #include <SDL2/SDL.h>
@@ -20,26 +21,6 @@
 #include <string>
 
 namespace engine {
-
-// RAII wrapper for SDL, calls SDL_Init on construction and SDL_Quit on
-// destruction for automatic cleanup.
-struct SDLInit {
-  SDLInit() {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
-      throw std::runtime_error(boost::str(
-          boost::format("SDL_Init failed: %s") % SDL_GetError()));
-    }
-  }
-
-  ~SDLInit() {
-    SDL_Quit();
-  }
-};
-
-using SDLWindowPtr = std::unique_ptr<SDL_Window, decltype(&SDL_DestroyWindow)>;
-
-auto makeSDLWindow(const std::string &windowName, int width, int height,
-                   uint32_t flags);
 
 class Application : public Ogre::FrameListener {
  private:
@@ -53,9 +34,9 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<Ogre::LogListener> ogreLogListener{};
 
   std::unique_ptr<Ogre::Root> ogreRoot{};
-  SDLInit sdlInit;
+  sdl::Init sdlInit;
 
-  SDLWindowPtr sdlWindow{nullptr, nullptr};
+  sdl::WindowPtr sdlWindow{nullptr, nullptr};
   Ogre::RenderWindowPtr ogreWindow;
 
   std::unique_ptr<bullet::Configuration> bulletConf{};
