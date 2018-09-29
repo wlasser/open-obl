@@ -1,6 +1,6 @@
-#include "engine/conversions.hpp"
-#include "ogrebullet/rigid_body.hpp"
+#include "ogrebullet/conversions.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
+#include "ogrebullet/rigid_body.hpp"
 
 namespace Ogre {
 
@@ -24,8 +24,8 @@ const AxisAlignedBox &RigidBody::getBoundingBox() const {
   btVector3 min{};
   btVector3 max{};
   mRigidBody->getAabb(min, max);
-  mBox.setExtents(engine::conversions::fromBullet(min),
-                  engine::conversions::fromBullet(max));
+  mBox.setExtents(conversions::fromBullet(min),
+                  conversions::fromBullet(max));
   return mBox;
 }
 
@@ -86,7 +86,7 @@ void RigidBody::notify() {
 }
 
 void RigidBody::setScale(const Vector3 &scale) {
-  auto localScale = engine::conversions::toBullet(scale);
+  auto localScale = conversions::toBullet(scale);
 
   if (mCollisionShapeOverride) {
     mCollisionShapeOverride->setLocalScaling(localScale);

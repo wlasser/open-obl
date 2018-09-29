@@ -88,6 +88,7 @@ target_sources(OpenOblivionOgreBullet PUBLIC
         src/ogrebullet/rigid_body.cpp
         include/ogrebullet/collision_object.hpp
         include/ogrebullet/collision_object_manager.hpp
+        include/ogrebullet/conversions.hpp
         include/ogrebullet/debug_drawer.hpp
         include/ogrebullet/motion_state.hpp
         include/ogrebullet/rigid_body.hpp)

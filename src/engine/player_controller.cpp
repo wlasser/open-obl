@@ -1,5 +1,6 @@
 #include "engine/player_controller.hpp"
 #include "engine/settings.hpp"
+#include "ogrebullet/conversions.hpp"
 #include <OgreMath.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
@@ -168,7 +169,7 @@ void PlayerController::updatePhysics(float elapsed) {
   auto axes = cameraNode->getLocalAxes();
   if (auto length = localVelocity.length() > 0.01f) {
     auto v = rigidBody->getLinearVelocity();
-    auto newV = conversions::toBullet(
+    auto newV = Ogre::conversions::toBullet(
         axes * localVelocity / length * speed(speedAttribute, athleticsSkill));
     newV.setY(v.y());
     rigidBody->setLinearVelocity(newV);

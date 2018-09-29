@@ -1,4 +1,4 @@
-#include "engine/conversions.hpp"
+#include "ogrebullet/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"
 
 namespace Ogre {
@@ -26,13 +26,13 @@ MotionState &MotionState::operator=(MotionState &&other) noexcept {
 
 void MotionState::getWorldTransform(btTransform &worldTrans) const {
   worldTrans.setIdentity();
-  worldTrans.setOrigin(engine::conversions::toBullet(mPosition));
-  worldTrans.setRotation(engine::conversions::toBullet(mOrientation));
+  worldTrans.setOrigin(conversions::toBullet(mPosition));
+  worldTrans.setRotation(conversions::toBullet(mOrientation));
 }
 
 void MotionState::setWorldTransform(const btTransform &worldTrans) {
-  mPosition = engine::conversions::fromBullet(worldTrans.getOrigin());
-  mOrientation = engine::conversions::fromBullet(worldTrans.getRotation());
+  mPosition = conversions::fromBullet(worldTrans.getOrigin());
+  mOrientation = conversions::fromBullet(worldTrans.getRotation());
   mNode->setPosition(mPosition);
   mNode->setOrientation(mOrientation);
 }

@@ -1,6 +1,7 @@
 #include "engine/conversions.hpp"
 #include "engine/nifloader/loader_state.hpp"
 #include "engine/nifloader/collision_object_loader_state.hpp"
+#include "ogrebullet/conversions.hpp"
 #include <Ogre.h>
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -122,6 +123,7 @@ CollisionObjectVisitor::parseWorldObject(const Graph &g,
 Ogre::RigidBodyInfo
 CollisionObjectVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
   using namespace engine::conversions;
+  using namespace Ogre::conversions;
 
   // This does not seem to affect the translation in any way.
   // TODO: What is the Havok origin used for?
@@ -219,6 +221,7 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     auto collisionShape = std::make_unique<btConvexHullShape>();
     for (const auto &vertex : convexVerticesShape->vertices) {
       using namespace engine::conversions;
+      using namespace Ogre::conversions;
       Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex).xyz()), 1.0f};
       auto v = mTransform * ogreV * 7.0f;
       collisionShape->addPoint(toBullet(v.xyz()));
@@ -237,6 +240,7 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     // extracting the rotation and comparing the volumes of the original
     // axis-aligned box and the rotated axis-aligned box.
     using namespace engine::conversions;
+    using namespace Ogre::conversions;
     auto collisionShape = std::make_unique<btConvexHullShape>();
     Ogre::Vector3 halfExtents{fromNif(boxShape->dimensions).xyz()};
     Ogre::AxisAlignedBox box{halfExtents, halfExtents};
