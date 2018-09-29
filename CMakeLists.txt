@@ -62,6 +62,42 @@ target_sources(OpenOblivionRecord PUBLIC
         include/record/subrecord.hpp
         include/record/tuplifiable.hpp)
 
+# Ogre library
+add_library(OpenOblivionOgre OBJECT)
+target_include_directories(OpenOblivionOgre PUBLIC include)
+target_sources(OpenOblivionOgre PUBLIC
+        src/ogre/ogre_stream_wrappers.cpp
+        src/ogre/window.cpp
+        include/ogre/ogre_stream_wrappers.hpp
+        include/ogre/spdlog_listener.hpp
+        include/ogre/window.hpp)
+target_link_libraries(OpenOblivionOgre PUBLIC
+        spdlog
+        ${OGRE_LIBRARIES})
+
+# OgreBullet library
+add_library(OpenOblivionOgreBullet OBJECT)
+target_include_directories(OpenOblivionOgreBullet PUBLIC include)
+target_sources(OpenOblivionOgreBullet PUBLIC
+        $<TARGET_OBJECTS:OpenOblivionNif>
+        $<TARGET_OBJECTS:OpenOblivionOgre>
+        src/ogrebullet/collision_object.cpp
+        src/ogrebullet/collision_object_manager.cpp
+        src/ogrebullet/debug_drawer.cpp
+        src/ogrebullet/motion_state.cpp
+        src/ogrebullet/rigid_body.cpp
+        include/ogrebullet/collision_object.hpp
+        include/ogrebullet/collision_object_manager.hpp
+        include/ogrebullet/debug_drawer.hpp
+        include/ogrebullet/motion_state.hpp
+        include/ogrebullet/rigid_body.hpp)
+target_include_directories(OpenOblivionOgreBullet PUBLIC
+        ${BULLET_INCLUDE_DIRS})
+target_link_libraries(OpenOblivionOgreBullet PUBLIC
+        spdlog
+        ${OGRE_LIBRARIES}
+        ${BULLET_LIBRARIES})
+
 # Engine library
 add_library(OpenOblivionEngine OBJECT)
 target_include_directories(OpenOblivionEngine PUBLIC include)
@@ -69,6 +105,8 @@ target_sources(OpenOblivionEngine PUBLIC
         $<TARGET_OBJECTS:OpenOblivionIO>
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
+        $<TARGET_OBJECTS:OpenOblivionOgre>
+        $<TARGET_OBJECTS:OpenOblivionOgreBullet>
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/sdl/sdl.cpp
@@ -77,13 +115,6 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/managers/light_manager.cpp
         src/engine/nifloader/loader.cpp
         src/engine/nifloader/loader_state.cpp
-        src/engine/ogre/debug_drawer.cpp
-        src/engine/ogre/motion_state.cpp
-        src/engine/ogre/ogre_stream_wrappers.cpp
-        src/engine/ogre/collision_object.cpp
-        src/engine/ogre/collision_object_manager.cpp
-        src/engine/ogre/rigid_body.cpp
-        src/engine/ogre/window.cpp
         src/engine/player_controller.cpp
         include/engine/application.hpp
         include/engine/bsa.hpp
@@ -97,14 +128,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/managers/static_manager.hpp
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
-        include/engine/ogre/debug_drawer.hpp
-        include/engine/ogre/motion_state.hpp
-        include/engine/ogre/ogre_stream_wrappers.hpp
-        include/engine/ogre/collision_object.hpp
-        include/engine/ogre/collision_object_manager.hpp
-        include/engine/ogre/rigid_body.hpp
-        include/engine/ogre/spdlog_listener.hpp
-        include/engine/ogre/window.hpp
         include/engine/player_controller.hpp
         include/engine/settings.hpp)
 
@@ -127,6 +150,8 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
         $<TARGET_OBJECTS:OpenOblivionEngine>
+        $<TARGET_OBJECTS:OpenOblivionOgre>
+        $<TARGET_OBJECTS:OpenOblivionOgreBullet>
         src/bsa/bsa.cpp
         src/formid.cpp
         src/main.cpp

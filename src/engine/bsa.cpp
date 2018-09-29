@@ -1,6 +1,6 @@
 #include "bsa/bsa.hpp"
 #include "engine/bsa.hpp"
-#include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "ogre/ogre_stream_wrappers.hpp"
 #include <ctime>
 #include <filesystem>
 #include <functional>
@@ -12,7 +12,7 @@ namespace {
 
 class BSAArchive : public Ogre::Archive {
  private:
-  using BSAArchiveStream = OgreStandardStream<bsa::FileData>;
+  using BSAArchiveStream = Ogre::OgreStandardStream<bsa::FileData>;
   // BSAReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.

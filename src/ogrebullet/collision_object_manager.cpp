@@ -1,4 +1,4 @@
-#include "engine/ogre/collision_object_manager.hpp"
+#include "ogrebullet/collision_object_manager.hpp"
 #include <OgreResourceGroupManager.h>
 
 namespace Ogre {

@@ -1,7 +1,7 @@
 #include "engine/conversions.hpp"
 #include "engine/nifloader/loader.hpp"
-#include "engine/ogre/collision_object.hpp"
-#include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "ogrebullet/collision_object.hpp"
+#include "ogre/ogre_stream_wrappers.hpp"
 #include "engine/settings.hpp"
 #include "nif/bhk.hpp"
 #include <boost/graph/adjacency_list.hpp>
@@ -45,7 +45,7 @@ void CollisionObject::loadImpl() {
                 "CollisionObject::load");
   }
 
-  auto ogreDataStreambuf = engine::OgreDataStreambuf{ogreDataStream};
+  auto ogreDataStreambuf = OgreDataStreambuf{ogreDataStream};
   std::istream is{&ogreDataStreambuf};
 
   auto untaggedBlocks = engine::nifloader::createBlockGraph(is);

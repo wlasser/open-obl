@@ -1,8 +1,8 @@
-#ifndef OPENOBLIVION_ENGINE_COLLISION_OBJECT_HPP
-#define OPENOBLIVION_ENGINE_COLLISION_OBJECT_HPP
+#ifndef OPENOBLIVION_OGREBULLET_COLLISION_OBJECT_HPP
+#define OPENOBLIVION_OGREBULLET_COLLISION_OBJECT_HPP
 
 #include "engine/nifloader/loader_state.hpp"
-#include "engine/ogre/motion_state.hpp"
+#include "ogrebullet/motion_state.hpp"
 #include "engine/settings.hpp"
 #include "nif/bhk.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -128,4 +128,4 @@ using CollisionObjectPtr = std::shared_ptr<CollisionObject>;
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_COLLISION_OBJECT_HPP
+#endif // OPENOBLIVION_OGREBULLET_COLLISION_OBJECT_HPP

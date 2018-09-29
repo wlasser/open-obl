@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_WINDOW_HPP
-#define OPENOBLIVION_ENGINE_WINDOW_HPP
+#ifndef OPENOBLIVION_OGRE_WINDOW_HPP
+#define OPENOBLIVION_OGRE_WINDOW_HPP
 
 #include <Ogre.h>
 #include <functional>
@@ -19,4 +19,4 @@ RenderWindowPtr makeRenderWindow(Root *root,
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_WINDOW_HPP
+#endif // OPENOBLIVION_OGRE_WINDOW_HPP

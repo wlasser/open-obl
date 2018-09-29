@@ -1,7 +1,7 @@
 #include "engine/conversions.hpp"
 #include "engine/nifloader/loader.hpp"
 #include "engine/nifloader/loader_state.hpp"
-#include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "ogre/ogre_stream_wrappers.hpp"
 #include "engine/settings.hpp"
 #include "io/memstream.hpp"
 #include "nif/basic.hpp"
@@ -252,7 +252,7 @@ void Loader::loadResource(Ogre::Resource *resource) {
   auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
       ->openResource(mesh->getName(), mesh->getGroup());
 
-  auto ogreDataStreamBuffer = OgreDataStreambuf{ogreDataStream};
+  auto ogreDataStreamBuffer = Ogre::OgreDataStreambuf{ogreDataStream};
   std::istream is{&ogreDataStreamBuffer};
 
   auto blocks = createBlockGraph(is);

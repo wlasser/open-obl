@@ -1,4 +1,4 @@
-#include "engine/ogre/debug_drawer.hpp"
+#include "ogrebullet/debug_drawer.hpp"
 
 namespace Ogre {
 

@@ -2,7 +2,7 @@
 #define OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
 
 #include "engine/conversions.hpp"
-#include "engine/ogre/motion_state.hpp"
+#include "ogrebullet/motion_state.hpp"
 #include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>

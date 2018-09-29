@@ -1,8 +1,9 @@
-#ifndef OPENOBLIVION_ENGINE_SPDLOG_LISTENER_HPP
-#define OPENOBLIVION_ENGINE_SPDLOG_LISTENER_HPP
+#ifndef OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP
+#define OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP
 
 #include <OgreLogManager.h>
 #include <spdlog/spdlog.h>
+#include <memory>
 
 namespace Ogre {
 
@@ -39,4 +40,4 @@ class SpdlogListener : public LogListener {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_SPDLOG_LISTENER_HPP
+#endif // OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP

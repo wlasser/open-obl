@@ -1,6 +1,6 @@
 #include "engine/conversions.hpp"
-#include "engine/ogre/rigid_body.hpp"
-#include "engine/ogre/collision_object_manager.hpp"
+#include "ogrebullet/rigid_body.hpp"
+#include "ogrebullet/collision_object_manager.hpp"
 
 namespace Ogre {
 

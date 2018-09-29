@@ -1,7 +1,7 @@
-#ifndef OPENOBLIVION_ENGINE_OGRE_DATA_STREAMBUF_HPP
-#define OPENOBLIVION_ENGINE_OGRE_DATA_STREAMBUF_HPP
+#ifndef OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
+#define OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
 
-#include <OgreDataStream.h>
+#include <OGRE/OgreDataStream.h>
 #include <iosfwd>
 #include <memory>
 #include <type_traits>
@@ -18,7 +18,7 @@
 // compile-time in Ogre. Then every stream will have to be an std::iostream, and
 // we will still need wrapper code when passing an std::istream into Ogre.
 // TODO: Convert Ogre to use standard streams?
-namespace engine {
+namespace Ogre {
 
 // OgreDataStreambuf is used to convert an existing Ogre::DataStream into a
 // standard stream. Currently only input is supported.
@@ -110,7 +110,7 @@ std::size_t OgreStandardStream<T>::tell() const {
 template<>
 void OgreStandardStream<std::ifstream>::close();
 
-} // namespace engine
+} // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_OGRE_DATA_STREAMBUF_HPP
+#endif // OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
 

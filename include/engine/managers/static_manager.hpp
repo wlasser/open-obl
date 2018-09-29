@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_STATIC_MANAGER_HPP
 #define OPENOBLIVION_ENGINE_STATIC_MANAGER_HPP
 
-#include "engine/ogre/rigid_body.hpp"
+#include "ogrebullet/rigid_body.hpp"
 #include "formid.hpp"
 #include <OgreEntity.h>
 #include <OgreSceneManager.h>

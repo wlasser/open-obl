@@ -1,9 +1,9 @@
-#ifndef OPENOBLIVION_ENGINE_RIGID_BODY_HPP
-#define OPENOBLIVION_ENGINE_RIGID_BODY_HPP
+#ifndef OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
+#define OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
 
-#include "engine/ogre/collision_object.hpp"
-#include "engine/ogre/motion_state.hpp"
-#include "engine/ogre/spdlog_listener.hpp"
+#include "ogrebullet/collision_object.hpp"
+#include "ogrebullet/motion_state.hpp"
+#include "ogre/spdlog_listener.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <OgreMovableObject.h>
 #include <stdexcept>
@@ -95,4 +95,4 @@ struct PartialCollisionObjectException : virtual std::runtime_error {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_RIGID_BODY_HPP
+#endif // OPENOBLIVION_OGRE_RIGID_BODY_HPP

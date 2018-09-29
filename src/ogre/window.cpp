@@ -1,4 +1,4 @@
-#include "engine/ogre/window.hpp"
+#include "ogre/window.hpp"
 
 namespace Ogre {
 

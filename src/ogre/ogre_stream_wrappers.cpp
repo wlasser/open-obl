@@ -1,10 +1,10 @@
-#include "engine/ogre/ogre_stream_wrappers.hpp"
+#include "ogre/ogre_stream_wrappers.hpp"
 #include <OgreDataStream.h>
 #include <fstream>
 #include <istream>
 #include <streambuf>
 
-namespace engine {
+namespace Ogre {
 
 OgreDataStreambuf::OgreDataStreambuf(std::shared_ptr<Ogre::DataStream> ogreDataStream)
     : std::streambuf(), ogreDataStream(std::move(ogreDataStream)) {}
@@ -60,4 +60,4 @@ void OgreStandardStream<std::ifstream>::close() {
   stream.close();
 }
 
-} // namespace engine
+} // namespace Ogre

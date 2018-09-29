@@ -1,5 +1,5 @@
 #include "engine/conversions.hpp"
-#include "engine/ogre/motion_state.hpp"
+#include "ogrebullet/motion_state.hpp"
 
 namespace Ogre {
 
