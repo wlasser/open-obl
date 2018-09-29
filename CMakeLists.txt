@@ -99,6 +99,18 @@ target_link_libraries(OpenOblivionOgreBullet PUBLIC
         ${OGRE_LIBRARIES}
         ${BULLET_LIBRARIES})
 
+# SDL library
+add_library(OpenOblivionSDL OBJECT)
+target_include_directories(OpenOblivionSDL PUBLIC include)
+target_sources(OpenOblivionSDL PUBLIC
+        src/sdl/sdl.cpp
+        include/sdl/sdl.hpp)
+target_include_directories(OpenOblivionSDL PUBLIC
+        ${Boost_INCLUDE_DIRS}
+        ${SDL2_INCLUDE_DIR})
+target_link_libraries(OpenOblivionSDL PUBLIC
+        ${SDL2_LIBRARY})
+
 # Engine library
 add_library(OpenOblivionEngine OBJECT)
 target_include_directories(OpenOblivionEngine PUBLIC include)
@@ -108,9 +120,9 @@ target_sources(OpenOblivionEngine PUBLIC
         $<TARGET_OBJECTS:OpenOblivionRecord>
         $<TARGET_OBJECTS:OpenOblivionOgre>
         $<TARGET_OBJECTS:OpenOblivionOgreBullet>
+        $<TARGET_OBJECTS:OpenOblivionSDL>
         src/engine/application.cpp
         src/engine/bsa.cpp
-        src/sdl/sdl.cpp
         src/engine/initial_processor.cpp
         src/engine/managers/interior_cell_manager.cpp
         src/engine/managers/light_manager.cpp
@@ -125,7 +137,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/bsa.hpp
         include/bullet/configuration.hpp
         include/engine/conversions.hpp
-        include/sdl/sdl.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
         include/engine/managers/interior_cell_manager.hpp
@@ -161,6 +172,7 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionEngine>
         $<TARGET_OBJECTS:OpenOblivionOgre>
         $<TARGET_OBJECTS:OpenOblivionOgreBullet>
+        $<TARGET_OBJECTS:OpenOblivionSDL>
         src/bsa/bsa.cpp
         src/formid.cpp
         src/main.cpp
