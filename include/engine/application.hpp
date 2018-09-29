@@ -7,6 +7,7 @@
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/loader.hpp"
+#include "engine/nif_collision_object_loader.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
@@ -42,6 +43,8 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   nifloader::Loader nifLoader{};
+  NifCollisionObjectLoader nifCollisionLoader{};
+
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
 
   std::unique_ptr<LightManager> lightMgr{};

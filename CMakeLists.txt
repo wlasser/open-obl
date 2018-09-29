@@ -115,6 +115,8 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/managers/light_manager.cpp
         src/engine/nifloader/loader.cpp
         src/engine/nifloader/loader_state.cpp
+        src/engine/nif_collision_object_loader.cpp
+        src/engine/nif_collision_object_loader_state.cpp
         src/engine/player_controller.cpp
         include/engine/application.hpp
         include/engine/bsa.hpp
@@ -128,6 +130,8 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/managers/static_manager.hpp
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
+        include/engine/nif_collision_object_loader.hpp
+        include/engine/nif_collision_object_loader_state.hpp
         include/engine/player_controller.hpp
         include/engine/settings.hpp)
 

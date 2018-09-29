@@ -100,6 +100,8 @@ Application::Application(std::string windowName) : FrameListener() {
       auto ext{path.extension()};
       if (ext == ".nif") {
         resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
+        resGrpMgr.declareResource(path, "CollisionObject", resourceGroup,
+                                  &nifCollisionLoader);
       } else if (ext == ".dds") {
         resGrpMgr.declareResource(path, "Texture", resourceGroup);
       }
