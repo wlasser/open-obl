@@ -1,12 +1,13 @@
-#ifndef OPENOBLIVION_BSA_HPP
-#define OPENOBLIVION_BSA_HPP
+#ifndef OPENOBLIVION_BSA_BSA_HPP
+#define OPENOBLIVION_BSA_BSA_HPP
 
 #include <algorithm>
-#include <iterator>
 #include <fstream>
-#include <string>
-#include <memory>
+#include <iterator>
 #include <map>
+#include <memory>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "io/memstream.hpp"
@@ -64,14 +65,14 @@ class BSAReader {
   using iterator = impl::BSAIterator;
   friend impl::BSAIterator;
 
- private:
-
   typedef struct {
     uint32_t size;
     uint32_t offset;
     std::string name;
     bool compressed;
   } FileRecord;
+
+ private:
 
   typedef struct {
     std::string name;
@@ -118,6 +119,11 @@ class BSAReader {
   explicit BSAReader(std::string);
 
   bool contains(std::string folder, std::string file) const;
+
+  std::optional<FileRecord> getRecord(std::string folder,
+                                      std::string file) const;
+  std::optional<FileRecord> getRecord(uint64_t folderHash,
+                                      uint64_t fileHash) const;
 
   iterator begin() const;
   iterator end() const;
@@ -186,4 +192,4 @@ class BSAIterator {
 } // namespace impl
 } // namespace bsa
 
-#endif // OPENOBLIVION_BSA_HPP
+#endif // OPENOBLIVION_BSA_BSA_HPP

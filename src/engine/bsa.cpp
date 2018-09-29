@@ -1,4 +1,4 @@
-#include "bsa.hpp"
+#include "bsa/bsa.hpp"
 #include "engine/bsa.hpp"
 #include "engine/ogre/ogre_stream_wrappers.hpp"
 #include <ctime>

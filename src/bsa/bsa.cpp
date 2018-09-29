@@ -1,15 +1,15 @@
-#include <cstring>
-#include <fstream>
-#include <memory>
-#include <cctype>
-#include <string>
-#include <algorithm>
-#include <zlib.h>
-
-#include "bsa.hpp"
+#include "bsa/bsa.hpp"
 #include "io/io.hpp"
 #include "io/read_bytes.hpp"
 #include "io/string.hpp"
+#include <boost/format.hpp>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <fstream>
+#include <memory>
+#include <string>
+#include <zlib.h>
 
 // TODO: Use std::filesystem::path
 uint64_t bsa::genHash(std::string path, bool isFolder) {
@@ -207,6 +207,10 @@ bool bsa::BSAReader::readFileNames() {
 }
 
 bsa::BSAReader::BSAReader(std::string filename) : is(filename) {
+  if (!is.good()) {
+    throw std::runtime_error(boost::str(
+        boost::format("Failed to open archive '%s'") % filename));
+  }
   readHeader();
   readRecords();
   if (static_cast<bool>(archiveFlags & ArchiveFlag::HasFileNames)) {
@@ -222,6 +226,25 @@ bool bsa::BSAReader::contains(std::string folder, std::string file) const {
   auto fileHash = bsa::genHash(std::move(file), false);
   const auto &files = folderRecord->second.files;
   return files.find(fileHash) != files.end();
+}
+
+std::optional<bsa::BSAReader::FileRecord>
+bsa::BSAReader::getRecord(std::string folder, std::string file) const {
+  auto folderHash = bsa::genHash(std::move(folder), true);
+  auto fileHash = bsa::genHash(std::move(file), false);
+  return getRecord(folderHash, fileHash);
+}
+
+std::optional<bsa::BSAReader::FileRecord>
+bsa::BSAReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
+  auto folderRecord = folderRecords.find(folderHash);
+  if (folderRecord == folderRecords.end()) return std::nullopt;
+
+  const auto &files = folderRecord->second.files;
+  auto fileRecord = files.find(fileHash);
+  if (fileRecord == files.end()) return std::nullopt;
+
+  return fileRecord->second;
 }
 
 bsa::BSAReader::iterator bsa::BSAReader::begin() const {

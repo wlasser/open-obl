@@ -1,4 +1,3 @@
-#include "bsa.hpp"
 #include "esp.hpp"
 #include "engine/application.hpp"
 #include "engine/nifloader/loader.hpp"
@@ -49,28 +48,9 @@ void readMaster(Processor &processor) {
   esp::readEsp(esmStream, processor);
 }
 
-void testApplication() {
+int main() {
   engine::Application app("Open Oblivion");
   app.getRoot()->addFrameListener(&app);
   app.getRoot()->startRendering();
-}
-
-void saveFromBSA(bsa::BSAReader &reader,
-                 const std::filesystem::path &folder,
-                 const std::filesystem::path &file,
-                 const std::filesystem::path &destination) {
-  auto is = reader[folder][file];
-  auto size = is.size();
-  std::vector<char> data(size);
-  is.read(data.data(), size);
-  std::ofstream of(destination, std::ios::binary);
-  of.write(data.data(), size);
-}
-
-int main() {
-  //bsa::BSAReader reader("Data/Oblivion - Meshes.bsa");
-  //saveFromBSA(reader, "meshes", "markerxheading.nif",
-  //            "meshes/markerxheading.nif");
-  testApplication();
   return 0;
 }

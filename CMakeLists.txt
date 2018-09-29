@@ -127,7 +127,7 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
         $<TARGET_OBJECTS:OpenOblivionEngine>
-        src/bsa.cpp
+        src/bsa/bsa.cpp
         src/formid.cpp
         src/main.cpp
         src/records.cpp
@@ -135,7 +135,7 @@ target_sources(OpenOblivion PRIVATE
         src/system_time.cpp
         include/actor_value.hpp
         include/attribute.hpp
-        include/bsa.hpp
+        include/bsa/bsa.hpp
         include/esp.hpp
         include/formid.hpp
         include/game_settings.hpp
@@ -155,6 +155,37 @@ target_link_libraries(OpenOblivion PRIVATE
         ${BULLET_LIBRARIES}
         spdlog
         stdc++fs)
+
+find_package(PkgConfig)
+if (PkgConfig_FOUND)
+    pkg_check_modules(GTKMM gtkmm-3.0)
+
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/bsabrowser)
+
+    add_custom_command(OUTPUT resources/bsabrowser/resources.c
+            COMMAND glib-compile-resources --target=${CMAKE_CURRENT_BINARY_DIR}/resources/bsabrowser/resources.c --generate-source bsabrowser.gresource.xml
+            DEPENDS resources/bsabrowser/bsabrowser.gresource.xml resources/bsabrowser/window.glade
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/bsabrowser/)
+
+    add_executable(BSABrowser)
+    target_include_directories(BSABrowser PRIVATE include)
+    target_sources(BSABrowser PRIVATE
+            $<TARGET_OBJECTS:OpenOblivionIO>
+            src/bsa/application.cpp
+            src/bsa/bsa.cpp
+            src/bsa/main.cpp
+            include/bsa/application.hpp
+            include/bsa/bsa.hpp
+            resources/bsabrowser/resources.c)
+
+    target_include_directories(BSABrowser PRIVATE
+            ${GTKMM_INCLUDE_DIRS})
+    target_link_libraries(BSABrowser PRIVATE
+            ${ZLIB_LIBRARIES}
+            ${GTKMM_LIBRARIES}
+            spdlog
+            stdc++fs)
+endif ()
 
 add_library(Catch INTERFACE)
 target_include_directories(Catch INTERFACE lib/catch)
