@@ -16,9 +16,7 @@
 #include <string>
 #include <type_traits>
 
-namespace engine {
-
-namespace nifloader {
+namespace engine::nifloader {
 
 // To instantiate a header we need a version, but we don't know the version
 // unless we've read the header. This function reads the first line of the
@@ -48,21 +46,6 @@ const AddVertexMap &getAddVertexMap();
 
 BlockGraph createBlockGraph(std::istream &is);
 
-// Handles custom loading of Nif files for Ogre. Each instance of this class is
-// expected to load more than one nif file, so it cannot really be stateful.
-// This class therefore handles the IO portion of loading, then constructs a
-// LoaderState object to actually load the mesh.
-class Loader : public Ogre::ManualResourceLoader {
- private:
-  friend class LoaderState;
-
-  std::shared_ptr<spdlog::logger> logger{};
-
- public:
-  void loadResource(Ogre::Resource *resource) override;
-  //void prepareResource(Ogre::Resource *resource) override;
-};
-
 template<class T>
 void addEdge(BlockGraph &blocks,
              BlockGraph::vertex_descriptor u,
@@ -87,7 +70,6 @@ void addVertex(BlockGraph &blocks,
   blocks[u] = std::move(block);
 }
 
-} // namespace nifloader
-} // namespace engine
+} // namespace engine::nifloader
 
 #endif // OPENOBLIVION_ENGINE_NIF_LOADER_HPP

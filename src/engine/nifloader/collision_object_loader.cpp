@@ -1,12 +1,12 @@
-#include "engine/nif_collision_object_loader.hpp"
-#include "engine/nif_collision_object_loader_state.hpp"
+#include "engine/nifloader/collision_object_loader.hpp"
+#include "engine/nifloader/collision_object_loader_state.hpp"
 #include "engine/nifloader/loader.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include "ogrebullet/collision_object.hpp"
 
-namespace engine {
+namespace engine::nifloader {
 
-void NifCollisionObjectLoader::loadResource(Ogre::Resource *resource) {
+void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
   if (!logger) logger = spdlog::get(settings::ogreLog);
   auto collisionObject = dynamic_cast<Ogre::CollisionObject *>(resource);
   // TODO: Handle this properly
@@ -22,7 +22,7 @@ void NifCollisionObjectLoader::loadResource(Ogre::Resource *resource) {
 
   auto blocks = nifloader::createBlockGraph(is);
 
-  NifCollisionObjectLoaderState instance(collisionObject, blocks);
+  CollisionObjectLoaderState instance(collisionObject, blocks);
 }
 
-} // namespace engine
+} // namespace engine::nifloader

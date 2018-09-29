@@ -4,11 +4,11 @@
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 
-namespace engine {
+namespace engine::nifloader {
 
-class NifCollisionObjectLoader : public Ogre::ManualResourceLoader {
+class CollisionObjectLoader : public Ogre::ManualResourceLoader {
  private:
-  friend class NifCollisionObjectLoaderState;
+  friend class CollisionObjectLoaderState;
 
   std::shared_ptr<spdlog::logger> logger{};
 
@@ -16,6 +16,6 @@ class NifCollisionObjectLoader : public Ogre::ManualResourceLoader {
   void loadResource(Ogre::Resource *resource) override;
 };
 
-} // namespace engine
+} // namespace engine::nifloader
 
 #endif // OPENOBLIVION_ENGINE_NIF_COLLISION_OBJECT_LOADER_HPP

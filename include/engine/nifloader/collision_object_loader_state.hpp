@@ -6,19 +6,19 @@
 #include "nif/bhk.hpp"
 #include "ogrebullet/collision_object.hpp"
 #include "ogrebullet/rigid_body.hpp"
-#include "settings.hpp"
+#include "engine/settings.hpp"
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 
-namespace engine {
+namespace engine::nifloader {
 
-class NifCollisionObjectLoaderState {
+class CollisionObjectLoaderState {
  public:
-  NifCollisionObjectLoaderState(Ogre::CollisionObject *collisionObjet,
-                                nifloader::BlockGraph untaggedBlocks);
+  CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
+                             nifloader::BlockGraph untaggedBlocks);
 };
 
-struct CollisionObjectNifVisitor {
+struct CollisionObjectVisitor {
   using Graph = engine::nifloader::TaggedBlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
@@ -33,7 +33,7 @@ struct CollisionObjectNifVisitor {
   void finish_edge(edge_descriptor e, const Graph &g) {}
   void finish_vertex(vertex_descriptor v, const Graph &g);
 
-  explicit CollisionObjectNifVisitor(Ogre::CollisionObject *rigidBody)
+  explicit CollisionObjectVisitor(Ogre::CollisionObject *rigidBody)
       : mRigidBody(rigidBody), mLogger(spdlog::get(engine::settings::log)) {}
 
  private:
@@ -54,14 +54,14 @@ struct CollisionObjectNifVisitor {
     if (refInt < 0 || refInt >= boost::num_vertices(g)) {
       OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                   "Nonexistent reference",
-                  "CollisionObjectNifVisitor");
+                  "CollisionObjectVisitor");
     }
     auto &taggedBlock = g[refInt];
     auto *block = dynamic_cast<U *>(taggedBlock.block.get());
     if (block == nullptr) {
       OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                   "Nonexistent reference",
-                  "CollisionObjectNifVisitor");
+                  "CollisionObjectVisitor");
     }
     return {block, taggedBlock.tag};
   }
@@ -89,6 +89,6 @@ struct CollisionObjectNifVisitor {
                        engine::nifloader::LoadStatus &tag);
 };
 
-} // namespace engine
+} // namespace engine::nifloader
 
 #endif // OPENOBLIVION_ENGINE_NIF_COLLISION_OBJECT_LOADER_STATE_HPP

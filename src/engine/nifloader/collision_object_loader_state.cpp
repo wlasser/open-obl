@@ -1,18 +1,19 @@
 #include "engine/conversions.hpp"
-#include "engine/nif_collision_object_loader_state.hpp"
+#include "engine/nifloader/loader_state.hpp"
+#include "engine/nifloader/collision_object_loader_state.hpp"
 #include <Ogre.h>
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-namespace engine {
+namespace engine::nifloader {
 
-NifCollisionObjectLoaderState::NifCollisionObjectLoaderState(
+CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject,
     nifloader::BlockGraph untaggedBlocks) {
 
-  CollisionObjectNifVisitor::Graph blocks{};
+  CollisionObjectVisitor::Graph blocks{};
   boost::copy_graph(untaggedBlocks, blocks);
 
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
@@ -20,18 +21,18 @@ NifCollisionObjectLoaderState::NifCollisionObjectLoaderState(
       colorMap.begin(), boost::get(boost::vertex_index, blocks));
 
   boost::depth_first_search(blocks,
-                            CollisionObjectNifVisitor(collisionObject),
+                            CollisionObjectVisitor(collisionObject),
                             propertyMap);
 }
 
-void CollisionObjectNifVisitor::start_vertex(vertex_descriptor v,
-                                             const Graph &g) {
+void CollisionObjectVisitor::start_vertex(vertex_descriptor v,
+                                          const Graph &g) {
   mTransform = Ogre::Matrix4::IDENTITY;
   mLogger->trace("Started at root vertex {}, reset transform", v);
 }
 
-void CollisionObjectNifVisitor::discover_vertex(vertex_descriptor v,
-                                                const Graph &g) {
+void CollisionObjectVisitor::discover_vertex(vertex_descriptor v,
+                                             const Graph &g) {
   auto &taggedNiObject = g[v];
   auto *niObject = taggedNiObject.block.get();
   auto &tag = taggedNiObject.tag;
@@ -57,8 +58,8 @@ void CollisionObjectNifVisitor::discover_vertex(vertex_descriptor v,
   }
 }
 
-void CollisionObjectNifVisitor::finish_vertex(vertex_descriptor v,
-                                              const Graph &g) {
+void CollisionObjectVisitor::finish_vertex(vertex_descriptor v,
+                                           const Graph &g) {
   auto *niObject = g[v].block.get();
   if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
     mTransform = mTransform * engine::nifloader::getTransform(niNode).inverse();
@@ -67,9 +68,9 @@ void CollisionObjectNifVisitor::finish_vertex(vertex_descriptor v,
   mLogger->trace(" * New transform = {}", mTransform);
 }
 
-void CollisionObjectNifVisitor::parseCollisionObject(const Graph &g,
-                                                     nif::bhk::CollisionObject *block,
-                                                     engine::nifloader::LoadStatus &tag) {
+void CollisionObjectVisitor::parseCollisionObject(const Graph &g,
+                                                  nif::bhk::CollisionObject *block,
+                                                  engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (bhkCollisionObject)");
   mLogger->trace(" * New transform = {}", mTransform);
@@ -84,9 +85,9 @@ void CollisionObjectNifVisitor::parseCollisionObject(const Graph &g,
 
 std::pair<std::unique_ptr<btCollisionShape>,
           std::unique_ptr<Ogre::RigidBodyInfo>>
-CollisionObjectNifVisitor::parseWorldObject(const Graph &g,
-                                            nif::bhk::WorldObject *block,
-                                            engine::nifloader::LoadStatus &tag) {
+CollisionObjectVisitor::parseWorldObject(const Graph &g,
+                                         nif::bhk::WorldObject *block,
+                                         engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (bhkWorldObject)");
   mLogger->trace(" * New transform = {}", mTransform);
@@ -119,7 +120,7 @@ CollisionObjectNifVisitor::parseWorldObject(const Graph &g,
 }
 
 Ogre::RigidBodyInfo
-CollisionObjectNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
+CollisionObjectVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const {
   using namespace engine::conversions;
 
   // This does not seem to affect the translation in any way.
@@ -162,9 +163,9 @@ CollisionObjectNifVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) con
   return info;
 }
 std::unique_ptr<btCollisionShape>
-CollisionObjectNifVisitor::parseShape(const Graph &g,
-                                      nif::bhk::Shape *block,
-                                      engine::nifloader::LoadStatus &tag) {
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   nif::bhk::Shape *block,
+                                   engine::nifloader::LoadStatus &tag) {
   if (auto moppBvTreeShape = dynamic_cast<nif::bhk::MoppBvTreeShape *>(block)) {
     engine::nifloader::Tagger tagger{tag};
     mLogger->trace("Parsing block ? (bhkMoppBvTreeShape)");
@@ -251,13 +252,13 @@ CollisionObjectNifVisitor::parseShape(const Graph &g,
     return nullptr;
     //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
     //            "Unknown collision shape",
-    //            "CollisionObjectNifVisitor::parseShape");
+    //            "CollisionObjectVisitor::parseShape");
   }
 }
 std::unique_ptr<btCollisionShape>
-CollisionObjectNifVisitor::parseNiTriStripsData(const Graph &g,
-                                                nif::hk::PackedNiTriStripsData *block,
-                                                engine::nifloader::LoadStatus &tag) {
+CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
+                                             nif::hk::PackedNiTriStripsData *block,
+                                             engine::nifloader::LoadStatus &tag) {
   engine::nifloader::Tagger tagger{tag};
   mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
   mLogger->trace(" * New transform = {}", mTransform);
@@ -324,4 +325,4 @@ CollisionObjectNifVisitor::parseNiTriStripsData(const Graph &g,
   return nullptr;
 }
 
-} // namespace engine
+} // namespace engine::nifloader
