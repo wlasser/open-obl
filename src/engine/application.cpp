@@ -1,3 +1,4 @@
+#include "bullet/collision.hpp"
 #include "engine/application.hpp"
 #include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
@@ -148,6 +149,12 @@ Application::Application(std::string windowName) : FrameListener() {
   playerController =
       std::make_unique<engine::PlayerController>(currentCell->scnMgr);
   currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
+  collisionCaller.addCallback(
+      playerController->getRigidBody(),
+      [this](const auto *other, const auto &contact) {
+        playerController->handleCollision(other, contact);
+      });
+
   ogreWindow->addViewport(playerController->getCamera());
 
   auto startPos = conversions::fromBSCoordinates({-1954.8577f,
@@ -393,6 +400,12 @@ void Application::pollEvents() {
   }
 }
 
+void Application::dispatchCollisions() {
+  gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(
+                               currentCell->physicsWorld->getDispatcher())};
+  collisionCaller.runCallbacks(dispatcher);
+}
+
 void Application::enableBulletDebugDraw(bool enable) {
   if (enable) {
     currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
@@ -410,6 +423,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   playerController->update(event.timeSinceLastFrame);
 
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
+
+  dispatchCollisions();
 
   if (drawBulletDebug) {
     debugDrawer->clearLines();

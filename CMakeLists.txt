@@ -135,9 +135,10 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
         src/engine/player_controller.cpp
+        include/bullet/collision.hpp
+        include/bullet/configuration.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
-        include/bullet/configuration.hpp
         include/engine/conversions.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
@@ -163,7 +164,8 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         ${SDL2_LIBRARY}
         ${BULLET_LIBRARIES}
         spdlog
-        stdc++fs)
+        stdc++fs
+        GSL)
 
 add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
@@ -202,7 +204,8 @@ target_link_libraries(OpenOblivion PRIVATE
         ${SDL2_LIBRARY}
         ${BULLET_LIBRARIES}
         spdlog
-        stdc++fs)
+        stdc++fs
+        GSL)
 
 find_package(PkgConfig)
 if (PkgConfig_FOUND)

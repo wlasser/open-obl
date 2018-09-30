@@ -3,6 +3,7 @@
 
 #include "engine/bsa.hpp"
 #include "bullet/configuration.hpp"
+#include "bullet/collision.hpp"
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
@@ -52,6 +53,7 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<InteriorCellManager> interiorCellMgr{};
 
   std::shared_ptr<InteriorCell> currentCell{};
+  bullet::CollisionCaller collisionCaller{};
   std::unique_ptr<PlayerController> playerController{};
 
   bool drawBulletDebug{false};
@@ -78,6 +80,8 @@ class Application : public Ogre::FrameListener {
                const std::string &list);
 
   void pollEvents();
+
+  void dispatchCollisions();
 
   void enableBulletDebugDraw(bool enable);
 

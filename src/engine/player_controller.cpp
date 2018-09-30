@@ -146,6 +146,19 @@ void PlayerJumpState::enter(PlayerController *player) {
   player->rigidBody->applyCentralImpulse(-impulse * gravityVector.normalized());
 }
 
+std::shared_ptr<PlayerState>
+PlayerJumpState::handleCollision(PlayerController *player,
+                                 const btCollisionObject *other,
+                                 const btManifoldPoint &contact) {
+  const auto impulse = contact.getAppliedImpulse();
+  const auto r = contact.getPositionWorldOnA() - contact.getPositionWorldOnB();
+  spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
+  if (r.normalized().dot(player->rigidBody->getGravity().normalized()) > 0.7) {
+    return std::make_shared<PlayerStandState>();
+  }
+  return nullptr;
+}
+
 void PlayerController::moveTo(const Ogre::Vector3 &position) {
   bodyNode->setPosition(position);
   motionState->notify();
@@ -154,6 +167,16 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   btTransform trans{};
   motionState->getWorldTransform(trans);
   rigidBody->setWorldTransform(trans);
+}
+
+void PlayerController::handleCollision(const btCollisionObject *other,
+                                       const btManifoldPoint &contact) {
+  auto newState =
+      state ? state->handleCollision(this, other, contact) : nullptr;
+  if (newState) {
+    state = std::move(newState);
+    state->enter(this);
+  }
 }
 
 void PlayerController::updatePhysics(float elapsed) {

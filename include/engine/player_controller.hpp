@@ -40,6 +40,13 @@ class PlayerState {
   virtual std::shared_ptr<PlayerState>
   update(PlayerController *player, float elapsed) = 0;
 
+  virtual std::shared_ptr<PlayerState>
+  handleCollision(PlayerController *player,
+                  const btCollisionObject *other,
+                  const btManifoldPoint &contact) {
+    return nullptr;
+  }
+
   virtual void enter(PlayerController *player) {}
 
   static bool handleMove(PlayerController *player, const MoveEvent &event);
@@ -69,6 +76,11 @@ class PlayerJumpState : public PlayerState {
   std::shared_ptr<PlayerState>
   update(PlayerController *player, float elapsed) override;
 
+  std::shared_ptr<PlayerState>
+  handleCollision(PlayerController *player,
+                  const btCollisionObject *other,
+                  const btManifoldPoint &contact) override;
+
   void enter(PlayerController *player) override;
 };
 
@@ -84,6 +96,9 @@ class PlayerController {
   void update(float elapsed);
 
   void moveTo(const Ogre::Vector3 &position);
+
+  void handleCollision(const btCollisionObject *other,
+                       const btManifoldPoint &contact);
 
  private:
   friend PlayerState;
