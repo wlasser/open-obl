@@ -1000,20 +1000,6 @@ struct Effect {
   static bool isNext(std::istream &is);
 };
 
-// Potion
-struct ALCH {
-  // Not present in save games for player-made potions and poisons
-  std::optional<record::EDID> editorID{};
-  record::FULL itemName{};
-  record::MODL modelFilename{};
-  std::optional<record::MODB> boundRadius{};
-  std::optional<record::MODT> textureHash{};
-  std::optional<record::ICON> iconFilename{};
-  std::optional<record::SCRI> itemScript{};
-  record::DATA_ALCH itemWeight{};
-  record::ENIT itemValue{};
-  std::vector<Effect> effects{};
-};
 
 // Full ESM/ESP header
 struct TES4 {
@@ -1211,13 +1197,6 @@ struct LTEX {
   std::vector<record::GNAM> potentialGrasses{};
 };
 
-struct STAT {
-  record::EDID editorID{};
-  record::MODL modelFilename{};
-  record::MODB boundRadius{};
-  std::optional<record::MODT> textureHash{};
-};
-
 struct ENCH {
   record::EDID editorID{};
   std::optional<record::FULL> name{};
@@ -1229,6 +1208,41 @@ struct SPEL {
   record::EDID editorID{};
   record::FULL name{};
   record::SPIT data{};
+  std::vector<Effect> effects{};
+};
+
+struct LIGH {
+  record::EDID editorID{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> itemScript{};
+  std::optional<record::FULL> name{};
+  std::optional<record::ICON> icon{};
+  record::DATA_LIGH data{};
+  std::optional<record::FNAM_LIGH> fadeValue{};
+  std::optional<record::SNAM_LIGH> sound{};
+};
+
+struct STAT {
+  record::EDID editorID{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+};
+
+// Potion
+struct ALCH {
+  // Not present in save games for player-made potions and poisons
+  std::optional<record::EDID> editorID{};
+  record::FULL itemName{};
+  record::MODL modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::ICON> iconFilename{};
+  std::optional<record::SCRI> itemScript{};
+  record::DATA_ALCH itemWeight{};
+  record::ENIT itemValue{};
   std::vector<Effect> effects{};
 };
 
@@ -1304,22 +1318,8 @@ struct REFR {
   record::DATA_REFR positionRotation{};
 };
 
-struct LIGH {
-  record::EDID editorID{};
-  std::optional<record::MODL> modelFilename{};
-  std::optional<record::MODB> boundRadius{};
-  std::optional<record::MODT> textureHash{};
-  std::optional<record::SCRI> itemScript{};
-  std::optional<record::FULL> name{};
-  std::optional<record::ICON> icon{};
-  record::DATA_LIGH data{};
-  std::optional<record::FNAM_LIGH> fadeValue{};
-  std::optional<record::SNAM_LIGH> sound{};
-};
-
 } // namespace raw
 
-using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using TES4 = Record<raw::TES4, "TES4"_rec>;
 using GMST = Record<raw::GMST, "GMST"_rec>;
 using GLOB = Record<raw::GLOB, "GLOB"_rec>;
@@ -1332,14 +1332,14 @@ using SOUN = Record<raw::SOUN, "SOUN"_rec>;
 using SKIL = Record<raw::SKIL, "SKIL"_rec>;
 using MGEF = Record<raw::MGEF, "MGEF"_rec>;
 using LTEX = Record<raw::LTEX, "LTEX"_rec>;
-using STAT = Record<raw::STAT, "STAT"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
+using LIGH = Record<raw::LIGH, "LIGH"_rec>;
+using STAT = Record<raw::STAT, "STAT"_rec>;
+using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using REFR = Record<raw::REFR, "REFR"_rec>;
-using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 
-DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(TES4);
 DECLARE_SPECIALIZED_RECORD(GMST);
 DECLARE_SPECIALIZED_RECORD(GLOB);
@@ -1352,12 +1352,13 @@ DECLARE_SPECIALIZED_RECORD(SOUN);
 DECLARE_SPECIALIZED_RECORD(SKIL);
 DECLARE_SPECIALIZED_RECORD(MGEF);
 DECLARE_SPECIALIZED_RECORD(LTEX);
-DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(SPEL);
+DECLARE_SPECIALIZED_RECORD(LIGH);
+DECLARE_SPECIALIZED_RECORD(STAT);
+DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 DECLARE_SPECIALIZED_RECORD(REFR);
-DECLARE_SPECIALIZED_RECORD(LIGH);
 
 } // namespace record
 
