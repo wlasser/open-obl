@@ -8,16 +8,16 @@
 
 namespace engine {
 
-record::CELL *InteriorCellManager::peek(FormID baseID) {
-  auto entry = cells.find(baseID);
+record::CELL *InteriorCellManager::peek(FormID baseID) const {
+  const auto entry = cells.find(baseID);
   if (entry != cells.end()) return entry->second.record.get();
   else return nullptr;
 }
 
-std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
+std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) const {
   // Try to find an InteriorCellEntry with the given baseID. Since every cell
   // should have an entry by now, if no entry exists then we can give up.
-  auto entry = cells.find(baseID);
+  const auto entry = cells.find(baseID);
   if (entry == cells.end()) return nullptr;
 
   // If this cell has been loaded before and is still loaded, then we can return
@@ -29,15 +29,16 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
   }
 
   // Otherwise we have to create a new shared_ptr and load the cell.
-  auto ptr = std::make_shared<InteriorCell>(bulletConf->makeDynamicsWorld());
+  const auto ptr =
+      std::make_shared<InteriorCell>(bulletConf->makeDynamicsWorld());
   strategy->notify(ptr);
   cell = std::weak_ptr(ptr);
 
   // Fill in the scene data from the cell record, which we already have.
-  auto &rec = entry->second.record;
+  const auto &rec = entry->second.record;
   ptr->name = (rec->data.name ? rec->data.name->data : "");
   if (auto lighting = rec->data.lighting) {
-    auto ambient = lighting->data.ambient;
+    const auto ambient = lighting->data.ambient;
     ptr->ambientLight.setAsABGR(ambient.v);
     ptr->scnMgr->setAmbientLight(ptr->ambientLight);
 
@@ -57,21 +58,21 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) {
 
 template<>
 void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) {
-  auto ref = record::readRecord<record::REFR>(is);
+  const auto ref = record::readRecord<record::REFR>(is);
   auto *node = cell->scnMgr->getRootSceneNode()->createChildSceneNode();
-  auto id = ref.data.baseID.data;
+  const auto id = ref.data.baseID.data;
 
   // Set the reference id in the user bindings
   node->getUserObjectBindings().setUserAny(Ogre::Any(ref.id));
 
-  auto &data = ref.data.positionRotation.data;
+  const auto &data = ref.data.positionRotation.data;
 
   // Set the position
   node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
 
   // Set the scale
   if (ref.data.scale) {
-    float scale = ref.data.scale->data;
+    const float scale = ref.data.scale->data;
     node->setScale(scale, scale, scale);
   }
 
@@ -84,8 +85,8 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
   rotX.FromAngleAxis(Ogre::Vector3::UNIT_X, Ogre::Radian(-data.aX));
   rotY.FromAngleAxis(Ogre::Vector3::UNIT_Y, Ogre::Radian(-data.aY));
   rotZ.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-data.aZ));
-  auto rotMat = conversions::fromBSCoordinates(rotX * rotY * rotZ);
-  Ogre::Quaternion rotation{rotMat};
+  const auto rotMat = conversions::fromBSCoordinates(rotX * rotY * rotZ);
+  const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
   // Construct the actual entities and attach them to the node

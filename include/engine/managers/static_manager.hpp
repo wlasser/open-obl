@@ -25,8 +25,8 @@ class StaticManager {
   friend class InitialProcessor;
 
  public:
-  RigidBodyEntity get(FormID baseID, Ogre::SceneManager *mgr) {
-    auto entry = statics.find(baseID);
+  RigidBodyEntity get(FormID baseID, Ogre::SceneManager *mgr) const {
+    const auto entry = statics.find(baseID);
     if (entry != statics.end()) {
       const auto &name = entry->second.modelFilename;
       // TODO: Name entity according to ref id

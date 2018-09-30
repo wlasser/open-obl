@@ -48,7 +48,7 @@ struct InteriorCell {
 struct InteriorCellEntry {
   long tell{};
   std::unique_ptr<record::CELL> record{};
-  std::weak_ptr<InteriorCell> cell{};
+  mutable std::weak_ptr<InteriorCell> cell{};
   // TODO: Constructors?
 };
 
@@ -104,8 +104,8 @@ class InteriorCellManager {
       bulletConf(bulletConf),
       strategy(std::move(strategy)) {}
 
-  record::CELL *peek(FormID baseID);
-  std::shared_ptr<InteriorCell> get(FormID baseID);
+  record::CELL *peek(FormID baseID) const;
+  std::shared_ptr<InteriorCell> get(FormID baseID) const;
 };
 
 template<>

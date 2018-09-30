@@ -2,8 +2,8 @@
 #include "engine/managers/light_manager.hpp"
 
 engine::LightMesh engine::LightManager::get(FormID baseID,
-                                            Ogre::SceneManager *mgr) {
-  auto entry = lights.find(baseID);
+                                            Ogre::SceneManager *mgr) const {
+  const auto entry = lights.find(baseID);
   if (entry != lights.end()) {
     const auto &rec = entry->second;
 
@@ -12,7 +12,7 @@ engine::LightMesh engine::LightManager::get(FormID baseID,
     light->setDiffuseColour(rec.color);
     light->setSpecularColour(rec.color);
     // TODO: These could do with more tuning
-    auto radius = rec.radius * conversions::metersPerUnit<decltype(rec.radius)>;
+    const auto radius = rec.radius * conversions::metersPerUnit<float>;
     light->setAttenuation(radius,
                           1.0f,
                           3.0f / radius,
@@ -22,7 +22,7 @@ engine::LightMesh engine::LightManager::get(FormID baseID,
     Ogre::Entity *mesh = nullptr;
     if (!rec.modelFilename.empty()) mesh = mgr->createEntity(rec.modelFilename);
 
-    auto spotLightFlag =
+    const auto spotLightFlag =
         LightEntry::Flag::SpotLight | LightEntry::Flag::SpotShadow;
 
     if ((rec.flags & spotLightFlag) != LightEntry::Flag::None) {

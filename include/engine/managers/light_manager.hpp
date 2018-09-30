@@ -43,7 +43,7 @@ class LightManager {
   friend class InitialProcessor;
 
  public:
-  LightMesh get(FormID baseID, Ogre::SceneManager *mgr);
+  LightMesh get(FormID baseID, Ogre::SceneManager *mgr) const;
 };
 
 } // namespace engine
