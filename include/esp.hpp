@@ -110,7 +110,6 @@ void readEsp(std::istream &is, Processor &processor) {
             // Expect a series of cells
             while (peekRecordType(is) == "CELL") {
               processor.template readRecord<record::CELL>(is);
-
             }
           }
         }
@@ -145,6 +144,12 @@ void readEsp(std::istream &is, Processor &processor) {
             case "MGEF"_rec: processor.template readRecord<record::MGEF>(is);
               break;
             case "LTEX"_rec: processor.template readRecord<record::LTEX>(is);
+              break;
+            case "ENCH"_rec: processor.template readRecord<record::ENCH>(is);
+              break;
+            case "SPEL"_rec: processor.template readRecord<record::SPEL>(is);
+              break;
+            case "BSGN"_rec: processor.template readRecord<record::BSGN>(is);
               break;
             case "LIGH"_rec: processor.template readRecord<record::LIGH>(is);
               break;

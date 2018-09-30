@@ -1211,6 +1211,14 @@ struct SPEL {
   std::vector<Effect> effects{};
 };
 
+struct BSGN {
+  record::EDID editorID{};
+  record::FULL name{};
+  record::ICON icon{};
+  std::optional<record::DESC> description{};
+  std::vector<record::SPLO> spells{};
+};
+
 struct LIGH {
   record::EDID editorID{};
   std::optional<record::MODL> modelFilename{};
@@ -1334,6 +1342,7 @@ using MGEF = Record<raw::MGEF, "MGEF"_rec>;
 using LTEX = Record<raw::LTEX, "LTEX"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
+using BSGN = Record<raw::BSGN, "BSGN"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
@@ -1354,6 +1363,7 @@ DECLARE_SPECIALIZED_RECORD(MGEF);
 DECLARE_SPECIALIZED_RECORD(LTEX);
 DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(SPEL);
+DECLARE_SPECIALIZED_RECORD(BSGN);
 DECLARE_SPECIALIZED_RECORD(LIGH);
 DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(ALCH);

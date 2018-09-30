@@ -1778,4 +1778,44 @@ std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
   return is;
 }
 
+// BSGN specialization
+template<>
+uint32_t BSGN::size() const {
+  return data.editorID.entireSize()
+      + data.name.entireSize()
+      + data.icon.entireSize()
+      + (data.description ? data.description->entireSize() : 0u)
+      + std::accumulate(data.spells.begin(), data.spells.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.size();
+                        });
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::BSGN &t,
+                         std::size_t /*size*/) {
+  os << t.editorID;
+  os << t.name;
+  os << t.icon;
+  if (t.description) os << *t.description;
+  for (const auto &spell : t.spells) os << spell;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "NAME");
+  readRecord(is, t.icon, "ICON");
+  readRecord(is, t.description, "DESC");
+  while (peekRecordType(is) == "SPLO") {
+    record::SPLO r{};
+    is >> r;
+    t.spells.push_back(r);
+  }
+  return is;
+}
+
 } // namespace record
