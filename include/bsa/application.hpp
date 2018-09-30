@@ -2,6 +2,7 @@
 #define OPENOBLIVION_BSA_APPLICATION_HPP
 
 #include "bsa/bsa.hpp"
+#include <gsl/gsl>
 #include <gtkmm/application.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/builder.h>
@@ -50,7 +51,7 @@ class ApplicationWindow : public Gtk::ApplicationWindow {
   ApplicationWindow(BaseObjectType *cobject,
                     const Glib::RefPtr<Gtk::Builder> &builder);
 
-  static ApplicationWindow *create();
+  static gsl::not_null<ApplicationWindow *> create();
 
   void open_file_view(const Glib::RefPtr<Gio::File> &file);
 
@@ -77,7 +78,7 @@ class Application : public Gtk::Application {
   static Glib::RefPtr<Application> create();
 
  private:
-  ApplicationWindow *create_appwindow();
+  gsl::not_null<ApplicationWindow *> create_appwindow();
   void on_hide_window(Gtk::Window *window);
   void on_action_file_open();
   void on_action_quit();

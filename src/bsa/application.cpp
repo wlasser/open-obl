@@ -1,5 +1,6 @@
 #define G_LOG_DOMAIN "BsaBrowser"
 #include "bsa/application.hpp"
+#include <gsl/gsl>
 #include <gtkmm/application.h>
 #include <gtkmm/applicationwindow.h>
 #include <gtkmm/filechooserdialog.h>
@@ -17,8 +18,7 @@ ApplicationWindow::ApplicationWindow(BaseObjectType *cobject,
   }
 }
 
-// TODO: gsl_notnull
-ApplicationWindow *ApplicationWindow::create() {
+gsl::not_null<ApplicationWindow *> ApplicationWindow::create() {
   auto builder = Gtk::Builder::create_from_resource(
       "/com/piepenguin/bsabrowser/window.glade");
 
@@ -29,7 +29,7 @@ ApplicationWindow *ApplicationWindow::create() {
     throw std::runtime_error("No \"BsaApplicationWindow\" in window.glade");
   }
 
-  return window;
+  return gsl::make_not_null(window);
 }
 
 void ApplicationWindow::open_file_view(const Glib::RefPtr<Gio::File> &file) {
@@ -140,7 +140,7 @@ Glib::RefPtr<Application> Application::create() {
   return Glib::RefPtr<Application>(new Application());
 }
 
-ApplicationWindow *Application::create_appwindow() {
+gsl::not_null<ApplicationWindow *> Application::create_appwindow() {
   auto window = ApplicationWindow::create();
 
   // Application will close when all added windows are closed

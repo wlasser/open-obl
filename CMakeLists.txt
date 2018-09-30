@@ -16,6 +16,8 @@ set(SPDLOG_BUILD_TESTING NO)
 set(SPDLOG_BUILD_BENCH NO)
 add_subdirectory(lib/spdlog)
 
+add_subdirectory(lib/gsl)
+
 # IO library
 add_library(OpenOblivionIO OBJECT)
 target_include_directories(OpenOblivionIO PUBLIC include)
@@ -230,6 +232,7 @@ if (PkgConfig_FOUND)
             ${ZLIB_LIBRARIES}
             ${GTKMM_LIBRARIES}
             spdlog
+            GSL
             stdc++fs)
 endif ()
 
