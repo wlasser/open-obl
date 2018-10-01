@@ -7,6 +7,7 @@
 #include "engine/managers/static_manager.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
+#include "ogrebullet/conversions.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
 #include "game_settings.hpp"
@@ -418,6 +419,27 @@ void Application::enableBulletDebugDraw(bool enable) {
   debugDrawer->enable(enable);
 }
 
+FormID Application::getCrosshairRef() {
+  using namespace Ogre::conversions;
+  auto *camera = playerController->getCamera();
+  auto cameraPos = toBullet(camera->getDerivedPosition());
+  auto cameraDir = toBullet(camera->getDerivedDirection());
+  auto rayStart = cameraPos + 0.5f * cameraDir;
+  auto rayEnd = cameraPos + 100.0f * cameraDir;
+  btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
+  currentCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
+  if (callback.hasHit()) {
+    // Follow the collision object's user pointer to its SceneNode, then follow
+    // the SceneNode's userAny to its refid
+    auto *node = static_cast<Ogre::SceneNode *>(
+        callback.m_collisionObject->getUserPointer());
+    auto &bindings = node->getUserObjectBindings();
+    return Ogre::any_cast<FormID>(bindings.getUserAny());
+  } else {
+    return 0;
+  }
+}
+
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
   playerController->update(event.timeSinceLastFrame);
@@ -425,6 +447,13 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
 
   dispatchCollisions();
+
+  static FormID refUnderCrosshair{0};
+  FormID newRefUnderCrosshair = getCrosshairRef();
+  if (newRefUnderCrosshair != refUnderCrosshair) {
+    refUnderCrosshair = newRefUnderCrosshair;
+    logger->info("Looking at 0x{:x}", refUnderCrosshair);
+  }
 
   if (drawBulletDebug) {
     debugDrawer->clearLines();

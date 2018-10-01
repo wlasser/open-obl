@@ -83,6 +83,8 @@ class Application : public Ogre::FrameListener {
 
   void dispatchCollisions();
 
+  FormID getCrosshairRef();
+
   void enableBulletDebugDraw(bool enable);
 
   Ogre::Root *getRoot() {

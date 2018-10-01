@@ -96,6 +96,7 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
       node->createChildSceneNode()->attachObject(stat);
       // TODO: Replace with rigidBody->attach(cell->physicsWorld)
       cell->physicsWorld->addRigidBody(rigidBody->getRigidBody());
+      rigidBody->getRigidBody()->setUserPointer(node);
     } else {
       node->attachObject(stat);
     }
