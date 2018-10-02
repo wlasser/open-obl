@@ -10,6 +10,7 @@ find_package(SDL2 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS)
 find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
+find_package(pugixml REQUIRED)
 
 set(SPDLOG_BUILD_EXAMPLES NO)
 set(SPDLOG_BUILD_TESTING NO)
@@ -125,6 +126,7 @@ target_sources(OpenOblivionEngine PUBLIC
         $<TARGET_OBJECTS:OpenOblivionSDL>
         src/engine/application.cpp
         src/engine/bsa.cpp
+        src/engine/gui/gui.cpp
         src/engine/initial_processor.cpp
         src/engine/managers/interior_cell_manager.cpp
         src/engine/managers/light_manager.cpp
@@ -140,6 +142,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/application.hpp
         include/engine/bsa.hpp
         include/engine/conversions.hpp
+        include/engine/gui/gui.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
         include/engine/managers/interior_cell_manager.hpp
@@ -165,7 +168,8 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         ${BULLET_LIBRARIES}
         spdlog
         stdc++fs
-        GSL)
+        GSL
+        pugixml)
 
 add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
@@ -186,6 +190,7 @@ target_sources(OpenOblivion PRIVATE
         include/actor_value.hpp
         include/attribute.hpp
         include/bsa/bsa.hpp
+        include/enum_template.hpp
         include/esp.hpp
         include/formid.hpp
         include/game_settings.hpp
@@ -205,7 +210,8 @@ target_link_libraries(OpenOblivion PRIVATE
         ${BULLET_LIBRARIES}
         spdlog
         stdc++fs
-        GSL)
+        GSL
+        pugixml)
 
 find_package(PkgConfig)
 if (PkgConfig_FOUND)
