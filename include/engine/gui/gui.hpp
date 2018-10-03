@@ -246,6 +246,15 @@ class Traits {
   TraitGraph mGraph{};
   // Map for looking up traits by name in the dependency graph.
   std::unordered_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
+  // Dependency graph vertex descriptors in (a) topological order. This is not
+  // updated every time a trait is added, and is only valid if mSorted == true.
+  std::vector<TraitGraph::vertex_descriptor> mOrdering{};
+  bool mSorted{false};
+
+  // Topologically sort the vertices in the dependency graph, store the result
+  // in mOrdering, and set mSorted. If the graph is already sorted, i.e. if
+  // mSorted == true, then this does nothing.
+  void sort();
 
  public:
   // Return a reference to the dynamic trait with the given fully-qualified name
@@ -266,6 +275,7 @@ class Traits {
   // to the added trait. No edges are created.
   template<class T, class ...Args>
   Trait<T> &addTrait(std::string name, Args &&... args) {
+    mSorted = false;
     auto index = boost::add_vertex(
         Trait<T>(std::move(name), std::forward<Args>(args)...),
         mGraph);
@@ -278,6 +288,15 @@ class Traits {
   template<class T>
   void addTraitAndBind(UiElement *uiElement, TraitSetterFun<T> setterFun,
                        const pugi::xml_node &node);
+
+  // If the given XML node corresponds to an implementation trait, then bind it
+  // to the given uiElement and return true, otherwise return false.
+  bool addAndBindImplementationTrait(const pugi::xml_node &node,
+                                     UiElement *uiElement);
+
+  // Update every trait, notifying the concrete representation of the new
+  // values. Throws if the underlying dependency graph is not a DAG.
+  void update();
 };
 
 namespace xml {
@@ -381,7 +400,7 @@ void Traits::addTraitAndBind(UiElement *uiElement,
                              TraitSetterFun<T> setterFun,
                              const pugi::xml_node &node) {
   auto fun = xml::getTraitFun<T>(node);
-  auto trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
+  auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
   trait.bind(uiElement, setterFun);
 }
 

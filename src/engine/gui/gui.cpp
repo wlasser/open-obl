@@ -2,6 +2,7 @@
 #include "engine/gui/gui.hpp"
 #include "engine/settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <cstdlib>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
@@ -19,6 +20,57 @@ const UiElement *extractUiElement(const MenuVariant &menu) {
   return std::visit([](auto &&arg) -> const UiElement * {
     return static_cast<const UiElement *>(&arg);
   }, menu);
+}
+
+void Traits::sort() {
+  if (mSorted) return;
+  mOrdering.clear();
+  // By our definitions, there is an edge uv iff v depends on u, and so in the
+  // ordering u should come before v iff there is an edge uv.
+  // boost::topological_sort says the reverse; that v comes before u iff there
+  // is an edge uv. Luckily for us, boost also gives the result in the reverse
+  // order (to them), which is the right order for us.
+  mOrdering.reserve(boost::num_vertices(mGraph));
+  boost::topological_sort(mGraph, std::back_inserter(mOrdering));
+  mSorted = true;
+}
+
+bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
+                                           engine::gui::UiElement *uiElement) {
+  using namespace std::literals;
+  if (node.name() == "x"s) {
+    addTraitAndBind<int>(uiElement, &UiElement::set_x, node);
+  } else if (node.name() == "y"s) {
+    addTraitAndBind<int>(uiElement, &UiElement::set_y, node);
+  } else if (node.name() == "width"s) {
+    addTraitAndBind<int>(uiElement, &UiElement::set_width, node);
+  } else if (node.name() == "height"s) {
+    addTraitAndBind<int>(uiElement, &UiElement::set_height, node);
+  } else if (node.name() == "alpha"s) {
+    addTraitAndBind<int>(uiElement, &UiElement::set_alpha, node);
+  } else if (node.name() == "locus"s) {
+    addTraitAndBind<bool>(uiElement, &UiElement::set_locus, node);
+  } else if (node.name() == "visible"s) {
+    addTraitAndBind<bool>(uiElement, &UiElement::set_visible, node);
+  } else if (node.name() == "menufade"s) {
+    addTraitAndBind<float>(uiElement, &UiElement::set_menufade, node);
+  } else if (node.name() == "explorefade"s) {
+    addTraitAndBind<float>(uiElement, &UiElement::set_explorefade, node);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+void Traits::update() {
+  // Make sure we've got a topological order, then iterate over the graph in
+  // that order and call update. The ordering guarantees that updates are
+  // performed in the correct order wrt dependencies.
+  sort();
+  for (const auto &desc : mOrdering) {
+    auto &vertex = mGraph[desc];
+    std::visit([](auto &&trait) { trait.update(); }, vertex);
+  }
 }
 
 namespace xml {
@@ -216,31 +268,12 @@ void parseMenu(std::istream &is) {
 
   // Now we construct the dependency graph of the dynamic representation
   Traits menuTraits{};
-
   for (const auto &node : menuNode.children()) {
-    if (node.name() == "x"s) {
-      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_x, node);
-    } else if (node.name() == "y"s) {
-      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_y, node);
-    } else if (node.name() == "width"s) {
-      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_width, node);
-    } else if (node.name() == "height"s) {
-      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_height, node);
-    } else if (node.name() == "alpha"s) {
-      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_alpha, node);
-    } else if (node.name() == "locus"s) {
-      menuTraits.addTraitAndBind<bool>(uiElement, &UiElement::set_locus, node);
-    } else if (node.name() == "visible"s) {
-      menuTraits.addTraitAndBind<bool>(uiElement, &UiElement::set_visible,
-                                       node);
-    } else if (node.name() == "menufade"s) {
-      menuTraits.addTraitAndBind<float>(uiElement, &UiElement::set_menufade,
-                                        node);
-    } else if (node.name() == "explorefade"s) {
-      menuTraits.addTraitAndBind<float>(uiElement, &UiElement::set_explorefade,
-                                        node);
-    }
+    menuTraits.addAndBindImplementationTrait(node, uiElement);
   }
+
+  // Force an update to initialize everything
+  menuTraits.update();
 }
 
 } // namespace xml
