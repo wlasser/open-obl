@@ -5,6 +5,7 @@
 #include "engine/keep_strategy.hpp"
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/static_manager.hpp"
+#include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
@@ -56,6 +57,7 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Add the resource managers
   collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
+  textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
 
   // Add the factories
   rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
@@ -106,6 +108,9 @@ Application::Application(std::string windowName) : FrameListener() {
                                   &nifCollisionLoader);
       } else if (ext == ".dds") {
         resGrpMgr.declareResource(path, "Texture", resourceGroup);
+      } else if (ext == ".xml" || ext == ".txt") {
+        resGrpMgr.declareResource(path, "Text", resourceGroup);
+        logger->info("Declared Text resource '{}'", path.string());
       }
     }
   }
@@ -116,6 +121,20 @@ Application::Application(std::string windowName) : FrameListener() {
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
   resGrpMgr.initialiseAllResourceGroups();
+
+  // Instantiate the menus
+  auto &txtResMgr = Ogre::TextResourceManager::getSingleton();
+  std::string menuPath = "menus/loading_menu.xml";
+  auto menuPtr = txtResMgr.getByName(menuPath, resourceGroup);
+  if (!menuPtr) {
+    logger->error("Resource does not exist");
+    throw std::runtime_error(boost::str(
+        boost::format("Failed to open %s") % menuPath));
+  }
+  menuPtr->load(false);
+  std::stringstream menuStream{menuPtr->getString()};
+  gui::xml::parseMenu(menuStream);
+  menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
   // Open the main esm
   std::filesystem::path masterEsm{"Oblivion.esm"};

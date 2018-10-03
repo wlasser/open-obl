@@ -1,11 +1,13 @@
 #include "enum_template.hpp"
 #include "engine/gui/gui.hpp"
 #include "engine/settings.hpp"
+#include <boost/algorithm/string/trim.hpp>
+#include <cstdlib>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
-namespace engine::gui {
+namespace engine::gui::xml {
 
 template<>
 bool parseEntity(const std::string &entity) {
@@ -62,6 +64,93 @@ MenuType parseEntity(const std::string &entity) {
   else throw std::runtime_error("Invalid entity");
 }
 
+template<>
+int getValue(const pugi::xml_node &node) {
+  // stoi discards whitespace so we don't need to trim.
+  // 0 means the base is autodetected.
+  // There is a string construction here but otherwise we need strtol which
+  // complains when sizeof(long) > sizeof(int).
+  return std::stoi(node.value(), nullptr, 0);
+}
+
+template<>
+int getChildValue(const pugi::xml_node &node, const char *name) {
+  return std::stoi(node.child_value(name), nullptr, 0);
+}
+
+template<>
+int getChildValue(const pugi::xml_node &node) {
+  return std::stoi(node.child_value(), nullptr, 0);
+}
+
+template<>
+float getValue(const pugi::xml_node &node) {
+  // No string construction necessary, unlike with getValue<int>
+  return std::strtof(node.value(), nullptr);
+}
+
+template<>
+float getChildValue(const pugi::xml_node &node, const char *name) {
+  return std::strtof(node.child_value(name), nullptr);
+}
+
+template<>
+float getChildValue(const pugi::xml_node &node) {
+  return std::strtof(node.child_value(), nullptr);
+}
+
+template<>
+bool getValue(const pugi::xml_node &node) {
+  return parseEntity<bool>(getValue<std::string>(node));
+}
+
+template<>
+bool getChildValue(const pugi::xml_node &node, const char *name) {
+  return parseEntity<bool>(getChildValue<std::string>(node, name));
+}
+
+template<>
+bool getChildValue(const pugi::xml_node &node) {
+  return parseEntity<bool>(getChildValue<std::string>(node));
+}
+
+template<>
+std::string getValue(const pugi::xml_node &node) {
+  std::string value{node.value()};
+  boost::algorithm::trim(value);
+  return value;
+}
+
+template<>
+std::string getChildValue(const pugi::xml_node &node, const char *name) {
+  std::string value{node.child_value(name)};
+  boost::algorithm::trim(value);
+  return value;
+}
+
+template<>
+std::string getChildValue(const pugi::xml_node &node) {
+  std::string value{node.child_value()};
+  boost::algorithm::trim(value);
+  return value;
+}
+
+template<>
+MenuType getValue(const pugi::xml_node &node) {
+  return parseEntity<MenuType>(getValue<std::string>(node));
+}
+
+template<>
+MenuType getChildValue(const pugi::xml_node &node, const char *name) {
+  return parseEntity<MenuType>(getChildValue<std::string>(node, name));
+}
+
+template<>
+MenuType getChildValue(const pugi::xml_node &node) {
+  return parseEntity<MenuType>(getChildValue<std::string>(node));
+}
+
+// Parse an entire menu from an XML stream
 void parseMenu(std::istream &is) {
   using namespace std::literals;
 
@@ -98,7 +187,7 @@ void parseMenu(std::istream &is) {
     logger->error("Menu must have a <class> tag");
     return;
   }
-  auto menuType = parseEntity<MenuType>(classNode.child_value());
+  auto menuType = getChildValue<MenuType>(classNode);
   MenuVariant menu{};
   enumvar::defaultConstruct(menuType, menu);
 
@@ -112,4 +201,4 @@ void parseMenu(std::istream &is) {
   }
 }
 
-} // namespace engine::gui
+} // namespace engine::gui::xml

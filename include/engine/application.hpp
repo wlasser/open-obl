@@ -1,19 +1,21 @@
 #ifndef OPENOBLIVION_ENGINE_APPLICATION_HPP
 #define OPENOBLIVION_ENGINE_APPLICATION_HPP
 
-#include "engine/bsa.hpp"
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
+#include "engine/bsa.hpp"
+#include "engine/gui/gui.hpp"
 #include "engine/managers/interior_cell_manager.hpp"
 #include "engine/managers/light_manager.hpp"
 #include "engine/managers/static_manager.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
+#include "engine/player_controller.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
+#include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
-#include "engine/player_controller.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
@@ -47,6 +49,9 @@ class Application : public Ogre::FrameListener {
   nifloader::CollisionObjectLoader nifCollisionLoader{};
 
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
+  std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
+
+  std::unique_ptr<gui::LoadingMenu> menuLoadingMenu{};
 
   std::unique_ptr<LightManager> lightMgr{};
   std::unique_ptr<StaticManager> staticMgr{};
