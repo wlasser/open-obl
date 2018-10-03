@@ -65,6 +65,8 @@ class UiElement {
   virtual void set_width(int width) {}
   // Height in pixels
   virtual void set_height(int height) {}
+  // Transparency. 0 is completely transparent, 255 is completely opaque
+  virtual void set_alpha(int alpha) {}
   // If true, this element is used to anchor the position of its children
   virtual void set_locus(bool locus) {}
   // If false, this element and all its descendants are hidden and un-clickable
@@ -135,13 +137,18 @@ using LoadingMenu = Menu<MenuType::LoadingMenu>;
 using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 
 template<class T>
-using TraitFunc = std::function<T(void)>;
+using TraitFun = std::function<T(void)>;
+
+template<class T>
+using TraitSetterFun = std::function<void(UiElement *, T)>;
 
 template<class T>
 class Trait {
  private:
-  TraitFunc<T> mValue{};
+  TraitFun<T> mValue{};
   std::string mName{};
+  TraitSetterFun<T> mSetter{};
+  UiElement *mConcrete{};
 
  public:
   explicit Trait(std::string name, T &&t) : mName(std::move(name)),
@@ -149,17 +156,40 @@ class Trait {
   explicit Trait(std::string name, const T &t) : mName(std::move(name)),
                                                  mValue([t]() { return t; }) {}
 
+  explicit Trait(std::string name, TraitFun<T> t) : mName(std::move(name)),
+                                                    mValue(t) {}
+
   Trait(const Trait<T> &) = default;
   Trait<T> &operator=(const Trait<T> &) = default;
-  Trait(Trait &&)
-  noexcept(std::is_nothrow_move_constructible_v<TraitFunc<T>>) = default;
-  Trait<T> &operator=(Trait &&)
-  noexcept(std::is_nothrow_move_assignable_v<TraitFunc<T>>) = default;
+
+  Trait(Trait &&) noexcept(std::is_nothrow_move_constructible_v<TraitFun<T>>
+      && std::is_nothrow_move_constructible_v<TraitSetterFun<T>>) = default;
+
+  Trait<T> &operator=(Trait &&) noexcept(
+  std::is_nothrow_move_assignable_v<TraitFun<T>>
+      && std::is_nothrow_move_assignable_v<TraitSetterFun<T>>) = default;
+
+  void bind(UiElement *concreteElement, TraitSetterFun<T> setter) {
+    mConcrete = concreteElement;
+    mSetter = setter;
+  }
 
   T invoke() const {
     return std::invoke(mValue);
   }
+
+  void update() const {
+    auto v = invoke();
+    if (mConcrete) std::invoke(mSetter, mConcrete, v);
+  }
 };
+
+template<class T>
+void bind(Trait<T> &trait, const MenuVariant &menu, TraitSetterFun<T> setter) {
+  std::visit([&trait, setter](UiElement &uiElement) {
+    trait.bind(&uiElement, setter);
+  }, menu);
+}
 
 using TraitVertex = std::variant<Trait<int>,
                                  Trait<float>,
@@ -185,6 +215,14 @@ class Traits {
       // TODO: Warn about incorrect type
       return Trait<T>(name, {});
     }
+  }
+
+  template<class T, class ...Args>
+  Trait<T> &addTrait(std::string name, Args &&... args) {
+    auto index = boost::add_vertex(
+        Trait<T>(std::move(name), std::forward<Args>(args)...),
+        mGraph);
+    return std::get<Trait<T>>(mGraph[index]);
   }
 };
 
@@ -266,6 +304,15 @@ MenuType getChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
 MenuType getChildValue(const pugi::xml_node &node);
+
+template<class T>
+TraitFun<T> getTraitFun(const pugi::xml_node &node) {
+  if (node.text()) {
+    auto value = getChildValue<T>(node);
+    return [value]() { return value; };
+  }
+  return []() -> T { return {}; };
+}
 
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);

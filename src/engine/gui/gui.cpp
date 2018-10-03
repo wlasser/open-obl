@@ -194,9 +194,45 @@ void parseMenu(std::istream &is) {
   // TODO: Use std::visit to delegate to a concrete representative creator
 
   // Now we construct the dependency graph of the dynamic representation
+  Traits menuTraits{};
+
   for (const auto &node : menuNode.children()) {
     if (node.name() == "x"s) {
-
+      auto fun = getTraitFun<int>(node);
+      auto trait = menuTraits.addTrait<int>(menuName + ".x", fun);
+      bind(trait, menu, &UiElement::set_x);
+    } else if (node.name() == "y"s) {
+      auto fun = getTraitFun<int>(node);
+      auto trait = menuTraits.addTrait<int>(menuName + ".y", fun);
+      bind(trait, menu, &UiElement::set_y);
+    } else if (node.name() == "width"s) {
+      auto fun = getTraitFun<int>(node);
+      auto trait = menuTraits.addTrait<int>(menuName + ".width", fun);
+      bind(trait, menu, &UiElement::set_width);
+    } else if (node.name() == "height"s) {
+      auto fun = getTraitFun<int>(node);
+      auto trait = menuTraits.addTrait<int>(menuName + ".height", fun);
+      bind(trait, menu, &UiElement::set_width);
+    } else if (node.name() == "alpha"s) {
+      auto fun = getTraitFun<int>(node);
+      auto trait = menuTraits.addTrait<int>(menuName + ".alpha", fun);
+      bind(trait, menu, &UiElement::set_alpha);
+    } else if (node.name() == "locus"s) {
+      auto fun = getTraitFun<bool>(node);
+      auto trait = menuTraits.addTrait<bool>(menuName + ".locus", fun);
+      bind(trait, menu, &UiElement::set_locus);
+    } else if (node.name() == "visible"s) {
+      auto fun = getTraitFun<bool>(node);
+      auto trait = menuTraits.addTrait<bool>(menuName + ".visible", fun);
+      bind(trait, menu, &UiElement::set_visible);
+    } else if (node.name() == "menufade"s) {
+      auto fun = getTraitFun<float>(node);
+      auto trait = menuTraits.addTrait<float>(menuName + ".menufade", fun);
+      bind(trait, menu, &UiElement::set_menuFade);
+    } else if (node.name() == "explorefade"s) {
+      auto fun = getTraitFun<float>(node);
+      auto trait = menuTraits.addTrait<float>(menuName + ".explorefade", fun);
+      bind(trait, menu, &UiElement::set_exploreFade);
     }
   }
 }
