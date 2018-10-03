@@ -78,11 +78,14 @@ class UiElement {
     set_menufade(explorefade);
   }
 
-  // Every UiElement is required to have a name
+  // Every UiElement is required to have a name which identifies it uniquely in
+  // the scope of the surrounding menu, or if the UiElement is a menu, then in
+  // the scope of the application.
   virtual std::string get_name() const = 0;
   virtual void set_name(std::string name) = 0;
 };
 
+// Each menu must be one of the following types, given in the XML by its <class>
 enum class MenuType {
   AlchemyMenu,
   AudioMenu,
@@ -148,21 +151,34 @@ class Menu : public UiElement {
   }
 };
 
+// Shorthands for each concrete menu
+// TODO: Shorthands for the rest of the menu types
 using LoadingMenu = Menu<MenuType::LoadingMenu>;
 
 // All the Menu<MenuType> inherit from UiElement, so why not just do everything
-// with a UiElement* ? We want to select the value of MenuType at runtime
+// with a UiElement* ? Well we want to select the value of MenuType at runtime
 // without doing an if-else over every value of MenuType; a variant encapsulates
 // a map from MenuType to Menu<MenuType> which lets us do this via
 // enumvar::defaultConstruct.
 using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 
+// Once the correct Menu has been constructed, we can drop back to runtime
+// polymorphism by casting the stored variant value to a pointer to its base.
+UiElement *extractUiElement(MenuVariant &menu);
+const UiElement *extractUiElement(const MenuVariant &menu);
+
+// TraitFun represents a function used to set/compute the value of the dynamic
+// representative of a trait.
 template<class T>
 using TraitFun = std::function<T(void)>;
 
+// TraitSetterFun represents a function used to set the value of the concrete
+// representative of a trait.
 template<class T>
 using TraitSetterFun = std::function<void(UiElement *, T)>;
 
+// The Trait class encapsulates a dynamic representative of a trait, and should
+// be bound to a concrete representative via an appropriate setter.
 template<class T>
 class Trait {
  private:
@@ -190,57 +206,64 @@ class Trait {
   std::is_nothrow_move_assignable_v<TraitFun<T>>
       && std::is_nothrow_move_assignable_v<TraitSetterFun<T>>) = default;
 
+  // Bind this Trait as the concrete representative of a trait in the
+  // concreteElement, whose value is modifable using the setter.
   void bind(UiElement *concreteElement, TraitSetterFun<T> setter) {
     mConcrete = concreteElement;
     mSetter = setter;
   }
 
+  // Calculate the actual value of this trait. This does not update the concrete
+  // representative.
   T invoke() const {
     return std::invoke(mValue);
   }
 
+  // Calculate the actual value of this trait and update the concrete
+  // representative, if any.
   void update() const {
-    auto v = invoke();
-    if (mConcrete) std::invoke(mSetter, mConcrete, v);
+    if (mConcrete) {
+      auto v = invoke();
+      std::invoke(mSetter, mConcrete, v);
+    }
   }
 };
 
-UiElement *extractUiElement(MenuVariant &menu);
-const UiElement *extractUiElement(const MenuVariant &menu);
-
-template<class T>
-void bind(Trait<T> &trait, const MenuVariant &menu, TraitSetterFun<T> setter) {
-  std::visit([&trait, setter](UiElement &uiElement) {
-    trait.bind(&uiElement, setter);
-  }, menu);
-}
-
-using TraitVertex = std::variant<Trait<int>,
-                                 Trait<float>,
-                                 Trait<std::string>,
-                                 Trait<bool>>;
-using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
-                                         boost::directedS, TraitVertex>;
-
+// Encapsulate the dynamic representation of all traits associated with a menu
+// and its children.
 class Traits {
  private:
+  using TraitVertex = std::variant<Trait<int>,
+                                   Trait<float>,
+                                   Trait<std::string>,
+                                   Trait<bool>>;
+  using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
+                                           boost::directedS, TraitVertex>;
+
+  // Dependency graph of traits. There is an edge from u to v if the trait v
+  // requires the value of trait u to compute its value. This should be a DAG,
+  // and will usually have multiple connected components.
   TraitGraph mGraph{};
+  // Map for looking up traits by name in the dependency graph.
   std::unordered_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
 
  public:
+  // Return a reference to the dynamic trait with the given fully-qualified name
   template<class T>
-  Trait<T> getTrait(const std::string &name) {
+  Trait<T> &getTrait(const std::string &name) {
     auto index = mIndices.find(name);
     if (index == mIndices.end()) return Trait<T>(name, {});
     const auto &vertex = mGraph[index->second];
     if (std::holds_alternative<T>(vertex)) {
       return std::get<T>(vertex);
     } else {
-      // TODO: Warn about incorrect type
-      return Trait<T>(name, {});
+      throw std::runtime_error("Incorrect trait type");
     }
   }
 
+  // Construct a new trait with the given name by forwarding the args to the
+  // Trait constructor, add it to the dependency graph, and return a reference
+  // to the added trait. No edges are created.
   template<class T, class ...Args>
   Trait<T> &addTrait(std::string name, Args &&... args) {
     auto index = boost::add_vertex(
@@ -249,6 +272,9 @@ class Traits {
     return std::get<Trait<T>>(mGraph[index]);
   }
 
+  // Given an XML node describing a trait, such as <x>100</x>, construct a
+  // corresponding Trait and bind it to the uiElement with the setterFun as
+  // in Trait::bind.
   template<class T>
   void addTraitAndBind(UiElement *uiElement, TraitSetterFun<T> setterFun,
                        const pugi::xml_node &node);
@@ -333,6 +359,9 @@ MenuType getChildValue(const pugi::xml_node &node, const char *name);
 template<>
 MenuType getChildValue(const pugi::xml_node &node);
 
+// Given an XML node representing a trait, produce a TraitFun which performs the
+// same operations. If the node does not represent a valid trait, then the
+// returned TraitFun<T> returns a value-initialized T.
 template<class T>
 TraitFun<T> getTraitFun(const pugi::xml_node &node) {
   if (node.text()) {
