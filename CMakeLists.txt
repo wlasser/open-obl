@@ -69,9 +69,13 @@ target_sources(OpenOblivionRecord PUBLIC
 add_library(OpenOblivionOgre OBJECT)
 target_include_directories(OpenOblivionOgre PUBLIC include)
 target_sources(OpenOblivionOgre PUBLIC
+        src/ogre/text_resource.cpp
+        src/ogre/text_resource_manager.cpp
         src/ogre/ogre_stream_wrappers.cpp
         src/ogre/window.cpp
         include/ogre/ogre_stream_wrappers.hpp
+        include/ogre/text_resource.hpp
+        include/ogre/text_resource_manager.hpp
         include/ogre/spdlog_listener.hpp
         include/ogre/window.hpp)
 target_link_libraries(OpenOblivionOgre PUBLIC
