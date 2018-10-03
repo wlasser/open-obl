@@ -7,7 +7,21 @@
 #include <spdlog/spdlog.h>
 #include <unordered_map>
 
-namespace engine::gui::xml {
+namespace engine::gui {
+
+UiElement *extractUiElement(MenuVariant &menu) {
+  return std::visit([](auto &&arg) -> UiElement * {
+    return static_cast<UiElement *>(&arg);
+  }, menu);
+}
+
+const UiElement *extractUiElement(const MenuVariant &menu) {
+  return std::visit([](auto &&arg) -> const UiElement * {
+    return static_cast<const UiElement *>(&arg);
+  }, menu);
+}
+
+namespace xml {
 
 template<>
 bool parseEntity(const std::string &entity) {
@@ -188,8 +202,15 @@ void parseMenu(std::istream &is) {
     return;
   }
   auto menuType = getChildValue<MenuType>(classNode);
+  // Construct a Menu<menuType> (menuType, not MenuType!)
   MenuVariant menu{};
   enumvar::defaultConstruct(menuType, menu);
+  // Extract a pointer to base of Menu<menuType> so we can do virtual dispatch.
+  // One could do everything with std::visit instead if they wanted
+  auto *uiElement = extractUiElement(menu);
+
+  // Set the menu name
+  uiElement->set_name(menuName);
 
   // TODO: Use std::visit to delegate to a concrete representative creator
 
@@ -198,43 +219,30 @@ void parseMenu(std::istream &is) {
 
   for (const auto &node : menuNode.children()) {
     if (node.name() == "x"s) {
-      auto fun = getTraitFun<int>(node);
-      auto trait = menuTraits.addTrait<int>(menuName + ".x", fun);
-      bind(trait, menu, &UiElement::set_x);
+      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_x, node);
     } else if (node.name() == "y"s) {
-      auto fun = getTraitFun<int>(node);
-      auto trait = menuTraits.addTrait<int>(menuName + ".y", fun);
-      bind(trait, menu, &UiElement::set_y);
+      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_y, node);
     } else if (node.name() == "width"s) {
-      auto fun = getTraitFun<int>(node);
-      auto trait = menuTraits.addTrait<int>(menuName + ".width", fun);
-      bind(trait, menu, &UiElement::set_width);
+      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_width, node);
     } else if (node.name() == "height"s) {
-      auto fun = getTraitFun<int>(node);
-      auto trait = menuTraits.addTrait<int>(menuName + ".height", fun);
-      bind(trait, menu, &UiElement::set_width);
+      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_height, node);
     } else if (node.name() == "alpha"s) {
-      auto fun = getTraitFun<int>(node);
-      auto trait = menuTraits.addTrait<int>(menuName + ".alpha", fun);
-      bind(trait, menu, &UiElement::set_alpha);
+      menuTraits.addTraitAndBind<int>(uiElement, &UiElement::set_alpha, node);
     } else if (node.name() == "locus"s) {
-      auto fun = getTraitFun<bool>(node);
-      auto trait = menuTraits.addTrait<bool>(menuName + ".locus", fun);
-      bind(trait, menu, &UiElement::set_locus);
+      menuTraits.addTraitAndBind<bool>(uiElement, &UiElement::set_locus, node);
     } else if (node.name() == "visible"s) {
-      auto fun = getTraitFun<bool>(node);
-      auto trait = menuTraits.addTrait<bool>(menuName + ".visible", fun);
-      bind(trait, menu, &UiElement::set_visible);
+      menuTraits.addTraitAndBind<bool>(uiElement, &UiElement::set_visible,
+                                       node);
     } else if (node.name() == "menufade"s) {
-      auto fun = getTraitFun<float>(node);
-      auto trait = menuTraits.addTrait<float>(menuName + ".menufade", fun);
-      bind(trait, menu, &UiElement::set_menuFade);
+      menuTraits.addTraitAndBind<float>(uiElement, &UiElement::set_menufade,
+                                        node);
     } else if (node.name() == "explorefade"s) {
-      auto fun = getTraitFun<float>(node);
-      auto trait = menuTraits.addTrait<float>(menuName + ".explorefade", fun);
-      bind(trait, menu, &UiElement::set_exploreFade);
+      menuTraits.addTraitAndBind<float>(uiElement, &UiElement::set_explorefade,
+                                        node);
     }
   }
 }
 
-} // namespace engine::gui::xml
+} // namespace xml
+
+} // namespace engine::gui

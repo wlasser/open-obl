@@ -72,11 +72,15 @@ class UiElement {
   // If false, this element and all its descendants are hidden and un-clickable
   virtual void set_visible(bool visible) {}
   // Time in seconds for fade-in or fade-out
-  virtual void set_menuFade(float menuFade) {}
+  virtual void set_menufade(float menufade) {}
   // This is probably distinct from menuFade, but we treat it as an alias
-  virtual void set_exploreFade(float exploreFade) {
-    set_menuFade(exploreFade);
+  virtual void set_explorefade(float explorefade) {
+    set_menufade(explorefade);
   }
+
+  // Every UiElement is required to have a name
+  virtual std::string get_name() const = 0;
+  virtual void set_name(std::string name) = 0;
 };
 
 enum class MenuType {
@@ -130,10 +134,27 @@ enum class MenuType {
 // corresponding methods allows us to do virtual dispatch based on a runtime
 // enum value, without manually checking for each value.
 template<MenuType Type>
-class Menu : public UiElement {};
+class Menu : public UiElement {
+ protected:
+  std::string mName{};
+
+ public:
+  std::string get_name() const override {
+    return mName;
+  }
+
+  void set_name(std::string name) override {
+    mName = name;
+  }
+};
 
 using LoadingMenu = Menu<MenuType::LoadingMenu>;
 
+// All the Menu<MenuType> inherit from UiElement, so why not just do everything
+// with a UiElement* ? We want to select the value of MenuType at runtime
+// without doing an if-else over every value of MenuType; a variant encapsulates
+// a map from MenuType to Menu<MenuType> which lets us do this via
+// enumvar::defaultConstruct.
 using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 
 template<class T>
@@ -184,6 +205,9 @@ class Trait {
   }
 };
 
+UiElement *extractUiElement(MenuVariant &menu);
+const UiElement *extractUiElement(const MenuVariant &menu);
+
 template<class T>
 void bind(Trait<T> &trait, const MenuVariant &menu, TraitSetterFun<T> setter) {
   std::visit([&trait, setter](UiElement &uiElement) {
@@ -224,6 +248,10 @@ class Traits {
         mGraph);
     return std::get<Trait<T>>(mGraph[index]);
   }
+
+  template<class T>
+  void addTraitAndBind(UiElement *uiElement, TraitSetterFun<T> setterFun,
+                       const pugi::xml_node &node);
 };
 
 namespace xml {
@@ -318,6 +346,15 @@ TraitFun<T> getTraitFun(const pugi::xml_node &node) {
 void parseMenu(std::istream &is);
 
 } // namespace xml
+
+template<class T>
+void Traits::addTraitAndBind(UiElement *uiElement,
+                             TraitSetterFun<T> setterFun,
+                             const pugi::xml_node &node) {
+  auto fun = xml::getTraitFun<T>(node);
+  auto trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
+  trait.bind(uiElement, setterFun);
+}
 
 } // namespace engine::gui
 
