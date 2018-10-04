@@ -169,6 +169,7 @@ const UiElement *extractUiElement(const MenuVariant &menu);
 
 // TraitFun represents a function used to set/compute the value of the dynamic
 // representative of a trait.
+// TODO: This needs to track dependencies
 template<class T>
 using TraitFun = std::function<T(void)>;
 
@@ -259,12 +260,14 @@ class Traits {
  public:
   // Return a reference to the dynamic trait with the given fully-qualified name
   template<class T>
-  Trait<T> &getTrait(const std::string &name) {
+  const Trait<T> &getTrait(const std::string &name) const {
     auto index = mIndices.find(name);
-    if (index == mIndices.end()) return Trait<T>(name, {});
+    if (index == mIndices.end()) {
+      throw std::runtime_error("No such trait");
+    }
     const auto &vertex = mGraph[index->second];
-    if (std::holds_alternative<T>(vertex)) {
-      return std::get<T>(vertex);
+    if (std::holds_alternative<Trait<T>>(vertex)) {
+      return std::get<Trait<T>>(vertex);
     } else {
       throw std::runtime_error("Incorrect trait type");
     }
@@ -302,14 +305,74 @@ class Traits {
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);
 
+// When evaluating a trait that does not begin with a <copy> to initialize the
+// working value, the working value is value-initialized on the first evaluation
+// of the trait. On subsequent evaluations, the value of the previous evaluation
+// is used as the initial working value. This is a lot like a function-local
+// static variable, but cannot be achieved in the same way with lambdas; static
+// variables in a lambda are defined in the surrounding function scope. Instead
+// we use a stateful functor to remember the previous value, and use mutable
+// lambdas to allow modifying its state.
+template<class T>
+struct PersistentFunctor {
+  T state{};
+  T operator()() const {
+    return state;
+  }
+};
+
+// Given a trait node whose body is given by a collection of operators, parse
+// the sequence of operators into a TraitFun.
+template<class T>
+TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
+  using namespace std::literals;
+
+  // Start with the <copy> if there is one, otherwise use a PersistentFunctor
+  // to remember the previous value. The functor needs to be updated after the
+  // entire evaluation is complete, which means it needs to act at both ends
+  // of the evaluation; this is not possible with the nesting technique used.
+  // Instead we have to pass a pointer to the functor all the way up the call
+  // stack, then use it to make the update at the end. The working function
+  // type is therefore not a TraitFun<T>.
+  using FunctorPair = std::pair<PersistentFunctor<T> *, T>;
+  std::function<FunctorPair(void)> fun{};
+
+  if (node.first_child().name() == "copy"s) {
+    auto copyNode{node.first_child()};
+    auto srcAttr = copyNode.attribute("src");
+    auto traitAttr = copyNode.attribute("trait");
+    if (srcAttr && traitAttr) {
+      // TODO: Selectors and switch-case
+      auto name =
+          std::string{srcAttr.value()} + "." + std::string{traitAttr.value()};
+      fun = [name, &tref = std::as_const(traits)]() -> FunctorPair {
+        return {nullptr, tref.getTrait<T>(name).invoke()};
+      };
+    }
+  } else {
+    fun = [functor = PersistentFunctor<T>{}]() mutable -> FunctorPair {
+      return {&functor, functor()};
+    };
+  }
+
+  // Now construct the actual function by embedding the functor update
+  return [fun]() mutable -> T {
+    auto[ptr, val] = fun();
+    if (ptr) ptr->state = val;
+    return val;
+  };
+}
+
 // Given an XML node representing a trait, produce a TraitFun which performs the
 // same operations. If the node does not represent a valid trait, then the
 // returned TraitFun<T> returns a value-initialized T.
 template<class T>
-TraitFun<T> getTraitFun(const pugi::xml_node &node) {
+TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
   if (node.text()) {
     auto value = xml::getChildValue<T>(node);
     return [value]() { return value; };
+  } else {
+    return parseOperators<T>(traits, node);
   }
   return []() -> T { return {}; };
 }
@@ -318,7 +381,7 @@ template<class T>
 void Traits::addTraitAndBind(UiElement *uiElement,
                              TraitSetterFun<T> setterFun,
                              const pugi::xml_node &node) {
-  auto fun = getTraitFun<T>(node);
+  auto fun = getTraitFun<T>(*this, node);
   auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
   trait.bind(uiElement, setterFun);
 }
