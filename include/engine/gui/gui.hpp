@@ -168,10 +168,37 @@ UiElement *extractUiElement(MenuVariant &menu);
 const UiElement *extractUiElement(const MenuVariant &menu);
 
 // TraitFun represents a function used to set/compute the value of the dynamic
-// representative of a trait.
-// TODO: This needs to track dependencies
+// representative of a trait. It needs to keep track of the names of its
+// immediate dependencies as edges in the dependency graph cannot be drawn until
+// all traits have been constructed.
 template<class T>
-using TraitFun = std::function<T(void)>;
+class TraitFun {
+ public:
+  using function_type = std::function<T(void)>;
+  using result_type = T;
+ private:
+  function_type mFun{};
+  std::vector<std::string> mDependencies{};
+ public:
+  TraitFun() = default;
+  explicit TraitFun(const function_type &f) : mFun(f) {}
+  explicit TraitFun(function_type &&f) : mFun(f) {}
+
+  void addDependency(std::string dep) {
+    mDependencies.push_back(std::move(dep));
+  }
+
+  const std::vector<std::string> &getDependencies() const {
+    return mDependencies;
+  }
+
+  T operator()() const {
+    return mFun();
+  }
+  explicit operator bool() const noexcept {
+    return static_cast<bool>(mFun);
+  }
+};
 
 // TraitSetterFun represents a function used to set the value of the concrete
 // representative of a trait.
@@ -228,16 +255,23 @@ class Trait {
       std::invoke(mSetter, mConcrete, v);
     }
   }
+
+  const std::vector<std::string> &getDependencies() const {
+    return mValue.getDependencies();
+  }
 };
 
 // Encapsulate the dynamic representation of all traits associated with a menu
 // and its children.
 class Traits {
  private:
-  using TraitVertex = std::variant<Trait<int>,
-                                   Trait<float>,
-                                   Trait<std::string>,
-                                   Trait<bool>>;
+  // Vertex properties are required to be default constructible and copy
+  // constructible so we have to store a shared ownership pointer.
+  using TraitVariant = std::variant<Trait<int>,
+                                    Trait<float>,
+                                    Trait<std::string>,
+                                    Trait<bool>>;
+  using TraitVertex = std::shared_ptr<TraitVariant>;
   using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                            boost::directedS, TraitVertex>;
 
@@ -266,8 +300,11 @@ class Traits {
       throw std::runtime_error("No such trait");
     }
     const auto &vertex = mGraph[index->second];
-    if (std::holds_alternative<Trait<T>>(vertex)) {
-      return std::get<Trait<T>>(vertex);
+    if (!vertex) {
+      throw std::runtime_error("nullptr vertex");
+    }
+    if (std::holds_alternative<Trait<T>>(*vertex)) {
+      return std::get<Trait<T>>(*vertex);
     } else {
       throw std::runtime_error("Incorrect trait type");
     }
@@ -279,10 +316,9 @@ class Traits {
   template<class T, class ...Args>
   Trait<T> &addTrait(std::string name, Args &&... args) {
     mSorted = false;
-    auto index = boost::add_vertex(
-        Trait<T>(std::move(name), std::forward<Args>(args)...),
-        mGraph);
-    return std::get<Trait<T>>(mGraph[index]);
+    auto index = boost::add_vertex(std::make_shared<TraitVariant>(
+        Trait<T>{std::move(name), std::forward<Args>(args)...}), mGraph);
+    return std::get<Trait<T>>(*mGraph[index]);
   }
 
   // Given an XML node describing a trait, such as <x>100</x>, construct a
@@ -296,6 +332,14 @@ class Traits {
   // to the given uiElement and return true, otherwise return false.
   bool addAndBindImplementationTrait(const pugi::xml_node &node,
                                      UiElement *uiElement);
+
+  // For each trait v, make an edge from u to v if u is a dependency of v.
+  // This will throw if a trait has a nonexistent dependency.
+  // Try to delay calling this until all traits have been added, as it
+  // regenerates all dependency edges, even those that haven't changed. Since
+  // traits are allowed to be defined out of order it doesn't really make sense
+  // to call this after every addTrait anyway.
+  void addTraitDependencies();
 
   // Update every trait, notifying the concrete representation of the new
   // values. Throws if the underlying dependency graph is not a DAG.
@@ -336,6 +380,9 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
   // type is therefore not a TraitFun<T>.
   using FunctorPair = std::pair<PersistentFunctor<T> *, T>;
   std::function<FunctorPair(void)> fun{};
+  // Need to keep track of the trait dependencies, which we can't give to the
+  // TraitFun<T> until the end.
+  std::vector<std::string> dependencies{};
 
   if (node.first_child().name() == "copy"s) {
     auto copyNode{node.first_child()};
@@ -348,6 +395,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
       fun = [name, &tref = std::as_const(traits)]() -> FunctorPair {
         return {nullptr, tref.getTrait<T>(name).invoke()};
       };
+      dependencies.push_back(std::move(name));
     }
   } else {
     fun = [functor = PersistentFunctor<T>{}]() mutable -> FunctorPair {
@@ -356,11 +404,17 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
   }
 
   // Now construct the actual function by embedding the functor update
-  return [fun]() mutable -> T {
+  TraitFun<T> traitFun{[fun]() mutable -> T {
     auto[ptr, val] = fun();
     if (ptr) ptr->state = val;
     return val;
-  };
+  }};
+  // Notify the function of its dependencies
+  for (auto &dep : dependencies) {
+    traitFun.addDependency(std::move(dep));
+  }
+
+  return traitFun;
 }
 
 // Given an XML node representing a trait, produce a TraitFun which performs the
@@ -370,11 +424,10 @@ template<class T>
 TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
   if (node.text()) {
     auto value = xml::getChildValue<T>(node);
-    return [value]() { return value; };
+    return TraitFun<T>{[value]() { return value; }};
   } else {
     return parseOperators<T>(traits, node);
   }
-  return []() -> T { return {}; };
 }
 
 template<class T>

@@ -61,6 +61,28 @@ bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
   return true;
 }
 
+void Traits::addTraitDependencies() {
+  for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
+    const TraitVertex &vPtr = mGraph[vIndex];
+    if (!vPtr) {
+      throw std::runtime_error("nullptr vertex");
+    }
+    const auto &deps = std::visit([](const auto &v) {
+      return v.getDependencies();
+    }, *vPtr);
+
+    for (const auto &dep : deps) {
+      auto uIndexIt = mIndices.find(dep);
+      if (uIndexIt == mIndices.end()) {
+        throw std::runtime_error("Nonexistent dependency");
+      }
+      TraitGraph::vertex_descriptor uIndex = uIndexIt->second;
+      boost::remove_edge(uIndex, vIndex, mGraph);
+      boost::add_edge(uIndex, vIndex, mGraph);
+    }
+  }
+}
+
 void Traits::update() {
   // Make sure we've got a topological order, then iterate over the graph in
   // that order and call update. The ordering guarantees that updates are
@@ -68,7 +90,10 @@ void Traits::update() {
   sort();
   for (const auto &desc : mOrdering) {
     auto &vertex = mGraph[desc];
-    std::visit([](auto &&trait) { trait.update(); }, vertex);
+    if (!vertex) {
+      throw std::runtime_error("nullptr vertex");
+    }
+    std::visit([](auto &&trait) { trait.update(); }, *vertex);
   }
 }
 
@@ -127,6 +152,9 @@ void parseMenu(std::istream &is) {
   for (const auto &node : menuNode.children()) {
     menuTraits.addAndBindImplementationTrait(node, uiElement);
   }
+
+  // Add the dependency graph edges
+  menuTraits.addTraitDependencies();
 
   // Force an update to initialize everything
   menuTraits.update();
