@@ -1,9 +1,8 @@
 #include "enum_template.hpp"
 #include "engine/gui/gui.hpp"
+#include "engine/gui/xml.hpp"
 #include "engine/settings.hpp"
-#include <boost/algorithm/string/trim.hpp>
 #include <boost/graph/topological_sort.hpp>
-#include <cstdlib>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
 #include <unordered_map>
@@ -73,12 +72,67 @@ void Traits::update() {
   }
 }
 
-namespace xml {
+// Parse an entire menu from an XML stream
+void parseMenu(std::istream &is) {
+  using namespace std::literals;
 
-template<>
-bool parseEntity(const std::string &entity) {
-  return entity == "&true;";
+  auto logger = spdlog::get(settings::log);
+
+  // Load the document. If this fails, we're done.
+  pugi::xml_document doc{};
+  pugi::xml_parse_result result = doc.load(is);
+  if (!result) {
+    logger->error("Failed to parse menu XML [{}]: {}",
+                  result.offset,
+                  result.description());
+    return;
+  }
+
+  // All menus should start with a <menu> tag
+  // TODO: Allow multiple menus in one XML file?
+  auto menuNode = doc.first_child();
+  if (!menuNode || menuNode.name() != "menu"s) {
+    logger->error("XML does not start with a <menu> tag");
+    return;
+  }
+  // Tag should have a name attribute uniquely identifying the menu
+  if (!menuNode.attribute("name")) {
+    logger->error("<menu> tag has no 'name' attribute");
+    return;
+  }
+  std::string menuName = menuNode.attribute("name").value();
+
+  // All menus must have a child <class> tag whose value determines which
+  // MenuType it is.
+  auto classNode = menuNode.child("class");
+  if (!classNode) {
+    logger->error("Menu must have a <class> tag");
+    return;
+  }
+  auto menuType = xml::getChildValue<MenuType>(classNode);
+  // Construct a Menu<menuType> (menuType, not MenuType!)
+  MenuVariant menu{};
+  enumvar::defaultConstruct(menuType, menu);
+  // Extract a pointer to base of Menu<menuType> so we can do virtual dispatch.
+  // One could do everything with std::visit instead if they wanted
+  auto *uiElement = extractUiElement(menu);
+
+  // Set the menu name
+  uiElement->set_name(menuName);
+
+  // TODO: Use std::visit to delegate to a concrete representative creator
+
+  // Now we construct the dependency graph of the dynamic representation
+  Traits menuTraits{};
+  for (const auto &node : menuNode.children()) {
+    menuTraits.addAndBindImplementationTrait(node, uiElement);
+  }
+
+  // Force an update to initialize everything
+  menuTraits.update();
 }
+
+namespace xml {
 
 template<>
 MenuType parseEntity(const std::string &entity) {
@@ -131,77 +185,6 @@ MenuType parseEntity(const std::string &entity) {
 }
 
 template<>
-int getValue(const pugi::xml_node &node) {
-  // stoi discards whitespace so we don't need to trim.
-  // 0 means the base is autodetected.
-  // There is a string construction here but otherwise we need strtol which
-  // complains when sizeof(long) > sizeof(int).
-  return std::stoi(node.value(), nullptr, 0);
-}
-
-template<>
-int getChildValue(const pugi::xml_node &node, const char *name) {
-  return std::stoi(node.child_value(name), nullptr, 0);
-}
-
-template<>
-int getChildValue(const pugi::xml_node &node) {
-  return std::stoi(node.child_value(), nullptr, 0);
-}
-
-template<>
-float getValue(const pugi::xml_node &node) {
-  // No string construction necessary, unlike with getValue<int>
-  return std::strtof(node.value(), nullptr);
-}
-
-template<>
-float getChildValue(const pugi::xml_node &node, const char *name) {
-  return std::strtof(node.child_value(name), nullptr);
-}
-
-template<>
-float getChildValue(const pugi::xml_node &node) {
-  return std::strtof(node.child_value(), nullptr);
-}
-
-template<>
-bool getValue(const pugi::xml_node &node) {
-  return parseEntity<bool>(getValue<std::string>(node));
-}
-
-template<>
-bool getChildValue(const pugi::xml_node &node, const char *name) {
-  return parseEntity<bool>(getChildValue<std::string>(node, name));
-}
-
-template<>
-bool getChildValue(const pugi::xml_node &node) {
-  return parseEntity<bool>(getChildValue<std::string>(node));
-}
-
-template<>
-std::string getValue(const pugi::xml_node &node) {
-  std::string value{node.value()};
-  boost::algorithm::trim(value);
-  return value;
-}
-
-template<>
-std::string getChildValue(const pugi::xml_node &node, const char *name) {
-  std::string value{node.child_value(name)};
-  boost::algorithm::trim(value);
-  return value;
-}
-
-template<>
-std::string getChildValue(const pugi::xml_node &node) {
-  std::string value{node.child_value()};
-  boost::algorithm::trim(value);
-  return value;
-}
-
-template<>
 MenuType getValue(const pugi::xml_node &node) {
   return parseEntity<MenuType>(getValue<std::string>(node));
 }
@@ -214,66 +197,6 @@ MenuType getChildValue(const pugi::xml_node &node, const char *name) {
 template<>
 MenuType getChildValue(const pugi::xml_node &node) {
   return parseEntity<MenuType>(getChildValue<std::string>(node));
-}
-
-// Parse an entire menu from an XML stream
-void parseMenu(std::istream &is) {
-  using namespace std::literals;
-
-  auto logger = spdlog::get(settings::log);
-
-  // Load the document. If this fails, we're done.
-  pugi::xml_document doc{};
-  pugi::xml_parse_result result = doc.load(is);
-  if (!result) {
-    logger->error("Failed to parse menu XML [{}]: {}",
-                  result.offset,
-                  result.description());
-    return;
-  }
-
-  // All menus should start with a <menu> tag
-  // TODO: Allow multiple menus in one XML file?
-  auto menuNode = doc.first_child();
-  if (!menuNode || menuNode.name() != "menu"s) {
-    logger->error("XML does not start with a <menu> tag");
-    return;
-  }
-  // Tag should have a name attribute uniquely identifying the menu
-  if (!menuNode.attribute("name")) {
-    logger->error("<menu> tag has no 'name' attribute");
-    return;
-  }
-  std::string menuName = menuNode.attribute("name").value();
-
-  // All menus must have a child <class> tag whose value determines which
-  // MenuType it is.
-  auto classNode = menuNode.child("class");
-  if (!classNode) {
-    logger->error("Menu must have a <class> tag");
-    return;
-  }
-  auto menuType = getChildValue<MenuType>(classNode);
-  // Construct a Menu<menuType> (menuType, not MenuType!)
-  MenuVariant menu{};
-  enumvar::defaultConstruct(menuType, menu);
-  // Extract a pointer to base of Menu<menuType> so we can do virtual dispatch.
-  // One could do everything with std::visit instead if they wanted
-  auto *uiElement = extractUiElement(menu);
-
-  // Set the menu name
-  uiElement->set_name(menuName);
-
-  // TODO: Use std::visit to delegate to a concrete representative creator
-
-  // Now we construct the dependency graph of the dynamic representation
-  Traits menuTraits{};
-  for (const auto &node : menuNode.children()) {
-    menuTraits.addAndBindImplementationTrait(node, uiElement);
-  }
-
-  // Force an update to initialize everything
-  menuTraits.update();
 }
 
 } // namespace xml

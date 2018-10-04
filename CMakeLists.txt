@@ -131,6 +131,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/gui/gui.cpp
+        src/engine/gui/xml.cpp
         src/engine/initial_processor.cpp
         src/engine/managers/interior_cell_manager.cpp
         src/engine/managers/light_manager.cpp
@@ -147,6 +148,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/bsa.hpp
         include/engine/conversions.hpp
         include/engine/gui/gui.hpp
+        include/engine/gui/xml.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
         include/engine/managers/interior_cell_manager.hpp

@@ -133,7 +133,7 @@ Application::Application(std::string windowName) : FrameListener() {
   }
   menuPtr->load(false);
   std::stringstream menuStream{menuPtr->getString()};
-  gui::xml::parseMenu(menuStream);
+  gui::parseMenu(menuStream);
   menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
   // Open the main esm

@@ -2,8 +2,8 @@
 #define OPENOBLIVION_ENGINE_GUI_GUI_HPP
 
 #include "enum_template.hpp"
+#include "engine/gui/xml.hpp"
 #include <boost/graph/adjacency_list.hpp>
-#include <pugixml.hpp>
 #include <functional>
 #include <type_traits>
 #include <unordered_map>
@@ -299,76 +299,33 @@ class Traits {
   void update();
 };
 
+// Parse an entire menu from an XML stream
+void parseMenu(std::istream &is);
+
+// Given an XML node representing a trait, produce a TraitFun which performs the
+// same operations. If the node does not represent a valid trait, then the
+// returned TraitFun<T> returns a value-initialized T.
+template<class T>
+TraitFun<T> getTraitFun(const pugi::xml_node &node) {
+  if (node.text()) {
+    auto value = xml::getChildValue<T>(node);
+    return [value]() { return value; };
+  }
+  return []() -> T { return {}; };
+}
+
+template<class T>
+void Traits::addTraitAndBind(UiElement *uiElement,
+                             TraitSetterFun<T> setterFun,
+                             const pugi::xml_node &node) {
+  auto fun = getTraitFun<T>(node);
+  auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
+  trait.bind(uiElement, setterFun);
+}
+
 namespace xml {
 
-// We don't have a DTD so can't specify custom entities directly. Instead they
-// should be treated as strings by the parser and decoded using the following
-// functions.
-template<class T>
-T parseEntity(const std::string &entity) = delete;
-
-template<>
-bool parseEntity(const std::string &entity);
-
-template<>
-MenuType parseEntity(const std::string &entity);
-
-// xml_node::value() and xml_node::child_value() return const char *, which
-// frequently have untrimmed whitespace due to the xml formatting, e.g.
-// <x> 0 </x> or <locus> &true; </locus>. These functions trim the whitespace
-// and convert to the requested type.
-
-// Base templates
-template<class T>
-T getValue(const pugi::xml_node &node) = delete;
-
-template<class T>
-T getChildValue(const pugi::xml_node &node, const char *name) = delete;
-
-template<class T>
-T getChildValue(const pugi::xml_node &node) = delete;
-
-// int specializations
-template<>
-int getValue(const pugi::xml_node &node);
-
-template<>
-int getChildValue(const pugi::xml_node &node, const char *name);
-
-template<>
-int getChildValue(const pugi::xml_node &node);
-
-// float specializations
-template<>
-float getValue(const pugi::xml_node &node);
-
-template<>
-float getChildValue(const pugi::xml_node &node, const char *name);
-
-template<>
-float getChildValue(const pugi::xml_node &node);
-
-// bool specialization
-template<>
-bool getValue(const pugi::xml_node &node);
-
-template<>
-bool getChildValue(const pugi::xml_node &node, const char *name);
-
-template<>
-bool getChildValue(const pugi::xml_node &node);
-
-// std::string specialization
-template<>
-std::string getValue(const pugi::xml_node &node);
-
-template<>
-std::string getChildValue(const pugi::xml_node &node, const char *name);
-
-template<>
-std::string getChildValue(const pugi::xml_node &node);
-
-// MenuType specialization
+// MenuType specializations
 template<>
 MenuType getValue(const pugi::xml_node &node);
 
@@ -378,30 +335,9 @@ MenuType getChildValue(const pugi::xml_node &node, const char *name);
 template<>
 MenuType getChildValue(const pugi::xml_node &node);
 
-// Given an XML node representing a trait, produce a TraitFun which performs the
-// same operations. If the node does not represent a valid trait, then the
-// returned TraitFun<T> returns a value-initialized T.
-template<class T>
-TraitFun<T> getTraitFun(const pugi::xml_node &node) {
-  if (node.text()) {
-    auto value = getChildValue<T>(node);
-    return [value]() { return value; };
-  }
-  return []() -> T { return {}; };
-}
+template<>
+MenuType parseEntity(const std::string &entity);
 
-// Parse an entire menu from an XML stream
-void parseMenu(std::istream &is);
-
-} // namespace xml
-
-template<class T>
-void Traits::addTraitAndBind(UiElement *uiElement,
-                             TraitSetterFun<T> setterFun,
-                             const pugi::xml_node &node) {
-  auto fun = xml::getTraitFun<T>(node);
-  auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
-  trait.bind(uiElement, setterFun);
 }
 
 } // namespace engine::gui
