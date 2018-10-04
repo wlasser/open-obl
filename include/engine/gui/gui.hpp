@@ -89,7 +89,10 @@ class UiElement {
 enum class MenuType {
   AlchemyMenu,
   AudioMenu,
+  BookMenu,
+  BreathMenu,
   ClassMenu,
+  ContainerMenu,
   ControlsMenu,
   CreditsMenu,
   DialogMenu,

@@ -167,7 +167,10 @@ MenuType parseEntity(const std::string &entity) {
   const static std::unordered_map<std::string, MenuType> map{
       {"&AlchemyMenu;", MenuType::AlchemyMenu},
       {"&AudioMenu;", MenuType::AudioMenu},
+      {"&BookMenu;", MenuType::BookMenu},
+      {"&BreathMenu;", MenuType::BreathMenu},
       {"&ClassMenu;", MenuType::ClassMenu},
+      {"&ContainerMenu;", MenuType::ContainerMenu},
       {"&ControlsMenu;", MenuType::ControlsMenu},
       {"&CreditsMenu;", MenuType::CreditsMenu},
       {"&DialogMenu;", MenuType::DialogMenu},
