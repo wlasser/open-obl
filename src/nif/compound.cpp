@@ -520,4 +520,39 @@ std::istream &operator>>(std::istream &is, InterpBlendItem &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.axisA;
+  is >> t.perpAxisInA1;
+  is >> t.perpAxisInA2;
+
+  is >> t.pivotB;
+  is >> t.axisB;
+  is >> t.perpAxisInB2;
+
+  io::readBytes(is, t.minAngle);
+  io::readBytes(is, t.maxAngle);
+  io::readBytes(is, t.maxFriction);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, RagdollDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.planeA;
+  is >> t.twistA;
+
+  is >> t.pivotB;
+  is >> t.planeB;
+  is >> t.twistB;
+
+  io::readBytes(is, t.coneMaxAngle);
+  io::readBytes(is, t.planeMinAngle);
+  io::readBytes(is, t.planeMaxAngle);
+  io::readBytes(is, t.twistMinAngle);
+  io::readBytes(is, t.twistMaxAngle);
+  io::readBytes(is, t.maxFriction);
+
+  return is;
+}
 } // namespace nif::compound

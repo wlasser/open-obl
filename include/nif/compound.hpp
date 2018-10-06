@@ -697,6 +697,38 @@ struct InterpBlendItem : Versionable {
   explicit InterpBlendItem(Version version) : Versionable(version) {}
 };
 
+struct LimitedHingeDescriptor {
+  Vector4 pivotA{};
+  Vector4 axisA{};
+  Vector4 perpAxisInA1{};
+  Vector4 perpAxisInA2{};
+
+  Vector4 pivotB{};
+  Vector4 axisB{};
+  Vector4 perpAxisInB2{};
+
+  float minAngle{};
+  float maxAngle{};
+  float maxFriction{};
+};
+
+struct RagdollDescriptor {
+  Vector4 pivotA{};
+  Vector4 planeA{};
+  Vector4 twistA{};
+
+  Vector4 pivotB{};
+  Vector4 planeB{};
+  Vector4 twistB{};
+
+  float coneMaxAngle{};
+  float planeMinAngle{};
+  float planeMaxAngle{};
+  float twistMinAngle{};
+  float twistMaxAngle{};
+  float maxFriction{};
+};
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, StringPalette &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
@@ -835,6 +867,8 @@ std::istream &operator>>(std::istream &is, KeyGroup<T> &t) {
 std::istream &operator>>(std::istream &is, ControlledBlock &t);
 std::istream &operator>>(std::istream &is, AVObject &t);
 std::istream &operator>>(std::istream &is, InterpBlendItem &t);
+std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t);
+std::istream &operator>>(std::istream &is, RagdollDescriptor &t);
 
 } // namespace compound
 } // namespace nif

@@ -1818,4 +1818,47 @@ std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
   return is;
 }
 
+// MISC specialization
+template<>
+uint32_t MISC::size() const {
+  return data.editorID.entireSize()
+      + (data.name ? data.name->entireSize() : 0u)
+      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
+      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
+      + (data.textureHash ? data.textureHash->entireSize() : 0u)
+      + (data.itemScript ? data.itemScript->entireSize() : 0u)
+      + (data.icon ? data.icon->entireSize() : 0u)
+      + data.data.entireSize();
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::MISC &t,
+                         std::size_t /*size*/) {
+  os << t.editorID;
+  if (t.name) os << *t.name;
+  if (t.modelFilename) os << *t.modelFilename;
+  if (t.boundRadius) os << *t.boundRadius;
+  if (t.textureHash) os << *t.textureHash;
+  if (t.icon) os << *t.icon;
+  if (t.itemScript) os << *t.itemScript;
+  os << t.data;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "FULL");
+  readRecord(is, t.modelFilename, "MODL");
+  readRecord(is, t.boundRadius, "MODB");
+  readRecord(is, t.textureHash, "MODT");
+  readRecord(is, t.icon, "ICON");
+  readRecord(is, t.itemScript, "SCRI");
+  readRecord(is, t.data, "DATA");
+
+  return is;
+}
+
 } // namespace record

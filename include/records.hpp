@@ -398,6 +398,12 @@ inline constexpr DATA_LIGH::Flag operator&(DATA_LIGH::Flag a,
   return DATA_LIGH::Flag(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
 }
 
+struct DATA_MISC : Tuplifiable<int32_t, float> {
+  int32_t value{};
+  float weight{};
+  MAKE_AS_TUPLE(&value, &weight);
+};
+
 struct DATA_MGEF {
   enum class Flag : uint32_t {
     None = 0u,
@@ -933,6 +939,7 @@ using DATA_FACT = Subrecord<raw::DATA_FACT, "DATA"_rec>;
 using DATA_GMST = Subrecord<raw::DATA_GMST, "DATA"_rec>;
 using DATA_HAIR = Subrecord<raw::DATA_HAIR, "DATA"_rec>;
 using DATA_LIGH = Subrecord<raw::DATA_LIGH, "DATA"_rec>;
+using DATA_MISC = Subrecord<raw::DATA_MISC, "DATA"_rec>;
 using DATA_MGEF = Subrecord<raw::DATA_MGEF, "DATA"_rec>;
 using DATA_RACE = Subrecord<raw::DATA_RACE, "DATA"_rec>;
 using DATA_REFR = Subrecord<raw::DATA_REFR, "DATA"_rec>;
@@ -1232,6 +1239,17 @@ struct LIGH {
   std::optional<record::SNAM_LIGH> sound{};
 };
 
+struct MISC {
+  record::EDID editorID{};
+  std::optional<record::FULL> name{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> itemScript{};
+  std::optional<record::ICON> icon{};
+  record::DATA_MISC data{};
+};
+
 struct STAT {
   record::EDID editorID{};
   record::MODL modelFilename{};
@@ -1247,8 +1265,8 @@ struct ALCH {
   record::MODL modelFilename{};
   std::optional<record::MODB> boundRadius{};
   std::optional<record::MODT> textureHash{};
-  std::optional<record::ICON> iconFilename{};
   std::optional<record::SCRI> itemScript{};
+  std::optional<record::ICON> iconFilename{};
   record::DATA_ALCH itemWeight{};
   record::ENIT itemValue{};
   std::vector<Effect> effects{};
@@ -1344,6 +1362,7 @@ using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
 using BSGN = Record<raw::BSGN, "BSGN"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
+using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
@@ -1365,6 +1384,7 @@ DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(SPEL);
 DECLARE_SPECIALIZED_RECORD(BSGN);
 DECLARE_SPECIALIZED_RECORD(LIGH);
+DECLARE_SPECIALIZED_RECORD(MISC);
 DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);

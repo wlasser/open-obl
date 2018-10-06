@@ -241,6 +241,19 @@ struct ShapeCollection : Shape {
 };
 inline ShapeCollection::~ShapeCollection() = default;
 
+struct ListShape : ShapeCollection, Versionable {
+  basic::UInt numSubShapes{};
+  std::vector<basic::Ref<Shape>> subShapes{};
+  compound::HavokMaterial material{version};
+  compound::hkWorldObjCinfoProperty childShapeProperty{};
+  compound::hkWorldObjCinfoProperty childFilterProperty{};
+  basic::UInt numUnknownInts{};
+  std::vector<basic::UInt> unknownInts{};
+
+  void read(std::istream &is) override;
+  explicit ListShape(Version version) : Versionable(version) {}
+};
+
 struct PackedNiTriStripsShape : ShapeCollection, Versionable {
   basic::UShort numSubShapes{};
   std::vector<nif::compound::OblivionSubShape> subShapes{};
@@ -303,6 +316,28 @@ struct Entity : WorldObject {
   ~Entity() override = 0;
 };
 inline Entity::~Entity() = default;
+
+struct Constraint : Serializable {
+  basic::UInt numEntities{};
+  std::vector<basic::Ptr<Entity>> entities{};
+  basic::UInt priority{};
+
+  void read(std::istream &is) override;
+  ~Constraint() override = 0;
+};
+inline Constraint::~Constraint() = default;
+
+struct LimitedHingeConstraint : Constraint {
+  compound::LimitedHingeDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+struct RagdollConstraint : Constraint {
+  compound::RagdollDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
 
 // Ignores rotation and translation
 struct RigidBody : Entity {

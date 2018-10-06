@@ -46,6 +46,17 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
 }
 
 template<>
+void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
+  auto rec = record::readRecord<record::MISC>(is);
+  StaticEntry entry{};
+  if (rec.data.modelFilename) {
+    entry.modelFilename = "meshes/" +
+        conversions::normalizePath(rec.data.modelFilename->data);
+  }
+  staticMgr->statics[rec.id] = std::move(entry);
+}
+
+template<>
 void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
   InteriorCellEntry entry{};
   entry.tell = is.tellg();

@@ -104,6 +104,20 @@ void ShapeCollection::read(std::istream &is) {
   Shape::read(is);
 }
 
+void ListShape::read(std::istream &is) {
+  ShapeCollection::read(is);
+  io::readBytes(is, numSubShapes);
+  subShapes.reserve(numSubShapes);
+  for (auto i = 0; i < numSubShapes; ++i) {
+    is >> subShapes.emplace_back();
+  }
+  is >> material;
+  is >> childShapeProperty;
+  is >> childFilterProperty;
+  io::readBytes(is, numUnknownInts);
+  io::readBytes(is, unknownInts, numUnknownInts);
+}
+
 void PackedNiTriStripsShape::read(std::istream &is) {
   ShapeCollection::read(is);
   io::readBytes(is, numSubShapes);
@@ -151,6 +165,26 @@ void SimpleShapePhantom::read(std::istream &is) {
 
 void Entity::read(std::istream &is) {
   WorldObject::read(is);
+}
+
+void Constraint::read(std::istream &is) {
+  Serializable::read(is);
+  io::readBytes(is, numEntities);
+  entities.reserve(numEntities);
+  for (int i = 0; i < numEntities; ++i) {
+    is >> entities.emplace_back();
+  }
+  io::readBytes(is, priority);
+}
+
+void LimitedHingeConstraint::read(std::istream &is) {
+  Constraint::read(is);
+  is >> descriptor;
+}
+
+void RagdollConstraint::read(std::istream &is) {
+  Constraint::read(is);
+  is >> descriptor;
 }
 
 void RigidBody::read(std::istream &is) {

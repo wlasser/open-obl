@@ -36,6 +36,9 @@ template<>
 void InitialProcessor::readRecord<record::LIGH>(std::istream &);
 
 template<>
+void InitialProcessor::readRecord<record::MISC>(std::istream &);
+
+template<>
 void InitialProcessor::readRecord<record::CELL>(std::istream &);
 
 template<>
