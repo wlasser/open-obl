@@ -81,6 +81,11 @@ class UiElement {
     set_menufade(explorefade);
   }
 
+  virtual void set_user(int index, int value) {}
+  virtual void set_user(int index, float value) {}
+  virtual void set_user(int index, bool value) {}
+  virtual void set_user(int index, std::string value) {}
+
   // Every UiElement is required to have a name which identifies it uniquely in
   // the scope of the surrounding menu, or if the UiElement is a menu, then in
   // the scope of the application.
@@ -338,6 +343,10 @@ class Traits {
   // to the given uiElement and return true, otherwise return false.
   bool addAndBindImplementationTrait(const pugi::xml_node &node,
                                      UiElement *uiElement);
+
+  // If the given XML node corresponds to a user trait, then bind it to the
+  // given uiElement and return true, otherwise return false.
+  bool addAndBindUserTrait(const pugi::xml_node &node, UiElement *uiElement);
 
   // For each trait v, make an edge from u to v if u is a dependency of v.
   // This will throw if a trait has a nonexistent dependency.

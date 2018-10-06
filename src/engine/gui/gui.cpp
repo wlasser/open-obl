@@ -2,6 +2,7 @@
 #include "engine/gui/gui.hpp"
 #include "engine/gui/xml.hpp"
 #include "engine/settings.hpp"
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
@@ -59,6 +60,25 @@ bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
     return false;
   }
   return true;
+}
+
+bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
+                                 UiElement *uiElement) {
+  std::string nodeName{node.name()};
+  if (boost::algorithm::starts_with(nodeName, "user")) {
+    int index{0};
+    try {
+      index = std::stoi(nodeName.substr(4));
+    } catch (const std::exception &e) {
+      return false;
+    }
+    if (index < 0) return false;
+    // The UiElement does not supply any type information, so we do not know
+    // what type this trait is supposed to be.
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void Traits::addTraitDependencies() {
