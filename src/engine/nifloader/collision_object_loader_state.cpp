@@ -131,17 +131,27 @@ CollisionObjectVisitor::generateRigidBodyInfo(nif::bhk::RigidBody *block) const 
 
   // Bullet needs a diagonalized inertia tensor given as a vector, and the
   // file stores it as a 3x4 matrix. We ignore the last (w) column and
-  // compute the eigenvalues.
+  // compute the eigenvalues. Also we need to change from BS coordinates.
   const auto &hkI = block->inertiaTensor;
-  Ogre::Matrix3 inertiaTensor{hkI.m11, hkI.m12, hkI.m13,
-                              hkI.m21, hkI.m22, hkI.m23,
-                              hkI.m31, hkI.m32, hkI.m33};
+  Ogre::Matrix3 bsI{hkI.m11, hkI.m12, hkI.m13,
+                    hkI.m21, hkI.m22, hkI.m23,
+                    hkI.m31, hkI.m32, hkI.m33};
+  Ogre::Matrix3 inertiaTensor{fromBSCoordinates(bsI)};
   std::array<Ogre::Vector3, 3> principalAxes{};
   Ogre::Vector3 principalMoments{};
   inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
                                     principalAxes.data());
-  // The principal axes for a rotation matrix and we have the diagonalization
+  mLogger->trace(
+      "Diagonalized inertia tensor, eigenvalues and eigenvectors are");
+  for (int i = 0; i < 3; ++i) {
+    mLogger->trace(" * {}, {}", principalMoments[i], principalAxes[i]);
+  }
+
+  // We have the diagonalization
   // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
+  // To do this properly we should change to the principal frame but for now
+  // assume the principal axes are coordinate-axis aligned (this seems to hold
+  // in practice).
   // TODO: Change to principal frame
 
   // The units for these are the same in Bullet and Havok
