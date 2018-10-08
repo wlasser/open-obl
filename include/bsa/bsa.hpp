@@ -16,7 +16,7 @@ namespace bsa {
 
 namespace impl {
 
-class BSAIterator;
+class BsaIterator;
 
 } // namespace impl
 
@@ -36,7 +36,7 @@ class FileData : public io::memstream {
 
 uint64_t genHash(std::string, bool);
 
-class BSAReader {
+class BsaReader {
  public:
   enum class ArchiveFlag : uint32_t {
     None = 0u,
@@ -62,8 +62,8 @@ class BSAReader {
     Misc = 1u << 8u
   };
 
-  using iterator = impl::BSAIterator;
-  friend impl::BSAIterator;
+  using iterator = impl::BsaIterator;
+  friend impl::BsaIterator;
 
   typedef struct {
     uint32_t size;
@@ -80,11 +80,11 @@ class BSAReader {
   } FolderRecord;
 
   class FolderAccessor {
-    friend BSAReader;
+    friend BsaReader;
    private:
     uint64_t hash;
-    const BSAReader &owner;
-    FolderAccessor(uint64_t hash, const BSAReader &owner) :
+    const BsaReader &owner;
+    FolderAccessor(uint64_t hash, const BsaReader &owner) :
         hash(hash), owner(owner) {}
    public:
     FileData operator[](uint64_t) const;
@@ -116,7 +116,7 @@ class BSAReader {
   bool readFileNames();
 
  public:
-  explicit BSAReader(std::string);
+  explicit BsaReader(std::string);
 
   bool contains(std::string folder, std::string file) const;
 
@@ -134,18 +134,18 @@ class BSAReader {
   FolderAccessor operator[](std::string) const;
 };
 
-inline BSAReader::ArchiveFlag operator|(BSAReader::ArchiveFlag a,
-                                        BSAReader::ArchiveFlag b) {
-  return static_cast<BSAReader::ArchiveFlag>(static_cast<uint32_t>(a)
+inline BsaReader::ArchiveFlag operator|(BsaReader::ArchiveFlag a,
+                                        BsaReader::ArchiveFlag b) {
+  return static_cast<BsaReader::ArchiveFlag>(static_cast<uint32_t>(a)
       | static_cast<uint32_t>(b));
 }
-inline BSAReader::ArchiveFlag operator&(BSAReader::ArchiveFlag a,
-                                        BSAReader::ArchiveFlag b) {
-  return static_cast<BSAReader::ArchiveFlag>(static_cast<uint32_t>(a)
+inline BsaReader::ArchiveFlag operator&(BsaReader::ArchiveFlag a,
+                                        BsaReader::ArchiveFlag b) {
+  return static_cast<BsaReader::ArchiveFlag>(static_cast<uint32_t>(a)
       & static_cast<uint32_t>(b));
 }
 
-// Public version of BSAReader::FolderRecord, for iterating.
+// Public version of BsaReader::FolderRecord, for iterating.
 // I am unsatisfied with how the filenames are duplicated in memory between
 // these records and the existing private ones.
 struct FolderRecord {
@@ -155,7 +155,7 @@ struct FolderRecord {
 
 namespace impl {
 
-class BSAIterator {
+class BsaIterator {
  public:
   // Iterator traits
   using value_type = bsa::FolderRecord;
@@ -164,7 +164,7 @@ class BSAIterator {
   using reference = const value_type &;
   using iterator_category = std::bidirectional_iterator_tag;
 
-  explicit BSAIterator(BSAReader::RecordMap::const_iterator currentRecord,
+  explicit BsaIterator(BsaReader::RecordMap::const_iterator currentRecord,
                        bool isEnd = false) : currentRecord(currentRecord) {
     if (!isEnd) updateCurrentPublicRecord();
   }
@@ -172,18 +172,18 @@ class BSAIterator {
   reference operator*() const;
   pointer operator->() const;
 
-  BSAIterator &operator++();
-  const BSAIterator operator++(int);
-  BSAIterator &operator--();
-  const BSAIterator operator--(int);
+  BsaIterator &operator++();
+  const BsaIterator operator++(int);
+  BsaIterator &operator--();
+  const BsaIterator operator--(int);
 
-  bool operator==(const BSAIterator &rhs);
-  bool operator!=(const BSAIterator &rhs) {
+  bool operator==(const BsaIterator &rhs);
+  bool operator!=(const BsaIterator &rhs) {
     return !operator==(rhs);
   }
 
  private:
-  BSAReader::RecordMap::const_iterator currentRecord{};
+  BsaReader::RecordMap::const_iterator currentRecord{};
   mutable bsa::FolderRecord currentPublicRecord{};
 
   reference updateCurrentPublicRecord() const;

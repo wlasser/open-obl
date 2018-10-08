@@ -70,7 +70,7 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
-  bsaArchiveFactory = std::make_unique<engine::BSAArchiveFactory>();
+  bsaArchiveFactory = std::make_unique<engine::BsaArchiveFactory>();
   archiveMgr.addArchiveFactory(bsaArchiveFactory.get());
 
   // Grab the data folder from the ini file

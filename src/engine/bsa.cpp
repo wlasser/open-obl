@@ -13,11 +13,11 @@ namespace {
 class BSAArchive : public Ogre::Archive {
  private:
   using BSAArchiveStream = Ogre::OgreStandardStream<bsa::FileData>;
-  // BSAReader loads on construction, but we want to defer reading the archive
+  // BsaReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.
   std::string name = "";
-  std::optional<bsa::BSAReader> reader = std::nullopt;
+  std::optional<bsa::BsaReader> reader = std::nullopt;
 
   template<class T>
   std::shared_ptr<std::vector<T>>
@@ -105,7 +105,7 @@ Ogre::FileInfo BSAArchive::getFileInfo(const std::filesystem::path &path) const 
   // 'path' mean, so we let StringUtils deal with it.
   Ogre::StringUtil::splitFilename(path, info.basename, info.path);
   if (path.has_filename()) {
-    // BSAReader transparently decompresses data, so it will appear to the user
+    // BsaReader transparently decompresses data, so it will appear to the user
     // that all the data is uncompressed.
     info.uncompressedSize = (*reader)[info.path][info.basename].size();
     info.compressedSize = info.uncompressedSize;
@@ -187,7 +187,7 @@ Ogre::DataStreamPtr BSAArchive::open(const Ogre::String &filename,
 
 std::time_t BSAArchive::getModifiedTime(const Ogre::String &filename) const {
   // BSA files don't track modification time, best we could do would be the
-  // modification time of the entire archive, but bsa::BSAReader doesn't track
+  // modification time of the entire archive, but bsa::BsaReader doesn't track
   // that so we'll just return the epoch.
   return 0;
 }
@@ -200,17 +200,17 @@ bool BSAArchive::isReadOnly() const {
   return true;
 }
 
-Ogre::Archive *BSAArchiveFactory::createInstance(const Ogre::String &name,
+Ogre::Archive *BsaArchiveFactory::createInstance(const Ogre::String &name,
                                                  bool readOnly) {
   if (!readOnly) return nullptr;
   return new BSAArchive(name, getType());
 }
 
-void BSAArchiveFactory::destroyInstance(Ogre::Archive *ptr) {
+void BsaArchiveFactory::destroyInstance(Ogre::Archive *ptr) {
   delete ptr;
 }
 
-const Ogre::String &BSAArchiveFactory::getType() const {
+const Ogre::String &BsaArchiveFactory::getType() const {
   static Ogre::String type = "BSA";
   return type;
 }

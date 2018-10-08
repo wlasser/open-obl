@@ -28,7 +28,7 @@ namespace engine {
 
 class Application : public Ogre::FrameListener {
  private:
-  std::unique_ptr<BSAArchiveFactory> bsaArchiveFactory{};
+  std::unique_ptr<BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
 
   std::ifstream esmStream;

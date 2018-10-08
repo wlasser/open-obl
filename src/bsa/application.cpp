@@ -55,7 +55,7 @@ void ApplicationWindow::open_file_view(const Glib::RefPtr<Gio::File> &file) {
 
   page.scrolledWindow->add(*page.treeView);
 
-  page.reader = std::make_unique<BSAReader>(file->get_parse_name());
+  page.reader = std::make_unique<BsaReader>(file->get_parse_name());
   for (const FolderRecord &folder : *page.reader) {
     const Gtk::TreeRow &row = *(page.treeStore->append());
     uint64_t folderHash = genHash(folder.name, true);

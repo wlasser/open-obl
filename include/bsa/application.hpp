@@ -43,7 +43,7 @@ struct BsaTreePage {
 
   // Model
   Glib::RefPtr<Gtk::TreeStore> treeStore{};
-  std::unique_ptr<BSAReader> reader{};
+  std::unique_ptr<BsaReader> reader{};
 };
 
 class ApplicationWindow : public Gtk::ApplicationWindow {

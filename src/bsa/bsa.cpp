@@ -61,19 +61,19 @@ uint64_t bsa::genHash(std::string path, bool isFolder) {
   return hash + hash2;
 }
 
-bsa::BSAReader::FolderAccessor
-bsa::BSAReader::operator[](std::string folder) const {
-  return bsa::BSAReader::FolderAccessor(bsa::genHash(std::move(folder), true),
+bsa::BsaReader::FolderAccessor
+bsa::BsaReader::operator[](std::string folder) const {
+  return bsa::BsaReader::FolderAccessor(bsa::genHash(std::move(folder), true),
                                         *this);
 }
 
 bsa::FileData
-bsa::BSAReader::FolderAccessor::operator[](std::string file) const {
+bsa::BsaReader::FolderAccessor::operator[](std::string file) const {
   return (*this)[bsa::genHash(std::move(file), false)];
 }
 
 bsa::FileData
-bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
+bsa::BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
   const FolderRecord &folder = owner.folderRecords.at(hash);
   const FileRecord &file = folder.files.at(fileHash);
   // Unset bits higher than the toggle compression bit
@@ -83,7 +83,7 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   owner.is.seekg(file.offset);
   // Skip over full path if given
   if (static_cast<bool>(owner.archiveFlags
-      & bsa::BSAReader::ArchiveFlag::RetainFileNames)) {
+      & bsa::BsaReader::ArchiveFlag::RetainFileNames)) {
     io::readBString(owner.is);
   }
   // Get size of uncompressed data if compressed
@@ -107,7 +107,7 @@ bsa::BSAReader::FolderAccessor::operator[](uint64_t fileHash) const {
   return bsa::FileData{std::move(data), uncompressedSize};
 }
 
-bool bsa::BSAReader::readHeader() {
+bool bsa::BsaReader::readHeader() {
   char fileId[4]{};
   if (!io::safeRead(is, fileId, 4) || strcmp(fileId, FILE_ID) != 0)
     return false;
@@ -132,7 +132,7 @@ bool bsa::BSAReader::readHeader() {
   return true;
 }
 
-bool bsa::BSAReader::readRecords() {
+bool bsa::BsaReader::readRecords() {
   // The file record blocks are read during the folder record parse
   // and not after, so we have to jump over them again at the end. To
   // do that we keep track of the largest position in the file that we
@@ -193,7 +193,7 @@ bool bsa::BSAReader::readRecords() {
   return true;
 }
 
-bool bsa::BSAReader::readFileNames() {
+bool bsa::BsaReader::readFileNames() {
   // The file names are listed in the same order as in the BSA, but
   // this is guaranteed to be in increasing order by hash.
   // Conveniently, std::map also stores its elements in increasing
@@ -206,7 +206,7 @@ bool bsa::BSAReader::readFileNames() {
   return true;
 }
 
-bsa::BSAReader::BSAReader(std::string filename) : is(filename) {
+bsa::BsaReader::BsaReader(std::string filename) : is(filename) {
   if (!is.good()) {
     throw std::runtime_error(boost::str(
         boost::format("Failed to open archive '%s'") % filename));
@@ -218,7 +218,7 @@ bsa::BSAReader::BSAReader(std::string filename) : is(filename) {
   }
 }
 
-bool bsa::BSAReader::contains(std::string folder, std::string file) const {
+bool bsa::BsaReader::contains(std::string folder, std::string file) const {
   auto folderHash = bsa::genHash(std::move(folder), true);
   auto folderRecord = folderRecords.find(folderHash);
   if (folderRecord == folderRecords.end()) return false;
@@ -228,15 +228,15 @@ bool bsa::BSAReader::contains(std::string folder, std::string file) const {
   return files.find(fileHash) != files.end();
 }
 
-std::optional<bsa::BSAReader::FileRecord>
-bsa::BSAReader::getRecord(std::string folder, std::string file) const {
+std::optional<bsa::BsaReader::FileRecord>
+bsa::BsaReader::getRecord(std::string folder, std::string file) const {
   auto folderHash = bsa::genHash(std::move(folder), true);
   auto fileHash = bsa::genHash(std::move(file), false);
   return getRecord(folderHash, fileHash);
 }
 
-std::optional<bsa::BSAReader::FileRecord>
-bsa::BSAReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
+std::optional<bsa::BsaReader::FileRecord>
+bsa::BsaReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
   auto folderRecord = folderRecords.find(folderHash);
   if (folderRecord == folderRecords.end()) return std::nullopt;
 
@@ -247,17 +247,17 @@ bsa::BSAReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
   return fileRecord->second;
 }
 
-bsa::BSAReader::iterator bsa::BSAReader::begin() const {
-  return bsa::BSAReader::iterator{folderRecords.begin()};
+bsa::BsaReader::iterator bsa::BsaReader::begin() const {
+  return bsa::BsaReader::iterator{folderRecords.begin()};
 }
 
-bsa::BSAReader::iterator bsa::BSAReader::end() const {
-  return bsa::BSAReader::iterator{folderRecords.end(), true};
+bsa::BsaReader::iterator bsa::BsaReader::end() const {
+  return bsa::BsaReader::iterator{folderRecords.end(), true};
 }
 
 namespace bsa::impl {
 
-BSAIterator::reference BSAIterator::updateCurrentPublicRecord() const {
+BsaIterator::reference BsaIterator::updateCurrentPublicRecord() const {
   currentPublicRecord.name = currentRecord->second.name;
   currentPublicRecord.files.clear();
   for (const auto&[hash, record] : currentRecord->second.files) {
@@ -266,39 +266,39 @@ BSAIterator::reference BSAIterator::updateCurrentPublicRecord() const {
   return currentPublicRecord;
 }
 
-BSAIterator::reference BSAIterator::operator*() const {
+BsaIterator::reference BsaIterator::operator*() const {
   updateCurrentPublicRecord();
   return currentPublicRecord;
 }
 
-BSAIterator::pointer BSAIterator::operator->() const {
+BsaIterator::pointer BsaIterator::operator->() const {
   updateCurrentPublicRecord();
   return &currentPublicRecord;
 }
 
-BSAIterator &BSAIterator::operator++() {
+BsaIterator &BsaIterator::operator++() {
   ++currentRecord;
   return *this;
 }
 
-const BSAIterator BSAIterator::operator++(int) {
+const BsaIterator BsaIterator::operator++(int) {
   auto tmp = *this;
   ++currentRecord;
   return tmp;
 }
 
-BSAIterator &BSAIterator::operator--() {
+BsaIterator &BsaIterator::operator--() {
   --currentRecord;
   return *this;
 }
 
-const BSAIterator BSAIterator::operator--(int) {
+const BsaIterator BsaIterator::operator--(int) {
   auto tmp = *this;
   --currentRecord;
   return tmp;
 }
 
-bool BSAIterator::operator==(const BSAIterator &other) {
+bool BsaIterator::operator==(const BsaIterator &other) {
   return currentRecord == other.currentRecord;
 }
 

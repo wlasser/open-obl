@@ -6,9 +6,9 @@
 
 namespace engine {
 
-class BSAArchiveFactory : public Ogre::ArchiveFactory {
+class BsaArchiveFactory : public Ogre::ArchiveFactory {
  public:
-  ~BSAArchiveFactory() override = default;
+  ~BsaArchiveFactory() override = default;
 
   Ogre::Archive *createInstance(const Ogre::String &name,
                                 bool readOnly) override;
