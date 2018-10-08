@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/modules")
 
+option(USE_IWYU "Run include-what-you-use when building" OFF)
+
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(OGRE 1.11 REQUIRED COMPONENTS)
@@ -228,6 +230,20 @@ target_link_libraries(OpenOblivion PRIVATE
         stdc++fs
         GSL
         pugixml)
+
+if (USE_IWYU)
+    find_program(IWYU_PATH NAMES include-what-you-use iwyu)
+    if (IWYU_PATH)
+        set_property(TARGET OpenOblivionIO PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionNif PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionRecord PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionOgre PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionOgreBullet PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionSDL PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivionEngine PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+        set_property(TARGET OpenOblivion PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
+    endif ()
+endif ()
 
 find_package(PkgConfig)
 if (PkgConfig_FOUND)
