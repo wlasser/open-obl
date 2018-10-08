@@ -2,6 +2,7 @@
 #define OPENOBLIVION_IO_IO_HPP
 
 #include <boost/format.hpp>
+#include <cstddef>
 #include <istream>
 #include <stdexcept>
 #include <string>

@@ -1,12 +1,12 @@
 #ifndef OPENOBLIVION_RECORD_IO_HPP
 #define OPENOBLIVION_RECORD_IO_HPP
 
-#include "io/io.hpp"
 #include "io/read_bytes.hpp"
 #include "io/write_bytes.hpp"
 #include "record/exceptions.hpp"
 #include "record/tuplifiable.hpp"
 #include "record/record_header.hpp"
+#include <cstddef>
 #include <istream>
 #include <optional>
 #include <ostream>

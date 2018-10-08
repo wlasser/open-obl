@@ -1,8 +1,9 @@
 #ifndef OPENOBLIVION_IO_READ_BYTES_HPP
 #define OPENOBLIVION_IO_READ_BYTES_HPP
 
-#include "io.hpp"
+#include "io/io.hpp"
 #include <array>
+#include <cstddef>
 #include <istream>
 #include <memory>
 #include <optional>

@@ -1,4 +1,3 @@
-#include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/text_resource.hpp"
 #include <Ogre.h>
 #include <istream>

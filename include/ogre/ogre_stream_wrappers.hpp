@@ -2,6 +2,7 @@
 #define OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
 
 #include <OGRE/OgreDataStream.h>
+#include <cstddef>
 #include <iosfwd>
 #include <memory>
 #include <type_traits>

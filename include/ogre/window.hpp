@@ -1,7 +1,9 @@
 #ifndef OPENOBLIVION_OGRE_WINDOW_HPP
 #define OPENOBLIVION_OGRE_WINDOW_HPP
 
-#include <Ogre.h>
+#include <OgrePrerequisites.h>
+#include <OgreRenderWindow.h>
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>

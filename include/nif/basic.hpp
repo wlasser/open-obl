@@ -2,6 +2,7 @@
 #define OPENOBLIVION_NIF_BASIC_HPP
 
 #include "nif/versionable.hpp"
+#include "io/read_bytes.hpp"
 #include <cstdint>
 #include <limits>
 #include <stdexcept>

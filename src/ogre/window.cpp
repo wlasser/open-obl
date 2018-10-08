@@ -1,4 +1,6 @@
 #include "ogre/window.hpp"
+#include <OgreException.h>
+#include <OgreRoot.h>
 
 namespace Ogre {
 

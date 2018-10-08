@@ -1,4 +1,3 @@
-#include "io/io.hpp"
 #include "record/io.hpp"
 #include "record/group.hpp"
 

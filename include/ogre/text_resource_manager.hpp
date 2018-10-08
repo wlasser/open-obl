@@ -2,6 +2,8 @@
 #define OPENOBLIVION_OGRE_TEXT_RESOURCE_MANAGER_HPP
 
 #include "ogre/text_resource.hpp"
+#include <OgrePrerequisites.h>
+#include <OgreResource.h>
 #include <OgreResourceManager.h>
 #include <OgreSingleton.h>
 
