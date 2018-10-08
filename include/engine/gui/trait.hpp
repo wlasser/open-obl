@@ -101,6 +101,26 @@ class UserTraitInterface {
   }
 };
 
+// This avoids writing the boilerplate necessary because UserTraitInterface
+// does not derived from UiElement. Obviously this is not an optimal solution.
+// TODO: Replace UserTraitInterface with boost::hana reflection.
+#define BUILD_USER_TRAIT_INTERFACE(interface) \
+TraitTypeId userTraitType(int index) const override { \
+  return interface.userTraitType(index); \
+} \
+void set_user(int index, int value) override { \
+  return interface.set_user(index, value); \
+} \
+void set_user(int index, float value) override { \
+  return interface.set_user(index, value); \
+} \
+void set_user(int index, bool value) override { \
+  return interface.set_user(index, value); \
+} \
+void set_user(int index, std::string value) override { \
+  return interface.set_user(index, value); \
+}
+
 // TraitFun represents a function used to set/compute the value of the dynamic
 // representative of a trait. It needs to keep track of the names of its
 // immediate dependencies as edges in the dependency graph cannot be drawn until

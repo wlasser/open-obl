@@ -7,6 +7,9 @@
 namespace engine::gui {
 
 class UiElement {
+ protected:
+  std::string mName{};
+
  public:
   // Position of left edge, relative to position of locus ancestor
   virtual void set_x(int x) {}
@@ -58,8 +61,13 @@ class UiElement {
   // Every UiElement is required to have a name which identifies it uniquely in
   // the scope of the surrounding menu, or if the UiElement is a menu, then in
   // the scope of the application.
-  virtual std::string get_name() const = 0;
-  virtual void set_name(std::string name) = 0;
+  virtual std::string get_name() const {
+    return mName;
+  }
+
+  virtual void set_name(std::string name) {
+    mName = name;
+  }
 };
 
 } // namespace engine::gui

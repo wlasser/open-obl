@@ -2,6 +2,8 @@
 #define OPENOBLIVION_ENGINE_GUI_GUI_HPP
 
 #include "enum_template.hpp"
+#include "engine/gui/menu.hpp"
+#include "engine/gui/menus/loading_menu.hpp"
 #include "engine/gui/trait.hpp"
 #include "engine/gui/traits.hpp"
 #include "engine/gui/trait_selector.hpp"
@@ -61,131 +63,6 @@
 // a concrete node (indeed they do not even have a concrete representative).
 
 namespace engine::gui {
-
-// Each menu must be one of the following types, given in the XML by its <class>
-enum class MenuType {
-  AlchemyMenu,
-  AudioMenu,
-  BookMenu,
-  BreathMenu,
-  ClassMenu,
-  ContainerMenu,
-  ControlsMenu,
-  CreditsMenu,
-  DialogMenu,
-  EffectSettingMenu,
-  EnchantmentMenu,
-  GameplayMenu,
-  GenericMenu,
-  HUDInfoMenu,
-  HUDMainMenu,
-  HUDSubtitleMenu,
-  InventoryMenu,
-  LevelUpMenu,
-  LoadingMenu,
-  LoadMenu,
-  LockPickMenu,
-  MagicMenu,
-  MagicPopupMenu,
-  MainMenu,
-  MapMenu,
-  MessageMenu,
-  NegotiateMenu,
-  OptionsMenu,
-  PauseMenu,
-  PersuasionMenu,
-  QuantityMenu,
-  QuickKeysMenu,
-  RaceSexMenu,
-  RechargeMenu,
-  RepairMenu,
-  SaveMenu,
-  SigilStoneMenu,
-  SkillsMenu,
-  SleepWaitMenu,
-  SpellMakingMenu,
-  SpellPurchaseMenu,
-  StatsMenu,
-  TextEditMenu,
-  TrainingMenu,
-  VideoMenu,
-  N
-};
-
-// The idea here is that we have a shallow inheritance hierarchy parameterised
-// by the MenuType enum. Specialising this class template and overriding its
-// corresponding methods allows us to do virtual dispatch based on a runtime
-// enum value, without manually checking for each value.
-template<MenuType Type>
-class Menu : public UiElement {
- protected:
-  std::string mName{};
-
- public:
-  std::string get_name() const override {
-    return mName;
-  }
-
-  void set_name(std::string name) override {
-    mName = name;
-  }
-};
-
-template<>
-class Menu<MenuType::LoadingMenu> : public UiElement {
- private:
-  std::string mName{};
-
-  int mStepNumber{};
-  std::string mLoadImage{};
-  std::string mLoadText{};
-  int mCurrentProgress{};
-  int mMaximumProgress{};
-  std::string mDebugText{};
-
-  UserTraitInterface<int, std::string, std::string, int, int, std::string>
-      mInterface{std::make_tuple(&mStepNumber,
-                                 &mLoadImage,
-                                 &mLoadText,
-                                 &mCurrentProgress,
-                                 &mMaximumProgress,
-                                 &mDebugText)};
-
- public:
-  // TODO: Use inheritance or something to fix this boilerplate
-
-  TraitTypeId userTraitType(int index) const override {
-    return mInterface.userTraitType(index);
-  }
-
-  void set_user(int index, int value) override {
-    return mInterface.set_user(index, value);
-  }
-
-  void set_user(int index, float value) override {
-    return mInterface.set_user(index, value);
-  }
-
-  void set_user(int index, bool value) override {
-    return mInterface.set_user(index, value);
-  }
-
-  void set_user(int index, std::string value) override {
-    return mInterface.set_user(index, value);
-  }
-
-  std::string get_name() const override {
-    return mName;
-  }
-
-  void set_name(std::string name) override {
-    mName = name;
-  }
-};
-
-// Shorthands for each concrete menu
-// TODO: Shorthands for the rest of the menu types
-using LoadingMenu = Menu<MenuType::LoadingMenu>;
 
 // All the Menu<MenuType> inherit from UiElement, so why not just do everything
 // with a UiElement* ? Well we want to select the value of MenuType at runtime
