@@ -6,6 +6,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <filesystem>
 #include <fstream>
+#include <mutex>
 
 class GameSettings {
  private:
@@ -103,8 +104,9 @@ class GameSettings {
 template<class T>
 class GameSetting {
  private:
-  T value;
-  bool loaded{false};
+  mutable T value;
+  mutable bool loaded{false};
+  mutable std::mutex mutables{};
   /*const*/ std::string path;
 
  public:
@@ -113,16 +115,17 @@ class GameSetting {
 
   GameSetting(const GameSetting &other) = default;
   GameSetting &operator=(const GameSetting &other) = default;
-  GameSetting(GameSetting &&other) noexcept = default;
-  GameSetting &operator=(GameSetting &&other) noexcept = default;
+  GameSetting(GameSetting &&other) = delete;
+  GameSetting &operator=(GameSetting &&other) = delete;
 
   // Return the value of the setting.
   // If the value has not yet been loaded successfully, this attempts to load
   // it. If loading fails, the default is returned. If loading succeeds, the
   // value is cached and any subsequent calls will return that value without a
   // load.
-  T get() {
+  T get() const {
     if (!loaded) {
+      std::unique_lock lock{mutables};
       auto opt = GameSettings::getSingleton().get<T>(path);
       if (opt) {
         value = *opt;
