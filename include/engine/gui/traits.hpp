@@ -80,7 +80,7 @@ class Traits {
   // corresponding Trait and bind it to the uiElement with the setterFun as
   // in Trait::bind.
   template<class T>
-  void addTraitAndBind(UiElement *uiElement, TraitSetterFun<T> setterFun,
+  void addAndBindTrait(UiElement *uiElement, TraitSetterFun<T> setterFun,
                        const pugi::xml_node &node);
 
   // If the given XML node corresponds to an implementation trait, then bind it
@@ -195,7 +195,7 @@ TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
 }
 
 template<class T>
-void Traits::addTraitAndBind(UiElement *uiElement,
+void Traits::addAndBindTrait(UiElement *uiElement,
                              TraitSetterFun<T> setterFun,
                              const pugi::xml_node &node) {
   auto fun = getTraitFun<T>(*this, node);

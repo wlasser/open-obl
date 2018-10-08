@@ -23,23 +23,23 @@ bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
                                            engine::gui::UiElement *uiElement) {
   using namespace std::literals;
   if (node.name() == "x"s) {
-    addTraitAndBind<int>(uiElement, &UiElement::set_x, node);
+    addAndBindTrait<int>(uiElement, &UiElement::set_x, node);
   } else if (node.name() == "y"s) {
-    addTraitAndBind<int>(uiElement, &UiElement::set_y, node);
+    addAndBindTrait<int>(uiElement, &UiElement::set_y, node);
   } else if (node.name() == "width"s) {
-    addTraitAndBind<int>(uiElement, &UiElement::set_width, node);
+    addAndBindTrait<int>(uiElement, &UiElement::set_width, node);
   } else if (node.name() == "height"s) {
-    addTraitAndBind<int>(uiElement, &UiElement::set_height, node);
+    addAndBindTrait<int>(uiElement, &UiElement::set_height, node);
   } else if (node.name() == "alpha"s) {
-    addTraitAndBind<int>(uiElement, &UiElement::set_alpha, node);
+    addAndBindTrait<int>(uiElement, &UiElement::set_alpha, node);
   } else if (node.name() == "locus"s) {
-    addTraitAndBind<bool>(uiElement, &UiElement::set_locus, node);
+    addAndBindTrait<bool>(uiElement, &UiElement::set_locus, node);
   } else if (node.name() == "visible"s) {
-    addTraitAndBind<bool>(uiElement, &UiElement::set_visible, node);
+    addAndBindTrait<bool>(uiElement, &UiElement::set_visible, node);
   } else if (node.name() == "menufade"s) {
-    addTraitAndBind<float>(uiElement, &UiElement::set_menufade, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_menufade, node);
   } else if (node.name() == "explorefade"s) {
-    addTraitAndBind<float>(uiElement, &UiElement::set_explorefade, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_explorefade, node);
   } else {
     return false;
   }
@@ -64,19 +64,19 @@ bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
 
     switch (uiElement->userTraitType(index)) {
       case TraitTypeId::Int: {
-        addTraitAndBind<int>(uiElement, setter, node);
+        addAndBindTrait<int>(uiElement, setter, node);
         break;
       }
       case TraitTypeId::Float: {
-        addTraitAndBind<float>(uiElement, setter, node);
+        addAndBindTrait<float>(uiElement, setter, node);
         break;
       }
       case TraitTypeId::Bool: {
-        addTraitAndBind<bool>(uiElement, setter, node);
+        addAndBindTrait<bool>(uiElement, setter, node);
         break;
       }
       case TraitTypeId::String: {
-        addTraitAndBind<std::string>(uiElement, setter, node);
+        addAndBindTrait<std::string>(uiElement, setter, node);
         break;
       }
       case TraitTypeId::Unimplemented: {
