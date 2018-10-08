@@ -73,8 +73,33 @@ bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
       return false;
     }
     if (index < 0) return false;
-    // The UiElement does not supply any type information, so we do not know
-    // what type this trait is supposed to be.
+
+    auto setter = [index](UiElement *uiElement, auto &&value) {
+      uiElement->set_user(index, value);
+    };
+
+    switch (uiElement->userTraitType(index)) {
+      case TraitTypeId::Int: {
+        addTraitAndBind<int>(uiElement, setter, node);
+        break;
+      }
+      case TraitTypeId::Float: {
+        addTraitAndBind<float>(uiElement, setter, node);
+        break;
+      }
+      case TraitTypeId::Bool: {
+        addTraitAndBind<bool>(uiElement, setter, node);
+        break;
+      }
+      case TraitTypeId::String: {
+        addTraitAndBind<std::string>(uiElement, setter, node);
+        break;
+      }
+      case TraitTypeId::Unimplemented: {
+        return false;
+      }
+    }
+
     return true;
   } else {
     return false;
@@ -171,6 +196,7 @@ void parseMenu(std::istream &is) {
   Traits menuTraits{};
   for (const auto &node : menuNode.children()) {
     menuTraits.addAndBindImplementationTrait(node, uiElement);
+    menuTraits.addAndBindUserTrait(node, uiElement);
   }
 
   // Add the dependency graph edges

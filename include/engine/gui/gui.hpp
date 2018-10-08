@@ -8,6 +8,7 @@
 #include <functional>
 #include <regex>
 #include <stdexcept>
+#include <tuple>
 #include <type_traits>
 #include <unordered_map>
 #include <variant>
@@ -58,6 +59,42 @@
 
 namespace engine::gui {
 
+// Implementation traits have well-defined types linked to their name; <x> is
+// always an int, for instance. User traits have different types depending on
+// the ui element, but these are still well-defined. This enum is used to
+// express the type of the user trait in the interface without using templates
+// directly. Unimplemented is used to denote that a particular user trait,
+// say <user5>, has no effect.
+enum class TraitTypeId : int {
+  Unimplemented = 0, Int, Float, Bool, String
+};
+
+// Convert a trait type into a trait type id.
+template<class T>
+constexpr TraitTypeId getTraitTypeId() {
+  return TraitTypeId::Unimplemented;
+}
+
+template<>
+constexpr inline TraitTypeId getTraitTypeId<int>() {
+  return TraitTypeId::Int;
+}
+
+template<>
+constexpr inline TraitTypeId getTraitTypeId<float>() {
+  return TraitTypeId::Float;
+}
+
+template<>
+constexpr inline TraitTypeId getTraitTypeId<bool>() {
+  return TraitTypeId::Bool;
+}
+
+template<>
+constexpr inline TraitTypeId getTraitTypeId<std::string>() {
+  return TraitTypeId::String;
+}
+
 class UiElement {
  public:
   // Position of left edge, relative to position of locus ancestor
@@ -81,6 +118,27 @@ class UiElement {
     set_menufade(explorefade);
   }
 
+  // Override this to specify the user trait interface of the ui element; the
+  // default should be that every user trait index is Unimplemented, with user
+  // traits being given implemented types in sequential order as needed.
+  virtual TraitTypeId userTraitType(int index) const {
+    return TraitTypeId::Unimplemented;
+  }
+
+  // Override these to set the user trait with the given index, doing nothing if
+  // the particular {index, value} combination is not implemented or invalid.
+  // I am not happy with this method of specifying the user trait interface as
+  // it artificially groups traits into types, and requires that every index be
+  // considered multiple times. If the ui element has n user traits then ideally
+  // one would write n functions which took only the type they wanted. Doing
+  // this with function templates prevents the functions from being virtual and
+  // causes problems with detecting the defined functions. Doing this with
+  // runtime polymorphism means picking some upper bound N on the number of
+  // user traits and defining 4N functions (one for each type), then overloading
+  // only the desired ones in the base. Moreover, translating the runtime index
+  // into a function would require a big switch. Maybe this is a good idea, but
+  // N needs to be at least 26 and writing 104 functions and a 26 case switch
+  // didn't seem worth the effort.
   virtual void set_user(int index, int value) {}
   virtual void set_user(int index, float value) {}
   virtual void set_user(int index, bool value) {}
@@ -153,6 +211,113 @@ class Menu : public UiElement {
   std::string mName{};
 
  public:
+  std::string get_name() const override {
+    return mName;
+  }
+
+  void set_name(std::string name) override {
+    mName = name;
+  }
+};
+
+// This class simplifies expressing the user trait interface of a ui element,
+// instead of writing 4 set_user functions containing disjoint switch
+// statements. Passing it a std::tuple of pointers to member variables
+// corresponding to the user traits (in order) gives the user automatically
+// generated set_user and userTraitType functions.
+// A problem is that this does not inherit from UiElement, and so does not
+// provide overrides for set_user. These must therefore be implemented (with
+// identical implementation) in every class that uses a UserTraitInterface.
+template<class ...Ts>
+class UserTraitInterface {
+ private:
+  std::tuple<Ts *...> mPtrs;
+
+  template<std::size_t I>
+  using IthType = std::remove_pointer_t
+      <std::tuple_element_t<I, decltype(mPtrs)>>;
+
+  template<class T, std::size_t I>
+  constexpr void assign(T value) {
+    if constexpr (std::is_same_v<IthType<I>, T>) {
+      *std::get<I>(mPtrs) = value;
+    }
+  }
+
+  template<class T, std::size_t ... Is>
+  constexpr void set_user_impl(int index, T value, std::index_sequence<Is...>) {
+    ((index == Is ? assign<T, Is>(value) : (void) T{}), ...);
+  }
+
+  template<std::size_t I>
+  constexpr auto getTypeFromIndex() const {
+    return static_cast<std::underlying_type_t<TraitTypeId>>(
+        getTraitTypeId<IthType<I>>());
+  }
+
+  template<std::size_t ... Is>
+  constexpr TraitTypeId userTraitTypeImpl(int index,
+                                          std::index_sequence<Is...>) const {
+    return TraitTypeId(((index == Is ? getTypeFromIndex<Is>() : 0) + ... + 0));
+  }
+
+ public:
+  explicit UserTraitInterface(std::tuple<Ts *...> ptrs)
+      : mPtrs(std::move(ptrs)) {}
+
+  template<class T>
+  constexpr void set_user(int index, T value) {
+    set_user_impl(index, value, std::index_sequence_for<Ts...>{});
+  }
+
+  constexpr TraitTypeId userTraitType(int index) const {
+    return userTraitTypeImpl(index, std::index_sequence_for<Ts...>{});
+  }
+};
+
+template<>
+class Menu<MenuType::LoadingMenu> : public UiElement {
+ private:
+  std::string mName{};
+
+  int mStepNumber{};
+  std::string mLoadImage{};
+  std::string mLoadText{};
+  int mCurrentProgress{};
+  int mMaximumProgress{};
+  std::string mDebugText{};
+
+  UserTraitInterface<int, std::string, std::string, int, int, std::string>
+      mInterface{std::make_tuple(&mStepNumber,
+                                 &mLoadImage,
+                                 &mLoadText,
+                                 &mCurrentProgress,
+                                 &mMaximumProgress,
+                                 &mDebugText)};
+
+ public:
+  // TODO: Use inheritance or something to fix this boilerplate
+
+  TraitTypeId userTraitType(int index) const override {
+    return mInterface.userTraitType(index);
+  }
+
+  void set_user(int index, int value) override {
+    return mInterface.set_user(index, value);
+  }
+
+  void set_user(int index, float value) override {
+    return mInterface.set_user(index, value);
+  }
+
+  void set_user(int index, bool value) override {
+    return mInterface.set_user(index, value);
+  }
+
+  void set_user(int index, std::string value) override {
+    return mInterface.set_user(index, value);
+  }
+
   std::string get_name() const override {
     return mName;
   }
