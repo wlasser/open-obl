@@ -90,15 +90,46 @@ bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
   }
 }
 
+std::vector<std::string>
+Traits::getDependencies(const TraitVertex &vertex) const {
+  if (vertex) {
+    return std::visit([](const auto &v) {
+      return v.getDependencies();
+    }, *vertex);
+  } else {
+    return {};
+  }
+}
+
+void Traits::addImplementationElementTraits() {
+  for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
+    const TraitVertex &vPtr = mGraph[vIndex];
+    const auto deps = getDependencies(vPtr);
+
+    for (const auto &dep : deps) {
+      if (boost::algorithm::starts_with(dep, "__")) {
+        if (mIndices.find(dep) != mIndices.end()) continue;
+
+        if (dep == "__screen.width") {
+          addTrait(mScreen.makeWidthTrait());
+        } else if (dep == "__screen.height") {
+          addTrait(mScreen.makeHeightTrait());
+        } else if (dep == "__screen.cropX") {
+          addTrait(mScreen.makeCropXTrait());
+        } else if (dep == "__screen.cropY") {
+          addTrait(mScreen.makeCropYTrait());
+        } else if (boost::algorithm::starts_with(dep, "__strings.")) {
+          addTrait(mStrings.makeTrait(dep));
+        }
+      }
+    }
+  }
+}
+
 void Traits::addTraitDependencies() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
     const TraitVertex &vPtr = mGraph[vIndex];
-    if (!vPtr) {
-      throw std::runtime_error("nullptr vertex");
-    }
-    const auto &deps = std::visit([](const auto &v) {
-      return v.getDependencies();
-    }, *vPtr);
+    const auto deps = getDependencies(vPtr);
 
     for (const auto &dep : deps) {
       auto uIndexIt = mIndices.find(dep);

@@ -152,6 +152,8 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/gui/gui.hpp
         include/engine/gui/menu.hpp
         include/engine/gui/menus/loading_menu.hpp
+        include/engine/gui/screen.hpp
+        include/engine/gui/strings.hpp
         include/engine/gui/trait.hpp
         include/engine/gui/traits.hpp
         include/engine/gui/trait_selector.hpp

@@ -80,6 +80,8 @@ void parseMenu(std::istream &is) {
     menuTraits.addAndBindUserTrait(node, uiElement);
   }
 
+  menuTraits.addImplementationElementTraits();
+
   // Add the dependency graph edges
   menuTraits.addTraitDependencies();
 

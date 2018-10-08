@@ -1,6 +1,8 @@
 #ifndef OPENOBLIVION_ENGINE_GUI_TRAITS_HPP
 #define OPENOBLIVION_ENGINE_GUI_TRAITS_HPP
 
+#include "engine/gui/screen.hpp"
+#include "engine/gui/strings.hpp"
 #include "engine/gui/trait.hpp"
 #include "engine/gui/trait_selector.hpp"
 #include "engine/gui/ui_element.hpp"
@@ -34,12 +36,20 @@ class Traits {
   // requires the value of trait u to compute its value. This should be a DAG,
   // and will usually have multiple connected components.
   TraitGraph mGraph{};
+
   // Map for looking up traits by name in the dependency graph.
   std::unordered_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
+
   // Dependency graph vertex descriptors in (a) topological order. This is not
   // updated every time a trait is added, and is only valid if mSorted == true.
   std::vector<TraitGraph::vertex_descriptor> mOrdering{};
   bool mSorted{false};
+
+  // Implementation-defined element storing screen settings.
+  const ScreenElement mScreen{};
+
+  // Implementation-defined element storing localized strings.
+  const StringsElement mStrings{"menus/strings.xml"};
 
   // Topologically sort the vertices in the dependency graph, store the result
   // in mOrdering, and set mSorted. If the graph is already sorted, i.e. if
@@ -73,6 +83,18 @@ class Traits {
     mSorted = false;
     auto index = boost::add_vertex(std::make_shared<TraitVariant>(
         Trait<T>{std::move(name), std::forward<Args>(args)...}), mGraph);
+    mIndices[name] = index;
+    return std::get<Trait<T>>(*mGraph[index]);
+  }
+
+  // Add an already constructed trait to the dependency graph and return a
+  // reference to it.
+  template<class T>
+  Trait<T> &addTrait(Trait<T> &&trait) {
+    mSorted = false;
+    auto index = boost::add_vertex(std::make_shared<TraitVariant>(trait),
+                                   mGraph);
+    mIndices[trait.getName()] = index;
     return std::get<Trait<T>>(*mGraph[index]);
   }
 
@@ -91,6 +113,14 @@ class Traits {
   // If the given XML node corresponds to a user trait, then bind it to the
   // given uiElement and return true, otherwise return false.
   bool addAndBindUserTrait(const pugi::xml_node &node, UiElement *uiElement);
+
+  // Return the names of the dependencies of a given vertex. Returns an empty
+  // vector if the vertex is null.
+  std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
+
+  // Add the traits of any implementation defined elements that are required as
+  // dependencies of existing traits.
+  void addImplementationElementTraits();
 
   // For each trait v, make an edge from u to v if u is a dependency of v.
   // This will throw if a trait has a nonexistent dependency.

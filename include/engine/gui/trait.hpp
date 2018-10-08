@@ -216,6 +216,10 @@ class Trait {
   const std::vector<std::string> &getDependencies() const {
     return mValue.getDependencies();
   }
+
+  std::string getName() const {
+    return mName;
+  }
 };
 
 } // namespace engine::gui
