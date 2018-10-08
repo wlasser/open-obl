@@ -2,6 +2,7 @@
 #define OPENOBLIVION_BSA_BSA_HPP
 
 #include <algorithm>
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -12,56 +13,77 @@
 
 #include "io/memstream.hpp"
 
-namespace bsa {
-
-namespace impl {
-
+namespace bsa::impl {
 class BsaIterator;
+} // namespace bsa::impl
 
-} // namespace impl
+namespace bsa {
 
 class FileData : public io::memstream {
  private:
-  std::unique_ptr<uint8_t[]> ptr;
-  std::size_t l;
+  std::vector<uint8_t> mData;
+  std::size_t mSize;
  public:
-  std::size_t size() { return l; }
+  std::size_t size() { return mSize; }
 
-  FileData(std::unique_ptr<uint8_t[]> p, std::size_t l) noexcept :
-      memstream(p.get(), l), ptr(std::move(p)), l(l) {}
+  FileData(std::vector<uint8_t> data, std::size_t l) noexcept :
+      memstream(data.data(), l), mData(std::move(data)), mSize(l) {}
+
+  FileData(const FileData &other) = delete;
+  FileData &operator=(const FileData &other) = delete;
 
   FileData(FileData &&other) noexcept :
-      FileData(std::move(other.ptr), other.l) {}
+      FileData(std::move(other.mData), other.mSize) {}
+  FileData &operator=(FileData &&other) noexcept {
+    std::swap(*this, other);
+    return *this;
+  }
 };
 
-uint64_t genHash(std::string, bool);
+enum class HashType : int {
+  File = 0,
+  Folder
+};
+
+uint64_t genHash(std::string, HashType);
+
+enum class ArchiveFlag : uint32_t {
+  None = 0u,
+  HasDirectoryNames = 1u << 0u,
+  HasFileNames = 1u << 1u,
+  Compressed = 1u << 2u,
+  RetainDirectoryNames = 1u << 3u,
+  RetainFileNames = 1u << 4u,
+  RetainOffsets = 1u << 5u,
+  BigEndian = 1u << 6u
+};
+constexpr inline ArchiveFlag operator|(ArchiveFlag a, ArchiveFlag b) {
+  return static_cast<ArchiveFlag>(static_cast<uint32_t>(a)
+      | static_cast<uint32_t>(b));
+}
+constexpr inline ArchiveFlag operator&(ArchiveFlag a, ArchiveFlag b) {
+  return static_cast<ArchiveFlag>(static_cast<uint32_t>(a)
+      & static_cast<uint32_t>(b));
+}
+constexpr inline bool operator!(ArchiveFlag a) {
+  return static_cast<uint32_t>(a) == 0;
+}
+
+enum class FileType : uint32_t {
+  None = 0u,
+  Meshes = 1u << 0u,
+  Textures = 1u << 1u,
+  Menus = 1u << 2u,
+  Sounds = 1u << 3u,
+  Voices = 1u << 4u,
+  Shaders = 1u << 5u,
+  Trees = 1u << 6u,
+  Fonts = 1u << 7u,
+  Misc = 1u << 8u
+};
 
 class BsaReader {
  public:
-  enum class ArchiveFlag : uint32_t {
-    None = 0u,
-    HasDirectoryNames = 1u << 0u,
-    HasFileNames = 1u << 1u,
-    Compressed = 1u << 2u,
-    RetainDirectoryNames = 1u << 3u,
-    RetainFileNames = 1u << 4u,
-    RetainOffsets = 1u << 5u,
-    BigEndian = 1u << 6u
-  };
-
-  enum class FileFlag : uint32_t {
-    None = 0u,
-    Meshes = 1u << 0u,
-    Textures = 1u << 1u,
-    Menus = 1u << 2u,
-    Sounds = 1u << 3u,
-    Voices = 1u << 4u,
-    Shaders = 1u << 5u,
-    Trees = 1u << 6u,
-    Fonts = 1u << 7u,
-    Misc = 1u << 8u
-  };
-
   using iterator = impl::BsaIterator;
   friend impl::BsaIterator;
 
@@ -92,11 +114,10 @@ class BsaReader {
   };
 
  public:
-
   /// Header information
-  const char FILE_ID[4] = "BSA";
-  const uint32_t VERSION = 0x67;
-  const uint32_t OFFSET = 0x24;
+  const char FILE_ID[4]{"BSA"};
+  const uint32_t VERSION{0x67};
+  const uint32_t OFFSET{0x24};
   ArchiveFlag archiveFlags;
   uint32_t folderCount;
   uint32_t fileCount;
@@ -104,10 +125,9 @@ class BsaReader {
   // including prefixed length bytes.
   uint32_t totalFolderNameLength;
   uint32_t totalFileNameLength;
-  FileFlag fileFlags;
+  FileType fileFlags;
 
  private:
-
   using RecordMap = std::map<uint64_t, FolderRecord>;
   RecordMap folderRecords;
   mutable std::ifstream is;
@@ -133,17 +153,6 @@ class BsaReader {
   }
   FolderAccessor operator[](std::string) const;
 };
-
-inline BsaReader::ArchiveFlag operator|(BsaReader::ArchiveFlag a,
-                                        BsaReader::ArchiveFlag b) {
-  return static_cast<BsaReader::ArchiveFlag>(static_cast<uint32_t>(a)
-      | static_cast<uint32_t>(b));
-}
-inline BsaReader::ArchiveFlag operator&(BsaReader::ArchiveFlag a,
-                                        BsaReader::ArchiveFlag b) {
-  return static_cast<BsaReader::ArchiveFlag>(static_cast<uint32_t>(a)
-      & static_cast<uint32_t>(b));
-}
 
 // Public version of BsaReader::FolderRecord, for iterating.
 // I am unsatisfied with how the filenames are duplicated in memory between

@@ -11,26 +11,33 @@
 #include <string>
 #include <zlib.h>
 
+namespace bsa {
+
 // TODO: Use std::filesystem::path
-uint64_t bsa::genHash(std::string path, bool isFolder) {
-  uint64_t hash = 0;
-  uint32_t hash2 = 0;
+uint64_t genHash(std::string path, HashType hashType) {
+  uint64_t hash{0u};
+  uint32_t hash2{0u};
+
   // Transform to a lowercase win path
-  std::string str(path);
+  std::string str{path};
   std::transform(path.begin(), path.end(), str.begin(),
-                 [](unsigned char c) -> unsigned char {
+                 [](unsigned char c) {
                    return static_cast<unsigned char>(std::tolower(
                        c == '/' ? '\\' : c));
                  });
+
   // Presence of a . does not imply a file e.g. /foo.bar/baz is a
   // valid folder. Moreover folders should not have a trailing slash, if they do
   // then we ignore it.
-  if (isFolder && str.back() == '\\') str.pop_back();
-  const auto begin = str.begin();
-  auto end = str.end();
-  const auto extPos = (isFolder ? end : begin + str.find_last_of('.'));
+  if (hashType == HashType::Folder && str.back() == '\\') str.pop_back();
+  const auto begin{str.begin()};
+  auto end{str.end()};
+
   // Empty string hashes to zero
-  if (str.begin() == str.end()) return 0;
+  if (str.begin() == str.end()) return 0u;
+
+  const auto extPos =
+      (hashType == HashType::Folder ? end : begin + str.find_last_of('.'));
 
   // Hash 1
   // Hash the file extension (if it exists) then strip it
@@ -42,7 +49,7 @@ uint64_t bsa::genHash(std::string path, bool isFolder) {
     hash2 = (hash2 * 0x1003f) + static_cast<uint8_t>(*c);
   }
   hash += hash2;
-  hash <<= 32;
+  hash <<= 32u;
 
   // Hash 2
   hash2 = static_cast<uint32_t>(*(end - 1));
@@ -61,62 +68,65 @@ uint64_t bsa::genHash(std::string path, bool isFolder) {
   return hash + hash2;
 }
 
-bsa::BsaReader::FolderAccessor
-bsa::BsaReader::operator[](std::string folder) const {
-  return bsa::BsaReader::FolderAccessor(bsa::genHash(std::move(folder), true),
-                                        *this);
+BsaReader::FolderAccessor
+BsaReader::operator[](std::string folder) const {
+  return FolderAccessor(genHash(std::move(folder), HashType::Folder), *this);
 }
 
-bsa::FileData
-bsa::BsaReader::FolderAccessor::operator[](std::string file) const {
-  return (*this)[bsa::genHash(std::move(file), false)];
+FileData
+BsaReader::FolderAccessor::operator[](std::string file) const {
+  return (*this)[genHash(std::move(file), HashType::File)];
 }
 
-bsa::FileData
-bsa::BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
-  const FolderRecord &folder = owner.folderRecords.at(hash);
-  const FileRecord &file = folder.files.at(fileHash);
+FileData
+BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
+  const FolderRecord &folder{owner.folderRecords.at(hash)};
+  const FileRecord &file{folder.files.at(fileHash)};
+
   // Unset bits higher than the toggle compression bit
-  uint32_t size = file.size & ~(3u << 30u);
-  uint32_t uncompressedSize = size;
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
   // Jump to the data
   owner.is.seekg(file.offset);
+
   // Skip over full path if given
-  if (static_cast<bool>(owner.archiveFlags
-      & bsa::BsaReader::ArchiveFlag::RetainFileNames)) {
+  if (!!(owner.archiveFlags & ArchiveFlag::RetainFileNames)) {
     io::readBString(owner.is);
   }
-  // Get size of uncompressed data if compressed
+
+  // Get size of uncompressed data if compressed, otherwise they're the same.
+  uint32_t uncompressedSize{compressedSize};
   if (file.compressed) {
     io::readBytes(owner.is, uncompressedSize);
   }
+
   // Read data and uncompress if necessary
-  auto data = std::make_unique<uint8_t[]>(uncompressedSize);
+  std::vector<uint8_t> data(uncompressedSize);
   if (file.compressed) {
-    // Blame ZLib for all the casts. unsigned char[] is required for the data,
-    // but char* is required for reading. unsigned long is required for the
-    // uncompressed size, but is > 32 bits on some systems, and the BSA requires
-    // a 32 bit uncompressed size.
-    auto compressedData = std::make_unique<unsigned char[]>(size);
-    owner.is.read(reinterpret_cast<char *>(compressedData.get()), size);
-    auto zlibUncompressedSize = static_cast<unsigned long>(uncompressedSize);
-    uncompress(data.get(), &zlibUncompressedSize, compressedData.get(), size);
+    std::vector<unsigned char> compressedData(compressedSize);
+    if (!io::safeRead(owner.is, compressedData.data(), compressedSize)) {
+      throw io::IOReadError("compressed data", owner.is.rdstate());
+    }
+    unsigned long zlibSize{uncompressedSize};
+    uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
   } else {
-    owner.is.read(reinterpret_cast<char *>(data.get()), size);
+    if (!io::safeRead(owner.is, data.data(), uncompressedSize)) {
+      throw io::IOReadError("uncompressed data", owner.is.rdstate());
+    }
   }
-  return bsa::FileData{std::move(data), uncompressedSize};
+  return FileData{std::move(data), uncompressedSize};
 }
 
-bool bsa::BsaReader::readHeader() {
+bool BsaReader::readHeader() {
   char fileId[4]{};
   if (!io::safeRead(is, fileId, 4) || strcmp(fileId, FILE_ID) != 0)
     return false;
 
-  uint32_t version = 0;
+  uint32_t version{};
   io::readBytes(is, version);
   if (version != VERSION) return false;
 
-  uint32_t offset = 0;
+  uint32_t offset{};
   io::readBytes(is, offset);
   if (offset != OFFSET) return false;
 
@@ -132,32 +142,32 @@ bool bsa::BsaReader::readHeader() {
   return true;
 }
 
-bool bsa::BsaReader::readRecords() {
-  // The file record blocks are read during the folder record parse
-  // and not after, so we have to jump over them again at the end. To
-  // do that we keep track of the largest position in the file that we
-  // reach, then jump to that.
-  auto largestOffset = is.tellg();
+bool BsaReader::readRecords() {
+  // The file record blocks are read during the folder record parse and not
+  // after, so we have to jump over them again at the end. To do that we keep
+  // track of the largest position in the file that we reach, then jump to that.
+  auto largestOffset{is.tellg()};
 
   for (uint32_t i = 0; i < folderCount; ++i) {
     // Read folder record
-    uint64_t hash = 0;
-    uint32_t count = 0;
-    uint32_t offset = 0;
+    uint64_t hash{};
+    uint32_t count{};
+    // This includes totalFileNameLength for some reason
+    uint32_t offset{};
     io::readBytes(is, hash);
     io::readBytes(is, count);
-    // This includes totalFileNameLength for some reason, so it
-    // will need to be subtracted
     io::readBytes(is, offset);
 
     // Jump to file record block
-    FolderRecord folderRecord = {};
-    auto pos = is.tellg();
+    FolderRecord folderRecord{};
+    const auto pos{is.tellg()};
+
+    // Correct the offset
     is.seekg(offset - totalFileNameLength);
 
     // Read folder name if available
-    if (static_cast<bool>(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
-      auto path = io::readBzString(is);
+    if (!!(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
+      auto path{io::readBzString(is)};
       folderRecord.name = path;
       // Transform Win path to *nix path
       std::transform(path.begin(), path.end(), folderRecord.name.begin(),
@@ -166,24 +176,26 @@ bool bsa::BsaReader::readRecords() {
 
     for (uint32_t j = 0; j < count; ++j) {
       // Read file record
-      uint64_t fileHash = 0;
-      uint32_t fileSize = 0;
-      uint32_t fileOffset = 0;
+      uint64_t fileHash{};
+      uint32_t fileSize{};
+      uint32_t fileOffset{};
       io::readBytes(is, fileHash);
       io::readBytes(is, fileSize);
       io::readBytes(is, fileOffset);
       // (1<<30) bit toggles compression of the file from default
-      bool compressed = (fileSize & (1u << 30u)) != 0;
-      compressed ^= static_cast<bool>(archiveFlags & ArchiveFlag::Compressed);
-      folderRecord.files.emplace(fileHash, FileRecord{fileSize,
-                                                      fileOffset, "",
-                                                      compressed});
+      bool compressed{(fileSize & (1u << 30u)) != 0};
+      compressed ^= !!(archiveFlags & ArchiveFlag::Compressed);
+      // TODO: RetainFileNames?
+      folderRecord.files.emplace(fileHash, FileRecord{
+          fileSize, fileOffset, "", compressed});
     }
 
     // Add the folder
     folderRecords.emplace(hash, std::move(folderRecord));
+
     // Record offset
     if (is.tellg() > largestOffset) largestOffset = is.tellg();
+
     // Jump back to file record block
     is.seekg(pos);
   }
@@ -193,7 +205,7 @@ bool bsa::BsaReader::readRecords() {
   return true;
 }
 
-bool bsa::BsaReader::readFileNames() {
+bool BsaReader::readFileNames() {
   // The file names are listed in the same order as in the BSA, but
   // this is guaranteed to be in increasing order by hash.
   // Conveniently, std::map also stores its elements in increasing
@@ -206,56 +218,56 @@ bool bsa::BsaReader::readFileNames() {
   return true;
 }
 
-bsa::BsaReader::BsaReader(std::string filename) : is(filename) {
+BsaReader::BsaReader(std::string filename) : is(filename) {
   if (!is.good()) {
     throw std::runtime_error(boost::str(
         boost::format("Failed to open archive '%s'") % filename));
   }
   readHeader();
   readRecords();
-  if (static_cast<bool>(archiveFlags & ArchiveFlag::HasFileNames)) {
+  if (!!(archiveFlags & ArchiveFlag::HasFileNames)) {
     readFileNames();
   }
 }
 
-bool bsa::BsaReader::contains(std::string folder, std::string file) const {
-  auto folderHash = bsa::genHash(std::move(folder), true);
-  auto folderRecord = folderRecords.find(folderHash);
+bool BsaReader::contains(std::string folder, std::string file) const {
+  const auto folderHash{genHash(std::move(folder), HashType::Folder)};
+  const auto folderRecord{folderRecords.find(folderHash)};
   if (folderRecord == folderRecords.end()) return false;
 
-  auto fileHash = bsa::genHash(std::move(file), false);
-  const auto &files = folderRecord->second.files;
+  const auto fileHash{genHash(std::move(file), HashType::File)};
+  const auto &files{folderRecord->second.files};
   return files.find(fileHash) != files.end();
 }
 
-std::optional<bsa::BsaReader::FileRecord>
-bsa::BsaReader::getRecord(std::string folder, std::string file) const {
-  auto folderHash = bsa::genHash(std::move(folder), true);
-  auto fileHash = bsa::genHash(std::move(file), false);
+std::optional<BsaReader::FileRecord>
+BsaReader::getRecord(std::string folder, std::string file) const {
+  const auto folderHash{genHash(std::move(folder), HashType::Folder)};
+  const auto fileHash{genHash(std::move(file), HashType::File)};
   return getRecord(folderHash, fileHash);
 }
 
-std::optional<bsa::BsaReader::FileRecord>
-bsa::BsaReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
-  auto folderRecord = folderRecords.find(folderHash);
+std::optional<BsaReader::FileRecord>
+BsaReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
+  const auto folderRecord{folderRecords.find(folderHash)};
   if (folderRecord == folderRecords.end()) return std::nullopt;
 
-  const auto &files = folderRecord->second.files;
-  auto fileRecord = files.find(fileHash);
+  const auto &files{folderRecord->second.files};
+  const auto fileRecord{files.find(fileHash)};
   if (fileRecord == files.end()) return std::nullopt;
 
   return fileRecord->second;
 }
 
-bsa::BsaReader::iterator bsa::BsaReader::begin() const {
-  return bsa::BsaReader::iterator{folderRecords.begin()};
+BsaReader::iterator BsaReader::begin() const {
+  return BsaReader::iterator{folderRecords.begin()};
 }
 
-bsa::BsaReader::iterator bsa::BsaReader::end() const {
-  return bsa::BsaReader::iterator{folderRecords.end(), true};
+BsaReader::iterator BsaReader::end() const {
+  return BsaReader::iterator{folderRecords.end(), true};
 }
 
-namespace bsa::impl {
+namespace impl {
 
 BsaIterator::reference BsaIterator::updateCurrentPublicRecord() const {
   currentPublicRecord.name = currentRecord->second.name;
@@ -302,4 +314,6 @@ bool BsaIterator::operator==(const BsaIterator &other) {
   return currentRecord == other.currentRecord;
 }
 
-} // namespace bsa::impl
+} // namespace impl
+
+} // namespace bsa
