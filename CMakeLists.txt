@@ -131,6 +131,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/gui/gui.cpp
+        src/engine/gui/traits.cpp
         src/engine/gui/trait_selector.cpp
         src/engine/gui/xml.cpp
         src/engine/initial_processor.cpp
@@ -149,7 +150,10 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/bsa.hpp
         include/engine/conversions.hpp
         include/engine/gui/gui.hpp
+        include/engine/gui/trait.hpp
+        include/engine/gui/traits.hpp
         include/engine/gui/trait_selector.hpp
+        include/engine/gui/ui_element.hpp
         include/engine/gui/xml.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
