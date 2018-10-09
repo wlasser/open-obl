@@ -11,6 +11,7 @@
 #include "ogrebullet/conversions.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
+#include "fs/path.hpp"
 #include "game_settings.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
@@ -25,8 +26,6 @@
 #include <string>
 
 namespace engine {
-
-namespace fs = std::filesystem;
 
 Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
@@ -74,8 +73,8 @@ Application::Application(std::string windowName) : FrameListener() {
   archiveMgr.addArchiveFactory(bsaArchiveFactory.get());
 
   // Grab the data folder from the ini file
-  std::filesystem::path masterPath{conversions::normalizePath(
-      gameSettings.get("General.SLocalMasterPath", "Data/"))};
+  const fs::Path masterPath
+      {gameSettings.get("General.SLocalMasterPath", "Data/")};
 
   // Loading from the filesystem is favoured over bsa files so that mods can
   // replace data. Marking the folder as recursive means that files are
@@ -84,11 +83,12 @@ Application::Application(std::string windowName) : FrameListener() {
   // is case-sensitive on *nix, but we need case-insensitivity on all platforms.
   // Files must therefore have lowercase names to correctly override.
   // TODO: Replace FileSystem with a case-insensitive version
-  resGrpMgr.addResourceLocation(masterPath, "FileSystem", resourceGroup, true);
+  resGrpMgr.addResourceLocation(masterPath.c_str(), "FileSystem", resourceGroup,
+                                true);
 
   // Get list of bsa files from ini
-  const auto bsaList{gameSettings.get("Archive.sArchiveList", "")};
-  const auto bsaFilenames = parseBSAList(masterPath, bsaList);
+  const std::string bsaList{gameSettings.get("Archive.sArchiveList", "")};
+  const auto bsaFilenames{parseBSAList(masterPath, bsaList)};
 
   // Meshes need to be declared explicitly as they use a ManualResourceLoader.
   // We could just use Archive.SMasterMeshesArchiveFileName, but it is not
@@ -96,21 +96,25 @@ Application::Application(std::string windowName) : FrameListener() {
   // any mod bsa files. While we're at it, we'll add the bsa files as resource
   // locations and declare every other recognised resource too.
   for (const auto &bsa : bsaFilenames) {
-    resGrpMgr.addResourceLocation(bsa, "BSA", resourceGroup);
-    Ogre::StringVectorPtr files = archiveMgr.load(bsa, "BSA", true)->list();
+    const auto bsaSysPath{bsa.sysPath()};
+    resGrpMgr.addResourceLocation(bsaSysPath, "BSA", resourceGroup);
+    const Ogre::StringVectorPtr files
+        {archiveMgr.load(bsaSysPath, "BSA", true)->list()};
 
     for (const auto &filename : *files) {
-      std::filesystem::path path{conversions::normalizePath(filename)};
-      auto ext{path.extension()};
-      if (ext == ".nif") {
-        resGrpMgr.declareResource(path, "Mesh", resourceGroup, &nifLoader);
-        resGrpMgr.declareResource(path, "CollisionObject", resourceGroup,
-                                  &nifCollisionLoader);
-      } else if (ext == ".dds") {
-        resGrpMgr.declareResource(path, "Texture", resourceGroup);
-      } else if (ext == ".xml" || ext == ".txt") {
-        resGrpMgr.declareResource(path, "Text", resourceGroup);
-        logger->info("Declared Text resource '{}'", path.string());
+      using namespace std::literals;
+      const fs::Path path{filename};
+      const auto ext{path.extension()};
+      if (ext == "nif"sv) {
+        resGrpMgr.declareResource(path.c_str(), "Mesh",
+                                  resourceGroup, &nifLoader);
+        resGrpMgr.declareResource(path.c_str(), "CollisionObject",
+                                  resourceGroup, &nifCollisionLoader);
+      } else if (ext == "dds"sv) {
+        resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
+      } else if (ext == "xml"sv || ext == "txt"sv) {
+        resGrpMgr.declareResource(path.c_str(), "Text", resourceGroup);
+        logger->info("Declared Text resource '{}'", path.view());
       }
     }
   }
@@ -137,13 +141,14 @@ Application::Application(std::string windowName) : FrameListener() {
   menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
   // Open the main esm
-  std::filesystem::path masterEsm{"Oblivion.esm"};
-  esmStream = std::ifstream(masterPath / masterEsm, std::ios::binary);
+  const fs::Path masterEsm{"Oblivion.esm"};
+  esmStream = std::ifstream((masterPath / masterEsm).sysPath(),
+                            std::ios::binary);
   if (!esmStream.is_open()) {
     throw std::runtime_error(boost::str(
-        boost::format("Failed to open %s") % masterEsm.string()));
+        boost::format("Failed to open %s") % masterEsm.view()));
   }
-  logger->info("Opened {}", masterEsm.string());
+  logger->info("Opened {}", masterEsm.view());
 
   // Create the engine managers
   lightMgr = std::make_unique<LightManager>();
@@ -160,7 +165,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                     staticMgr.get(),
                                     interiorCellMgr.get());
   esp::readEsp(esmStream, initialProcessor);
-  logger->info("Read {}", masterEsm.string());
+  logger->info("Read {}", masterEsm.view());
 
   // Load a test cell
   currentCell = interiorCellMgr->get(0x00'031b59);
@@ -290,26 +295,26 @@ void Application::createWindow(const std::string &windowName) {
                                       &params);
 }
 
-std::vector<fs::path>
-Application::parseBSAList(const fs::path &masterPath, const std::string &list) {
+std::vector<fs::Path>
+Application::parseBSAList(const fs::Path &masterPath, const std::string &list) {
   std::vector<std::string> names{};
 
   // Split them on commas, this leaves trailing whitespace
   boost::split(names, list, [](char c) { return c == ','; });
 
   // Trim the whitespace and append the data folder
-  std::vector<fs::path> filenames(names.size());
+  std::vector<fs::Path> filenames(names.size());
   std::transform(names.begin(), names.end(), filenames.begin(),
                  [&masterPath](std::string name) {
                    boost::trim(name);
-                   return masterPath / fs::path{name};
+                   return masterPath / fs::Path{name};
                  });
 
   // Reject any invalid ones
-  filenames.erase(std::remove_if(filenames.begin(), filenames.end(),
-                                 [](const auto &filename) {
-                                   return !fs::is_regular_file(filename);
-                                 }),
+  auto predicate = [](const auto &filename) {
+    return !filename.exists();
+  };
+  filenames.erase(std::remove_if(filenames.begin(), filenames.end(), predicate),
                   filenames.end());
 
   return filenames;

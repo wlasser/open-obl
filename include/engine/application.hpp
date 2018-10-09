@@ -11,6 +11,7 @@
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
 #include "engine/player_controller.hpp"
+#include "fs/path.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
@@ -80,9 +81,8 @@ class Application : public Ogre::FrameListener {
 
   void createWindow(const std::string &windowName);
 
-  std::vector<std::filesystem::path>
-  parseBSAList(const std::filesystem::path &masterPath,
-               const std::string &list);
+  std::vector<fs::Path> parseBSAList(const fs::Path &masterPath,
+                                     const std::string &list);
 
   void pollEvents();
 

@@ -34,6 +34,14 @@ target_sources(OpenOblivionIO PUBLIC
         include/io/string.hpp
         include/io/write_bytes.hpp)
 
+# FS library
+add_library(OpenOblivionFS OBJECT)
+target_include_directories(OpenOblivionFS PUBLIC include)
+target_sources(OpenOblivionFS PUBLIC
+        src/fs/path.cpp
+        include/fs/path.hpp)
+target_include_directories(OpenOblivionFS PUBLIC ${Boost_INCLUDE_DIRS})
+
 # Nif library
 add_library(OpenOblivionNif OBJECT)
 target_include_directories(OpenOblivionNif PUBLIC include)
@@ -193,6 +201,7 @@ add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionIO>
+        $<TARGET_OBJECTS:OpenOblivionFS>
         $<TARGET_OBJECTS:OpenOblivionNif>
         $<TARGET_OBJECTS:OpenOblivionRecord>
         $<TARGET_OBJECTS:OpenOblivionEngine>
