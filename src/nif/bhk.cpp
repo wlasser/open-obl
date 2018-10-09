@@ -248,18 +248,14 @@ namespace nif::hk {
 void PackedNiTriStripsData::read(std::istream &is) {
   nif::bhk::ShapeCollection::read(is);
   io::readBytes(is, numTriangles);
-  triangles.reserve(numTriangles);
-  for (auto i = 0; i < numTriangles; ++i) {
-    triangles.emplace_back();
-    is >> triangles.back();
-  }
+  triangles.assign(numTriangles, {});
+  is.read(reinterpret_cast<char *>(triangles.data()),
+          numTriangles * sizeof(nif::compound::TriangleData));
 
   io::readBytes(is, numVertices);
-  vertices.reserve(numVertices);
-  for (auto i = 0; i < numVertices; ++i) {
-    vertices.emplace_back();
-    is >> vertices.back();
-  }
+  vertices.assign(numVertices, {});
+  is.read(reinterpret_cast<char *>(vertices.data()),
+          numVertices * sizeof(nif::compound::Vector3));
 }
 
 } // namespace nif::hk

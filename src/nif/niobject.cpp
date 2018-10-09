@@ -586,11 +586,9 @@ void NiGeometryData::read(std::istream &is) {
     arr1 = *numUVSets & 0b11111;
   }
   for (auto i = 0; i < arr1; ++i) {
-    std::vector<compound::TexCoord> row{};
-    for (auto j = 0; j < numVertices; ++j) {
-      row.emplace_back();
-      is >> row.back();
-    }
+    std::vector<compound::TexCoord> row(numVertices);
+    is.read(reinterpret_cast<char *>(row.data()),
+            numVertices * sizeof(compound::TexCoord));
     uvSets.push_back(row);
   }
 

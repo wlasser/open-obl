@@ -561,6 +561,8 @@ struct TriangleData {
   basic::UShort weldingInfo{};
   Vector3 normal{};
 };
+static_assert(sizeof(TriangleData) == sizeof(Triangle) + 2 + sizeof(Vector3),
+              "TriangleData must have no padding");
 
 struct OblivionSubShape : Versionable {
   HavokFilter havokFilter{};
