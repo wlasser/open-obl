@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivion)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug -Wall")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/modules")
 
 option(USE_IWYU "Run include-what-you-use when building" OFF)

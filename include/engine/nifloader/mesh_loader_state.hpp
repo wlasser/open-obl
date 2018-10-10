@@ -112,7 +112,8 @@ class MeshLoaderState {
   explicit MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks);
 };
 
-struct TBGVisitor {
+class TBGVisitor {
+ public:
   using Graph = TaggedBlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;

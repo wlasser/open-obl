@@ -33,10 +33,9 @@ Real RigidBody::getBoundingRadius() const {
   // If we take a sphere centered at the bounding box center, then by symmetry
   // the distance from the center to any corner point is constant, and moreover
   // is the largest distance from the center to any point.
-  auto bbox = getBoundingBox();
-  auto center = bbox.getCenter();
-  return (bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - bbox.getCenter())
-      .length();
+  const auto bbox{getBoundingBox()};
+  const auto center{bbox.getCenter()};
+  return (bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - center).length();
 }
 
 const String &RigidBody::getMovableType() const {

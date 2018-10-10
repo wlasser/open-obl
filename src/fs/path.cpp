@@ -91,8 +91,6 @@ bool Path::exists() const {
   std::unique_lock lock{mSysPathMutex};
   if (mSysPath) return true;
 
-  const auto folder{this->folder()};
-
   for (const auto &entry : stdfs::recursive_directory_iterator(".")) {
     const Path entryPath{entry.path()};
     if (entryPath == *this) {

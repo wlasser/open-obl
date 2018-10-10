@@ -504,7 +504,7 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   if (tag == LoadStatus::Loaded) {
     auto material = materialManager.getByName(materialName, mesh->getGroup());
     if (material) {
-      return material;
+      return std::move(material);
     } else {
       throw std::runtime_error(
           "NiMaterialProperty marked as loaded but material does not exist");
@@ -564,7 +564,7 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   fsParams->setNamedAutoConstant("matSpecular",
                                  AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
 
-  return material;
+  return std::move(material);
 }
 
 std::unique_ptr<Ogre::TextureUnitState>

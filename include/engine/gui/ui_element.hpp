@@ -68,7 +68,10 @@ class UiElement {
   virtual void set_name(std::string name) {
     mName = name;
   }
+
+  virtual ~UiElement() = 0;
 };
+inline UiElement::~UiElement() = default;
 
 } // namespace engine::gui
 

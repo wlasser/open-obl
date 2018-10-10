@@ -162,7 +162,7 @@ class TraitFun {
 };
 
 // Forward declare UiElement
-struct UiElement;
+class UiElement;
 
 // TraitSetterFun represents a function used to set the value of the concrete
 // representative of a trait.
@@ -174,8 +174,8 @@ using TraitSetterFun = std::function<void(UiElement *, T)>;
 template<class T>
 class Trait {
  private:
-  TraitFun<T> mValue{};
   std::string mName{};
+  TraitFun<T> mValue{};
   TraitSetterFun<T> mSetter{};
   UiElement *mConcrete{};
 
