@@ -122,6 +122,10 @@ class Traits {
   // dependencies of existing traits.
   void addImplementationElementTraits();
 
+  // Set all the user traits to point to the given interface buffer.
+  template<class ...Ts>
+  void setUserTraitSources(const std::tuple<Ts...> &userInterface);
+
   // For each trait v, make an edge from u to v if u is a dependency of v.
   // This will throw if a trait has a nonexistent dependency.
   // Try to delay calling this until all traits have been added, as it
@@ -132,6 +136,7 @@ class Traits {
 
   // Update every trait, notifying the concrete representation of the new
   // values. Throws if the underlying dependency graph is not a DAG.
+  // TODO: Provide a method to update only a trait and its dependents
   void update();
 };
 
@@ -231,6 +236,26 @@ void Traits::addAndBindTrait(UiElement *uiElement,
   auto fun = getTraitFun<T>(*this, node);
   auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
   trait.bind(uiElement, setterFun);
+}
+
+template<class ...Ts>
+void Traits::setUserTraitSources(const std::tuple<Ts...> &userInterface) {
+  for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
+    const TraitVertex &traitPtr = mGraph[vIndex];
+    if (!traitPtr) {
+      throw std::runtime_error("nullptr vertex");
+    }
+    auto &trait = *traitPtr;
+    std::optional<int> userIndex{std::visit([](auto &&v) {
+      return getUserTraitIndex(v.getName());
+    }, trait)};
+
+    if (!userIndex) continue;
+
+    std::visit([&userInterface](auto &&v) {
+      v.setSource(userInterface);
+    }, trait);
+  }
 }
 
 } // namespace engine::gui

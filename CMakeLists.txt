@@ -141,6 +141,7 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/gui/gui.cpp
+        src/engine/gui/trait.cpp
         src/engine/gui/traits.cpp
         src/engine/gui/trait_selector.cpp
         src/engine/gui/xml.cpp

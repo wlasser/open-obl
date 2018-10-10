@@ -22,6 +22,9 @@ const UiElement *extractUiElement(const MenuVariant &menu) {
   }, menu);
 }
 
+MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
+  return makeInterfaceBufferImpl(menuVar);
+}
 
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is) {
@@ -87,6 +90,14 @@ void parseMenu(std::istream &is) {
 
   // Force an update to initialize everything
   menuTraits.update();
+
+  // Construct a user interface buffer
+  MenuInterfaceVariant userInterface{makeInterfaceBuffer(menu)};
+
+  // Link the buffer to the user traits
+  std::visit([&menuTraits](auto &&t) {
+    menuTraits.setUserTraitSources(t.value);
+  }, userInterface);
 }
 
 namespace xml {

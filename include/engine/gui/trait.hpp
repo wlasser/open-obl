@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_GUI_TRAIT_HPP
 #define OPENOBLIVION_ENGINE_GUI_TRAIT_HPP
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <functional>
 #include <string>
 #include <tuple>
@@ -46,6 +47,10 @@ constexpr inline TraitTypeId getTraitTypeId<std::string>() {
   return TraitTypeId::String;
 }
 
+// If name is the name of a user trait, then return the index of that trait,
+// e.g. user12 returns 12.
+std::optional<int> getUserTraitIndex(const std::string &name);
+
 // This class simplifies expressing the user trait interface of a ui element,
 // instead of writing 4 set_user functions containing disjoint switch
 // statements. Passing it a std::tuple of pointers to member variables
@@ -88,6 +93,8 @@ class UserTraitInterface {
   }
 
  public:
+  using interface_t = std::tuple<Ts ...>;
+
   explicit UserTraitInterface(std::tuple<Ts *...> ptrs)
       : mPtrs(std::move(ptrs)) {}
 
@@ -172,6 +179,28 @@ class Trait {
   TraitSetterFun<T> mSetter{};
   UiElement *mConcrete{};
 
+  // Attempt to set the trait fun to return the value pointed to by source, only
+  // performing the assignment if U == T. Returns true if the assignment is
+  // successful and false otherwise.
+  template<class U>
+  bool setTraitFunFromSource(const U *source) {
+    if constexpr (std::is_same_v<U, T>) {
+      mValue = TraitFun<T>{[source]() -> T {
+        return *source;
+      }};
+      return true;
+    }
+    return false;
+  }
+
+  template<class Tuple, std::size_t ... Is>
+  bool setSourceImpl(int index,
+                     const Tuple &tuple,
+                     std::index_sequence<Is...>) {
+    return ((index == Is ? setTraitFunFromSource(&std::get<Is>(tuple)) : false)
+        || ... || false);
+  };
+
  public:
   explicit Trait(std::string name, T &&t) : mName(std::move(name)),
                                             mValue([t]() { return t; }) {}
@@ -197,6 +226,23 @@ class Trait {
     mConcrete = concreteElement;
     mSetter = setter;
   }
+
+  // If this trait is a user trait of type T for some slot I, and the given user
+  // interface has type T in slot I, then reset this trait's TraitFun to point
+  // to the value in slot I of the user interface. If any of this is not true,
+  // throw.
+  template<class ...Ts>
+  void setSource(const std::tuple<Ts...> &userInterface) {
+    const int index = [this]() {
+      const auto opt{getUserTraitIndex(mName)};
+      if (opt) return *opt;
+      else throw std::runtime_error("Not a user trait");
+    }();
+    if (!setSourceImpl(index, userInterface,
+                       std::index_sequence_for<Ts...>{})) {
+      throw std::runtime_error("Incompatible interface");
+    }
+  };
 
   // Calculate the actual value of this trait. This does not update the concrete
   // representative.

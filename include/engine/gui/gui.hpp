@@ -76,6 +76,21 @@ using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 UiElement *extractUiElement(MenuVariant &menu);
 const UiElement *extractUiElement(const MenuVariant &menu);
 
+template<class ...Ts>
+auto makeInterfaceBufferImpl(const std::variant<Ts...> &var) {
+  return std::visit([](auto &&t) -> std::variant<typename Ts::UserInterface...> {
+    return (typename std::decay_t<decltype(t)>::UserInterface) {};
+  }, var);
+}
+
+// A variant of user trait interfaces coinciding with MenuVariant.
+// Handwaving, MenuVariant::UserInterface = MenuInterfaceVariant.
+using MenuInterfaceVariant = decltype(makeInterfaceBufferImpl(
+    std::declval<MenuVariant>()));
+
+// Construct a user interface buffer from the menu
+MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar);
+
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);
 

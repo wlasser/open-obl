@@ -48,46 +48,37 @@ bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
 
 bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
                                  UiElement *uiElement) {
-  std::string nodeName{node.name()};
-  if (boost::algorithm::starts_with(nodeName, "user")) {
-    int index{0};
-    try {
-      index = std::stoi(nodeName.substr(4));
-    } catch (const std::exception &e) {
+  const std::optional<int> indexOpt{getUserTraitIndex(node.name())};
+  if (!indexOpt) return false;
+  const int index{*indexOpt};
+
+  auto setter = [index](UiElement *uiElement, auto &&value) {
+    uiElement->set_user(index, value);
+  };
+
+  switch (uiElement->userTraitType(index)) {
+    case TraitTypeId::Int: {
+      addAndBindTrait<int>(uiElement, setter, node);
+      break;
+    }
+    case TraitTypeId::Float: {
+      addAndBindTrait<float>(uiElement, setter, node);
+      break;
+    }
+    case TraitTypeId::Bool: {
+      addAndBindTrait<bool>(uiElement, setter, node);
+      break;
+    }
+    case TraitTypeId::String: {
+      addAndBindTrait<std::string>(uiElement, setter, node);
+      break;
+    }
+    case TraitTypeId::Unimplemented: {
       return false;
     }
-    if (index < 0) return false;
-
-    auto setter = [index](UiElement *uiElement, auto &&value) {
-      uiElement->set_user(index, value);
-    };
-
-    switch (uiElement->userTraitType(index)) {
-      case TraitTypeId::Int: {
-        addAndBindTrait<int>(uiElement, setter, node);
-        break;
-      }
-      case TraitTypeId::Float: {
-        addAndBindTrait<float>(uiElement, setter, node);
-        break;
-      }
-      case TraitTypeId::Bool: {
-        addAndBindTrait<bool>(uiElement, setter, node);
-        break;
-      }
-      case TraitTypeId::String: {
-        addAndBindTrait<std::string>(uiElement, setter, node);
-        break;
-      }
-      case TraitTypeId::Unimplemented: {
-        return false;
-      }
-    }
-
-    return true;
-  } else {
-    return false;
   }
+
+  return true;
 }
 
 std::vector<std::string>

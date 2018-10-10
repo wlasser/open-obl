@@ -28,6 +28,10 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
                                  &mDebugText)};
 
  public:
+  struct UserInterface {
+    using type = decltype(mInterface)::interface_t;
+    type value{};
+  };
   BUILD_USER_TRAIT_INTERFACE(mInterface);
 };
 

@@ -55,12 +55,24 @@ enum class MenuType {
   N
 };
 
+template<class T>
+struct UserInterfaceWrapper {
+  using type = T;
+  T value{};
+};
+
 // The idea here is that we have a shallow inheritance hierarchy parameterised
 // by the MenuType enum. Specialising this class template and overriding its
 // corresponding methods allows us to do virtual dispatch based on a runtime
 // enum value, without manually checking for each value.
 template<MenuType Type>
-class Menu : public UiElement {};
+class Menu : public UiElement {
+ public:
+  struct UserInterface {
+    using type = std::tuple<>;
+    type value{};
+  };
+};
 
 } // namespace engine::gui
 
