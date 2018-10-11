@@ -151,6 +151,8 @@ void readEsp(std::istream &is, Processor &processor) {
               break;
             case "BSGN"_rec: processor.template readRecord<record::BSGN>(is);
               break;
+            case "DOOR"_rec: processor.template readRecord<record::DOOR>(is);
+              break;
             case "LIGH"_rec: processor.template readRecord<record::LIGH>(is);
               break;
             case "MISC"_rec: processor.template readRecord<record::MISC>(is);

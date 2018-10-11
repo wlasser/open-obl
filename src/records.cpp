@@ -1787,7 +1787,7 @@ uint32_t BSGN::size() const {
       + (data.description ? data.description->entireSize() : 0u)
       + std::accumulate(data.spells.begin(), data.spells.end(), 0u,
                         [](auto a, const auto &b) {
-                          return a + b.size();
+                          return a + b.entireSize();
                         });
 }
 
@@ -1857,6 +1857,67 @@ std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
   readRecord(is, t.icon, "ICON");
   readRecord(is, t.itemScript, "SCRI");
   readRecord(is, t.data, "DATA");
+
+  return is;
+}
+
+// DOOR specialization
+template<>
+uint32_t DOOR::size() const {
+  return data.editorID.entireSize()
+      + (data.name ? data.name->entireSize() : 0u)
+      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
+      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
+      + (data.textureHash ? data.textureHash->entireSize() : 0u)
+      + (data.script ? data.script->entireSize() : 0u)
+      + (data.openSound ? data.openSound->entireSize() : 0u)
+      + (data.closeSound ? data.closeSound->entireSize() : 0u)
+      + (data.loopSound ? data.loopSound->entireSize() : 0u)
+      + data.flags.entireSize()
+      + std::accumulate(data.randomTeleports.begin(),
+                        data.randomTeleports.end(),
+                        0u,
+                        [](auto a, const auto &b) {
+                          return a + b.entireSize();
+                        });
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::DOOR &t,
+                         std::size_t /*size*/) {
+  os << t.editorID;
+  if (t.name) os << *t.name;
+  if (t.modelFilename) os << *t.modelFilename;
+  if (t.boundRadius) os << *t.boundRadius;
+  if (t.textureHash) os << *t.textureHash;
+  if (t.script) os << *t.script;
+  if (t.openSound) os << *t.openSound;
+  if (t.closeSound) os << *t.closeSound;
+  if (t.loopSound) os << *t.loopSound;
+  os << t.flags;
+  for (const auto &rec : t.randomTeleports) os << rec;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "FULL");
+  readRecord(is, t.modelFilename, "MODL");
+  readRecord(is, t.boundRadius, "MODB");
+  readRecord(is, t.textureHash, "MODT");
+  readRecord(is, t.script, "SCRI");
+  readRecord(is, t.openSound, "SNAM");
+  readRecord(is, t.closeSound, "ANAM");
+  readRecord(is, t.loopSound, "BNAM");
+  readRecord(is, t.flags, "FNAM");
+  while (peekRecordType(is) == "TNAM") {
+    record::TNAM_DOOR r{};
+    is >> r;
+    t.randomTeleports.push_back(r);
+  }
 
   return is;
 }

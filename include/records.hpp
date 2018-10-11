@@ -51,8 +51,12 @@ union Color {
   };
 };
 
+// Sound to play for a door closing
+using ANAM_DOOR = FormID;
 // Apprentice skill text
 using ANAM_SKIL = std::string;
+// Loop sound for a door
+using BNAM_DOOR = FormID;
 // Crime gold multiplier for a faction
 using CNAM_FACT = float;
 // Default hair colour
@@ -133,12 +137,16 @@ using RNAM = uint32_t;
 using SCRI = FormID;
 // ESM/ESP description. Also max 512 bytes
 using SNAM = std::string;
+// Sound to play for a door opening
+using SNAM_DOOR = FormID;
 // Sound to play for a light
 using SNAM_LIGH = FormID;
 // Landscape texture specular
 using SNAM_LTEX = uint8_t;
 // Body data, unused?
 using SNAM_RACE = std::array<uint8_t, 2>;
+// Door random teleport location
+using TNAM_DOOR = FormID;
 // Greater/lesser powers and racial abilities
 using SPLO = FormID;
 // Facegen face clamp
@@ -224,6 +232,18 @@ enum class DATA_HAIR : uint8_t {
 };
 inline constexpr DATA_HAIR operator|(DATA_HAIR a, DATA_HAIR b) {
   return DATA_HAIR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
+}
+
+// Door flags
+enum class FNAM_DOOR : uint8_t {
+  None = 0,
+  OblivionGate = 1u,
+  AutomaticDoor = 1u << 1u,
+  Hidden = 1u << 2u,
+  MinimalUse = 1u << 3u
+};
+inline constexpr FNAM_DOOR operator|(FNAM_DOOR a, FNAM_DOOR b) {
+  return FNAM_DOOR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
 }
 
 // Map marker flags
@@ -927,7 +947,9 @@ using XSOL = Subrecord<raw::XSOL, "XSOL"_rec>;
 using XTEL = Subrecord<raw::XTEL, "XTEL"_rec>;
 using XTRG = Subrecord<raw::XTRG, "XTRG"_rec>;
 
+using ANAM_DOOR = Subrecord<raw::ANAM_DOOR, "ANAM"_rec>;
 using ANAM_SKIL = Subrecord<raw::ANAM_SKIL, "ANAM"_rec>;
+using BNAM_DOOR = Subrecord<raw::BNAM_DOOR, "BNAM"_rec>;
 using CNAM_FACT = Subrecord<raw::CNAM_FACT, "CNAM"_rec>;
 using CNAM_RACE = Subrecord<raw::CNAM_RACE, "CNAM"_rec>;
 using CNAM_TES4 = Subrecord<raw::CNAM_TES4, "CNAM"_rec>;
@@ -947,6 +969,7 @@ using DATA_SKIL = Subrecord<raw::DATA_SKIL, "DATA"_rec>;
 using DATA_TES4 = Subrecord<raw::DATA_TES4, "DATA"_rec>;
 using ENAM_SKIL = Subrecord<raw::ENAM_SKIL, "ENAM"_rec>;
 using ENIT_ENCH = Subrecord<raw::ENIT_ENCH, "ENIT"_rec>;
+using FNAM_DOOR = Subrecord<raw::FNAM_DOOR, "FNAM"_rec>;
 using FNAM_FACT = Subrecord<raw::FNAM_FACT, "FNAM"_rec>;
 using FNAM_GLOB = Subrecord<raw::FNAM_GLOB, "FNAM"_rec>;
 using FNAM_LIGH = Subrecord<raw::FNAM_LIGH, "FNAM"_rec>;
@@ -960,9 +983,11 @@ using INDX_SKIL = Subrecord<raw::INDX_SKIL, "INDX"_rec>;
 using JNAM_SKIL = Subrecord<raw::JNAM_SKIL, "JNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
+using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
 using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
 using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
+using TNAM_DOOR = Subrecord<raw::TNAM_DOOR, "TNAM"_rec>;
 
 DECLARE_SPECIALIZED_SUBRECORD(DATA_CLAS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GMST);
@@ -1226,6 +1251,20 @@ struct BSGN {
   std::vector<record::SPLO> spells{};
 };
 
+struct DOOR {
+  record::EDID editorID{};
+  std::optional<record::FULL> name{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> script{};
+  std::optional<record::SNAM_DOOR> openSound{};
+  std::optional<record::ANAM_DOOR> closeSound{};
+  std::optional<record::BNAM_DOOR> loopSound{};
+  record::FNAM_DOOR flags{};
+  std::vector<record::TNAM_DOOR> randomTeleports{};
+};
+
 struct LIGH {
   record::EDID editorID{};
   std::optional<record::MODL> modelFilename{};
@@ -1361,6 +1400,7 @@ using LTEX = Record<raw::LTEX, "LTEX"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
 using BSGN = Record<raw::BSGN, "BSGN"_rec>;
+using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
