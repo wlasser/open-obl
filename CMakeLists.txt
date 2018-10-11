@@ -21,123 +21,18 @@ add_subdirectory(lib/spdlog)
 
 add_subdirectory(lib/gsl)
 
-# IO library
-add_library(OpenOblivionIO OBJECT)
-target_include_directories(OpenOblivionIO PUBLIC include)
-target_sources(OpenOblivionIO PUBLIC
-        src/io/io.cpp
-        src/io/read_bytes.cpp
-        src/io/string.cpp
-        include/io/io.hpp
-        include/io/memstream.hpp
-        include/io/read_bytes.hpp
-        include/io/string.hpp
-        include/io/write_bytes.hpp)
-
-# FS library
-add_library(OpenOblivionFS OBJECT)
-target_include_directories(OpenOblivionFS PUBLIC include)
-target_sources(OpenOblivionFS PUBLIC
-        src/fs/path.cpp
-        include/fs/path.hpp)
-target_include_directories(OpenOblivionFS PUBLIC ${Boost_INCLUDE_DIRS})
-
-# Nif library
-add_library(OpenOblivionNif OBJECT)
-target_include_directories(OpenOblivionNif PUBLIC include)
-target_sources(OpenOblivionNif PUBLIC
-        $<TARGET_OBJECTS:OpenOblivionIO>
-        src/nif/basic.cpp
-        src/nif/bhk.cpp
-        src/nif/compound.cpp
-        src/nif/niobject.cpp
-        include/nif/basic.hpp
-        include/nif/bhk.hpp
-        include/nif/compound.hpp
-        include/nif/enum.hpp
-        include/nif/niobject.hpp
-        include/nif/versionable.hpp)
-
-# Record library
-add_library(OpenOblivionRecord OBJECT)
-target_include_directories(OpenOblivionRecord PUBLIC include)
-target_sources(OpenOblivionRecord PUBLIC
-        $<TARGET_OBJECTS:OpenOblivionIO>
-        src/record/group.cpp
-        src/record/io.cpp
-        include/record/exceptions.hpp
-        include/record/group.hpp
-        include/record/io.hpp
-        include/record/rec_of.hpp
-        include/record/record.hpp
-        include/record/record_header.hpp
-        include/record/size_of.hpp
-        include/record/subrecord.hpp
-        include/record/tuplifiable.hpp)
-
-# Ogre library
-add_library(OpenOblivionOgre OBJECT)
-target_include_directories(OpenOblivionOgre PUBLIC include)
-target_sources(OpenOblivionOgre PUBLIC
-        src/ogre/text_resource.cpp
-        src/ogre/text_resource_manager.cpp
-        src/ogre/ogre_stream_wrappers.cpp
-        src/ogre/window.cpp
-        include/ogre/ogre_stream_wrappers.hpp
-        include/ogre/text_resource.hpp
-        include/ogre/text_resource_manager.hpp
-        include/ogre/spdlog_listener.hpp
-        include/ogre/window.hpp)
-target_link_libraries(OpenOblivionOgre PUBLIC
-        spdlog
-        ${OGRE_LIBRARIES})
-
-# OgreBullet library
-add_library(OpenOblivionOgreBullet OBJECT)
-target_include_directories(OpenOblivionOgreBullet PUBLIC include)
-target_sources(OpenOblivionOgreBullet PUBLIC
-        $<TARGET_OBJECTS:OpenOblivionNif>
-        $<TARGET_OBJECTS:OpenOblivionOgre>
-        src/ogrebullet/collision_object.cpp
-        src/ogrebullet/collision_object_manager.cpp
-        src/ogrebullet/debug_drawer.cpp
-        src/ogrebullet/motion_state.cpp
-        src/ogrebullet/rigid_body.cpp
-        include/ogrebullet/collision_object.hpp
-        include/ogrebullet/collision_object_manager.hpp
-        include/ogrebullet/conversions.hpp
-        include/ogrebullet/debug_drawer.hpp
-        include/ogrebullet/motion_state.hpp
-        include/ogrebullet/rigid_body.hpp)
-target_include_directories(OpenOblivionOgreBullet PUBLIC
-        ${BULLET_INCLUDE_DIRS})
-target_link_libraries(OpenOblivionOgreBullet PUBLIC
-        spdlog
-        ${OGRE_LIBRARIES}
-        ${BULLET_LIBRARIES})
-
-# SDL library
-add_library(OpenOblivionSDL OBJECT)
-target_include_directories(OpenOblivionSDL PUBLIC include)
-target_sources(OpenOblivionSDL PUBLIC
-        src/sdl/sdl.cpp
-        include/sdl/sdl.hpp)
-target_include_directories(OpenOblivionSDL PUBLIC
-        ${Boost_INCLUDE_DIRS}
-        ${SDL2_INCLUDE_DIR})
-target_link_libraries(OpenOblivionSDL PUBLIC
-        ${SDL2_LIBRARY})
+add_subdirectory(src/io)
+add_subdirectory(src/fs)
+add_subdirectory(src/nif)
+add_subdirectory(src/record)
+add_subdirectory(src/ogre)
+add_subdirectory(src/ogrebullet)
+add_subdirectory(src/sdl)
 
 # Engine library
 add_library(OpenOblivionEngine OBJECT)
 target_include_directories(OpenOblivionEngine PUBLIC include)
 target_sources(OpenOblivionEngine PUBLIC
-        $<TARGET_OBJECTS:OpenOblivionIO>
-        $<TARGET_OBJECTS:OpenOblivionNif>
-        $<TARGET_OBJECTS:OpenOblivionRecord>
-        $<TARGET_OBJECTS:OpenOblivionOgre>
-        $<TARGET_OBJECTS:OpenOblivionOgreBullet>
-        $<TARGET_OBJECTS:OpenOblivionSDL>
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/gui/gui.cpp
@@ -185,13 +80,18 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/settings.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC
-        ${SDL2_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
         ${BULLET_INCLUDE_DIRS})
 
 target_link_libraries(OpenOblivionEngine PUBLIC
+        OpenOblivion::OpenOblivionIO
+        OpenOblivion::OpenOblivionFS
+        OpenOblivion::OpenOblivionNif
+        OpenOblivion::OpenOblivionRecord
+        OpenOblivion::OpenOblivionOgre
+        OpenOblivion::OpenOblivionOgreBullet
+        OpenOblivion::OpenOblivionSDL
         ${OGRE_LIBRARIES}
-        ${SDL2_LIBRARY}
         ${BULLET_LIBRARIES}
         spdlog
         stdc++fs
@@ -201,14 +101,7 @@ target_link_libraries(OpenOblivionEngine PUBLIC
 add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
-        $<TARGET_OBJECTS:OpenOblivionIO>
-        $<TARGET_OBJECTS:OpenOblivionFS>
-        $<TARGET_OBJECTS:OpenOblivionNif>
-        $<TARGET_OBJECTS:OpenOblivionRecord>
         $<TARGET_OBJECTS:OpenOblivionEngine>
-        $<TARGET_OBJECTS:OpenOblivionOgre>
-        $<TARGET_OBJECTS:OpenOblivionOgreBullet>
-        $<TARGET_OBJECTS:OpenOblivionSDL>
         src/bsa/bsa.cpp
         src/formid.cpp
         src/main.cpp
@@ -232,6 +125,13 @@ target_include_directories(OpenOblivion PRIVATE
         ${Boost_INCLUDE_DIRS}
         ${BULLET_INCLUDE_DIRS})
 target_link_libraries(OpenOblivion PRIVATE
+        OpenOblivion::OpenOblivionIO
+        OpenOblivion::OpenOblivionFS
+        OpenOblivion::OpenOblivionNif
+        OpenOblivion::OpenOblivionRecord
+        OpenOblivion::OpenOblivionOgre
+        OpenOblivion::OpenOblivionOgreBullet
+        OpenOblivion::OpenOblivionSDL
         ${ZLIB_LIBRARIES}
         ${OGRE_LIBRARIES}
         ${SDL2_LIBRARY}
@@ -269,7 +169,6 @@ if (PkgConfig_FOUND)
     add_executable(BSABrowser)
     target_include_directories(BSABrowser PRIVATE include)
     target_sources(BSABrowser PRIVATE
-            $<TARGET_OBJECTS:OpenOblivionIO>
             src/bsa/application.cpp
             src/bsa/bsa.cpp
             src/bsa/main.cpp
@@ -280,6 +179,7 @@ if (PkgConfig_FOUND)
     target_include_directories(BSABrowser PRIVATE
             ${GTKMM_INCLUDE_DIRS})
     target_link_libraries(BSABrowser PRIVATE
+            OpenOblivion::OpenOblivionIO
             ${ZLIB_LIBRARIES}
             ${GTKMM_LIBRARIES}
             spdlog
@@ -293,6 +193,5 @@ target_include_directories(Catch INTERFACE lib/catch)
 add_executable(Test test/tests.cpp)
 target_include_directories(Test PRIVATE include)
 target_sources(Test PRIVATE
-        $<TARGET_OBJECTS:OpenOblivionIO>
         test/io/write_bytes.cpp)
-target_link_libraries(Test PRIVATE Catch)
+target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch)
