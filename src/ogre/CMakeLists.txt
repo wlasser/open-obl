@@ -22,9 +22,8 @@ target_sources(OpenOblivionOgre PRIVATE
         ogre_stream_wrappers.cpp
         window.cpp)
 
-target_link_libraries(OpenOblivionOgre PRIVATE
-        spdlog
-        ${OGRE_LIBRARIES})
+target_link_libraries(OpenOblivionOgre PRIVATE spdlog
+        PUBLIC OgreMain)
 
 install(TARGETS OpenOblivionOgre EXPORT OpenOblivionOgreTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

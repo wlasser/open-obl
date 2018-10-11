@@ -15,9 +15,8 @@ target_sources(OpenOblivionFS PRIVATE
         ${CMAKE_SOURCE_DIR}/include/fs/path.hpp
         path.cpp)
 
-target_link_libraries(OpenOblivionFS PRIVATE
-        Boost::boost
-        stdc++fs)
+target_link_libraries(OpenOblivionFS PRIVATE Boost::boost
+        INTERFACE stdc++fs)
 
 install(TARGETS OpenOblivionFS EXPORT OpenOblivionFSTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

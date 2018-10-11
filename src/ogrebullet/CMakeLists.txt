@@ -10,7 +10,7 @@ add_library(OpenOblivion::OpenOblivionOgreBullet ALIAS OpenOblivionOgreBullet)
 target_include_directories(OpenOblivionOgreBullet PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        PRIVATE
+        PUBLIC
         ${BULLET_INCLUDE_DIRS})
 
 target_sources(OpenOblivionOgreBullet PRIVATE
@@ -30,8 +30,7 @@ target_link_libraries(OpenOblivionOgreBullet PRIVATE
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionOgre
         spdlog
-        ${OGRE_LIBRARIES}
-        ${BULLET_LIBRARIES})
+        PUBLIC ${BULLET_LIBRARY} OgreMain)
 
 install(TARGETS OpenOblivionOgreBullet EXPORT OpenOblivionOgreBulletTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

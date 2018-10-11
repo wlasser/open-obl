@@ -3,13 +3,12 @@ project(OpenOblivion)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug -Wall")
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/modules")
 
 option(USE_IWYU "Run include-what-you-use when building" OFF)
 
 find_package(ZLIB 1.2.11 REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(OGRE 1.11 REQUIRED COMPONENTS)
+find_package(SDL2 2.0 REQUIRED)
+find_package(OGRE 1.11 REQUIRED)
 find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
 find_package(pugixml REQUIRED)
@@ -80,7 +79,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/settings.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC
-        ${Boost_INCLUDE_DIRS}
         ${BULLET_INCLUDE_DIRS})
 
 target_link_libraries(OpenOblivionEngine PUBLIC
@@ -91,12 +89,13 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
         OpenOblivion::OpenOblivionSDL
-        ${OGRE_LIBRARIES}
-        ${BULLET_LIBRARIES}
+        Boost::boost
+        OgreMain
         spdlog
         stdc++fs
         GSL
-        pugixml)
+        pugixml
+        ${BULLET_LIBRARIES})
 
 add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
@@ -120,10 +119,8 @@ target_sources(OpenOblivion PRIVATE
         include/system_time.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
-        ${ZLIB_INCLUDE_DIRS}
-        ${SDL2_INCLUDE_DIR}
-        ${Boost_INCLUDE_DIRS}
         ${BULLET_INCLUDE_DIRS})
+
 target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionFS
@@ -132,14 +129,16 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
         OpenOblivion::OpenOblivionSDL
-        ${ZLIB_LIBRARIES}
-        ${OGRE_LIBRARIES}
-        ${SDL2_LIBRARY}
-        ${BULLET_LIBRARIES}
+        Boost::boost
+        ZLIB::ZLIB
+        SDL2::SDL2
+        SDL2::SDL2main
+        OgreMain OgreGLSupport
         spdlog
         stdc++fs
         GSL
-        pugixml)
+        pugixml
+        ${BULLET_LIBRARIES})
 
 if (USE_IWYU)
     find_program(IWYU_PATH NAMES include-what-you-use iwyu)
