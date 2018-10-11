@@ -3,6 +3,7 @@
 
 #include "formid.hpp"
 #include "records.hpp"
+#include "ogrebullet/rigid_body.hpp"
 #include <OgreColourValue.h>
 #include <OgreLight.h>
 #include <OgreSceneManager.h>
@@ -33,6 +34,7 @@ struct LightItemEntry : LightEntry {
 
 struct LightMesh {
   Ogre::Light *light{nullptr};
+  Ogre::RigidBody *rigidBody{nullptr};
   Ogre::Entity *mesh{nullptr};
 };
 

@@ -100,15 +100,30 @@ void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) 
     } else {
       node->attachObject(stat);
     }
-  } else if (auto[light, mesh] = lightMgr->get(id, cell->scnMgr); light) {
-    node->attachObject(light);
-    if (mesh) {
-      node->createChildSceneNode()->attachObject(mesh);
-    }
-  } else {
-    cell->scnMgr->destroySceneNode(node);
     return;
   }
+
+  if (auto[light, rigidBody, mesh] = lightMgr->get(id, cell->scnMgr); light) {
+    Ogre::SceneNode *workingNode{node};
+
+    if (rigidBody) {
+      workingNode->attachObject(rigidBody);
+      cell->physicsWorld->addRigidBody(rigidBody->getRigidBody());
+      rigidBody->getRigidBody()->setUserPointer(workingNode);
+      workingNode = workingNode->createChildSceneNode();
+    }
+
+    if (mesh) {
+      workingNode->attachObject(mesh);
+      workingNode = workingNode->createChildSceneNode();
+    }
+
+    workingNode->attachObject(light);
+
+    return;
+  }
+
+  cell->scnMgr->destroySceneNode(node);
 }
 
 } // namespace engine
