@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 #define OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 
+#include "engine/resolvers/door_resolver.hpp"
 #include "engine/resolvers/interior_cell_resolver.hpp"
 #include "engine/resolvers/light_resolver.hpp"
 #include "engine/resolvers/static_resolver.hpp"
@@ -11,14 +12,17 @@ namespace engine {
 
 class InitialProcessor {
  private:
+  DoorResolver *doorRes;
   LightResolver *lightRes;
   StaticResolver *staticRes;
   InteriorCellResolver *interiorCellRes;
 
  public:
-  InitialProcessor(LightResolver *lightRes,
+  InitialProcessor(DoorResolver *doorRes,
+                   LightResolver *lightRes,
                    StaticResolver *staticRes,
                    InteriorCellResolver *interiorCellRes) :
+      doorRes(doorRes),
       lightRes(lightRes),
       staticRes(staticRes),
       interiorCellRes(interiorCellRes) {}
@@ -31,6 +35,9 @@ class InitialProcessor {
 
 template<>
 void InitialProcessor::readRecord<record::STAT>(std::istream &);
+
+template<>
+void InitialProcessor::readRecord<record::DOOR>(std::istream &);
 
 template<>
 void InitialProcessor::readRecord<record::LIGH>(std::istream &);

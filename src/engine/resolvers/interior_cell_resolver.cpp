@@ -48,7 +48,7 @@ std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
   }
   ptr->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
 
-  Processor processor(ptr.get(), lightRes, staticRes);
+  Processor processor(ptr.get(), doorRes, lightRes, staticRes);
 
   // TODO: Lock a mutex here
   is.seekg(entry->second.tell);
@@ -56,6 +56,10 @@ std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
   esp::readCellChildren(is, processor, processor, processor);
 
   return ptr;
+}
+
+bool InteriorCellResolver::add(FormID baseID, InteriorCellEntry entry) {
+  return cells.try_emplace(entry.record->id, std::move(entry)).second;
 }
 
 template<>
@@ -93,6 +97,17 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
 
   // Construct the actual entities and attach them to the node
   if (auto[rigidBody, mesh]{staticRes->get(id, cell->scnMgr)}; rigidBody
+      || mesh) {
+    gsl::not_null<Ogre::SceneNode *> workingNode{node};
+
+    workingNode = attachRigidBody(workingNode, rigidBody,
+                                  gsl::make_not_null(cell->physicsWorld.get()));
+    workingNode = attachMesh(workingNode, mesh, true);
+
+    return;
+  }
+
+  if (auto[rigidBody, mesh]{doorRes->get(id, cell->scnMgr)}; rigidBody
       || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 

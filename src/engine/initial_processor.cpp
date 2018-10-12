@@ -1,6 +1,7 @@
 #include "game_settings.hpp"
 #include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
+#include "fs/path.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
 #include "records.hpp"
@@ -10,12 +11,24 @@ namespace engine {
 
 template<>
 void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
-  auto rec = record::readRecord<record::STAT>(is);
+  const auto rec{record::readRecord<record::STAT>(is)};
   StaticEntry entry{};
   // MODL records omit the "meshes/" folder
-  entry.modelFilename = "meshes/" +
-      conversions::normalizePath(rec.data.modelFilename.data);
-  staticRes->statics[rec.id] = std::move(entry);
+  fs::Path rawPath{rec.data.modelFilename.data};
+  entry.modelFilename = (fs::Path{"meshes"} / rawPath).view();
+  staticRes->add(rec.id, std::move(entry));
+}
+
+template<>
+void InitialProcessor::readRecord<record::DOOR>(std::istream &is) {
+  auto rec = record::readRecord<record::DOOR>(is);
+  DoorEntry entry{};
+
+  if (rec.data.modelFilename) {
+    fs::Path rawPath{rec.data.modelFilename->data};
+    entry.modelFilename = (fs::Path{"meshes"} / rawPath).view();
+  }
+  doorRes->add(rec.id, std::move(entry));
 }
 
 template<>
@@ -41,7 +54,7 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
     entry.color.setAsABGR(data.color.v);
     entry.flags = data.flags;
 
-    lightRes->lights[rec.id] = std::move(entry);
+    lightRes->add(rec.id, std::move(entry));
   }
 }
 
@@ -53,7 +66,7 @@ void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
     entry.modelFilename = "meshes/" +
         conversions::normalizePath(rec.data.modelFilename->data);
   }
-  staticRes->statics[rec.id] = std::move(entry);
+  staticRes->add(rec.id, std::move(entry));
 }
 
 template<>
@@ -62,7 +75,7 @@ void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
   entry.tell = is.tellg();
   entry.record = std::make_unique<record::CELL>();
   record::readRecord(is, *entry.record, "CELL");
-  interiorCellRes->cells[entry.record->id] = std::move(entry);
+  interiorCellRes->add(entry.record->id, std::move(entry));
   // Children will be loaded later, so if this cell has any then skip over them
   if (record::peekGroupType(is) == record::Group::GroupType::CellChildren) {
     record::skipGroup(is);

@@ -151,17 +151,20 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Opened {}", masterEsm.view());
 
   // Create the engine managers
+  doorRes = std::make_unique<DoorResolver>();
   lightRes = std::make_unique<LightResolver>();
   staticRes = std::make_unique<StaticResolver>();
   interiorCellRes = std::make_unique<InteriorCellResolver>(
       esmStream,
+      doorRes.get(),
       lightRes.get(),
       staticRes.get(),
       bulletConf.get(),
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm
-  InitialProcessor initialProcessor(lightRes.get(),
+  InitialProcessor initialProcessor(doorRes.get(),
+                                    lightRes.get(),
                                     staticRes.get(),
                                     interiorCellRes.get());
   esp::readEsp(esmStream, initialProcessor);

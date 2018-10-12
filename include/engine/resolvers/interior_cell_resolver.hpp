@@ -3,6 +3,7 @@
 
 #include "bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
+#include "engine/resolvers/door_resolver.hpp"
 #include "engine/resolvers/light_resolver.hpp"
 #include "engine/resolvers/static_resolver.hpp"
 #include "formid.hpp"
@@ -67,14 +68,17 @@ class InteriorCellResolver {
   class Processor {
    private:
     InteriorCell *cell;
+    DoorResolver *doorRes;
     LightResolver *lightRes;
     StaticResolver *staticRes;
 
    public:
     explicit Processor(InteriorCell *cell,
+                       DoorResolver *doorRes,
                        LightResolver *lightRes,
                        StaticResolver *staticRes) :
         cell(cell),
+        doorRes(doorRes),
         lightRes(lightRes),
         staticRes(staticRes) {}
 
@@ -85,6 +89,7 @@ class InteriorCellResolver {
   };
 
   std::istream &is;
+  DoorResolver *doorRes;
   LightResolver *lightRes;
   StaticResolver *staticRes;
   bullet::Configuration *bulletConf;
@@ -94,11 +99,13 @@ class InteriorCellResolver {
 
  public:
   explicit InteriorCellResolver(std::istream &is,
+                                DoorResolver *doorRes,
                                 LightResolver *lightRes,
                                 StaticResolver *staticRes,
                                 bullet::Configuration *bulletConf,
                                 std::unique_ptr<Strategy> &&strategy) :
       is(is),
+      doorRes(doorRes),
       lightRes(lightRes),
       staticRes(staticRes),
       bulletConf(bulletConf),
@@ -106,6 +113,7 @@ class InteriorCellResolver {
 
   record::CELL *peek(FormID baseID) const;
   std::shared_ptr<InteriorCell> get(FormID baseID) const;
+  bool add(FormID baseID, InteriorCellEntry entry);
 };
 
 template<>

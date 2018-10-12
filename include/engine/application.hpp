@@ -6,6 +6,7 @@
 #include "engine/bsa.hpp"
 #include "engine/gui/gui.hpp"
 #include "engine/resolvers/interior_cell_resolver.hpp"
+#include "engine/resolvers/door_resolver.hpp"
 #include "engine/resolvers/light_resolver.hpp"
 #include "engine/resolvers/static_resolver.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
@@ -54,6 +55,7 @@ class Application : public Ogre::FrameListener {
 
   std::unique_ptr<gui::LoadingMenu> menuLoadingMenu{};
 
+  std::unique_ptr<DoorResolver> doorRes{};
   std::unique_ptr<LightResolver> lightRes{};
   std::unique_ptr<StaticResolver> staticRes{};
   std::unique_ptr<InteriorCellResolver> interiorCellRes{};
