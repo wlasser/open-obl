@@ -16,7 +16,7 @@ record::RecordHeader record::readRecordHeader(std::istream &is) {
   return result;
 }
 
-record::RecordHeader record::skipRecord(std::istream &is) {
+[[maybe_unused]] record::RecordHeader record::skipRecord(std::istream &is) {
   auto header = readRecordHeader(is);
   is.seekg(header.size, std::ios_base::cur);
   return header;

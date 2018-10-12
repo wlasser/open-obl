@@ -15,7 +15,7 @@
 struct NullProcessor {
   template<class R>
   void readRecord(std::istream &is) {
-    (void) record::skipRecord(is);
+    record::skipRecord(is);
   }
 };
 
@@ -33,7 +33,7 @@ LogProcessor logProcessor;
 
 template<>
 void NullProcessor::readRecord<record::CELL>(std::istream &is) {
-  (void) record::skipRecord(is);
+  record::skipRecord(is);
   esp::readCellChildren(is, nullProcessor, nullProcessor, nullProcessor);
 }
 

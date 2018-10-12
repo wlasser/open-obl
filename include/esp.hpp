@@ -161,7 +161,7 @@ void readEsp(std::istream &is, Processor &processor) {
               break;
             case "ALCH"_rec: processor.template readRecord<record::ALCH>(is);
               break;
-            default: (void) skipRecord(is);
+            default: skipRecord(is);
               break;
           }
         }
@@ -208,7 +208,7 @@ void readCellChildren(std::istream &is,
     // group is empty e.g. ImperialSewerSystemTG11
     if (peekRecordType(is) == "PGRD") {
       // TODO: PGRD
-      (void) skipRecord(is);
+      skipRecord(is);
     }
 
     parseCellChildrenBlock(is, temporaryProcessor);
@@ -222,9 +222,9 @@ void parseCellChildrenBlock(std::istream &is, Processor &processor) {
     if (type == "REFR") {
       processor.template readRecord<record::REFR>(is);
     } else if (type == "ACHR") {
-      (void) skipRecord(is);
+      skipRecord(is);
     } else if (type == "ACRE") {
-      (void) skipRecord(is);
+      skipRecord(is);
     } else {
       return;
     }

@@ -52,7 +52,7 @@ std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
 
   // TODO: Lock a mutex here
   is.seekg(entry->second.tell);
-  (void) record::skipRecord(is);
+  record::skipRecord(is);
   esp::readCellChildren(is, processor, processor, processor);
 
   return ptr;
