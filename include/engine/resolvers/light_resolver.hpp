@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_LIGHT_MANAGER_HPP
-#define OPENOBLIVION_ENGINE_LIGHT_MANAGER_HPP
+#ifndef OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP
+#define OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP
 
 #include "formid.hpp"
 #include "records.hpp"
@@ -38,7 +38,7 @@ struct LightMesh {
   Ogre::Entity *mesh{nullptr};
 };
 
-class LightManager {
+class LightResolver {
  private:
   std::unordered_map<FormID, LightEntry> lights{};
   std::unordered_map<FormID, LightItemEntry> lightItems{};
@@ -50,4 +50,4 @@ class LightManager {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_LIGHT_MANAGER_HPP
+#endif // OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP

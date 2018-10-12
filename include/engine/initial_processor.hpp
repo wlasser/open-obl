@@ -1,9 +1,9 @@
 #ifndef OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 #define OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
 
-#include "engine/managers/interior_cell_manager.hpp"
-#include "engine/managers/light_manager.hpp"
-#include "engine/managers/static_manager.hpp"
+#include "engine/resolvers/interior_cell_resolver.hpp"
+#include "engine/resolvers/light_resolver.hpp"
+#include "engine/resolvers/static_resolver.hpp"
 #include "record/io.hpp"
 #include "records.hpp"
 
@@ -11,17 +11,17 @@ namespace engine {
 
 class InitialProcessor {
  private:
-  LightManager *lightMgr;
-  StaticManager *staticMgr;
-  InteriorCellManager *interiorCellMgr;
+  LightResolver *lightRes;
+  StaticResolver *staticRes;
+  InteriorCellResolver *interiorCellRes;
 
  public:
-  InitialProcessor(LightManager *lightMgr,
-                   StaticManager *staticMgr,
-                   InteriorCellManager *interiorCellMgr) :
-      lightMgr(lightMgr),
-      staticMgr(staticMgr),
-      interiorCellMgr(interiorCellMgr) {}
+  InitialProcessor(LightResolver *lightRes,
+                   StaticResolver *staticRes,
+                   InteriorCellResolver *interiorCellRes) :
+      lightRes(lightRes),
+      staticRes(staticRes),
+      interiorCellRes(interiorCellRes) {}
 
   template<class R>
   void readRecord(std::istream &is) {

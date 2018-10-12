@@ -1,8 +1,8 @@
 #include <engine/conversions.hpp>
-#include "engine/managers/light_manager.hpp"
+#include "engine/resolvers/light_resolver.hpp"
 
-engine::LightMesh engine::LightManager::get(FormID baseID,
-                                            Ogre::SceneManager *mgr) const {
+engine::LightMesh engine::LightResolver::get(FormID baseID,
+                                             Ogre::SceneManager *mgr) const {
   const auto entry = lights.find(baseID);
   if (entry != lights.end()) {
     const auto &rec{entry->second};

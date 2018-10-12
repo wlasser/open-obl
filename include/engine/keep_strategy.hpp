@@ -9,7 +9,7 @@ namespace engine::strategy {
 // memory. This is virtual because we want to be able to change strategies at
 // runtime (e.g. based on memory constraints), but is also generic as each
 // strategy is used concretely for only a single type.
-// For instance, InteriorCellManager needs a KeepStrategy for InteriorCell, but
+// For instance, InteriorCellResolver needs a KeepStrategy for InteriorCell, but
 // doesn't care which one.
 template<class T>
 class KeepStrategy {

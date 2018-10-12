@@ -5,9 +5,9 @@
 #include "bullet/collision.hpp"
 #include "engine/bsa.hpp"
 #include "engine/gui/gui.hpp"
-#include "engine/managers/interior_cell_manager.hpp"
-#include "engine/managers/light_manager.hpp"
-#include "engine/managers/static_manager.hpp"
+#include "engine/resolvers/interior_cell_resolver.hpp"
+#include "engine/resolvers/light_resolver.hpp"
+#include "engine/resolvers/static_resolver.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
 #include "engine/player_controller.hpp"
@@ -54,9 +54,9 @@ class Application : public Ogre::FrameListener {
 
   std::unique_ptr<gui::LoadingMenu> menuLoadingMenu{};
 
-  std::unique_ptr<LightManager> lightMgr{};
-  std::unique_ptr<StaticManager> staticMgr{};
-  std::unique_ptr<InteriorCellManager> interiorCellMgr{};
+  std::unique_ptr<LightResolver> lightRes{};
+  std::unique_ptr<StaticResolver> staticRes{};
+  std::unique_ptr<InteriorCellResolver> interiorCellRes{};
 
   std::shared_ptr<InteriorCell> currentCell{};
   bullet::CollisionCaller collisionCaller{};

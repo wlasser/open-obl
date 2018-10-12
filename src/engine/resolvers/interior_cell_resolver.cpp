@@ -1,5 +1,5 @@
 #include "engine/conversions.hpp"
-#include "engine/managers/interior_cell_manager.hpp"
+#include "engine/resolvers/interior_cell_resolver.hpp"
 #include "esp.hpp"
 #include "formid.hpp"
 #include "records.hpp"
@@ -8,13 +8,13 @@
 
 namespace engine {
 
-record::CELL *InteriorCellManager::peek(FormID baseID) const {
+record::CELL *InteriorCellResolver::peek(FormID baseID) const {
   const auto entry = cells.find(baseID);
   if (entry != cells.end()) return entry->second.record.get();
   else return nullptr;
 }
 
-std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) const {
+std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
   // Try to find an InteriorCellEntry with the given baseID. Since every cell
   // should have an entry by now, if no entry exists then we can give up.
   const auto entry = cells.find(baseID);
@@ -57,7 +57,7 @@ std::shared_ptr<InteriorCell> InteriorCellManager::get(FormID baseID) const {
 }
 
 template<>
-void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &is) {
+void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is) {
   const auto ref = record::readRecord<record::REFR>(is);
   auto *node = cell->scnMgr->getRootSceneNode()->createChildSceneNode();
   const auto id = ref.data.baseID.data;

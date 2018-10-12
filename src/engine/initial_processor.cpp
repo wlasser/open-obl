@@ -15,7 +15,7 @@ void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
   // MODL records omit the "meshes/" folder
   entry.modelFilename = "meshes/" +
       conversions::normalizePath(rec.data.modelFilename.data);
-  staticMgr->statics[rec.id] = std::move(entry);
+  staticRes->statics[rec.id] = std::move(entry);
 }
 
 template<>
@@ -41,7 +41,7 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
     entry.color.setAsABGR(data.color.v);
     entry.flags = data.flags;
 
-    lightMgr->lights[rec.id] = std::move(entry);
+    lightRes->lights[rec.id] = std::move(entry);
   }
 }
 
@@ -53,7 +53,7 @@ void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
     entry.modelFilename = "meshes/" +
         conversions::normalizePath(rec.data.modelFilename->data);
   }
-  staticMgr->statics[rec.id] = std::move(entry);
+  staticRes->statics[rec.id] = std::move(entry);
 }
 
 template<>
@@ -62,7 +62,7 @@ void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
   entry.tell = is.tellg();
   entry.record = std::make_unique<record::CELL>();
   record::readRecord(is, *entry.record, "CELL");
-  interiorCellMgr->cells[entry.record->id] = std::move(entry);
+  interiorCellRes->cells[entry.record->id] = std::move(entry);
   // Children will be loaded later, so if this cell has any then skip over them
   if (record::peekGroupType(is) == record::Group::GroupType::CellChildren) {
     record::skipGroup(is);

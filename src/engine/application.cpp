@@ -3,8 +3,8 @@
 #include "engine/conversions.hpp"
 #include "engine/initial_processor.hpp"
 #include "engine/keep_strategy.hpp"
-#include "engine/managers/interior_cell_manager.hpp"
-#include "engine/managers/static_manager.hpp"
+#include "engine/resolvers/interior_cell_resolver.hpp"
+#include "engine/resolvers/static_resolver.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
@@ -151,24 +151,24 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Opened {}", masterEsm.view());
 
   // Create the engine managers
-  lightMgr = std::make_unique<LightManager>();
-  staticMgr = std::make_unique<StaticManager>();
-  interiorCellMgr = std::make_unique<InteriorCellManager>(
+  lightRes = std::make_unique<LightResolver>();
+  staticRes = std::make_unique<StaticResolver>();
+  interiorCellRes = std::make_unique<InteriorCellResolver>(
       esmStream,
-      lightMgr.get(),
-      staticMgr.get(),
+      lightRes.get(),
+      staticRes.get(),
       bulletConf.get(),
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm
-  InitialProcessor initialProcessor(lightMgr.get(),
-                                    staticMgr.get(),
-                                    interiorCellMgr.get());
+  InitialProcessor initialProcessor(lightRes.get(),
+                                    staticRes.get(),
+                                    interiorCellRes.get());
   esp::readEsp(esmStream, initialProcessor);
   logger->info("Read {}", masterEsm.view());
 
   // Load a test cell
-  currentCell = interiorCellMgr->get(0x00'031b59);
+  currentCell = interiorCellRes->get(0x00'031b59);
   logger->info("Loaded test cell");
 
   playerController =

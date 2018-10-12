@@ -40,8 +40,6 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/gui/trait_selector.cpp
         src/engine/gui/xml.cpp
         src/engine/initial_processor.cpp
-        src/engine/managers/interior_cell_manager.cpp
-        src/engine/managers/light_manager.cpp
         src/engine/nifloader/loader.cpp
         src/engine/nifloader/loader_state.cpp
         src/engine/nifloader/collision_object_loader.cpp
@@ -49,6 +47,8 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
         src/engine/player_controller.cpp
+        src/engine/resolvers/interior_cell_resolver.cpp
+        src/engine/resolvers/light_resolver.cpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
         include/engine/application.hpp
@@ -66,9 +66,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/gui/xml.hpp
         include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
-        include/engine/managers/interior_cell_manager.hpp
-        include/engine/managers/light_manager.hpp
-        include/engine/managers/static_manager.hpp
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
         include/engine/nifloader/collision_object_loader.hpp
@@ -76,6 +73,10 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/mesh_loader.hpp
         include/engine/nifloader/mesh_loader_state.hpp
         include/engine/player_controller.hpp
+        include/engine/resolvers/interior_cell_resolver.hpp
+        include/engine/resolvers/light_resolver.hpp
+        include/engine/resolvers/resolvers.hpp
+        include/engine/resolvers/static_resolver.hpp
         include/engine/settings.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC

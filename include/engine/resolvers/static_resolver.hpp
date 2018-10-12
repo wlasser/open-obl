@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_STATIC_MANAGER_HPP
-#define OPENOBLIVION_ENGINE_STATIC_MANAGER_HPP
+#ifndef OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
+#define OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
 
 #include "ogrebullet/rigid_body.hpp"
 #include "formid.hpp"
@@ -19,7 +19,7 @@ struct RigidBodyEntity {
   Ogre::Entity *entity{};
 };
 
-class StaticManager {
+class StaticResolver {
  private:
   std::unordered_map<FormID, StaticEntry> statics{};
   friend class InitialProcessor;
@@ -52,4 +52,4 @@ class StaticManager {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_STATIC_MANAGER_HPP
+#endif // OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP

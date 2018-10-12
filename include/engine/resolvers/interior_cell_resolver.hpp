@@ -1,10 +1,10 @@
-#ifndef OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
-#define OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
+#ifndef OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
+#define OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
 
 #include "bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
-#include "engine/managers/light_manager.hpp"
-#include "engine/managers/static_manager.hpp"
+#include "engine/resolvers/light_resolver.hpp"
+#include "engine/resolvers/static_resolver.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
 #include "records.hpp"
@@ -52,14 +52,14 @@ struct InteriorCellEntry {
   // TODO: Constructors?
 };
 
-// We want the cell manager to be able to decide to keep some cells loaded if
+// We want the cell resolver to be able to decide to keep some cells loaded if
 // they are accessed frequently, or have just been accessed, etc. This means the
-// manager must have sole or shared ownership of the cells. Since it is possible
-// for NPCs to navigate through cells and follow the player, the AI code in
-// particular needs to be able to force cells to remain (at least partially)
-// loaded. Thus we cannot allow loading a new cell to unconditionally delete an
-// old one; it may still be in use. We therefore require shared ownership.
-class InteriorCellManager {
+// resolver must have sole or shared ownership of the cells. Since it is
+// possible for NPCs to navigate through cells and follow the player, the AI
+// code needs to be able to force cells to remain (at least partially) loaded.
+// Thus we cannot allow loading a new cell to unconditionally delete an old one;
+// it may still be in use. We therefore require shared ownership.
+class InteriorCellResolver {
  public:
   using Strategy = strategy::KeepStrategy<InteriorCell>;
 
@@ -67,13 +67,13 @@ class InteriorCellManager {
   class Processor {
    private:
     InteriorCell *cell;
-    LightManager *lightMgr;
-    StaticManager *staticMgr;
+    LightResolver *lightMgr;
+    StaticResolver *staticMgr;
 
    public:
     explicit Processor(InteriorCell *cell,
-                       LightManager *lightMgr,
-                       StaticManager *staticMgr) :
+                       LightResolver *lightMgr,
+                       StaticResolver *staticMgr) :
         cell(cell),
         lightMgr(lightMgr),
         staticMgr(staticMgr) {}
@@ -85,19 +85,19 @@ class InteriorCellManager {
   };
 
   std::istream &is;
-  LightManager *lightMgr;
-  StaticManager *staticMgr;
+  LightResolver *lightMgr;
+  StaticResolver *staticMgr;
   bullet::Configuration *bulletConf;
   std::unordered_map<FormID, InteriorCellEntry> cells{};
   std::unique_ptr<Strategy> strategy;
   friend class InitialProcessor;
 
  public:
-  explicit InteriorCellManager(std::istream &is,
-                               LightManager *lightMgr,
-                               StaticManager *staticMgr,
-                               bullet::Configuration *bulletConf,
-                               std::unique_ptr<Strategy> &&strategy) :
+  explicit InteriorCellResolver(std::istream &is,
+                                LightResolver *lightMgr,
+                                StaticResolver *staticMgr,
+                                bullet::Configuration *bulletConf,
+                                std::unique_ptr<Strategy> &&strategy) :
       is(is),
       lightMgr(lightMgr),
       staticMgr(staticMgr),
@@ -109,8 +109,8 @@ class InteriorCellManager {
 };
 
 template<>
-void InteriorCellManager::Processor::readRecord<record::REFR>(std::istream &);
+void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &);
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_INTERIOR_CELL_MANAGER_HPP
+#endif // OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
