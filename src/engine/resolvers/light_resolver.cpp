@@ -1,60 +1,47 @@
-#include <engine/conversions.hpp>
+#include "engine/conversions.hpp"
+#include "engine/resolvers/resolvers.hpp"
 #include "engine/resolvers/light_resolver.hpp"
 
 engine::LightMesh engine::LightResolver::get(FormID baseID,
                                              Ogre::SceneManager *mgr) const {
-  const auto entry = lights.find(baseID);
-  if (entry != lights.end()) {
-    const auto &rec{entry->second};
+  const auto entry{lights.find(baseID)};
+  if (entry == lights.end()) return {};
 
-    auto *const light{mgr->createLight()};
+  const auto &rec{entry->second};
 
-    light->setDiffuseColour(rec.color);
-    light->setSpecularColour(rec.color);
-    // TODO: These could do with more tuning
-    const auto radius{rec.radius * conversions::metersPerUnit<float>};
-    light->setAttenuation(radius,
-                          1.0f,
-                          3.0f / radius,
-                          5.0f / (radius * radius));
-    light->setPowerScale(rec.fadeValue);
+  auto *const light{mgr->createLight()};
 
-    const auto spotLightFlag =
-        LightEntry::Flag::SpotLight | LightEntry::Flag::SpotShadow;
+  light->setDiffuseColour(rec.color);
+  light->setSpecularColour(rec.color);
+  // TODO: These could do with more tuning
+  const auto radius{rec.radius * conversions::metersPerUnit<float>};
+  light->setAttenuation(radius,
+                        1.0f,
+                        3.0f / radius,
+                        5.0f / (radius * radius));
+  light->setPowerScale(rec.fadeValue);
 
-    if ((rec.flags & spotLightFlag) != LightEntry::Flag::None) {
-      // Spotlights
-      light->setType(Ogre::Light::LightTypes::LT_SPOTLIGHT);
-      light->setSpotlightRange(Ogre::Radian(0.0f),
-                               Ogre::Degree(rec.fov),
-                               rec.falloffExponent);
-      light->setSpotlightNearClipDistance(0.0f);
-    } else {
-      // Point lights
-      light->setType(Ogre::Light::LightTypes::LT_POINT);
-    }
+  const auto spotLightFlag
+      {LightEntry::Flag::SpotLight | LightEntry::Flag::SpotShadow};
 
-    auto *const mesh = [=]() -> Ogre::Entity * {
-      if (rec.modelFilename.empty()) return nullptr;
-      else return mgr->createEntity(rec.modelFilename);
-    }();
+  if ((rec.flags & spotLightFlag) != LightEntry::Flag::None) {
+    // Spotlights
+    light->setType(Ogre::Light::LightTypes::LT_SPOTLIGHT);
+    light->setSpotlightRange(Ogre::Radian(0.0f),
+                             Ogre::Degree(rec.fov),
+                             rec.falloffExponent);
+    light->setSpotlightNearClipDistance(0.0f);
+  } else {
+    // Point lights
+    light->setType(Ogre::Light::LightTypes::LT_POINT);
+  }
 
-    if (!mesh) return {light, nullptr, mesh};
+  auto *const mesh{loadMesh(rec, mgr)};
+  auto *const rigidBody{loadRigidBody(mesh, mgr)};
 
-    auto *const rigidBody = [=]() -> Ogre::RigidBody * {
-      const auto &group{mesh->getMesh()->getGroup()};
-      std::map<std::string, std::string> params = {
-          {"collisionObject", rec.modelFilename},
-          {"resourceGroup", group}
-      };
-      try {
-        return dynamic_cast<Ogre::RigidBody *>(
-            mgr->createMovableObject("RigidBody", &params));
-      } catch (const Ogre::PartialCollisionObjectException &e) {
-        return nullptr;
-      }
-    }();
+  return {light, rigidBody, mesh};
+}
 
-    return {light, rigidBody, mesh};
-  } else return {};
+bool engine::LightResolver::add(FormID baseID, store_t entry) {
+  return lights.try_emplace(baseID, entry).second;
 }

@@ -49,6 +49,8 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/player_controller.cpp
         src/engine/resolvers/interior_cell_resolver.cpp
         src/engine/resolvers/light_resolver.cpp
+        src/engine/resolvers/resolvers.cpp
+        src/engine/resolvers/static_resolver.cpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
         include/engine/application.hpp

@@ -39,13 +39,15 @@ struct LightMesh {
 };
 
 class LightResolver {
+ public:
+  using get_t = LightMesh;
+  using store_t = LightEntry;
+  LightMesh get(FormID baseID, Ogre::SceneManager *mgr) const;
+  bool add(FormID baseID, store_t entry);
+
  private:
   std::unordered_map<FormID, LightEntry> lights{};
-  std::unordered_map<FormID, LightItemEntry> lightItems{};
   friend class InitialProcessor;
-
- public:
-  LightMesh get(FormID baseID, Ogre::SceneManager *mgr) const;
 };
 
 } // namespace engine

@@ -1,6 +1,11 @@
 #ifndef OPENOBLIVION_ENGINE_RESOLVERS_HPP
 #define OPENOBLIVION_ENGINE_RESOLVERS_HPP
 
+#include "ogrebullet/rigid_body.hpp"
+#include <gsl/gsl>
+#include <OgreEntity.h>
+#include <OgreSceneManager.h>
+
 // At runtime it is necessary to resolve `FormID`s into concrete instances of
 // the types they represent, for example producing an `Ogre::Entity` and
 // `Ogre::RigidBody` from the base id of a `STAT`. Sometimes it is feasible to
@@ -48,5 +53,42 @@
 // caller's responsibility to know how to link the two together in the scene.
 // Moreover, this allows passing ownership to the `Ogre::SceneManager` instead
 // of the `Resolver` managing that itself.
+
+namespace engine {
+
+// struct T {
+//   std::string modelFilename;
+// };
+template<class T>
+Ogre::Entity *loadMesh(const T &rec, Ogre::SceneManager *mgr) {
+  if (rec.modelFilename.empty()) return nullptr;
+  else return mgr->createEntity(rec.modelFilename);
+}
+
+Ogre::RigidBody *loadRigidBody(Ogre::Entity *entity, Ogre::SceneManager *mgr);
+
+// If `mesh` is non-null, attach it to the `node` and return a new child node,
+// otherwise return `node`. If `final` is true, never create a child node.
+gsl::not_null<Ogre::SceneNode *>
+attachMesh(gsl::not_null<Ogre::SceneNode *> node, Ogre::Entity *mesh,
+           bool final = false);
+
+// If `rigidBody` is non-null, attach it to the `node`, link it to the `world`,
+// and return a new child node. Otherwise return `node`. If `final` is true,
+// never create a child node.
+gsl::not_null<Ogre::SceneNode *>
+attachRigidBody(gsl::not_null<Ogre::SceneNode *> node,
+                Ogre::RigidBody *rigidBody,
+                gsl::not_null<btDiscreteDynamicsWorld *> world,
+                bool final = false);
+
+// If `light` is non-null, attach it to the `node` and return a new child node,
+// otherwise return `node.` If `final` is true, never create a child node.
+gsl::not_null<Ogre::SceneNode *>
+attachLight(gsl::not_null<Ogre::SceneNode *> node,
+            Ogre::Light *light,
+            bool final = false);
+
+} // namespace engine
 
 #endif // OPENOBLIVION_ENGINE_RESOLVERS_HPP

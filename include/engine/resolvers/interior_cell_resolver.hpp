@@ -67,16 +67,16 @@ class InteriorCellResolver {
   class Processor {
    private:
     InteriorCell *cell;
-    LightResolver *lightMgr;
-    StaticResolver *staticMgr;
+    LightResolver *lightRes;
+    StaticResolver *staticRes;
 
    public:
     explicit Processor(InteriorCell *cell,
-                       LightResolver *lightMgr,
-                       StaticResolver *staticMgr) :
+                       LightResolver *lightRes,
+                       StaticResolver *staticRes) :
         cell(cell),
-        lightMgr(lightMgr),
-        staticMgr(staticMgr) {}
+        lightRes(lightRes),
+        staticRes(staticRes) {}
 
     template<class R>
     void readRecord(std::istream &is) {
@@ -85,8 +85,8 @@ class InteriorCellResolver {
   };
 
   std::istream &is;
-  LightResolver *lightMgr;
-  StaticResolver *staticMgr;
+  LightResolver *lightRes;
+  StaticResolver *staticRes;
   bullet::Configuration *bulletConf;
   std::unordered_map<FormID, InteriorCellEntry> cells{};
   std::unique_ptr<Strategy> strategy;
@@ -94,13 +94,13 @@ class InteriorCellResolver {
 
  public:
   explicit InteriorCellResolver(std::istream &is,
-                                LightResolver *lightMgr,
-                                StaticResolver *staticMgr,
+                                LightResolver *lightRes,
+                                StaticResolver *staticRes,
                                 bullet::Configuration *bulletConf,
                                 std::unique_ptr<Strategy> &&strategy) :
       is(is),
-      lightMgr(lightMgr),
-      staticMgr(staticMgr),
+      lightRes(lightRes),
+      staticRes(staticRes),
       bulletConf(bulletConf),
       strategy(std::move(strategy)) {}
 
