@@ -370,6 +370,10 @@ constexpr Version operator ""_ver(const char *str, std::size_t size) {
 
 namespace io {
 
+template<class L, class R, nif::Version ver1, nif::Version ver2>
+void readBytes(std::istream &,
+               nif::Versionable::VersionEither<L, R, ver1, ver2> &);
+
 template<class T, nif::Version ver1, nif::Version ver2>
 void readBytes(std::istream &is,
                nif::Versionable::VersionOptional<T, ver1, ver2> &t) {

@@ -220,7 +220,7 @@ void NiTimeController::read(std::istream &is) {
   io::readBytes(is, phase);
   io::readBytes(is, startTime);
   io::readBytes(is, stopTime);
-  io::readBytes(is, controllerTarget);
+  is >> controllerTarget;
 }
 
 void NiInterpController::read(std::istream &is) {
