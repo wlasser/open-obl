@@ -111,6 +111,7 @@ target_sources(OpenOblivion PRIVATE
         src/main.cpp
         src/records.cpp
         src/save_state.cpp
+        src/subrecords.cpp
         src/system_time.cpp
         include/actor_value.hpp
         include/attribute.hpp
@@ -121,6 +122,7 @@ target_sources(OpenOblivion PRIVATE
         include/game_settings.hpp
         include/magic_effects.hpp
         include/save_state.hpp
+        include/subrecords.hpp
         include/system_time.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
