@@ -43,7 +43,7 @@ Path::Path(const std::string &path) {
   mPath.reserve(path.size());
   std::transform(path.begin(), path.end(), std::back_inserter(mPath),
                  [](unsigned char c) {
-                   return std::tolower(c == '\\' ? '/' : c);
+                   return c == '\\' ? '/' : std::tolower(c);
                  });
   // Drop all trailing / and .
   boost::algorithm::trim_if(mPath, boost::algorithm::is_any_of("/."));
