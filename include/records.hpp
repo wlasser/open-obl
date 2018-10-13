@@ -27,13 +27,13 @@ namespace raw {
 // This is not a record, but appears multiple times in records with magic
 // effect components, e.g ALCH, ENCH, SPEL
 struct Effect {
-  record::EFID name{};
-  record::EFIT data{};
   struct ScriptEffectData {
     // Reverse order compared to Effect
     record::SCIT data{};
     record::FULL name{record::FULL("Script Effect")};
   };
+  record::EFID name{};
+  record::EFIT data{};
   std::optional<ScriptEffectData> script{};
   uint32_t size() const;
   void read(std::istream &is);
@@ -43,15 +43,15 @@ struct Effect {
 
 // Full ESM/ESP header
 struct TES4 {
+  struct Master {
+    record::MAST master{};
+    record::DATA_TES4 fileSize{};
+  };
   record::HEDR header{};
   record::OFST offsets{};
   record::DELE deleted{};
   record::CNAM_TES4 author{};
   record::SNAM description{};
-  struct Master {
-    record::MAST master{};
-    record::DATA_TES4 fileSize{};
-  };
   // Optional TODO: Use std::optional, or leave as an empty vector?
   std::vector<Master> masters{};
 };
@@ -86,18 +86,18 @@ struct CLAS {
 // Faction
 // TODO: Look at entire optional behaviour of this record
 struct FACT {
-  record::EDID editorID{};
-  // TODO: Use std::optional
-  record::FULL name{};
-  std::vector<record::XNAM> relations{};
-  record::DATA_FACT flags{};
-  record::CNAM_FACT crimeGoldMultiplier{};
   struct Rank {
     record::RNAM index{};
     record::MNAM maleName{};
     record::FNAM_FACT femaleName{};
     record::INAM iconFilename{};
   };
+  record::EDID editorID{};
+  // TODO: Use std::optional
+  record::FULL name{};
+  std::vector<record::XNAM> relations{};
+  record::DATA_FACT flags{};
+  record::CNAM_FACT crimeGoldMultiplier{};
   std::vector<Rank> ranks{};
 };
 
@@ -124,6 +124,24 @@ struct EYES {
 
 // Character race
 struct RACE {
+  struct FaceData {
+    record::INDX_FACE type{};
+    // Instead of simply not including an entry for non-present body parts,
+    // such as ears for Argonians, the remaining subrecords are omitted.
+    std::optional<record::MODL> modelFilename{};
+    std::optional<record::MODB> boundRadius{};
+    // Not present for INDX_FACE::eyeLeft and INDX_FACE::eyeRight
+    std::optional<record::ICON> textureFilename{};
+  };
+  struct BodyData {
+    record::INDX_BODY type{};
+    // Not present for INDX_BODY::tail when the race does not have a tail.
+    std::optional<record::ICON> textureFilename{};
+  };
+  struct TailData {
+    record::MODL model{};
+    record::MODB boundRadius{};
+  };
   record::EDID editorID{};
   std::optional<record::FULL> name{};
   record::DESC description{};
@@ -148,29 +166,11 @@ struct RACE {
 
   record::ATTR baseAttributes{};
 
-  struct FaceData {
-    record::INDX_FACE type{};
-    // Instead of simply not including an entry for non-present body parts,
-    // such as ears for Argonians, the remaining subrecords are omitted.
-    std::optional<record::MODL> modelFilename{};
-    std::optional<record::MODB> boundRadius{};
-    // Not present for INDX_FACE::eyeLeft and INDX_FACE::eyeRight
-    std::optional<record::ICON> textureFilename{};
-  };
   // Face data marker? It's empty.
   record::NAM0 faceMarker{};
   // Face data
   std::vector<FaceData> faceData{};
 
-  struct BodyData {
-    record::INDX_BODY type{};
-    // Not present for INDX_BODY::tail when the race does not have a tail.
-    std::optional<record::ICON> textureFilename{};
-  };
-  struct TailData {
-    record::MODL model{};
-    record::MODB boundRadius{};
-  };
   // Body data marker
   record::NAM1 bodyMarker{};
   // Male body data

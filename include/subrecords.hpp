@@ -434,14 +434,15 @@ struct DATA_MGEF {
     FogProjectile = 1u << 22u,
     NoHitEffect = 1u << 23u
   };
-  Flag flags = Flag::None;
-  float baseCost = 0.0f;
   // For summon spells, the FormID of the summoned weapon, armor, or creature.
   // Otherwise, the ActorValue affected by the spell.
+  // TODO: std::variant
   union AssociatedObject {
     FormID summonedFormID;
     ActorValue affectedActorValue;
   };
+  Flag flags = Flag::None;
+  float baseCost = 0.0f;
   AssociatedObject associatedObject{};
   MagicSchool school{};
   // Resist magic always applies to Flag::Touch and Flag::Target, after this.
@@ -476,6 +477,10 @@ inline constexpr DATA_MGEF::Flag operator|(DATA_MGEF::Flag a,
 }
 
 struct DATA_RACE {
+  enum class Flag : uint32_t {
+    None = 0u,
+    Playable = 1u
+  };
   // The ActorValue is saved as a uint8_t, not a uint32_t like it usually is.
   // The CS enforces that there are seven skill modifiers, but allows any number
   // of them to be `NONE`. Such entries are not written to the record.
@@ -486,10 +491,6 @@ struct DATA_RACE {
   float heightFemale = 0.0f;
   float weightMale = 0.0f;
   float weightFemale = 0.0f;
-  enum class Flag : uint32_t {
-    None = 0u,
-    Playable = 1u
-  };
   Flag flags = Flag::None;
 };
 inline constexpr DATA_RACE::Flag operator|(DATA_RACE::Flag a,
@@ -539,15 +540,15 @@ struct DNAM : Tuplifiable<FormID, FormID> {
 
 // Magic effect
 struct EFIT {
-  EffectID efid{};
-  uint32_t magnitude = 0;
-  uint32_t area = 0;
-  uint32_t duration = 0;
   enum class Type : uint32_t {
     Self = 0u,
     Touch = 1u,
     Target = 2u
   };
+  EffectID efid{};
+  uint32_t magnitude = 0;
+  uint32_t area = 0;
+  uint32_t duration = 0;
   Type type = Type::Self;
   // Actor value index for attribute or skill effect
   ActorValue avIndex{};
@@ -560,7 +561,6 @@ struct ENAM {
 
 // Potion and ingredient value
 struct ENIT {
-  uint32_t value = 0;
   // Flag::NoAuto: Value is set manually and not calculated
   // Flag::Food: This is not an ingredient, it is food or drink
   enum class Flag : uint8_t {
@@ -568,6 +568,7 @@ struct ENIT {
     NoAuto = 1u << 0u,
     Food = 1u << 1u
   };
+  uint32_t value = 0;
   Flag flags = Flag::None;
   // Unused data
   std::array<uint8_t, 3> unused{};
@@ -669,14 +670,13 @@ struct OFST {
 
 // Script effect
 struct SCIT {
-  FormID id{};
-  MagicSchool school{};
-  EffectID visualEffect{};
-  // Flags
   enum class Flag : uint8_t {
     None = 0u,
     Hostile = 1u
   };
+  FormID id{};
+  MagicSchool school{};
+  EffectID visualEffect{};
   Flag flags = Flag::None;
   // Unused
   std::array<uint8_t, 3> unused{};
@@ -687,14 +687,6 @@ inline constexpr SCIT::Flag operator|(SCIT::Flag a, SCIT::Flag b) {
 }
 
 struct SNDD {
-  // Multiply by 5 to convert to game units
-  uint8_t minAttenuationDistance = 0;
-  // Multiply by 100 to convert to game units
-  uint8_t maxAttenuationDistance = 0;
-  // As a signed percentage
-  int8_t frequencyAdjustment = 0;
-  // Unused? TODO: Find out what this does
-  uint8_t unused = 0;
   // Flag::LFE: Low frequency effects
   enum class Flag : uint32_t {
     None = 0u,
@@ -707,6 +699,14 @@ struct SNDD {
     TwoDimensional = 1u << 6u,
     LFE = 1u << 7u
   };
+  // Multiply by 5 to convert to game units
+  uint8_t minAttenuationDistance = 0;
+  // Multiply by 100 to convert to game units
+  uint8_t maxAttenuationDistance = 0;
+  // As a signed percentage
+  int8_t frequencyAdjustment = 0;
+  // Unused? TODO: Find out what this does
+  uint8_t unused = 0;
   Flag flags = Flag::None;
 };
 inline constexpr SNDD::Flag operator|(SNDD::Flag a, SNDD::Flag b) {
