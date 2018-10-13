@@ -630,7 +630,7 @@ struct KeyGroup {
   void readKeys(std::istream &is) {
     auto v = keys.template emplace<I>(numKeys);
     // TODO: This is not robust. What if T is std::array, or std::string?
-    if constexpr (std::is_integral_v<T>) {
+    if constexpr (std::is_trivial_v<T>) {
       for (auto &key : v) io::readBytes(is, key);
     } else {
       for (auto &key : v) is >> key;
