@@ -115,6 +115,7 @@ target_sources(OpenOblivion PRIVATE
         src/system_time.cpp
         include/actor_value.hpp
         include/attribute.hpp
+        include/bitflag.hpp
         include/bsa/bsa.hpp
         include/enum_template.hpp
         include/esp.hpp

@@ -21,7 +21,7 @@ struct LightEntry {
   float falloffExponent{1.0f};
   float fov{90.0f};
   Ogre::ColourValue color{};
-  Flag flags{Flag::None};
+  Flag flags{Flag::make(Flag::None)};
 };
 
 struct LightItemEntry : LightEntry {

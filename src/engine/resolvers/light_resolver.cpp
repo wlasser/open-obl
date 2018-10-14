@@ -24,7 +24,7 @@ engine::LightMesh engine::LightResolver::get(FormID baseID,
   const auto spotLightFlag
       {LightEntry::Flag::SpotLight | LightEntry::Flag::SpotShadow};
 
-  if ((rec.flags & spotLightFlag) != LightEntry::Flag::None) {
+  if (rec.flags & spotLightFlag) {
     // Spotlights
     light->setType(Ogre::Light::LightTypes::LT_SPOTLIGHT);
     light->setSpotlightRange(Ogre::Radian(0.0f),

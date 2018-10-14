@@ -35,7 +35,7 @@ template<>
 void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
   auto rec = record::readRecord<record::LIGH>(is);
   using Flag = record::raw::DATA_LIGH::Flag;
-  if ((rec.data.data.data.flags & Flag::CanBeCarried) != Flag::None) {
+  if (rec.data.data.data.flags & Flag::CanBeCarried) {
     // TODO: Support carriable lights
   } else {
     LightEntry entry{};

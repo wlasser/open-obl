@@ -3,6 +3,7 @@
 
 #include "actor_value.hpp"
 #include "attribute.hpp"
+#include "bitflag.hpp"
 #include "formid.hpp"
 #include "magic_effects.hpp"
 #include "record/definition_helpers.hpp"
@@ -172,73 +173,55 @@ using XSCL = float;
 using XTRG = FormID;
 
 // Cell flags
-enum class DATA_CELL : uint8_t {
-  None = 0,
-  CannotTravelFromHere = 1u,
-  HasWater = 1u << 1u,
-  OblivionOrForceHideLand = 1u << 3u,
-  PublicPlace = 1u << 5u,
-  HandChanged = 1u << 6u,
-  BehaveLikeExterior = 1u << 7u
+struct DATA_CELL : Bitflag<8, DATA_CELL> {
+  static constexpr enum_t None{0u};
+  static constexpr enum_t CannotTravelFromHere{1u};
+  static constexpr enum_t HasWater{1u << 1u};
+  static constexpr enum_t OblivionOrForceHideLand{1u << 3u};
+  static constexpr enum_t PublicPlace{1u << 5u};
+  static constexpr enum_t HandChanged{1u << 6u};
+  static constexpr enum_t BehaveLikeExterior{1u << 7u};
 };
-inline constexpr DATA_CELL operator|(DATA_CELL a, DATA_CELL b) {
-  return DATA_CELL(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // Eye flags
-enum class DATA_EYES : uint8_t {
-  None = 0,
-  Playable = 1u
+struct DATA_EYES : Bitflag<8, DATA_EYES> {
+  static constexpr enum_t None{0u};
+  static constexpr enum_t Playable{1u};
 };
-inline constexpr DATA_EYES operator|(DATA_EYES a, DATA_EYES b) {
-  return DATA_EYES(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // SpecialCombat means that faction members may fight each other without
 // alerting other members of the faction.
-enum class DATA_FACT : uint8_t {
-  None = 0,
-  InvisibleToPlayer = 1u,
-  Evil = 1u << 1u,
-  SpecialCombat = 1u << 2u
+struct DATA_FACT : Bitflag<8, DATA_FACT> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t InvisibleToPlayer{1u};
+  static constexpr enum_t Evil{1u << 1u};
+  static constexpr enum_t SpecialCombat{1u << 2u};
 };
-inline constexpr DATA_FACT operator|(DATA_FACT a, DATA_FACT b) {
-  return DATA_FACT(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // Hair flags
-enum class DATA_HAIR : uint8_t {
-  None = 0,
-  Playable = 1u,
-  NotMale = 1u << 1u, // Why the negation?
-  NotFemale = 1u << 2u,
-  Fixed = 1u << 3u
+struct DATA_HAIR : Bitflag<8, DATA_HAIR> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t Playable{1u};
+  static constexpr enum_t NotMale{1u << 1u}; // Why the negation?
+  static constexpr enum_t NotFemale{1u << 2u};
+  static constexpr enum_t Fixed{1u << 3u};
 };
-inline constexpr DATA_HAIR operator|(DATA_HAIR a, DATA_HAIR b) {
-  return DATA_HAIR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // Door flags
-enum class FNAM_DOOR : uint8_t {
-  None = 0,
-  OblivionGate = 1u,
-  AutomaticDoor = 1u << 1u,
-  Hidden = 1u << 2u,
-  MinimalUse = 1u << 3u
+struct FNAM_DOOR : Bitflag<8, FNAM_DOOR> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t OblivionGate{1u};
+  static constexpr enum_t AutomaticDoor{1u << 1u};
+  static constexpr enum_t Hidden{1u << 2u};
+  static constexpr enum_t MinimalUse{1u << 3u};
 };
-inline constexpr FNAM_DOOR operator|(FNAM_DOOR a, FNAM_DOOR b) {
-  return FNAM_DOOR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // Map marker flags
-enum class FNAM_REFR : uint8_t {
-  None = 0,
-  Visible = 1u,
-  CanTravelTo = 1u << 1u
+struct FNAM_REFR : Bitflag<8, FNAM_REFR> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t Visible{1u};
+  static constexpr enum_t CanTravelTo{1u << 1u};
 };
-inline constexpr FNAM_REFR operator|(FNAM_REFR a, FNAM_REFR b) {
-  return FNAM_REFR(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
-}
 
 // Body part indices
 enum class INDX_BODY : uint32_t {
@@ -280,9 +263,9 @@ enum class TNAM : uint16_t {
 };
 
 // TODO: Find the remaining values of this
-enum class XACT : uint32_t {
-  None = 0,
-  OpenByDefault = 0x0du
+struct XACT : Bitflag<32, XACT> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t OpenByDefault{0x0du};
 };
 
 // Cell music type
@@ -312,48 +295,39 @@ struct ATTR : Tuplifiable<std::array<uint8_t, 8>, std::array<uint8_t, 8>> {
 // Class data. Skill the NPC trains (if applicable) is given as an actual
 // skill index, but the major skills are given as actor values, for some reason.
 struct DATA_CLAS {
-  enum class Flag : uint32_t {
-    None = 0u, // i.e. NPC only
-    Playable = 1u,
-    Guard = 2u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0}; // i.e. NPC only
+    static constexpr enum_t Playable{1u};
+    static constexpr enum_t Guard{2u};
   };
-  enum class BarterFlag : uint32_t {
-    None = 0u,
-    Weapons = 1u << 0u,
-    Armor = 1u << 1u,
-    Clothing = 1u << 2u,
-    Books = 1u << 3u,
-    Ingredients = 1u << 4u,
-    Lights = 1u << 7u,
-    Apparatus = 1u << 8u,
-    Miscellaneous = 1u << 10u,
-    Spells = 1u << 11u,
-    MagicItems = 1u << 12u,
-    Potions = 1u << 13u,
-    Training = 1u << 14u,
-    Recharge = 1u << 16u,
-    Repair = 1u << 17u
+  struct BarterFlag : Bitflag<32, BarterFlag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Weapons{1u << 0u};
+    static constexpr enum_t Armor{1u << 1u};
+    static constexpr enum_t Clothing{1u << 2u};
+    static constexpr enum_t Books{1u << 3u};
+    static constexpr enum_t Ingredients{1u << 4u};
+    static constexpr enum_t Lights{1u << 7u};
+    static constexpr enum_t Apparatus{1u << 8u};
+    static constexpr enum_t Miscellaneous{1u << 10u};
+    static constexpr enum_t Spells{1u << 11u};
+    static constexpr enum_t MagicItems{1u << 12u};
+    static constexpr enum_t Potions{1u << 13u};
+    static constexpr enum_t Training{1u << 14u};
+    static constexpr enum_t Recharge{1u << 16u};
+    static constexpr enum_t Repair{1u << 17u};
   };
   std::array<ActorValue, 2> primaryAttributes{};
   Specialization specialization{};
   std::array<ActorValue, 7> majorSkills{};
-  Flag playableFlag = Flag::None;
-  BarterFlag barterFlag = BarterFlag::None;
+  Flag playableFlag{Flag::make(Flag::None)};
+  BarterFlag barterFlag{BarterFlag::make(BarterFlag::None)};
   // If false the next three variables are not present
   bool hasTrainingInfo = false;
   SkillIndex skillTrained = SkillIndex::None;
   uint8_t maxTrainingLevel = 0u;
   std::array<uint8_t, 2> unused{};
 };
-inline constexpr DATA_CLAS::Flag operator|(DATA_CLAS::Flag a,
-                                           DATA_CLAS::Flag b) {
-  return DATA_CLAS::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
-inline constexpr DATA_CLAS::BarterFlag operator|(DATA_CLAS::BarterFlag a,
-                                                 DATA_CLAS::BarterFlag b) {
-  return DATA_CLAS::BarterFlag(static_cast<uint32_t>(a)
-                                   | static_cast<uint32_t>(b));
-}
 
 // Value of a game setting. Only one value is used at a time, but cannot use a
 // union due to s.
@@ -366,18 +340,18 @@ struct DATA_GMST {
 
 // Lighting data
 struct DATA_LIGH {
-  enum class Flag : uint32_t {
-    None = 0u,
-    Dynamic = 1u,
-    CanBeCarried = 1u << 1u,
-    Negative = 1u << 2u,
-    Flicker = 1u << 3u,
-    OffByDefault = 1u << 5u,
-    FlickerSlow = 1u << 6u,
-    Pulse = 1u << 7u,
-    PulseSlow = 1u << 8u,
-    SpotLight = 1u << 9u,
-    SpotShadow = 1u << 10u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Dynamic{1u};
+    static constexpr enum_t CanBeCarried{1u << 1u};
+    static constexpr enum_t Negative{1u << 2u};
+    static constexpr enum_t Flicker{1u << 3u};
+    static constexpr enum_t OffByDefault{1u << 5u};
+    static constexpr enum_t FlickerSlow{1u << 6u};
+    static constexpr enum_t Pulse{1u << 7u};
+    static constexpr enum_t PulseSlow{1u << 8u};
+    static constexpr enum_t SpotLight{1u << 9u};
+    static constexpr enum_t SpotShadow{1u << 10u};
   };
   // Duration time in seconds for a carried light. -1 for no duration.
   int32_t time{};
@@ -385,7 +359,7 @@ struct DATA_LIGH {
   uint32_t radius{};
   // Light color
   Color color{};
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
   float falloffExponent{1.0f};
   // Spotlight field of view in degrees
   float fov{90.0f};
@@ -393,14 +367,6 @@ struct DATA_LIGH {
   uint32_t value{};
   float weight{};
 };
-inline constexpr DATA_LIGH::Flag operator|(DATA_LIGH::Flag a,
-                                           DATA_LIGH::Flag b) {
-  return DATA_LIGH::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
-inline constexpr DATA_LIGH::Flag operator&(DATA_LIGH::Flag a,
-                                           DATA_LIGH::Flag b) {
-  return DATA_LIGH::Flag(static_cast<uint32_t>(a) & static_cast<uint32_t>(b));
-}
 
 struct DATA_MISC : Tuplifiable<int32_t, float> {
   int32_t value{};
@@ -409,30 +375,30 @@ struct DATA_MISC : Tuplifiable<int32_t, float> {
 };
 
 struct DATA_MGEF {
-  enum class Flag : uint32_t {
-    None = 0u,
-    Hostile = 1u,
-    Recover = 1u << 1u,
-    Detrimental = 1u << 2u,
-    MagnitudePercent = 1u << 3u,
-    Self = 1u << 4u,
-    Touch = 1u << 5u,
-    Target = 1u << 6u,
-    NoDuration = 1u << 7u,
-    NoMagnitude = 1u << 8u,
-    NoArea = 1u << 9u,
-    FXPersist = 1u << 10u,
-    Spellmaking = 1u << 11u,
-    Enchanting = 1u << 12u,
-    NoIngredient = 1u << 13u,
-    UseWeapon = 1u << 16u,
-    UseArmor = 1u << 17u,
-    UseCreature = 1u << 18u,
-    UseSkill = 1u << 19u,
-    SprayProjectile = 1u << 20u,
-    BoltProjectile = 1u << 21u,
-    FogProjectile = 1u << 22u,
-    NoHitEffect = 1u << 23u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Hostile{1u};
+    static constexpr enum_t Recover{1u << 1u};
+    static constexpr enum_t Detrimental{1u << 2u};
+    static constexpr enum_t MagnitudePercent{1u << 3u};
+    static constexpr enum_t Self{1u << 4u};
+    static constexpr enum_t Touch{1u << 5u};
+    static constexpr enum_t Target{1u << 6u};
+    static constexpr enum_t NoDuration{1u << 7u};
+    static constexpr enum_t NoMagnitude{1u << 8u};
+    static constexpr enum_t NoArea{1u << 9u};
+    static constexpr enum_t FXPersist{1u << 10u};
+    static constexpr enum_t Spellmaking{1u << 11u};
+    static constexpr enum_t Enchanting{1u << 12u};
+    static constexpr enum_t NoIngredient{1u << 13u};
+    static constexpr enum_t UseWeapon{1u << 16u};
+    static constexpr enum_t UseArmor{1u << 17u};
+    static constexpr enum_t UseCreature{1u << 18u};
+    static constexpr enum_t UseSkill{1u << 19u};
+    static constexpr enum_t SprayProjectile{1u << 20u};
+    static constexpr enum_t BoltProjectile{1u << 21u};
+    static constexpr enum_t FogProjectile{1u << 22u};
+    static constexpr enum_t NoHitEffect{1u << 23u};
   };
   // For summon spells, the FormID of the summoned weapon, armor, or creature.
   // Otherwise, the ActorValue affected by the spell.
@@ -441,7 +407,7 @@ struct DATA_MGEF {
     FormID summonedFormID;
     ActorValue affectedActorValue;
   };
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
   float baseCost = 0.0f;
   AssociatedObject associatedObject{};
   MagicSchool school{};
@@ -470,16 +436,11 @@ struct DATA_MGEF {
   // Multiplies the cost of an enchanted item
   float constantEffectBarterFactor = 1.0f;
 };
-inline constexpr DATA_MGEF::Flag operator|(DATA_MGEF::Flag a,
-                                           DATA_MGEF::Flag b) {
-  return static_cast<DATA_MGEF::Flag>(static_cast<uint32_t>(a)
-      | static_cast<uint32_t>(b));
-}
 
 struct DATA_RACE {
-  enum class Flag : uint32_t {
-    None = 0u,
-    Playable = 1u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Playable{1u};
   };
   // The ActorValue is saved as a uint8_t, not a uint32_t like it usually is.
   // The CS enforces that there are seven skill modifiers, but allows any number
@@ -491,12 +452,8 @@ struct DATA_RACE {
   float heightFemale = 0.0f;
   float weightMale = 0.0f;
   float weightFemale = 0.0f;
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
 };
-inline constexpr DATA_RACE::Flag operator|(DATA_RACE::Flag a,
-                                           DATA_RACE::Flag b) {
-  return DATA_RACE::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
 
 // Position and rotation data
 struct DATA_REFR : Tuplifiable<float, float, float, float, float, float> {
@@ -561,22 +518,18 @@ struct ENAM {
 
 // Potion and ingredient value
 struct ENIT {
-  // Flag::NoAuto: Value is set manually and not calculated
-  // Flag::Food: This is not an ingredient, it is food or drink
-  enum class Flag : uint8_t {
-    None = 0u,
-    NoAuto = 1u << 0u,
-    Food = 1u << 1u
+  struct Flag : Bitflag<8, Flag> {
+    static constexpr enum_t None{0u};
+    // Value is set manually and not calculated
+    static constexpr enum_t NoAuto{1u << 0u};
+    // This is not an ingredient, it is food or drink
+    static constexpr enum_t Food{1u << 1u};
   };
   uint32_t value = 0;
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
   // Unused data
   std::array<uint8_t, 3> unused{};
 };
-inline constexpr ENIT::Flag operator|(ENIT::Flag a, ENIT::Flag b) {
-  return static_cast<ENIT::Flag>(static_cast<uint8_t>(a)
-      | static_cast<uint8_t>(b));
-}
 
 // Enchanting effect
 struct ENIT_ENCH {
@@ -670,34 +623,30 @@ struct OFST {
 
 // Script effect
 struct SCIT {
-  enum class Flag : uint8_t {
-    None = 0u,
-    Hostile = 1u
+  struct Flag : Bitflag<8, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Hostile{1u};
   };
   FormID id{};
   MagicSchool school{};
   EffectID visualEffect{};
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
   // Unused
   std::array<uint8_t, 3> unused{};
 };
-inline constexpr SCIT::Flag operator|(SCIT::Flag a, SCIT::Flag b) {
-  return static_cast<SCIT::Flag>(static_cast<uint8_t>(a)
-      | static_cast<uint8_t>(b));
-}
 
 struct SNDD {
-  // Flag::LFE: Low frequency effects
-  enum class Flag : uint32_t {
-    None = 0u,
-    RandomFrequencyShift = 1u,
-    PlayAtRandom = 1u << 1u,
-    EnvironmentIgnored = 1u << 2u,
-    RandomLocation = 1u << 3u,
-    Loop = 1u << 4u,
-    MenuSound = 1u << 5u,
-    TwoDimensional = 1u << 6u,
-    LFE = 1u << 7u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t RandomFrequencyShift{1u};
+    static constexpr enum_t PlayAtRandom{1u << 1u};
+    static constexpr enum_t EnvironmentIgnored{1u << 2u};
+    static constexpr enum_t RandomLocation{1u << 3u};
+    static constexpr enum_t Loop{1u << 4u};
+    static constexpr enum_t MenuSound{1u << 5u};
+    static constexpr enum_t TwoDimensional{1u << 6u};
+    // Low frequency effects
+    static constexpr enum_t LFE{1u << 7u};
   };
   // Multiply by 5 to convert to game units
   uint8_t minAttenuationDistance = 0;
@@ -707,12 +656,8 @@ struct SNDD {
   int8_t frequencyAdjustment = 0;
   // Unused? TODO: Find out what this does
   uint8_t unused = 0;
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
 };
-inline constexpr SNDD::Flag operator|(SNDD::Flag a, SNDD::Flag b) {
-  return static_cast<SNDD::Flag>(static_cast<uint32_t>(a)
-      | static_cast<uint32_t>(b));
-}
 
 struct SNDX : SNDD {
   // Unused? TODO: Find out what this does
@@ -743,20 +688,20 @@ struct SPIT {
     Expert = 3,
     Master = 4
   };
-  enum class Flag : uint32_t {
-    None = 0,
-    NoAuto = 0x1u,
-    NoSilence = 0x8u | 0x2u,
-    PlayerStartSpell = 0x4u,
-    AreaIgnoresLineOfSight = 0x10u,
-    ScriptAlwaysApplies = 0x20u,
-    NoAbsorbReflect = 0x40u,
-    TouchExplodeNoTarget = 0x80u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0};
+    static constexpr enum_t NoAuto{0x1u};
+    static constexpr enum_t NoSilence{0x8u | 0x2u};
+    static constexpr enum_t PlayerStartSpell{0x4u};
+    static constexpr enum_t AreaIgnoresLineOfSight{0x10u};
+    static constexpr enum_t ScriptAlwaysApplies{0x20u};
+    static constexpr enum_t NoAbsorbReflect{0x40u};
+    static constexpr enum_t TouchExplodeNoTarget{0x80u};
   };
   Type type{Type::Spell};
   uint32_t cost{};
   Level level{Level::Novice};
-  Flag flags{Flag::None};
+  Flag flags{Flag::make(Flag::None)};
 };
 
 // Race determining voice
@@ -795,23 +740,19 @@ struct XCLR {
 };
 
 struct XESP {
-  enum class Flag : uint32_t {
-    None = 0,
-    SetEnableStateToOppositeOfParent = 1u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0};
+    static constexpr enum_t SetEnableStateToOppositeOfParent{1u};
   };
   FormID parent{};
-  Flag flags{Flag::None};
+  Flag flags{Flag::make(Flag::None)};
 };
-inline constexpr XESP::Flag operator|(XESP::Flag a, XESP::Flag b) {
-  return static_cast<XESP::Flag>(static_cast<uint32_t>(a)
-      | static_cast<uint32_t>(b));
-}
 
 // Locked door/container information
 struct XLOC {
-  enum class Flag : uint32_t {
-    None = 0,
-    LeveledLock = 4u
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0};
+    static constexpr enum_t LeveledLock{4u};
   };
   // 0-100, 100 = needs a key
   uint32_t lockLevel{};
@@ -819,11 +760,8 @@ struct XLOC {
   FormID key{};
   // Unknown four bytes sometimes present
   uint32_t unused{};
-  Flag flags = Flag::None;
+  Flag flags{Flag::make(Flag::None)};
 };
-inline constexpr XLOC::Flag operator|(XLOC::Flag a, XLOC::Flag b) {
-  return XLOC::Flag(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
-}
 
 // Disposition modifier between members of different factions
 // Also used for racial relations

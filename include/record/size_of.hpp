@@ -2,6 +2,7 @@
 #define OPENOBLIVION_RECORD_SIZE_OF_HPP
 
 #include "record/tuplifiable.hpp"
+#include "bitflag.hpp"
 #include <array>
 #include <optional>
 #include <string>
@@ -60,6 +61,12 @@ inline std::size_t SizeOf(const std::tuple<const T *...> &t) {
 template<class ...T>
 inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
   return SizeOf(t.asTuple());
+}
+
+template<class T>
+inline auto SizeOf(const T &data) ->
+std::enable_if_t<std::is_base_of_v<Bitflag<T::num_bits, T>, T>, std::size_t> {
+  return sizeof(typename T::underlying_t);
 }
 
 } // namespace record

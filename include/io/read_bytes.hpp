@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_IO_READ_BYTES_HPP
 #define OPENOBLIVION_IO_READ_BYTES_HPP
 
+#include "bitflag.hpp"
 #include "io/io.hpp"
 #include <array>
 #include <cstddef>
@@ -20,10 +21,18 @@ template<class T>
 auto readBytes(std::istream &is, T &data)
     -> typename std::enable_if_t<is_byte_direct_ioable_v < T>,
 void> {
-  is.read(reinterpret_cast<char *>(std::addressof(data)), sizeof(data));
-  if (is.rdstate() != std::ios::goodbit) {
-    throw IOReadError(typeid(T).name(), is.rdstate());
-  }
+is.read(reinterpret_cast
+<char *>(std::addressof(data)),
+sizeof(data));
+if (is.
+rdstate()
+!= std::ios::goodbit) {
+throw IOReadError(typeid(T).
+name(), is
+.
+rdstate()
+);
+}
 }
 
 void readBytes(std::istream &is, std::string &data);
@@ -61,6 +70,16 @@ void readBytes(std::istream &is, std::vector<T> &data, std::size_t length) {
     data.template emplace_back<T>({});
     readBytes(is, data.back());
   }
+}
+
+template<class T>
+auto readBytes(std::istream &is, T &data) -> std::enable_if_t<
+    std::is_base_of_v<
+        Bitflag<std::remove_cv_t<T>::num_bits, std::remove_cv_t<T>>,
+        std::remove_cv_t<T>>, void> {
+  typename T::underlying_t val{};
+  readBytes(is, val);
+  data = T::make(val);
 }
 
 } // namespace io
