@@ -62,43 +62,41 @@ std::string getMenuName(pugi::xml_node menuNode) {
   return attrib.value();
 }
 
+void addChildren(Traits &traits, pugi::xml_node parentNode,
+                 UiElement *parentElement) {
+  for (const auto &node : parentNode.children()) {
+    traits.addAndBindImplementationTrait(node, parentElement);
+    traits.addAndBindUserTrait(node, parentElement);
+    // TODO: Look for an add other UiElements, e.g. rect, image
+  }
+}
+
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is) {
-  auto doc = loadDocument(is);
-  const auto[menuNode, menuType] = getMenuNode(doc);
+  auto doc{loadDocument(is)};
+  const auto[menuNode, menuType]{getMenuNode(doc)};
 
   // Construct a Menu<menuType> (menuType, not MenuType!) then extract a pointer
   // to base so we can do virtual dispatch.
   MenuVariant menu{};
   enumvar::defaultConstruct(menuType, menu);
-  auto *uiElement = extractUiElement(menu);
+  auto *menuElement{extractUiElement(menu)};
 
-  uiElement->set_name(getMenuName(menuNode));
+  menuElement->set_name(getMenuName(menuNode));
 
-  // TODO: Use std::visit to delegate to a concrete representative creator
-
-  // Now we construct the dependency graph of the dynamic representation
+  // Now construct the dependency graph of the dynamic representation
   Traits menuTraits{};
-  for (const auto &node : menuNode.children()) {
-    menuTraits.addAndBindImplementationTrait(node, uiElement);
-    menuTraits.addAndBindUserTrait(node, uiElement);
-  }
-
+  addChildren(menuTraits, menuNode, menuElement);
   menuTraits.addImplementationElementTraits();
-
-  // Add the dependency graph edges
   menuTraits.addTraitDependencies();
-
-  // Force an update to initialize everything
   menuTraits.update();
 
-  // Construct a user interface buffer
-  MenuInterfaceVariant userInterface{makeInterfaceBuffer(menu)};
+  // Construct a suitable user interface buffer and link it to the user traits
+  MenuInterfaceVariant interfaceBuffer{makeInterfaceBuffer(menu)};
 
-  // Link the buffer to the user traits
   std::visit([&menuTraits](auto &&t) {
     menuTraits.setUserTraitSources(t.value);
-  }, userInterface);
+  }, interfaceBuffer);
 }
 
 namespace xml {
