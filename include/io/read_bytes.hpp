@@ -9,27 +9,17 @@
 #include <optional>
 #include <string>
 #include <tuple>
-#include <typeinfo>
+#include <type_traits>
+#include <typeinfo> // TODO: Remove this, it doesn't help
 #include <utility>
 #include <vector>
 
 namespace io {
 
 template<class T>
-struct is_byte_direct_readable : std::bool_constant<
-    std::is_integral_v<T> ||
-        std::is_floating_point_v<T> ||
-        std::is_enum_v<T> ||
-        std::is_aggregate_v<T>> {
-};
-
-template<class T>
-inline constexpr bool is_byte_direct_readable_v =
-    is_byte_direct_readable<T>::value;
-
-template<class T>
 auto readBytes(std::istream &is, T &data)
--> typename std::enable_if_t<is_byte_direct_readable_v<T>, void> {
+    -> typename std::enable_if_t<is_byte_direct_ioable_v < T>,
+void> {
   is.read(reinterpret_cast<char *>(std::addressof(data)), sizeof(data));
   if (is.rdstate() != std::ios::goodbit) {
     throw IOReadError(typeid(T).name(), is.rdstate());

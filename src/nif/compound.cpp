@@ -329,8 +329,8 @@ std::istream &operator>>(std::istream &is, BoneVertData &t) {
 }
 
 std::istream &operator>>(std::istream &is, NiTransform &t) {
-  io::readBytes(is, t.rotation);
-  io::readBytes(is, t.translation);
+  is >> t.rotation;
+  is >> t.translation;
   io::readBytes(is, t.scale);
 
   return is;

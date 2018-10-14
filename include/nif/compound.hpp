@@ -136,7 +136,7 @@ struct hkQuaternion {
 };
 
 // Column major
-struct Matrix22 {
+struct Matrix22 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
   basic::Float m21 = 0.0f;
   basic::Float m12 = 0.0f;
@@ -144,7 +144,7 @@ struct Matrix22 {
 };
 
 // Column major
-struct Matrix33 {
+struct Matrix33 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
   basic::Float m21 = 0.0f;
   basic::Float m31 = 0.0f;
@@ -157,7 +157,7 @@ struct Matrix33 {
 };
 
 // Column major
-struct Matrix34 {
+struct Matrix34 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
   basic::Float m21 = 0.0f;
   basic::Float m31 = 0.0f;
@@ -173,7 +173,7 @@ struct Matrix34 {
 };
 
 // Column major {
-struct Matrix44 {
+struct Matrix44 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
   basic::Float m21 = 0.0f;
   basic::Float m31 = 0.0f;
@@ -192,7 +192,7 @@ struct Matrix44 {
   basic::Float m44 = 1.0f;
 };
 
-struct hkMatrix3 {
+struct hkMatrix3 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
   basic::Float m12 = 0.0f;
   basic::Float m13 = 0.0f;
@@ -629,12 +629,7 @@ struct KeyGroup {
   template<std::size_t I>
   void readKeys(std::istream &is) {
     auto v = keys.template emplace<I>(numKeys);
-    // TODO: This is not robust. What if T is std::array, or std::string?
-    if constexpr (io::is_byte_direct_readable_v<T>) {
-      for (auto &key : v) io::readBytes(is, key);
-    } else {
-      for (auto &key : v) is >> key;
-    }
+    for (auto &key : v) is >> key;
   }
 };
 
@@ -821,16 +816,26 @@ std::istream &operator>>(std::istream &is, TBC &t);
 template<class T, Enum::KeyType Arg>
 std::istream &operator>>(std::istream &is, Key<T, Arg> &t) {
   io::readBytes(is, t.time);
-  is >> t.value;
+  if constexpr (io::is_byte_direct_ioable_v<T>) {
+    io::readBytes(is, t.value);
+  } else {
+    is >> t.value;
+  }
   return is;
 }
 template<class T>
 std::istream &operator>>(std::istream &is,
                          Key<T, Enum::KeyType::QUADRATIC_KEY> &t) {
   io::readBytes(is, t.time);
-  is >> t.value;
-  is >> t.forward;
-  is >> t.backward;
+  if constexpr (io::is_byte_direct_ioable_v<T>) {
+    io::readBytes(is, t.value);
+    io::readBytes(is, t.forward);
+    io::readBytes(is, t.backward);
+  } else {
+    is >> t.value;
+    is >> t.forward;
+    is >> t.backward;
+  }
   return is;
 }
 template<class T>

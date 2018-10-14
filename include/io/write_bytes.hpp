@@ -1,25 +1,27 @@
 #ifndef OPENOBLIVION_IO_WRITE_BYTES_HPP
 #define OPENOBLIVION_IO_WRITE_BYTES_HPP
 
-#include "io.hpp"
+#include "io/io.hpp"
 #include <array>
 #include <memory>
 #include <optional>
 #include <ostream>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace io {
 
 // Write raw bytes to a stream.
 template<class T>
-inline void writeBytes(std::ostream &os, const T &data) {
+inline auto writeBytes(std::ostream &os, const T &data) ->
+    std::enable_if_t<is_byte_direct_ioable_v < T>,
+void> {
   os.write(reinterpret_cast<const char *>(std::addressof(data)), sizeof(data));
 }
 
 // TODO: write null terminator?
-template<>
 inline void writeBytes(std::ostream &os, const std::string &data) {
   os.write(data.c_str(), data.length());
 }

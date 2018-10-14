@@ -26,6 +26,21 @@ struct IOReadError : virtual std::runtime_error {
               % typeName % decodeIosState(state))) {}
 };
 
+struct byte_direct_ioable_tag {};
+
+template<class T>
+struct is_byte_direct_ioable : std::bool_constant<
+    std::is_integral_v<T> ||
+        std::is_floating_point_v<T> ||
+        std::is_enum_v<T> ||
+        std::is_union_v<T> ||
+        std::is_base_of_v<byte_direct_ioable_tag, T>> {
+};
+
+template<class T>
+inline constexpr bool is_byte_direct_ioable_v =
+    is_byte_direct_ioable<T>::value;
+
 } // namespace io
 
 #endif //OPENOBLIVION_IO_IO_HPP
