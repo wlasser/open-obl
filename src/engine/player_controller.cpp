@@ -1,6 +1,7 @@
 #include "engine/player_controller.hpp"
 #include "engine/settings.hpp"
 #include "ogrebullet/conversions.hpp"
+#include <gsl/gsl>
 #include <OgreMath.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
@@ -8,13 +9,16 @@
 namespace engine {
 
 PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
-  auto &settings = GameSettings::getSingleton();
+  const auto &settings{GameSettings::getSingleton()};
 
   camera = scnMgr->createCamera("PlayerCamera");
   camera->setNearClipDistance(0.1f);
 
-  float screenWidth = settings.iGet("Display.iSize W");
-  float screenHeight = settings.iGet("Display.iSize H");
+  const auto screenWidth
+      {gsl::narrow_cast<float>(settings.iGet("Display.iSize W"))};
+  const auto screenHeight
+      {gsl::narrow_cast<float>(settings.iGet("Display.iSize H"))};
+
   camera->setAspectRatio(screenWidth / screenHeight);
 
   // We are given the horizontal fov, but can only set the vertical fov.
@@ -53,7 +57,7 @@ btRigidBody *PlayerController::getRigidBody() {
 }
 
 void PlayerController::handleEvent(const MoveEvent &event) {
-  auto newState = state ? state->handleEvent(this, event) : nullptr;
+  auto newState{state ? state->handleEvent(this, event) : nullptr};
   if (newState) {
     state = std::move(newState);
     state->enter(this);
@@ -61,7 +65,7 @@ void PlayerController::handleEvent(const MoveEvent &event) {
 }
 
 void PlayerController::update(float elapsed) {
-  auto newState = state ? state->update(this, elapsed) : nullptr;
+  auto newState{state ? state->update(this, elapsed) : nullptr};
   if (newState) {
     state = std::move(newState);
     state->enter(this);
@@ -131,7 +135,6 @@ PlayerJumpState::handleEvent(PlayerController *player, const MoveEvent &event) {
 std::shared_ptr<PlayerState>
 PlayerJumpState::update(PlayerController *player, float elapsed) {
   player->updatePhysics(elapsed);
-  // TODO: Stop jumping
   return nullptr;
 }
 
@@ -139,10 +142,10 @@ void PlayerJumpState::enter(PlayerController *player) {
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
-  const btVector3 gravityVector = player->rigidBody->getGravity();
-  const float g = gravityVector.length();
-  const float apex = player->jumpHeight(player->acrobaticsSkill);
-  const float impulse = player->mass * std::sqrt(2.0f * g * apex);
+  const btVector3 gravityVector{player->rigidBody->getGravity()};
+  const float g{gravityVector.length()};
+  const float apex{player->jumpHeight(player->acrobaticsSkill)};
+  const float impulse{player->mass * std::sqrt(2.0f * g * apex)};
   player->rigidBody->applyCentralImpulse(-impulse * gravityVector.normalized());
 }
 
@@ -150,8 +153,8 @@ std::shared_ptr<PlayerState>
 PlayerJumpState::handleCollision(PlayerController *player,
                                  const btCollisionObject *other,
                                  const btManifoldPoint &contact) {
-  const auto impulse = contact.getAppliedImpulse();
-  const auto r = contact.getPositionWorldOnA() - contact.getPositionWorldOnB();
+  const auto impulse{contact.getAppliedImpulse()};
+  const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
   spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
   if (r.normalized().dot(player->rigidBody->getGravity().normalized()) > 0.7) {
     return std::make_shared<PlayerStandState>();
@@ -171,8 +174,7 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
 
 void PlayerController::handleCollision(const btCollisionObject *other,
                                        const btManifoldPoint &contact) {
-  auto newState =
-      state ? state->handleCollision(this, other, contact) : nullptr;
+  auto newState{state ? state->handleCollision(this, other, contact) : nullptr};
   if (newState) {
     state = std::move(newState);
     state->enter(this);
@@ -189,15 +191,15 @@ void PlayerController::updatePhysics(float elapsed) {
   cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
 
   // This is a rotation of the standard basis, so is still in SO(3)
-  auto axes = cameraNode->getLocalAxes();
+  const auto axes{cameraNode->getLocalAxes()};
   if (auto length = localVelocity.length() > 0.01f) {
-    auto v = rigidBody->getLinearVelocity();
-    auto newV = Ogre::conversions::toBullet(
-        axes * localVelocity / length * speed(speedAttribute, athleticsSkill));
+    const auto v{rigidBody->getLinearVelocity()};
+    auto newV{Ogre::conversions::toBullet(
+        axes * localVelocity / length * speed(speedAttribute, athleticsSkill))};
     newV.setY(v.y());
     rigidBody->setLinearVelocity(newV);
   } else {
-    auto v = rigidBody->getLinearVelocity();
+    const auto v{rigidBody->getLinearVelocity()};
     rigidBody->setLinearVelocity({0.0f, v.y(), 0.0f});
   }
 }

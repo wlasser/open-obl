@@ -117,21 +117,21 @@ class PlayerController {
   float athleticsSkill{50.0f};
   float acrobaticsSkill{50.0f};
 
-  float moveTypeModifier(float athleticsSkill) {
+  float moveTypeModifier(float athleticsSkill) const {
     return *fMoveRunMult + *fMoveRunAthleticsMult * athleticsSkill * 0.01f;
   }
 
-  float baseSpeed(float speedAttribute) {
+  float baseSpeed(float speedAttribute) const {
     const float walkRange = *fMoveCharWalkMax - *fMoveCharWalkMax;
     return *fMoveCharWalkMin + walkRange * speedAttribute * 0.01f;
   }
 
-  float speed(float speedAttribute, float athleticsSkill) {
+  float speed(float speedAttribute, float athleticsSkill) const {
     return moveTypeModifier(athleticsSkill) * baseSpeed(speedAttribute)
         * conversions::metersPerUnit<float>;
   }
 
-  float jumpHeight(float acrobaticsSkill) {
+  float jumpHeight(float acrobaticsSkill) const {
     const float heightRange = *fJumpHeightMax - *fJumpHeightMin;
     return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
         * conversions::metersPerUnit<float>;
@@ -139,8 +139,8 @@ class PlayerController {
 
   void updatePhysics(float elapsed);
 
-  const float height = 1.0f * 128 * conversions::metersPerUnit<float>;
-  const float mass = 80.0f;
+  float height{1.0f * 128 * conversions::metersPerUnit<float>};
+  float mass{80.0f};
 
   Ogre::Radian pitch{0.0f};
   Ogre::Radian yaw{0.0f};
