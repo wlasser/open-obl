@@ -91,6 +91,12 @@ using MenuInterfaceVariant = decltype(makeInterfaceBufferImpl(
 // Construct a user interface buffer from the menu
 MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar);
 
+pugi::xml_document loadDocument(std::istream &is);
+
+std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc);
+
+std::string getMenuName(pugi::xml_node menuNode);
+
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);
 

@@ -26,53 +26,54 @@ MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
   return makeInterfaceBufferImpl(menuVar);
 }
 
-// Parse an entire menu from an XML stream
-void parseMenu(std::istream &is) {
-  using namespace std::literals;
-
+pugi::xml_document loadDocument(std::istream &is) {
   auto logger = spdlog::get(settings::log);
 
-  // Load the document. If this fails, we're done.
   pugi::xml_document doc{};
   pugi::xml_parse_result result = doc.load(is);
   if (!result) {
-    logger->error("Failed to parse menu XML [{}]: {}",
-                  result.offset,
-                  result.description());
-    return;
+    logger->error("Failed to parse menu XML [offset {}]: {}",
+                  result.offset, result.description());
+    throw std::runtime_error("Failed to parse menu XML");
+  }
+  return doc;
+}
+
+std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc) {
+  const auto menuNode{doc.child("menu")};
+  if (!menuNode) {
+    throw std::runtime_error("Menu does not have a <menu> tag");
   }
 
-  // All menus should start with a <menu> tag
-  // TODO: Allow multiple menus in one XML file?
-  auto menuNode = doc.first_child();
-  if (!menuNode || menuNode.name() != "menu"s) {
-    logger->error("XML does not start with a <menu> tag");
-    return;
-  }
-  // Tag should have a name attribute uniquely identifying the menu
-  if (!menuNode.attribute("name")) {
-    logger->error("<menu> tag has no 'name' attribute");
-    return;
-  }
-  std::string menuName = menuNode.attribute("name").value();
-
-  // All menus must have a child <class> tag whose value determines which
-  // MenuType it is.
-  auto classNode = menuNode.child("class");
+  const auto classNode{menuNode.child("class")};
   if (!classNode) {
-    logger->error("Menu must have a <class> tag");
-    return;
+    throw std::runtime_error("<menu> must have a <class> child tag");
   }
-  auto menuType = xml::getChildValue<MenuType>(classNode);
-  // Construct a Menu<menuType> (menuType, not MenuType!)
+
+  const auto menuType = xml::getChildValue<MenuType>(classNode);
+  return {menuNode, menuType};
+}
+
+std::string getMenuName(pugi::xml_node menuNode) {
+  const auto attrib{menuNode.attribute("name")};
+  if (!attrib) {
+    throw std::runtime_error("<menu> tag does not have a 'name' attribute");
+  }
+  return attrib.value();
+}
+
+// Parse an entire menu from an XML stream
+void parseMenu(std::istream &is) {
+  auto doc = loadDocument(is);
+  const auto[menuNode, menuType] = getMenuNode(doc);
+
+  // Construct a Menu<menuType> (menuType, not MenuType!) then extract a pointer
+  // to base so we can do virtual dispatch.
   MenuVariant menu{};
   enumvar::defaultConstruct(menuType, menu);
-  // Extract a pointer to base of Menu<menuType> so we can do virtual dispatch.
-  // One could do everything with std::visit instead if they wanted
   auto *uiElement = extractUiElement(menu);
 
-  // Set the menu name
-  uiElement->set_name(menuName);
+  uiElement->set_name(getMenuName(menuNode));
 
   // TODO: Use std::visit to delegate to a concrete representative creator
 
