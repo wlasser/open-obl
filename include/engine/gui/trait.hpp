@@ -4,6 +4,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -49,7 +50,7 @@ constexpr inline TraitTypeId getTraitTypeId<std::string>() {
 
 // If name is the name of a user trait, then return the index of that trait,
 // e.g. user12 returns 12.
-std::optional<int> getUserTraitIndex(const std::string &name);
+std::optional<int> getUserTraitIndex(std::string_view name);
 
 // This class simplifies expressing the user trait interface of a ui element,
 // instead of writing 4 set_user functions containing disjoint switch
