@@ -80,23 +80,23 @@ class GameSettings {
     return tree.get<std::string>(path, defaultValue);
   }
 
-  bool bGet(const std::string &path) {
+  bool bGet(const std::string &path) const {
     return get<bool>(path).value();
   }
 
-  float fGet(const std::string &path) {
+  float fGet(const std::string &path) const {
     return get<float>(path).value();
   }
 
-  int iGet(const std::string &path) {
+  int iGet(const std::string &path) const {
     return get<int>(path).value();
   }
 
-  std::string sGet(const std::string &path) {
+  std::string sGet(const std::string &path) const {
     return get<std::string>(path).value();
   }
 
-  unsigned int uGet(const std::string &path) {
+  unsigned int uGet(const std::string &path) const {
     return get<unsigned int>(path).value();
   }
 };
@@ -136,11 +136,11 @@ class GameSetting {
     return value;
   }
 
-  T operator*() {
+  T operator*() const {
     return get();
   }
 
-  explicit operator T() {
+  explicit operator T() const {
     return get();
   }
 };
