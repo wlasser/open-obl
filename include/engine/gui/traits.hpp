@@ -82,7 +82,7 @@ class Traits {
   Trait<T> &addTrait(std::string name, Args &&... args) {
     mSorted = false;
     const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
-        Trait<T>{std::move(name), std::forward<Args>(args)...}), mGraph)};
+        Trait<T>{name, std::forward<Args>(args)...}), mGraph)};
     mIndices[name] = index;
     return std::get<Trait<T>>(*mGraph[index]);
   }
