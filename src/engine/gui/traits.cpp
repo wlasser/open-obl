@@ -58,19 +58,19 @@ bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
 
   switch (uiElement->userTraitType(index)) {
     case TraitTypeId::Int: {
-      addAndBindTrait<int>(uiElement, setter, node);
+      addAndBindTrait<int>(uiElement, std::move(setter), node);
       break;
     }
     case TraitTypeId::Float: {
-      addAndBindTrait<float>(uiElement, setter, node);
+      addAndBindTrait<float>(uiElement, std::move(setter), node);
       break;
     }
     case TraitTypeId::Bool: {
-      addAndBindTrait<bool>(uiElement, setter, node);
+      addAndBindTrait<bool>(uiElement, std::move(setter), node);
       break;
     }
     case TraitTypeId::String: {
-      addAndBindTrait<std::string>(uiElement, setter, node);
+      addAndBindTrait<std::string>(uiElement, std::move(setter), node);
       break;
     }
     case TraitTypeId::Unimplemented: {
@@ -94,8 +94,8 @@ Traits::getDependencies(const TraitVertex &vertex) const {
 
 void Traits::addImplementationElementTraits() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
-    const TraitVertex &vPtr = mGraph[vIndex];
-    const auto deps = getDependencies(vPtr);
+    const TraitVertex &vPtr{mGraph[vIndex]};
+    const auto deps{getDependencies(vPtr)};
 
     for (const auto &dep : deps) {
       if (boost::algorithm::starts_with(dep, "__")) {
@@ -119,15 +119,15 @@ void Traits::addImplementationElementTraits() {
 
 void Traits::addTraitDependencies() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
-    const TraitVertex &vPtr = mGraph[vIndex];
-    const auto deps = getDependencies(vPtr);
+    const TraitVertex &vPtr{mGraph[vIndex]};
+    const auto deps{getDependencies(vPtr)};
 
     for (const auto &dep : deps) {
-      auto uIndexIt = mIndices.find(dep);
+      const auto uIndexIt{mIndices.find(dep)};
       if (uIndexIt == mIndices.end()) {
         throw std::runtime_error("Nonexistent dependency");
       }
-      TraitGraph::vertex_descriptor uIndex = uIndexIt->second;
+      const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
       boost::remove_edge(uIndex, vIndex, mGraph);
       boost::add_edge(uIndex, vIndex, mGraph);
     }
@@ -140,7 +140,7 @@ void Traits::update() {
   // performed in the correct order wrt dependencies.
   sort();
   for (const auto &desc : mOrdering) {
-    auto &vertex = mGraph[desc];
+    auto &vertex{mGraph[desc]};
     if (!vertex) {
       throw std::runtime_error("nullptr vertex");
     }

@@ -46,10 +46,10 @@ class Traits {
   bool mSorted{false};
 
   // Implementation-defined element storing screen settings.
-  const ScreenElement mScreen{};
+  ScreenElement mScreen{};
 
   // Implementation-defined element storing localized strings.
-  const StringsElement mStrings{"menus/strings.xml"};
+  StringsElement mStrings{"menus/strings.xml"};
 
   // Topologically sort the vertices in the dependency graph, store the result
   // in mOrdering, and set mSorted. If the graph is already sorted, i.e. if
@@ -60,11 +60,11 @@ class Traits {
   // Return a reference to the dynamic trait with the given fully-qualified name
   template<class T>
   const Trait<T> &getTrait(const std::string &name) const {
-    auto index = mIndices.find(name);
+    const auto index{mIndices.find(name)};
     if (index == mIndices.end()) {
       throw std::runtime_error("No such trait");
     }
-    const auto &vertex = mGraph[index->second];
+    const auto &vertex{mGraph[index->second]};
     if (!vertex) {
       throw std::runtime_error("nullptr vertex");
     }
@@ -81,8 +81,8 @@ class Traits {
   template<class T, class ...Args>
   Trait<T> &addTrait(std::string name, Args &&... args) {
     mSorted = false;
-    auto index = boost::add_vertex(std::make_shared<TraitVariant>(
-        Trait<T>{std::move(name), std::forward<Args>(args)...}), mGraph);
+    const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
+        Trait<T>{std::move(name), std::forward<Args>(args)...}), mGraph)};
     mIndices[name] = index;
     return std::get<Trait<T>>(*mGraph[index]);
   }
@@ -92,8 +92,8 @@ class Traits {
   template<class T>
   Trait<T> &addTrait(Trait<T> &&trait) {
     mSorted = false;
-    auto index = boost::add_vertex(std::make_shared<TraitVariant>(trait),
-                                   mGraph);
+    const auto index{boost::add_vertex(std::make_shared<TraitVariant>(trait),
+                                       mGraph)};
     mIndices[trait.getName()] = index;
     return std::get<Trait<T>>(*mGraph[index]);
   }
@@ -176,21 +176,21 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
   std::vector<std::string> dependencies{};
 
   if (node.first_child().name() == "copy"s) {
-    auto copyNode{node.first_child()};
-    auto srcAttr = copyNode.attribute("src");
-    auto traitAttr = copyNode.attribute("trait");
+    const auto copyNode{node.first_child()};
+    const auto srcAttr{copyNode.attribute("src")};
+    const auto traitAttr{copyNode.attribute("trait")};
     if (srcAttr && traitAttr) {
       std::string src{srcAttr.value()};
-      std::string trait{traitAttr.value()};
-      const auto selector = tokenizeTraitSelector(src);
+      const std::string trait{traitAttr.value()};
+      const auto selector{tokenizeTraitSelector(src)};
       if (selector) {
-        // node points to a trait and therefore has no non-operator children; need
-        // to go up another level to begin searching.
+        // node points to a trait and therefore has no non-operator children;
+        // need to go up another level to begin searching.
         src = invokeSelector(node.parent(), *selector);
       }
 
       // TODO: switch-case
-      auto name = src + "." + trait;
+      std::string name{src + "." + trait};
       fun = [name, &tref = std::as_const(traits)]() -> FunctorPair {
         return {nullptr, tref.getTrait<T>(name).invoke()};
       };
@@ -204,7 +204,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
 
   // Now construct the actual function by embedding the functor update
   TraitFun<T> traitFun{[fun]() mutable -> T {
-    auto[ptr, val] = fun();
+    const auto[ptr, val] = fun();
     if (ptr) ptr->state = val;
     return val;
   }};
@@ -222,7 +222,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
 template<class T>
 TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
   if (node.text()) {
-    auto value = xml::getChildValue<T>(node);
+    const auto value{xml::getChildValue<T>(node)};
     return TraitFun<T>{[value]() { return value; }};
   } else {
     return parseOperators<T>(traits, node);
@@ -233,23 +233,24 @@ template<class T>
 void Traits::addAndBindTrait(UiElement *uiElement,
                              TraitSetterFun<T> setterFun,
                              const pugi::xml_node &node) {
-  auto fun = getTraitFun<T>(*this, node);
-  auto &trait = addTrait<T>(uiElement->get_name() + "." + node.name(), fun);
+  auto fun{getTraitFun<T>(*this, node)};
+  auto &trait{addTrait<T>(uiElement->get_name() + "." + node.name(),
+                          std::move(fun))};
   trait.bind(uiElement, setterFun);
 }
 
 template<class ...Ts>
 void Traits::setUserTraitSources(const std::tuple<Ts...> &userInterface) {
-  for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
-    const TraitVertex &traitPtr = mGraph[vIndex];
+  for (auto vIndex : mGraph.vertex_set()) {
+    const TraitVertex &traitPtr{mGraph[vIndex]};
     if (!traitPtr) {
       throw std::runtime_error("nullptr vertex");
     }
     auto &trait = *traitPtr;
-    std::optional<int> userIndex{std::visit([](auto &&v) {
+
+    const std::optional<int> userIndex{std::visit([](auto &&v) {
       return getUserTraitIndex(v.getName());
     }, trait)};
-
     if (!userIndex) continue;
 
     std::visit([&userInterface](auto &&v) {
