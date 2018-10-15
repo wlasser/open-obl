@@ -5,6 +5,7 @@
 
 namespace engine::gui {
 
+// TODO: Use std::string_view and a faster regex
 std::optional<TraitSelector> tokenizeTraitSelector(std::string src) {
   const std::regex selectorRegex{"(.+?)\\((.*?)\\)"};
   std::smatch selectorMatch{};
@@ -146,6 +147,22 @@ std::string invokeSelector(const pugi::xml_node &node,
     case TraitSelector::Type::strings: {
       return invokeStringsSelector();
     }
+  }
+}
+
+std::optional<std::string> resolveTrait(pugi::xml_node node) {
+  const auto srcAttr{node.attribute("src")};
+  const auto traitAttr{node.attribute("trait")};
+
+  if (!(srcAttr && traitAttr)) return std::nullopt;
+
+  const std::string trait{traitAttr.value()};
+  if (const auto selector{tokenizeTraitSelector(srcAttr.value())}; selector) {
+    // node points to a trait and therefore has no non-operator children;
+    // need to go up another level to begin searching.
+    return invokeSelector(node.parent(), *selector) + "." + trait;
+  } else {
+    return std::string{srcAttr.value()} + "." + trait;
   }
 }
 

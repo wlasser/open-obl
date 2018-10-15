@@ -177,24 +177,14 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
 
   if (node.first_child().name() == "copy"s) {
     const auto copyNode{node.first_child()};
-    const auto srcAttr{copyNode.attribute("src")};
-    const auto traitAttr{copyNode.attribute("trait")};
-    if (srcAttr && traitAttr) {
-      std::string src{srcAttr.value()};
-      const std::string trait{traitAttr.value()};
-      const auto selector{tokenizeTraitSelector(src)};
-      if (selector) {
-        // node points to a trait and therefore has no non-operator children;
-        // need to go up another level to begin searching.
-        src = invokeSelector(node.parent(), *selector);
-      }
-
-      // TODO: switch-case
-      std::string name{src + "." + trait};
+    if (auto nameOpt = resolveTrait(copyNode); nameOpt) {
+      std::string &name{*nameOpt};
       fun = [name, &tref = std::as_const(traits)]() -> FunctorPair {
         return {nullptr, tref.getTrait<T>(name).invoke()};
       };
       dependencies.push_back(std::move(name));
+    } else {
+      // Invalid <copy>
     }
   } else {
     fun = [functor = PersistentFunctor<T>{}]() mutable -> FunctorPair {

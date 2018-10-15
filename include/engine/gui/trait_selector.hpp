@@ -75,6 +75,11 @@ std::string invokeStringsSelector();
 std::string invokeSelector(const pugi::xml_node &node,
                            const TraitSelector &selector);
 
+// If node has 'src' and 'trait' attributes then join them into a
+// fully-qualified trait path, invoking 'src' if it corresponds to a selector,
+// otherwise return an empty optional.
+std::optional<std::string> resolveTrait(pugi::xml_node node);
+
 } // namespace engine::gui
 
 #endif // OPENOBLIVION_ENGINE_GUI_TRAIT_SELECTOR_HPP
