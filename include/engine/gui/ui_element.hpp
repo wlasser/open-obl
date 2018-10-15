@@ -2,6 +2,7 @@
 #define OPENOBLIVION_ENGINE_GUI_UI_ELEMENT_HPP
 
 #include "engine/gui/trait.hpp"
+#include <optional>
 #include <string>
 
 namespace engine::gui {
@@ -66,8 +67,23 @@ class UiElement {
   }
 
   virtual void set_name(std::string name) {
-    mName = name;
+    mName = std::move(name);
   }
+
+  // Some UiElements have traits that must be generated internally, not supplied
+  // manually by the ui designer. For instance, a designer would not know the
+  // width of a text box, even if they knew the contents of the box.
+  // The UiElement is therefore allowed to supply its own implementation traits,
+  // called 'provided traits', which should have no dependencies and no setter.
+  virtual std::optional<Trait<int>> make_x() const { return {}; }
+  virtual std::optional<Trait<int>> make_y() const { return {}; }
+  virtual std::optional<Trait<int>> make_width() const { return {}; }
+  virtual std::optional<Trait<int>> make_height() const { return {}; }
+  virtual std::optional<Trait<int>> make_alpha() const { return {}; }
+  virtual std::optional<Trait<bool>> make_locus() const { return {}; }
+  virtual std::optional<Trait<bool>> make_visible() const { return {}; }
+  virtual std::optional<Trait<float>> make_menufade() const { return {}; }
+  virtual std::optional<Trait<float>> make_explorefade() const { return {}; }
 
   virtual ~UiElement() = 0;
 };

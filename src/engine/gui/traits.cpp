@@ -117,6 +117,18 @@ void Traits::addImplementationElementTraits() {
   }
 }
 
+void Traits::addProvidedTraits(const UiElement *uiElement) {
+  addTrait(uiElement->make_x());
+  addTrait(uiElement->make_y());
+  addTrait(uiElement->make_width());
+  addTrait(uiElement->make_height());
+  addTrait(uiElement->make_alpha());
+  addTrait(uiElement->make_locus());
+  addTrait(uiElement->make_visible());
+  addTrait(uiElement->make_menufade());
+  addTrait(uiElement->make_explorefade());
+}
+
 void Traits::addTraitDependencies() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
     const TraitVertex &vPtr{mGraph[vIndex]};

@@ -115,6 +115,9 @@ void parseMenu(std::istream &is) {
   Traits menuTraits{};
   auto uiElements = addChildren(menuTraits, menuNode, menuElement);
   menuTraits.addImplementationElementTraits();
+  for (const auto &uiElement : uiElements) {
+    menuTraits.addProvidedTraits(uiElement.get());
+  }
   menuTraits.addTraitDependencies();
   menuTraits.update();
 

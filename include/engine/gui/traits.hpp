@@ -56,6 +56,11 @@ class Traits {
   // mSorted == true, then this does nothing.
   void sort();
 
+  // If the optional is non-empty then add the contained trait, overwriting any
+  // existing trait in the dependency graph with the same name.
+  template<class T>
+  void addTrait(std::optional<Trait<T>> trait);
+
  public:
   // Return a reference to the dynamic trait with the given fully-qualified name
   template<class T>
@@ -121,6 +126,10 @@ class Traits {
   // Add the traits of any implementation defined elements that are required as
   // dependencies of existing traits.
   void addImplementationElementTraits();
+
+  // Add the element's provided traits, overriding any existing traits with the
+  // same name.
+  void addProvidedTraits(const UiElement *uiElement);
 
   // Set all the user traits to point to the given interface buffer.
   template<class ...Ts>
@@ -217,6 +226,16 @@ TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
   } else {
     return parseOperators<T>(traits, node);
   }
+}
+
+template<class T>
+void Traits::addTrait(std::optional<Trait<T>> trait) {
+  if (!trait) return;
+  const auto it{mIndices.find(trait->getName())};
+  if (it != mIndices.end()) {
+    boost::remove_vertex(it->second, mGraph);
+  }
+  (void) addTrait(std::move(*trait));
 }
 
 template<class T>
