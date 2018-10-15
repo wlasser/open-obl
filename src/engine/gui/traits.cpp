@@ -135,13 +135,29 @@ void Traits::addTraitDependencies() {
     const auto deps{getDependencies(vPtr)};
 
     for (const auto &dep : deps) {
-      const auto uIndexIt{mIndices.find(dep)};
-      if (uIndexIt == mIndices.end()) {
-        throw std::runtime_error("Nonexistent dependency");
+      // Switch statements (selected traits with trailing underscores) can
+      // depend on all possible cases.
+      if (dep.back() == '_') {
+        for (auto uIndex : mGraph.vertex_set()) {
+          const TraitVertex &uPtr{mGraph[uIndex]};
+          if (!uPtr) continue;
+          const bool match = std::visit([&dep](const auto &v) {
+            return boost::algorithm::starts_with(v.getName(), dep);
+          }, *uPtr);
+          if (match) {
+            boost::remove_edge(uIndex, vIndex, mGraph);
+            boost::add_edge(uIndex, vIndex, mGraph);
+          }
+        }
+      } else {
+        const auto uIndexIt{mIndices.find(dep)};
+        if (uIndexIt == mIndices.end()) {
+          throw std::runtime_error("Nonexistent dependency");
+        }
+        const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
+        boost::remove_edge(uIndex, vIndex, mGraph);
+        boost::add_edge(uIndex, vIndex, mGraph);
       }
-      const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
-      boost::remove_edge(uIndex, vIndex, mGraph);
-      boost::add_edge(uIndex, vIndex, mGraph);
     }
   }
 }

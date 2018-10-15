@@ -165,6 +165,79 @@ struct PersistentFunctor {
   }
 };
 
+// PersistentFunctors needs to be updated after the entire evaluation is
+// complete, but will be the most nested function. Instead of working with a
+// TraitFun<T> directly, we adjoin an pointer to the functor to the return type
+// and use it to pass the functor all the way up the call stack, before updating
+// the functor and discarding it in the final return value.
+template<class T>
+using FunctorPair = std::pair<PersistentFunctor<T> *, T>;
+template<class T>
+using PersistentTraitFun = std::function<FunctorPair<T>(void)>;
+// Using a PersistentTraitFun instead of a TraitFun prohibits requires tracking
+// dependencies separately.
+template<class T>
+struct DependentTraitFun {
+  PersistentTraitFun<T> fun{};
+  std::vector<std::string> deps{};
+};
+
+// If the copy operator has a selector that selects a trait whose name ends in
+// a trailing '_', then the current working value is stringified and appended to
+// to the trait name. This is used to implement a switch statement.
+template<class T>
+PersistentTraitFun<T> getSwitchCaseTraitFun(const Traits &traits,
+                                            const std::string &name,
+                                            DependentTraitFun<T> workingFun) {
+  auto fun = std::move(workingFun.fun);
+  return [name, fun, &tref = std::as_const(traits)]() -> FunctorPair<T> {
+    const auto[ptr, val] = fun();
+    if constexpr (std::is_same_v<T, int> || std::is_same_v<T, float>) {
+      return {ptr, tref.getTrait<T>(name + std::to_string(val)).invoke()};
+    } else if constexpr (std::is_same_v<T, bool>) {
+      return {ptr, tref.getTrait<T>(name + (val ? "true" : "false")).invoke()};
+    } else if constexpr (std::is_same_v<T, std::string>) {
+      return {ptr, tref.getTrait<T>(name + val).invoke()};
+    } else {
+      return {ptr, tref.getTrait<T>(name).invoke()};
+    }
+  };
+}
+
+template<class T>
+DependentTraitFun<T> parseOperatorCopy(const Traits &traits,
+                                       pugi::xml_node node,
+                                       DependentTraitFun<T> workingFun) {
+  if (!workingFun.fun) {
+    workingFun.fun = []() { return FunctorPair<T>{nullptr, {}}; };
+  };
+  PersistentTraitFun<T> fun{};
+
+  // If a selector is provided then replace the current working value with the
+  // value of the selected trait, otherwise replace it with the child value of
+  // the <copy> node.
+  if (auto opt{resolveTrait(node)}; opt) {
+    // Trailing underscore implies a switch statement using the working value,
+    // otherwise replace the working value.
+    std::string &name{*opt};
+    if (name.back() == '_') {
+      fun = getSwitchCaseTraitFun(traits, name, std::move(workingFun));
+    } else {
+      fun = [name, &tref = std::as_const(traits)]() -> FunctorPair<T> {
+        return {nullptr, tref.getTrait<T>(name).invoke()};
+      };
+    }
+    workingFun.deps.push_back(std::move(name));
+  } else {
+    const T value{xml::getChildValue<T>(node)};
+    fun = [value]() {
+      return FunctorPair<T>{nullptr, value};
+    };
+  }
+
+  return {std::move(fun), std::move(workingFun.deps)};
+}
+
 // Given a trait node whose body is given by a collection of operators, parse
 // the sequence of operators into a TraitFun.
 template<class T>
@@ -172,31 +245,20 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
   using namespace std::literals;
 
   // Start with the <copy> if there is one, otherwise use a PersistentFunctor
-  // to remember the previous value. The functor needs to be updated after the
-  // entire evaluation is complete, which means it needs to act at both ends
-  // of the evaluation; this is not possible with the nesting technique used.
-  // Instead we have to pass a pointer to the functor all the way up the call
-  // stack, then use it to make the update at the end. The working function
-  // type is therefore not a TraitFun<T>.
-  using FunctorPair = std::pair<PersistentFunctor<T> *, T>;
-  std::function<FunctorPair(void)> fun{};
-  // Need to keep track of the trait dependencies, which we can't give to the
-  // TraitFun<T> until the end.
+  // to remember the previous value. Need to keep track of the trait
+  // dependencies, which can't be given to the TraitFun<T> until the end.
   std::vector<std::string> dependencies{};
+  PersistentTraitFun<T> fun{};
 
-  if (node.first_child().name() == "copy"s) {
-    const auto copyNode{node.first_child()};
-    if (auto nameOpt = resolveTrait(copyNode); nameOpt) {
-      std::string &name{*nameOpt};
-      fun = [name, &tref = std::as_const(traits)]() -> FunctorPair {
-        return {nullptr, tref.getTrait<T>(name).invoke()};
-      };
-      dependencies.push_back(std::move(name));
-    } else {
-      // Invalid <copy>
-    }
+  if (const auto firstChild{node.first_child()}; firstChild.name() == "copy"s) {
+    auto[newFun, newDeps]{parseOperatorCopy<T>(traits, firstChild, {})};
+    dependencies.reserve(dependencies.size() + newDeps.size());
+    dependencies.insert(dependencies.end(),
+                        std::move_iterator(newDeps.begin()),
+                        std::move_iterator(newDeps.end()));
+    fun = std::move(newFun);
   } else {
-    fun = [functor = PersistentFunctor<T>{}]() mutable -> FunctorPair {
+    fun = [functor = PersistentFunctor<T>{}]() mutable -> FunctorPair<T> {
       return {&functor, functor()};
     };
   }
