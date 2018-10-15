@@ -21,6 +21,9 @@ struct TraitSelector {
 // Attempt to read the selector string as a TraitSelector
 std::optional<TraitSelector> tokenizeTraitSelector(std::string selector);
 
+// Ascend back up the tree, building the fully-qualified name of the node.
+std::string fullyQualifyName(pugi::xml_node node);
+
 // If an argument is given, then the 'child' selector returns the
 // fully-qualified name of a descendant of node, whose name matches the
 // argument, by performing a depth-first-search but iterating over the children

@@ -1,4 +1,7 @@
 #include "enum_template.hpp"
+#include "engine/gui/elements/image.hpp"
+#include "engine/gui/elements/rect.hpp"
+#include "engine/gui/elements/text.hpp"
 #include "engine/gui/gui.hpp"
 #include "engine/gui/xml.hpp"
 #include "engine/settings.hpp"
@@ -54,21 +57,44 @@ std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc) {
   return {menuNode, menuType};
 }
 
-std::string getMenuName(pugi::xml_node menuNode) {
+std::string getMenuElementName(pugi::xml_node menuNode) {
   const auto attrib{menuNode.attribute("name")};
   if (!attrib) {
-    throw std::runtime_error("<menu> tag does not have a 'name' attribute");
+    throw std::runtime_error("Tag does not have a 'name' attribute");
   }
   return attrib.value();
 }
 
-void addChildren(Traits &traits, pugi::xml_node parentNode,
-                 UiElement *parentElement) {
+std::vector<std::unique_ptr<UiElement>>
+addChildren(Traits &traits,
+            pugi::xml_node parentNode,
+            UiElement *parentElement) {
+  using namespace std::literals;
+  std::vector<std::unique_ptr<UiElement>> uiElements;
+
   for (const auto &node : parentNode.children()) {
     traits.addAndBindImplementationTrait(node, parentElement);
     traits.addAndBindUserTrait(node, parentElement);
-    // TODO: Look for an add other UiElements, e.g. rect, image
+
+    std::unique_ptr<UiElement> element = [&]() -> std::unique_ptr<UiElement> {
+      if (node.name() == "image"s) return std::make_unique<Image>();
+      else if (node.name() == "rect"s) return std::make_unique<Rect>();
+      else if (node.name() == "text"s) return std::make_unique<Text>();
+      else return nullptr;
+    }();
+
+    if (element) {
+      element->set_name(fullyQualifyName(node));
+      auto children{addChildren(traits, node, element.get())};
+      uiElements.reserve(uiElements.size() + 1u + children.size());
+      uiElements.push_back(std::move(element));
+      uiElements.insert(uiElements.end(),
+                        std::move_iterator(children.begin()),
+                        std::move_iterator(children.end()));
+    }
   }
+
+  return uiElements;
 }
 
 // Parse an entire menu from an XML stream
@@ -82,11 +108,12 @@ void parseMenu(std::istream &is) {
   enumvar::defaultConstruct(menuType, menu);
   auto *menuElement{extractUiElement(menu)};
 
-  menuElement->set_name(getMenuName(menuNode));
+  const std::string menuName{getMenuElementName(menuNode)};
+  menuElement->set_name(menuName);
 
   // Now construct the dependency graph of the dynamic representation
   Traits menuTraits{};
-  addChildren(menuTraits, menuNode, menuElement);
+  auto uiElements = addChildren(menuTraits, menuNode, menuElement);
   menuTraits.addImplementationElementTraits();
   menuTraits.addTraitDependencies();
   menuTraits.update();

@@ -95,10 +95,12 @@ pugi::xml_document loadDocument(std::istream &is);
 
 std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc);
 
-std::string getMenuName(pugi::xml_node menuNode);
+std::string getMenuElementName(pugi::xml_node menuNode);
 
-void addChildren(Traits &traits, pugi::xml_node parentNode,
-                 UiElement *parentElement);
+std::vector<std::unique_ptr<UiElement>>
+addChildren(Traits &traits,
+            pugi::xml_node parentNode,
+            UiElement *parentElement);
 
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);

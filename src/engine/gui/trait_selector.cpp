@@ -1,5 +1,6 @@
 #include "engine/gui/trait_selector.hpp"
 #include <boost/range/adaptors.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <regex>
 
 namespace engine::gui {
@@ -41,18 +42,25 @@ std::optional<TraitSelector> tokenizeTraitSelector(std::string src) {
   return parsedSelector;
 }
 
+std::string fullyQualifyName(pugi::xml_node node) {
+  // Can't just use node.path as that uses tag names, not name attributes.
+  std::vector<std::string> ancestors;
+  for (; node.attribute("name"); node = node.parent()) {
+    ancestors.push_back(node.attribute("name").value());
+  }
+  return boost::algorithm::join(ancestors | boost::adaptors::reversed, ".");
+}
+
 std::string invokeChildSelector(const pugi::xml_node &node,
                                 std::optional<std::string> arg) {
   if (arg) {
     // Search through this node's descendants for a node whose name matches the
     // argument, but search from the last sibling to the first
     for (const auto &child : node.children() | boost::adaptors::reversed) {
-      if (arg == child.attribute("name").value()) {
-        std::string parentName{node.attribute("name").value()};
-        std::string childName{child.attribute("name").value()};
-        return childName.append(".").append(parentName);
+      if (*arg == child.attribute("name").value()) {
+        return fullyQualifyName(child);
       } else {
-        auto childName = invokeChildSelector(child, arg);
+        const auto childName{invokeChildSelector(child, arg)};
         if (!childName.empty()) return childName;
       }
     }
@@ -62,9 +70,7 @@ std::string invokeChildSelector(const pugi::xml_node &node,
     // ensures that we are not returning a trait.
     for (const auto &child : node.children() | boost::adaptors::reversed) {
       if (child.attribute("name")) {
-        std::string parentName{node.attribute("name").value()};
-        std::string childName{child.attribute("name").value()};
-        return childName.append(".").append(parentName);
+        return fullyQualifyName(child);
       }
     }
     // No valid children, so return nothing
@@ -78,22 +84,11 @@ std::string invokeLastSelector(const pugi::xml_node &node) {
 }
 
 std::string invokeMeSelector(const pugi::xml_node &node) {
-  std::string parentName{node.parent().attribute("name").value()};
-  std::string childName{node.attribute("name").value()};
-  // <menu> elements have empty parents, in which case their fully-qualified
-  // name is just their name.
-  if (parentName.empty()) return childName;
-  else return parentName.append(".").append(childName);
+  return fullyQualifyName(node);
 }
 
 std::string invokeParentSelector(const pugi::xml_node &node) {
-  std::string parentName{node.parent().attribute("name").value()};
-  std::string grandparentName{node.parent().parent().attribute("name").value()};
-  if (parentName.empty()) return "";
-    // If the parent is a <menu> then the grandparent is empty, and the
-    // fully-qualified parent name is just the parent name.
-  else if (grandparentName.empty()) return parentName;
-  else return grandparentName.append(".").append(parentName);
+  return fullyQualifyName(node.parent());
 }
 
 std::string invokeScreenSelector() {
@@ -102,15 +97,14 @@ std::string invokeScreenSelector() {
 
 std::string invokeSiblingSelector(const pugi::xml_node &node,
                                   std::optional<std::string> arg) {
-  auto parent = node.parent();
-  std::string parentName{parent.attribute("name").value()};
+  const auto parent{node.parent()};
   if (arg) {
     // The unique sibling with the given name is the first child of the parent
     // with that name, since names are unique.
-    if (parent.find_child_by_attribute("name", arg->c_str())) {
+    if (auto child = parent.find_child_by_attribute("name", arg->c_str())) {
       // sibling(me()) == "" contractually
       if (*arg == node.attribute("name").value()) return "";
-      else return parentName.append(".").append(*arg);
+      else return fullyQualifyName(child);
     }
     return "";
   } else {
@@ -118,9 +112,7 @@ std::string invokeSiblingSelector(const pugi::xml_node &node,
     // find the first non-trait.
     for (auto sibling = node.previous_sibling(); sibling;
          sibling = sibling.previous_sibling()) {
-      if (sibling.attribute("name")) {
-        return parentName.append(".").append(sibling.attribute("name").value());
-      }
+      if (sibling.attribute("name")) return fullyQualifyName(sibling);
     }
   }
   return "";
