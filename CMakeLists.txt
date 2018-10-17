@@ -35,6 +35,8 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/gui/gui.cpp
+        src/engine/gui/stack/program.cpp
+        src/engine/gui/stack/types.cpp
         src/engine/gui/trait.cpp
         src/engine/gui/traits.cpp
         src/engine/gui/trait_selector.cpp
@@ -64,6 +66,10 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/gui/menu.hpp
         include/engine/gui/menus/loading_menu.hpp
         include/engine/gui/screen.hpp
+        include/engine/gui/stack/instructions.hpp
+        include/engine/gui/stack/meta.hpp
+        include/engine/gui/stack/program.hpp
+        include/engine/gui/stack/types.hpp
         include/engine/gui/strings.hpp
         include/engine/gui/trait.hpp
         include/engine/gui/traits.hpp
