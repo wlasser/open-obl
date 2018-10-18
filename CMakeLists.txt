@@ -209,5 +209,13 @@ target_include_directories(Catch INTERFACE lib/catch)
 add_executable(Test test/tests.cpp)
 target_include_directories(Test PRIVATE include)
 target_sources(Test PRIVATE
-        test/io/write_bytes.cpp)
-target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch)
+        test/io/write_bytes.cpp
+        test/engine/gui/stack.cpp)
+target_sources(Test PRIVATE
+        src/engine/gui/stack/program.cpp
+        src/engine/gui/stack/types.cpp
+        src/engine/gui/trait.cpp
+        src/engine/gui/trait_selector.cpp
+        src/engine/gui/xml.cpp)
+target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch
+        pugixml)
