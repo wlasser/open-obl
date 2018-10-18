@@ -24,7 +24,15 @@ void invokeBinaryOperator(Stack &stack, F f) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
       auto opt
           {meta::try_functor<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
-      if (opt) stack.emplace_back(*opt);
+      if (opt.has_value()) {
+        stack.emplace_back(*opt);
+      } else {
+        throw std::runtime_error(
+            "Type error: could not invoke binary functor with given arguments");
+      }
+    } else {
+      throw std::runtime_error(
+          "Type error: arguments to binary functor must have the same type");
     }
   }, a, b);
 }
@@ -41,7 +49,15 @@ void invokeBinaryPredicate(Stack &stack, F f) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
       auto opt
           {meta::try_predicate<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
-      if (opt) stack.emplace_back(*opt);
+      if (opt.has_value()) {
+        stack.emplace_back(*opt);
+      } else {
+        throw std::runtime_error(
+            "Type error: could not invoke binary predicate with given arguments");
+      }
+    } else {
+      throw std::runtime_error(
+          "Type error: arguments to binary predicate must have the same type");
     }
   }, a, b);
 }
@@ -316,9 +332,10 @@ struct not_t {
     std::visit([&stack](auto &&pred) {
       if constexpr (std::is_same_v<std::decay_t<decltype(pred)>, bool>) {
         stack.emplace_back(!pred);
+      } else {
+        throw std::runtime_error("Type error: expected a bool");
       }
     }, a);
-    invokeBinaryOperator(stack, *this);
   }
 };
 
@@ -330,7 +347,11 @@ struct onlyif_t {
     stack.pop_back();
     std::visit([&stack](auto &&working, auto &&pred) {
       if constexpr (std::is_same_v<std::decay_t<decltype(pred)>, bool>) {
-        if (pred) stack.emplace_back(working);
+        if (pred) {
+          stack.emplace_back(working);
+        } else {
+          throw std::runtime_error("Type error: expected a bool");
+        }
       }
     }, a, b);
   }
@@ -345,6 +366,8 @@ struct onlyifnot_t {
     std::visit([&stack](auto &&working, auto &&pred) {
       if constexpr (std::is_same_v<std::decay_t<decltype(pred)>, bool>) {
         if (!pred) stack.emplace_back(working);
+      } else {
+        throw std::runtime_error("Type error: expected a bool");
       }
     }, a, b);
   }
@@ -365,6 +388,8 @@ struct rand_t {
                                           float>) {
         std::uniform_real_distribution<float> dist(0.0, range);
         stack.emplace_back(dist(gen));
+      } else {
+        throw std::runtime_error("Type error: expected an int or float");
       }
     }, a);
   }
