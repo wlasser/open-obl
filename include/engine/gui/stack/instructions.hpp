@@ -79,6 +79,7 @@ struct add_t {
   constexpr float operator()(float a, float b) const noexcept {
     return a + b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   std::string operator()(const std::string &a, const std::string &b) const {
     return a + b;
   }
@@ -92,6 +93,7 @@ struct sub_t {
   constexpr float operator()(float a, float b) const noexcept {
     return a - b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -102,6 +104,7 @@ struct mul_t {
   constexpr float operator()(float a, float b) const noexcept {
     return a * b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -112,6 +115,7 @@ struct div_t {
   constexpr float operator()(float a, float b) const noexcept {
     return a / b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -122,6 +126,7 @@ struct mod_t {
   constexpr float operator()(float a, float b) const noexcept {
     return std::fmod(a, b);
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -132,6 +137,7 @@ struct floor_t {
   constexpr float operator()(float a, float b) const noexcept {
     return std::floor(a + b);
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -142,6 +148,7 @@ struct ceil_t {
   constexpr float operator()(float a, float b) const noexcept {
     return std::ceil(a + b);
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -152,6 +159,7 @@ struct min_t {
   constexpr float operator()(float a, float b) const noexcept {
     return std::min(a, b);
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -162,6 +170,7 @@ struct max_t {
   constexpr float operator()(float a, float b) const noexcept {
     return std::max(a, b);
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -172,6 +181,7 @@ struct abs_t {
   constexpr float operator()(float a, float b) const noexcept {
     return a < 0 ? std::abs(a + b) : a;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -179,6 +189,8 @@ struct gcd_t {
   constexpr int operator()(int a, int b) const noexcept {
     return std::gcd(a, b);
   }
+  constexpr float operator()(float, float) const noexcept = delete;
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -186,6 +198,8 @@ struct lcm_t {
   constexpr int operator()(int a, int b) const noexcept {
     return std::lcm(a, b);
   }
+  constexpr float operator()(float, float) const noexcept = delete;
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
 
@@ -196,6 +210,7 @@ struct gt_t {
   constexpr bool operator()(float a, float b) const noexcept {
     return a > b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   bool operator()(const std::string &a, const std::string &b) const noexcept {
     return a > b;
   }
@@ -209,6 +224,7 @@ struct gte_t {
   constexpr bool operator()(float a, float b) const noexcept {
     return a >= b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   bool operator()(const std::string &a, const std::string &b) const noexcept {
     return a >= b;
   }
@@ -222,6 +238,7 @@ struct lt_t {
   constexpr bool operator()(float a, float b) const noexcept {
     return a < b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   bool operator()(const std::string &a, const std::string &b) const noexcept {
     return a < b;
   }
@@ -235,6 +252,7 @@ struct lte_t {
   constexpr bool operator()(float a, float b) const noexcept {
     return a <= b;
   }
+  constexpr bool operator()(bool, bool) const noexcept = delete;
   bool operator()(const std::string &a, const std::string &b) const noexcept {
     return a <= b;
   }
@@ -274,6 +292,8 @@ struct neq_t {
 };
 
 struct and_t {
+  constexpr int operator()(int, int) const noexcept = delete;
+  constexpr float operator()(float, float) const noexcept = delete;
   constexpr bool operator()(bool a, bool b) const noexcept {
     return a && b;
   }
@@ -281,6 +301,8 @@ struct and_t {
 };
 
 struct or_t {
+  constexpr int operator()(int, int) const noexcept = delete;
+  constexpr float operator()(float, float) const noexcept = delete;
   constexpr bool operator()(bool a, bool b) const noexcept {
     return a || b;
   }

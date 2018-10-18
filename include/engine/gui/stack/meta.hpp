@@ -26,6 +26,9 @@ template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
 // optional. Return an empty optional otherwise. The pointers are a hack to get
 // a catch-all overload without using a variadic function, which cannot have
 // non-trivial types (like std::string) passed to it.
+// Note that implicit conversions are considered for the purpose of determining
+// f(*lhs, *rhs). Any undesired overloads that may occur through implicit
+// conversions should be explicitly deleted.
 template<class A, class F>
 constexpr auto try_functor(F &&f, const A *lhs, const A *rhs) ->
 decltype((void) (f(*lhs, *rhs)), std::optional<A>{}) {
@@ -40,7 +43,7 @@ std::optional<A> {
 
 // Like try_functor, but for boolean return types.
 template<class A, class F>
-constexpr auto try_predicate(F &&f, const A *lhs, const A &rhs) ->
+constexpr auto try_predicate(F &&f, const A *lhs, const A *rhs) ->
 decltype((void) (f(*lhs, *rhs)), std::optional<bool>{}) {
   return f(*lhs, *rhs);
 }

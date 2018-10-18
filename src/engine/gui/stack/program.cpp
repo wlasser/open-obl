@@ -108,6 +108,7 @@ Program compile(pugi::xml_node node) {
 ValueType Program::operator()() {
   std::unique_lock lock{lastReturnMutex};
   Stack stack{};
+  if (lastReturn) stack.push_back(*lastReturn);
   for (const auto &instr : instructions) {
     std::visit([&stack](auto &&op) { op(stack); }, instr);
   }
