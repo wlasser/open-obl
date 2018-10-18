@@ -303,4 +303,52 @@ TEST_CASE("can compute abs on the stack", "[gui][gui/stack]") {
   REQUIRE_THAT(std::get<float>(ret), Catch::WithinULP(6.5f, 1));
 }
 
+TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
+  Program program{};
+  program.instructions = std::vector<Instruction>{
+      push_t{3},
+      push_t{5},
+      lt_t{},
+      push_t{std::string{"world"}},
+      push_t{std::string{"hello"}},
+      gt_t{},
+      push_t{3.1f},
+      push_t{3.2f},
+      eq_t{},
+      not_t{},
+      push_t{5},
+      push_t{3},
+      neq_t{},
+      and_t{},
+      and_t{},
+      and_t{}
+  };
+
+  auto ret{program()};
+  REQUIRE(std::holds_alternative<bool>(ret));
+  REQUIRE(std::get<bool>(ret));
+}
+
+TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
+  Program program{};
+  program.instructions = std::vector<Instruction>{
+      push_t{0},    // Zero buffer
+      push_t{0},
+      push_t{3},    // Desired final value
+      push_t{5},
+      push_t{5},
+      eq_t{},       // == true
+      onlyif_t{},   // Should just be '3'
+      push_t{7},    // Want this to be discarded
+      push_t{5},
+      push_t{5},
+      eq_t{},       // == true
+      onlyifnot_t{} // Should discard the 'true' and '7'
+  };
+
+  auto ret{program()};
+  REQUIRE(std::holds_alternative<int>(ret));
+  REQUIRE(std::get<int>(ret) == 3);
+}
+
 } // namespace engine::gui::stack
