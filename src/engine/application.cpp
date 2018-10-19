@@ -478,12 +478,7 @@ RefId Application::getCrosshairRef() {
   currentCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
 
   if (callback.hasHit()) {
-    // Follow the collision object's user pointer to its SceneNode, then follow
-    // the SceneNode's userAny to its refid
-    auto *const userPtr{callback.m_collisionObject->getUserPointer()};
-    auto *const node = static_cast<Ogre::SceneNode *>(userPtr);
-    const auto &bindings = node->getUserObjectBindings();
-    return Ogre::any_cast<RefId>(bindings.getUserAny());
+    return RefId{decodeFormId(callback.m_collisionObject->getUserPointer())};
   } else {
     return RefId{};
   }

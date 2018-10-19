@@ -27,7 +27,16 @@
 using FormId = uint32_t;
 using IRef = uint32_t;
 
-std::string formIdString(FormId formID) noexcept;
+// Lightweight construction of a hexadecimal string representation of formId.
+std::string formIdString(FormId formId) noexcept;
+
+// The bullet api allows storing two `int`s and a `void *` as user data in
+// collision objects, but it is more convenient to store a FormId. Since it
+// would be UB to cast a FormId with large mod index directly to an int, we
+// pretend the FormId is an actual pointer and put it in the lower 4 bytes of
+// the void *.
+void *encodeFormId(FormId formId) noexcept;
+FormId decodeFormId(void *ptr) noexcept;
 
 class BaseId;
 class RefId;

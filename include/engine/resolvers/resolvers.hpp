@@ -1,12 +1,13 @@
 #ifndef OPENOBLIVION_ENGINE_RESOLVERS_HPP
 #define OPENOBLIVION_ENGINE_RESOLVERS_HPP
 
+#include "formid.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>
 #include <OgreEntity.h>
 #include <OgreSceneManager.h>
 
-// At runtime it is necessary to resolve `FormId`s into concrete instances of
+// At runtime it is necessary to resolve BaseIds into concrete instances of
 // the types they represent, for example producing an `Ogre::Entity` and
 // `Ogre::RigidBody` from the base id of a `STAT`. Sometimes it is feasible to
 // load every instance of a type during esp parsing and keep them in memory for
@@ -88,6 +89,9 @@ gsl::not_null<Ogre::SceneNode *>
 attachLight(gsl::not_null<Ogre::SceneNode *> node,
             Ogre::Light *light,
             bool final = false);
+
+// Set the bullet user data in the RigidBody to the given RefId.
+void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId);
 
 } // namespace engine
 

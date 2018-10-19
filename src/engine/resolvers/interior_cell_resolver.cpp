@@ -68,9 +68,6 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
   auto *const node{cell->scnMgr->getRootSceneNode()->createChildSceneNode()};
   const auto id{ref.data.baseID.data};
 
-  // Set the reference id in the user bindings
-  node->getUserObjectBindings().setUserAny(Ogre::Any(ref.id));
-
   const auto &data{ref.data.positionRotation.data};
 
   // Set the position
@@ -100,6 +97,8 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
       || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
+    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
+
     workingNode = attachRigidBody(workingNode, rigidBody,
                                   gsl::make_not_null(cell->physicsWorld.get()));
     workingNode = attachMesh(workingNode, mesh, true);
@@ -111,6 +110,8 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
       || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
+    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
+
     workingNode = attachRigidBody(workingNode, rigidBody,
                                   gsl::make_not_null(cell->physicsWorld.get()));
     workingNode = attachMesh(workingNode, mesh, true);
@@ -120,6 +121,8 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
 
   if (auto[light, rigidBody, mesh]{lightRes->get(id, cell->scnMgr)}; light) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
+
+    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
 
     workingNode = attachRigidBody(workingNode, rigidBody,
                                   gsl::make_not_null(cell->physicsWorld.get()));

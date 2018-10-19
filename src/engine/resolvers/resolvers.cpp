@@ -45,7 +45,6 @@ attachRigidBody(gsl::not_null<Ogre::SceneNode *> node,
   node->attachObject(rigidBody);
   // TODO: Replace with rigidBody->attach(world)
   world->addRigidBody(rigidBody->getRigidBody());
-  rigidBody->getRigidBody()->setUserPointer(node);
   return final ? node : gsl::make_not_null(node->createChildSceneNode());
 }
 
@@ -56,6 +55,11 @@ attachLight(gsl::not_null<Ogre::SceneNode *> node,
   if (!light) return node;
   node->attachObject(light);
   return final ? node : gsl::make_not_null(node->createChildSceneNode());
+}
+
+void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId) {
+  auto formId{static_cast<FormId>(refId)};
+  rigidBody->getRigidBody()->setUserPointer(encodeFormId(formId));
 }
 
 } // namespace engine
