@@ -55,9 +55,8 @@ uint32_t ALCH::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::ALCH &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
   if (t.editorID) os << *t.editorID;
   os << t.itemName << t.modelFilename;
   if (t.boundRadius) os << *t.boundRadius;
@@ -99,9 +98,8 @@ uint32_t TES4::size() const {
 };
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::TES4 &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
   os << t.header << t.offsets << t.deleted << t.author << t.description;
   for (const auto &master : t.masters) {
     os << master.master << master.fileSize;
@@ -133,9 +131,8 @@ uint32_t GMST::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::GMST &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::GMST &t, std::size_t /*size*/) {
   os << t.editorID << t.value;
   return os;
 }
@@ -155,9 +152,8 @@ uint32_t GLOB::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::GLOB &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::GLOB &t, std::size_t /*size*/) {
   os << t.editorID << t.type << t.value;
   return os;
 }
@@ -179,9 +175,8 @@ uint32_t CLAS::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::CLAS &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
   os << t.editorID << t.name << t.description << t.iconFilename << t.data;
   return os;
 }
@@ -212,9 +207,8 @@ uint32_t FACT::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::FACT &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::FACT &t, std::size_t /*size*/) {
   os << t.editorID << t.name;
   for (const auto &r : t.relations) {
     os << r;
@@ -259,9 +253,8 @@ uint32_t HAIR::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::HAIR &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
   os << t.editorID << t.name << t.modelFilename << t.boundRadius
      << t.textureHash << t.iconFilename << t.flags;
   return os;
@@ -288,9 +281,8 @@ uint32_t EYES::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::EYES &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
   os << t.editorID << t.name << t.iconFilename << t.flags;
   return os;
 }
@@ -356,9 +348,8 @@ uint32_t RACE::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::RACE &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
   os << t.editorID;
   if (t.name) os << t.name.value();
   os << t.description;
@@ -498,9 +489,8 @@ uint32_t SOUN::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::SOUN &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
   os << t.editorID << t.filename;
   std::visit([&os](auto &&r) {
     using T = std::decay_t<decltype(r)>;
@@ -542,9 +532,8 @@ uint32_t SKIL::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::SKIL &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
   os << t.editorID << t.index << t.description;
   if (t.iconFilename) os << t.iconFilename.value();
   os << t.data << t.apprenticeText << t.journeymanText << t.expertText
@@ -579,9 +568,8 @@ uint32_t MGEF::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::MGEF &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
   os << t.editorID << t.effectName << t.description;
   if (t.iconFilename) os << t.iconFilename.value();
   if (t.effectModel) os << t.effectModel.value();
@@ -618,9 +606,8 @@ uint32_t LTEX::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::LTEX &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
   os << t.editorID << t.textureFilename;
   if (t.havokData) os << t.havokData.value();
   if (t.specularExponent) os << t.specularExponent.value();
@@ -654,9 +641,8 @@ uint32_t STAT::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::STAT &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
   os << t.editorID << t.modelFilename << t.boundRadius;
   if (t.textureHash) os << t.textureHash.value();
   return os;
@@ -700,9 +686,8 @@ std::istream &raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::ENCH &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
   os << t.editorID;
   if (t.name) os << *t.name;
   os << t.enchantmentData;
@@ -734,9 +719,8 @@ std::istream &raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::SPEL &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
   os << t.editorID << t.name << t.data;
   for (const auto &effect : t.effects) effect.write(os);
 
@@ -762,9 +746,8 @@ uint32_t CELL::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::CELL &t,
-                         std::size_t size) {
+std::ostream &
+raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
   os << t.editorID;
   if (t.name) os << t.name.value();
   os << t.data;
@@ -857,9 +840,8 @@ uint32_t REFR::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR &t,
-                         std::size_t size) {
+std::ostream &
+raw::write(std::ostream &os, const raw::REFR &t, std::size_t size) {
   os << t.baseID;
   if (t.editorID) os << *t.editorID;
   if (t.description) os << *t.description;
@@ -891,10 +873,7 @@ std::ostream &raw::write(std::ostream &os,
 }
 
 template<>
-std::istream &raw::read(std::istream &is,
-                        raw::REFR &t,
-                        std::size_t size) {
-
+std::istream &raw::read(std::istream &is, raw::REFR &t, std::size_t size) {
   readRecord(is, t.editorID, "EDID");
   readRecord(is, t.baseID, "NAME");
   std::set<std::string> possibleSubrecords = {
@@ -982,8 +961,8 @@ uint32_t LIGH::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os, const raw::LIGH &t,
-                         std::size_t/*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
   os << t.editorID;
   if (t.modelFilename) os << *t.modelFilename;
   if (t.boundRadius) os << *t.boundRadius;
@@ -1049,9 +1028,8 @@ uint32_t BSGN::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::BSGN &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
   os << t.editorID;
   os << t.name;
   os << t.icon;
@@ -1089,9 +1067,8 @@ uint32_t MISC::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::MISC &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
   os << t.editorID;
   if (t.name) os << *t.name;
   if (t.modelFilename) os << *t.modelFilename;
@@ -1140,9 +1117,8 @@ uint32_t DOOR::size() const {
 }
 
 template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::DOOR &t,
-                         std::size_t /*size*/) {
+std::ostream &
+raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
   os << t.editorID;
   if (t.name) os << *t.name;
   if (t.modelFilename) os << *t.modelFilename;
