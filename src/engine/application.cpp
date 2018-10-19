@@ -448,11 +448,14 @@ void Application::enableBulletDebugDraw(bool enable) {
 
 FormID Application::getCrosshairRef() {
   using namespace Ogre::conversions;
+  GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
+
   auto *camera = playerController->getCamera();
   auto cameraPos = toBullet(camera->getDerivedPosition());
   auto cameraDir = toBullet(camera->getDerivedDirection());
   auto rayStart = cameraPos + 0.5f * cameraDir;
-  auto rayEnd = cameraPos + 100.0f * cameraDir;
+  auto rayEnd = cameraPos +
+      conversions::metersPerUnit<float> * *iActivatePickLength * cameraDir;
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
   currentCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
   if (callback.hasHit()) {
