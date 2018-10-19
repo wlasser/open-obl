@@ -88,7 +88,7 @@ std::istream &raw::read(std::istream &is, raw::XRGD &t, std::size_t size) {
 // XLOC specicalization
 template<>
 uint16_t XLOC::size() const {
-  return 4u + sizeof(FormID) + 4u;
+  return 4u + sizeof(FormId) + 4u;
 }
 
 template<>
@@ -116,7 +116,7 @@ std::istream &raw::read(std::istream &is,
 // XESP specialization
 template<>
 uint16_t XESP::size() const {
-  return sizeof(FormID) + sizeof(raw::XESP::Flag);
+  return sizeof(FormId) + sizeof(raw::XESP::Flag);
 }
 
 template<>
@@ -140,7 +140,7 @@ std::istream &raw::read(std::istream &is,
 // XCLR specialization
 template<>
 uint16_t XCLR::size() const {
-  return sizeof(FormID) * data.regions.size();
+  return sizeof(FormId) * data.regions.size();
 }
 
 template<>
@@ -155,7 +155,7 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XCLR &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormID);
+  const std::size_t length = size / sizeof(FormId);
   io::readBytes(is, t.regions, length);
   return is;
 }
@@ -189,7 +189,7 @@ std::istream &raw::read(std::istream &is,
 // HNAM specialization
 template<>
 uint16_t HNAM::size() const {
-  return data.hair.size() * sizeof(FormID);
+  return data.hair.size() * sizeof(FormId);
 }
 
 template<>
@@ -204,7 +204,7 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::HNAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormID);
+  const std::size_t length = size / sizeof(FormId);
   io::readBytes(is, t.hair, length);
   return is;
 }
@@ -212,7 +212,7 @@ std::istream &raw::read(std::istream &is, raw::HNAM &t, std::size_t size) {
 // ENAM specialization
 template<>
 uint16_t ENAM::size() const {
-  return data.eyes.size() * sizeof(FormID);
+  return data.eyes.size() * sizeof(FormId);
 }
 
 template<>
@@ -227,7 +227,7 @@ std::ostream &raw::write(std::ostream &os,
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ENAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormID);
+  const std::size_t length = size / sizeof(FormId);
   io::readBytes(is, t.eyes, length);
   return is;
 }
@@ -325,7 +325,7 @@ template<>
 uint16_t DATA_MGEF::size() const {
   return sizeof(raw::DATA_MGEF::Flag) + sizeof(raw::DATA_MGEF::AssociatedObject)
       + sizeof(MagicSchool) + sizeof(ActorValue) + 2u * sizeof(uint16_t)
-      + 4u * sizeof(float) + 7u * sizeof(FormID);
+      + 4u * sizeof(float) + 7u * sizeof(FormId);
 }
 
 template<>
@@ -726,7 +726,7 @@ std::istream &raw::read(std::istream &is, raw::EFIT &t, std::size_t /*size*/) {
 // SCIT specialization
 template<>
 uint16_t SCIT::size() const {
-  return sizeof(FormID) + sizeof(MagicSchool) + 8u;
+  return sizeof(FormId) + sizeof(MagicSchool) + 8u;
 }
 
 template<>

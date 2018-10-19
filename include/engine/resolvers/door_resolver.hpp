@@ -27,11 +27,11 @@ class DoorResolver {
   using get_t = DoorEntity;
   using store_t = DoorEntry;
 
-  get_t get(FormID baseID, Ogre::SceneManager *mgr) const;
-  bool add(FormID baseID, store_t entry);
+  get_t get(FormId baseID, Ogre::SceneManager *mgr) const;
+  bool add(FormId baseID, store_t entry);
 
  private:
-  std::unordered_map<FormID, store_t> doors{};
+  std::unordered_map<FormId, store_t> doors{};
 };
 
 } // namespace engine

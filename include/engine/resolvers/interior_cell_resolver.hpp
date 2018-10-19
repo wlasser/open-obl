@@ -93,7 +93,7 @@ class InteriorCellResolver {
   LightResolver *lightRes;
   StaticResolver *staticRes;
   bullet::Configuration *bulletConf;
-  std::unordered_map<FormID, InteriorCellEntry> cells{};
+  std::unordered_map<FormId, InteriorCellEntry> cells{};
   std::unique_ptr<Strategy> strategy;
   friend class InitialProcessor;
 
@@ -111,9 +111,9 @@ class InteriorCellResolver {
       bulletConf(bulletConf),
       strategy(std::move(strategy)) {}
 
-  record::CELL *peek(FormID baseID) const;
-  std::shared_ptr<InteriorCell> get(FormID baseID) const;
-  bool add(FormID baseID, InteriorCellEntry entry);
+  record::CELL *peek(FormId baseID) const;
+  std::shared_ptr<InteriorCell> get(FormId baseID) const;
+  bool add(FormId baseID, InteriorCellEntry entry);
 };
 
 template<>

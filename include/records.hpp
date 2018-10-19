@@ -147,7 +147,7 @@ struct RACE {
   record::DESC description{};
   // FormIDs of greater/lesser powers, racial abilities
   std::vector<record::SPLO> powers{};
-  // FormID corresponds to races, not factions
+  // FormId corresponds to races, not factions
   std::vector<record::XNAM> relations{};
   // Skill modifiers, height, weight, flags
   record::DATA_RACE data{};

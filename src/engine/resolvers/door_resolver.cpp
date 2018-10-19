@@ -4,7 +4,7 @@
 namespace engine {
 
 DoorResolver::get_t
-DoorResolver::get(FormID baseID, Ogre::SceneManager *mgr) const {
+DoorResolver::get(FormId baseID, Ogre::SceneManager *mgr) const {
   const auto entry{doors.find(baseID)};
   if (entry == doors.end()) return {};
 
@@ -16,7 +16,7 @@ DoorResolver::get(FormID baseID, Ogre::SceneManager *mgr) const {
   return {rigidBody, entity};
 }
 
-bool DoorResolver::add(FormID baseID, store_t entry) {
+bool DoorResolver::add(FormId baseID, store_t entry) {
   return doors.try_emplace(baseID, entry).second;
 }
 

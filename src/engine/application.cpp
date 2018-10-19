@@ -117,7 +117,7 @@ Application::Application(std::string windowName) : FrameListener() {
   }
   menuPtr->load(false);
   std::stringstream menuStream{menuPtr->getString()};
-  gui::parseMenu(menuStream);
+  //gui::parseMenu(menuStream);
   menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
   // Open the main esm
@@ -462,7 +462,7 @@ void Application::enableBulletDebugDraw(bool enable) {
   debugDrawer->enable(enable);
 }
 
-FormID Application::getCrosshairRef() {
+FormId Application::getCrosshairRef() {
   using namespace Ogre::conversions;
   using namespace engine::conversions;
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
@@ -483,7 +483,7 @@ FormID Application::getCrosshairRef() {
     auto *const userPtr{callback.m_collisionObject->getUserPointer()};
     auto *const node = static_cast<Ogre::SceneNode *>(userPtr);
     const auto &bindings = node->getUserObjectBindings();
-    return Ogre::any_cast<FormID>(bindings.getUserAny());
+    return Ogre::any_cast<FormId>(bindings.getUserAny());
   } else {
     return 0;
   }
@@ -495,8 +495,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
   dispatchCollisions();
 
-  static FormID refUnderCrosshair{0};
-  FormID newRefUnderCrosshair = getCrosshairRef();
+  static FormId refUnderCrosshair{0};
+  FormId newRefUnderCrosshair = getCrosshairRef();
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
     logger->info("Looking at 0x{:x}", refUnderCrosshair);

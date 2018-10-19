@@ -17,10 +17,10 @@ class SaveState {
   };
 
   struct PCLocation {
-    FormID cell;
+    FormId cell;
     float x, y, z;
   };
-  static const std::size_t PCLocationSize = sizeof(FormID) + 3 * sizeof(float);
+  static const std::size_t PCLocationSize = sizeof(FormId) + 3 * sizeof(float);
 
   struct Global {
     IRef iref;
@@ -75,9 +75,9 @@ class SaveState {
   // Number of change records
   uint32_t recordsNum;
   // Number of next dynamic formid i.e. 0xff000000
-  FormID nextObjectId;
+  FormId nextObjectId;
   // Worldspace information
-  FormID worldId;
+  FormId worldId;
   uint32_t worldX;
   uint32_t worldY;
   // Player location

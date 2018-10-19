@@ -100,7 +100,7 @@ class Application : public Ogre::FrameListener {
 
   void dispatchCollisions();
 
-  FormID getCrosshairRef();
+  FormId getCrosshairRef();
 
   void enableBulletDebugDraw(bool enable);
 

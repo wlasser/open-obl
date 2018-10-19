@@ -10,13 +10,13 @@
 
 namespace engine {
 
-record::CELL *InteriorCellResolver::peek(FormID baseID) const {
+record::CELL *InteriorCellResolver::peek(FormId baseID) const {
   const auto entry = cells.find(baseID);
   if (entry != cells.end()) return entry->second.record.get();
   else return nullptr;
 }
 
-std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
+std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormId baseID) const {
   // Try to find an InteriorCellEntry with the given baseID. Since every cell
   // should have an entry by now, if no entry exists then we can give up.
   const auto entry{cells.find(baseID)};
@@ -58,7 +58,7 @@ std::shared_ptr<InteriorCell> InteriorCellResolver::get(FormID baseID) const {
   return ptr;
 }
 
-bool InteriorCellResolver::add(FormID baseID, InteriorCellEntry entry) {
+bool InteriorCellResolver::add(FormId baseID, InteriorCellEntry entry) {
   return cells.try_emplace(entry.record->id, std::move(entry)).second;
 }
 

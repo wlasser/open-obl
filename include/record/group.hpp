@@ -29,7 +29,7 @@ class Group {
   } Grid;
   union Label {
     char recordType[4];
-    FormID parent;
+    FormId parent;
     uint32_t blockNumber;
     uint32_t subblockNumber;
     Grid grid;

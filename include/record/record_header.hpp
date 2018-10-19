@@ -27,7 +27,7 @@ struct RecordHeader {
   uint32_t type{};
   uint32_t size{};
   Flag flags{Flag::None};
-  FormID id{};
+  FormId id{};
   // We never use this, so omit it to get a nice 16-byte struct
   //uint32_t versionControlInfo{};
 };

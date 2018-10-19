@@ -37,11 +37,11 @@ union Color {
 };
 
 // Sound to play for a door closing
-using ANAM_DOOR = FormID;
+using ANAM_DOOR = FormId;
 // Apprentice skill text
 using ANAM_SKIL = std::string;
 // Loop sound for a door
-using BNAM_DOOR = FormID;
+using BNAM_DOOR = FormId;
 // Crime gold multiplier for a faction
 using CNAM_FACT = float;
 // Default hair colour
@@ -86,7 +86,7 @@ using FNAM_SOUN = std::string;
 // Name
 using FULL = std::string;
 // Possible grass on a landscape texture
-using GNAM = FormID;
+using GNAM = FormId;
 // Icon filename
 using ICON = std::string;
 // Faction rank insignia icon filename. Why not use ICON?
@@ -111,7 +111,7 @@ using MODL = std::string;
 using NAM0 = std::tuple<>;
 using NAM1 = std::tuple<>;
 // Base object formid
-using NAME = FormID;
+using NAME = FormId;
 // Open by default. Its presence implies true.
 using ONAM = std::tuple<>;
 // Facegen main clamp
@@ -119,26 +119,26 @@ using PNAM = float;
 // Rank index in a faction
 using RNAM = uint32_t;
 // Item script
-using SCRI = FormID;
+using SCRI = FormId;
 // ESM/ESP description. Also max 512 bytes
 using SNAM = std::string;
 // Sound to play for a door opening
-using SNAM_DOOR = FormID;
+using SNAM_DOOR = FormId;
 // Sound to play for a light
-using SNAM_LIGH = FormID;
+using SNAM_LIGH = FormId;
 // Landscape texture specular
 using SNAM_LTEX = uint8_t;
 // Body data, unused?
 using SNAM_RACE = std::array<uint8_t, 2>;
 // Door random teleport location
-using TNAM_DOOR = FormID;
+using TNAM_DOOR = FormId;
 // Greater/lesser powers and racial abilities
-using SPLO = FormID;
+using SPLO = FormId;
 // Facegen face clamp
 using UNAM = float;
 // The climate of a cell, if it is exterior or an interior cell with the
 // BehaveLikeExterior flag set.
-using XCCM = FormID;
+using XCCM = FormId;
 // Enchanted weapon charge
 using XCHG = float;
 // The water height in a cell
@@ -146,9 +146,9 @@ using XCLW = float;
 // Number of copies of an item
 using XCNT = int32_t;
 // The water in a cell
-using XCWT = FormID;
+using XCWT = FormId;
 // If a cell is owned, disable ownership while this global variable is true.
-using XGLB = FormID;
+using XGLB = FormId;
 // Placed armor or weapon health. This is displayed and editable as a float
 // in the construction set, but is only saved as an integer.
 using XHLT = int32_t;
@@ -159,18 +159,18 @@ using XLOD = std::array<float, 3>;
 // Denotes the reference as a marker?
 using XMRK = std::tuple<>;
 // Cell owner
-using XOWN = FormID;
+using XOWN = FormId;
 // Cell formid, only used in testing cells, associated to XMarkers.
-using XPCI = FormID;
+using XPCI = FormId;
 // If a cell is owned, and the owner is a faction, the rank in that faction.
 using XRNK = uint32_t;
 // Reference to a door with a random teleport target which can use this door as
 // an output.
-using XRTM = FormID;
+using XRTM = FormId;
 // Uniform scaling factor for placed references
 using XSCL = float;
 // Target reference
-using XTRG = FormID;
+using XTRG = FormId;
 
 // Cell flags
 struct DATA_CELL : Bitflag<8, DATA_CELL> {
@@ -400,11 +400,11 @@ struct DATA_MGEF {
     static constexpr enum_t FogProjectile{1u << 22u};
     static constexpr enum_t NoHitEffect{1u << 23u};
   };
-  // For summon spells, the FormID of the summoned weapon, armor, or creature.
+  // For summon spells, the FormId of the summoned weapon, armor, or creature.
   // Otherwise, the ActorValue affected by the spell.
   // TODO: std::variant
   union AssociatedObject {
-    FormID summonedFormID;
+    FormId summonedFormID;
     ActorValue affectedActorValue;
   };
   Flag flags{Flag::make(Flag::None)};
@@ -420,17 +420,17 @@ struct DATA_MGEF {
   // uninitialized heap memory on Windows, and often it is just 0.
   uint16_t unused = 0;
   // No light is saved as 0
-  FormID light{};
+  FormId light{};
   float projectileSpeed = 0.0f;
-  FormID effectShader{};
+  FormId effectShader{};
   // The remaining values are present for every effect except Darkness, which
   // omits them all. Instead of making them optional, resort to the default
   // values if they are not present.
-  FormID enchantEffect{};
-  FormID castingSound{};
-  FormID boltSound{};
-  FormID hitSound{};
-  FormID areaSound{};
+  FormId enchantEffect{};
+  FormId castingSound{};
+  FormId boltSound{};
+  FormId hitSound{};
+  FormId areaSound{};
   // Multiplies the magnitude of an enchantment
   float constantEffectEnchantmentFactor = 1.0f;
   // Multiplies the cost of an enchanted item
@@ -489,9 +489,9 @@ struct DELE {
 };
 
 // Default hair
-struct DNAM : Tuplifiable<FormID, FormID> {
-  FormID m{};
-  FormID f{};
+struct DNAM : Tuplifiable<FormId, FormId> {
+  FormId m{};
+  FormId f{};
   MAKE_AS_TUPLE(&m, &f)
 };
 
@@ -513,7 +513,7 @@ struct EFIT {
 
 // Eyes
 struct ENAM {
-  std::vector<FormID> eyes;
+  std::vector<FormId> eyes;
 };
 
 // Potion and ingredient value
@@ -563,7 +563,7 @@ struct HEDR : Tuplifiable<float, int32_t, uint32_t> {
 
 // Hair
 struct HNAM {
-  std::vector<FormID> hair;
+  std::vector<FormId> hair;
 };
 
 // Havok data for land materials
@@ -627,7 +627,7 @@ struct SCIT {
     static constexpr enum_t None{0u};
     static constexpr enum_t Hostile{1u};
   };
-  FormID id{};
+  FormId id{};
   MagicSchool school{};
   EffectID visualEffect{};
   Flag flags{Flag::make(Flag::None)};
@@ -705,9 +705,9 @@ struct SPIT {
 };
 
 // Race determining voice
-struct VNAM : Tuplifiable<FormID, FormID> {
-  FormID m{};
-  FormID f{};
+struct VNAM : Tuplifiable<FormId, FormId> {
+  FormId m{};
+  FormId f{};
   MAKE_AS_TUPLE(&m, &f)
 };
 
@@ -736,7 +736,7 @@ struct XCLL : Tuplifiable<Color, Color, Color, float, float, uint32_t, uint32_t,
 
 // The regions containing the cell
 struct XCLR {
-  std::vector<FormID> regions;
+  std::vector<FormId> regions;
 };
 
 struct XESP {
@@ -744,7 +744,7 @@ struct XESP {
     static constexpr enum_t None{0};
     static constexpr enum_t SetEnableStateToOppositeOfParent{1u};
   };
-  FormID parent{};
+  FormId parent{};
   Flag flags{Flag::make(Flag::None)};
 };
 
@@ -757,7 +757,7 @@ struct XLOC {
   // 0-100, 100 = needs a key
   uint32_t lockLevel{};
   // 0 if no key
-  FormID key{};
+  FormId key{};
   // Unknown four bytes sometimes present
   uint32_t unused{};
   Flag flags{Flag::make(Flag::None)};
@@ -765,8 +765,8 @@ struct XLOC {
 
 // Disposition modifier between members of different factions
 // Also used for racial relations
-struct XNAM : Tuplifiable<FormID, int32_t> {
-  FormID factionID{};
+struct XNAM : Tuplifiable<FormId, int32_t> {
+  FormId factionID{};
   int32_t relationModifier = 0;
   MAKE_AS_TUPLE(&factionID, &relationModifier)
 };
@@ -782,8 +782,8 @@ struct XSED {
 };
 
 // Teleport information for a door
-struct XTEL : Tuplifiable<FormID, float, float, float, float, float, float> {
-  FormID destinationID{};
+struct XTEL : Tuplifiable<FormId, float, float, float, float, float, float> {
+  FormId destinationID{};
   // Destination position
   float x{};
   float y{};

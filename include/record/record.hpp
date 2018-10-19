@@ -27,13 +27,13 @@ class Record {
   }
   using Flag = record::RecordFlag;
   Flag flags = Flag::None;
-  FormID id = 0;
+  FormId id = 0;
   // Version control info. This is bugged in the original implementation, with
   // Dec coming before Jan of the same year and not the next one. We ignore it.
   uint32_t versionControlInfo = 0;
   T data;
 
-  Record(const T &t, Flag flags, FormID id, uint32_t versionControlInfo) :
+  Record(const T &t, Flag flags, FormId id, uint32_t versionControlInfo) :
       flags(flags), id(id), versionControlInfo(versionControlInfo), data(t) {}
   Record() : Record(T(), Flag::None, 0, 0) {}
 };
