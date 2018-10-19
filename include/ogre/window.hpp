@@ -11,13 +11,14 @@
 namespace Ogre {
 
 using RenderWindowPtr = std::unique_ptr<RenderWindow,
-                                        std::function<void(RenderWindow *)>>;
+                                        std::function<void(RenderWindow * )>>;
 
 RenderWindowPtr makeRenderWindow(Root *root,
                                  const String &windowName,
                                  unsigned int width,
                                  unsigned int height,
-                                 std::map<std::string, std::string> *params);
+                                 const std::map<std::string,
+                                                std::string> *params);
 
 } // namespace Ogre
 

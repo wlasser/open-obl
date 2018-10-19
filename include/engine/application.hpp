@@ -83,8 +83,18 @@ class Application : public Ogre::FrameListener {
 
   void createWindow(const std::string &windowName);
 
-  std::vector<fs::Path> parseBSAList(const fs::Path &masterPath,
+  std::vector<fs::Path> parseBsaList(const fs::Path &masterPath,
                                      const std::string &list);
+
+  // Detect the resource type of path, and declare it with the correct manual
+  // resource loader, if any.
+  void declareResource(const fs::Path &path, const std::string &resourceGroup);
+
+  // Add the given bsa archive as a resource location
+  void declareBsaArchive(const fs::Path &bsaFilename);
+
+  // Declare all the resources in the given bsa archive
+  void declareBsaResources(const fs::Path &bsaFilename);
 
   void pollEvents();
 

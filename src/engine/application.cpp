@@ -73,8 +73,7 @@ Application::Application(std::string windowName) : FrameListener() {
   archiveMgr.addArchiveFactory(bsaArchiveFactory.get());
 
   // Grab the data folder from the ini file
-  const fs::Path masterPath
-      {gameSettings.get("General.SLocalMasterPath", "Data/")};
+  const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
 
   // Loading from the filesystem is favoured over bsa files so that mods can
   // replace data. Marking the folder as recursive means that files are
@@ -83,12 +82,12 @@ Application::Application(std::string windowName) : FrameListener() {
   // is case-sensitive on *nix, but we need case-insensitivity on all platforms.
   // Files must therefore have lowercase names to correctly override.
   // TODO: Replace FileSystem with a case-insensitive version
-  resGrpMgr.addResourceLocation(masterPath.c_str(), "FileSystem", resourceGroup,
+  resGrpMgr.addResourceLocation(dataPath.c_str(), "FileSystem", resourceGroup,
                                 true);
 
   // Get list of bsa files from ini
   const std::string bsaList{gameSettings.get("Archive.sArchiveList", "")};
-  const auto bsaFilenames{parseBSAList(masterPath, bsaList)};
+  const auto bsaFilenames{parseBsaList(dataPath, bsaList)};
 
   // Meshes need to be declared explicitly as they use a ManualResourceLoader.
   // We could just use Archive.SMasterMeshesArchiveFileName, but it is not
@@ -96,27 +95,8 @@ Application::Application(std::string windowName) : FrameListener() {
   // any mod bsa files. While we're at it, we'll add the bsa files as resource
   // locations and declare every other recognised resource too.
   for (const auto &bsa : bsaFilenames) {
-    const auto bsaSysPath{bsa.sysPath()};
-    resGrpMgr.addResourceLocation(bsaSysPath, "BSA", resourceGroup);
-    const Ogre::StringVectorPtr files
-        {archiveMgr.load(bsaSysPath, "BSA", true)->list()};
-
-    for (const auto &filename : *files) {
-      using namespace std::literals;
-      const fs::Path path{filename};
-      const auto ext{path.extension()};
-      if (ext == "nif"sv) {
-        resGrpMgr.declareResource(path.c_str(), "Mesh",
-                                  resourceGroup, &nifLoader);
-        resGrpMgr.declareResource(path.c_str(), "CollisionObject",
-                                  resourceGroup, &nifCollisionLoader);
-      } else if (ext == "dds"sv) {
-        resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
-      } else if (ext == "xml"sv || ext == "txt"sv) {
-        resGrpMgr.declareResource(path.c_str(), "Text", resourceGroup);
-        logger->info("Declared Text resource '{}'", path.view());
-      }
-    }
+    declareBsaArchive(bsa);
+    declareBsaResources(bsa);
   }
 
   // Shaders are not stored in the data folder (mostly for vcs reasons)
@@ -142,7 +122,7 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Open the main esm
   const fs::Path masterEsm{"Oblivion.esm"};
-  esmStream = std::ifstream((masterPath / masterEsm).sysPath(),
+  esmStream = std::ifstream((dataPath / masterEsm).sysPath(),
                             std::ios::binary);
   if (!esmStream.is_open()) {
     throw std::runtime_error(boost::str(
@@ -199,28 +179,29 @@ Application::Application(std::string windowName) : FrameListener() {
 }
 
 void Application::createLoggers() {
+  using namespace spdlog::sinks;
+
   // The console gets info and above, in particular not debug
-  auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  auto consoleSink{std::make_shared<stdout_color_sink_mt>()};
   consoleSink->set_level(spdlog::level::info);
 
   // The log file gets everything
-  auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(
-      "OpenOblivion.log", true);
+  auto fileSink{std::make_shared<basic_file_sink_mt>("OpenOblivion.log", true)};
   fileSink->set_level(spdlog::level::trace);
 
   // Every log will write to both the console and the log file
   const std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
 
   // Construct the default Ogre logger and register its spdlog listener
-  auto ogreLogger = std::make_shared<spdlog::logger>(settings::ogreLog, sinks);
+  auto ogreLogger{std::make_shared<spdlog::logger>(settings::ogreLog, sinks)};
   spdlog::register_logger(ogreLogger);
   ogreLogMgr = std::make_unique<Ogre::LogManager>();
-  auto *defaultLog = ogreLogMgr->createLog("Default", true, true, true);
+  auto *defaultLog{ogreLogMgr->createLog("Default", true, true, true)};
   ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
   defaultLog->addListener(ogreLogListener.get());
 
   // Construct our own logger
-  auto logger = std::make_shared<spdlog::logger>(settings::log, sinks);
+  auto logger{std::make_shared<spdlog::logger>(settings::log, sinks)};
   spdlog::register_logger(logger);
 
   // Set the starting logger levels. These will be modified later according to
@@ -230,7 +211,7 @@ void Application::createLoggers() {
 }
 
 void Application::loadIniConfiguration() {
-  auto &gameSettings = GameSettings::getSingleton();
+  auto &gameSettings{GameSettings::getSingleton()};
 
   logger->info("Parsing {}", settings::defaultIni);
   gameSettings.load(settings::defaultIni, true);
@@ -258,11 +239,11 @@ void Application::setRenderSystem(const std::string &systemName) {
 }
 
 void Application::createWindow(const std::string &windowName) {
-  auto &gameSettings = GameSettings::getSingleton();
+  const auto &gameSettings{GameSettings::getSingleton()};
 
   // Grab the window dimensions
-  const int windowWidth = gameSettings.iGet("Display.iSize W");
-  const int windowHeight = gameSettings.iGet("Display.iSize H");
+  const int windowWidth{gameSettings.iGet("Display.iSize W")};
+  const int windowHeight{gameSettings.iGet("Display.iSize H")};
   if (windowHeight <= 0 || windowWidth <= 0) {
     logger->critical("Cannot create a window with width {} and height {}",
                      windowWidth, windowHeight);
@@ -280,15 +261,15 @@ void Application::createWindow(const std::string &windowName) {
   // Make the window and find its system parent handle
   sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
                               windowFlags);
-  const auto sdlWindowInfo = sdl::getSysWMInfo(sdlWindow.get());
-  const auto parent = sdl::getWindowParent(sdlWindowInfo);
+  const auto sdlWindowInfo{sdl::getSysWMInfo(sdlWindow.get())};
+  const auto parent{sdl::getWindowParent(sdlWindowInfo)};
 
   // Make cursor behaviour more sensible
   sdl::setRelativeMouseMode(true);
 
   // Construct a render window with the SDL window as a parent; SDL handles the
   // window itself, Ogre manages the OpenGL context.
-  std::map<std::string, std::string> params = {
+  const std::map<std::string, std::string> params{
       {"parentWindowHandle", parent}
   };
   ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
@@ -299,7 +280,7 @@ void Application::createWindow(const std::string &windowName) {
 }
 
 std::vector<fs::Path>
-Application::parseBSAList(const fs::Path &masterPath, const std::string &list) {
+Application::parseBsaList(const fs::Path &masterPath, const std::string &list) {
   std::vector<std::string> names{};
 
   // Split them on commas, this leaves trailing whitespace
@@ -314,13 +295,48 @@ Application::parseBSAList(const fs::Path &masterPath, const std::string &list) {
                  });
 
   // Reject any invalid ones
-  auto predicate = [](const auto &filename) {
+  const auto predicate = [](const auto &filename) {
     return !filename.exists();
   };
   filenames.erase(std::remove_if(filenames.begin(), filenames.end(), predicate),
                   filenames.end());
 
   return filenames;
+}
+
+void Application::declareResource(const fs::Path &path,
+                                  const std::string &resourceGroup) {
+  using namespace std::literals;
+  auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+  const auto ext{path.extension()};
+
+  if (ext == "nif"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Mesh",
+                              resourceGroup, &nifLoader);
+    resGrpMgr.declareResource(path.c_str(), "CollisionObject",
+                              resourceGroup, &nifCollisionLoader);
+  } else if (ext == "dds"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
+  } else if (ext == "xml"sv || ext == "txt"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Text", resourceGroup);
+  }
+}
+
+void Application::declareBsaArchive(const fs::Path &bsaFilename) {
+  auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+  const auto sysPath{bsaFilename.sysPath()};
+  resGrpMgr.addResourceLocation(sysPath, "BSA", settings::resourceGroup);
+}
+
+void Application::declareBsaResources(const fs::Path &bsaFilename) {
+  auto &archiveMgr{Ogre::ArchiveManager::getSingleton()};
+  const auto sysPath{bsaFilename.sysPath()};
+  const Ogre::Archive *archive{archiveMgr.load(sysPath, "BSA", true)};
+  const Ogre::StringVectorPtr files{archive->list()};
+
+  for (const auto &filename : *files) {
+    declareResource(fs::Path{filename}, settings::resourceGroup);
+  }
 }
 
 void Application::pollEvents() {
@@ -429,8 +445,8 @@ void Application::pollEvents() {
 }
 
 void Application::dispatchCollisions() {
-  gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(
-                               currentCell->physicsWorld->getDispatcher())};
+  auto *const btDispatcher{currentCell->physicsWorld->getDispatcher()};
+  gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(btDispatcher)};
   collisionCaller.runCallbacks(dispatcher);
 }
 
@@ -448,22 +464,25 @@ void Application::enableBulletDebugDraw(bool enable) {
 
 FormID Application::getCrosshairRef() {
   using namespace Ogre::conversions;
+  using namespace engine::conversions;
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
-  auto *camera = playerController->getCamera();
-  auto cameraPos = toBullet(camera->getDerivedPosition());
-  auto cameraDir = toBullet(camera->getDerivedDirection());
-  auto rayStart = cameraPos + 0.5f * cameraDir;
-  auto rayEnd = cameraPos +
-      conversions::metersPerUnit<float> * *iActivatePickLength * cameraDir;
+  auto *const camera{playerController->getCamera()};
+  const auto cameraPos{toBullet(camera->getDerivedPosition())};
+  const auto cameraDir{toBullet(camera->getDerivedDirection())};
+  const auto rayStart{cameraPos + 0.5f * cameraDir};
+  const float rayLength{*iActivatePickLength * metersPerUnit<float>};
+  const auto rayEnd{cameraPos + rayLength * cameraDir};
+
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
   currentCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
+
   if (callback.hasHit()) {
     // Follow the collision object's user pointer to its SceneNode, then follow
     // the SceneNode's userAny to its refid
-    auto *node = static_cast<Ogre::SceneNode *>(
-        callback.m_collisionObject->getUserPointer());
-    auto &bindings = node->getUserObjectBindings();
+    auto *const userPtr{callback.m_collisionObject->getUserPointer()};
+    auto *const node = static_cast<Ogre::SceneNode *>(userPtr);
+    const auto &bindings = node->getUserObjectBindings();
     return Ogre::any_cast<FormID>(bindings.getUserAny());
   } else {
     return 0;
@@ -473,9 +492,7 @@ FormID Application::getCrosshairRef() {
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
   playerController->update(event.timeSinceLastFrame);
-
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
-
   dispatchCollisions();
 
   static FormID refUnderCrosshair{0};
