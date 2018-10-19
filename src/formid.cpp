@@ -1,3 +1,5 @@
+#include "io/read_bytes.hpp"
+#include "io/write_bytes.hpp"
 #include "formid.hpp"
 
 std::string formIdString(FormId formID) noexcept {
@@ -9,3 +11,23 @@ std::string formIdString(FormId formID) noexcept {
   }
   return s;
 }
+
+namespace io {
+
+void readBytes(std::istream &is, BaseId &baseId) {
+  readBytes(is, baseId.mId);
+}
+
+void writeBytes(std::ostream &os, const BaseId &baseId) {
+  writeBytes(os, baseId.mId);
+}
+
+void readBytes(std::istream &is, RefId &refId) {
+  readBytes(is, refId.mId);
+}
+
+void writeBytes(std::ostream &os, const RefId &refId) {
+  writeBytes(os, refId.mId);
+}
+
+} // namespace io

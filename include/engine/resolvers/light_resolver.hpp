@@ -14,8 +14,8 @@ namespace engine {
 struct LightEntry {
   using Flag = record::raw::DATA_LIGH::Flag;
   std::string modelFilename{};
-  FormId sound{0u};
-  FormId script{0u};
+  BaseId sound{};
+  BaseId script{};
   float fadeValue{1.0f};
   float radius{300.0f};
   float falloffExponent{1.0f};
@@ -42,11 +42,11 @@ class LightResolver {
  public:
   using get_t = LightMesh;
   using store_t = LightEntry;
-  LightMesh get(FormId baseID, Ogre::SceneManager *mgr) const;
-  bool add(FormId baseID, store_t entry);
+  LightMesh get(BaseId baseId, Ogre::SceneManager *mgr) const;
+  bool add(BaseId baseId, store_t entry);
 
  private:
-  std::unordered_map<FormId, LightEntry> lights{};
+  std::unordered_map<BaseId, LightEntry> lights{};
   friend class InitialProcessor;
 };
 

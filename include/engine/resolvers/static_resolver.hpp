@@ -24,11 +24,11 @@ class StaticResolver {
   using get_t = RigidBodyEntity;
   using store_t = StaticEntry;
 
-  RigidBodyEntity get(FormId baseID, Ogre::SceneManager *mgr) const;
-  bool add(FormId baseID, store_t entry);
+  RigidBodyEntity get(BaseId baseId, Ogre::SceneManager *mgr) const;
+  bool add(BaseId baseId, store_t entry);
 
  private:
-  std::unordered_map<FormId, store_t> statics{};
+  std::unordered_map<BaseId, store_t> statics{};
   friend class InitialProcessor;
 };
 

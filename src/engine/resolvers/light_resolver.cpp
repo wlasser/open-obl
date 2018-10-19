@@ -2,9 +2,9 @@
 #include "engine/resolvers/resolvers.hpp"
 #include "engine/resolvers/light_resolver.hpp"
 
-engine::LightMesh engine::LightResolver::get(FormId baseID,
+engine::LightMesh engine::LightResolver::get(BaseId baseId,
                                              Ogre::SceneManager *mgr) const {
-  const auto entry{lights.find(baseID)};
+  const auto entry{lights.find(baseId)};
   if (entry == lights.end()) return {};
 
   const auto &rec{entry->second};
@@ -42,6 +42,6 @@ engine::LightMesh engine::LightResolver::get(FormId baseID,
   return {light, rigidBody, mesh};
 }
 
-bool engine::LightResolver::add(FormId baseID, store_t entry) {
-  return lights.try_emplace(baseID, entry).second;
+bool engine::LightResolver::add(BaseId baseId, store_t entry) {
+  return lights.try_emplace(baseId, entry).second;
 }

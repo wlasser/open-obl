@@ -1,3 +1,4 @@
+#include "formid.hpp"
 #include "io/write_bytes.hpp"
 #include "io/read_bytes.hpp"
 #include "record/record.hpp"
@@ -323,9 +324,9 @@ std::istream &raw::read(std::istream &is, raw::SNDX &t, std::size_t size) {
 // DATA_MGEF specialization
 template<>
 uint16_t DATA_MGEF::size() const {
-  return sizeof(raw::DATA_MGEF::Flag) + sizeof(raw::DATA_MGEF::AssociatedObject)
-      + sizeof(MagicSchool) + sizeof(ActorValue) + 2u * sizeof(uint16_t)
-      + 4u * sizeof(float) + 7u * sizeof(FormId);
+  return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(MagicSchool)
+      + sizeof(ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
+      + 7u * sizeof(FormId);
 }
 
 template<>
@@ -334,7 +335,9 @@ std::ostream &raw::write(std::ostream &os,
                          std::size_t /*size*/) {
   writeBytes(os, t.flags);
   writeBytes(os, t.baseCost);
-  writeBytes(os, t.associatedObject);
+  std::visit([&os](auto &&v) {
+    writeBytes(os, v);
+  }, t.associatedObject);
   writeBytes(os, t.school);
   writeBytes(os, t.resist);
   writeBytes(os, t.esceLength);
@@ -358,7 +361,9 @@ std::istream &raw::read(std::istream &is,
                         std::size_t size) {
   readBytes(is, t.flags);
   readBytes(is, t.baseCost);
-  readBytes(is, t.associatedObject);
+  std::visit([&is](auto &&v) {
+    readBytes(is, v);
+  }, t.associatedObject);
   readBytes(is, t.school);
   readBytes(is, t.resist);
   readBytes(is, t.esceLength);

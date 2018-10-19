@@ -151,7 +151,7 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Read {}", masterEsm.view());
 
   // Load a test cell
-  currentCell = interiorCellRes->get(0x00'031b59);
+  currentCell = interiorCellRes->get(BaseId{0x00'031b59});
   logger->info("Loaded test cell");
 
   playerController =
@@ -462,7 +462,7 @@ void Application::enableBulletDebugDraw(bool enable) {
   debugDrawer->enable(enable);
 }
 
-FormId Application::getCrosshairRef() {
+RefId Application::getCrosshairRef() {
   using namespace Ogre::conversions;
   using namespace engine::conversions;
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
@@ -483,9 +483,9 @@ FormId Application::getCrosshairRef() {
     auto *const userPtr{callback.m_collisionObject->getUserPointer()};
     auto *const node = static_cast<Ogre::SceneNode *>(userPtr);
     const auto &bindings = node->getUserObjectBindings();
-    return Ogre::any_cast<FormId>(bindings.getUserAny());
+    return Ogre::any_cast<RefId>(bindings.getUserAny());
   } else {
-    return 0;
+    return RefId{};
   }
 }
 
@@ -495,11 +495,11 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
   dispatchCollisions();
 
-  static FormId refUnderCrosshair{0};
-  FormId newRefUnderCrosshair = getCrosshairRef();
+  static RefId refUnderCrosshair{0};
+  RefId newRefUnderCrosshair = getCrosshairRef();
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
-    logger->info("Looking at 0x{:x}", refUnderCrosshair);
+    logger->info("Looking at 0x{:x}", static_cast<FormId>(refUnderCrosshair));
   }
 
   if (drawBulletDebug) {

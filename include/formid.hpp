@@ -29,17 +29,34 @@ using IRef = uint32_t;
 
 std::string formIdString(FormId formID) noexcept;
 
+class BaseId;
+class RefId;
+
+namespace io {
+
+void readBytes(std::istream &, BaseId &);
+void writeBytes(std::ostream &, const BaseId &);
+void readBytes(std::istream &, RefId &);
+void writeBytes(std::ostream &, const RefId &);
+
+}
+
 class BaseId {
  public:
-  explicit BaseId(FormId formId) noexcept : mId(formId) {}
+  constexpr BaseId() noexcept : mId{} {}
 
-  explicit operator FormId() const noexcept {
+  constexpr explicit BaseId(FormId formId) noexcept : mId{formId} {}
+
+  constexpr explicit operator FormId() const noexcept {
     return mId;
   }
 
   std::string string() const noexcept {
     return formIdString(static_cast<FormId>(*this));
   }
+
+  friend void io::readBytes(std::istream &is, BaseId &baseId);
+  friend void io::writeBytes(std::ostream &os, const BaseId &baseId);
 
  private:
   FormId mId{};
@@ -55,15 +72,20 @@ inline bool operator!=(const BaseId &lhs, const BaseId &rhs) {
 
 class RefId {
  public:
-  explicit RefId(FormId formId) noexcept : mId(formId) {}
+  constexpr RefId() noexcept : mId{} {}
 
-  explicit operator FormId() const noexcept {
+  constexpr explicit RefId(FormId formId) noexcept : mId{formId} {}
+
+  constexpr explicit operator FormId() const noexcept {
     return mId;
   }
 
   std::string string() const noexcept {
     return formIdString(static_cast<FormId>(*this));
   }
+
+  friend void io::readBytes(std::istream &is, RefId &refId);
+  friend void io::writeBytes(std::ostream &os, const RefId &refId);
 
  private:
   FormId mId{};

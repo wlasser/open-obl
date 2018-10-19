@@ -3,6 +3,7 @@
 
 #include "record/tuplifiable.hpp"
 #include "bitflag.hpp"
+#include "formid.hpp"
 #include <array>
 #include <optional>
 #include <string>
@@ -12,6 +13,14 @@
 #include <vector>
 
 namespace record {
+
+inline std::size_t SizeOf(const BaseId &t) {
+  return sizeof(t);
+}
+
+inline std::size_t SizeOf(const RefId &t) {
+  return sizeof(t);
+}
 
 template<class T, typename =
 std::enable_if_t<

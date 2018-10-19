@@ -2,8 +2,8 @@
 #include "engine/resolvers/static_resolver.hpp"
 
 engine::RigidBodyEntity
-engine::StaticResolver::get(FormId baseID, Ogre::SceneManager *mgr) const {
-  const auto entry{statics.find(baseID)};
+engine::StaticResolver::get(BaseId baseId, Ogre::SceneManager *mgr) const {
+  const auto entry{statics.find(baseId)};
   if (entry == statics.end()) return {};
 
   const store_t &rec{entry->second};
@@ -14,6 +14,6 @@ engine::StaticResolver::get(FormId baseID, Ogre::SceneManager *mgr) const {
   return {rigidBody, entity};
 }
 
-bool engine::StaticResolver::add(FormId baseID, store_t entry) {
-  return statics.try_emplace(baseID, entry).second;
+bool engine::StaticResolver::add(BaseId baseId, store_t entry) {
+  return statics.try_emplace(baseId, entry).second;
 }
