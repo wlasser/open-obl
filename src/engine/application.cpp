@@ -134,12 +134,13 @@ Application::Application(std::string windowName) : FrameListener() {
   doorRes = std::make_unique<DoorResolver>();
   lightRes = std::make_unique<LightResolver>();
   staticRes = std::make_unique<StaticResolver>();
+  InteriorCellResolver::resolvers_t resolvers{
+      *doorRes, *lightRes, *staticRes
+  };
   interiorCellRes = std::make_unique<InteriorCellResolver>(
       esmStream,
-      doorRes.get(),
-      lightRes.get(),
-      staticRes.get(),
-      bulletConf.get(),
+      resolvers,
+      *bulletConf,
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm
@@ -151,7 +152,8 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Read {}", masterEsm.view());
 
   // Load a test cell
-  currentCell = interiorCellRes->get(BaseId{0x00'031b59});
+  currentCell = interiorCellRes->make(BaseId{0x00'048706});
+  //currentCell = interiorCellRes->make(BaseId{0x00'031b59});
   logger->info("Loaded test cell");
 
   playerController =
@@ -165,9 +167,8 @@ Application::Application(std::string windowName) : FrameListener() {
 
   ogreWindow->addViewport(playerController->getCamera());
 
-  auto startPos = conversions::fromBSCoordinates({-1954.8577f,
-                                                  -473.5773f,
-                                                  -318.9890f});
+  auto startPos = conversions::fromBSCoordinates({0, 0, 0});
+  //auto startPos = conversions::fromBSCoordinates({-1954.8577f, -473.5773f, -318.9890f});
   startPos.y += 4.0f;
   playerController->moveTo(startPos);
 

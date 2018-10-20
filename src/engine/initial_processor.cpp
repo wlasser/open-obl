@@ -71,7 +71,7 @@ void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
 
 template<>
 void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
-  InteriorCellEntry entry{};
+  Resolver<record::CELL>::store_t entry{};
   entry.tell = is.tellg();
   entry.record = std::make_unique<record::CELL>();
   record::readRecord(is, *entry.record, "CELL");

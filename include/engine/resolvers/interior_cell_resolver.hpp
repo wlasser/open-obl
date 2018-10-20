@@ -5,6 +5,7 @@
 #include "engine/keep_strategy.hpp"
 #include "engine/resolvers/door_resolver.hpp"
 #include "engine/resolvers/light_resolver.hpp"
+#include "engine/resolvers/resolvers.hpp"
 #include "engine/resolvers/static_resolver.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
@@ -24,7 +25,7 @@ struct InteriorCell {
   std::string name{};
   Ogre::ColourValue ambientLight{};
   Ogre::Light *directionalLight{};
-  Ogre::SceneManager *scnMgr{};
+  gsl::not_null<Ogre::SceneManager *> scnMgr;
   std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld{};
 
   explicit InteriorCell(std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld)
@@ -36,22 +37,10 @@ struct InteriorCell {
   InteriorCell(InteriorCell &&other) = default;
   InteriorCell &operator=(InteriorCell &&other) = default;
 
-  ~InteriorCell() {
-    auto root = Ogre::Root::getSingletonPtr();
-    if (root) root->destroySceneManager(scnMgr);
-    for (int i = physicsWorld->getNumCollisionObjects() - 1; i >= 0; --i) {
-      btCollisionObject *obj = physicsWorld->getCollisionObjectArray()[i];
-      physicsWorld->removeCollisionObject(obj);
-    }
-  }
+  ~InteriorCell();
 };
 
-struct InteriorCellEntry {
-  long tell{};
-  std::unique_ptr<record::CELL> record{};
-  mutable std::weak_ptr<InteriorCell> cell{};
-  // TODO: Constructors?
-};
+using InteriorCellResolver = Resolver<record::CELL>;
 
 // We want the cell resolver to be able to decide to keep some cells loaded if
 // they are accessed frequently, or have just been accessed, etc. This means the
@@ -60,27 +49,38 @@ struct InteriorCellEntry {
 // code needs to be able to force cells to remain (at least partially) loaded.
 // Thus we cannot allow loading a new cell to unconditionally delete an old one;
 // it may still be in use. We therefore require shared ownership.
-class InteriorCellResolver {
- public:
+template<>
+class Resolver<record::CELL> {
+ private:
+  class Entry {
+   public:
+    long tell{};
+    std::unique_ptr<record::CELL> record{};
+    mutable std::weak_ptr<InteriorCell> cell{};
+    // TODO: This is not a struct, give it constructors etc
+  };
+
   using Strategy = strategy::KeepStrategy<InteriorCell>;
 
- private:
+  class Resolvers {
+   public:
+    Resolver<record::DOOR> &doorRes;
+    Resolver<record::LIGH> &lighRes;
+    Resolver<record::STAT> &statRes;
+
+    Resolvers(Resolver<record::DOOR> &doorRes,
+              Resolver<record::LIGH> &lighRes,
+              Resolver<record::STAT> &statRes) :
+        doorRes(doorRes), lighRes(lighRes), statRes(statRes) {}
+  };
+
   class Processor {
    private:
-    InteriorCell *cell;
-    DoorResolver *doorRes;
-    LightResolver *lightRes;
-    StaticResolver *staticRes;
-
+    InteriorCell &mCell;
+    Resolvers mResolvers;
    public:
-    explicit Processor(InteriorCell *cell,
-                       DoorResolver *doorRes,
-                       LightResolver *lightRes,
-                       StaticResolver *staticRes) :
-        cell(cell),
-        doorRes(doorRes),
-        lightRes(lightRes),
-        staticRes(staticRes) {}
+    explicit Processor(InteriorCell &cell, Resolvers resolvers) :
+        mCell(cell), mResolvers(resolvers) {}
 
     template<class R>
     void readRecord(std::istream &is) {
@@ -88,36 +88,36 @@ class InteriorCellResolver {
     }
   };
 
-  std::istream &is;
-  DoorResolver *doorRes;
-  LightResolver *lightRes;
-  StaticResolver *staticRes;
-  bullet::Configuration *bulletConf;
-  std::unordered_map<BaseId, InteriorCellEntry> cells{};
-  std::unique_ptr<Strategy> strategy;
-  friend class InitialProcessor;
+  // TODO: Support multiple streams for multiple esps
+  std::istream &mIs;
+  Resolvers mResolvers;
+  bullet::Configuration &mBulletConf;
+  std::unordered_map<BaseId, Entry> mMap{};
+  std::unique_ptr<Strategy> mStrategy;
 
  public:
-  explicit InteriorCellResolver(std::istream &is,
-                                DoorResolver *doorRes,
-                                LightResolver *lightRes,
-                                StaticResolver *staticRes,
-                                bullet::Configuration *bulletConf,
-                                std::unique_ptr<Strategy> &&strategy) :
-      is(is),
-      doorRes(doorRes),
-      lightRes(lightRes),
-      staticRes(staticRes),
-      bulletConf(bulletConf),
-      strategy(std::move(strategy)) {}
+  using store_t = Entry;
+  using peek_t = record::CELL *;
+  using get_t = record::CELL *;
+  using make_t = std::shared_ptr<InteriorCell>;
+  using resolvers_t = Resolvers;
 
-  record::CELL *peek(BaseId baseId) const;
-  std::shared_ptr<InteriorCell> get(BaseId baseId) const;
-  bool add(BaseId baseId, InteriorCellEntry entry);
+  explicit Resolver(std::istream &is, Resolvers resolvers,
+                    bullet::Configuration &bulletConf,
+                    std::unique_ptr<Strategy> strategy) :
+      mIs(is),
+      mResolvers(resolvers),
+      mBulletConf(bulletConf),
+      mStrategy(std::move(strategy)) {}
+
+  peek_t peek(BaseId baseId) const;
+  get_t get(BaseId baseId) const;
+  make_t make(BaseId baseId) const;
+  bool add(BaseId baseId, store_t entry);
 };
 
 template<>
-void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &);
+void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &);
 
 } // namespace engine
 

@@ -10,30 +10,42 @@
 
 namespace engine {
 
-record::CELL *InteriorCellResolver::peek(BaseId baseId) const {
-  const auto entry = cells.find(baseId);
-  if (entry != cells.end()) return entry->second.record.get();
-  else return nullptr;
+InteriorCell::~InteriorCell() {
+  auto root{Ogre::Root::getSingletonPtr()};
+  if (root) root->destroySceneManager(scnMgr);
+  // TODO: No raw loops
+  for (int i = physicsWorld->getNumCollisionObjects() - 1; i >= 0; --i) {
+    btCollisionObject *obj = physicsWorld->getCollisionObjectArray()[i];
+    physicsWorld->removeCollisionObject(obj);
+  }
 }
 
-std::shared_ptr<InteriorCell> InteriorCellResolver::get(BaseId baseId) const {
-  // Try to find an InteriorCellEntry with the given baseId. Since every cell
-  // should have an entry by now, if no entry exists then we can give up.
-  const auto entry{cells.find(baseId)};
-  if (entry == cells.end()) return nullptr;
+auto Resolver<record::CELL>::peek(BaseId baseId) const -> peek_t {
+  const auto entry{mMap.find(baseId)};
+  if (entry == mMap.end()) return nullptr;
+  else return entry->second.record.get();
+}
+
+auto Resolver<record::CELL>::get(BaseId baseId) const -> get_t {
+  return peek(baseId);
+}
+
+auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
+  const auto entry{mMap.find(baseId)};
+  if (entry == mMap.end()) return nullptr;
 
   // If this cell has been loaded before and is still loaded, then we can return
   // a new shared_ptr to it. Also update the currently loaded cell.
   auto &cell{entry->second.cell};
   if (!cell.expired()) {
-    strategy->notify(cell.lock());
+    mStrategy->notify(cell.lock());
     return cell.lock();
   }
 
   // Otherwise we have to create a new shared_ptr and load the cell.
-  const auto ptr
-      {std::make_shared<InteriorCell>(bulletConf->makeDynamicsWorld())};
-  strategy->notify(ptr);
+  const auto
+      ptr{std::make_shared<InteriorCell>(mBulletConf.makeDynamicsWorld())};
+  mStrategy->notify(ptr);
   cell = std::weak_ptr(ptr);
 
   // Fill in the scene data from the cell record, which we already have.
@@ -48,24 +60,24 @@ std::shared_ptr<InteriorCell> InteriorCellResolver::get(BaseId baseId) const {
   }
   ptr->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
 
-  Processor processor(ptr.get(), doorRes, lightRes, staticRes);
+  Processor processor(*ptr, mResolvers);
 
   // TODO: Lock a mutex here
-  is.seekg(entry->second.tell);
-  record::skipRecord(is);
-  esp::readCellChildren(is, processor, processor, processor);
+  mIs.seekg(entry->second.tell);
+  record::skipRecord(mIs);
+  esp::readCellChildren(mIs, processor, processor, processor);
 
   return ptr;
 }
 
-bool InteriorCellResolver::add(BaseId baseId, InteriorCellEntry entry) {
-  return cells.try_emplace(BaseId{entry.record->id}, std::move(entry)).second;
+bool Resolver<record::CELL>::add(BaseId baseId, store_t entry) {
+  return mMap.try_emplace(BaseId{entry.record->id}, std::move(entry)).second;
 }
 
 template<>
-void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is) {
+void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &is) {
   const auto ref{record::readRecord<record::REFR>(is)};
-  auto *const node{cell->scnMgr->getRootSceneNode()->createChildSceneNode()};
+  auto *const node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
   const auto id{ref.data.baseID.data};
 
   const auto &data{ref.data.positionRotation.data};
@@ -92,49 +104,50 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
-  auto scnMgr{gsl::make_not_null(cell->scnMgr)};
+  auto scnMgr{mCell.scnMgr};
 
   // Construct the actual entities and attach them to the node
-  if (auto[rigidBody, mesh]{staticRes->make(id, scnMgr, {})}; rigidBody
-      || mesh) {
+  if (auto[rigidBody, mesh]{mResolvers.statRes.make(id, scnMgr, {})};
+      rigidBody || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
     if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
 
     workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(cell->physicsWorld.get()));
+                                  gsl::make_not_null(mCell.physicsWorld.get()));
     workingNode = attachMesh(workingNode, mesh, true);
 
     return;
   }
 
-  if (auto[rigidBody, mesh]{doorRes->make(id, scnMgr, {})}; rigidBody
-      || mesh) {
+  if (auto[rigidBody, mesh]{mResolvers.doorRes.make(id, scnMgr, {})};
+      rigidBody || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
     if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
 
     workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(cell->physicsWorld.get()));
+                                  gsl::make_not_null(mCell.physicsWorld.get()));
     workingNode = attachMesh(workingNode, mesh, true);
 
     return;
   }
 
-  if (auto[light, rigidBody, mesh]{lightRes->make(id, scnMgr, {})}; light) {
+  if (auto[light, rigidBody, mesh]{mResolvers.lighRes.make(id, scnMgr, {})};
+      light) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
     if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
 
     workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(cell->physicsWorld.get()));
+                                  gsl::make_not_null(mCell.physicsWorld.get()));
     workingNode = attachMesh(workingNode, mesh);
     workingNode = attachLight(workingNode, light, true);
 
     return;
   }
 
-  cell->scnMgr->destroySceneNode(node);
+  mCell.scnMgr->destroySceneNode(node);
 }
 
 } // namespace engine
