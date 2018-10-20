@@ -37,18 +37,13 @@ class Resolver<record::LIGH> {
     Flag flags{Flag::make(Flag::None)};
     std::optional<ItemEntry> item{};
   };
-  struct LightEntity {
-    Ogre::Light *light{};
-    Ogre::RigidBody *rigidBody{};
-    Ogre::Entity *entity{};
-  };
 
   std::unordered_map<BaseId, Entry> mMap{};
 
  public:
   using peek_t = Entry;
   using get_t = Entry;
-  using make_t = LightEntity;
+  using make_t = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
   using store_t = Entry;
 
   peek_t peek(BaseId baseId) const;
@@ -57,6 +52,7 @@ class Resolver<record::LIGH> {
               gsl::not_null<Ogre::SceneManager *> mgr,
               std::optional<RefId> id) const;
   bool add(BaseId baseId, store_t entry);
+  bool contains(BaseId baseId) const noexcept;
 };
 
 } // namespace engine

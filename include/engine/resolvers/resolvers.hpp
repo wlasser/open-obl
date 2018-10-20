@@ -2,10 +2,10 @@
 #define OPENOBLIVION_ENGINE_RESOLVERS_HPP
 
 #include "formid.hpp"
-#include "ogrebullet/rigid_body.hpp"
+#include "engine/resolvers/helpers.hpp"
 #include <gsl/gsl>
-#include <OgreEntity.h>
 #include <OgreSceneManager.h>
+#include <optional>
 
 namespace engine {
 
@@ -48,44 +48,6 @@ class Resolver {
 // `Ogre::SceneManager` argument, the `Resolver` can construct the reference in-
 // place; it should not be the caller's responsibility to know how to link all
 // the components together into a scene.
-
-// Expects a type
-// struct T {
-//   std::string modelFilename;
-// };
-template<class T>
-Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
-  if (rec.modelFilename.empty()) return nullptr;
-  else return mgr->createEntity(rec.modelFilename);
-}
-
-Ogre::RigidBody *
-loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr);
-
-// If `mesh` is non-null, attach it to the `node` and return a new child node,
-// otherwise return `node`. If `final` is true, never create a child node.
-gsl::not_null<Ogre::SceneNode *>
-attachMesh(gsl::not_null<Ogre::SceneNode *> node, Ogre::Entity *mesh,
-           bool final = false);
-
-// If `rigidBody` is non-null, attach it to the `node`, link it to the `world`,
-// and return a new child node. Otherwise return `node`. If `final` is true,
-// never create a child node.
-gsl::not_null<Ogre::SceneNode *>
-attachRigidBody(gsl::not_null<Ogre::SceneNode *> node,
-                Ogre::RigidBody *rigidBody,
-                gsl::not_null<btDiscreteDynamicsWorld *> world,
-                bool final = false);
-
-// If `light` is non-null, attach it to the `node` and return a new child node,
-// otherwise return `node.` If `final` is true, never create a child node.
-gsl::not_null<Ogre::SceneNode *>
-attachLight(gsl::not_null<Ogre::SceneNode *> node,
-            Ogre::Light *light,
-            bool final = false);
-
-// Set the bullet user data in the RigidBody to the given RefId.
-void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId);
 
 } // namespace engine
 

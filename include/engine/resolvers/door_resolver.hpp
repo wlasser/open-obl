@@ -22,21 +22,18 @@ class Resolver<record::DOOR> {
     bool minimalUses{false};
     // TODO: Door sounds
   };
-  struct DoorEntity {
-    Ogre::RigidBody *rigidBody{};
-    Ogre::Entity *entity{};
-  };
 
   std::unordered_map<BaseId, Entry> mMap{};
 
  public:
-  using make_t = DoorEntity;
+  using make_t = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
   using store_t = Entry;
 
   make_t make(BaseId baseId,
               gsl::not_null<Ogre::SceneManager *> mgr,
               std::optional<RefId> id) const;
   bool add(BaseId baseId, store_t entry);
+  bool contains(BaseId baseId) const noexcept;
 };
 
 } // namespace engine

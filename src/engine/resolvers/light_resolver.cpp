@@ -55,11 +55,15 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
     setRefId(gsl::make_not_null(rigidBody), refId);
   }
 
-  return {light, rigidBody, mesh};
+  return {ecs::Light{light}, ecs::RigidBody{rigidBody}, ecs::Mesh{mesh}};
 }
 
 bool Resolver<record::LIGH>::add(BaseId baseId, store_t entry) {
   return mMap.try_emplace(baseId, entry).second;
+}
+
+bool Resolver<record::LIGH>::contains(BaseId baseId) const noexcept {
+  return mMap.find(baseId) != mMap.end();
 }
 
 } // namespace engine

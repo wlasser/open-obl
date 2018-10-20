@@ -19,11 +19,15 @@ auto Resolver<record::DOOR>::make(BaseId baseId,
     setRefId(gsl::make_not_null(rigidBody), refId);
   }
 
-  return {rigidBody, entity};
+  return {ecs::RigidBody{rigidBody}, ecs::Mesh{entity}};
 }
 
 bool Resolver<record::DOOR>::add(BaseId baseId, store_t entry) {
   return mMap.try_emplace(baseId, entry).second;
+}
+
+bool Resolver<record::DOOR>::contains(BaseId baseId) const noexcept {
+  return mMap.find(baseId) != mMap.end();
 }
 
 } // namespace engine

@@ -78,7 +78,8 @@ template<>
 void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &is) {
   const auto ref{record::readRecord<record::REFR>(is)};
   auto *const node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
-  const auto id{ref.data.baseID.data};
+  const BaseId baseId{ref.data.baseID.data};
+  const RefId refId{ref.id};
 
   const auto &data{ref.data.positionRotation.data};
 
@@ -105,49 +106,22 @@ void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &i
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
   auto scnMgr{mCell.scnMgr};
+  gsl::not_null<Ogre::SceneNode *> workingNode{node};
+  gsl::not_null<btDiscreteDynamicsWorld *> world{mCell.physicsWorld.get()};
 
   // Construct the actual entities and attach them to the node
-  if (auto[rigidBody, mesh]{mResolvers.statRes.make(id, scnMgr, {})};
-      rigidBody || mesh) {
-    gsl::not_null<Ogre::SceneNode *> workingNode{node};
-
-    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
-
-    workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(mCell.physicsWorld.get()));
-    workingNode = attachMesh(workingNode, mesh, true);
-
-    return;
+  if (mResolvers.statRes.contains(baseId)) {
+    auto entity{mResolvers.statRes.make(baseId, scnMgr, {})};
+    attachAll(workingNode, refId, world, entity);
+  } else if (mResolvers.doorRes.contains(baseId)) {
+    auto entity{mResolvers.doorRes.make(baseId, scnMgr, {})};
+    attachAll(workingNode, refId, world, entity);
+  } else if (mResolvers.lighRes.contains(baseId)) {
+    auto entity{mResolvers.lighRes.make(baseId, scnMgr, {})};
+    attachAll(workingNode, refId, world, entity);
+  } else {
+    mCell.scnMgr->destroySceneNode(node);
   }
-
-  if (auto[rigidBody, mesh]{mResolvers.doorRes.make(id, scnMgr, {})};
-      rigidBody || mesh) {
-    gsl::not_null<Ogre::SceneNode *> workingNode{node};
-
-    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
-
-    workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(mCell.physicsWorld.get()));
-    workingNode = attachMesh(workingNode, mesh, true);
-
-    return;
-  }
-
-  if (auto[light, rigidBody, mesh]{mResolvers.lighRes.make(id, scnMgr, {})};
-      light) {
-    gsl::not_null<Ogre::SceneNode *> workingNode{node};
-
-    if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});
-
-    workingNode = attachRigidBody(workingNode, rigidBody,
-                                  gsl::make_not_null(mCell.physicsWorld.get()));
-    workingNode = attachMesh(workingNode, mesh);
-    workingNode = attachLight(workingNode, light, true);
-
-    return;
-  }
-
-  mCell.scnMgr->destroySceneNode(node);
 }
 
 } // namespace engine

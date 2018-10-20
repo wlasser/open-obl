@@ -86,6 +86,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/mesh_loader_state.hpp
         include/engine/player_controller.hpp
         include/engine/resolvers/door_resolver.hpp
+        include/engine/resolvers/helpers.hpp
         include/engine/resolvers/interior_cell_resolver.hpp
         include/engine/resolvers/light_resolver.hpp
         include/engine/resolvers/resolvers.hpp
