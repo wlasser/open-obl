@@ -7,66 +7,60 @@
 #include <OgreEntity.h>
 #include <OgreSceneManager.h>
 
-// At runtime it is necessary to resolve BaseIds into concrete instances of
-// the types they represent, for example producing an `Ogre::Entity` and
-// `Ogre::RigidBody` from the base id of a `STAT`. Sometimes it is feasible to
-// load every instance of a type during esp parsing and keep them in memory for
-// the duration of the application, other times loading should be deferred until
-// necessary. In the latter case the esp should still only be parsed once, so a
-// map of `FormId`s to file offsets should be stored to speed up loading from
-// the disk when needed. Sometimes a small amount of information is needed from
-// an object without loading it completely (e.g. the activation prompt for a
-// `DOOR` should show the name of its linked `CELL`, but the entire `CELL` does
-// not need to be loaded until the door is opened), so there must be more than
-// one 'get' method.
-// Since the caller should know before the call which type they except the
-// `FormId` to resolve to, the resolution can be performed by a different class
-// for each type, un-creatively called a `Resolver`. For the sake of consistency
-// (and possible use of meta-programming later) a `Resolver` should look
-// something like
-//```
-//class Resolver {
-// public:
-//  using get_t = /* ... */
-//  using peek_t = /* ... */
-//
-//  get_t get(FormId, Ogre::SceneManager *) const;
-//  peek_t peek(FormId) const;
-//
-// private:
-//  using store_t = /* ... */
-//  using map_t = std::unordered_map<FormId, store_t>;
-
-//  map_t map;
-//};
-//```
-// Obviously the private `map` is less of a requirement than the public
-// interface. The idea is that a `Processor` will populate the `Resolver`'s
-// internal map of `FormId`s with `store_t` instances containing sufficient
-// information to build an engine representation of the object directly, or look
-// up in the esp file how to build one. `get` should return this representation,
-// loading it if necessary, and `peek` should return information about the
-// object available without loading or doing any disk io.
-// The `Ogre::SceneManager` is provided to `get` so that the `Resolver` can
-// construct the representation directly in the scene, if this makes sense. For
-// example, `get`ting a `STAT` could return a
-// `std::pair<Ogre::Entity*, Ogre::RigidBody*>`, but it should not be the
-// caller's responsibility to know how to link the two together in the scene.
-// Moreover, this allows passing ownership to the `Ogre::SceneManager` instead
-// of the `Resolver` managing that itself.
-
 namespace engine {
 
+// At runtime it is necessary to conver BaseIds into the base records that they
+// identify, usually either to view information about the base record or to
+// create a concrete realisation of it in the form of a reference record.
+// The possibility of the latter operation depends on the type of base record;
+// it makes sense to realise a `STAT` or `CONT`, but not a `CLAS`, for example.
+// Further to this is the possibility of only loading a stub of a record and
+// deferring the full loading until it is necessary. This can reduce memory
+// usage and game startup time, and does not require parsing the esp file
+// multiple times of a file offset is saved.
+// This resolution of a BaseId into a base record or new reference record is
+// handled by an uncreatively named `Resolver` for the record type. For the
+// sake of consistency, a `Resolver` should look something like
+template<class T>
+class Resolver {
+ public:
+  // Replace with actual types
+  using get_t = void;
+  using peek_t = void;
+  using make_t = void;
+
+  // Return the base record, performing disk io if necessary.
+  get_t get(BaseId) const;
+  // Return a stub of the base record, do not perform disk io.
+  peek_t peek(BaseId) const;
+  // Return a new instance of the BaseId with the given RefId, or a new one.
+  // May perform disk io.
+  make_t make(BaseId, Ogre::SceneManager *, std::optional<RefId>) const;
+};
+// Note that in this context, the returned (base or reference) records do not
+// have to have the same layout as the ones used for (de)serialization.
+// Moreover, the reference records returned by `make` may contain rendering
+// information for the rendering engine. Calling `Resolver<STAT>::make` for
+// example should return a reference containing an `Ogre::RigidBody` and
+// `Ogre::Entity`. In other words, reference records represent not just concrete
+// realisations of base records within the scope of the game engine, but also
+// within the scope of the rendering engine. By providing an
+// `Ogre::SceneManager` argument, the `Resolver` can construct the reference in-
+// place; it should not be the caller's responsibility to know how to link all
+// the components together into a scene.
+
+// Expects a type
 // struct T {
 //   std::string modelFilename;
 // };
 template<class T>
-Ogre::Entity *loadMesh(const T &rec, Ogre::SceneManager *mgr) {
+Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
   if (rec.modelFilename.empty()) return nullptr;
   else return mgr->createEntity(rec.modelFilename);
 }
 
-Ogre::RigidBody *loadRigidBody(Ogre::Entity *entity, Ogre::SceneManager *mgr);
+Ogre::RigidBody *
+loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr);
 
 // If `mesh` is non-null, attach it to the `node` and return a new child node,
 // otherwise return `node`. If `final` is true, never create a child node.

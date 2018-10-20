@@ -92,8 +92,10 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
+  auto scnMgr{gsl::make_not_null(cell->scnMgr)};
+
   // Construct the actual entities and attach them to the node
-  if (auto[rigidBody, mesh]{staticRes->get(id, cell->scnMgr)}; rigidBody
+  if (auto[rigidBody, mesh]{staticRes->make(id, scnMgr, {})}; rigidBody
       || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
@@ -106,7 +108,7 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
     return;
   }
 
-  if (auto[rigidBody, mesh]{doorRes->get(id, cell->scnMgr)}; rigidBody
+  if (auto[rigidBody, mesh]{doorRes->make(id, scnMgr, {})}; rigidBody
       || mesh) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
@@ -119,7 +121,7 @@ void InteriorCellResolver::Processor::readRecord<record::REFR>(std::istream &is)
     return;
   }
 
-  if (auto[light, rigidBody, mesh]{lightRes->get(id, cell->scnMgr)}; light) {
+  if (auto[light, rigidBody, mesh]{lightRes->make(id, scnMgr, {})}; light) {
     gsl::not_null<Ogre::SceneNode *> workingNode{node};
 
     if (rigidBody) setRefId(gsl::make_not_null(rigidBody), RefId{ref.id});

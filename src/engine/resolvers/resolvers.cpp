@@ -3,7 +3,8 @@
 
 namespace engine {
 
-Ogre::RigidBody *loadRigidBody(Ogre::Entity *entity, Ogre::SceneManager *mgr) {
+Ogre::RigidBody *
+loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr) {
   if (!entity) return nullptr;
   const auto &mesh{entity->getMesh()};
   if (!mesh) return nullptr;

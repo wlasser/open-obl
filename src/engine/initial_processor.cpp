@@ -12,7 +12,7 @@ namespace engine {
 template<>
 void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
   const auto rec{record::readRecord<record::STAT>(is)};
-  StaticEntry entry{};
+  Resolver<record::STAT>::store_t entry{};
   // MODL records omit the "meshes/" folder
   fs::Path rawPath{rec.data.modelFilename.data};
   entry.modelFilename = (fs::Path{"meshes"} / rawPath).view();
@@ -22,7 +22,7 @@ void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
 template<>
 void InitialProcessor::readRecord<record::DOOR>(std::istream &is) {
   auto rec = record::readRecord<record::DOOR>(is);
-  DoorEntry entry{};
+  Resolver<record::DOOR>::store_t entry{};
 
   if (rec.data.modelFilename) {
     fs::Path rawPath{rec.data.modelFilename->data};
@@ -38,7 +38,7 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
   if (rec.data.data.data.flags & Flag::CanBeCarried) {
     // TODO: Support carriable lights
   } else {
-    LightEntry entry{};
+    Resolver<record::LIGH>::store_t entry{};
     const auto &data = rec.data.data.data;
 
     if (rec.data.modelFilename) {
@@ -61,7 +61,7 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
 template<>
 void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
   auto rec = record::readRecord<record::MISC>(is);
-  StaticEntry entry{};
+  Resolver<record::STAT>::store_t entry{};
   if (rec.data.modelFilename) {
     entry.modelFilename = "meshes/" +
         conversions::normalizePath(rec.data.modelFilename->data);

@@ -1,35 +1,42 @@
 #ifndef OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
 #define OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
 
-#include "ogrebullet/rigid_body.hpp"
+#include "engine/resolvers/resolvers.hpp"
 #include "formid.hpp"
+#include "records.hpp"
+#include "ogrebullet/rigid_body.hpp"
+#include <gsl/gsl>
 #include <OgreEntity.h>
 #include <OgreSceneManager.h>
+#include <optional>
 #include <string>
 #include <unordered_map>
 
 namespace engine {
 
-struct StaticEntry {
-  std::string modelFilename{};
-};
+using StaticResolver = Resolver<record::STAT>;
 
-struct RigidBodyEntity {
-  Ogre::RigidBody *rigidBody{nullptr};
-  Ogre::Entity *entity{nullptr};
-};
-
-class StaticResolver {
- public:
-  using get_t = RigidBodyEntity;
-  using store_t = StaticEntry;
-
-  RigidBodyEntity get(BaseId baseId, Ogre::SceneManager *mgr) const;
-  bool add(BaseId baseId, store_t entry);
-
+template<>
+class Resolver<record::STAT> {
  private:
-  std::unordered_map<BaseId, store_t> statics{};
-  friend class InitialProcessor;
+  struct Entry {
+    std::string modelFilename{};
+  };
+  struct StaticEntity {
+    Ogre::RigidBody *rigidBody{};
+    Ogre::Entity *entity{};
+  };
+
+  std::unordered_map<BaseId, Entry> mMap{};
+
+ public:
+  using make_t = StaticEntity;
+  using store_t = Entry;
+
+  make_t make(BaseId baseId,
+              gsl::not_null<Ogre::SceneManager *> mgr,
+              std::optional<RefId> id) const;
+  bool add(BaseId baseId, store_t entry);
 };
 
 } // namespace engine

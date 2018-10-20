@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_DOOR_RESOLVER_HPP
 #define OPENOBLIVION_ENGINE_DOOR_RESOLVER_HPP
 
+#include "engine/resolvers/resolvers.hpp"
 #include "records.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>
@@ -8,30 +9,34 @@
 
 namespace engine {
 
-struct DoorEntry {
-  std::string modelFilename{};
-  bool oblivionGate{false};
-  bool automatics{false};
-  bool hidden{false};
-  bool minimalUse{false};
-  // TODO: Door sounds
-};
+using DoorResolver = Resolver<record::DOOR>;
 
-struct DoorEntity {
-  Ogre::RigidBody *rigidBody{nullptr};
-  Ogre::Entity *entity{nullptr};
-};
-
-class DoorResolver {
- public:
-  using get_t = DoorEntity;
-  using store_t = DoorEntry;
-
-  get_t get(BaseId baseId, Ogre::SceneManager *mgr) const;
-  bool add(BaseId baseId, store_t entry);
-
+template<>
+class Resolver<record::DOOR> {
  private:
-  std::unordered_map<BaseId, store_t> doors{};
+  struct Entry {
+    std::string modelFilename{};
+    bool oblivionGate{false};
+    bool automatic{false};
+    bool hidden{false};
+    bool minimalUses{false};
+    // TODO: Door sounds
+  };
+  struct DoorEntity {
+    Ogre::RigidBody *rigidBody{};
+    Ogre::Entity *entity{};
+  };
+
+  std::unordered_map<BaseId, Entry> mMap{};
+
+ public:
+  using make_t = DoorEntity;
+  using store_t = Entry;
+
+  make_t make(BaseId baseId,
+              gsl::not_null<Ogre::SceneManager *> mgr,
+              std::optional<RefId> id) const;
+  bool add(BaseId baseId, store_t entry);
 };
 
 } // namespace engine
