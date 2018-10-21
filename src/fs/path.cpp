@@ -42,8 +42,11 @@ Path &Path::operator=(Path &&other) noexcept {
 Path::Path(const std::string &path) {
   mPath.reserve(path.size());
   std::transform(path.begin(), path.end(), std::back_inserter(mPath),
-                 [](unsigned char c) {
-                   return c == '\\' ? '/' : std::tolower(c);
+      // We only care about ascii, this is much faster than tolower.
+                 [](unsigned char c) -> unsigned char {
+                   if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
+                   else if (c == '\\') return '/';
+                   else return c;
                  });
   // Drop all trailing / and .
   boost::algorithm::trim_if(mPath, boost::algorithm::is_any_of("/."));
