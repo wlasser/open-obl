@@ -12,7 +12,7 @@
 #include "engine/resolvers/static_resolver.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
-#include "engine/player_controller.hpp"
+#include "engine/player_controller/player_controller.hpp"
 #include "fs/path.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"

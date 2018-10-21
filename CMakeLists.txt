@@ -48,7 +48,10 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/collision_object_loader_state.cpp
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
-        src/engine/player_controller.cpp
+        src/engine/player_controller/abilities.cpp
+        src/engine/player_controller/player_controller.cpp
+        src/engine/player_controller/player_jump_state.cpp
+        src/engine/player_controller/player_stand_state.cpp
         src/engine/resolvers/door_resolver.cpp
         src/engine/resolvers/interior_cell_resolver.cpp
         src/engine/resolvers/light_resolver.cpp
@@ -85,7 +88,11 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/collision_object_loader_state.hpp
         include/engine/nifloader/mesh_loader.hpp
         include/engine/nifloader/mesh_loader_state.hpp
-        include/engine/player_controller.hpp
+        include/engine/player_controller/abilities.hpp
+        include/engine/player_controller/player_controller.hpp
+        include/engine/player_controller/player_jump_state.hpp
+        include/engine/player_controller/player_stand_state.hpp
+        include/engine/player_controller/player_state.hpp
         include/engine/resolvers/door_resolver.hpp
         include/engine/resolvers/helpers.hpp
         include/engine/resolvers/interior_cell_resolver.hpp
