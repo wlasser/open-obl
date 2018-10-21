@@ -11,6 +11,7 @@
 // WTF X.h
 #undef InputFocus
 #undef None
+#undef Bool
 
 namespace sdl {
 
@@ -361,6 +362,14 @@ enum class KeyCode : uint32_t {
   Audiofastforward = SDLK_AUDIOFASTFORWARD,
 };
 
+enum class MouseButton : uint8_t {
+  Left = SDL_BUTTON_LEFT,
+  Middle = SDL_BUTTON_MIDDLE,
+  Right = SDL_BUTTON_RIGHT,
+  Extra1 = SDL_BUTTON_X1,
+  Extra2 = SDL_BUTTON_X2
+};
+
 enum class WindowEventType : std::underlying_type_t<SDL_WindowEventID> {
   None = SDL_WINDOWEVENT_NONE,
   Shown = SDL_WINDOWEVENT_SHOWN,
@@ -404,6 +413,7 @@ bool pollEvent(Event &event);
 EventType typeOf(const Event &event);
 WindowEventType typeOf(const WindowEvent &event);
 KeyCode keyCodeOf(const KeyboardEvent &event);
+MouseButton mouseButtonof(const MouseButtonEvent &event);
 
 } // namespace sdl
 

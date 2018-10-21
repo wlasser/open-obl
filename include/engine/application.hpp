@@ -4,6 +4,7 @@
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
 #include "engine/bsa.hpp"
+#include "engine/controls.hpp"
 #include "engine/gui/gui.hpp"
 #include "engine/resolvers/interior_cell_resolver.hpp"
 #include "engine/resolvers/door_resolver.hpp"
@@ -44,6 +45,8 @@ class Application : public Ogre::FrameListener {
 
   sdl::WindowPtr sdlWindow{nullptr, nullptr};
   Ogre::RenderWindowPtr ogreWindow;
+
+  std::unique_ptr<KeyMap> keyMap{};
 
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
@@ -112,6 +115,13 @@ class Application : public Ogre::FrameListener {
   bool frameRenderingQueued(const Ogre::FrameEvent &event) override;
   bool frameEnded(const Ogre::FrameEvent &event) override;
 };
+
+// TODO: Move this somewhere central or use a library
+template<class ...Ts>
+struct overloaded : Ts ... {
+  using Ts::operator()...;
+};
+template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace engine
 

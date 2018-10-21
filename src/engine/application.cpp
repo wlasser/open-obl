@@ -51,6 +51,9 @@ Application::Application(std::string windowName) : FrameListener() {
   sdlInit = sdl::Init();
   createWindow(windowName);
 
+  // Set the keyboard configuration
+  keyMap = std::make_unique<KeyMap>(gameSettings);
+
   // Construct the Bullet configuration
   bulletConf = std::make_unique<bullet::Configuration>();
 
@@ -341,96 +344,68 @@ void Application::declareBsaResources(const fs::Path &bsaFilename) {
 }
 
 void Application::pollEvents() {
+  const auto &settings{GameSettings::getSingleton()};
+  const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
-    switch (sdl::typeOf(sdlEvent)) {
 
+    auto keyEvent{keyMap->translateKey(sdlEvent)};
+    if (keyEvent) {
+      std::visit(overloaded{
+          [this](event::Forward e) { playerController->handleEvent(e); },
+          [this](event::Backward e) { playerController->handleEvent(e); },
+          [this](event::SlideLeft e) { playerController->handleEvent(e); },
+          [this](event::SlideRight e) { playerController->handleEvent(e); },
+          [](event::Use) {},
+          [](event::Activate) {},
+          [](event::Block) {},
+          [](event::Cast) {},
+          [](event::ReadyItem) {},
+          [](event::Sneak) {},
+          [](event::Run) {},
+          [](event::AlwaysRun) {},
+          [](event::AutoMove) {},
+          [this](event::Jump e) { playerController->handleEvent(e); },
+          [](event::TogglePov) {},
+          [](event::MenuMode) {},
+          [](event::Rest) {},
+          [](event::QuickMenu) {},
+          [](event::Quick) {},
+          [](event::QuickSave) {},
+          [](event::QuickLoad) {},
+          [](event::Grab) {}
+      }, *keyEvent);
+      continue;
+    }
+
+    switch (sdl::typeOf(sdlEvent)) {
       case sdl::EventType::Quit: {
         ogreRoot->queueEndRendering();
         break;
       }
-
       case sdl::EventType::KeyDown: {
         if (sdlEvent.key.repeat) break;
         switch (sdl::keyCodeOf(sdlEvent.key)) {
-
-          case sdl::KeyCode::Escape: {
-            ogreRoot->queueEndRendering();
-            break;
-          }
-
           case sdl::KeyCode::H: {
             drawBulletDebug = !drawBulletDebug;
             enableBulletDebugDraw(drawBulletDebug);
             break;
           }
-
-          case sdl::KeyCode::A: {
-            playerController->handleEvent({MoveEvent::Left, true, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::D: {
-            playerController->handleEvent({MoveEvent::Right, true, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::W: {
-            playerController->handleEvent({MoveEvent::Forward, true, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::S: {
-            playerController->handleEvent({MoveEvent::Backward, true, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::Space: {
-            playerController->handleEvent({MoveEvent::Jump, false, 0.0f});
-            break;
-          }
-
-          default:break;
-        }
-        break;
-      }
-
-      case sdl::EventType::KeyUp: {
-        if (sdlEvent.key.repeat) break;
-        switch (sdl::keyCodeOf(sdlEvent.key)) {
-
-          case sdl::KeyCode::A: {
-            playerController->handleEvent({MoveEvent::Left, false, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::D: {
-            playerController->handleEvent({MoveEvent::Right, false, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::W: {
-            playerController->handleEvent({MoveEvent::Forward, false, 0.0f});
-            break;
-          }
-
-          case sdl::KeyCode::S: {
-            playerController->handleEvent({MoveEvent::Backward, false, 0.0f});
+          case sdl::KeyCode::Escape: {
+            ogreRoot->queueEndRendering();
             break;
           }
           default:break;
         }
         break;
       }
-
       case sdl::EventType::MouseMotion: {
-        playerController->handleEvent(
-            MoveEvent(MoveEvent::Pitch, true, sdlEvent.motion.yrel));
-        playerController->handleEvent(
-            MoveEvent(MoveEvent::Yaw, true, sdlEvent.motion.xrel));
+        const event::Pitch pitch{{sdlEvent.motion.yrel * sensitivity}};
+        const event::Yaw yaw{{sdlEvent.motion.xrel * sensitivity}};
+        playerController->handleEvent(pitch);
+        playerController->handleEvent(yaw);
         break;
       }
-
       case sdl::EventType::WindowEvent: {
         if (sdl::typeOf(sdlEvent.window) == sdl::WindowEventType::Resized) {
           ogreWindow->resize(static_cast<unsigned int>(sdlEvent.window.data1),

@@ -58,6 +58,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/bullet/configuration.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
+        include/engine/controls.hpp
         include/engine/conversions.hpp
         include/engine/gui/elements/image.hpp
         include/engine/gui/elements/rect.hpp
