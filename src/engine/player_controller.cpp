@@ -38,7 +38,9 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   pitchNode->attachObject(camera);
 
   motionState = std::make_unique<Ogre::MotionState>(bodyNode);
-  collisionShape = std::make_unique<btCapsuleShape>(0.30f, height);
+  const auto radius{0.3f};
+  collisionShape = std::make_unique<btCapsuleShape>(radius,
+                                                    height - 2.0f * radius);
   btRigidBody::btRigidBodyConstructionInfo info(mass,
                                                 motionState.get(),
                                                 collisionShape.get());
