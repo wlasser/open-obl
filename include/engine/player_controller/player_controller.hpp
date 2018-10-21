@@ -20,8 +20,8 @@ class PlayerController {
  public:
   explicit PlayerController(Ogre::SceneManager *scnMgr);
 
-  Ogre::Camera *getCamera();
-  btRigidBody *getRigidBody();
+  Ogre::Camera *getCamera() const noexcept;
+  btRigidBody *getRigidBody() const noexcept;
 
   void handleEvent(const KeyVariant &event);
   void handleEvent(const MouseVariant &event);
@@ -51,21 +51,21 @@ class PlayerController {
   float athleticsSkill{50.0f};
   float acrobaticsSkill{50.0f};
 
-  float moveTypeModifier(float athleticsSkill) const {
+  float moveTypeModifier(float athleticsSkill) const noexcept {
     return *fMoveRunMult + *fMoveRunAthleticsMult * athleticsSkill * 0.01f;
   }
 
-  float baseSpeed(float speedAttribute) const {
+  float baseSpeed(float speedAttribute) const noexcept {
     const float walkRange = *fMoveCharWalkMax - *fMoveCharWalkMax;
     return *fMoveCharWalkMin + walkRange * speedAttribute * 0.01f;
   }
 
-  float speed(float speedAttribute, float athleticsSkill) const {
+  float speed(float speedAttribute, float athleticsSkill) const noexcept {
     return moveTypeModifier(athleticsSkill) * baseSpeed(speedAttribute)
         * conversions::metersPerUnit<float>;
   }
 
-  float jumpHeight(float acrobaticsSkill) const {
+  float jumpHeight(float acrobaticsSkill) const noexcept {
     const float heightRange = *fJumpHeightMax - *fJumpHeightMin;
     return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
         * conversions::metersPerUnit<float>;

@@ -123,7 +123,7 @@ class GameSetting {
   // it. If loading fails, the default is returned. If loading succeeds, the
   // value is cached and any subsequent calls will return that value without a
   // load.
-  T get() const {
+  T get() const noexcept {
     if (!loaded) {
       std::unique_lock lock{mutables};
       auto opt = GameSettings::getSingleton().get<T>(path);
@@ -136,11 +136,11 @@ class GameSetting {
     return value;
   }
 
-  T operator*() const {
+  T operator*() const noexcept {
     return get();
   }
 
-  explicit operator T() const {
+  explicit operator T() const noexcept {
     return get();
   }
 };

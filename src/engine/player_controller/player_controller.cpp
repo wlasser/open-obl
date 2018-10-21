@@ -50,11 +50,11 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   state = std::make_shared<PlayerStandState>();
 }
 
-Ogre::Camera *PlayerController::getCamera() {
+Ogre::Camera *PlayerController::getCamera() const noexcept {
   return camera;
 }
 
-btRigidBody *PlayerController::getRigidBody() {
+btRigidBody *PlayerController::getRigidBody() const noexcept {
   return rigidBody.get();
 }
 
