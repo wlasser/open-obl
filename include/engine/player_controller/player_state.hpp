@@ -4,6 +4,7 @@
 #include "engine/controls.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <memory>
+#include <optional>
 #include <variant>
 
 namespace engine {
@@ -13,48 +14,32 @@ using KeyVariant = std::variant<
     event::Jump>;
 using MouseVariant = std::variant<event::Pitch, event::Yaw>;
 
-class PlayerController;
-
+template<class State>
 class PlayerState {
  public:
-  virtual ~PlayerState() = 0;
-
-  // Handle the key press/release event, returning a new state to transition to
-  // if required, and nullptr otherwise.
-  virtual std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *player, const KeyVariant &event) {
-    return nullptr;
-  }
-
-  // Handle the mouse motion event. No state transitions are allowed.
-  virtual void
-  handleEvent(PlayerController *player, const MouseVariant &event) {}
-
   // Fallback for unhandled KeyEvents. Derived classes can write
   // `using PlayerState::handleEvent` to get this automatically.
-  std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *, const event::KeyEvent &) {
-    return nullptr;
+  std::optional<State>
+  handleEvent(PlayerControllerImpl &, const event::KeyEvent &) {
+    return std::nullopt;
   }
 
   // Fallback for unhandled MouseEvents. Derived classes can write
   // `using PlayerState::handleEvent` to get this automatically.
-  void handleEvent(PlayerController *, const event::MouseEvent &) {}
+  void handleEvent(PlayerControllerImpl &, const event::MouseEvent &) {}
 
-  virtual std::shared_ptr<PlayerState>
-  update(PlayerController *player, float elapsed) = 0;
-
-  virtual std::shared_ptr<PlayerState>
-  handleCollision(PlayerController *player,
-                  const btCollisionObject *other,
-                  const btManifoldPoint &contact) {
-    return nullptr;
+  std::optional<State> update(PlayerControllerImpl &player, float elapsed) {
+    return std::nullopt;
   }
 
-  virtual void enter(PlayerController *player) {}
-};
+  std::optional<State> handleCollision(PlayerControllerImpl &player,
+                                       const btCollisionObject *other,
+                                       const btManifoldPoint &contact) {
+    return std::nullopt;
+  }
 
-inline PlayerState::~PlayerState() = default;
+  void enter(PlayerControllerImpl &player) {}
+};
 
 } // namespace engine
 

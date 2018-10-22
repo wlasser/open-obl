@@ -3,30 +3,48 @@
 
 #include "engine/controls.hpp"
 #include "engine/player_controller/player_state.hpp"
+#include "engine/player_controller/player_controller_impl.hpp"
 #include <OgreMath.h>
-#include <memory>
+#include <optional>
 
 namespace engine {
 
-class PlayerController;
-
+template<class State>
 struct MoveAbility {
-  std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *player, const event::Forward &event);
+  std::optional<State>
+  handleEvent(PlayerControllerImpl &impl, const event::Forward &event) {
+    impl.localVelocity.z -= (event.down ? 1.0f : -1.0f);
+    return std::nullopt;
+  }
 
-  std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *player, const event::Backward &event);
+  std::optional<State>
+  handleEvent(PlayerControllerImpl &impl, const event::Backward &event) {
+    impl.localVelocity.z += (event.down ? 1.0f : -1.0f);
+    return std::nullopt;
+  }
 
-  std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *player, const event::SlideLeft &event);
+  std::optional<State>
+  handleEvent(PlayerControllerImpl &impl, const event::SlideLeft &event) {
+    impl.localVelocity.x -= (event.down ? 1.0f : -1.0f);
+    return std::nullopt;
+  }
 
-  std::shared_ptr<PlayerState>
-  handleEvent(PlayerController *player, const event::SlideRight &event);
+  std::optional<State>
+  handleEvent(PlayerControllerImpl &impl, const event::SlideRight &event) {
+    impl.localVelocity.x += (event.down ? 1.0f : -1.0f);
+    return std::nullopt;
+  }
 };
 
+template<class State>
 struct LookAbility {
-  void handleEvent(PlayerController *player, const event::Pitch &event);
-  void handleEvent(PlayerController *player, const event::Yaw &event);
+  void handleEvent(PlayerControllerImpl &impl, const event::Pitch &event) {
+    impl.pitch += -Ogre::Radian(event.delta);
+  }
+
+  void handleEvent(PlayerControllerImpl &impl, const event::Yaw &event) {
+    impl.yaw += -Ogre::Radian(event.delta);
+  }
 };
 
 } // namespace engine

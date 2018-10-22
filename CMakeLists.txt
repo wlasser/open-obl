@@ -48,7 +48,6 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/collision_object_loader_state.cpp
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
-        src/engine/player_controller/abilities.cpp
         src/engine/player_controller/player_controller.cpp
         src/engine/player_controller/player_jump_state.cpp
         src/engine/player_controller/player_stand_state.cpp
@@ -90,6 +89,7 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/mesh_loader_state.hpp
         include/engine/player_controller/abilities.hpp
         include/engine/player_controller/player_controller.hpp
+        include/engine/player_controller/player_controller_impl.hpp
         include/engine/player_controller/player_jump_state.hpp
         include/engine/player_controller/player_stand_state.hpp
         include/engine/player_controller/player_state.hpp
