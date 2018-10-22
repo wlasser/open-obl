@@ -1,11 +1,11 @@
-#include "engine/player_controller/player_controller.hpp"
+#include "engine/character_controller/player_controller.hpp"
 #include "engine/settings.hpp"
 #include <gsl/gsl>
 #include <OgreMath.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
 
-namespace engine {
+namespace engine::character {
 
 PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   const auto &settings{GameSettings::getSingleton()};
@@ -46,7 +46,7 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   impl.rigidBody = std::make_unique<btRigidBody>(info);
   impl.rigidBody->setAngularFactor(0.0f);
 
-  state = PlayerStandState{};
+  state = StandState{};
 }
 
 Ogre::Camera *PlayerController::getCamera() const noexcept {
@@ -59,10 +59,10 @@ btRigidBody *PlayerController::getRigidBody() const noexcept {
 
 void PlayerController::handleEvent(const KeyVariant &event) {
   auto newState{std::visit(
-      [this, &event](auto &&s) -> std::optional<PlayerStateVariant> {
+      [this, &event](auto &&s) -> std::optional<StateVariant> {
         return std::visit(
-            [this, &s](auto &&e) -> std::optional<PlayerStateVariant> {
-              return liftOptional<PlayerStateVariant>(s.handleEvent(impl, e));
+            [this, &s](auto &&e) -> std::optional<StateVariant> {
+              return liftOptional<StateVariant>(s.handleEvent(impl, e));
             },
             event);
       },
@@ -85,8 +85,8 @@ void PlayerController::handleEvent(const MouseVariant &event) {
 
 void PlayerController::update(float elapsed) {
   auto newState{std::visit(
-      [this, elapsed](auto &&s) -> std::optional<PlayerStateVariant> {
-        return liftOptional<PlayerStateVariant>(s.update(impl, elapsed));
+      [this, elapsed](auto &&s) -> std::optional<StateVariant> {
+        return liftOptional<StateVariant>(s.update(impl, elapsed));
       }, state)};
 
   if (newState) {
@@ -99,7 +99,7 @@ void PlayerController::update(float elapsed) {
 void PlayerController::handleCollision(const btCollisionObject *other,
                                        const btManifoldPoint &contact) {
   auto newState{std::visit(
-      [this, other, &contact](auto &&s) -> std::optional<PlayerStateVariant> {
+      [this, other, &contact](auto &&s) -> std::optional<StateVariant> {
         return s.handleCollision(impl, other, contact);
       }, state)};
 
@@ -120,4 +120,4 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   impl.rigidBody->setWorldTransform(trans);
 }
 
-} // namespace engine
+} // namespace engine::character

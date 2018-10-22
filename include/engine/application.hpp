@@ -4,6 +4,7 @@
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
 #include "engine/bsa.hpp"
+#include "engine/character_controller/player_controller.hpp"
 #include "engine/controls.hpp"
 #include "engine/gui/gui.hpp"
 #include "engine/resolvers/interior_cell_resolver.hpp"
@@ -12,7 +13,6 @@
 #include "engine/resolvers/static_resolver.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
-#include "engine/player_controller/player_controller.hpp"
 #include "fs/path.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
@@ -65,7 +65,7 @@ class Application : public Ogre::FrameListener {
 
   std::shared_ptr<InteriorCell> currentCell{};
   bullet::CollisionCaller collisionCaller{};
-  std::unique_ptr<PlayerController> playerController{};
+  std::unique_ptr<character::PlayerController> playerController{};
 
   bool drawBulletDebug{false};
   std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};

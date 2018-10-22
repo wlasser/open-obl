@@ -160,7 +160,7 @@ Application::Application(std::string windowName) : FrameListener() {
   logger->info("Loaded test cell");
 
   playerController =
-      std::make_unique<engine::PlayerController>(currentCell->scnMgr);
+      std::make_unique<character::PlayerController>(currentCell->scnMgr);
   currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
   collisionCaller.addCallback(
       playerController->getRigidBody(),

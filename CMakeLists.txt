@@ -34,6 +34,11 @@ target_include_directories(OpenOblivionEngine PUBLIC include)
 target_sources(OpenOblivionEngine PUBLIC
         src/engine/application.cpp
         src/engine/bsa.cpp
+        src/engine/character_controller/jump_state.cpp
+        src/engine/character_controller/player_controller.cpp
+        src/engine/character_controller/sneak_jump_state.cpp
+        src/engine/character_controller/sneak_stand_state.cpp
+        src/engine/character_controller/stand_state.cpp
         src/engine/gui/gui.cpp
         src/engine/gui/stack/program.cpp
         src/engine/gui/stack/types.cpp
@@ -48,11 +53,6 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/collision_object_loader_state.cpp
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
-        src/engine/player_controller/player_controller.cpp
-        src/engine/player_controller/player_jump_state.cpp
-        src/engine/player_controller/player_sneak_jump_state.cpp
-        src/engine/player_controller/player_sneak_stand_state.cpp
-        src/engine/player_controller/player_stand_state.cpp
         src/engine/resolvers/door_resolver.cpp
         src/engine/resolvers/interior_cell_resolver.cpp
         src/engine/resolvers/light_resolver.cpp
@@ -62,6 +62,14 @@ target_sources(OpenOblivionEngine PUBLIC
         include/bullet/configuration.hpp
         include/engine/application.hpp
         include/engine/bsa.hpp
+        include/engine/character_controller/abilities.hpp
+        include/engine/character_controller/fallback_state.hpp
+        include/engine/character_controller/jump_state.hpp
+        include/engine/character_controller/player_controller.hpp
+        include/engine/character_controller/player_controller_impl.hpp
+        include/engine/character_controller/sneak_jump_state.hpp
+        include/engine/character_controller/sneak_stand_state.hpp
+        include/engine/character_controller/stand_state.hpp
         include/engine/controls.hpp
         include/engine/conversions.hpp
         include/engine/gui/elements/image.hpp
@@ -89,14 +97,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/collision_object_loader_state.hpp
         include/engine/nifloader/mesh_loader.hpp
         include/engine/nifloader/mesh_loader_state.hpp
-        include/engine/player_controller/abilities.hpp
-        include/engine/player_controller/player_controller.hpp
-        include/engine/player_controller/player_controller_impl.hpp
-        include/engine/player_controller/player_jump_state.hpp
-        include/engine/player_controller/player_sneak_jump_state.hpp
-        include/engine/player_controller/player_sneak_stand_state.hpp
-        include/engine/player_controller/player_stand_state.hpp
-        include/engine/player_controller/player_state.hpp
         include/engine/resolvers/door_resolver.hpp
         include/engine/resolvers/helpers.hpp
         include/engine/resolvers/interior_cell_resolver.hpp

@@ -1,13 +1,13 @@
-#ifndef OPENOBLIVION_ENGINE_ABILITIES_HPP
-#define OPENOBLIVION_ENGINE_ABILITIES_HPP
+#ifndef OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_ABILITIES_HPP
+#define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_ABILITIES_HPP
 
 #include "engine/controls.hpp"
-#include "engine/player_controller/player_state.hpp"
-#include "engine/player_controller/player_controller_impl.hpp"
+#include "engine/character_controller/fallback_state.hpp"
+#include "engine/character_controller/player_controller_impl.hpp"
 #include <OgreMath.h>
 #include <optional>
 
-namespace engine {
+namespace engine::character {
 
 template<class State>
 struct MoveAbility {
@@ -47,6 +47,6 @@ struct LookAbility {
   }
 };
 
-} // namespace engine
+} // namespace engine::character
 
-#endif // OPENOBLIVION_ENGINE_ABILITIES_HPP
+#endif // OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_ABILITIES_HPP

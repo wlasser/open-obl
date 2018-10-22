@@ -1,31 +1,31 @@
-#ifndef OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
-#define OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
+#ifndef OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
+#define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
 
 #include "engine/controls.hpp"
 #include "engine/conversions.hpp"
-#include "engine/player_controller/player_controller_impl.hpp"
-#include "engine/player_controller/player_jump_state.hpp"
-#include "engine/player_controller/player_sneak_jump_state.hpp"
-#include "engine/player_controller/player_sneak_stand_state.hpp"
-#include "engine/player_controller/player_stand_state.hpp"
-#include "engine/player_controller/player_state.hpp"
+#include "engine/character_controller/player_controller_impl.hpp"
+#include "engine/character_controller/fallback_state.hpp"
+#include "engine/character_controller/jump_state.hpp"
+#include "engine/character_controller/sneak_jump_state.hpp"
+#include "engine/character_controller/sneak_stand_state.hpp"
+#include "engine/character_controller/stand_state.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
 #include <variant>
 
-namespace engine {
+namespace engine::character {
 
 template<class B, class A>
 std::optional<B> liftOptional(const std::optional<A> &a) {
   return a ? std::optional<B>{*a} : std::nullopt;
 }
 
-using PlayerStateVariant = std::variant<PlayerStandState,
-                                        PlayerJumpState,
-                                        PlayerSneakStandState,
-                                        PlayerSneakJumpState>;
+using StateVariant = std::variant<StandState,
+                                  JumpState,
+                                  SneakStandState,
+                                  SneakJumpState>;
 
 class PlayerController {
  public:
@@ -46,9 +46,9 @@ class PlayerController {
 
  private:
   PlayerControllerImpl impl{};
-  PlayerStateVariant state{};
+  StateVariant state{};
 };
 
-} // namespace engine
+} // namespace engine::character
 
-#endif // OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_HPP
+#endif // OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP

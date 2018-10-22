@@ -1,21 +1,21 @@
-#include "engine/player_controller/player_controller_impl.hpp"
-#include "engine/player_controller/player_sneak_jump_state.hpp"
-#include "engine/player_controller/player_sneak_stand_state.hpp"
+#include "engine/character_controller/player_controller_impl.hpp"
+#include "engine/character_controller/sneak_jump_state.hpp"
+#include "engine/character_controller/sneak_stand_state.hpp"
 #include "engine/settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
 #include <memory>
 
-namespace engine {
+namespace engine::character {
 
-std::optional<PlayerSneakJumpState>
-PlayerSneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
+std::optional<SneakJumpState>
+SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
   return std::nullopt;
 }
 
-void PlayerSneakJumpState::enter(PlayerControllerImpl &impl) {
+void SneakJumpState::enter(PlayerControllerImpl &impl) {
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
@@ -26,17 +26,17 @@ void PlayerSneakJumpState::enter(PlayerControllerImpl &impl) {
   impl.rigidBody->applyCentralImpulse(-impulse * gravityVector.normalized());
 }
 
-std::optional<PlayerSneakStandState>
-PlayerSneakJumpState::handleCollision(PlayerControllerImpl &impl,
-                                      const btCollisionObject *other,
-                                      const btManifoldPoint &contact) {
+std::optional<SneakStandState>
+SneakJumpState::handleCollision(PlayerControllerImpl &impl,
+                                const btCollisionObject *other,
+                                const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
   spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
   if (r.normalized().dot(impl.rigidBody->getGravity().normalized()) > 0.7) {
-    return PlayerSneakStandState{};
+    return SneakStandState{};
   }
   return std::nullopt;
 }
 
-} // namespace engine
+} // namespace engine::character

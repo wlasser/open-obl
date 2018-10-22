@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_IMPL_HPP
-#define OPENOBLIVION_ENGINE_PLAYER_CONTROLLER_IMPL_HPP
+#ifndef OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
+#define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
 
 #include "engine/conversions.hpp"
 #include "game_settings.hpp"
@@ -10,7 +10,7 @@
 #include <memory>
 #include <optional>
 
-namespace engine {
+namespace engine::character {
 
 struct PlayerControllerImpl {
   GameSetting<float> fMoveCharWalkMin{"fMoveCharWalkMin", 90.0f};
@@ -183,6 +183,6 @@ struct PlayerControllerImpl {
 
 };
 
-} // namespace engine
+} // namespace engine::character
 
-#endif // ENGINE_OPENOBLIVION_PLAYER_CONTROLLER_IMPL_HPP
+#endif // ENGINE_OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP

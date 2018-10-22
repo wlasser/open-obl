@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_PLAYER_STATE_HPP
-#define OPENOBLIVION_ENGINE_PLAYER_STATE_HPP
+#ifndef OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP
+#define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP
 
 #include "engine/controls.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -7,7 +7,7 @@
 #include <optional>
 #include <variant>
 
-namespace engine {
+namespace engine::character {
 
 using KeyVariant = std::variant<
     event::Forward, event::Backward, event::SlideLeft, event::SlideRight,
@@ -15,17 +15,17 @@ using KeyVariant = std::variant<
 using MouseVariant = std::variant<event::Pitch, event::Yaw>;
 
 template<class State>
-class PlayerState {
+class FallbackState {
  public:
   // Fallback for unhandled KeyEvents. Derived classes can write
-  // `using PlayerState::handleEvent` to get this automatically.
+  // `using FallbackState::handleEvent` to get this automatically.
   std::optional<State>
   handleEvent(PlayerControllerImpl &, const event::KeyEvent &) {
     return std::nullopt;
   }
 
   // Fallback for unhandled MouseEvents. Derived classes can write
-  // `using PlayerState::handleEvent` to get this automatically.
+  // `using FallbackState::handleEvent` to get this automatically.
   void handleEvent(PlayerControllerImpl &, const event::MouseEvent &) {}
 
   std::optional<State> update(PlayerControllerImpl &player, float elapsed) {
@@ -42,6 +42,6 @@ class PlayerState {
   void exit(PlayerControllerImpl &player) {}
 };
 
-} // namespace engine
+} // namespace engine::character
 
-#endif // OPENOBLIVION_ENGINE_PLAYER_STATE_HPP
+#endif // OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP
