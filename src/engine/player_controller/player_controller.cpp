@@ -106,12 +106,15 @@ void PlayerController::updatePhysics(float elapsed) {
   pitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
   cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
 
+  const auto speed{walkSpeed(speedAttribute, athleticsSkill, wornWeight,
+                             raceHeight, hasWeaponOut)};
+
   // This is a rotation of the standard basis, so is still in SO(3)
   const auto axes{cameraNode->getLocalAxes()};
   if (auto length = localVelocity.length() > 0.01f) {
     const auto v{rigidBody->getLinearVelocity()};
     auto newV{Ogre::conversions::toBullet(
-        axes * localVelocity / length * speed(speedAttribute, athleticsSkill))};
+        axes * localVelocity / length * speed)};
     newV.setY(v.y());
     rigidBody->setLinearVelocity(newV);
   } else {
