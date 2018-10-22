@@ -11,7 +11,7 @@ namespace engine {
 
 using KeyVariant = std::variant<
     event::Forward, event::Backward, event::SlideLeft, event::SlideRight,
-    event::Jump>;
+    event::Sneak, event::Jump>;
 using MouseVariant = std::variant<event::Pitch, event::Yaw>;
 
 template<class State>
@@ -39,6 +39,7 @@ class PlayerState {
   }
 
   void enter(PlayerControllerImpl &player) {}
+  void exit(PlayerControllerImpl &player) {}
 };
 
 } // namespace engine

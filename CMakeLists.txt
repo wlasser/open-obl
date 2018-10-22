@@ -50,6 +50,8 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/mesh_loader_state.cpp
         src/engine/player_controller/player_controller.cpp
         src/engine/player_controller/player_jump_state.cpp
+        src/engine/player_controller/player_sneak_jump_state.cpp
+        src/engine/player_controller/player_sneak_stand_state.cpp
         src/engine/player_controller/player_stand_state.cpp
         src/engine/resolvers/door_resolver.cpp
         src/engine/resolvers/interior_cell_resolver.cpp
@@ -91,6 +93,8 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/player_controller/player_controller.hpp
         include/engine/player_controller/player_controller_impl.hpp
         include/engine/player_controller/player_jump_state.hpp
+        include/engine/player_controller/player_sneak_jump_state.hpp
+        include/engine/player_controller/player_sneak_stand_state.hpp
         include/engine/player_controller/player_stand_state.hpp
         include/engine/player_controller/player_state.hpp
         include/engine/resolvers/door_resolver.hpp

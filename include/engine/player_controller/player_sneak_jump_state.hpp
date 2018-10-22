@@ -1,29 +1,30 @@
-#ifndef OPENOBLIVION_ENGINE_PLAYER_JUMP_STATE_HPP
-#define OPENOBLIVION_ENGINE_PLAYER_JUMP_STATE_HPP
+#ifndef OPENOBLIVION_ENGINE_PLAYER_SNEAK_JUMP_STATE_HPP
+#define OPENOBLIVION_ENGINE_PLAYER_SNEAK_JUMP_STATE_HPP
 
 #include "engine/player_controller/abilities.hpp"
 #include "engine/player_controller/player_controller_impl.hpp"
 #include "engine/player_controller/player_state.hpp"
+#include <optional>
 #include <memory>
-#include <variant>
 
 namespace engine {
 
+class PlayerSneakStandState;
 class PlayerStandState;
 
-class PlayerJumpState : public PlayerState<PlayerJumpState>,
-                        public MoveAbility<PlayerJumpState>,
-                        public LookAbility<PlayerJumpState> {
+class PlayerSneakJumpState : public PlayerState<PlayerSneakJumpState>,
+                             public MoveAbility<PlayerSneakJumpState>,
+                             public LookAbility<PlayerSneakJumpState> {
  public:
-  using PlayerState::handleEvent;
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
+  using PlayerState::handleEvent;
   using PlayerState::exit;
 
-  std::optional<PlayerJumpState>
+  std::optional<PlayerSneakJumpState>
   update(PlayerControllerImpl &impl, float elapsed);
 
-  std::optional<PlayerStandState>
+  std::optional<PlayerSneakStandState>
   handleCollision(PlayerControllerImpl &impl,
                   const btCollisionObject *other,
                   const btManifoldPoint &contact);
@@ -33,4 +34,4 @@ class PlayerJumpState : public PlayerState<PlayerJumpState>,
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_PLAYER_JUMP_STATE_HPP
+#endif // OPENOBLIVION_ENGINE_PLAYER_SNEAK_JUMP_STATE_HPP

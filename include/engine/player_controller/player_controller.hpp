@@ -5,6 +5,8 @@
 #include "engine/conversions.hpp"
 #include "engine/player_controller/player_controller_impl.hpp"
 #include "engine/player_controller/player_jump_state.hpp"
+#include "engine/player_controller/player_sneak_jump_state.hpp"
+#include "engine/player_controller/player_sneak_stand_state.hpp"
 #include "engine/player_controller/player_stand_state.hpp"
 #include "engine/player_controller/player_state.hpp"
 #include "ogrebullet/motion_state.hpp"
@@ -15,13 +17,15 @@
 
 namespace engine {
 
-// TODO: Does TartanLlama's functional optional have this?
 template<class B, class A>
 std::optional<B> liftOptional(const std::optional<A> &a) {
   return a ? std::optional<B>{*a} : std::nullopt;
 }
 
-using PlayerStateVariant = std::variant<PlayerStandState, PlayerJumpState>;
+using PlayerStateVariant = std::variant<PlayerStandState,
+                                        PlayerJumpState,
+                                        PlayerSneakStandState,
+                                        PlayerSneakJumpState>;
 
 class PlayerController {
  public:

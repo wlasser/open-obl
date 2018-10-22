@@ -361,7 +361,7 @@ void Application::pollEvents() {
           [](event::Block) {},
           [](event::Cast) {},
           [](event::ReadyItem) {},
-          [](event::Sneak) {},
+          [this](event::Sneak e) { playerController->handleEvent(e); },
           [](event::Run) {},
           [](event::AlwaysRun) {},
           [](event::AutoMove) {},

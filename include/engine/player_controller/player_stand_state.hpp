@@ -4,12 +4,13 @@
 #include "engine/player_controller/abilities.hpp"
 #include "engine/player_controller/player_controller_impl.hpp"
 #include "engine/player_controller/player_state.hpp"
-#include <memory>
+#include <optional>
 #include <variant>
 
 namespace engine {
 
 class PlayerJumpState;
+class PlayerSneakStandState;
 
 class PlayerStandState : public PlayerState<PlayerStandState>,
                          public MoveAbility<PlayerStandState>,
@@ -20,9 +21,13 @@ class PlayerStandState : public PlayerState<PlayerStandState>,
   using PlayerState::handleEvent;
   using PlayerState::handleCollision;
   using PlayerState::enter;
+  using PlayerState::exit;
 
   std::optional<PlayerJumpState>
   handleEvent(PlayerControllerImpl &impl, const event::Jump &event);
+
+  std::optional<PlayerSneakStandState>
+  handleEvent(PlayerControllerImpl &impl, const event::Sneak &event);
 
   std::optional<PlayerStandState>
   update(PlayerControllerImpl &impl, float elapsed);

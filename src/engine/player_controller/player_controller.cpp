@@ -69,6 +69,7 @@ void PlayerController::handleEvent(const KeyVariant &event) {
       state)};
 
   if (newState) {
+    std::visit([this](auto &&s) { s.exit(impl); }, state);
     state = std::move(*newState);
     std::visit([this](auto &&s) { s.enter(impl); }, state);
   }
@@ -89,6 +90,7 @@ void PlayerController::update(float elapsed) {
       }, state)};
 
   if (newState) {
+    std::visit([this](auto &&s) { s.exit(impl); }, state);
     state = std::move(*newState);
     std::visit([this](auto &&s) { s.enter(impl); }, state);
   }
@@ -102,6 +104,7 @@ void PlayerController::handleCollision(const btCollisionObject *other,
       }, state)};
 
   if (newState) {
+    std::visit([this](auto &&s) { s.exit(impl); }, state);
     state = std::move(*newState);
     std::visit([this](auto &&s) { s.enter(impl); }, state);
   }
