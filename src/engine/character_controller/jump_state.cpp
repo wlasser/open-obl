@@ -16,6 +16,10 @@ JumpState::update(PlayerControllerImpl &impl, float elapsed) {
 }
 
 void JumpState::enter(PlayerControllerImpl &impl) {
+  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
+        * impl.weaponOutModifier(hasWeaponOut);
+  };
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.

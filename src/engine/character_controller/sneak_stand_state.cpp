@@ -27,6 +27,10 @@ SneakStandState::update(PlayerControllerImpl &impl, float elapsed) {
 
 void SneakStandState::enter(PlayerControllerImpl &impl) {
   impl.cameraNode->setPosition({0.0f, impl.height * 0.25f, 0.0f});
+  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
+        * impl.weaponOutModifier(hasWeaponOut) * impl.sneakModifier();
+  };
 }
 
 void SneakStandState::exit(PlayerControllerImpl &impl) {

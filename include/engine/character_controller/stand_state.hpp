@@ -20,7 +20,6 @@ class StandState : public FallbackState<StandState>,
   using LookAbility::handleEvent;
   using FallbackState::handleEvent;
   using FallbackState::handleCollision;
-  using FallbackState::enter;
   using FallbackState::exit;
 
   std::optional<JumpState>
@@ -31,6 +30,8 @@ class StandState : public FallbackState<StandState>,
 
   std::optional<StandState>
   update(PlayerControllerImpl &impl, float elapsed);
+
+  void enter(PlayerControllerImpl &impl);
 };
 
 } // namespace engine::character

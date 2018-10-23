@@ -47,6 +47,7 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   impl.rigidBody->setAngularFactor(0.0f);
 
   state = StandState{};
+  std::visit([this](auto &&s) { s.enter(impl); }, state);
 }
 
 Ogre::Camera *PlayerController::getCamera() const noexcept {

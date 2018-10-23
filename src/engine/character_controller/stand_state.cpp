@@ -26,4 +26,11 @@ StandState::update(PlayerControllerImpl &impl, float elapsed) {
   return std::nullopt;
 }
 
+void StandState::enter(PlayerControllerImpl &impl) {
+  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
+        * impl.weaponOutModifier(hasWeaponOut);
+  };
+}
+
 } // namespace engine::character
