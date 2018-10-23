@@ -12,15 +12,11 @@
 #include "ogrebullet/motion_state.hpp"
 #include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
+#include <gsl/gsl>
 #include <Ogre.h>
 #include <variant>
 
 namespace engine::character {
-
-template<class B, class A>
-std::optional<B> liftOptional(const std::optional<A> &a) {
-  return a ? std::optional<B>{*a} : std::nullopt;
-}
 
 using StateVariant = std::variant<StandState,
                                   JumpState,
@@ -47,6 +43,15 @@ class PlayerController {
  private:
   PlayerControllerImpl impl{};
   StateVariant state{};
+
+  void setAspectRatio(gsl::not_null<Ogre::Camera *> camera) const;
+  void attachCamera(gsl::not_null<Ogre::Camera *> camera,
+                    gsl::not_null<Ogre::SceneNode *> node);
+  void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
+
+  void enter(StateVariant &state);
+  void exit(StateVariant &state);
+  void changeState(StateVariant newState);
 };
 
 } // namespace engine::character
