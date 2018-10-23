@@ -6,9 +6,11 @@
 #include "engine/character_controller/player_controller_impl.hpp"
 #include "engine/character_controller/fallback_state.hpp"
 #include "engine/character_controller/jump_state.hpp"
+#include "engine/character_controller/run_state.hpp"
 #include "engine/character_controller/sneak_jump_state.hpp"
 #include "engine/character_controller/sneak_stand_state.hpp"
 #include "engine/character_controller/stand_state.hpp"
+#include "engine/character_controller/walk_state.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -22,6 +24,7 @@ using StateVariant = std::variant<StandState,
                                   JumpState,
                                   SneakStandState,
                                   SneakJumpState>;
+using MovementStateVariant = std::variant<WalkState, RunState>;
 
 class PlayerController {
  public:
@@ -43,6 +46,7 @@ class PlayerController {
  private:
   PlayerControllerImpl impl{};
   StateVariant state{};
+  MovementStateVariant movementState{};
 
   void setAspectRatio(gsl::not_null<Ogre::Camera *> camera) const;
   void attachCamera(gsl::not_null<Ogre::Camera *> camera,
@@ -50,8 +54,11 @@ class PlayerController {
   void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
 
   void enter(StateVariant &state);
+  void enter(MovementStateVariant &state);
   void exit(StateVariant &state);
+  void exit(MovementStateVariant &state);
   void changeState(StateVariant newState);
+  void changeState(MovementStateVariant newState);
 };
 
 } // namespace engine::character

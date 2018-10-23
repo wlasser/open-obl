@@ -19,6 +19,9 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
 
   state = StandState{};
   enter(state);
+
+  movementState = WalkState{};
+  enter(movementState);
 }
 
 Ogre::Camera *PlayerController::getCamera() const noexcept {
@@ -39,6 +42,15 @@ void PlayerController::handleEvent(const KeyVariant &event) {
   // @formatter:on
 
   if (newState) changeState(*newState);
+
+  auto newMovementState{std::visit([this, &event](auto &&s) {
+    return std::visit([this, &s](auto &&e) -> std::optional<MovementStateVariant> {
+      return s.handleEvent(impl, e);
+    }, event);
+  }, movementState)};
+
+  if (newMovementState) changeState(*newMovementState);
+
 }
 
 void PlayerController::handleEvent(const MouseVariant &event) {
@@ -47,6 +59,12 @@ void PlayerController::handleEvent(const MouseVariant &event) {
       s.handleEvent(impl, e);
     }, event);
   }, state);
+
+  std::visit([this, &event](auto &&s) {
+    std::visit([this, &s](auto &&e) {
+      s.handleEvent(impl, e);
+    }, event);
+  }, movementState);
 }
 
 void PlayerController::update(float elapsed) {
@@ -56,6 +74,13 @@ void PlayerController::update(float elapsed) {
       }, state)};
 
   if (newState) changeState(*newState);
+
+  auto newMovementState{std::visit(
+      [this, elapsed](auto &&s) -> std::optional<MovementStateVariant> {
+        return s.update(impl, elapsed);
+      }, movementState)};
+
+  if (newMovementState) changeState(*newMovementState);
 }
 
 void PlayerController::handleCollision(const btCollisionObject *other,
@@ -66,6 +91,13 @@ void PlayerController::handleCollision(const btCollisionObject *other,
       }, state)};
 
   if (newState) changeState(*newState);
+
+  auto newMovementState{std::visit(
+      [this, other, &contact](auto &&s) -> std::optional<MovementStateVariant> {
+        return s.handleCollision(impl, other, contact);
+      }, movementState)};
+
+  if (newMovementState) changeState(*newMovementState);
 }
 
 void PlayerController::moveTo(const Ogre::Vector3 &position) {
@@ -125,7 +157,17 @@ void PlayerController::enter(StateVariant &state) {
   std::visit([this](auto &&s) { s.enter(this->impl); }, state);
 }
 
+void PlayerController::enter(MovementStateVariant &state) {
+  std::visit([this](auto &&s) {
+    s.enter(this->impl);
+  }, state);
+};
+
 void PlayerController::exit(StateVariant &state) {
+  std::visit([this](auto &&s) { s.exit(this->impl); }, state);
+}
+
+void PlayerController::exit(MovementStateVariant &state) {
   std::visit([this](auto &&s) { s.exit(this->impl); }, state);
 }
 
@@ -133,6 +175,12 @@ void PlayerController::changeState(StateVariant newState) {
   exit(state);
   state = newState;
   enter(state);
+}
+
+void PlayerController::changeState(MovementStateVariant newState) {
+  exit(movementState);
+  movementState = newState;
+  enter(movementState);
 }
 
 } // namespace engine::character

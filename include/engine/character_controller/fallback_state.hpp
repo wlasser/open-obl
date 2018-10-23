@@ -2,6 +2,7 @@
 #define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP
 
 #include "engine/controls.hpp"
+#include "engine/character_controller/player_controller_impl.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <memory>
 #include <optional>
@@ -11,7 +12,7 @@ namespace engine::character {
 
 using KeyVariant = std::variant<
     event::Forward, event::Backward, event::SlideLeft, event::SlideRight,
-    event::Sneak, event::Jump>;
+    event::Sneak, event::Run, event::AlwaysRun, event::Jump>;
 using MouseVariant = std::variant<event::Pitch, event::Yaw>;
 
 template<class State>

@@ -36,9 +36,11 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/bsa.cpp
         src/engine/character_controller/jump_state.cpp
         src/engine/character_controller/player_controller.cpp
+        src/engine/character_controller/run_state.cpp
         src/engine/character_controller/sneak_jump_state.cpp
         src/engine/character_controller/sneak_stand_state.cpp
         src/engine/character_controller/stand_state.cpp
+        src/engine/character_controller/walk_state.cpp
         src/engine/gui/gui.cpp
         src/engine/gui/stack/program.cpp
         src/engine/gui/stack/types.cpp
@@ -67,9 +69,11 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/character_controller/jump_state.hpp
         include/engine/character_controller/player_controller.hpp
         include/engine/character_controller/player_controller_impl.hpp
+        include/engine/character_controller/run_state.hpp
         include/engine/character_controller/sneak_jump_state.hpp
         include/engine/character_controller/sneak_stand_state.hpp
         include/engine/character_controller/stand_state.hpp
+        include/engine/character_controller/walk_state.hpp
         include/engine/controls.hpp
         include/engine/conversions.hpp
         include/engine/gui/elements/image.hpp
