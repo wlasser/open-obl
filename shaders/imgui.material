@@ -1,0 +1,25 @@
+vertex_program imgui_vs_glsl glsl {
+    source imgui_vs.glsl
+}
+
+fragment_program imgui_fs_glsl glsl {
+    source imgui_fs.glsl
+}
+
+material __ImGuiMaterial {
+    technique {
+        pass {
+            vertex_program_ref imgui_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+            }
+
+            fragment_program_ref imgui_fs_glsl {
+            }
+
+            lighting on
+            ambient vertexcolour
+            scene_blend alpha_blend
+            depth_check on
+        }
+    }
+}

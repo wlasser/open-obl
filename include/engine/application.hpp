@@ -17,6 +17,7 @@
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
+#include "ogreimgui/imgui_manager.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
 #include "sdl/sdl.hpp"
@@ -69,6 +70,7 @@ class Application : public Ogre::FrameListener {
 
   bool drawBulletDebug{false};
   std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
+  std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
  public:
   explicit Application(std::string windowName);

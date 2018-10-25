@@ -26,6 +26,7 @@ add_subdirectory(src/nif)
 add_subdirectory(src/record)
 add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
+add_subdirectory(src/ogreimgui)
 add_subdirectory(src/sdl)
 
 # Engine library
@@ -119,6 +120,7 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
+        OpenOblivion::OpenOblivionOgreImGui
         OpenOblivion::OpenOblivionSDL
         Boost::boost
         OgreMain
@@ -162,6 +164,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
+        OpenOblivion::OpenOblivionOgreImGui
         OpenOblivion::OpenOblivionSDL
         Boost::boost
         ZLIB::ZLIB

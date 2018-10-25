@@ -53,7 +53,7 @@ KeyCode keyCodeOf(const KeyboardEvent &event) {
   return KeyCode(event.keysym.sym);
 }
 
-MouseButton mouseButtonof(const MouseButtonEvent &event) {
+MouseButton mouseButtonOf(const MouseButtonEvent &event) {
   return MouseButton(event.button);
 }
 

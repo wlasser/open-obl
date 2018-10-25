@@ -398,6 +398,7 @@ using KeyboardEvent = SDL_KeyboardEvent;
 using MouseMotionEvent = SDL_MouseMotionEvent;
 using MouseButtonEvent = SDL_MouseButtonEvent;
 using MouseWheelEvent = SDL_MouseWheelEvent;
+using TextInputEvent = SDL_TextInputEvent;
 using SysWMInfo = SDL_SysWMinfo; // Note the capitalization change
 
 // Resources are wrapped in unique_ptrs with custom deleters for automatic
@@ -413,7 +414,7 @@ bool pollEvent(Event &event);
 EventType typeOf(const Event &event);
 WindowEventType typeOf(const WindowEvent &event);
 KeyCode keyCodeOf(const KeyboardEvent &event);
-MouseButton mouseButtonof(const MouseButtonEvent &event);
+MouseButton mouseButtonOf(const MouseButtonEvent &event);
 
 } // namespace sdl
 

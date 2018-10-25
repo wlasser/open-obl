@@ -50,7 +50,6 @@ void readMaster(Processor &processor) {
 
 int main() {
   engine::Application app("Open Oblivion");
-  app.getRoot()->addFrameListener(&app);
   app.getRoot()->startRendering();
   return 0;
 }

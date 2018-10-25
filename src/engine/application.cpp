@@ -9,6 +9,7 @@
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
+#include "ogreimgui/imgui_manager.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
 #include "fs/path.hpp"
@@ -46,6 +47,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
   setRenderSystem("OpenGL 3+ Rendering Subsystem");
   ogreRoot->initialise(false);
+  ogreRoot->addFrameListener(this);
 
   // Create the window
   sdlInit = sdl::Init();
@@ -169,6 +171,8 @@ Application::Application(std::string windowName) : FrameListener() {
       });
 
   ogreWindow->addViewport(playerController->getCamera());
+  ogreRoot->getRenderSystem()
+      ->_setViewport(playerController->getCamera()->getViewport());
 
   auto startPos = conversions::fromBSCoordinates({0, 0, 0});
   //auto startPos = conversions::fromBSCoordinates({-1954.8577f, -473.5773f, -318.9890f});
@@ -180,6 +184,9 @@ Application::Application(std::string windowName) : FrameListener() {
   currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
       ->attachObject(debugDrawer->getObject());
   debugDrawer->enable(false);
+
+  imguiMgr = std::make_unique<Ogre::ImGuiManager>();
+  currentCell->scnMgr->addRenderQueueListener(imguiMgr.get());
 }
 
 void Application::createLoggers() {
@@ -269,7 +276,7 @@ void Application::createWindow(const std::string &windowName) {
   const auto parent{sdl::getWindowParent(sdlWindowInfo)};
 
   // Make cursor behaviour more sensible
-  sdl::setRelativeMouseMode(true);
+  //sdl::setRelativeMouseMode(true);
 
   // Construct a render window with the SDL window as a parent; SDL handles the
   // window itself, Ogre manages the OpenGL context.
@@ -348,6 +355,8 @@ void Application::pollEvents() {
   const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
+
+    imguiMgr->handleEvent(sdlEvent);
 
     auto keyEvent{keyMap->translateKey(sdlEvent)};
     if (keyEvent) {
@@ -461,6 +470,10 @@ RefId Application::getCrosshairRef() {
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
+  imguiMgr->newFrame(event.timeSinceLastFrame);
+  bool showDemoWindow{true};
+  ImGui::ShowDemoWindow(&showDemoWindow);
+
   pollEvents();
   playerController->update(event.timeSinceLastFrame);
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
