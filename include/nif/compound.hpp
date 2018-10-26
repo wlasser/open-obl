@@ -29,6 +29,7 @@ struct SizedString {
   basic::UInt length{};
   std::vector<basic::Char> value{};
   std::string str() const;
+  // TODO: get string_view
 };
 
 struct StringPalette {

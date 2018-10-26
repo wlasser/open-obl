@@ -471,8 +471,8 @@ RefId Application::getCrosshairRef() {
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   imguiMgr->newFrame(event.timeSinceLastFrame);
-  bool showDemoWindow{true};
-  ImGui::ShowDemoWindow(&showDemoWindow);
+  //bool showDemoWindow{true};
+  //ImGui::ShowDemoWindow(&showDemoWindow);
 
   pollEvents();
   playerController->update(event.timeSinceLastFrame);

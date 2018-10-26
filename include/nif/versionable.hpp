@@ -5,6 +5,7 @@
 #include <array>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
 #include <variant>
 
 // Nif files are heavily versioned, with different parts appearing only under
@@ -320,7 +321,8 @@ class Versionable {
 };
 
 // Convert a version string into its integer representation.
-constexpr Version verOf(const char *str, std::size_t size) {
+constexpr Version verOf(std::string_view str) {
+  const std::size_t size{str.size()};
   Version version = 0;
 
   // Current position in str
@@ -362,7 +364,7 @@ constexpr Version verOf(const char *str, std::size_t size) {
 namespace literals {
 
 constexpr Version operator ""_ver(const char *str, std::size_t size) {
-  return verOf(str, size);
+  return verOf(std::string_view(str, size));
 }
 
 } // namespace literal

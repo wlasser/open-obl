@@ -8,6 +8,7 @@
 #include <OgreAxisAlignedBox.h>
 #include <OgreLogManager.h>
 #include <OgreResource.h>
+#include <polymorphic_value.h>
 #include <spdlog/spdlog.h>
 #include <istream>
 #include <map>
@@ -24,9 +25,7 @@ namespace engine::nifloader {
 // can be read properly.
 nif::Version peekVersion(std::istream &);
 
-// Vertex properties are required to be copy constructable, so we cannot use
-// std::unique_ptr.
-using Block = std::shared_ptr<nif::NiObject>;
+using Block = jbcoe::polymorphic_value<nif::NiObject>;
 using BlockGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                          boost::bidirectionalS, Block>;
 
@@ -60,14 +59,14 @@ void addVertex(BlockGraph &blocks,
                BlockGraph::vertex_descriptor u,
                nif::Version nifVersion,
                std::istream &is) {
-  std::shared_ptr<T> block{};
-  if constexpr (std::is_base_of_v<nif::Versionable, T>) {
-    block = std::make_shared<T>(nifVersion);
-  } else {
-    block = std::make_shared<T>();
-  }
-  block->read(is);
-  blocks[u] = std::move(block);
+  blocks[u] = [nifVersion]() -> jbcoe::polymorphic_value<nif::NiObject> {
+    if constexpr (std::is_base_of_v<nif::Versionable, T>) {
+      return jbcoe::make_polymorphic_value<nif::NiObject, T>(nifVersion);
+    } else {
+      return jbcoe::make_polymorphic_value<nif::NiObject, T>();
+    }
+  }();
+  blocks[u]->read(is);
 }
 
 } // namespace engine::nifloader

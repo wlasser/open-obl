@@ -36,7 +36,7 @@ struct TextureFamily {
 
 // Compute the minimum bounding box of the vertices in the block, subject to the
 // given Ogre-coordinate transformation
-Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
+Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
                                     Ogre::Matrix4 transformation);
 
 // Returns true if the triangle has a counterclockwise winding order, and
@@ -47,7 +47,7 @@ bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
 
 // Return the number of triangles with a counterclockwise winding order.
 // The mesh should have normals.
-long numCCWTriangles(nif::NiTriShapeData *block);
+long numCCWTriangles(const nif::NiTriShapeData &block);
 
 // Append '_n' to the filename, preserving the extension
 std::filesystem::path toNormalMap(std::filesystem::path texFile);
@@ -57,19 +57,24 @@ class MeshLoaderState {
   friend class TBGVisitor;
 
   template<class T, class S>
-  T *getBlock(nif::basic::Ref<S> ref);
+  T &getBlock(nif::basic::Ref<S> ref);
 
-  BoundedSubmesh parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
+  // TODO: This is awful, stop doing dynamic_cast checks!
+  template<class T, class S,
+      class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
+  bool checkRefType(nif::basic::Ref<S> ref);
+
+  BoundedSubmesh parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
                                      LoadStatus &tag,
                                      const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
-  parseNiMaterialProperty(nif::NiMaterialProperty *block,
+  parseNiMaterialProperty(const nif::NiMaterialProperty &block,
                           LoadStatus &tag);
 
   // See parseTexDesc for why the pass is necessary.
   TextureFamily
-  parseNiTexturingProperty(nif::NiTexturingProperty *block,
+  parseNiTexturingProperty(const nif::NiTexturingProperty &block,
                            LoadStatus &tag,
                            Ogre::Pass *pass);
 
@@ -79,11 +84,11 @@ class MeshLoaderState {
   // Ogre::TextureUnitState with a nullptr parent, and we have to supply the
   // parent pass here.
   std::unique_ptr<Ogre::TextureUnitState>
-  parseTexDesc(nif::compound::TexDesc *tex,
+  parseTexDesc(const nif::compound::TexDesc *tex,
                Ogre::Pass *parent,
                const std::optional<std::string> &textureOverride = {});
 
-  void parseNiSourceTexture(nif::NiSourceTexture *block,
+  void parseNiSourceTexture(const nif::NiSourceTexture &block,
                             LoadStatus &tag,
                             Ogre::TextureUnitState *tex,
                             const std::optional<std::string> &textureOverride = {});
@@ -91,18 +96,19 @@ class MeshLoaderState {
   // Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
   // for rendering.
   std::unique_ptr<Ogre::VertexData>
-  generateVertexData(nif::NiGeometryData *block, Ogre::Matrix4 transformation,
+  generateVertexData(const nif::NiGeometryData &block,
+                     Ogre::Matrix4 transformation,
                      std::vector<nif::compound::Vector3> *bitangents,
                      std::vector<nif::compound::Vector3> *tangents);
 
   // Reads triangle data from NiTriShapeData and prepares it for rendering.
   std::unique_ptr<Ogre::IndexData>
-  generateIndexData(nif::NiTriShapeData *block);
+  generateIndexData(const nif::NiTriShapeData &block);
 
   // Reads triangle strip data from NiTriStripsData and prepares it for
   // rendering.
   std::unique_ptr<Ogre::IndexData>
-  generateIndexData(nif::NiTriStripsData *block);
+  generateIndexData(const nif::NiTriStripsData &block);
 
   TaggedBlockGraph blocks;
   Ogre::Mesh *mesh;
@@ -136,12 +142,20 @@ class TBGVisitor {
 };
 
 template<class T, class S>
-T *MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
-  auto val = static_cast<int32_t>(ref);
+T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
+  const auto val{static_cast<int32_t>(ref)};
   if (val < 0 || val >= blocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
   }
-  return dynamic_cast<T *>(blocks[val].block.get());
+  return dynamic_cast<T &>(*blocks[val].block);
+}
+
+template<class T, class S, class>
+bool MeshLoaderState::checkRefType(nif::basic::Ref<S> ref) {
+  const auto val{static_cast<int32_t>(ref)};
+  if (val < 0 || val >= blocks.vertex_set().size()) return false;
+  // This is horrific.
+  return dynamic_cast<T *>(&*blocks[val].block) != nullptr;
 }
 
 } // namespace engine::nifloader

@@ -20,6 +20,8 @@ add_subdirectory(lib/spdlog)
 
 add_subdirectory(lib/gsl)
 
+add_subdirectory(lib/polymorphic_value)
+
 add_subdirectory(src/io)
 add_subdirectory(src/fs)
 add_subdirectory(src/nif)
@@ -128,6 +130,7 @@ target_link_libraries(OpenOblivionEngine PUBLIC
         stdc++fs
         GSL
         pugixml
+        polymorphic_value
         ${BULLET_LIBRARIES})
 
 add_executable(OpenOblivion)
@@ -175,6 +178,7 @@ target_link_libraries(OpenOblivion PRIVATE
         stdc++fs
         GSL
         pugixml
+        polymorphic_value
         ${BULLET_LIBRARIES})
 
 if (USE_IWYU)

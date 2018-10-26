@@ -3,11 +3,12 @@
 #include "engine/nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <algorithm>
 #include <numeric>
 
 namespace engine::nifloader {
 
-Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
+Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
                                     Ogre::Matrix4 transformation) {
   using namespace conversions;
   const auto fltMin = std::numeric_limits<float>::lowest();
@@ -15,9 +16,9 @@ Ogre::AxisAlignedBox getBoundingBox(nif::NiGeometryData *block,
   Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
   Ogre::Vector3 bboxMax{fltMin, fltMin, fltMin};
 
-  if (!block->hasVertices || block->vertices.empty()) return {};
+  if (!block.hasVertices || block.vertices.empty()) return {};
 
-  for (const auto &vertex : block->vertices) {
+  for (const auto &vertex : block.vertices) {
     Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
     auto v = transformation * ogreV;
     // NB: Cannot use else if, both branches apply if the mesh is flat
@@ -41,18 +42,18 @@ bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
   return expected.dotProduct(actual) > 0.0f;
 }
 
-long numCCWTriangles(nif::NiTriShapeData *block) {
-  assert(block->hasNormals);
+long numCCWTriangles(const nif::NiTriShapeData &block) {
+  assert(block.hasNormals);
   using conversions::fromNif;
-  return std::count_if(block->triangles.begin(), block->triangles.end(),
+  return std::count_if(block.triangles.begin(), block.triangles.end(),
                        [&](const auto &tri) {
                          return isWindingOrderCCW(
-                             fromNif(block->vertices[tri.v1]),
-                             fromNif(block->normals[tri.v1]),
-                             fromNif(block->vertices[tri.v2]),
-                             fromNif(block->normals[tri.v2]),
-                             fromNif(block->vertices[tri.v3]),
-                             fromNif(block->normals[tri.v3]));
+                             fromNif(block.vertices[tri.v1]),
+                             fromNif(block.normals[tri.v1]),
+                             fromNif(block.vertices[tri.v2]),
+                             fromNif(block.normals[tri.v2]),
+                             fromNif(block.vertices[tri.v3]),
+                             fromNif(block.normals[tri.v3]));
                        });
 }
 
@@ -65,17 +66,17 @@ std::filesystem::path toNormalMap(std::filesystem::path texFile) {
 }
 
 std::unique_ptr<Ogre::VertexData>
-MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
+MeshLoaderState::generateVertexData(const nif::NiGeometryData &block,
                                     Ogre::Matrix4 transformation,
                                     std::vector<nif::compound::Vector3> *bitangents,
                                     std::vector<nif::compound::Vector3> *tangents) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
-  auto vertexData = std::make_unique<Ogre::VertexData>();
-  vertexData->vertexCount = block->numVertices;
-  auto vertDecl = vertexData->vertexDeclaration;
-  auto vertBind = vertexData->vertexBufferBinding;
-  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+  auto vertexData{std::make_unique<Ogre::VertexData>()};
+  vertexData->vertexCount = block.numVertices;
+  auto vertDecl{vertexData->vertexDeclaration};
+  auto vertBind{vertexData->vertexBufferBinding};
+  auto *hwBufMgr{Ogre::HardwareBufferManager::getSingletonPtr()};
 
   // Specify the order of data in the vertex buffer. This is per vertex,
   // so the vertices, normals etc will have to be interleaved in the buffer.
@@ -124,7 +125,7 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
   // Normal vectors are not translated and transform with the inverse
   // transpose of the transformation matrix. We will also need this for tangents
   // and bitangents so we compute it now.
-  auto normalTransformation = transformation;
+  auto normalTransformation{transformation};
   normalTransformation.setTrans(Ogre::Vector3::ZERO);
   normalTransformation = normalTransformation.inverse().transpose();
 
@@ -137,16 +138,16 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
   // and so on with a row for each of the elements of the vertex
   // declaration.
   // TODO: Is there an efficient transpose algorithm to make this abstraction worthwhile?
-  std::vector<float> vertexBuffer(offset * block->numVertices);
+  std::vector<float> vertexBuffer(offset * block.numVertices);
   std::size_t localOffset{0};
 
   // Vertices
-  if (block->hasVertices) {
+  if (block.hasVertices) {
     auto it = vertexBuffer.begin();
-    for (const auto &vertex : block->vertices) {
+    for (const auto &vertex : block.vertices) {
       using namespace conversions;
-      Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
-      auto v = transformation * ogreV;
+      const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+      const auto v{transformation * ogreV};
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
@@ -160,12 +161,12 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
   // TODO: Blend weights
 
   // Normals
-  if (block->hasNormals) {
+  if (block.hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
-    for (const auto &normal : block->normals) {
+    for (const auto &normal : block.normals) {
       using namespace conversions;
-      Ogre::Vector4 ogreN{fromBSCoordinates(fromNif(normal))};
-      auto n = normalTransformation * ogreN;
+      const Ogre::Vector4 ogreN{fromBSCoordinates(fromNif(normal))};
+      const auto n{normalTransformation * ogreN};
       *it = n.x;
       *(it + 1) = n.y;
       *(it + 2) = n.z;
@@ -177,9 +178,9 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
   }
 
   // Vertex colours
-  if (block->hasVertexColors) {
+  if (block.hasVertexColors) {
     auto it = vertexBuffer.begin() + localOffset;
-    for (const auto &col : block->vertexColors) {
+    for (const auto &col : block.vertexColors) {
       *it = col.r;
       *(it + 1) = col.g;
       *(it + 2) = col.b;
@@ -189,20 +190,18 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
   } else {
     // If a mesh doesn't have any vertex colours then we default to white
     auto it = vertexBuffer.begin() + localOffset;
-    for (int i = 0; i < block->numVertices; ++i) {
-      *it = 1.0f;
-      *(it + 1) = 1.0f;
-      *(it + 2) = 1.0f;
+    for (int i = 0; i < block.numVertices; ++i) {
+      std::fill(it, it + 3, 1.0f);
       it += offset;
     }
     localOffset += 3;
   }
 
   // UVs
-  if (!block->uvSets.empty()) {
+  if (!block.uvSets.empty()) {
     auto it = vertexBuffer.begin() + localOffset;
     // TODO: Support more than one UV set?
-    for (const auto &uv : block->uvSets[0]) {
+    for (const auto &uv : block.uvSets[0]) {
       *it = uv.u;
       *(it + 1) = uv.v;
       it += offset;
@@ -215,8 +214,8 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
       using namespace conversions;
-      Ogre::Vector4 ogreBt{fromBSCoordinates(fromNif(bitangent))};
-      auto bt = normalTransformation * ogreBt;
+      const Ogre::Vector4 ogreBt{fromBSCoordinates(fromNif(bitangent))};
+      const auto bt{normalTransformation * ogreBt};
       *it = bt.x;
       *(it + 1) = bt.y;
       *(it + 2) = bt.z;
@@ -232,8 +231,8 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
       using namespace conversions;
-      Ogre::Vector4 ogreT{fromBSCoordinates(fromNif(tangent))};
-      auto t = normalTransformation * ogreT;
+      const Ogre::Vector4 ogreT{fromBSCoordinates(fromNif(tangent))};
+      const auto t{normalTransformation * ogreT};
       *it = t.x;
       *(it + 1) = t.y;
       *(it + 2) = t.z;
@@ -246,70 +245,67 @@ MeshLoaderState::generateVertexData(nif::NiGeometryData *block,
 
   // Copy the vertex buffer into a hardware buffer, and link the buffer to
   // the vertex declaration.
-  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-  auto hwVertexBuffer = hwBufPtr->createVertexBuffer(bytesPerVertex,
-                                                     block->numVertices,
-                                                     usage);
-  hwVertexBuffer->writeData(0,
-                            hwVertexBuffer->getSizeInBytes(),
-                            vertexBuffer.data(),
-                            true);
-  vertBind->setBinding(source, hwVertexBuffer);
+  const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
+  const auto bpv{bytesPerVertex};
+
+  auto hwBuf{hwBufMgr->createVertexBuffer(bpv, block.numVertices, usage)};
+  hwBuf->writeData(0, hwBuf->getSizeInBytes(), vertexBuffer.data(), true);
+
+  vertBind->setBinding(source, hwBuf);
 
   return vertexData;
 }
 
 std::unique_ptr<Ogre::IndexData>
-MeshLoaderState::generateIndexData(nif::NiTriShapeData *block) {
-  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+MeshLoaderState::generateIndexData(const nif::NiTriShapeData &block) {
+  auto *hwBufMgr{Ogre::HardwareBufferManager::getSingletonPtr()};
 
   // We can assume that compound::Triangle has no padding and std::vector
   // is sequential, so can avoid copying the faces.
-  auto indexBuffer = reinterpret_cast<uint16_t *>(block->triangles.data());
+  auto indexBuffer{reinterpret_cast<const uint16_t *>(block.triangles.data())};
 
-  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-  auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
-  std::size_t numIndices = 3u * block->numTriangles;
+  const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
+  const auto itype{Ogre::HardwareIndexBuffer::IT_16BIT};
+  const std::size_t numIndices{3u * block.numTriangles};
 
   // Copy the triangle (index) buffer into a hardware buffer.
-  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype, numIndices, usage);
-  hwIndexBuffer->writeData(0,
-                           hwIndexBuffer->getSizeInBytes(),
-                           indexBuffer,
-                           true);
+  auto hwBuf{hwBufMgr->createIndexBuffer(itype, numIndices, usage)};
+  hwBuf->writeData(0, hwBuf->getSizeInBytes(), indexBuffer, true);
 
-  auto indexData = std::make_unique<Ogre::IndexData>();
-  indexData->indexBuffer = hwIndexBuffer;
+  auto indexData{std::make_unique<Ogre::IndexData>()};
+  indexData->indexBuffer = hwBuf;
   indexData->indexCount = numIndices;
   indexData->indexStart = 0;
   return indexData;
 }
 
 std::unique_ptr<Ogre::IndexData>
-MeshLoaderState::generateIndexData(nif::NiTriStripsData *block) {
-  auto hwBufPtr = Ogre::HardwareBufferManager::getSingletonPtr();
+MeshLoaderState::generateIndexData(const nif::NiTriStripsData &block) {
+  auto *hwBufMgr = Ogre::HardwareBufferManager::getSingletonPtr();
 
-  auto usage = Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY;
-  auto itype = Ogre::HardwareIndexBuffer::IT_16BIT;
-  std::size_t numIndices = std::accumulate(block->stripLengths.begin(),
-                                           block->stripLengths.end(), 0u);
+  const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
+  const auto itype{Ogre::HardwareIndexBuffer::IT_16BIT};
+  const std::size_t numIndices{std::accumulate(block.stripLengths.begin(),
+                                               block.stripLengths.end(), 0u)};
 
-  auto hwIndexBuffer = hwBufPtr->createIndexBuffer(itype, numIndices, usage);
-  std::size_t offset = 0;
-  for (const auto &strip : block->points) {
-    hwIndexBuffer->writeData(offset, 2u * strip.size(), &strip[0], true);
-    offset += 2u * strip.size();
+  std::vector<uint16_t> buf{};
+  buf.reserve(numIndices);
+  for (const auto &strip : block.points) {
+    buf.insert(buf.end(), strip.begin(), strip.end());
   }
 
-  auto indexData = std::make_unique<Ogre::IndexData>();
-  indexData->indexBuffer = hwIndexBuffer;
+  auto hwBuf{hwBufMgr->createIndexBuffer(itype, numIndices, usage)};
+  hwBuf->writeData(0, hwBuf->getSizeInBytes(), buf.data(), true);
+
+  auto indexData{std::make_unique<Ogre::IndexData>()};
+  indexData->indexBuffer = hwBuf;
   indexData->indexCount = numIndices;
   indexData->indexStart = 0;
   return indexData;
 }
 
 BoundedSubmesh
-MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
+MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
                                      LoadStatus &tag,
                                      const Ogre::Matrix4 &transform) {
   // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
@@ -318,7 +314,7 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   // loaded or in the process of loading.
   Tagger tagger{tag};
   if (tag == LoadStatus::Loaded) {
-    auto submesh = mesh->getSubMesh(block->name.str());
+    auto submesh{mesh->getSubMesh(block.name.str())};
     if (submesh) {
       // TODO: How to get the bounding box once the submesh has been created?
       return {submesh, {}};
@@ -327,7 +323,7 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
           "NiTriBasedGeom marked as loaded but submesh does not exist");
     }
   }
-  auto submesh = mesh->createSubMesh(block->name.str());
+  auto submesh{mesh->createSubMesh(block.name.str())};
 
   submesh->useSharedVertices = false;
 
@@ -338,38 +334,28 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   // an NiBinaryExtraData block. For low versions, the extra data is arranged
   // like a linked list, and for high versions it's an array.
   // TODO: Support the linked list version
-  if (block->extraDataArray) {
-    auto xtraIt = block->extraDataArray->begin();
-    do {
-      xtraIt = std::find_if(xtraIt, block->extraDataArray->end(),
-                            [this](const auto &xtraData) {
-                              return getBlock<nif::NiBinaryExtraData>(xtraData);
-                            });
-      if (xtraIt == block->extraDataArray->end()) break;
+  if (block.extraDataArray) {
+    for (const auto &extraDataRef : *block.extraDataArray) {
+      if (!checkRefType<nif::NiBinaryExtraData>(extraDataRef)) continue;
+      auto &binaryExtraData{getBlock<nif::NiBinaryExtraData>(extraDataRef)};
 
-      auto taggedXtraData = blocks[static_cast<int32_t>(*xtraIt)];
-      auto xtraData = dynamic_cast<nif::NiBinaryExtraData *>(
-          taggedXtraData.block.get());
-      auto &xtraDataTag = taggedXtraData.tag;
-
-      if (xtraData->name) {
-        std::string name = xtraData->name->str();
-        // Tangent data should begin with "Tangent space"
+      if (binaryExtraData.name) {
+        const std::string name{binaryExtraData.name->str()};
         if (name.find("Tangent space") == 0) {
           // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
-          // We need both the number of bytes in each list, and the number of
-          // vertices
-          std::size_t numBytes = xtraData->data.dataSize / 2;
-          std::size_t numVertices = numBytes / (3 * sizeof(float));
-          bitangents.resize(numVertices);
-          tangents.resize(numVertices);
+          const std::size_t bytesPerList{binaryExtraData.data.dataSize / 2};
+          const std::size_t bytesPerVert{3u * sizeof(float)};
+          const std::size_t vertsPerList{bytesPerList / bytesPerVert};
+          bitangents.resize(vertsPerList);
+          tangents.resize(vertsPerList);
+
           // Poor naming choices, maybe?
-          std::memcpy(bitangents.data(), xtraData->data.data.data() + numBytes,
-                      numBytes);
-          std::memcpy(tangents.data(), xtraData->data.data.data(), numBytes);
+          const nif::basic::Byte *bytes{binaryExtraData.data.data.data()};
+          std::memcpy(tangents.data(), bytes, bytesPerList);
+          std::memcpy(bitangents.data(), bytes + bytesPerList, bytesPerList);
         }
       }
-    } while (++xtraIt != block->extraDataArray->end());
+    }
   }
 
   // Here we have a slight problem with loading; For nif files, materials and
@@ -385,24 +371,23 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
 
   // Find the material property, if any
   auto taggedMatIt =
-      std::find_if(block->properties.begin(), block->properties.end(),
+      std::find_if(block.properties.begin(), block.properties.end(),
                    [this](const auto &property) {
-                     return getBlock<nif::NiMaterialProperty>(property);
+                     return checkRefType<nif::NiMaterialProperty>(property);
                    });
 
   // Find the texturing property, if any
   auto taggedTexIt =
-      std::find_if(block->properties.begin(), block->properties.end(),
+      std::find_if(block.properties.begin(), block.properties.end(),
                    [this](const auto &property) {
-                     return getBlock<nif::NiTexturingProperty>(property);
+                     return checkRefType<nif::NiTexturingProperty>(property);
                    });
 
   // It is ok to have a material but no texture
-  if (taggedMatIt != block->properties.end()) {
-    auto &taggedMat = blocks[static_cast<int32_t>(*taggedMatIt)];
-    auto matBlock =
-        dynamic_cast<nif::NiMaterialProperty *>(taggedMat.block.get());
-    auto &matTag = taggedMat.tag;
+  if (taggedMatIt != block.properties.end()) {
+    auto &taggedMat{blocks[static_cast<int32_t>(*taggedMatIt)]};
+    auto &matBlock{dynamic_cast<nif::NiMaterialProperty &>(*taggedMat.block)};
+    auto &matTag{taggedMat.tag};
 
     // If the material has already been loaded, then by the assumption that each
     // material has a unique texture (if any), the associated texture must
@@ -411,21 +396,21 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
     // Without this assumption we would have to clone the material and attach
     // the new texture.
     if (matTag == LoadStatus::Loaded) {
-      auto material = parseNiMaterialProperty(matBlock, matTag);
+      const auto material{parseNiMaterialProperty(matBlock, matTag)};
       submesh->setMaterialName(material->getName(), material->getGroup());
     } else {
-      auto material = parseNiMaterialProperty(matBlock, matTag);
+      const auto material{parseNiMaterialProperty(matBlock, matTag)};
       submesh->setMaterialName(material->getName(), material->getGroup());
-      auto pass = material->getTechnique(0)->getPass(0);
+      auto pass{material->getTechnique(0)->getPass(0)};
 
       // The texture may or may not have already been loaded, but it has
       // definitely not been attached to the material.
-      if (taggedTexIt != block->properties.end()) {
-        auto &taggedTex = blocks[static_cast<int32_t>(*taggedTexIt)];
-        auto texBlock =
-            dynamic_cast<nif::NiTexturingProperty *>(taggedTex.block.get());
-        auto &texTag = taggedTex.tag;
-        auto family = parseNiTexturingProperty(texBlock, texTag, pass);
+      if (taggedTexIt != block.properties.end()) {
+        auto &taggedTex{blocks[static_cast<int32_t>(*taggedTexIt)]};
+        auto texBlock
+            {dynamic_cast<nif::NiTexturingProperty &>(*taggedTex.block)};
+        auto &texTag{taggedTex.tag};
+        auto family{parseNiTexturingProperty(texBlock, texTag, pass)};
         if (family.base) {
           pass->addTextureUnitState(family.base.release());
           if (family.normal) {
@@ -440,17 +425,21 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   // Ogre::SubMeshes cannot have transformations applied to them (that is
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
   // information manually.
-  auto totalTrans = transform * getTransform(block);
+  const auto totalTrans{transform * getTransform(block)};
 
-  auto dataRef = static_cast<int32_t>(block->data);
+  // TODO: Replace with getBlock when tags aren't necessary
+  const auto dataRef{static_cast<int32_t>(block.data)};
   if (dataRef < 0 || dataRef >= blocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
   }
-  auto &taggedDataBlock = blocks[dataRef];
-  auto dataBlock = taggedDataBlock.block.get();
-  auto geometryData = dynamic_cast<nif::NiGeometryData *>(dataBlock);
+  auto &taggedDataBlock{blocks[dataRef]};
+  auto &dataBlock{*taggedDataBlock.block};
+
+  auto &geometryData
+      {dynamic_cast<nif::NiGeometryData &>(*taggedDataBlock.block)};
+
   if (taggedDataBlock.tag == LoadStatus::Loaded) {
-    auto bbox = getBoundingBox(geometryData, totalTrans);
+    auto bbox{getBoundingBox(geometryData, totalTrans)};
     return {submesh, bbox};
   }
 
@@ -458,17 +447,18 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
   Tagger dataTagger{taggedDataBlock.tag};
 
   // TODO: Replace this with a virtual function somehow?
-  if (auto triShapeData = dynamic_cast<nif::NiTriShapeData *>(dataBlock)) {
+  if (dynamic_cast<nif::NiTriShapeData *>(&dataBlock)) {
+    auto &triShapeData{dynamic_cast<nif::NiTriShapeData &>(dataBlock)};
     indexData = generateIndexData(triShapeData);
     submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-  } else if (auto triStripsData =
-      dynamic_cast<nif::NiTriStripsData *>(dataBlock)) {
+  } else if (dynamic_cast<nif::NiTriStripsData *>(&dataBlock)) {
+    auto &triStripsData{dynamic_cast<nif::NiTriStripsData &>(dataBlock)};
     indexData = generateIndexData(triStripsData);
     submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
   }
 
-  auto vertexData = generateVertexData(geometryData, totalTrans,
-                                       &bitangents, &tangents);
+  auto vertexData{generateVertexData(geometryData, totalTrans,
+                                     &bitangents, &tangents)};
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
   // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
@@ -484,9 +474,9 @@ MeshLoaderState::parseNiTriBasedGeom(nif::NiTriBasedGeom *block,
 }
 
 std::shared_ptr<Ogre::Material>
-MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
+MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
                                          LoadStatus &tag) {
-  auto &materialManager = Ogre::MaterialManager::getSingleton();
+  auto &materialManager{Ogre::MaterialManager::getSingleton()};
 
   Tagger tagger{tag};
   // Materials should be nif local, so a reasonable strategy would be name the
@@ -494,15 +484,19 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
   // Unfortunately, nif material names are not necessarily unique, even within
   // a nif file. We therefore resort to using the block index.
   // TODO: This is way more work than we need to do here
+  // TODO: Get rid of this, it's hideous.
+  auto comp = [this, &block](auto i) {
+    return dynamic_cast<const nif::NiMaterialProperty *>(&*blocks[i].block)
+        == &block;
+  };
   auto it = std::find_if(blocks.vertex_set().begin(), blocks.vertex_set().end(),
-                         [this, &block](auto i) {
-                           return blocks[i].block.get() == block;
-                         });
+                         comp);
 
-  std::string meshName = mesh->getName();
-  std::string materialName = meshName.append("/").append(std::to_string(*it));
+  std::string meshName{mesh->getName()};
+  const std::string materialName
+      {meshName.append("/").append(std::to_string(*it))};
   if (tag == LoadStatus::Loaded) {
-    auto material = materialManager.getByName(materialName, mesh->getGroup());
+    auto material{materialManager.getByName(materialName, mesh->getGroup())};
     if (material) {
       return std::move(material);
     } else {
@@ -511,29 +505,29 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
     }
   }
 
-  auto material = materialManager.create(materialName, mesh->getGroup());
+  auto material{materialManager.create(materialName, mesh->getGroup())};
 
-  auto technique = material->getTechnique(0);
-  auto pass = technique->getPass(0);
+  auto technique{material->getTechnique(0)};
+  auto pass{technique->getPass(0)};
 
-  pass->setAmbient(conversions::fromNif(block->ambientColor));
+  pass->setAmbient(conversions::fromNif(block.ambientColor));
 
-  auto diffuse = conversions::fromNif(block->diffuseColor);
-  diffuse.a = block->alpha;
+  auto diffuse{conversions::fromNif(block.diffuseColor)};
+  diffuse.a = block.alpha;
   pass->setDiffuse(diffuse);
 
-  auto specular = conversions::fromNif(block->specularColor);
-  specular.a = block->alpha;
+  auto specular{conversions::fromNif(block.specularColor)};
+  specular.a = block.alpha;
   pass->setSpecular(specular);
 
-  pass->setEmissive(conversions::fromNif(block->emissiveColor));
+  pass->setEmissive(conversions::fromNif(block.emissiveColor));
 
   // TODO: How to convert from nif glossiness to Ogre shininess?
-  pass->setShininess(block->glossiness);
+  pass->setShininess(block.glossiness);
 
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setVertexProgram("genericMaterial_vs_glsl", true);
-  auto vsParams = pass->getVertexProgramParameters();
+  auto vsParams{pass->getVertexProgramParameters()};
   vsParams->setNamedAutoConstant("world",
                                  AutoConst::ACT_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("worldInverseTranspose",
@@ -544,8 +538,8 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
                                  AutoConst::ACT_CAMERA_POSITION);
 
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
-  auto fsParams = pass->getFragmentProgramParameters();
-  const int numLights = 8;
+  auto fsParams{pass->getFragmentProgramParameters()};
+  const int numLights{8};
   fsParams->setNamedConstant("diffuseMap", 0);
   fsParams->setNamedConstant("normalMap", 1);
   fsParams->setNamedAutoConstant("lightPositionArray",
@@ -568,10 +562,10 @@ MeshLoaderState::parseNiMaterialProperty(nif::NiMaterialProperty *block,
 }
 
 std::unique_ptr<Ogre::TextureUnitState>
-MeshLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
+MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
                               Ogre::Pass *parent,
                               const std::optional<std::string> &textureOverride) {
-  auto textureUnit = std::make_unique<Ogre::TextureUnitState>(parent);
+  auto textureUnit{std::make_unique<Ogre::TextureUnitState>(parent)};
 
   switch (tex->clampMode) {
     case nif::Enum::TexClampMode::CLAMP_S_CLAMP_T:
@@ -644,25 +638,36 @@ MeshLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
   textureUnit->setTextureCoordSet(tex->uvSet);
 
   if (tex->hasTextureTransform && *tex->hasTextureTransform) {
-    auto &transform = *tex->textureTransform;
+    const auto &transform{*tex->textureTransform};
 
-    Ogre::Matrix4 translation{};
-    translation.makeTrans(transform.translation.u,
-                          transform.translation.v,
-                          0.0f);
+    const Ogre::Matrix4 translation = [&transform]() {
+      Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
+      t.makeTrans(transform.translation.u, transform.translation.v, 0.0f);
+      return t;
+    }();
 
-    Ogre::Matrix4 scale{};
-    scale.setScale(Ogre::Vector3{transform.scale.u, transform.scale.v, 1.0f});
+    const Ogre::Matrix4 scale = [&transform]() {
+      Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
+      s.setScale(Ogre::Vector3{transform.scale.u, transform.scale.v, 1.0f});
+      return s;
+    }();
 
     // TODO: Is transform.rotation really an anti-clockwise rotation in radians?
-    Ogre::Matrix4 rotation{};
-    rotation.makeTransform({0.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f},
-                           Ogre::Quaternion{Ogre::Radian{transform.rotation},
-                                            Ogre::Vector3::UNIT_Z});
+    const Ogre::Matrix4 rotation = [&transform]() {
+      using namespace Ogre;
+      Matrix4 r{Ogre::Matrix4::IDENTITY};
+      r.makeTransform(Vector3::ZERO, Vector3::UNIT_SCALE,
+                      Quaternion{Radian{transform.rotation}, Vector3::UNIT_Z});
+      return r;
+    }();
 
-    Ogre::Matrix4 center{};
-    center.makeTrans(transform.center.u, transform.center.v, 0.0f);
-    Ogre::Matrix4 centerInv = center.inverse();
+    const Ogre::Matrix4 center = [&transform]() {
+      Ogre::Matrix4 c{Ogre::Matrix4::IDENTITY};
+      c.makeTrans(transform.center.u, transform.center.v, 0.0f);
+      return c;
+    }();
+
+    const Ogre::Matrix4 centerInv{center.inverse()};
 
     switch (transform.transformMethod) {
       case nif::Enum::TransformMethod::MayaDeprecated:
@@ -675,8 +680,8 @@ MeshLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
         break;
       case nif::Enum::TransformMethod::Maya: {
         Ogre::Matrix4 fromMaya{};
-        fromMaya.makeTransform({0.0f, 1.0f, 0.0f},
-                               {0.0f, -1.0f, 0.0f},
+        fromMaya.makeTransform(Ogre::Vector3::UNIT_Y,
+                               Ogre::Vector3::NEGATIVE_UNIT_Y,
                                Ogre::Quaternion::ZERO);
         textureUnit->setTextureTransform(
             center * rotation * centerInv * fromMaya * translation * scale);
@@ -687,28 +692,29 @@ MeshLoaderState::parseTexDesc(nif::compound::TexDesc *tex,
     }
   }
 
-  // TODO: Check this is a valid reference
-  auto sourceRef = static_cast<int32_t>(tex->source);
-  TaggedBlock taggedSource = blocks[sourceRef];
-  LoadStatus &sourceTag = taggedSource.tag;
-  auto source = dynamic_cast<nif::NiSourceTexture *>(taggedSource.block.get());
+  // TODO: Replace with getBlock when tags aren't necessary
+  const auto sourceRef{static_cast<int32_t>(tex->source)};
+  auto &taggedSource{blocks[sourceRef]};
+  auto &sourceTag{taggedSource.tag};
+  auto source{dynamic_cast<nif::NiSourceTexture &>(*taggedSource.block)};
   parseNiSourceTexture(source, sourceTag, textureUnit.get(), textureOverride);
 
   return textureUnit;
 }
 
-void MeshLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
+void MeshLoaderState::parseNiSourceTexture(const nif::NiSourceTexture &block,
                                            LoadStatus &tag,
                                            Ogre::TextureUnitState *tex,
                                            const std::optional<std::string> &textureOverride) {
   Tagger tagger{tag};
 
-  if (block->useExternal) {
+  if (block.useExternal) {
     using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
-    auto &texFile = std::get<ExternalTextureFile>(block->textureFileData);
+    auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
     if (textureOverride) {
       tex->setTextureName(*textureOverride);
     } else {
+      // TODO: Use fs not std::fs
       tex->setTextureName(conversions::normalizePath(
           texFile.filename.string.str()));
     }
@@ -726,7 +732,7 @@ void MeshLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
   // let Ogre decide.
   // TODO: Try and convert the pixel layout?
 
-  switch (block->formatPrefs.mipMapFormat) {
+  switch (block.formatPrefs.mipMapFormat) {
     case nif::Enum::MipMapFormat::MIP_FMT_NO:tex->setNumMipmaps(0);
       break;
     case nif::Enum::MipMapFormat::MIP_FMT_YES:[[fallthrough]];
@@ -745,7 +751,7 @@ void MeshLoaderState::parseNiSourceTexture(nif::NiSourceTexture *block,
 }
 
 TextureFamily
-MeshLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
+MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
                                           LoadStatus &tag, Ogre::Pass *pass) {
   Tagger tagger{tag};
 
@@ -754,39 +760,39 @@ MeshLoaderState::parseNiTexturingProperty(nif::NiTexturingProperty *block,
 
   TextureFamily family{};
 
-  if (block->hasBaseTexture) {
-    family.base = parseTexDesc(&block->baseTexture, pass);
+  if (block.hasBaseTexture) {
+    family.base = parseTexDesc(&block.baseTexture, pass);
     // Normal mapping is automatically turned on if a normal map exists. If one
     // doesn't exist, then we use a flat normal map.
-    auto &texMgr = Ogre::TextureManager::getSingleton();
+    auto &texMgr{Ogre::TextureManager::getSingleton()};
     if (auto normalMap = toNormalMap(family.base->getTextureName());
         texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
-      family.normal = parseTexDesc(&block->baseTexture, pass, normalMap);
+      family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
     } else {
-      family.normal = parseTexDesc(&block->baseTexture, pass,
+      family.normal = parseTexDesc(&block.baseTexture, pass,
                                    "textures/flat_n.dds");
     }
   }
-  if (block->hasDarkTexture) {
-    family.dark = parseTexDesc(&block->darkTexture, pass);
+  if (block.hasDarkTexture) {
+    family.dark = parseTexDesc(&block.darkTexture, pass);
   }
-  if (block->hasDetailTexture) {
-    family.detail = parseTexDesc(&block->detailTexture, pass);
+  if (block.hasDetailTexture) {
+    family.detail = parseTexDesc(&block.detailTexture, pass);
   }
-  if (block->hasGlossTexture) {
-    family.gloss = parseTexDesc(&block->glossTexture, pass);
+  if (block.hasGlossTexture) {
+    family.gloss = parseTexDesc(&block.glossTexture, pass);
   }
-  if (block->hasGlowTexture) {
-    family.glow = parseTexDesc(&block->glowTexture, pass);
+  if (block.hasGlowTexture) {
+    family.glow = parseTexDesc(&block.glowTexture, pass);
   }
-  if (block->hasDecal0Texture) {
-    family.decals.emplace_back(parseTexDesc(&block->decal0Texture, pass));
-    if (block->hasDecal1Texture) {
-      family.decals.emplace_back(parseTexDesc(&block->decal1Texture, pass));
-      if (block->hasDecal2Texture) {
-        family.decals.emplace_back(parseTexDesc(&block->decal2Texture, pass));
-        if (block->hasDecal3Texture) {
-          family.decals.emplace_back(parseTexDesc(&block->decal3Texture, pass));
+  if (block.hasDecal0Texture) {
+    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
+    if (block.hasDecal1Texture) {
+      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
+      if (block.hasDecal2Texture) {
+        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
+        if (block.hasDecal3Texture) {
+          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
         }
       }
     }
@@ -818,24 +824,28 @@ void TBGVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
 // this child transformation occurs before any parent ones.
 void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &taggedNiObject = g[v];
-  auto *niObject = taggedNiObject.block.get();
+  auto &niObject = *taggedNiObject.block;
   auto &tag = taggedNiObject.tag;
 
-  if (auto niTriBasedGeom = dynamic_cast<nif::NiTriBasedGeom *>(niObject)) {
+  if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
+    const auto
+        &niTriBasedGeom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
     auto[submesh, subBbox] = state.parseNiTriBasedGeom(niTriBasedGeom, tag,
                                                        transform);
-    auto bbox = state.mesh->getBounds();
+    auto bbox{state.mesh->getBounds()};
     bbox.merge(subBbox);
     state.mesh->_setBounds(bbox);
-  } else if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
+  } else if (dynamic_cast<const nif::NiNode *>(&niObject)) {
+    auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     transform = transform * getTransform(niNode);
   }
 }
 
 // If we have finished reading an NiNode, then we can remove its transformation.
 void TBGVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
-  auto *niObject = g[v].block.get();
-  if (auto niNode = dynamic_cast<nif::NiNode *>(niObject)) {
+  auto &niObject{*g[v].block};
+  if (dynamic_cast<const nif::NiNode *>(&niObject)) {
+    auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     transform = transform * getTransform(niNode).inverse();
   }
 }

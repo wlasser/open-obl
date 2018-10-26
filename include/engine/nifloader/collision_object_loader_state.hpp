@@ -44,48 +44,43 @@ struct CollisionObjectVisitor {
 
   template<class T>
   struct RefResult {
-    T *block;
+    const T &block;
     engine::nifloader::LoadStatus &tag;
   };
 
   template<class U, class T>
   RefResult<U> getRef(const Graph &g, nif::basic::Ref<T> ref) {
-    auto refInt = static_cast<__int32_t>(ref);
+    const auto refInt{static_cast<int32_t>(ref)};
     if (refInt < 0 || refInt >= boost::num_vertices(g)) {
       OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                   "Nonexistent reference",
                   "CollisionObjectVisitor");
     }
     auto &taggedBlock = g[refInt];
-    auto *block = dynamic_cast<U *>(taggedBlock.block.get());
-    if (block == nullptr) {
-      OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "CollisionObjectVisitor");
-    }
-    return {block, taggedBlock.tag};
+    return {dynamic_cast<const U &>(*taggedBlock.block), taggedBlock.tag};
   }
 
   void parseCollisionObject(const Graph &g,
-                            nif::bhk::CollisionObject *block,
+                            const nif::bhk::CollisionObject &block,
                             engine::nifloader::LoadStatus &tag);
 
   std::pair<std::unique_ptr<btCollisionShape>,
             std::unique_ptr<Ogre::RigidBodyInfo>>
   parseWorldObject(const Graph &g,
-                   nif::bhk::WorldObject *block,
+                   const nif::bhk::WorldObject &block,
                    engine::nifloader::LoadStatus &tag);
 
-  Ogre::RigidBodyInfo generateRigidBodyInfo(nif::bhk::RigidBody *block) const;
+  Ogre::RigidBodyInfo
+  generateRigidBodyInfo(const nif::bhk::RigidBody &block) const;
 
   std::unique_ptr<btCollisionShape>
   parseShape(const Graph &g,
-             nif::bhk::Shape *block,
+             const nif::bhk::Shape &block,
              engine::nifloader::LoadStatus &tag);
 
   std::unique_ptr<btCollisionShape>
   parseNiTriStripsData(const Graph &g,
-                       nif::hk::PackedNiTriStripsData *block,
+                       const nif::hk::PackedNiTriStripsData &block,
                        engine::nifloader::LoadStatus &tag);
 };
 

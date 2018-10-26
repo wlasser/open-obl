@@ -47,7 +47,7 @@ class Tagger {
 
 // Convert the translation, rotation, and scale parameters into Ogre coordinates
 // and return a combined transformation matrix.
-Ogre::Matrix4 getTransform(nif::NiAVObject *block);
+Ogre::Matrix4 getTransform(const nif::NiAVObject &block);
 
 } // namespace engine::nifloader
 
