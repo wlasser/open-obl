@@ -20,9 +20,8 @@ void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
   auto ogreDataStreamBuffer = Ogre::OgreDataStreambuf{ogreDataStream};
   std::istream is{&ogreDataStreamBuffer};
 
-  auto blocks = nifloader::createBlockGraph(is);
-
-  CollisionObjectLoaderState instance(collisionObject, blocks);
+  CollisionObjectLoaderState instance(collisionObject,
+                                      nifloader::createBlockGraph(is));
 }
 
 } // namespace engine::nifloader

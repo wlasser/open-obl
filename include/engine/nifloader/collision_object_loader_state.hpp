@@ -15,7 +15,7 @@ namespace engine::nifloader {
 class CollisionObjectLoaderState {
  public:
   CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
-                             nifloader::BlockGraph untaggedBlocks);
+                             nifloader::BlockGraph blocks);
 };
 
 struct CollisionObjectVisitor {
