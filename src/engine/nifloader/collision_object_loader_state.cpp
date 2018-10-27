@@ -12,78 +12,78 @@ namespace engine::nifloader {
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject,
-    nifloader::BlockGraph untaggedBlocks) {
-
-  CollisionObjectVisitor::Graph blocks{};
-  boost::copy_graph(untaggedBlocks, blocks);
+    nifloader::BlockGraph blocks) {
 
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  auto propertyMap = boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, blocks));
-
-  boost::depth_first_search(blocks,
-                            CollisionObjectVisitor(collisionObject),
-                            propertyMap);
+  const auto indexMap{boost::get(boost::vertex_index, blocks)};
+  const auto propertyMap{boost::make_iterator_property_map(colorMap.begin(),
+                                                           indexMap)};
+  CollisionObjectVisitor visitor(collisionObject);
+  boost::depth_first_search(blocks, std::move(visitor), propertyMap);
 }
 
-void CollisionObjectVisitor::start_vertex(vertex_descriptor v,
-                                          const Graph &g) {
+void CollisionObjectVisitor::start_vertex(vertex_descriptor, const Graph &) {
   mTransform = Ogre::Matrix4::IDENTITY;
-  mLogger->trace("Started at root vertex {}, reset transform", v);
 }
 
 void CollisionObjectVisitor::discover_vertex(vertex_descriptor v,
                                              const Graph &g) {
-  const auto &taggedNiObject{g[v]};
-  const auto &niObject{*taggedNiObject.block};
-  auto &tag = taggedNiObject.tag;
+  const auto &niObject{*g[v]};
 
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     const auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block {} (NiNode)", v);
-    mTransform = mTransform * engine::nifloader::getTransform(niNode);
-    mLogger->trace(" * New transform = {}", mTransform);
+    discover_vertex(niNode, g);
   } else if (dynamic_cast<const nif::BSXFlags *>(&niObject)) {
     const auto &bsxFlags{dynamic_cast<const nif::BSXFlags &>(niObject)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block {} (BSXFlags)", v);
-    mLogger->trace(" * New transform = {}", mTransform);
-    using Flags = nif::BSXFlags::Flags;
-    const Flags flags{bsxFlags.data};
-    if ((flags & Flags::bHavok) != Flags::bNone) {
-      mHasHavok = true;
-    }
+    discover_vertex(bsxFlags, g);
   } else if (dynamic_cast<const nif::bhk::CollisionObject *>(&niObject)) {
     const auto &collisionObject
         {dynamic_cast<const nif::bhk::CollisionObject &>(niObject)};
-    if (!mHasHavok) return;
-    parseCollisionObject(g, collisionObject, tag);
+    discover_vertex(collisionObject, g);
   }
 }
 
 void CollisionObjectVisitor::finish_vertex(vertex_descriptor v,
                                            const Graph &g) {
-  const auto &niObject{*g[v].block};
+  const auto &niObject{*g[v]};
+
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     const auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
-    mTransform = mTransform * getTransform(niNode).inverse();
+    finish_vertex(niNode, g);
   }
-  mLogger->trace("Finished block {}", v);
-  mLogger->trace(" * New transform = {}", mTransform);
+}
+
+void CollisionObjectVisitor::discover_vertex(const nif::NiNode &node,
+                                             const Graph &) {
+  mTransform = mTransform * getTransform(node);
+}
+
+void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
+                                             const Graph &) {
+  using Flags = nif::BSXFlags::Flags;
+  const Flags flags{bsxFlags.data};
+  if ((flags & Flags::bHavok) != Flags::bNone) {
+    mHasHavok = true;
+  }
+}
+
+void CollisionObjectVisitor::discover_vertex(const nif::bhk::CollisionObject &collisionObject,
+                                             const Graph &g) {
+  if (!mHasHavok) return;
+  parseCollisionObject(g, collisionObject);
+}
+
+void CollisionObjectVisitor::finish_vertex(const nif::NiNode &node,
+                                           const Graph &g) {
+  mTransform = mTransform * getTransform(node).inverse();
 }
 
 void CollisionObjectVisitor::parseCollisionObject(const Graph &g,
-                                                  const nif::bhk::CollisionObject &block,
-                                                  engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
-  mLogger->trace("Parsing block ? (bhkCollisionObject)");
-  mLogger->trace(" * New transform = {}", mTransform);
-
+                                                  const nif::bhk::CollisionObject &block) {
   // TODO: COFlags
   // TODO: target
-  auto[worldObj, worldObjTag]{getRef<nif::bhk::WorldObject>(g, block.body)};
-  auto[collisionShape, info]{parseWorldObject(g, worldObj, worldObjTag)};
+  const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
+  auto[collisionShape, info]{parseWorldObject(g, worldObj)};
   if (collisionShape) mRigidBody->mCollisionShape = std::move(collisionShape);
   if (info) mRigidBody->mInfo = std::move(info);
 }
@@ -91,30 +91,21 @@ void CollisionObjectVisitor::parseCollisionObject(const Graph &g,
 std::pair<std::unique_ptr<btCollisionShape>,
           std::unique_ptr<Ogre::RigidBodyInfo>>
 CollisionObjectVisitor::parseWorldObject(const Graph &g,
-                                         const nif::bhk::WorldObject &block,
-                                         engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
-  mLogger->trace("Parsing block ? (bhkWorldObject)");
-  mLogger->trace(" * New transform = {}", mTransform);
-
+                                         const nif::bhk::WorldObject &block) {
   // TODO: Flags
 
-  Ogre::Matrix4 localTrans{Ogre::Matrix4::IDENTITY};
-  if (dynamic_cast<const nif::bhk::RigidBodyT *>(&block)) {
-    const auto &body{dynamic_cast<const nif::bhk::RigidBodyT &>(block)};
-    using namespace engine::conversions;
-    localTrans.makeTransform(
-        fromBSCoordinates(fromNif(body.translation).xyz()),
-        {1.0f, 1.0f, 1.0f},
-        fromBSCoordinates(fromNif(body.rotation)));
-    mLogger->trace(" * Applying RigidBodyT transform {}", localTrans);
-  }
+  const Ogre::Matrix4 localTrans = [&block]() {
+    // TODO: RigidBody that is not a RigidBodyT
+    if (dynamic_cast<const nif::bhk::RigidBodyT *>(&block)) {
+      const auto &body{dynamic_cast<const nif::bhk::RigidBodyT &>(block)};
+      return getRigidBodyTransform(body);
+    } else {
+      return Ogre::Matrix4::IDENTITY;
+    }
+  }();
   mTransform = mTransform * localTrans;
-  // TODO: RigidBody that is not a RigidBodyT
-
-  auto[shape, shapeTag]{getRef<nif::bhk::Shape>(g, block.shape)};
-  auto collisionShape{parseShape(g, shape, shapeTag)};
-
+  const auto &shape{getRef<nif::bhk::Shape>(g, block.shape)};
+  auto collisionShape{parseShape(g, shape)};
   mTransform = mTransform * localTrans.inverse();
 
   std::unique_ptr<Ogre::RigidBodyInfo> info{};
@@ -147,11 +138,6 @@ CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) 
   Ogre::Vector3 principalMoments{};
   inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
                                     principalAxes.data());
-  mLogger->trace(
-      "Diagonalized inertia tensor, eigenvalues and eigenvectors are");
-  for (int i = 0; i < 3; ++i) {
-    mLogger->trace(" * {}, {}", principalMoments[i], principalAxes[i]);
-  }
 
   // We have the diagonalization
   // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
@@ -183,107 +169,17 @@ CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) 
 
 std::unique_ptr<btCollisionShape>
 CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::Shape &block,
-                                   engine::nifloader::LoadStatus &tag) {
-  // TODO: Lots of duplicate code in these branches.
-  if (dynamic_cast<const nif::bhk::MoppBvTreeShape *>(&block)) {
-    const auto &moppBvTreeShape
-        {dynamic_cast<const nif::bhk::MoppBvTreeShape &>(block)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkMoppBvTreeShape)");
-    mLogger->trace(" * New transform = {}", mTransform);
-
-    const auto material{moppBvTreeShape.material.material};
-
-    // Instead of decoding the MOPP data we use the linked shape
-    auto[shape, shapeTag]{getRef<nif::bhk::Shape>(g, moppBvTreeShape.shape)};
-
-    // Apply the scale and recurse into the linked shape
-    // The effort here is to avoid scaling the w component
-    const float scale{moppBvTreeShape.shapeScale};
-    const Ogre::Matrix4 scaleMat = [scale]() {
-      Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-      s.setScale({scale, scale, scale});
-      return s;
-    }();
-
-    mTransform = mTransform * scaleMat;
-    auto collisionShape{parseShape(g, shape, shapeTag)};
-    mTransform = mTransform * scaleMat.inverse();
-
-    return collisionShape;
-  } else if (dynamic_cast<const nif::bhk::PackedNiTriStripsShape *>(&block)) {
-    const auto &niTriStrips
-        {dynamic_cast<const nif::bhk::PackedNiTriStripsShape &>(block)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkPackedNiTriStripsShape)");
-    mLogger->trace(" * New transform = {}", mTransform);
-
-    // TODO: Subshapes?
-
-    // @formatter:off
-    auto[data, dataTag]
-        {getRef<nif::hk::PackedNiTriStripsData>(g, niTriStrips.data)};
-    // @formatter:on
-
-    const Ogre::Matrix4 scaleMat = [&niTriStrips]() {
-      Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-      s.setScale(conversions::fromNif(niTriStrips.scale).xyz());
-      return s;
-    }();
-
-    // For some reason the coordinates are scaled down in the nif file by a
-    // factor of 7. This scale needs to also apply to the translation, not
-    // just the linear part.
-    mTransform = mTransform * scaleMat * 7.0f;
-    auto collisionShape = parseNiTriStripsData(g, data, dataTag);
-    mTransform = mTransform * scaleMat.inverse() * (1.0f / 7.0f);
-
-    return collisionShape;
-  } else if (dynamic_cast<const nif::bhk::ConvexVerticesShape *>(&block)) {
-    const auto &convexVerticesShape
-        {dynamic_cast<const nif::bhk::ConvexVerticesShape &>(block)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkConvexVerticesShape)");
-    mLogger->trace(" * New transform = {}", mTransform);
-
-    const auto material{convexVerticesShape.material.material};
-
-    auto collisionShape{std::make_unique<btConvexHullShape>()};
-    for (const auto &vertex : convexVerticesShape.vertices) {
-      using namespace engine::conversions;
-      using namespace Ogre::conversions;
-      const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex).xyz()), 1.0f};
-      const auto v{mTransform * ogreV * 7.0f};
-      collisionShape->addPoint(toBullet(v.xyz()));
-    }
-    return collisionShape;
-  } else if (dynamic_cast<const nif::bhk::BoxShape *>(&block)) {
-    const auto &boxShape{dynamic_cast<const nif::bhk::BoxShape &>(block)};
-    engine::nifloader::Tagger tagger{tag};
-    mLogger->trace("Parsing block ? (bhkBoxShape)");
-    mLogger->trace(" * New transform = {}", mTransform);
-
-    const auto material{boxShape.material.material};
-
-    // Applying the nif transform may result in a non-axis-aligned box, which
-    // btBoxShape does not support, so we use a btConvexHullShape instead.
-    // If necessary, one could check that the box stays axis-aligned by
-    // extracting the rotation and comparing the volumes of the original
-    // axis-aligned box and the rotated axis-aligned box.
-    using namespace engine::conversions;
-    using namespace Ogre::conversions;
-    auto collisionShape{std::make_unique<btConvexHullShape>()};
-    const Ogre::Vector3 halfExtents{fromNif(boxShape.dimensions).xyz()};
-    const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
-    for (const auto &corner : box.getAllCorners()) {
-      const Ogre::Vector4 ogreV{fromBSCoordinates(corner), 1.0f};
-      const auto v{mTransform * ogreV * 7.0f};
-      collisionShape->addPoint(toBullet(v.xyz()));
-    }
-    return collisionShape;
+                                   const nif::bhk::Shape &block) {
+  using namespace nif::bhk;
+  if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const MoppBvTreeShape &>(block));
+  } else if (dynamic_cast<const PackedNiTriStripsShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const PackedNiTriStripsShape &>(block));
+  } else if (dynamic_cast<const ConvexVerticesShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const ConvexVerticesShape &>(block));
+  } else if (dynamic_cast<const BoxShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const BoxShape &>(block));
   } else {
-    engine::nifloader::Tagger tagger{tag};
     mLogger->warn("Parsing unknown bhkShape");
     return nullptr;
     //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
@@ -293,10 +189,94 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 }
 
 std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::MoppBvTreeShape &shape) {
+  const auto material{shape.material.material};
+
+  // Instead of decoding the MOPP data we use the linked shape
+  const auto &childShape{getRef<nif::bhk::Shape>(g, shape.shape)};
+
+  // Apply the scale and recurse into the linked shape
+  // The effort here is to avoid scaling the w component
+  const float scale{shape.shapeScale};
+  const Ogre::Matrix4 scaleMat = [scale]() {
+    Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
+    s.setScale({scale, scale, scale});
+    return s;
+  }();
+
+  mTransform = mTransform * scaleMat;
+  auto collisionShape{parseShape(g, childShape)};
+  mTransform = mTransform * scaleMat.inverse();
+
+  return collisionShape;
+}
+
+std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::PackedNiTriStripsShape &shape) {
+  // TODO: Subshapes?
+
+  const auto &data{getRef<nif::hk::PackedNiTriStripsData>(g, shape.data)};
+
+  const Ogre::Matrix4 scaleMat = [&shape]() {
+    Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
+    s.setScale(conversions::fromNif(shape.scale).xyz());
+    return s;
+  }();
+
+  // For some reason the coordinates are scaled down in the nif file by a
+  // factor of 7. This scale needs to also apply to the translation, not
+  // just the linear part.
+  mTransform = mTransform * scaleMat * 7.0f;
+  auto collisionShape{parseNiTriStripsData(g, data)};
+  mTransform = mTransform * scaleMat.inverse() * (1.0f / 7.0f);
+
+  return collisionShape;
+}
+
+std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::ConvexVerticesShape &shape) {
+  const auto material{shape.material.material};
+
+  auto collisionShape{std::make_unique<btConvexHullShape>()};
+  for (const auto &vertex : shape.vertices) {
+    using namespace engine::conversions;
+    using namespace Ogre::conversions;
+    const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex).xyz()), 1.0f};
+    const auto v{mTransform * ogreV * 7.0f};
+    collisionShape->addPoint(toBullet(v.xyz()));
+  }
+  return collisionShape;
+}
+
+std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::BoxShape &shape) {
+  const auto material{shape.material.material};
+
+  // Applying the nif transform may result in a non-axis-aligned box, which
+  // btBoxShape does not support, so we use a btConvexHullShape instead.
+  // If necessary, one could check that the box stays axis-aligned by
+  // extracting the rotation and comparing the volumes of the original
+  // axis-aligned box and the rotated axis-aligned box.
+  using namespace engine::conversions;
+  using namespace Ogre::conversions;
+  auto collisionShape{std::make_unique<btConvexHullShape>()};
+  const Ogre::Vector3 halfExtents{fromNif(shape.dimensions).xyz()};
+  const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
+  for (const auto &corner : box.getAllCorners()) {
+    const Ogre::Vector4 ogreV{fromBSCoordinates(corner), 1.0f};
+    const auto v{mTransform * ogreV * 7.0f};
+    collisionShape->addPoint(toBullet(v.xyz()));
+  }
+  return collisionShape;
+}
+
+std::unique_ptr<btCollisionShape>
 CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
-                                             const nif::hk::PackedNiTriStripsData &block,
-                                             engine::nifloader::LoadStatus &tag) {
-  engine::nifloader::Tagger tagger{tag};
+                                             const nif::hk::PackedNiTriStripsData &block) {
   mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
   mLogger->trace(" * New transform = {}", mTransform);
 
@@ -360,6 +340,15 @@ CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
   // TODO: Support dynamic concave geometry
 
   return nullptr;
+}
+
+Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
+  using namespace engine::conversions;
+  Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
+  t.makeTransform(fromBSCoordinates(fromNif(body.translation).xyz()),
+                  Ogre::Vector3::UNIT_SCALE,
+                  fromBSCoordinates(fromNif(body.rotation)));
+  return t;
 }
 
 } // namespace engine::nifloader

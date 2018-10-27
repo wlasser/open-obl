@@ -19,70 +19,79 @@ class CollisionObjectLoaderState {
 };
 
 struct CollisionObjectVisitor {
-  using Graph = engine::nifloader::TaggedBlockGraph;
+  using Graph = BlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
 
-  void initialize_vertex(vertex_descriptor v, const Graph &g) {}
   void start_vertex(vertex_descriptor v, const Graph &g);
   void discover_vertex(vertex_descriptor v, const Graph &g);
-  void examine_edge(edge_descriptor e, const Graph &g) {}
-  void tree_edge(edge_descriptor e, const Graph &g) {}
-  void back_edge(edge_descriptor e, const Graph &g) {}
-  void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
-  void finish_edge(edge_descriptor e, const Graph &g) {}
   void finish_vertex(vertex_descriptor v, const Graph &g);
+
+  [[maybe_unused]] void initialize_vertex(vertex_descriptor, const Graph &) {}
+  [[maybe_unused]] void examine_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void tree_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void back_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
   explicit CollisionObjectVisitor(Ogre::CollisionObject *rigidBody)
       : mRigidBody(rigidBody), mLogger(spdlog::get(engine::settings::log)) {}
 
  private:
-  Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   Ogre::CollisionObject *mRigidBody{};
+  Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   bool mHasHavok{false};
   std::shared_ptr<spdlog::logger> mLogger{};
 
-  template<class T>
-  struct RefResult {
-    const T &block;
-    engine::nifloader::LoadStatus &tag;
-  };
+  void discover_vertex(const nif::NiNode &node, const Graph &g);
+  void discover_vertex(const nif::BSXFlags &bsxFlags, const Graph &g);
+  void discover_vertex(const nif::bhk::CollisionObject &collisionObject,
+                       const Graph &g);
+
+  void finish_vertex(const nif::NiNode &node, const Graph &g);
 
   template<class U, class T>
-  RefResult<U> getRef(const Graph &g, nif::basic::Ref<T> ref) {
+  const U &getRef(const Graph &g, nif::basic::Ref<T> ref) {
     const auto refInt{static_cast<int32_t>(ref)};
     if (refInt < 0 || refInt >= boost::num_vertices(g)) {
       OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                   "Nonexistent reference",
                   "CollisionObjectVisitor");
     }
-    auto &taggedBlock = g[refInt];
-    return {dynamic_cast<const U &>(*taggedBlock.block), taggedBlock.tag};
+    return dynamic_cast<const U &>(*g[refInt]);
   }
 
   void parseCollisionObject(const Graph &g,
-                            const nif::bhk::CollisionObject &block,
-                            engine::nifloader::LoadStatus &tag);
+                            const nif::bhk::CollisionObject &block);
 
   std::pair<std::unique_ptr<btCollisionShape>,
             std::unique_ptr<Ogre::RigidBodyInfo>>
-  parseWorldObject(const Graph &g,
-                   const nif::bhk::WorldObject &block,
-                   engine::nifloader::LoadStatus &tag);
+  parseWorldObject(const Graph &g, const nif::bhk::WorldObject &block);
 
   Ogre::RigidBodyInfo
   generateRigidBodyInfo(const nif::bhk::RigidBody &block) const;
 
   std::unique_ptr<btCollisionShape>
-  parseShape(const Graph &g,
-             const nif::bhk::Shape &block,
-             engine::nifloader::LoadStatus &tag);
+  parseShape(const Graph &g, const nif::bhk::Shape &block);
+
+  std::unique_ptr<btCollisionShape>
+  parseShape(const Graph &g, const nif::bhk::MoppBvTreeShape &shape);
+
+  std::unique_ptr<btCollisionShape>
+  parseShape(const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape);
+
+  std::unique_ptr<btCollisionShape>
+  parseShape(const Graph &g, const nif::bhk::ConvexVerticesShape &shape);
+
+  std::unique_ptr<btCollisionShape>
+  parseShape(const Graph &g, const nif::bhk::BoxShape &shape);
 
   std::unique_ptr<btCollisionShape>
   parseNiTriStripsData(const Graph &g,
-                       const nif::hk::PackedNiTriStripsData &block,
-                       engine::nifloader::LoadStatus &tag);
+                       const nif::hk::PackedNiTriStripsData &block);
 };
+
+Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
 
 } // namespace engine::nifloader
 
