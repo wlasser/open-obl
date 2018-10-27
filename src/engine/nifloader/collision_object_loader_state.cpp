@@ -28,28 +28,25 @@ void CollisionObjectVisitor::start_vertex(vertex_descriptor, const Graph &) {
 
 void CollisionObjectVisitor::discover_vertex(vertex_descriptor v,
                                              const Graph &g) {
+  using namespace nif;
   const auto &niObject{*g[v]};
 
-  if (dynamic_cast<const nif::NiNode *>(&niObject)) {
-    const auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
-    discover_vertex(niNode, g);
-  } else if (dynamic_cast<const nif::BSXFlags *>(&niObject)) {
-    const auto &bsxFlags{dynamic_cast<const nif::BSXFlags &>(niObject)};
-    discover_vertex(bsxFlags, g);
-  } else if (dynamic_cast<const nif::bhk::CollisionObject *>(&niObject)) {
-    const auto &collisionObject
-        {dynamic_cast<const nif::bhk::CollisionObject &>(niObject)};
-    discover_vertex(collisionObject, g);
+  if (dynamic_cast<const NiNode *>(&niObject)) {
+    discover_vertex(dynamic_cast<const NiNode &>(niObject), g);
+  } else if (dynamic_cast<const BSXFlags *>(&niObject)) {
+    discover_vertex(dynamic_cast<const BSXFlags &>(niObject), g);
+  } else if (dynamic_cast<const bhk::CollisionObject *>(&niObject)) {
+    discover_vertex(dynamic_cast<const bhk::CollisionObject &>(niObject), g);
   }
 }
 
 void CollisionObjectVisitor::finish_vertex(vertex_descriptor v,
                                            const Graph &g) {
+  using namespace nif;
   const auto &niObject{*g[v]};
 
-  if (dynamic_cast<const nif::NiNode *>(&niObject)) {
-    const auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
-    finish_vertex(niNode, g);
+  if (dynamic_cast<const NiNode *>(&niObject)) {
+    finish_vertex(dynamic_cast<const NiNode &>(niObject), g);
   }
 }
 
@@ -277,61 +274,27 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 std::unique_ptr<btCollisionShape>
 CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
                                              const nif::hk::PackedNiTriStripsData &block) {
-  mLogger->trace("Parsing block ? (hkPackedNiTriStripsData)");
-  mLogger->trace(" * New transform = {}", mTransform);
-
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
   // so they need to be kept alive for the lifetime of the collision object.
-  btIndexedMesh indexedMesh{};
+  btIndexedMesh mesh{};
 
-  indexedMesh.m_numTriangles = block.numTriangles;
-  indexedMesh.m_numVertices = block.numVertices;
+  mesh.m_numTriangles = block.numTriangles;
+  mesh.m_numVertices = block.numVertices;
 
   // TODO: Is aligning the triangles to 8-byte boundaries faster than packing?
-  indexedMesh.m_triangleIndexStride = 3u * sizeof(nif::basic::UShort);
+  mesh.m_triangleIndexStride = 3u * sizeof(nif::basic::UShort);
 
   // Vertex data is always in single-precision, regardless of Ogre or Bullet
-  indexedMesh.m_vertexType = PHY_FLOAT;
-  indexedMesh.m_vertexStride = 3u * sizeof(float);
+  mesh.m_vertexType = PHY_FLOAT;
+  mesh.m_vertexStride = 3u * sizeof(float);
 
-  // Copy into index buffer
-  auto &indexBuffer{mRigidBody->mIndexBuffer};
-  indexBuffer.assign(indexedMesh.m_numTriangles * 3u, 0u);
-  {
-    auto it{indexBuffer.begin()};
-    for (const auto &triData : block.triangles) {
-      const auto &tri{triData.triangle};
-      *it = tri.v1;
-      *(it + 1) = tri.v2;
-      *(it + 2) = tri.v3;
-      it += 3;
-    }
-  }
-  indexedMesh.m_triangleIndexBase =
-      reinterpret_cast<unsigned char *>(indexBuffer.data());
-
-  // Copy into vertex buffer
-  auto &vertexBuffer{mRigidBody->mVertexBuffer};
-  vertexBuffer.assign(indexedMesh.m_numVertices * 3u, 0.0f);
-  {
-    auto it{vertexBuffer.begin()};
-    for (const auto &vertex : block.vertices) {
-      using namespace engine::conversions;
-      const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
-      const auto v{mTransform * ogreV};
-      *it = v.x;
-      *(it + 1) = v.y;
-      *(it + 2) = v.z;
-      it += 3;
-    }
-  }
-  indexedMesh.m_vertexBase =
-      reinterpret_cast<unsigned char *>(vertexBuffer.data());
+  mesh.m_triangleIndexBase = fillIndexBuffer(mRigidBody->mIndexBuffer, block);
+  mesh.m_vertexBase = fillVertexBuffer(mRigidBody->mVertexBuffer, block);
 
   // Construct the actual mesh and give ownership to the rigid body
   auto collisionMesh{std::make_unique<btTriangleIndexVertexArray>()};
-  collisionMesh->addIndexedMesh(indexedMesh, PHY_SHORT);
+  collisionMesh->addIndexedMesh(mesh, PHY_SHORT);
   mRigidBody->mCollisionMesh = std::move(collisionMesh);
 
   return std::make_unique<btBvhTriangleMeshShape>(
@@ -340,6 +303,36 @@ CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
   // TODO: Support dynamic concave geometry
 
   return nullptr;
+}
+
+unsigned char *
+CollisionObjectVisitor::fillIndexBuffer(std::vector<uint16_t> &indexBuf,
+                                        const nif::hk::PackedNiTriStripsData &block) {
+  indexBuf.assign(block.numTriangles * 3u, 0u);
+  auto it{indexBuf.begin()};
+  for (const auto &triData : block.triangles) {
+    const auto &tri{triData.triangle};
+    *it++ = tri.v1;
+    *it++ = tri.v2;
+    *it++ = tri.v3;
+  }
+  return reinterpret_cast<unsigned char *>(indexBuf.data());
+}
+
+unsigned char *
+CollisionObjectVisitor::fillVertexBuffer(std::vector<float> &vertexBuf,
+                                         const nif::hk::PackedNiTriStripsData &block) {
+  vertexBuf.assign(block.numVertices * 3u, 0.0f);
+  auto it{vertexBuf.begin()};
+  for (const auto &vertex : block.vertices) {
+    using namespace engine::conversions;
+    const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+    const auto v{mTransform * ogreV};
+    *it++ = v.x;
+    *it++ = v.y;
+    *it++ = v.z;
+  }
+  return reinterpret_cast<unsigned char *>(vertexBuf.data());
 }
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {

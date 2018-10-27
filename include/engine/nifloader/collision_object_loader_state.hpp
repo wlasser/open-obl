@@ -89,6 +89,16 @@ struct CollisionObjectVisitor {
   std::unique_ptr<btCollisionShape>
   parseNiTriStripsData(const Graph &g,
                        const nif::hk::PackedNiTriStripsData &block);
+
+  // Fill indexBuf with the indexed triangle data of block and return a pointer
+  // to the first byte. indexBuf will be resized if necessary.
+  unsigned char *fillIndexBuffer(std::vector<uint16_t> &indexBuf,
+                                 const nif::hk::PackedNiTriStripsData &block);
+
+  // Fill vertexBuf with the vertex data of block and return a pointer to the
+  // first byte. vertexBuf will be resized if necessary.
+  unsigned char *fillVertexBuffer(std::vector<float> &vertexBuf,
+                                  const nif::hk::PackedNiTriStripsData &block);
 };
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
