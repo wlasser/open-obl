@@ -81,6 +81,19 @@ void setFilterMode(nif::Enum::TexFilterMode mode, Ogre::TextureUnitState *tex);
 void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
                   Ogre::TextureUnitState *tex);
 
+void setMaterialProperties(const nif::NiMaterialProperty &block,
+                           Ogre::Pass *pass);
+
+void addGenericVertexShader(Ogre::Pass *pass);
+void addGenericFragmentShader(Ogre::Pass *pass);
+
+struct TangentData {
+  std::vector<nif::compound::Vector3> bitangents{};
+  std::vector<nif::compound::Vector3> tangents{};
+};
+
+TangentData getTangentData(const nif::NiBinaryExtraData &extraData);
+
 class MeshLoaderState {
  private:
   friend class TBGVisitor;
@@ -93,8 +106,23 @@ class MeshLoaderState {
       class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
   bool checkRefType(nif::basic::Ref<S> ref);
 
+  template<class T>
+  struct RefResult {
+    T &block;
+    LoadStatus &tag;
+  };
+
+  template<class T, class S>
+  RefResult<T> getTaggedBlock(nif::basic::Ref<S> ref);
+
+  // Returns an iterator into TaggedBlockGraph vertex_set.
+  // TODO: Get rid of this, it's hideous.
+  template<class T>
+  auto getBlockIndex(const T &block);
+
+  // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
+  // material and texture, and so translate to Ogre::SubMesh objects.
   BoundedSubmesh parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
-                                     LoadStatus &tag,
                                      const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
@@ -115,6 +143,14 @@ class MeshLoaderState {
   TextureFamily parseNiTexturingProperty(const nif::NiTexturingProperty &block,
                                          LoadStatus &tag,
                                          Ogre::Pass *pass);
+
+  TangentData parseTangentData(const nif::NiExtraDataArray &extraDataArray);
+
+  bool attachTextureProperty(const nif::NiPropertyArray &properties,
+                             Ogre::Pass *pass);
+
+  bool attachMaterialProperty(const nif::NiPropertyArray &properties,
+                              Ogre::SubMesh *submesh);
 
   TaggedBlockGraph mBlocks;
   Ogre::Mesh *mMesh;
@@ -161,6 +197,25 @@ bool MeshLoaderState::checkRefType(nif::basic::Ref<S> ref) {
   if (val < 0 || val >= mBlocks.vertex_set().size()) return false;
   // This is horrific.
   return dynamic_cast<T *>(&*mBlocks[val].block) != nullptr;
+}
+
+template<class T, class S>
+auto MeshLoaderState::getTaggedBlock(nif::basic::Ref<S> ref) -> RefResult<T> {
+  const auto val{static_cast<int32_t>(ref)};
+  if (val < 0 || val >= mBlocks.vertex_set().size()) {
+    throw std::out_of_range("Nonexistent reference");
+  }
+  return {dynamic_cast<T &>(*mBlocks[val].block), mBlocks[val].tag};
+}
+
+template<class T>
+auto MeshLoaderState::getBlockIndex(const T &block) {
+  // TODO: This is way more work than we need to do here
+  auto comp = [this, &block](auto i) {
+    return dynamic_cast<const T *>(&*mBlocks[i].block) == &block;
+  };
+  return std::find_if(mBlocks.vertex_set().begin(), mBlocks.vertex_set().end(),
+                      comp);
 }
 
 } // namespace engine::nifloader

@@ -493,6 +493,8 @@ struct NiControllerManager : NiTimeController {
   void read(std::istream &is) override;
 };
 
+using NiExtraDataArray = std::vector<basic::Ref<NiExtraData>>;
+
 struct NiObjectNet : NiObject, Versionable {
   compound::SizedString name{};
 
@@ -505,7 +507,7 @@ struct NiObjectNet : NiObject, Versionable {
   VersionOptional<basic::UInt, "10.0.1.0"_ver, Unbounded>
       extraDataArrayLength{version};
 
-  VersionOptional<std::vector<basic::Ref<NiExtraData>>, "10.0.1.0"_ver, Unbounded>
+  VersionOptional<NiExtraDataArray, "10.0.1.0"_ver, Unbounded>
       extraDataArray{version};
 
   VersionOptional<basic::Ref<NiTimeController>, "3.0.0.0"_ver, Unbounded>
@@ -685,6 +687,8 @@ struct NiSpecularProperty : NiProperty {
 
 struct NiCollisionObject;
 
+using NiPropertyArray = std::vector<basic::Ref<NiProperty>>;
+
 struct NiAVObject : NiObjectNet {
 
   basic::Flags flags = 0x0c;
@@ -697,7 +701,7 @@ struct NiAVObject : NiObjectNet {
 
   // userVer2 <= 34
   basic::UInt numProperties = 0;
-  std::vector<basic::Ref<NiProperty>> properties{};
+  NiPropertyArray properties{};
 
   VersionOptional<basic::Bool, "3.0.0.0"_ver, "4.2.2.0"_ver>
       hasBoundingVolume{version};

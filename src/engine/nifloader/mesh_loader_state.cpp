@@ -518,213 +518,8 @@ void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
   }
 }
 
-BoundedSubmesh
-MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
-                                     LoadStatus &tag,
-                                     const Ogre::Matrix4 &transform) {
-  // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
-  // material and texture, and so translate to Ogre::SubMesh objects.
-  // If a submesh with this name already exists, then it is either already
-  // loaded or in the process of loading.
-  Tagger tagger{tag};
-  if (tag == LoadStatus::Loaded) {
-    auto submesh{mMesh->getSubMesh(block.name.str())};
-    if (submesh) {
-      // TODO: How to get the bounding box once the submesh has been created?
-      return {submesh, {}};
-    } else {
-      throw std::runtime_error(
-          "NiTriBasedGeom marked as loaded but submesh does not exist");
-    }
-  }
-  auto submesh{mMesh->createSubMesh(block.name.str())};
-
-  submesh->useSharedVertices = false;
-
-  std::vector<nif::compound::Vector3> bitangents{};
-  std::vector<nif::compound::Vector3> tangents{};
-
-  // For normal mapping we need tangent and bitangent information given inside
-  // an NiBinaryExtraData block. For low versions, the extra data is arranged
-  // like a linked list, and for high versions it's an array.
-  // TODO: Support the linked list version
-  if (block.extraDataArray) {
-    for (const auto &extraDataRef : *block.extraDataArray) {
-      if (!checkRefType<nif::NiBinaryExtraData>(extraDataRef)) continue;
-      auto &binaryExtraData{getBlock<nif::NiBinaryExtraData>(extraDataRef)};
-
-      if (binaryExtraData.name) {
-        const std::string name{binaryExtraData.name->str()};
-        if (name.find("Tangent space") == 0) {
-          // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
-          const std::size_t bytesPerList{binaryExtraData.data.dataSize / 2};
-          const std::size_t bytesPerVert{3u * sizeof(float)};
-          const std::size_t vertsPerList{bytesPerList / bytesPerVert};
-          bitangents.resize(vertsPerList);
-          tangents.resize(vertsPerList);
-
-          // Poor naming choices, maybe?
-          const nif::basic::Byte *bytes{binaryExtraData.data.data.data()};
-          std::memcpy(tangents.data(), bytes, bytesPerList);
-          std::memcpy(bitangents.data(), bytes + bytesPerList, bytesPerList);
-        }
-      }
-    }
-  }
-
-  // Here we have a slight problem with loading; For nif files, materials and
-  // textures are independent and can be assigned independently to blocks. In
-  // Ogre however, a texture has to have a parent material, and if two textures
-  // have different parents then they must be different textures. This means
-  // that we have to be much more careful about what being 'loaded' means, and
-  // can only load a texture if there is a material to couple it to.
-  // For simplicity, we assume that the same material will not be given
-  // multiple textures in the same mesh. Multiple materials are allowed to share
-  // the same texture, however. This is only reasonable because materials are
-  // mesh-local.
-
-  // Find the material property, if any
-  auto taggedMatIt =
-      std::find_if(block.properties.begin(), block.properties.end(),
-                   [this](const auto &property) {
-                     return checkRefType<nif::NiMaterialProperty>(property);
-                   });
-
-  // Find the texturing property, if any
-  auto taggedTexIt =
-      std::find_if(block.properties.begin(), block.properties.end(),
-                   [this](const auto &property) {
-                     return checkRefType<nif::NiTexturingProperty>(property);
-                   });
-
-  // It is ok to have a material but no texture
-  if (taggedMatIt != block.properties.end()) {
-    auto &taggedMat{mBlocks[static_cast<int32_t>(*taggedMatIt)]};
-    auto &matBlock{dynamic_cast<nif::NiMaterialProperty &>(*taggedMat.block)};
-    auto &matTag{taggedMat.tag};
-
-    // If the material has already been loaded, then by the assumption that each
-    // material has a unique texture (if any), the associated texture must
-    // already have been loaded and attached to the material. We can load the
-    // material (presumably from a cache) and skip the texture loading.
-    // Without this assumption we would have to clone the material and attach
-    // the new texture.
-    if (matTag == LoadStatus::Loaded) {
-      const auto material{parseNiMaterialProperty(matBlock, matTag)};
-      submesh->setMaterialName(material->getName(), material->getGroup());
-    } else {
-      const auto material{parseNiMaterialProperty(matBlock, matTag)};
-      submesh->setMaterialName(material->getName(), material->getGroup());
-      auto pass{material->getTechnique(0)->getPass(0)};
-
-      // The texture may or may not have already been loaded, but it has
-      // definitely not been attached to the material.
-      if (taggedTexIt != block.properties.end()) {
-        auto &taggedTex{mBlocks[static_cast<int32_t>(*taggedTexIt)]};
-        auto texBlock
-            {dynamic_cast<nif::NiTexturingProperty &>(*taggedTex.block)};
-        auto &texTag{taggedTex.tag};
-        auto family{parseNiTexturingProperty(texBlock, texTag, pass)};
-        if (family.base) {
-          pass->addTextureUnitState(family.base.release());
-          if (family.normal) {
-            pass->addTextureUnitState(family.normal.release());
-          }
-        }
-        // TODO: Support more than base textures
-      }
-    }
-  }
-
-  // Ogre::SubMeshes cannot have transformations applied to them (that is
-  // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
-  // information manually.
-  const auto totalTrans{transform * getTransform(block)};
-
-  // TODO: Replace with getBlock when tags aren't necessary
-  const auto dataRef{static_cast<int32_t>(block.data)};
-  if (dataRef < 0 || dataRef >= mBlocks.vertex_set().size()) {
-    throw std::out_of_range("Nonexistent reference");
-  }
-  auto &taggedDataBlock{mBlocks[dataRef]};
-  auto &dataBlock{*taggedDataBlock.block};
-
-  auto &geometryData
-      {dynamic_cast<nif::NiGeometryData &>(*taggedDataBlock.block)};
-
-  if (taggedDataBlock.tag == LoadStatus::Loaded) {
-    auto bbox{getBoundingBox(geometryData, totalTrans)};
-    return {submesh, bbox};
-  }
-
-  std::unique_ptr<Ogre::IndexData> indexData{};
-  Tagger dataTagger{taggedDataBlock.tag};
-
-  // TODO: Replace this with a virtual function somehow?
-  if (dynamic_cast<nif::NiTriShapeData *>(&dataBlock)) {
-    auto &triShapeData{dynamic_cast<nif::NiTriShapeData &>(dataBlock)};
-    indexData = generateIndexData(triShapeData);
-    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-  } else if (dynamic_cast<nif::NiTriStripsData *>(&dataBlock)) {
-    auto &triStripsData{dynamic_cast<nif::NiTriStripsData &>(dataBlock)};
-    indexData = generateIndexData(triStripsData);
-    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
-  }
-
-  auto vertexData{generateVertexData(geometryData, totalTrans,
-                                     &bitangents, &tangents)};
-
-  // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
-  // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
-  // create index data on the stack and copy it over. Instead we do a Bad Thing,
-  // deleting the submesh's indexData and replacing it with our own.
-  delete submesh->indexData;
-
-  // Transfer ownership to Ogre
-  submesh->vertexData = vertexData.release();
-  submesh->indexData = indexData.release();
-
-  return {submesh, getBoundingBox(geometryData, totalTrans)};
-}
-
-std::shared_ptr<Ogre::Material>
-MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
-                                         LoadStatus &tag) {
-  auto &materialManager{Ogre::MaterialManager::getSingleton()};
-
-  Tagger tagger{tag};
-  // Materials should be nif local, so a reasonable strategy would be name the
-  // Ogre::Material by the mesh name followed by the nif material name.
-  // Unfortunately, nif material names are not necessarily unique, even within
-  // a nif file. We therefore resort to using the block index.
-  // TODO: This is way more work than we need to do here
-  // TODO: Get rid of this, it's hideous.
-  auto comp = [this, &block](auto i) {
-    return dynamic_cast<const nif::NiMaterialProperty *>(&*mBlocks[i].block)
-        == &block;
-  };
-  auto it{std::find_if(mBlocks.vertex_set().begin(),
-                       mBlocks.vertex_set().end(),
-                       comp)};
-
-  std::string meshName{mMesh->getName()};
-  const std::string materialName
-      {meshName.append("/").append(std::to_string(*it))};
-  if (tag == LoadStatus::Loaded) {
-    auto material{materialManager.getByName(materialName, mMesh->getGroup())};
-    if (material) {
-      return std::move(material);
-    } else {
-      throw std::runtime_error(
-          "NiMaterialProperty marked as loaded but material does not exist");
-    }
-  }
-
-  auto material{materialManager.create(materialName, mMesh->getGroup())};
-
-  auto technique{material->getTechnique(0)};
-  auto pass{technique->getPass(0)};
-
+void setMaterialProperties(const nif::NiMaterialProperty &block,
+                           Ogre::Pass *pass) {
   pass->setAmbient(conversions::fromNif(block.ambientColor));
 
   auto diffuse{conversions::fromNif(block.diffuseColor)};
@@ -739,7 +534,9 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
 
   // TODO: How to convert from nif glossiness to Ogre shininess?
   pass->setShininess(block.glossiness);
+}
 
+void addGenericVertexShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setVertexProgram("genericMaterial_vs_glsl", true);
   auto vsParams{pass->getVertexProgramParameters()};
@@ -751,7 +548,10 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
                                  AutoConst::ACT_WORLDVIEWPROJ_MATRIX);
   vsParams->setNamedAutoConstant("viewPos",
                                  AutoConst::ACT_CAMERA_POSITION);
+}
 
+void addGenericFragmentShader(Ogre::Pass *pass) {
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
   auto fsParams{pass->getFragmentProgramParameters()};
   const int numLights{8};
@@ -772,6 +572,184 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
                                  AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
   fsParams->setNamedAutoConstant("matSpecular",
                                  AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
+}
+
+TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
+  TangentData out{};
+  if (extraData.name) {
+    if (extraData.name->str().find("Tangent space") == 0) {
+      // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
+      const std::size_t bytesPerList{extraData.data.dataSize / 2};
+      const std::size_t bytesPerVert{3u * sizeof(float)};
+      const std::size_t vertsPerList{bytesPerList / bytesPerVert};
+      out.bitangents.resize(vertsPerList);
+      out.tangents.resize(vertsPerList);
+
+      // Poor naming choices, maybe?
+      const nif::basic::Byte *bytes{extraData.data.data.data()};
+      std::memcpy(out.tangents.data(), bytes, bytesPerList);
+      std::memcpy(out.bitangents.data(), bytes + bytesPerList, bytesPerList);
+    }
+  }
+  return out;
+}
+
+TangentData
+MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
+  auto pred = [this](auto ref) {
+    const auto &data{this->getBlock<nif::NiExtraData>(ref)};
+    return (data.name && data.name->str().find("Tangent space") == 0);
+  };
+  auto it{std::find_if(extraDataArray.begin(), extraDataArray.end(), pred)};
+  if (it != extraDataArray.end() && checkRefType<nif::NiBinaryExtraData>(*it)) {
+    return getTangentData(getBlock<nif::NiBinaryExtraData>(*it));
+  }
+  return TangentData{};
+}
+
+bool
+MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
+                                       Ogre::Pass *pass) {
+
+  auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
+    return checkRefType<nif::NiTexturingProperty>(ref);
+  })};
+  if (it == properties.end()) return false;
+
+  auto[texBlock, texTag] = getTaggedBlock<nif::NiTexturingProperty>(*it);
+
+  auto family{parseNiTexturingProperty(texBlock, texTag, pass)};
+  if (family.base) {
+    pass->addTextureUnitState(family.base.release());
+    if (family.normal) {
+      pass->addTextureUnitState(family.normal.release());
+    }
+  }
+  // TODO: Support more than base textures
+  return true;
+}
+
+bool
+MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
+                                        Ogre::SubMesh *submesh) {
+
+  auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
+    return checkRefType<nif::NiMaterialProperty>(ref);
+  })};
+  if (it == properties.end()) return false;
+
+  auto[matBlock, matTag] = getTaggedBlock<nif::NiMaterialProperty>(*it);
+
+  if (matTag == LoadStatus::Loaded) {
+    // NB: This is common code but cannot be pulled out of the if statement
+    // because it consumes matTag and marks it as Loaded.
+    // TODO: The intent is unclear, as shown by the existence of this comment.
+    const auto material{parseNiMaterialProperty(matBlock, matTag)};
+    submesh->setMaterialName(material->getName(), material->getGroup());
+  } else {
+    const auto material{parseNiMaterialProperty(matBlock, matTag)};
+    submesh->setMaterialName(material->getName(), material->getGroup());
+    attachTextureProperty(properties, material->getTechnique(0)->getPass(0));
+  }
+  return true;
+}
+
+BoundedSubmesh
+MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
+                                     const Ogre::Matrix4 &transform) {
+  // If this submesh has already been loaded, return it.
+  //if (auto *submesh{mMesh->getSubMesh(block.name.str())}) {
+  // WTF Ogre, mMesh->getSubMesh returns a pointer but doesn't return nullptr if
+  // the submesh doesn't exist, it throws.
+  {
+    const auto &nameMap{mMesh->getSubMeshNameMap()};
+    if (auto it{nameMap.find(block.name.str())}; it != nameMap.end()) {
+      // TODO: How to get the bounding box once the submesh has been created?
+      return {mMesh->getSubMesh(it->second), {}};
+    }
+  }
+
+  auto submesh{mMesh->createSubMesh(block.name.str())};
+  submesh->useSharedVertices = false;
+
+  attachMaterialProperty(block.properties, submesh);
+
+  const auto &geomData{getBlock<nif::NiGeometryData>(block.data)};
+
+  std::unique_ptr<Ogre::IndexData> indexData{[submesh, &geomData = geomData]() {
+    using namespace nif;
+    if (dynamic_cast<const NiTriShapeData *>(&geomData)) {
+      submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+      return generateIndexData(dynamic_cast<const NiTriShapeData &>(geomData));
+    } else if (dynamic_cast<const NiTriStripsData *>(&geomData)) {
+      submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+      return generateIndexData(dynamic_cast<const NiTriStripsData &>(geomData));
+    } else {
+      return std::unique_ptr<Ogre::IndexData>{};
+    }
+  }()};
+
+  // For normal mapping we need tangent and bitangent information given inside
+  // an NiBinaryExtraData block. For low versions, the extra data is arranged
+  // like a linked list, and for high versions it's an array.
+  auto[bitangents, tangents] = [this, &block]() {
+    if (block.extraDataArray) {
+      return parseTangentData(*block.extraDataArray);
+    } else {
+      // TODO: Support the linked list version
+      return TangentData{};
+    }
+  }();
+
+  // Ogre::SubMeshes cannot have transformations applied to them (that is
+  // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
+  // information manually.
+  const auto totalTrans{transform * getTransform(block)};
+  auto vertexData{generateVertexData(geomData, totalTrans,
+                                     &bitangents, &tangents)};
+
+  // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
+  // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
+  // create index data on the stack and copy it over. Instead we do a Bad Thing,
+  // deleting the submesh's indexData and replacing it with our own.
+  delete submesh->indexData;
+
+  // Transfer ownership to Ogre
+  submesh->vertexData = vertexData.release();
+  submesh->indexData = indexData.release();
+
+  return {submesh, getBoundingBox(geomData, totalTrans)};
+}
+
+std::shared_ptr<Ogre::Material>
+MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
+                                         LoadStatus &tag) {
+  Tagger tagger{tag};
+  // Materials should be nif local, so a reasonable strategy would be name the
+  // Ogre::Material by the mesh name followed by the nif material name.
+  // Unfortunately, nif material names are not necessarily unique, even within
+  // a nif file. We therefore resort to using the block index.
+  std::string meshName{mMesh->getName()};
+  auto it{getBlockIndex<nif::NiMaterialProperty>(block)};
+  const auto materialName{meshName.append("/").append(std::to_string(*it))};
+
+  if (tag == LoadStatus::Loaded) {
+    auto &matMgr{Ogre::MaterialManager::getSingleton()};
+    if (auto material{matMgr.getByName(materialName, mMesh->getGroup())}) {
+      return std::move(material);
+    } else {
+      throw std::runtime_error(
+          "NiMaterialProperty marked as loaded but material does not exist");
+    }
+  }
+
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  auto material{matMgr.create(materialName, mMesh->getGroup())};
+  auto pass{material->getTechnique(0)->getPass(0)};
+
+  setMaterialProperties(block, pass);
+  addGenericVertexShader(pass);
+  addGenericFragmentShader(pass);
 
   return std::move(material);
 }
@@ -797,11 +775,13 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
   return textureUnit;
 }
 
-MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph untaggedBlocks)
+MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph
+untaggedBlocks)
     : mMesh(mesh) {
   boost::copy_graph(untaggedBlocks, mBlocks);
 
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
+  std::vector<boost::default_color_type>
+      colorMap(boost::num_vertices(mBlocks));
   auto propertyMap = boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks));
 
@@ -819,13 +799,11 @@ void TBGVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
 // transformation. If it's an NiNode, update the current transformation so that
 // this child transformation occurs before any parent ones.
 void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
-  auto &taggedNiObject = g[v];
-  auto &niObject = *taggedNiObject.block;
-  auto &tag = taggedNiObject.tag;
+  auto &niObject = *g[v].block;
 
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
     const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
-    auto[submesh, subBbox] = state.parseNiTriBasedGeom(geom, tag, transform);
+    auto[submesh, subBbox] = state.parseNiTriBasedGeom(geom, transform);
     auto bbox{state.mMesh->getBounds()};
     bbox.merge(subBbox);
     state.mMesh->_setBounds(bbox);
