@@ -135,6 +135,9 @@ CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) 
   Ogre::Vector3 principalMoments{};
   inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
                                     principalAxes.data());
+  // Coordinates in havok are scaled up by a factor of 7, and the units of the
+  // moments of inertia are kg m^2.
+  principalMoments /= (7.0f * 7.0f);
 
   // We have the diagonalization
   // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
