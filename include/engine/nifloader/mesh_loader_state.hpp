@@ -106,16 +106,7 @@ class MeshLoaderState {
       class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
   bool checkRefType(nif::basic::Ref<S> ref);
 
-  template<class T>
-  struct RefResult {
-    T &block;
-    LoadStatus &tag;
-  };
-
-  template<class T, class S>
-  RefResult<T> getTaggedBlock(nif::basic::Ref<S> ref);
-
-  // Returns an iterator into TaggedBlockGraph vertex_set.
+  // Returns an iterator into BlockGraph vertex_set.
   // TODO: Get rid of this, it's hideous.
   template<class T>
   auto getBlockIndex(const T &block);
@@ -126,8 +117,7 @@ class MeshLoaderState {
                                      const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
-  parseNiMaterialProperty(const nif::NiMaterialProperty &block,
-                          LoadStatus &tag);
+  parseNiMaterialProperty(const nif::NiMaterialProperty &block);
 
   // When setting the texture name of a texture unit, Ogre looks up and loads
   // the texture using the resource group of its parent. Thus contrary to what
@@ -141,7 +131,6 @@ class MeshLoaderState {
 
   // See parseTexDesc for why the pass is necessary.
   TextureFamily parseNiTexturingProperty(const nif::NiTexturingProperty &block,
-                                         LoadStatus &tag,
                                          Ogre::Pass *pass);
 
   TangentData parseTangentData(const nif::NiExtraDataArray &extraDataArray);
@@ -152,7 +141,7 @@ class MeshLoaderState {
   bool attachMaterialProperty(const nif::NiPropertyArray &properties,
                               Ogre::SubMesh *submesh);
 
-  TaggedBlockGraph mBlocks;
+  BlockGraph mBlocks;
   Ogre::Mesh *mMesh;
 
  public:
@@ -161,7 +150,7 @@ class MeshLoaderState {
 
 class TBGVisitor {
  public:
-  using Graph = TaggedBlockGraph;
+  using Graph = BlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
 
@@ -188,7 +177,7 @@ T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
   if (val < 0 || val >= mBlocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
   }
-  return dynamic_cast<T &>(*mBlocks[val].block);
+  return dynamic_cast<T &>(*mBlocks[val]);
 }
 
 template<class T, class S, class>
@@ -196,23 +185,14 @@ bool MeshLoaderState::checkRefType(nif::basic::Ref<S> ref) {
   const auto val{static_cast<int32_t>(ref)};
   if (val < 0 || val >= mBlocks.vertex_set().size()) return false;
   // This is horrific.
-  return dynamic_cast<T *>(&*mBlocks[val].block) != nullptr;
-}
-
-template<class T, class S>
-auto MeshLoaderState::getTaggedBlock(nif::basic::Ref<S> ref) -> RefResult<T> {
-  const auto val{static_cast<int32_t>(ref)};
-  if (val < 0 || val >= mBlocks.vertex_set().size()) {
-    throw std::out_of_range("Nonexistent reference");
-  }
-  return {dynamic_cast<T &>(*mBlocks[val].block), mBlocks[val].tag};
+  return dynamic_cast<T *>(&*mBlocks[val]) != nullptr;
 }
 
 template<class T>
 auto MeshLoaderState::getBlockIndex(const T &block) {
   // TODO: This is way more work than we need to do here
   auto comp = [this, &block](auto i) {
-    return dynamic_cast<const T *>(&*mBlocks[i].block) == &block;
+    return dynamic_cast<const T *>(&*mBlocks[i]) == &block;
   };
   return std::find_if(mBlocks.vertex_set().begin(), mBlocks.vertex_set().end(),
                       comp);

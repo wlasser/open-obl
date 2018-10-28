@@ -4,20 +4,6 @@
 
 namespace engine::nifloader {
 
-Tagger::Tagger(LoadStatus &tag) : tag(tag) {
-  switch (tag) {
-    case LoadStatus::Unloaded:tag = LoadStatus::Loading;
-      break;
-    case LoadStatus::Loading:
-      throw std::runtime_error("Cycle detected while loading nif file");
-    default: break;
-  }
-}
-
-Tagger::~Tagger() {
-  tag = LoadStatus::Loaded;
-}
-
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
   using namespace conversions;
   Ogre::Vector3 translation{fromBSCoordinates(fromNif(block.translation))};

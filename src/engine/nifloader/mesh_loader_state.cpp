@@ -304,57 +304,6 @@ generateIndexData(const nif::NiTriStripsData &block) {
   return indexData;
 }
 
-TextureFamily
-MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
-                                          LoadStatus &tag, Ogre::Pass *pass) {
-  Tagger tagger{tag};
-
-  // Nif ApplyMode is for vertex colors, which are currently unsupported
-  // TODO: Support ApplyMode with vertex colors
-
-  TextureFamily family{};
-
-  if (block.hasBaseTexture) {
-    family.base = parseTexDesc(&block.baseTexture, pass);
-    // Normal mapping is automatically turned on if a normal map exists. If one
-    // doesn't exist, then we use a flat normal map.
-    auto &texMgr{Ogre::TextureManager::getSingleton()};
-    if (auto normalMap = toNormalMap(family.base->getTextureName());
-        texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
-      family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
-    } else {
-      family.normal = parseTexDesc(&block.baseTexture, pass,
-                                   "textures/flat_n.dds");
-    }
-  }
-  if (block.hasDarkTexture) {
-    family.dark = parseTexDesc(&block.darkTexture, pass);
-  }
-  if (block.hasDetailTexture) {
-    family.detail = parseTexDesc(&block.detailTexture, pass);
-  }
-  if (block.hasGlossTexture) {
-    family.gloss = parseTexDesc(&block.glossTexture, pass);
-  }
-  if (block.hasGlowTexture) {
-    family.glow = parseTexDesc(&block.glowTexture, pass);
-  }
-  if (block.hasDecal0Texture) {
-    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
-    if (block.hasDecal1Texture) {
-      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
-      if (block.hasDecal2Texture) {
-        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
-        if (block.hasDecal3Texture) {
-          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
-        }
-      }
-    }
-  }
-
-  return family;
-}
-
 void setSourceTexture(const nif::NiSourceTexture &block,
                       Ogre::TextureUnitState *tex,
                       const std::optional<std::string> &textureOverride) {
@@ -594,6 +543,55 @@ TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
   return out;
 }
 
+TextureFamily
+MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
+                                          Ogre::Pass *pass) {
+  // Nif ApplyMode is for vertex colors, which are currently unsupported
+  // TODO: Support ApplyMode with vertex colors
+
+  TextureFamily family{};
+
+  if (block.hasBaseTexture) {
+    family.base = parseTexDesc(&block.baseTexture, pass);
+    // Normal mapping is automatically turned on if a normal map exists. If one
+    // doesn't exist, then we use a flat normal map.
+    auto &texMgr{Ogre::TextureManager::getSingleton()};
+    if (auto normalMap = toNormalMap(family.base->getTextureName());
+        texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
+      family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
+    } else {
+      family.normal = parseTexDesc(&block.baseTexture, pass,
+                                   "textures/flat_n.dds");
+    }
+  }
+  if (block.hasDarkTexture) {
+    family.dark = parseTexDesc(&block.darkTexture, pass);
+  }
+  if (block.hasDetailTexture) {
+    family.detail = parseTexDesc(&block.detailTexture, pass);
+  }
+  if (block.hasGlossTexture) {
+    family.gloss = parseTexDesc(&block.glossTexture, pass);
+  }
+  if (block.hasGlowTexture) {
+    family.glow = parseTexDesc(&block.glowTexture, pass);
+  }
+  if (block.hasDecal0Texture) {
+    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
+    if (block.hasDecal1Texture) {
+      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
+      if (block.hasDecal2Texture) {
+        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
+        if (block.hasDecal3Texture) {
+          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
+        }
+      }
+    }
+  }
+
+  return family;
+}
+
 TangentData
 MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
   auto pred = [this](auto ref) {
@@ -610,15 +608,14 @@ MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
 bool
 MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
                                        Ogre::Pass *pass) {
-
   auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
     return checkRefType<nif::NiTexturingProperty>(ref);
   })};
   if (it == properties.end()) return false;
 
-  auto[texBlock, texTag] = getTaggedBlock<nif::NiTexturingProperty>(*it);
+  const auto &texBlock{getBlock<nif::NiTexturingProperty>(*it)};
 
-  auto family{parseNiTexturingProperty(texBlock, texTag, pass)};
+  auto family{parseNiTexturingProperty(texBlock, pass)};
   if (family.base) {
     pass->addTextureUnitState(family.base.release());
     if (family.normal) {
@@ -632,23 +629,17 @@ MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
 bool
 MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
                                         Ogre::SubMesh *submesh) {
-
   auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
     return checkRefType<nif::NiMaterialProperty>(ref);
   })};
   if (it == properties.end()) return false;
 
-  auto[matBlock, matTag] = getTaggedBlock<nif::NiMaterialProperty>(*it);
+  const auto &matBlock{getBlock<nif::NiMaterialProperty>(*it)};
 
-  if (matTag == LoadStatus::Loaded) {
-    // NB: This is common code but cannot be pulled out of the if statement
-    // because it consumes matTag and marks it as Loaded.
-    // TODO: The intent is unclear, as shown by the existence of this comment.
-    const auto material{parseNiMaterialProperty(matBlock, matTag)};
-    submesh->setMaterialName(material->getName(), material->getGroup());
-  } else {
-    const auto material{parseNiMaterialProperty(matBlock, matTag)};
-    submesh->setMaterialName(material->getName(), material->getGroup());
+  const auto material{parseNiMaterialProperty(matBlock)};
+  submesh->setMaterialName(material->getName(), material->getGroup());
+  auto *pass{material->getTechnique(0)->getPass(0)};
+  if (pass->getNumTextureUnitStates() == 0) {
     attachTextureProperty(properties, material->getTechnique(0)->getPass(0));
   }
   return true;
@@ -722,9 +713,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
 }
 
 std::shared_ptr<Ogre::Material>
-MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
-                                         LoadStatus &tag) {
-  Tagger tagger{tag};
+MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block) {
   // Materials should be nif local, so a reasonable strategy would be name the
   // Ogre::Material by the mesh name followed by the nif material name.
   // Unfortunately, nif material names are not necessarily unique, even within
@@ -733,17 +722,11 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
   auto it{getBlockIndex<nif::NiMaterialProperty>(block)};
   const auto materialName{meshName.append("/").append(std::to_string(*it))};
 
-  if (tag == LoadStatus::Loaded) {
-    auto &matMgr{Ogre::MaterialManager::getSingleton()};
-    if (auto material{matMgr.getByName(materialName, mMesh->getGroup())}) {
-      return std::move(material);
-    } else {
-      throw std::runtime_error(
-          "NiMaterialProperty marked as loaded but material does not exist");
-    }
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  if (auto material{matMgr.getByName(materialName, mMesh->getGroup())}) {
+    return std::move(material);
   }
 
-  auto &matMgr{Ogre::MaterialManager::getSingleton()};
   auto material{matMgr.create(materialName, mMesh->getGroup())};
   auto pass{material->getTechnique(0)->getPass(0)};
 
@@ -775,11 +758,8 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
   return textureUnit;
 }
 
-MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph
-untaggedBlocks)
-    : mMesh(mesh) {
-  boost::copy_graph(untaggedBlocks, mBlocks);
-
+MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks)
+    : mBlocks(blocks), mMesh(mesh) {
   std::vector<boost::default_color_type>
       colorMap(boost::num_vertices(mBlocks));
   auto propertyMap = boost::make_iterator_property_map(
@@ -799,7 +779,7 @@ void TBGVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
 // transformation. If it's an NiNode, update the current transformation so that
 // this child transformation occurs before any parent ones.
 void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
-  auto &niObject = *g[v].block;
+  auto &niObject = *g[v];
 
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
     const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
@@ -815,7 +795,7 @@ void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 
 // If we have finished reading an NiNode, then we can remove its transformation.
 void TBGVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
-  auto &niObject{*g[v].block};
+  auto &niObject{*g[v]};
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     transform = transform * getTransform(niNode).inverse();
