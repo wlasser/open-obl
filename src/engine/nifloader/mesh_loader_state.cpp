@@ -66,10 +66,10 @@ std::filesystem::path toNormalMap(std::filesystem::path texFile) {
 }
 
 std::unique_ptr<Ogre::VertexData>
-MeshLoaderState::generateVertexData(const nif::NiGeometryData &block,
-                                    Ogre::Matrix4 transformation,
-                                    std::vector<nif::compound::Vector3> *bitangents,
-                                    std::vector<nif::compound::Vector3> *tangents) {
+generateVertexData(const nif::NiGeometryData &block,
+                   Ogre::Matrix4 transformation,
+                   std::vector<nif::compound::Vector3> *bitangents,
+                   std::vector<nif::compound::Vector3> *tangents) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
   auto vertexData{std::make_unique<Ogre::VertexData>()};
@@ -257,7 +257,7 @@ MeshLoaderState::generateVertexData(const nif::NiGeometryData &block,
 }
 
 std::unique_ptr<Ogre::IndexData>
-MeshLoaderState::generateIndexData(const nif::NiTriShapeData &block) {
+generateIndexData(const nif::NiTriShapeData &block) {
   auto *hwBufMgr{Ogre::HardwareBufferManager::getSingletonPtr()};
 
   // We can assume that compound::Triangle has no padding and std::vector
@@ -280,7 +280,7 @@ MeshLoaderState::generateIndexData(const nif::NiTriShapeData &block) {
 }
 
 std::unique_ptr<Ogre::IndexData>
-MeshLoaderState::generateIndexData(const nif::NiTriStripsData &block) {
+generateIndexData(const nif::NiTriStripsData &block) {
   auto *hwBufMgr = Ogre::HardwareBufferManager::getSingletonPtr();
 
   const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
@@ -304,6 +304,220 @@ MeshLoaderState::generateIndexData(const nif::NiTriStripsData &block) {
   return indexData;
 }
 
+TextureFamily
+MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
+                                          LoadStatus &tag, Ogre::Pass *pass) {
+  Tagger tagger{tag};
+
+  // Nif ApplyMode is for vertex colors, which are currently unsupported
+  // TODO: Support ApplyMode with vertex colors
+
+  TextureFamily family{};
+
+  if (block.hasBaseTexture) {
+    family.base = parseTexDesc(&block.baseTexture, pass);
+    // Normal mapping is automatically turned on if a normal map exists. If one
+    // doesn't exist, then we use a flat normal map.
+    auto &texMgr{Ogre::TextureManager::getSingleton()};
+    if (auto normalMap = toNormalMap(family.base->getTextureName());
+        texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
+      family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
+    } else {
+      family.normal = parseTexDesc(&block.baseTexture, pass,
+                                   "textures/flat_n.dds");
+    }
+  }
+  if (block.hasDarkTexture) {
+    family.dark = parseTexDesc(&block.darkTexture, pass);
+  }
+  if (block.hasDetailTexture) {
+    family.detail = parseTexDesc(&block.detailTexture, pass);
+  }
+  if (block.hasGlossTexture) {
+    family.gloss = parseTexDesc(&block.glossTexture, pass);
+  }
+  if (block.hasGlowTexture) {
+    family.glow = parseTexDesc(&block.glowTexture, pass);
+  }
+  if (block.hasDecal0Texture) {
+    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
+    if (block.hasDecal1Texture) {
+      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
+      if (block.hasDecal2Texture) {
+        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
+        if (block.hasDecal3Texture) {
+          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
+        }
+      }
+    }
+  }
+
+  return family;
+}
+
+void setSourceTexture(const nif::NiSourceTexture &block,
+                      Ogre::TextureUnitState *tex,
+                      const std::optional<std::string> &textureOverride) {
+  if (block.useExternal) {
+    if (textureOverride) {
+      tex->setTextureName(*textureOverride);
+    } else {
+      using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
+      auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
+      // TODO: Use fs not std::fs
+      tex->setTextureName(conversions::normalizePath(
+          texFile.filename.string.str()));
+    }
+  } else {
+    // We do not support internal textures, see InternalTextureFile comments
+    return;
+  }
+
+  // Ogre is much more specific about its pixel layout than nif, and less
+  // specific even still than dds. It is not obvious how many of these formats
+  // translate, and some do not have analogues at all; Ogre does not seem to
+  // support palettized textures, for instance. Moreover, it appears that this
+  // is just setting a *preference*, so hopefully we are free to ignore it and
+  // let Ogre decide.
+  // TODO: Try and convert the pixel layout?
+
+  switch (block.formatPrefs.mipMapFormat) {
+    case nif::Enum::MipMapFormat::MIP_FMT_NO:tex->setNumMipmaps(0);
+      break;
+    case nif::Enum::MipMapFormat::MIP_FMT_YES:[[fallthrough]];
+    case nif::Enum::MipMapFormat::MIP_FMT_DEFAULT:[[fallthrough]];
+      // TODO: Use a global mipmap setting
+    default:tex->setNumMipmaps(4);
+      break;
+  }
+
+  // Ogre does not seem to provide control over this particular alpha setting
+
+  // All textures are assumed static i.e. they cannot be dynamically changed
+  // This can be set explicitly in a Texture, but not the TextureUnitState.
+
+  // All textures are direct since we don't support internal textures
+}
+
+void setClampMode(nif::Enum::TexClampMode mode, Ogre::TextureUnitState *tex) {
+  using ClampMode = nif::Enum::TexClampMode;
+  using AddressingMode = Ogre::TextureUnitState::TextureAddressingMode;
+
+  switch (mode) {
+    case ClampMode::CLAMP_S_CLAMP_T:
+      tex->setTextureAddressingMode(AddressingMode::TAM_CLAMP);
+      return;
+    case ClampMode::CLAMP_S_WRAP_T:
+      tex->setTextureAddressingMode(AddressingMode::TAM_CLAMP,
+                                    AddressingMode::TAM_WRAP,
+                                    AddressingMode::TAM_WRAP);
+      return;
+    case ClampMode::WRAP_S_CLAMP_T:
+      tex->setTextureAddressingMode(AddressingMode::TAM_WRAP,
+                                    AddressingMode::TAM_CLAMP,
+                                    AddressingMode::TAM_WRAP);
+      return;
+    case ClampMode::WRAP_S_WRAP_T:
+      tex->setTextureAddressingMode(AddressingMode::TAM_WRAP);
+      return;
+    default:tex->setTextureAddressingMode(AddressingMode::TAM_WRAP);
+      return;
+  }
+}
+
+void setFilterMode(nif::Enum::TexFilterMode mode, Ogre::TextureUnitState *tex) {
+  using FilterMode = nif::Enum::TexFilterMode;
+
+  switch (mode) {
+    case FilterMode::FILTER_NEAREST:
+      tex->setTextureFiltering(Ogre::TextureFilterOptions::TFO_NONE);
+      return;
+    case FilterMode::FILTER_BILERP:
+      tex->setTextureFiltering(Ogre::TextureFilterOptions::TFO_BILINEAR);
+      return;
+    case FilterMode::FILTER_TRILERP:
+      tex->setTextureFiltering(Ogre::TextureFilterOptions::TFO_TRILINEAR);
+      return;
+    case FilterMode::FILTER_NEAREST_MIPNEAREST:
+      tex->setTextureFiltering(Ogre::FilterOptions::FO_POINT,
+                               Ogre::FilterOptions::FO_POINT,
+                               Ogre::FilterOptions::FO_POINT);
+      return;
+    case FilterMode::FILTER_NEAREST_MIPLERP:
+      tex->setTextureFiltering(Ogre::FilterOptions::FO_POINT,
+                               Ogre::FilterOptions::FO_POINT,
+                               Ogre::FilterOptions::FO_LINEAR);
+      return;
+    case FilterMode::FILTER_BILERP_MIPNEAREST:
+      tex->setTextureFiltering(Ogre::FilterOptions::FO_LINEAR,
+                               Ogre::FilterOptions::FO_LINEAR,
+                               Ogre::FilterOptions::FO_POINT);
+      return;
+    case FilterMode::FILTER_ANISOTROPIC:
+      tex->setTextureFiltering(Ogre::TextureFilterOptions::TFO_ANISOTROPIC);
+      return;
+    default:tex->setTextureFiltering(Ogre::TextureFilterOptions::TFO_TRILINEAR);
+      return;
+  }
+}
+
+void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
+                  Ogre::TextureUnitState *tex) {
+  const Ogre::Matrix4 translation = [&transform]() {
+    Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
+    t.makeTrans(transform.translation.u, transform.translation.v, 0.0f);
+    return t;
+  }();
+
+  const Ogre::Matrix4 scale = [&transform]() {
+    Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
+    s.setScale(Ogre::Vector3{transform.scale.u, transform.scale.v, 1.0f});
+    return s;
+  }();
+
+  // TODO: Is transform.rotation really an anti-clockwise rotation in radians?
+  const Ogre::Matrix4 rotation = [&transform]() {
+    using namespace Ogre;
+    Matrix4 r{Ogre::Matrix4::IDENTITY};
+    r.makeTransform(Vector3::ZERO, Vector3::UNIT_SCALE,
+                    Quaternion{Radian{transform.rotation}, Vector3::UNIT_Z});
+    return r;
+  }();
+
+  const Ogre::Matrix4 center = [&transform]() {
+    Ogre::Matrix4 c{Ogre::Matrix4::IDENTITY};
+    c.makeTrans(transform.center.u, transform.center.v, 0.0f);
+    return c;
+  }();
+
+  const Ogre::Matrix4 centerInv{center.inverse()};
+
+  switch (transform.transformMethod) {
+    case nif::Enum::TransformMethod::MayaDeprecated: {
+      const auto trans{center * rotation * centerInv * translation * scale};
+      tex->setTextureTransform(trans);
+      break;
+    }
+    case nif::Enum::TransformMethod::Max: {
+      const auto trans{center * scale * rotation * translation * centerInv};
+      tex->setTextureTransform(trans);
+      break;
+    }
+    case nif::Enum::TransformMethod::Maya: {
+      Ogre::Matrix4 fromMaya{};
+      fromMaya.makeTransform(Ogre::Vector3::UNIT_Y,
+                             Ogre::Vector3::NEGATIVE_UNIT_Y,
+                             Ogre::Quaternion::ZERO);
+      const auto trans
+          {center * rotation * centerInv * fromMaya * translation * scale};
+      tex->setTextureTransform(trans);
+      break;
+    }
+    default:tex->setTextureTransform(Ogre::Matrix4::IDENTITY);
+      break;
+  }
+}
+
 BoundedSubmesh
 MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
                                      LoadStatus &tag,
@@ -314,7 +528,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
   // loaded or in the process of loading.
   Tagger tagger{tag};
   if (tag == LoadStatus::Loaded) {
-    auto submesh{mesh->getSubMesh(block.name.str())};
+    auto submesh{mMesh->getSubMesh(block.name.str())};
     if (submesh) {
       // TODO: How to get the bounding box once the submesh has been created?
       return {submesh, {}};
@@ -323,7 +537,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
           "NiTriBasedGeom marked as loaded but submesh does not exist");
     }
   }
-  auto submesh{mesh->createSubMesh(block.name.str())};
+  auto submesh{mMesh->createSubMesh(block.name.str())};
 
   submesh->useSharedVertices = false;
 
@@ -385,7 +599,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
 
   // It is ok to have a material but no texture
   if (taggedMatIt != block.properties.end()) {
-    auto &taggedMat{blocks[static_cast<int32_t>(*taggedMatIt)]};
+    auto &taggedMat{mBlocks[static_cast<int32_t>(*taggedMatIt)]};
     auto &matBlock{dynamic_cast<nif::NiMaterialProperty &>(*taggedMat.block)};
     auto &matTag{taggedMat.tag};
 
@@ -406,7 +620,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
       // The texture may or may not have already been loaded, but it has
       // definitely not been attached to the material.
       if (taggedTexIt != block.properties.end()) {
-        auto &taggedTex{blocks[static_cast<int32_t>(*taggedTexIt)]};
+        auto &taggedTex{mBlocks[static_cast<int32_t>(*taggedTexIt)]};
         auto texBlock
             {dynamic_cast<nif::NiTexturingProperty &>(*taggedTex.block)};
         auto &texTag{taggedTex.tag};
@@ -429,10 +643,10 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
 
   // TODO: Replace with getBlock when tags aren't necessary
   const auto dataRef{static_cast<int32_t>(block.data)};
-  if (dataRef < 0 || dataRef >= blocks.vertex_set().size()) {
+  if (dataRef < 0 || dataRef >= mBlocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
   }
-  auto &taggedDataBlock{blocks[dataRef]};
+  auto &taggedDataBlock{mBlocks[dataRef]};
   auto &dataBlock{*taggedDataBlock.block};
 
   auto &geometryData
@@ -486,17 +700,18 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
   // TODO: This is way more work than we need to do here
   // TODO: Get rid of this, it's hideous.
   auto comp = [this, &block](auto i) {
-    return dynamic_cast<const nif::NiMaterialProperty *>(&*blocks[i].block)
+    return dynamic_cast<const nif::NiMaterialProperty *>(&*mBlocks[i].block)
         == &block;
   };
-  auto it = std::find_if(blocks.vertex_set().begin(), blocks.vertex_set().end(),
-                         comp);
+  auto it{std::find_if(mBlocks.vertex_set().begin(),
+                       mBlocks.vertex_set().end(),
+                       comp)};
 
-  std::string meshName{mesh->getName()};
+  std::string meshName{mMesh->getName()};
   const std::string materialName
       {meshName.append("/").append(std::to_string(*it))};
   if (tag == LoadStatus::Loaded) {
-    auto material{materialManager.getByName(materialName, mesh->getGroup())};
+    auto material{materialManager.getByName(materialName, mMesh->getGroup())};
     if (material) {
       return std::move(material);
     } else {
@@ -505,7 +720,7 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block,
     }
   }
 
-  auto material{materialManager.create(materialName, mesh->getGroup())};
+  auto material{materialManager.create(materialName, mMesh->getGroup())};
 
   auto technique{material->getTechnique(0)};
   auto pass{technique->getPass(0)};
@@ -567,249 +782,30 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
                               const std::optional<std::string> &textureOverride) {
   auto textureUnit{std::make_unique<Ogre::TextureUnitState>(parent)};
 
-  switch (tex->clampMode) {
-    case nif::Enum::TexClampMode::CLAMP_S_CLAMP_T:
-      textureUnit->setTextureAddressingMode(
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_CLAMP);
-      break;
-    case nif::Enum::TexClampMode::CLAMP_S_WRAP_T:
-      textureUnit->setTextureAddressingMode(
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_CLAMP,
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP,
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP);
-      break;
-    case nif::Enum::TexClampMode::WRAP_S_CLAMP_T:
-      textureUnit->setTextureAddressingMode(
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP,
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_CLAMP,
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP);
-      break;
-    case nif::Enum::TexClampMode::WRAP_S_WRAP_T:
-      textureUnit->setTextureAddressingMode(
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP);
-      break;
-    default:
-      textureUnit->setTextureAddressingMode(
-          Ogre::TextureUnitState::TextureAddressingMode::TAM_WRAP);
-      break;
-  }
-
-  switch (tex->filterMode) {
-    case nif::Enum::TexFilterMode::FILTER_NEAREST:
-      textureUnit->setTextureFiltering(
-          Ogre::TextureFilterOptions::TFO_NONE);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_BILERP:
-      textureUnit->setTextureFiltering(
-          Ogre::TextureFilterOptions::TFO_BILINEAR);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_TRILERP:
-      textureUnit->setTextureFiltering(
-          Ogre::TextureFilterOptions::TFO_TRILINEAR);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_NEAREST_MIPNEAREST:
-      textureUnit->setTextureFiltering(
-          Ogre::FilterOptions::FO_POINT,
-          Ogre::FilterOptions::FO_POINT,
-          Ogre::FilterOptions::FO_POINT);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_NEAREST_MIPLERP:
-      textureUnit->setTextureFiltering(
-          Ogre::FilterOptions::FO_POINT,
-          Ogre::FilterOptions::FO_POINT,
-          Ogre::FilterOptions::FO_LINEAR);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_BILERP_MIPNEAREST:
-      textureUnit->setTextureFiltering(
-          Ogre::FilterOptions::FO_LINEAR,
-          Ogre::FilterOptions::FO_LINEAR,
-          Ogre::FilterOptions::FO_POINT);
-      break;
-    case nif::Enum::TexFilterMode::FILTER_ANISOTROPIC:
-      textureUnit->setTextureFiltering(
-          Ogre::TextureFilterOptions::TFO_ANISOTROPIC);
-      break;
-    default:
-      textureUnit->setTextureFiltering(
-          Ogre::TextureFilterOptions::TFO_TRILINEAR);
-      break;
-  }
+  setClampMode(tex->clampMode, textureUnit.get());
+  setFilterMode(tex->filterMode, textureUnit.get());
 
   textureUnit->setTextureCoordSet(tex->uvSet);
 
   if (tex->hasTextureTransform && *tex->hasTextureTransform) {
-    const auto &transform{*tex->textureTransform};
-
-    const Ogre::Matrix4 translation = [&transform]() {
-      Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
-      t.makeTrans(transform.translation.u, transform.translation.v, 0.0f);
-      return t;
-    }();
-
-    const Ogre::Matrix4 scale = [&transform]() {
-      Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-      s.setScale(Ogre::Vector3{transform.scale.u, transform.scale.v, 1.0f});
-      return s;
-    }();
-
-    // TODO: Is transform.rotation really an anti-clockwise rotation in radians?
-    const Ogre::Matrix4 rotation = [&transform]() {
-      using namespace Ogre;
-      Matrix4 r{Ogre::Matrix4::IDENTITY};
-      r.makeTransform(Vector3::ZERO, Vector3::UNIT_SCALE,
-                      Quaternion{Radian{transform.rotation}, Vector3::UNIT_Z});
-      return r;
-    }();
-
-    const Ogre::Matrix4 center = [&transform]() {
-      Ogre::Matrix4 c{Ogre::Matrix4::IDENTITY};
-      c.makeTrans(transform.center.u, transform.center.v, 0.0f);
-      return c;
-    }();
-
-    const Ogre::Matrix4 centerInv{center.inverse()};
-
-    switch (transform.transformMethod) {
-      case nif::Enum::TransformMethod::MayaDeprecated:
-        textureUnit->setTextureTransform(
-            center * rotation * centerInv * translation * scale);
-        break;
-      case nif::Enum::TransformMethod::Max:
-        textureUnit->setTextureTransform(
-            center * scale * rotation * translation * centerInv);
-        break;
-      case nif::Enum::TransformMethod::Maya: {
-        Ogre::Matrix4 fromMaya{};
-        fromMaya.makeTransform(Ogre::Vector3::UNIT_Y,
-                               Ogre::Vector3::NEGATIVE_UNIT_Y,
-                               Ogre::Quaternion::ZERO);
-        textureUnit->setTextureTransform(
-            center * rotation * centerInv * fromMaya * translation * scale);
-        break;
-      }
-      default:textureUnit->setTextureTransform(Ogre::Matrix4::IDENTITY);
-        break;
-    }
+    setTransform(*tex->textureTransform, textureUnit.get());
   }
 
-  // TODO: Replace with getBlock when tags aren't necessary
-  const auto sourceRef{static_cast<int32_t>(tex->source)};
-  auto &taggedSource{blocks[sourceRef]};
-  auto &sourceTag{taggedSource.tag};
-  auto source{dynamic_cast<nif::NiSourceTexture &>(*taggedSource.block)};
-  parseNiSourceTexture(source, sourceTag, textureUnit.get(), textureOverride);
+  const auto &source{getBlock<nif::NiSourceTexture &>(tex->source)};
+  setSourceTexture(source, textureUnit.get(), textureOverride);
 
   return textureUnit;
 }
 
-void MeshLoaderState::parseNiSourceTexture(const nif::NiSourceTexture &block,
-                                           LoadStatus &tag,
-                                           Ogre::TextureUnitState *tex,
-                                           const std::optional<std::string> &textureOverride) {
-  Tagger tagger{tag};
-
-  if (block.useExternal) {
-    using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
-    auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
-    if (textureOverride) {
-      tex->setTextureName(*textureOverride);
-    } else {
-      // TODO: Use fs not std::fs
-      tex->setTextureName(conversions::normalizePath(
-          texFile.filename.string.str()));
-    }
-  } else {
-    // We do not support internal textures, see InternalTextureFile comments
-    logger.logMessage("Nif internal texture files are unsupported");
-    return;
-  }
-
-  // Ogre is much more specific about its pixel layout than nif, and less
-  // specific even still than dds. It is not obvious how many of these formats
-  // translate, and some do not have analogues at all; Ogre does not seem to
-  // support palettized textures, for instance. Moreover, it appears that this
-  // is just setting a *preference*, so hopefully we are free to ignore it and
-  // let Ogre decide.
-  // TODO: Try and convert the pixel layout?
-
-  switch (block.formatPrefs.mipMapFormat) {
-    case nif::Enum::MipMapFormat::MIP_FMT_NO:tex->setNumMipmaps(0);
-      break;
-    case nif::Enum::MipMapFormat::MIP_FMT_YES:[[fallthrough]];
-    case nif::Enum::MipMapFormat::MIP_FMT_DEFAULT:[[fallthrough]];
-      // TODO: Use a global mipmap setting
-    default:tex->setNumMipmaps(4);
-      break;
-  }
-
-  // Ogre does not seem to provide control over this particular alpha setting
-
-  // All textures are assumed static i.e. they cannot be dynamically changed
-  // This can be set explicitly in a Texture, but not the TextureUnitState.
-
-  // All textures are direct since we don't support internal textures
-}
-
-TextureFamily
-MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
-                                          LoadStatus &tag, Ogre::Pass *pass) {
-  Tagger tagger{tag};
-
-  // Nif ApplyMode is for vertex colors, which are currently unsupported
-  // TODO: Support ApplyMode with vertex colors
-
-  TextureFamily family{};
-
-  if (block.hasBaseTexture) {
-    family.base = parseTexDesc(&block.baseTexture, pass);
-    // Normal mapping is automatically turned on if a normal map exists. If one
-    // doesn't exist, then we use a flat normal map.
-    auto &texMgr{Ogre::TextureManager::getSingleton()};
-    if (auto normalMap = toNormalMap(family.base->getTextureName());
-        texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
-      family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
-    } else {
-      family.normal = parseTexDesc(&block.baseTexture, pass,
-                                   "textures/flat_n.dds");
-    }
-  }
-  if (block.hasDarkTexture) {
-    family.dark = parseTexDesc(&block.darkTexture, pass);
-  }
-  if (block.hasDetailTexture) {
-    family.detail = parseTexDesc(&block.detailTexture, pass);
-  }
-  if (block.hasGlossTexture) {
-    family.gloss = parseTexDesc(&block.glossTexture, pass);
-  }
-  if (block.hasGlowTexture) {
-    family.glow = parseTexDesc(&block.glowTexture, pass);
-  }
-  if (block.hasDecal0Texture) {
-    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
-    if (block.hasDecal1Texture) {
-      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
-      if (block.hasDecal2Texture) {
-        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
-        if (block.hasDecal3Texture) {
-          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
-        }
-      }
-    }
-  }
-
-  return family;
-}
-
 MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph untaggedBlocks)
-    : mesh(mesh) {
-  boost::copy_graph(untaggedBlocks, blocks);
+    : mMesh(mesh) {
+  boost::copy_graph(untaggedBlocks, mBlocks);
 
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   auto propertyMap = boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, blocks));
+      colorMap.begin(), boost::get(boost::vertex_index, mBlocks));
 
-  boost::depth_first_search(blocks, TBGVisitor(*this), propertyMap);
+  boost::depth_first_search(mBlocks, TBGVisitor(*this), propertyMap);
 }
 
 // This is a new connected component so we need to reset the transformation to
@@ -828,13 +824,11 @@ void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &tag = taggedNiObject.tag;
 
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
-    const auto
-        &niTriBasedGeom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
-    auto[submesh, subBbox] = state.parseNiTriBasedGeom(niTriBasedGeom, tag,
-                                                       transform);
-    auto bbox{state.mesh->getBounds()};
+    const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
+    auto[submesh, subBbox] = state.parseNiTriBasedGeom(geom, tag, transform);
+    auto bbox{state.mMesh->getBounds()};
     bbox.merge(subBbox);
-    state.mesh->_setBounds(bbox);
+    state.mMesh->_setBounds(bbox);
   } else if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     transform = transform * getTransform(niNode);
