@@ -10,10 +10,6 @@ class DebugDrawer : public btIDebugDraw {
  public:
   explicit DebugDrawer(SceneManager *mgr, const String &group);
 
-  void drawLine(const Vector3 &from,
-                const Vector3 &to,
-                const ColourValue &colour);
-
   void drawLine(const btVector3 &from,
                 const btVector3 &to,
                 const btVector3 &colour) override;
@@ -47,6 +43,7 @@ class DebugDrawer : public btIDebugDraw {
   struct Vertex {
     Vector3 pos{};
     ColourValue col{};
+    explicit Vertex(Vector3 pos, ColourValue col) : pos(pos), col(col) {}
   };
   ManualObject *mObject{};
   std::vector<Vertex> mVertices{};

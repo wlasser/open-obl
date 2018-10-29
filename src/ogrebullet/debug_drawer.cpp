@@ -11,19 +11,13 @@ DebugDrawer::DebugDrawer(SceneManager *mgr, const String &group) {
   mObject->end();
 }
 
-void DebugDrawer::drawLine(const Vector3 &from,
-                           const Vector3 &to,
-                           const ColourValue &colour) {
-  mVertices.push_back({from, colour});
-  mVertices.push_back({to, colour});
-}
-
 void DebugDrawer::drawLine(const btVector3 &from,
                            const btVector3 &to,
                            const btVector3 &colour) {
-  drawLine(Vector3{from.x(), from.y(), from.z()},
-           Vector3{to.x(), to.y(), to.z()},
-           ColourValue{colour.x(), colour.y(), colour.z()});
+  mVertices.emplace_back(Vector3{from.x(), from.y(), from.z()},
+                         ColourValue{colour.x(), colour.y(), colour.z()});
+  mVertices.emplace_back(Vector3{to.x(), to.y(), to.z()},
+                         ColourValue{colour.x(), colour.y(), colour.z()});
 }
 
 void DebugDrawer::clearLines() {
