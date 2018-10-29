@@ -29,22 +29,9 @@ using Block = jbcoe::polymorphic_value<nif::NiObject>;
 using BlockGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                          boost::bidirectionalS, Block>;
 
-// Add an edge from u to v. Does not check that v is a valid reference.
-template<class T>
-void addEdge(BlockGraph &blocks, BlockGraph::vertex_descriptor u,
-             nif::basic::Ref<T> v);
-
-// Read a block of type T from the stream and add a pointer to it as a vertex
-// in the block graph.
-template<class T>
-void addVertex(BlockGraph &blocks, BlockGraph::vertex_descriptor u,
-               nif::Version nifVersion, std::istream &is);
-
-using AddVertexMap = std::map<std::string, decltype(&addVertex<nif::NiNode>)>;
-const AddVertexMap &getAddVertexMap();
-
 BlockGraph createBlockGraph(std::istream &is);
 
+// Add an edge from u to v. Does not check that v is a valid reference.
 template<class T>
 void addEdge(BlockGraph &blocks,
              BlockGraph::vertex_descriptor u,
@@ -54,20 +41,24 @@ void addEdge(BlockGraph &blocks,
   boost::add_edge(u, vDesc, blocks);
 }
 
+// Read a block of type T from the stream and add a pointer to it as a vertex
+// in the block graph.
 template<class T>
 void addVertex(BlockGraph &blocks,
                BlockGraph::vertex_descriptor u,
-               nif::Version nifVersion,
+               [[maybe_unused]] nif::Version nifVersion,
                std::istream &is) {
-  blocks[u] = [nifVersion]() -> jbcoe::polymorphic_value<nif::NiObject> {
-    if constexpr (std::is_base_of_v<nif::Versionable, T>) {
-      return jbcoe::make_polymorphic_value<nif::NiObject, T>(nifVersion);
-    } else {
-      return jbcoe::make_polymorphic_value<nif::NiObject, T>();
-    }
-  }();
-  blocks[u]->read(is);
+  if constexpr (std::is_base_of_v<nif::Versionable, T>) {
+    blocks[u] = jbcoe::make_polymorphic_value<nif::NiObject, T>(nifVersion);
+    blocks[u]->read(is);
+  } else {
+    blocks[u] = jbcoe::make_polymorphic_value<nif::NiObject, T>();
+    blocks[u]->read(is);
+  }
 }
+
+using AddVertexMap = std::map<std::string, decltype(&addVertex<nif::NiNode>)>;
+const AddVertexMap &getAddVertexMap();
 
 } // namespace engine::nifloader
 
