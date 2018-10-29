@@ -86,6 +86,9 @@ class Resolver<record::CELL> {
     void readRecord(std::istream &is) {
       record::skipRecord(is);
     }
+
+    template<>
+    void readRecord<record::REFR>(std::istream &is);
   };
 
   // TODO: Support multiple streams for multiple esps
@@ -115,9 +118,6 @@ class Resolver<record::CELL> {
   make_t make(BaseId baseId) const;
   bool add(BaseId baseId, store_t entry);
 };
-
-template<>
-void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &);
 
 } // namespace engine
 

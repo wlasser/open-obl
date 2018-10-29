@@ -31,25 +31,25 @@ class InitialProcessor {
   void readRecord(std::istream &is) {
     record::skipRecord(is);
   }
+
+  template<>
+  void readRecord<record::STAT>(std::istream &is);
+
+  template<>
+  void readRecord<record::DOOR>(std::istream &is);
+
+  template<>
+  void readRecord<record::LIGH>(std::istream &is);
+
+  template<>
+  void readRecord<record::MISC>(std::istream &is);
+
+  template<>
+  void readRecord<record::CELL>(std::istream &is);
+
+  template<>
+  void readRecord<record::GMST>(std::istream &is);
 };
-
-template<>
-void InitialProcessor::readRecord<record::STAT>(std::istream &);
-
-template<>
-void InitialProcessor::readRecord<record::DOOR>(std::istream &);
-
-template<>
-void InitialProcessor::readRecord<record::LIGH>(std::istream &);
-
-template<>
-void InitialProcessor::readRecord<record::MISC>(std::istream &);
-
-template<>
-void InitialProcessor::readRecord<record::CELL>(std::istream &);
-
-template<>
-void InitialProcessor::readRecord<record::GMST>(std::istream &);
 
 } // namespace engine
 
