@@ -78,10 +78,11 @@ struct PlayerControllerImpl {
   // Multiplicative modifier of movement speed due to items carried.
   float encumbranceModifier(float wornWeight,
                             bool hasWeaponOut) const noexcept {
-    const float clampedWornWeight = std::min(wornWeight, *fMoveWeightMax);
-    const float weightRange = std::max(*fMoveWeightMax - *fMoveWeightMin, 0.1f);
-    const float effectMod = encumbranceEffectModifier(hasWeaponOut);
-    return 1.0f - effectMod * (*fMoveWeightMin + wornWeight) / weightRange;
+    const float clampedWornWeight{std::min(wornWeight, *fMoveWeightMax)};
+    const float weightRange{std::max(*fMoveWeightMax - *fMoveWeightMin, 0.1f)};
+    const float effectMod{encumbranceEffectModifier(hasWeaponOut)};
+    const float denominator{*fMoveWeightMin + clampedWornWeight};
+    return 1.0f - effectMod * denominator / weightRange;
   }
 
   // Multiplicative modifier of movement speed due to having a weapon out.
@@ -91,7 +92,7 @@ struct PlayerControllerImpl {
 
   // Base walk movement speed in units/s.
   float baseSpeed(float speedAttribute) const noexcept {
-    const float walkRange = *fMoveCharWalkMax - *fMoveCharWalkMin;
+    const float walkRange{*fMoveCharWalkMax - *fMoveCharWalkMin};
     return *fMoveCharWalkMin + walkRange * speedAttribute * 0.01f;
   }
 
@@ -141,7 +142,7 @@ struct PlayerControllerImpl {
 
   // Distance from jump apex to ground, in m.
   float jumpHeight(float acrobaticsSkill) const noexcept {
-    const float heightRange = *fJumpHeightMax - *fJumpHeightMin;
+    const float heightRange{*fJumpHeightMax - *fJumpHeightMin};
     return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
         * conversions::metersPerUnit<float>;
   }
@@ -163,7 +164,7 @@ struct PlayerControllerImpl {
   std::unique_ptr<btRigidBody> rigidBody{};
 
   float getMoveSpeed() const noexcept {
-    const float base{baseSpeed(speedAttribute) * height
+    const float base{baseSpeed(speedAttribute) * raceHeight
                          * conversions::metersPerUnit<float>};
     const float weightMult{encumbranceModifier(wornWeight, hasWeaponOut)};
     return base * weightMult
