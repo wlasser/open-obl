@@ -304,8 +304,6 @@ CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
       mRigidBody->mCollisionMesh.get(), false);
 
   // TODO: Support dynamic concave geometry
-
-  return nullptr;
 }
 
 unsigned char *
