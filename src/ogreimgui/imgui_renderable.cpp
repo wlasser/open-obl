@@ -69,6 +69,7 @@ void ImGuiRenderable::generateIndexData(const ImDrawIdx *idxBuf,
   hwIdxBuf->writeData(0, hwIdxBuf->getSizeInBytes(), idxBuf, true);
 
   mIndexData->indexCount = numIndices;
+  mIndexData->indexBuffer = hwIdxBuf;
 }
 
 void ImGuiRenderable::generateVertexData(const ImDrawVert *vertBuf,
@@ -80,9 +81,9 @@ void ImGuiRenderable::generateVertexData(const ImDrawVert *vertBuf,
   // TODO: Optimize creation to size changes only
   auto hwVertBuf{hwBufMgr.createVertexBuffer(mBytesPerVertex, numVerts, usage)};
   hwVertBuf->writeData(0, hwVertBuf->getSizeInBytes(), vertBuf, true);
-  vertBind->setBinding(0, hwVertBuf);
 
   mVertexData->vertexCount = numVerts;
+  vertBind->setBinding(0, hwVertBuf);
 }
 
 } // namespace Ogre

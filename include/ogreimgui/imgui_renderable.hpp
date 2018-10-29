@@ -40,6 +40,10 @@ class ImGuiRenderable : public Renderable {
   void generateIndexData(const ImDrawIdx *idxBuf, std::size_t numIndices);
   void generateVertexData(const ImDrawVert *vertBuf, std::size_t numVerts);
 
+  void setWorldTransforms(const Matrix4 &xform) {
+    mXform = xform;
+  }
+
   MaterialPtr mMaterial{};
 
  private:

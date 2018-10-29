@@ -134,7 +134,7 @@ void ImGuiManager::createFontTexture() {
   int width{};
   int height{};
   unsigned char *pixels{};
-  io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height);
+  io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
 
   auto tex{texMgr.createManual(mFontTextureName,
                                mResourceGroup,
@@ -143,10 +143,11 @@ void ImGuiManager::createFontTexture() {
                                static_cast<unsigned int>(height),
                                1u,
                                MIP_DEFAULT,
-                               PF_A8,
+                               PF_BYTE_RGBA,
                                TU_STATIC_WRITE_ONLY)};
-  tex->getBuffer()->writeData(0, width * height * 1u, pixels, true);
+  tex->getBuffer()->writeData(0, width * height * 4u, pixels, true);
   io.Fonts->TexID = tex.get();
+  tex->load();
 }
 
 void ImGuiManager::removeFontTexture() noexcept {
@@ -172,7 +173,9 @@ void ImGuiManager::createMaterial() {
     auto tex{texMgr.getByName(mFontTextureName, mResourceGroup)};
     auto state{pass->createTextureUnitState()};
     state->setTexture(tex);
+    state->setTextureFiltering(TFO_NONE);
   }
+  mat->load();
 }
 
 void ImGuiManager::removeMaterial() noexcept {
@@ -202,6 +205,7 @@ void ImGuiManager::render(Viewport *viewport, RenderQueue *queue) {
       0.0f,           0.0f,           0.0f, 1.0f
   };
   // @formatter:on
+  mRenderable.setWorldTransforms(proj);
 
   // TODO: No raw loops
   for (int i = 0; i < draw_data->CmdListsCount; ++i) {
@@ -220,21 +224,21 @@ void ImGuiManager::render(Viewport *viewport, RenderQueue *queue) {
       } else {
         auto pass{mRenderable.mMaterial->getTechnique(0)->getPass(0)};
         auto state{pass->getTextureUnitState(0)};
-
         if (cmd.TextureId) {
           auto handle{reinterpret_cast<ResourceHandle>(cmd.TextureId)};
-          auto resPtr{texMgr.getByHandle(handle)};
-
-          if (auto tex{std::static_pointer_cast<Texture>(resPtr)}; tex) {
+          auto res{texMgr.getByHandle(handle)};
+          auto tex{std::static_pointer_cast<Texture>(res)};
+          if (tex) {
             state->setTexture(tex);
           } else {
-            auto fontTex{texMgr.getByName(mFontTextureName, mResourceGroup)};
-            state->setTexture(fontTex);
+            state->setTexture(texMgr
+                                  .getByName(mFontTextureName, mResourceGroup));
           }
         } else {
-          auto fontTex{texMgr.getByName(mFontTextureName, mResourceGroup)};
-          state->setTexture(fontTex);
+          state->setTexture(texMgr.getByName(mFontTextureName, mResourceGroup));
         }
+
+        //queue->addRenderable(&mRenderable, RENDER_QUEUE_OVERLAY, 0);
         scnMgr->_injectRenderWithPass(pass, &mRenderable, false);
       }
 

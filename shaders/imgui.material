@@ -14,12 +14,20 @@ material __ImGuiMaterial {
             }
 
             fragment_program_ref imgui_fs_glsl {
+                param_named diffuseMap int 0
             }
 
-            lighting on
+            lighting off
             ambient vertexcolour
+
+            separate_scene_blend_op add add
+            separate_scene_blend src_alpha one_minus_src_alpha one_minus_src_alpha zero
             scene_blend alpha_blend
+
+            cull_hardware none
+            cull_software none
             depth_check on
+            depth_func always_pass
         }
     }
 }
