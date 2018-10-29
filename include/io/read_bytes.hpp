@@ -17,23 +17,16 @@
 
 namespace io {
 
+// @formatter:off
 template<class T>
 auto readBytes(std::istream &is, T &data)
-    -> typename std::enable_if_t<is_byte_direct_ioable_v < T>,
-void> {
-is.read(reinterpret_cast
-<char *>(std::addressof(data)),
-sizeof(data));
-if (is.
-rdstate()
-!= std::ios::goodbit) {
-throw IOReadError(typeid(T).
-name(), is
-.
-rdstate()
-);
+    -> typename std::enable_if_t<is_byte_direct_ioable_v<T>, void> {
+  is.read(reinterpret_cast<char *>(std::addressof(data)), sizeof(data));
+  if (is.rdstate() != std::ios::goodbit) {
+    throw IOReadError(typeid(T).name(), is.rdstate());
+  }
 }
-}
+// @formatter:on
 
 void readBytes(std::istream &is, std::string &data);
 

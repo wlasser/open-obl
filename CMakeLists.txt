@@ -2,9 +2,10 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivion)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fstandalone-debug -Wall")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 
 option(USE_IWYU "Run include-what-you-use when building" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 2.0 REQUIRED)
