@@ -4,6 +4,7 @@
 #include "engine/controls.hpp"
 #include "engine/character_controller/fallback_state.hpp"
 #include "engine/character_controller/player_controller_impl.hpp"
+#include <btBulletDynamicsCommon.h>
 #include <OgreMath.h>
 #include <optional>
 
@@ -44,6 +45,15 @@ struct LookAbility {
 
   void handleEvent(PlayerControllerImpl &impl, const event::Yaw &event) {
     impl.yaw += -Ogre::Radian(event.delta);
+  }
+};
+
+template<class State>
+struct CollideAbility {
+  std::optional<State> handleCollision(PlayerControllerImpl &/*impl*/,
+                                       const btCollisionObject */*other*/,
+                                       const btManifoldPoint &/*contact*/) {
+    return std::nullopt;
   }
 };
 

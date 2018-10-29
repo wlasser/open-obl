@@ -18,7 +18,6 @@ class SneakJumpState : public FallbackState<SneakJumpState>,
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
   using FallbackState::handleEvent;
-  using FallbackState::exit;
 
   std::optional<SneakJumpState>
   update(PlayerControllerImpl &impl, float elapsed);
@@ -29,6 +28,7 @@ class SneakJumpState : public FallbackState<SneakJumpState>,
                   const btManifoldPoint &contact);
 
   void enter(PlayerControllerImpl &impl);
+  void exit(PlayerControllerImpl &impl) {}
 };
 
 } // namespace engine::character

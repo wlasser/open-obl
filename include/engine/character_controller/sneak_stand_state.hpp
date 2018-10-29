@@ -14,12 +14,13 @@ class StandState;
 
 class SneakStandState : public FallbackState<SneakStandState>,
                         public MoveAbility<SneakStandState>,
-                        public LookAbility<SneakStandState> {
+                        public LookAbility<SneakStandState>,
+                        public CollideAbility<SneakStandState> {
  public:
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
+  using CollideAbility::handleCollision;
   using FallbackState::handleEvent;
-  using FallbackState::handleCollision;
 
   std::optional<SneakJumpState>
   handleEvent(PlayerControllerImpl &impl, const event::Jump &event);

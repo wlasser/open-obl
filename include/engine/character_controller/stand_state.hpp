@@ -14,13 +14,13 @@ class SneakStandState;
 
 class StandState : public FallbackState<StandState>,
                    public MoveAbility<StandState>,
-                   public LookAbility<StandState> {
+                   public LookAbility<StandState>,
+                   public CollideAbility<StandState> {
  public:
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
+  using CollideAbility::handleCollision;
   using FallbackState::handleEvent;
-  using FallbackState::handleCollision;
-  using FallbackState::exit;
 
   std::optional<JumpState>
   handleEvent(PlayerControllerImpl &impl, const event::Jump &event);
@@ -32,6 +32,7 @@ class StandState : public FallbackState<StandState>,
   update(PlayerControllerImpl &impl, float elapsed);
 
   void enter(PlayerControllerImpl &impl);
+  void exit(PlayerControllerImpl &) {}
 };
 
 } // namespace engine::character

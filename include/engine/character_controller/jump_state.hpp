@@ -18,7 +18,6 @@ class JumpState : public FallbackState<JumpState>,
   using FallbackState::handleEvent;
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
-  using FallbackState::exit;
 
   std::optional<JumpState> update(PlayerControllerImpl &impl, float elapsed);
 
@@ -28,6 +27,7 @@ class JumpState : public FallbackState<JumpState>,
                   const btManifoldPoint &contact);
 
   void enter(PlayerControllerImpl &impl);
+  void exit(PlayerControllerImpl &) {}
 };
 
 } // namespace engine::character

@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_WALK_STATE_HPP
 #define OPENOBLIVION_ENGINE_CHARACTER_CONTROLLER_WALK_STATE_HPP
 
+#include "engine/character_controller/abilities.hpp"
 #include "engine/character_controller/fallback_state.hpp"
 #include "engine/character_controller/player_controller_impl.hpp"
 #include <optional>
@@ -9,11 +10,11 @@ namespace engine::character {
 
 class RunState;
 
-class WalkState : public FallbackState<WalkState> {
+class WalkState : public FallbackState<WalkState>,
+                  public CollideAbility<WalkState> {
  public:
   using FallbackState::handleEvent;
-  using FallbackState::exit;
-  using FallbackState::handleCollision;
+  using CollideAbility::handleCollision;
 
   std::optional<RunState>
   handleEvent(PlayerControllerImpl &impl, const event::Run &event);
@@ -25,6 +26,7 @@ class WalkState : public FallbackState<WalkState> {
   update(PlayerControllerImpl &impl, float elapsed);
 
   void enter(PlayerControllerImpl &impl);
+  void exit(PlayerControllerImpl &) {}
 };
 
 } // namespace engine::character

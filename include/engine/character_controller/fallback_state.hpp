@@ -28,19 +28,6 @@ class FallbackState {
   // Fallback for unhandled MouseEvents. Derived classes can write
   // `using FallbackState::handleEvent` to get this automatically.
   void handleEvent(PlayerControllerImpl &, const event::MouseEvent &) {}
-
-  std::optional<State> update(PlayerControllerImpl &player, float elapsed) {
-    return std::nullopt;
-  }
-
-  std::optional<State> handleCollision(PlayerControllerImpl &player,
-                                       const btCollisionObject *other,
-                                       const btManifoldPoint &contact) {
-    return std::nullopt;
-  }
-
-  void enter(PlayerControllerImpl &player) {}
-  void exit(PlayerControllerImpl &player) {}
 };
 
 } // namespace engine::character
