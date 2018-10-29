@@ -5,7 +5,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
-#include <memory>
+#include <optional>
 
 namespace engine::character {
 
@@ -32,12 +32,13 @@ void JumpState::enter(PlayerControllerImpl &impl) {
 
 std::optional<StandState>
 JumpState::handleCollision(PlayerControllerImpl &impl,
-                           const btCollisionObject *other,
+                           const btCollisionObject *,
                            const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
+  const auto gravityVector{impl.rigidBody->getGravity()};
   spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
-  if (r.normalized().dot(impl.rigidBody->getGravity().normalized()) > 0.7) {
+  if (r.normalized().dot(gravityVector.normalized()) > std::sqrt(2.0f) / 2.0f) {
     return StandState{};
   }
   return std::nullopt;
