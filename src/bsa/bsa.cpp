@@ -80,6 +80,8 @@ BsaReader::FolderAccessor::operator[](std::string file) const {
 
 FileData
 BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
+  std::unique_lock lock{owner.isMutex};
+
   const FolderRecord &folder{owner.folderRecords.at(hash)};
   const FileRecord &file{folder.files.at(fileHash)};
 

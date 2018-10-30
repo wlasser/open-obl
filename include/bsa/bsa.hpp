@@ -7,6 +7,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -131,6 +132,7 @@ class BsaReader {
   using RecordMap = std::map<uint64_t, FolderRecord>;
   RecordMap folderRecords;
   mutable std::ifstream is;
+  mutable std::mutex isMutex{};
   bool readHeader();
   bool readRecords();
   bool readFileNames();
