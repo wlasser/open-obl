@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_RESOLVERS_HELPERS_HPP
 #define OPENOBLIVION_ENGINE_RESOLVERS_HELPERS_HPP
 
+#include "formid.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>
 #include <OgreEntity.h>
@@ -17,7 +18,7 @@ namespace ecs {
 
 template<class T>
 struct Component {
-  T value;
+  T value{};
   using type = T;
   operator T &() {
     return value;
