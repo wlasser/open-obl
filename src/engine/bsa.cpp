@@ -11,9 +11,9 @@ namespace engine {
 
 namespace {
 
-class BSAArchive : public Ogre::Archive {
+class BsaArchive : public Ogre::Archive {
  private:
-  using BSAArchiveStream = Ogre::OgreStandardStream<bsa::FileData>;
+  using BsaArchiveStream = Ogre::OgreStandardStream<bsa::FileData>;
   // BsaReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.
@@ -30,13 +30,13 @@ class BSAArchive : public Ogre::Archive {
   Ogre::FileInfo getFileInfo(const fs::Path &path) const;
 
  public:
-  BSAArchive(const Ogre::String &name, const Ogre::String &archType);
-  ~BSAArchive() override = default;
+  BsaArchive(const Ogre::String &name, const Ogre::String &archType);
+  ~BsaArchive() override = default;
 
-  BSAArchive(const BSAArchive &other) = delete;
-  BSAArchive &operator=(const BSAArchive &other) = delete;
-  BSAArchive(BSAArchive &&other) = delete;
-  BSAArchive &operator=(BSAArchive &&other) = delete;
+  BsaArchive(const BsaArchive &other) = delete;
+  BsaArchive &operator=(const BsaArchive &other) = delete;
+  BsaArchive(BsaArchive &&other) = delete;
+  BsaArchive &operator=(BsaArchive &&other) = delete;
 
   [[noreturn]] Ogre::DataStreamPtr create(const Ogre::String &filename) override;
   [[noreturn]] void remove(const Ogre::String &filename) override;
@@ -60,15 +60,15 @@ class BSAArchive : public Ogre::Archive {
   void load() override;
   void unload() override;
 
-  Ogre::DataStreamPtr open(const Ogre::String &filename,
-                           bool readOnly) const override;
+  Ogre::DataStreamPtr
+  open(const Ogre::String &filename, bool readOnly) const override;
 };
 
 }
 
 template<class T>
 std::shared_ptr<std::vector<T>>
-BSAArchive::find(const Ogre::String &pattern,
+BsaArchive::find(const Ogre::String &pattern,
                  bool recursive,
                  bool dirs,
                  const std::function<T(fs::Path)> &f) const {
@@ -103,7 +103,7 @@ BSAArchive::find(const Ogre::String &pattern,
   return ret;
 }
 
-Ogre::FileInfo BSAArchive::getFileInfo(const fs::Path &path) const {
+Ogre::FileInfo BsaArchive::getFileInfo(const fs::Path &path) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
 
   Ogre::FileInfo info;
@@ -126,19 +126,19 @@ Ogre::FileInfo BSAArchive::getFileInfo(const fs::Path &path) const {
   return info;
 }
 
-BSAArchive::BSAArchive(const Ogre::String &name,
+BsaArchive::BsaArchive(const Ogre::String &name,
                        const Ogre::String &archType) :
     Ogre::Archive(name, archType), name(name) {}
 
-[[noreturn]] Ogre::DataStreamPtr BSAArchive::create(const Ogre::String &filename) {
+[[noreturn]] Ogre::DataStreamPtr BsaArchive::create(const Ogre::String &filename) {
   throw std::runtime_error("Cannot modify BSA archives");
 }
 
-[[noreturn]] void BSAArchive::remove(const Ogre::String &filename) {
+[[noreturn]] void BsaArchive::remove(const Ogre::String &filename) {
   throw std::runtime_error("Cannot modify BSA archives");
 }
 
-bool BSAArchive::exists(const Ogre::String &filename) const {
+bool BsaArchive::exists(const Ogre::String &filename) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
   fs::Path path{filename};
   const auto file{path.filename()};
@@ -146,70 +146,68 @@ bool BSAArchive::exists(const Ogre::String &filename) const {
   return reader->contains(std::string{folder}, std::string{file});
 }
 
-Ogre::StringVectorPtr BSAArchive::find(const Ogre::String &pattern,
+Ogre::StringVectorPtr BsaArchive::find(const Ogre::String &pattern,
                                        bool recursive, bool dirs) const {
-  return find<std::string>(pattern, recursive, dirs,
-                           [](const fs::Path &path) -> std::string {
-                             return path.c_str();
-                           });
+  return find<std::string>(pattern, recursive, dirs, [](const fs::Path &path) {
+    return std::string{path.c_str()};
+  });
 }
 
-Ogre::FileInfoListPtr BSAArchive::findFileInfo(const Ogre::String &pattern,
+Ogre::FileInfoListPtr BsaArchive::findFileInfo(const Ogre::String &pattern,
                                                bool recursive,
                                                bool dirs) const {
   return find<Ogre::FileInfo>(pattern, recursive, dirs,
-                              [this](const fs::Path &path) -> Ogre::FileInfo {
+                              [this](const fs::Path &path) {
                                 return getFileInfo(path);
                               });
 }
 
-Ogre::StringVectorPtr BSAArchive::list(bool recursive, bool dirs) const {
+Ogre::StringVectorPtr BsaArchive::list(bool recursive, bool dirs) const {
   return find("*", recursive, dirs);
 }
 
-Ogre::FileInfoListPtr BSAArchive::listFileInfo(bool recursive,
-                                               bool dirs) const {
+Ogre::FileInfoListPtr
+BsaArchive::listFileInfo(bool recursive, bool dirs) const {
   return findFileInfo("*", recursive, dirs);
 }
 
-void BSAArchive::load() {
+void BsaArchive::load() {
   reader.emplace(name);
 }
 
-void BSAArchive::unload() {
+void BsaArchive::unload() {
   reader.reset();
 }
 
-Ogre::DataStreamPtr BSAArchive::open(const Ogre::String &filename,
+Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
                                      bool /*readOnly*/) const {
   if (!exists(filename)) return std::shared_ptr<Ogre::DataStream>(nullptr);
   const fs::Path path{filename};
   const auto file{path.filename()};
   const auto folder{path.folder()};
-  return std::make_shared<BSAArchiveStream>(filename,
-                                            (*reader)[std::string{
-                                                folder}][std::string{file}]);
+  return std::make_shared<BsaArchiveStream>(
+      filename, (*reader)[std::string{folder}][std::string{file}]);
 }
 
-std::time_t BSAArchive::getModifiedTime(const Ogre::String &filename) const {
+std::time_t BsaArchive::getModifiedTime(const Ogre::String &filename) const {
   // BSA files don't track modification time, best we could do would be the
   // modification time of the entire archive, but bsa::BsaReader doesn't track
   // that so we'll just return the epoch.
   return 0;
 }
 
-bool BSAArchive::isCaseSensitive() const {
+bool BsaArchive::isCaseSensitive() const {
   return false;
 }
 
-bool BSAArchive::isReadOnly() const {
+bool BsaArchive::isReadOnly() const {
   return true;
 }
 
 gsl::owner<Ogre::Archive *>
 BsaArchiveFactory::createInstance(const Ogre::String &name, bool readOnly) {
   if (!readOnly) return nullptr;
-  return new BSAArchive(name, getType());
+  return new BsaArchive(name, getType());
 }
 
 void BsaArchiveFactory::destroyInstance(gsl::owner<Ogre::Archive *> ptr) {
