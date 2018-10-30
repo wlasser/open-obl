@@ -6,6 +6,7 @@
 #include "ogre/spdlog_listener.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <OgreMovableObject.h>
+#include <gsl/gsl>
 #include <stdexcept>
 
 namespace Ogre {
@@ -69,16 +70,16 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
 class RigidBodyFactory : public MovableObjectFactory {
  public:
   RigidBodyFactory() = default;
-
   ~RigidBodyFactory() override = default;
 
-  void destroyInstance(MovableObject *obj) override;
+  void destroyInstance(gsl::owner<MovableObject *> obj) override;
 
   const String &getType() const override;
 
  protected:
-  MovableObject *createInstanceImpl(const String &name,
-                                    const NameValuePairList *params) override;
+  gsl::owner<MovableObject *>
+  createInstanceImpl(const String &name,
+                     const NameValuePairList *params) override;
 
   const String mType = "RigidBody";
 };

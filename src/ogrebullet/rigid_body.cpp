@@ -1,6 +1,7 @@
 #include "ogrebullet/conversions.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
+#include <gsl/gsl>
 
 namespace Ogre {
 
@@ -52,8 +53,7 @@ btRigidBody *RigidBody::getRigidBody() const {
 }
 
 RigidBody::RigidBody(const String &name, CollisionObjectPtr collisionObject)
-    : mCollisionObject(std::move(collisionObject)) {
-  mName = name;
+    : MovableObject(name), mCollisionObject(std::move(collisionObject)) {
   if (auto *info = mCollisionObject->getRigidBodyInfo()) {
     mRigidBody = std::make_unique<btRigidBody>(*info);
   } else {
@@ -73,7 +73,7 @@ void RigidBody::bind(Node *node) {
     mMotionState = std::make_unique<MotionState>(node);
     if (mRigidBody) {
       mRigidBody->setMotionState(mMotionState.get());
-      if (node->getScale() != Vector3{1.0f, 1.0f, 1.0f}) {
+      if (node->getScale() != Vector3::UNIT_SCALE) {
         setScale(node->getScale());
       }
     }
@@ -85,35 +85,37 @@ void RigidBody::notify() {
 }
 
 void RigidBody::setScale(const Vector3 &scale) {
-  auto localScale = conversions::toBullet(scale);
+  const auto localScale{conversions::toBullet(scale)};
 
   if (mCollisionShapeOverride) {
     mCollisionShapeOverride->setLocalScaling(localScale);
+    return;
+  }
+
+  btCollisionShape *base{mCollisionObject->getCollisionShape()};
+
+  // We can't copy the base in general
+  if (auto *triMesh{dynamic_cast<btBvhTriangleMeshShape *>(base)}) {
+    mCollisionShapeOverride =
+        std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
+  } else if (auto *convexHull{dynamic_cast<btConvexHullShape *>(base)}) {
+    auto override{std::make_unique<btConvexHullShape>()};
+    auto points{gsl::make_span(convexHull->getUnscaledPoints(),
+                               convexHull->getNumPoints())};
+    for (const auto &point : points) {
+      override->addPoint(point);
+    }
+    mCollisionShapeOverride = std::move(override);
   } else {
-    btCollisionShape *base = mCollisionObject->getCollisionShape();
+    // TODO: Scale other collision shapes
+  }
 
-    // We can't copy the base in general
-    if (auto *triMesh = dynamic_cast<btBvhTriangleMeshShape *>(base)) {
-      mCollisionShapeOverride =
-          std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
-    } else if (auto *convexHull = dynamic_cast<btConvexHullShape *>(base)) {
-      auto override = std::make_unique<btConvexHullShape>();
-      btVector3 *points = convexHull->getUnscaledPoints();
-      for (int i = 0; i < convexHull->getNumPoints(); ++i) {
-        override->addPoint(*(points + i));
-      }
-      mCollisionShapeOverride = std::move(override);
-    } else {
-      // TODO: Scale other collision shapes
-    }
-
-    if (mCollisionShapeOverride) {
-      mRigidBody->setCollisionShape(mCollisionShapeOverride.get());
-    }
+  if (mCollisionShapeOverride) {
+    mRigidBody->setCollisionShape(mCollisionShapeOverride.get());
   }
 }
 
-void RigidBodyFactory::destroyInstance(MovableObject *obj) {
+void RigidBodyFactory::destroyInstance(gsl::owner<MovableObject *> obj) {
   OGRE_DELETE obj;
 }
 
@@ -121,19 +123,20 @@ const String &RigidBodyFactory::getType() const {
   return mType;
 }
 
-MovableObject *RigidBodyFactory::createInstanceImpl(const String &name,
-                                                    const NameValuePairList *params) {
+gsl::owner<MovableObject *>
+RigidBodyFactory::createInstanceImpl(const String &name,
+                                     const NameValuePairList *params) {
   CollisionObjectPtr ptr{};
-  String group = ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME;
+  String group{ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME};
 
   if (params) {
-    auto it = params->find("resourceGroup");
-    if (it != params->end()) group = it->second;
+    if (auto it{params->find("resourceGroup")}; it != params->end()) {
+      group = it->second;
+    }
 
-    it = params->find("collisionObject");
-    if (it != params->end()) {
-      auto retrieveResult = CollisionObjectManager::getSingleton()
-          .createOrRetrieve(it->second, group);
+    if (auto it{params->find("collisionObject")}; it != params->end()) {
+      auto &collisionMgr{CollisionObjectManager::getSingleton()};
+      auto retrieveResult{collisionMgr.createOrRetrieve(it->second, group)};
       ptr = std::dynamic_pointer_cast<CollisionObject>(retrieveResult.first);
       if (ptr) ptr->load();
     }

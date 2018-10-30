@@ -30,7 +30,7 @@ target_link_libraries(OpenOblivionOgreBullet PRIVATE
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionOgre
         spdlog
-        PUBLIC ${BULLET_LIBRARY} OgreMain)
+        PUBLIC ${BULLET_LIBRARY} GSL OgreMain)
 
 install(TARGETS OpenOblivionOgreBullet EXPORT OpenOblivionOgreBulletTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
