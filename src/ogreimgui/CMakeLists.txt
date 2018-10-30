@@ -15,7 +15,7 @@ target_include_directories(OpenOblivionOgreImGui PUBLIC
 
 set(IMGUI_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib/imgui)
 
-target_sources(OpenOblivionOgreImGui PRIVATE
+add_library(ImGui OBJECT
         ${IMGUI_SOURCE_DIR}/imgui/imconfig.h
         ${IMGUI_SOURCE_DIR}/imgui/imgui.cpp
         ${IMGUI_SOURCE_DIR}/imgui/imgui.h
@@ -25,7 +25,12 @@ target_sources(OpenOblivionOgreImGui PRIVATE
         ${IMGUI_SOURCE_DIR}/imgui/imgui_widgets.cpp
         ${IMGUI_SOURCE_DIR}/imgui/imstb_rectpack.h
         ${IMGUI_SOURCE_DIR}/imgui/imstb_textedit.h
-        ${IMGUI_SOURCE_DIR}/imgui/imstb_truetype.h
+        ${IMGUI_SOURCE_DIR}/imgui/imstb_truetype.h)
+
+set_target_properties(ImGui PROPERTIES CXX_CLANG_TIDY "")
+
+target_sources(OpenOblivionOgreImGui PRIVATE
+        $<TARGET_OBJECTS:ImGui>
         ${CMAKE_SOURCE_DIR}/include/ogreimgui/imgui_manager.hpp
         ${CMAKE_SOURCE_DIR}/include/ogreimgui/imgui_renderable.hpp
         imgui_manager.cpp
