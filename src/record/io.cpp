@@ -1,11 +1,13 @@
 #include "record/io.hpp"
+#include <array>
+#include <string>
 
 std::string record::peekRecordType(std::istream &is) {
   // Peek at the next 4 bytes
-  char type[5]{};
-  is.read(type, 4);
+  std::string type(4, ' ');
+  is.read(type.data(), 4);
   is.seekg(-4, std::istream::cur);
-  return std::string(type);
+  return type;
 }
 
 record::RecordHeader record::readRecordHeader(std::istream &is) {
@@ -23,8 +25,8 @@ record::RecordHeader record::readRecordHeader(std::istream &is) {
 }
 
 void record::skipGroup(std::istream &is) {
-  char type[4]{};
-  is.read(type, 4);
+  std::array<char, 4> type{};
+  is.read(type.data(), 4);
   uint32_t size;
   is.read(reinterpret_cast<char *>(&size), 4);
   // Group size includes the header, unlike records and subrecords

@@ -12,8 +12,8 @@ std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
 }
 
 std::istream &record::operator>>(std::istream &is, Group &grp) {
-  char type[5]{};
-  if (!io::safeRead(is, type, 4) || grp.type != type) {
+  std::string type(4, ' ');
+  if (!io::safeRead(is, type.data(), 4) || grp.type != type) {
     throw RecordNotFoundError(grp.type, type);
   }
   readOrThrow(is, &grp.groupSize, 4, "GRUP");
@@ -26,9 +26,9 @@ std::istream &record::operator>>(std::istream &is, Group &grp) {
 
 std::optional<record::Group::GroupType> record::peekGroupType(std::istream &is) {
   // Jump back
-  char type[5]{};
-  is.read(type, 4);
-  if (std::string("GRUP") != type) {
+  std::string type(4, ' ');
+  is.read(type.data(), 4);
+  if (type != "GRUP") {
     is.seekg(-4, std::istream::cur);
     return std::nullopt;
   }
