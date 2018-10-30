@@ -52,10 +52,8 @@ target_compile_definitions(GSL INTERFACE
 
 # add include folders to the library and targets that consume it
 target_include_directories(GSL INTERFACE
-    $<BUILD_INTERFACE:
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    >
-)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
 
 if ((CMAKE_VERSION GREATER 3.7.9) OR (CMAKE_VERSION EQUAL 3.7.9))
     if (MSVC_IDE)
@@ -72,10 +70,21 @@ if ((CMAKE_VERSION GREATER 3.7.9) OR (CMAKE_VERSION EQUAL 3.7.9))
     endif()
 endif()
 
-install(
-    DIRECTORY include/gsl
-    DESTINATION include
-)
+install(TARGETS GSL
+        EXPORT MicrosoftGSLTargets
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(DIRECTORY include/gsl
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT MicrosoftGSLTargets
+        NAMESPACE MicrosoftGSL
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MicrosoftGSL
+        FILE MicrosoftGSLConfig.cmake)
+
+export(EXPORT MicrosoftGSLTargets
+        NAMESPACE MicrosoftGSL
+        FILE MicrosoftGSLConfig.cmake)
 
 option(GSL_TEST "Generate tests." ${GSL_STANDALONE_PROJECT})
 if (GSL_TEST)
