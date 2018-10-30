@@ -22,9 +22,13 @@ void NiKeyframeData::read(std::istream &is) {
         break;
       case 3: readKeys<3>(is);
         break;
-      case 4: io::readBytes(is, order);
-        for (int i = 0; i < 3; ++i) is >> xyzRotations[i];
+      case 4: {
+        io::readBytes(is, order);
+        for (auto &keyGrp : xyzRotations) {
+          is >> keyGrp;
+        }
         break;
+      }
       default:
         throw std::runtime_error(boost::str(
             boost::format("Expected a KeyType, found %d") %

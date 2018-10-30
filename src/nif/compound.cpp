@@ -134,7 +134,9 @@ std::istream &operator>>(std::istream &is, NiBound &t) {
 
 std::istream &operator>>(std::istream &is, BoxBV &t) {
   is >> t.center;
-  for (int i = 0; i < 3; ++i) is >> t.axis[i];
+  for (auto &ax : t.axis) {
+    is >> ax;
+  }
   is >> t.extent;
   return is;
 }
