@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_ENGINE_BSA_HPP
 #define OPENOBLIVION_ENGINE_BSA_HPP
 
+#include <gsl/gsl>
 #include <OgreArchive.h>
 #include <OgreArchiveFactory.h>
 
@@ -10,10 +11,10 @@ class BsaArchiveFactory : public Ogre::ArchiveFactory {
  public:
   ~BsaArchiveFactory() override = default;
 
-  Ogre::Archive *createInstance(const Ogre::String &name,
-                                bool readOnly) override;
+  gsl::owner<Ogre::Archive *>
+  createInstance(const Ogre::String &name, bool readOnly) override;
 
-  void destroyInstance(Ogre::Archive *ptr) override;
+  void destroyInstance(gsl::owner<Ogre::Archive *> ptr) override;
   const Ogre::String &getType() const override;
 };
 

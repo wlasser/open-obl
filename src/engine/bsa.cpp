@@ -2,6 +2,7 @@
 #include "engine/bsa.hpp"
 #include "fs/path.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
+#include <gsl/gsl>
 #include <ctime>
 #include <functional>
 #include <optional>
@@ -16,8 +17,8 @@ class BSAArchive : public Ogre::Archive {
   // BsaReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.
-  std::string name = "";
-  std::optional<bsa::BsaReader> reader = std::nullopt;
+  std::string name{};
+  std::optional<bsa::BsaReader> reader{};
 
   template<class T>
   std::shared_ptr<std::vector<T>>
@@ -30,7 +31,12 @@ class BSAArchive : public Ogre::Archive {
 
  public:
   BSAArchive(const Ogre::String &name, const Ogre::String &archType);
-  ~BSAArchive() override;
+  ~BSAArchive() override = default;
+
+  BSAArchive(const BSAArchive &other) = delete;
+  BSAArchive &operator=(const BSAArchive &other) = delete;
+  BSAArchive(BSAArchive &&other) = delete;
+  BSAArchive &operator=(BSAArchive &&other) = delete;
 
   [[noreturn]] Ogre::DataStreamPtr create(const Ogre::String &filename) override;
   [[noreturn]] void remove(const Ogre::String &filename) override;
@@ -124,10 +130,6 @@ BSAArchive::BSAArchive(const Ogre::String &name,
                        const Ogre::String &archType) :
     Ogre::Archive(name, archType), name(name) {}
 
-BSAArchive::~BSAArchive() {
-  unload();
-}
-
 [[noreturn]] Ogre::DataStreamPtr BSAArchive::create(const Ogre::String &filename) {
   throw std::runtime_error("Cannot modify BSA archives");
 }
@@ -204,18 +206,18 @@ bool BSAArchive::isReadOnly() const {
   return true;
 }
 
-Ogre::Archive *BsaArchiveFactory::createInstance(const Ogre::String &name,
-                                                 bool readOnly) {
+gsl::owner<Ogre::Archive *>
+BsaArchiveFactory::createInstance(const Ogre::String &name, bool readOnly) {
   if (!readOnly) return nullptr;
   return new BSAArchive(name, getType());
 }
 
-void BsaArchiveFactory::destroyInstance(Ogre::Archive *ptr) {
+void BsaArchiveFactory::destroyInstance(gsl::owner<Ogre::Archive *> ptr) {
   delete ptr;
 }
 
 const Ogre::String &BsaArchiveFactory::getType() const {
-  static Ogre::String type = "BSA";
+  static const Ogre::String type{"BSA"};
   return type;
 }
 

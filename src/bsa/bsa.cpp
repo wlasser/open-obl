@@ -118,9 +118,9 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
 }
 
 bool BsaReader::readHeader() {
-  char fileId[4]{};
-  if (!io::safeRead(is, fileId, 4) || strcmp(fileId, FILE_ID) != 0)
-    return false;
+  std::string fileId{};
+  io::readBytes(is, fileId);
+  if (fileId != FILE_ID) return false;
 
   uint32_t version{};
   io::readBytes(is, version);
@@ -223,7 +223,10 @@ BsaReader::BsaReader(std::string filename) : is(filename) {
     throw std::runtime_error(boost::str(
         boost::format("Failed to open archive '%s'") % filename));
   }
-  readHeader();
+  if (!readHeader()) {
+    throw std::runtime_error(boost::str(
+        boost::format("Archive '%s' has invalid header") % filename));
+  }
   readRecords();
   if (!!(archiveFlags & ArchiveFlag::HasFileNames)) {
     readFileNames();

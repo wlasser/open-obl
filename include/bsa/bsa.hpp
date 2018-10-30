@@ -115,17 +115,17 @@ class BsaReader {
 
  public:
   /// Header information
-  const char FILE_ID[4]{"BSA"};
+  const char *FILE_ID{"BSA"};
   const uint32_t VERSION{0x67};
   const uint32_t OFFSET{0x24};
-  ArchiveFlag archiveFlags;
-  uint32_t folderCount;
-  uint32_t fileCount;
+  ArchiveFlag archiveFlags{ArchiveFlag::None};
+  uint32_t folderCount{};
+  uint32_t fileCount{};
   // Total length of all folder names, including null-terminators but not
   // including prefixed length bytes.
-  uint32_t totalFolderNameLength;
-  uint32_t totalFileNameLength;
-  FileType fileFlags;
+  uint32_t totalFolderNameLength{};
+  uint32_t totalFileNameLength{};
+  FileType fileFlags{};
 
  private:
   using RecordMap = std::map<uint64_t, FolderRecord>;
@@ -137,6 +137,12 @@ class BsaReader {
 
  public:
   explicit BsaReader(std::string);
+
+  BsaReader() = delete;
+  BsaReader(const BsaReader &) = delete;
+  BsaReader &operator=(const BsaReader &) = delete;
+  BsaReader(BsaReader &&) = delete;
+  BsaReader &operator=(BsaReader &&) = delete;
 
   bool contains(std::string folder, std::string file) const;
 
