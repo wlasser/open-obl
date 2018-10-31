@@ -75,7 +75,8 @@ void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
   entry.tell = is.tellg();
   entry.record = std::make_unique<record::CELL>();
   record::readRecord(is, *entry.record, "CELL");
-  interiorCellRes->add(BaseId{entry.record->id}, std::move(entry));
+  const BaseId baseId{entry.record->id};
+  interiorCellRes->add(baseId, std::move(entry));
   // Children will be loaded later, so if this cell has any then skip over them
   if (record::peekGroupType(is) == record::Group::GroupType::CellChildren) {
     record::skipGroup(is);
