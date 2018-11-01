@@ -139,6 +139,7 @@ target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionEngine>
         src/bsa/bsa.cpp
+        src/esp_coordinator.cpp
         src/formid.cpp
         src/main.cpp
         src/records.cpp
@@ -151,6 +152,7 @@ target_sources(OpenOblivion PRIVATE
         include/bsa/bsa.hpp
         include/enum_template.hpp
         include/esp.hpp
+        include/esp_coordinator.hpp
         include/formid.hpp
         include/game_settings.hpp
         include/magic_effects.hpp
