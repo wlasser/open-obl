@@ -1,14 +1,13 @@
 #ifndef OPENOBLIVION_ESP_HPP
 #define OPENOBLIVION_ESP_HPP
 
+#include "esp_coordinator.hpp"
 #include "io/io.hpp"
 #include "records.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
 #include "record/rec_of.hpp"
 #include <array>
-#include <istream>
-#include <ostream>
 #include <string>
 
 // The functions in this file handle reading an esp (or esm) file.
@@ -19,20 +18,16 @@
 //
 // A Processor is required to implement a function template
 // ```
-// template<class T> void readRecord(std::istream &is)
+// template<class T>
+// void readRecord(EspAccessor esp, EspCoordinator::SeekPos pos);
 // ```
 // for each type `T` arising from the class template `record::Record`.
 // Instantiations of this function template are invoked by the caller when a
-// record of type `T` is encountered in the esp file, with `is` positioned at
-// the beginning of the record header. Expect in the cases noted below,
-// `readRecord` should leave `is` one byte after the end of the record upon
-// returning. To ensure that this happens, it is recommended that the caller use
-// the functions `record::readRecord` and `record::skipRecord`. These correctly
-// advance `is` and return a `record::Record` or `record::RecordHeader`
-// respectively.
+// record of type `T` is encountered in the esp file, with `pos` pointing to
+// the beginning of the record header.
 //
 // If a group in the esp file is being read, then `readRecord` is guaranteed to
-// be invoked for every record in the group in the order that it appears,
+// be invoked for every record in the group in the order that they appear,
 // expect in the groups CELL, WRLD, and DIAL. Some of the entries in these
 // groups contain a list of child groups, which the Processor may handle
 // differently.
@@ -45,7 +40,7 @@ namespace esp {
 // Read an entire esp file from the beginning, delegating the actual reading
 // to the `processor`
 template<class Processor>
-void readEsp(std::istream &is, Processor &processor);
+void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor);
 
 // This function reads the CellChildren subgroup following a CELL record.
 // The reading of the PersistentChildren, VisibleDistantChildren, and
@@ -59,7 +54,7 @@ void readEsp(std::istream &is, Processor &processor);
 template<class PersistentProcessor,
     class VisibleDistantProcessor,
     class TemporaryProcessor>
-void readCellChildren(std::istream &is,
+void readCellChildren(EspAccessor accessor,
                       PersistentProcessor &persistentProcessor,
                       VisibleDistantProcessor &visibleDistantProcessor,
                       TemporaryProcessor &temporaryProcessor);
@@ -67,18 +62,23 @@ void readCellChildren(std::istream &is,
 // Read an individual subgroup of a CellChildren subgroup, namely a
 // PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
 template<class Processor>
-void parseCellChildrenBlock(std::istream &is, Processor &processor);
+void parseCellChildrenBlock(EspAccessor accessor, Processor &processor);
 
 template<class Processor>
-void readEsp(std::istream &is, Processor &processor) {
+void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor) {
+  using namespace record;
+
+  auto accessor{coordinator.makeAccessor(modIndex)};
+
   // First is always a TES4 record
-  record::peekOrThrow(is, "TES4");
-  processor.template readRecord<record::TES4>(is);
+  if (const auto recType{accessor.peekRecordType()}; recType != "TES4") {
+    throw record::RecordNotFoundError("TES4", recType);
+  }
+  processor.template readRecord<record::TES4>(accessor);
 
   // Now we expect a collection of top groups
-  while (record::peekRecordType(is) == "GRUP") {
-    record::Group topGrp;
-    is >> topGrp;
+  while (accessor.peekRecordType() == "GRUP") {
+    const Group topGrp{accessor.readGroup().value};
 
     if (topGrp.groupType != record::Group::GroupType::Top) {
       throw record::GroupError("Expected TOP GRUP at top level");
@@ -86,7 +86,6 @@ void readEsp(std::istream &is, Processor &processor) {
 
     // Get the record type of the top group. This is a little verbose because
     // we need an int to switch over.
-    using namespace record;
     const auto &rt = topGrp.label.recordType;
     std::array<char, 4> recTypeArr = {rt[0], rt[1], rt[2], rt[3]};
     auto recType = recOf(recTypeArr);
@@ -97,71 +96,89 @@ void readEsp(std::istream &is, Processor &processor) {
       // Invalid record
       case 0: throw RecordNotFoundError("a record", rt);
       case "CELL"_rec: {
+        using GroupType = Group::GroupType;
         // Expect a series of InteriorCellBlock groups
-        while (peekGroupType(is) == Group::GroupType::InteriorCellBlock) {
-          Group interiorCellBlock;
-          is >> interiorCellBlock;
+        while (accessor.peekGroupType() == GroupType::InteriorCellBlock) {
+          const Group interiorCellBlock{accessor.readGroup().value};
 
           // Expect a series of InteriorCellSubblock groups
-          while (peekGroupType(is) == Group::GroupType::InteriorCellSubblock) {
-            Group interiorCellSubblock;
-            is >> interiorCellSubblock;
+          while (accessor.peekGroupType() == GroupType::InteriorCellSubblock) {
+            const Group interiorCellSubblock{accessor.readGroup().value};
 
             // Expect a series of cells
-            while (peekRecordType(is) == "CELL") {
-              processor.template readRecord<record::CELL>(is);
+            while (accessor.peekRecordType() == "CELL") {
+              processor.template readRecord<record::CELL>(accessor);
             }
           }
         }
         break;
       }
-      case "WRLD"_rec: skipGroup(is);
+      case "WRLD"_rec: accessor.skipGroup();
         break;
-      case "DIAL"_rec: skipGroup(is);
+      case "DIAL"_rec: accessor.skipGroup();
         break;
       default: {
         // Otherwise we expect a block of records all of the same type
-        while (peekRecordType(is) == topGrp.label.recordType) {
+        while (accessor.peekRecordType() == topGrp.label.recordType) {
           switch (recType) {
-            case "GMST"_rec: processor.template readRecord<record::GMST>(is);
+            case "GMST"_rec:
+              processor.template readRecord<record::GMST>(accessor);
               break;
-            case "GLOB"_rec: processor.template readRecord<record::GLOB>(is);
+            case "GLOB"_rec:
+              processor.template readRecord<record::GLOB>(accessor);
               break;
-            case "CLAS"_rec: processor.template readRecord<record::CLAS>(is);
+            case "CLAS"_rec:
+              processor.template readRecord<record::CLAS>(accessor);
               break;
-            case "FACT"_rec: processor.template readRecord<record::FACT>(is);
+            case "FACT"_rec:
+              processor.template readRecord<record::FACT>(accessor);
               break;
-            case "HAIR"_rec: processor.template readRecord<record::HAIR>(is);
+            case "HAIR"_rec:
+              processor.template readRecord<record::HAIR>(accessor);
               break;
-            case "EYES"_rec: processor.template readRecord<record::EYES>(is);
+            case "EYES"_rec:
+              processor.template readRecord<record::EYES>(accessor);
               break;
-            case "RACE"_rec: processor.template readRecord<record::RACE>(is);
+            case "RACE"_rec:
+              processor.template readRecord<record::RACE>(accessor);
               break;
-            case "SOUN"_rec: processor.template readRecord<record::SOUN>(is);
+            case "SOUN"_rec:
+              processor.template readRecord<record::SOUN>(accessor);
               break;
-            case "SKIL"_rec: processor.template readRecord<record::SKIL>(is);
+            case "SKIL"_rec:
+              processor.template readRecord<record::SKIL>(accessor);
               break;
-            case "MGEF"_rec: processor.template readRecord<record::MGEF>(is);
+            case "MGEF"_rec:
+              processor.template readRecord<record::MGEF>(accessor);
               break;
-            case "LTEX"_rec: processor.template readRecord<record::LTEX>(is);
+            case "LTEX"_rec:
+              processor.template readRecord<record::LTEX>(accessor);
               break;
-            case "ENCH"_rec: processor.template readRecord<record::ENCH>(is);
+            case "ENCH"_rec:
+              processor.template readRecord<record::ENCH>(accessor);
               break;
-            case "SPEL"_rec: processor.template readRecord<record::SPEL>(is);
+            case "SPEL"_rec:
+              processor.template readRecord<record::SPEL>(accessor);
               break;
-            case "BSGN"_rec: processor.template readRecord<record::BSGN>(is);
+            case "BSGN"_rec:
+              processor.template readRecord<record::BSGN>(accessor);
               break;
-            case "DOOR"_rec: processor.template readRecord<record::DOOR>(is);
+            case "DOOR"_rec:
+              processor.template readRecord<record::DOOR>(accessor);
               break;
-            case "LIGH"_rec: processor.template readRecord<record::LIGH>(is);
+            case "LIGH"_rec:
+              processor.template readRecord<record::LIGH>(accessor);
               break;
-            case "MISC"_rec: processor.template readRecord<record::MISC>(is);
+            case "MISC"_rec:
+              processor.template readRecord<record::MISC>(accessor);
               break;
-            case "STAT"_rec: processor.template readRecord<record::STAT>(is);
+            case "STAT"_rec:
+              processor.template readRecord<record::STAT>(accessor);
               break;
-            case "ALCH"_rec: processor.template readRecord<record::ALCH>(is);
+            case "ALCH"_rec:
+              processor.template readRecord<record::ALCH>(accessor);
               break;
-            default: skipRecord(is);
+            default: accessor.skipRecord();
               break;
           }
         }
@@ -173,58 +190,56 @@ void readEsp(std::istream &is, Processor &processor) {
 template<class PersistentProcessor,
     class VisibleDistantProcessor,
     class TemporaryProcessor>
-void readCellChildren(std::istream &is,
+void readCellChildren(EspAccessor accessor,
                       PersistentProcessor &persistentProcessor,
                       VisibleDistantProcessor &visibleDistantProcessor,
                       TemporaryProcessor &temporaryProcessor) {
   using namespace record;
+  using GroupType = Group::GroupType;
 
   // Expect a cell children group, though there exist empty cells,
   // like Hackdirt, so this is optional.
-  if (peekGroupType(is) != Group::GroupType::CellChildren) return;
-
-  Group cellChildren;
-  is >> cellChildren;
-
-  if (peekGroupType(is) == Group::GroupType::CellPersistentChildren) {
-    Group persistentChildren;
-    is >> persistentChildren;
-
-    parseCellChildrenBlock(is, persistentProcessor);
+  if (accessor.peekGroupType() != GroupType::CellChildren) {
+    return;
   }
 
-  if (peekGroupType(is) == Group::GroupType::CellVisibleDistantChildren) {
-    Group visibleDistantChildren;
-    is >> visibleDistantChildren;
+  const Group cellChildren{accessor.readGroup().value};
 
-    parseCellChildrenBlock(is, visibleDistantProcessor);
+  if (accessor.peekGroupType() == GroupType::CellPersistentChildren) {
+    const Group persistentChildren{accessor.readGroup().value};
+    parseCellChildrenBlock(accessor, persistentProcessor);
   }
 
-  if (peekGroupType(is) == Group::GroupType::CellTemporaryChildren) {
-    Group temporaryChildren;
-    is >> temporaryChildren;
+  if (accessor.peekGroupType() == GroupType::CellVisibleDistantChildren) {
+    const Group visibleDistantChildren{accessor.readGroup().value};
+    parseCellChildrenBlock(accessor, visibleDistantProcessor);
+  }
+
+  if (accessor.peekGroupType() == GroupType::CellTemporaryChildren) {
+    const Group temporaryChildren{accessor.readGroup().value};
 
     // Unsure if PGRD is usually optional or not, but sometimes this entire
     // group is empty e.g. ImperialSewerSystemTG11
-    if (peekRecordType(is) == "PGRD") {
+    if (accessor.peekRecordType() == "PGRD") {
       // TODO: PGRD
-      skipRecord(is);
+      accessor.skipRecord();
     }
 
-    parseCellChildrenBlock(is, temporaryProcessor);
+    parseCellChildrenBlock(accessor, temporaryProcessor);
   }
 }
 
 template<class Processor>
-void parseCellChildrenBlock(std::istream &is, Processor &processor) {
+void parseCellChildrenBlock(EspAccessor accessor, Processor &processor) {
   using namespace record;
-  for (auto type = peekRecordType(is);; type = peekRecordType(is)) {
+  for (;;) {
+    const auto type{accessor.peekRecordType()};
     if (type == "REFR") {
-      processor.template readRecord<record::REFR>(is);
+      processor.template readRecord<record::REFR>(accessor);
     } else if (type == "ACHR") {
-      skipRecord(is);
+      accessor.skipRecord();
     } else if (type == "ACRE") {
-      skipRecord(is);
+      accessor.skipRecord();
     } else {
       return;
     }
