@@ -1,4 +1,4 @@
-#include "engine/resolvers/resolvers.hpp"
+#include "resolvers/resolvers.hpp"
 #include <OgreMesh.h>
 
 namespace engine {

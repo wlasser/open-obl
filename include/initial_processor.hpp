@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
-#define OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
+#ifndef OPENOBLIVION_INITIAL_PROCESSOR_HPP
+#define OPENOBLIVION_INITIAL_PROCESSOR_HPP
 
-#include "engine/resolvers/door_resolver.hpp"
-#include "engine/resolvers/interior_cell_resolver.hpp"
-#include "engine/resolvers/light_resolver.hpp"
-#include "engine/resolvers/static_resolver.hpp"
 #include "record/io.hpp"
 #include "records.hpp"
+#include "resolvers/door_resolver.hpp"
+#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/light_resolver.hpp"
+#include "resolvers/static_resolver.hpp"
 
 namespace engine {
 
@@ -53,4 +53,4 @@ class InitialProcessor {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_INITIAL_PROCESSOR_HPP
+#endif // OPENOBLIVION_INITIAL_PROCESSOR_HPP

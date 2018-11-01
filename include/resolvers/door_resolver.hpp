@@ -1,8 +1,8 @@
-#ifndef OPENOBLIVION_ENGINE_DOOR_RESOLVER_HPP
-#define OPENOBLIVION_ENGINE_DOOR_RESOLVER_HPP
+#ifndef OPENOBLIVION_DOOR_RESOLVER_HPP
+#define OPENOBLIVION_DOOR_RESOLVER_HPP
 
-#include "engine/resolvers/resolvers.hpp"
 #include "records.hpp"
+#include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>
 #include <string>
@@ -38,4 +38,4 @@ class Resolver<record::DOOR> {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_DOOR_RESOLVER_HPP
+#endif // OPENOBLIVION_DOOR_RESOLVER_HPP

@@ -1,9 +1,9 @@
-#ifndef OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP
-#define OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP
+#ifndef OPENOBLIVION_LIGHT_RESOLVER_HPP
+#define OPENOBLIVION_LIGHT_RESOLVER_HPP
 
-#include "engine/resolvers/resolvers.hpp"
 #include "formid.hpp"
 #include "records.hpp"
+#include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreColourValue.h>
 #include <OgreLight.h>
@@ -57,4 +57,4 @@ class Resolver<record::LIGH> {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_LIGHT_RESOLVER_HPP
+#endif // OPENOBLIVION_LIGHT_RESOLVER_HPP

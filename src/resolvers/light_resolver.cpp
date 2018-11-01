@@ -1,6 +1,6 @@
 #include "engine/conversions.hpp"
-#include "engine/resolvers/resolvers.hpp"
-#include "engine/resolvers/light_resolver.hpp"
+#include "resolvers/resolvers.hpp"
+#include "resolvers/light_resolver.hpp"
 
 namespace engine {
 

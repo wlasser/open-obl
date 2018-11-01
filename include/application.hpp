@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_APPLICATION_HPP
-#define OPENOBLIVION_ENGINE_APPLICATION_HPP
+#ifndef OPENOBLIVION_APPLICATION_HPP
+#define OPENOBLIVION_APPLICATION_HPP
 
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
@@ -7,10 +7,6 @@
 #include "engine/character_controller/player_controller.hpp"
 #include "engine/controls.hpp"
 #include "engine/gui/gui.hpp"
-#include "engine/resolvers/interior_cell_resolver.hpp"
-#include "engine/resolvers/door_resolver.hpp"
-#include "engine/resolvers/light_resolver.hpp"
-#include "engine/resolvers/static_resolver.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
 #include "fs/path.hpp"
@@ -20,6 +16,10 @@
 #include "ogreimgui/imgui_manager.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
+#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/door_resolver.hpp"
+#include "resolvers/light_resolver.hpp"
+#include "resolvers/static_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/format.hpp>
 #include <Ogre.h>
@@ -127,4 +127,4 @@ template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_APPLICATION_HPP
+#endif // OPENOBLIVION_APPLICATION_HPP

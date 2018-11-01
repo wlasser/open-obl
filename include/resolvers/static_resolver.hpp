@@ -1,9 +1,9 @@
-#ifndef OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
-#define OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
+#ifndef OPENOBLIVION_STATIC_RESOLVER_HPP
+#define OPENOBLIVION_STATIC_RESOLVER_HPP
 
-#include "engine/resolvers/resolvers.hpp"
 #include "formid.hpp"
 #include "records.hpp"
+#include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>
 #include <OgreEntity.h>
@@ -38,4 +38,4 @@ class Resolver<record::STAT> {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_STATIC_RESOLVER_HPP
+#endif // OPENOBLIVION_STATIC_RESOLVER_HPP

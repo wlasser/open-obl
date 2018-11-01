@@ -1,7 +1,7 @@
 #include "game_settings.hpp"
 #include "engine/conversions.hpp"
-#include "engine/initial_processor.hpp"
 #include "fs/path.hpp"
+#include "initial_processor.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
 #include "records.hpp"

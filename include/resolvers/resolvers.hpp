@@ -1,8 +1,8 @@
-#ifndef OPENOBLIVION_ENGINE_RESOLVERS_HPP
-#define OPENOBLIVION_ENGINE_RESOLVERS_HPP
+#ifndef OPENOBLIVION_RESOLVERS_HPP
+#define OPENOBLIVION_RESOLVERS_HPP
 
 #include "formid.hpp"
-#include "engine/resolvers/helpers.hpp"
+#include "resolvers/helpers.hpp"
 #include <gsl/gsl>
 #include <OgreSceneManager.h>
 #include <optional>
@@ -51,4 +51,4 @@ class Resolver {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_RESOLVERS_HPP
+#endif // OPENOBLIVION_RESOLVERS_HPP

@@ -1,9 +1,9 @@
 #include "engine/conversions.hpp"
-#include "engine/resolvers/resolvers.hpp"
-#include "engine/resolvers/interior_cell_resolver.hpp"
 #include "esp.hpp"
 #include "formid.hpp"
 #include "records.hpp"
+#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/resolvers.hpp"
 #include <gsl/gsl>
 #include <OgreRoot.h>
 #include <OgreSceneNode.h>

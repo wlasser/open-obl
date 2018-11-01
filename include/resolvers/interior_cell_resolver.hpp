@@ -1,15 +1,15 @@
-#ifndef OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
-#define OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
+#ifndef OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP
+#define OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP
 
 #include "bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
-#include "engine/resolvers/door_resolver.hpp"
-#include "engine/resolvers/light_resolver.hpp"
-#include "engine/resolvers/resolvers.hpp"
-#include "engine/resolvers/static_resolver.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
 #include "records.hpp"
+#include "resolvers/door_resolver.hpp"
+#include "resolvers/light_resolver.hpp"
+#include "resolvers/resolvers.hpp"
+#include "resolvers/static_resolver.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <OgreColourValue.h>
 #include <OgreLight.h>
@@ -121,4 +121,4 @@ class Resolver<record::CELL> {
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_INTERIOR_CELL_RESOLVER_HPP
+#endif // OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP

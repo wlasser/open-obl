@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENGINE_RESOLVERS_HELPERS_HPP
-#define OPENOBLIVION_ENGINE_RESOLVERS_HELPERS_HPP
+#ifndef OPENOBLIVION_RESOLVERS_HELPERS_HPP
+#define OPENOBLIVION_RESOLVERS_HELPERS_HPP
 
 #include "formid.hpp"
 #include "ogrebullet/rigid_body.hpp"
@@ -116,4 +116,4 @@ attachAll(gsl::not_null<Ogre::SceneNode *> node,
 
 } // namespace engine
 
-#endif // OPENOBLIVION_ENGINE_RESOLVERS_HELPERS_HPP
+#endif // OPENOBLIVION_RESOLVERS_HELPERS_HPP

@@ -36,7 +36,6 @@ add_subdirectory(src/sdl)
 add_library(OpenOblivionEngine OBJECT)
 target_include_directories(OpenOblivionEngine PUBLIC include)
 target_sources(OpenOblivionEngine PUBLIC
-        src/engine/application.cpp
         src/engine/bsa.cpp
         src/engine/character_controller/jump_state.cpp
         src/engine/character_controller/player_controller.cpp
@@ -52,21 +51,14 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/gui/traits.cpp
         src/engine/gui/trait_selector.cpp
         src/engine/gui/xml.cpp
-        src/engine/initial_processor.cpp
         src/engine/nifloader/loader.cpp
         src/engine/nifloader/loader_state.cpp
         src/engine/nifloader/collision_object_loader.cpp
         src/engine/nifloader/collision_object_loader_state.cpp
         src/engine/nifloader/mesh_loader.cpp
         src/engine/nifloader/mesh_loader_state.cpp
-        src/engine/resolvers/door_resolver.cpp
-        src/engine/resolvers/interior_cell_resolver.cpp
-        src/engine/resolvers/light_resolver.cpp
-        src/engine/resolvers/resolvers.cpp
-        src/engine/resolvers/static_resolver.cpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
-        include/engine/application.hpp
         include/engine/bsa.hpp
         include/engine/character_controller/abilities.hpp
         include/engine/character_controller/fallback_state.hpp
@@ -97,7 +89,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/gui/trait_selector.hpp
         include/engine/gui/ui_element.hpp
         include/engine/gui/xml.hpp
-        include/engine/initial_processor.hpp
         include/engine/keep_strategy.hpp
         include/engine/nifloader/loader.hpp
         include/engine/nifloader/loader_state.hpp
@@ -105,12 +96,6 @@ target_sources(OpenOblivionEngine PUBLIC
         include/engine/nifloader/collision_object_loader_state.hpp
         include/engine/nifloader/mesh_loader.hpp
         include/engine/nifloader/mesh_loader_state.hpp
-        include/engine/resolvers/door_resolver.hpp
-        include/engine/resolvers/helpers.hpp
-        include/engine/resolvers/interior_cell_resolver.hpp
-        include/engine/resolvers/light_resolver.hpp
-        include/engine/resolvers/resolvers.hpp
-        include/engine/resolvers/static_resolver.hpp
         include/engine/settings.hpp)
 
 target_include_directories(OpenOblivionEngine PUBLIC
@@ -138,15 +123,23 @@ add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionEngine>
+        src/application.cpp
         src/bsa/bsa.cpp
         src/esp_coordinator.cpp
         src/formid.cpp
+        src/initial_processor.cpp
         src/main.cpp
         src/records.cpp
+        src/resolvers/door_resolver.cpp
+        src/resolvers/interior_cell_resolver.cpp
+        src/resolvers/light_resolver.cpp
+        src/resolvers/resolvers.cpp
+        src/resolvers/static_resolver.cpp
         src/save_state.cpp
         src/subrecords.cpp
         src/system_time.cpp
         include/actor_value.hpp
+        include/application.hpp
         include/attribute.hpp
         include/bitflag.hpp
         include/bsa/bsa.hpp
@@ -155,7 +148,14 @@ target_sources(OpenOblivion PRIVATE
         include/esp_coordinator.hpp
         include/formid.hpp
         include/game_settings.hpp
+        include/initial_processor.hpp
         include/magic_effects.hpp
+        include/resolvers/door_resolver.hpp
+        include/resolvers/helpers.hpp
+        include/resolvers/interior_cell_resolver.hpp
+        include/resolvers/light_resolver.hpp
+        include/resolvers/resolvers.hpp
+        include/resolvers/static_resolver.hpp
         include/save_state.hpp
         include/subrecords.hpp
         include/system_time.hpp)
