@@ -1,11 +1,11 @@
-#ifndef OPENOBLIVION_ENGINE_BSA_HPP
-#define OPENOBLIVION_ENGINE_BSA_HPP
+#ifndef OPENOBLIVION_OGRE_ARCHIVE_FACTORY_HPP
+#define OPENOBLIVION_OGRE_ARCHIVE_FACTORY_HPP
 
 #include <gsl/gsl>
 #include <OgreArchive.h>
 #include <OgreArchiveFactory.h>
 
-namespace engine {
+namespace Ogre {
 
 class BsaArchiveFactory : public Ogre::ArchiveFactory {
  public:
@@ -18,6 +18,6 @@ class BsaArchiveFactory : public Ogre::ArchiveFactory {
   const Ogre::String &getType() const override;
 };
 
-} // namespace engine
+} // namespace Ogre
 
-#endif // OPENOBLIVION_ENGINE_BSA_HPP
+#endif // OPENOBLIVION_OGRE_BSA_ARCHIVE_FACTORY_HPP

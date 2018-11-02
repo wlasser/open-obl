@@ -3,7 +3,7 @@
 
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
-#include "engine/bsa.hpp"
+#include "bsa_archive_factory.hpp"
 #include "engine/character_controller/player_controller.hpp"
 #include "engine/controls.hpp"
 #include "engine/gui/gui.hpp"
@@ -33,7 +33,7 @@ namespace engine {
 
 class Application : public Ogre::FrameListener {
  private:
-  std::unique_ptr<BsaArchiveFactory> bsaArchiveFactory{};
+  std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
 
   std::ifstream esmStream;

@@ -1,5 +1,5 @@
 #include "bsa/bsa.hpp"
-#include "engine/bsa.hpp"
+#include "bsa_archive_factory.hpp"
 #include "fs/path.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include <gsl/gsl>
@@ -7,7 +7,7 @@
 #include <functional>
 #include <optional>
 
-namespace engine {
+namespace Ogre {
 
 namespace {
 
@@ -219,4 +219,4 @@ const Ogre::String &BsaArchiveFactory::getType() const {
   return type;
 }
 
-} // namespace engine
+} // namespace Ogre

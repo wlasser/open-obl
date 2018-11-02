@@ -36,7 +36,6 @@ add_subdirectory(src/sdl)
 add_library(OpenOblivionEngine OBJECT)
 target_include_directories(OpenOblivionEngine PUBLIC include)
 target_sources(OpenOblivionEngine PUBLIC
-        src/engine/bsa.cpp
         src/engine/character_controller/jump_state.cpp
         src/engine/character_controller/player_controller.cpp
         src/engine/character_controller/run_state.cpp
@@ -59,7 +58,6 @@ target_sources(OpenOblivionEngine PUBLIC
         src/engine/nifloader/mesh_loader_state.cpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
-        include/engine/bsa.hpp
         include/engine/character_controller/abilities.hpp
         include/engine/character_controller/fallback_state.hpp
         include/engine/character_controller/jump_state.hpp
@@ -125,6 +123,7 @@ target_sources(OpenOblivion PRIVATE
         $<TARGET_OBJECTS:OpenOblivionEngine>
         src/application.cpp
         src/bsa/bsa.cpp
+        src/bsa_archive_factory.cpp
         src/esp_coordinator.cpp
         src/formid.cpp
         src/initial_processor.cpp
@@ -143,6 +142,7 @@ target_sources(OpenOblivion PRIVATE
         include/attribute.hpp
         include/bitflag.hpp
         include/bsa/bsa.hpp
+        include/bsa_archive_factory.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
