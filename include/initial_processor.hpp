@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_INITIAL_PROCESSOR_HPP
 #define OPENOBLIVION_INITIAL_PROCESSOR_HPP
 
+#include "esp_coordinator.hpp"
 #include "record/io.hpp"
 #include "records.hpp"
 #include "resolvers/door_resolver.hpp"
@@ -28,27 +29,27 @@ class InitialProcessor {
       interiorCellRes(interiorCellRes) {}
 
   template<class R>
-  void readRecord(std::istream &is) {
-    record::skipRecord(is);
+  void readRecord(esp::EspAccessor &accessor) {
+    accessor.skipRecord();
   }
 
   template<>
-  void readRecord<record::STAT>(std::istream &is);
+  void readRecord<record::STAT>(esp::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::DOOR>(std::istream &is);
+  void readRecord<record::DOOR>(esp::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::LIGH>(std::istream &is);
+  void readRecord<record::LIGH>(esp::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::MISC>(std::istream &is);
+  void readRecord<record::MISC>(esp::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::CELL>(std::istream &is);
+  void readRecord<record::CELL>(esp::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::GMST>(std::istream &is);
+  void readRecord<record::GMST>(esp::EspAccessor &accessor);
 };
 
 } // namespace engine

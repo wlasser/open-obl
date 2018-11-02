@@ -19,7 +19,7 @@
 // A Processor is required to implement a function template
 // ```
 // template<class T>
-// void readRecord(EspAccessor esp, EspCoordinator::SeekPos pos);
+// void readRecord(EspAccessor esp);
 // ```
 // for each type `T` arising from the class template `record::Record`.
 // Instantiations of this function template are invoked by the caller when a
@@ -54,7 +54,7 @@ void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor);
 template<class PersistentProcessor,
     class VisibleDistantProcessor,
     class TemporaryProcessor>
-void readCellChildren(EspAccessor accessor,
+void readCellChildren(EspAccessor &accessor,
                       PersistentProcessor &persistentProcessor,
                       VisibleDistantProcessor &visibleDistantProcessor,
                       TemporaryProcessor &temporaryProcessor);
@@ -62,7 +62,7 @@ void readCellChildren(EspAccessor accessor,
 // Read an individual subgroup of a CellChildren subgroup, namely a
 // PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
 template<class Processor>
-void parseCellChildrenBlock(EspAccessor accessor, Processor &processor);
+void parseCellChildrenBlock(EspAccessor &accessor, Processor &processor);
 
 template<class Processor>
 void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor) {
@@ -190,7 +190,7 @@ void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor) {
 template<class PersistentProcessor,
     class VisibleDistantProcessor,
     class TemporaryProcessor>
-void readCellChildren(EspAccessor accessor,
+void readCellChildren(EspAccessor &accessor,
                       PersistentProcessor &persistentProcessor,
                       VisibleDistantProcessor &visibleDistantProcessor,
                       TemporaryProcessor &temporaryProcessor) {
@@ -230,7 +230,7 @@ void readCellChildren(EspAccessor accessor,
 }
 
 template<class Processor>
-void parseCellChildrenBlock(EspAccessor accessor, Processor &processor) {
+void parseCellChildrenBlock(EspAccessor &accessor, Processor &processor) {
   using namespace record;
   for (;;) {
     const auto type{accessor.peekRecordType()};

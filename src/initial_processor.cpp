@@ -1,6 +1,7 @@
-#include "game_settings.hpp"
 #include "engine/conversions.hpp"
+#include "esp_coordinator.hpp"
 #include "fs/path.hpp"
+#include "game_settings.hpp"
 #include "initial_processor.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
@@ -10,8 +11,8 @@
 namespace engine {
 
 template<>
-void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
-  const auto rec{record::readRecord<record::STAT>(is)};
+void InitialProcessor::readRecord<record::STAT>(esp::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::STAT>().value};
   Resolver<record::STAT>::store_t entry{};
   // MODL records omit the "meshes/" folder
   fs::Path rawPath{rec.data.modelFilename.data};
@@ -20,8 +21,8 @@ void InitialProcessor::readRecord<record::STAT>(std::istream &is) {
 }
 
 template<>
-void InitialProcessor::readRecord<record::DOOR>(std::istream &is) {
-  auto rec = record::readRecord<record::DOOR>(is);
+void InitialProcessor::readRecord<record::DOOR>(esp::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::DOOR>().value};
   Resolver<record::DOOR>::store_t entry{};
 
   if (rec.data.modelFilename) {
@@ -32,8 +33,8 @@ void InitialProcessor::readRecord<record::DOOR>(std::istream &is) {
 }
 
 template<>
-void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
-  auto rec = record::readRecord<record::LIGH>(is);
+void InitialProcessor::readRecord<record::LIGH>(esp::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::LIGH>().value};
   using Flag = record::raw::DATA_LIGH::Flag;
   if (rec.data.data.data.flags & Flag::CanBeCarried) {
     // TODO: Support carriable lights
@@ -59,8 +60,8 @@ void InitialProcessor::readRecord<record::LIGH>(std::istream &is) {
 }
 
 template<>
-void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
-  auto rec = record::readRecord<record::MISC>(is);
+void InitialProcessor::readRecord<record::MISC>(esp::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::MISC>().value};
   Resolver<record::STAT>::store_t entry{};
   if (rec.data.modelFilename) {
     entry.modelFilename = "meshes/" +
@@ -70,22 +71,23 @@ void InitialProcessor::readRecord<record::MISC>(std::istream &is) {
 }
 
 template<>
-void InitialProcessor::readRecord<record::CELL>(std::istream &is) {
-  Resolver<record::CELL>::store_t entry{};
-  entry.tell = is.tellg();
-  entry.record = std::make_unique<record::CELL>();
-  record::readRecord(is, *entry.record, "CELL");
-  const BaseId baseId{entry.record->id};
+void InitialProcessor::readRecord<record::CELL>(esp::EspAccessor &accessor) {
+  // Constructor takes accessor by *value* so it can be stored for deferred
+  // loading. It therefore calls readRecord on the *copy*, so does not advance
+  // our accessor.
+  Resolver<record::CELL>::store_t entry(accessor);
+  accessor.skipRecord();
+  const BaseId baseId{entry.mRecord->id};
   interiorCellRes->add(baseId, std::move(entry));
   // Children will be loaded later, so if this cell has any then skip over them
-  if (record::peekGroupType(is) == record::Group::GroupType::CellChildren) {
-    record::skipGroup(is);
+  if (accessor.peekGroupType() == record::Group::GroupType::CellChildren) {
+    accessor.skipGroup();
   }
 }
 
 template<>
-void InitialProcessor::readRecord<record::GMST>(std::istream &is) {
-  auto rec = record::readRecord<record::GMST>(is);
+void InitialProcessor::readRecord<record::GMST>(esp::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::GMST>().value};
   GameSettings::getSingleton().load(rec, true);
 }
 

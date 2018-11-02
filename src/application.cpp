@@ -4,6 +4,7 @@
 #include "engine/keep_strategy.hpp"
 #include "engine/settings.hpp"
 #include "esp.hpp"
+#include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "game_settings.hpp"
 #include "initial_processor.hpp"
@@ -125,15 +126,15 @@ Application::Application(std::string windowName) : FrameListener() {
   //gui::parseMenu(menuStream);
   menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
-  // Open the main esm
-  const fs::Path masterEsm{"Oblivion.esm"};
-  esmStream = std::ifstream((dataPath / masterEsm).sysPath(),
-                            std::ios::binary);
-  if (!esmStream.is_open()) {
-    throw std::runtime_error(boost::str(
-        boost::format("Failed to open %s") % masterEsm.view()));
-  }
-  logger->info("Opened {}", masterEsm.view());
+  // Load esp files
+  // TODO: Get the actual load order
+  std::vector<std::string> loadOrder{"Oblivion.esm"};
+  std::transform(loadOrder.begin(), loadOrder.end(), loadOrder.begin(),
+                 [&dataPath](const std::string &s) -> std::string {
+                   return (dataPath / fs::Path{s}).sysPath();
+                 });
+  espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
+                                                         loadOrder.end());
 
   // Create the engine managers
   doorRes = std::make_unique<DoorResolver>();
@@ -143,7 +144,6 @@ Application::Application(std::string windowName) : FrameListener() {
       *doorRes, *lightRes, *staticRes
   };
   interiorCellRes = std::make_unique<InteriorCellResolver>(
-      esmStream,
       resolvers,
       *bulletConf,
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
@@ -153,8 +153,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                     lightRes.get(),
                                     staticRes.get(),
                                     interiorCellRes.get());
-  esp::readEsp(esmStream, initialProcessor);
-  logger->info("Read {}", masterEsm.view());
+  esp::readEsp(*espCoordinator, 0, initialProcessor);
 
   // Load a test cell
   currentCell = interiorCellRes->make(BaseId{0x00'048706});

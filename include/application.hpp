@@ -9,6 +9,7 @@
 #include "engine/gui/gui.hpp"
 #include "engine/nifloader/mesh_loader.hpp"
 #include "engine/nifloader/collision_object_loader.hpp"
+#include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
@@ -58,6 +59,8 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
 
   std::unique_ptr<gui::LoadingMenu> menuLoadingMenu{};
+
+  std::unique_ptr<esp::EspCoordinator> espCoordinator{};
 
   std::unique_ptr<DoorResolver> doorRes{};
   std::unique_ptr<LightResolver> lightRes{};

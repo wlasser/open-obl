@@ -37,14 +37,6 @@ auto EspCoordinator::getAvailableStream(EspEntry &esp) -> Streams::iterator {
   return streamIt;
 }
 
-template<class InputIt>
-EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
-  auto out{std::back_inserter(mLoadOrder)};
-  std::transform(first, last, out, [this](std::string name) {
-    return EspEntry(std::move(name), mStreams.end());
-  });
-}
-
 EspCoordinator::EspCoordinator(EspCoordinator &&other) noexcept {
   std::unique_lock lock{other.mMutex};
   std::swap(mStreams, other.mStreams);
@@ -84,6 +76,86 @@ void EspCoordinator::close(int modIndex) {
     stream.it->stream.close();
     stream.it = mStreams.end();
   }
+}
+
+EspCoordinator::ReadHeaderResult
+EspCoordinator::readRecordHeader(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  return {record::readRecordHeader(it->stream), it->pos = it->stream.tellg()};
+};
+
+EspCoordinator::ReadHeaderResult
+EspCoordinator::skipRecord(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  return {record::skipRecord(it->stream), it->pos = it->stream.tellg()};
+};
+
+std::string EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  return record::peekRecordType(it->stream);
+};
+
+EspCoordinator::ReadResult<record::Group>
+EspCoordinator::readGroup(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  record::Group g{};
+  it->stream >> g;
+  return {g, it->pos = it->stream.tellg()};
+}
+
+EspCoordinator::SeekPos
+EspCoordinator::skipGroup(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  record::skipGroup(it->stream);
+  return it->stream.tellg();
+}
+
+std::optional<record::Group::GroupType>
+EspCoordinator::peekGroupType(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  return record::peekGroupType(it->stream);
+}
+
+EspAccessor::ReadHeaderResult EspAccessor::readRecordHeader() {
+  auto r{mCoordinator->readRecordHeader(mIndex, mPos)};
+  mPos = r.end;
+  return r;
+}
+
+EspAccessor::ReadHeaderResult EspAccessor::skipRecord() {
+  auto r{mCoordinator->skipRecord(mIndex, mPos)};
+  mPos = r.end;
+  return r;
+}
+
+std::string EspAccessor::peekRecordType() {
+  return mCoordinator->peekRecordType(mIndex, mPos);
+}
+
+EspAccessor::ReadResult<record::Group> EspAccessor::readGroup() {
+  auto r{mCoordinator->readGroup(mIndex, mPos)};
+  mPos = r.end;
+  return r;
+}
+
+void EspAccessor::skipGroup() {
+  mPos = mCoordinator->skipGroup(mIndex, mPos);
+}
+
+std::optional<record::Group::GroupType> EspAccessor::peekGroupType() {
+  return mCoordinator->peekGroupType(mIndex, mPos);
 }
 
 } // namespace esp

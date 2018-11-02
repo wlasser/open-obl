@@ -3,6 +3,7 @@
 
 #include "bullet/configuration.hpp"
 #include "engine/keep_strategy.hpp"
+#include "esp_coordinator.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
 #include "records.hpp"
@@ -54,10 +55,24 @@ class Resolver<record::CELL> {
  private:
   class Entry {
    public:
-    long tell{};
-    std::unique_ptr<record::CELL> record{};
-    mutable std::weak_ptr<InteriorCell> cell{};
-    // TODO: This is not a struct, give it constructors etc
+    esp::EspAccessor mAccessor;
+    std::unique_ptr<record::CELL> mRecord{};
+    mutable std::weak_ptr<InteriorCell> mCell{};
+
+    explicit Entry(esp::EspAccessor accessor) : mAccessor(accessor) {
+      // Read from a copy to keep mAccessor pointing to the start of the record.
+      esp::EspAccessor localAccessor{mAccessor};
+      mRecord = std::make_unique<record::CELL>(
+          localAccessor.readRecord<record::CELL>().value);
+    }
+
+    ~Entry() = default;
+
+    Entry(const Entry &) = delete;
+    Entry &operator=(const Entry &) = delete;
+
+    Entry(Entry &&other) noexcept = default;
+    Entry &operator=(Entry &&other) noexcept = default;
   };
 
   using Strategy = strategy::KeepStrategy<InteriorCell>;
@@ -83,16 +98,14 @@ class Resolver<record::CELL> {
         mCell(cell), mResolvers(resolvers) {}
 
     template<class R>
-    void readRecord(std::istream &is) {
-      record::skipRecord(is);
+    void readRecord(esp::EspAccessor &accessor) {
+      accessor.skipRecord();
     }
 
     template<>
-    void readRecord<record::REFR>(std::istream &is);
+    void readRecord<record::REFR>(esp::EspAccessor &accessor);
   };
 
-  // TODO: Support multiple streams for multiple esps
-  std::istream &mIs;
   Resolvers mResolvers;
   bullet::Configuration &mBulletConf;
   std::unordered_map<BaseId, Entry> mMap{};
@@ -105,10 +118,9 @@ class Resolver<record::CELL> {
   using make_t = std::shared_ptr<InteriorCell>;
   using resolvers_t = Resolvers;
 
-  explicit Resolver(std::istream &is, Resolvers resolvers,
+  explicit Resolver(Resolvers resolvers,
                     bullet::Configuration &bulletConf,
                     std::unique_ptr<Strategy> strategy) :
-      mIs(is),
       mResolvers(resolvers),
       mBulletConf(bulletConf),
       mStrategy(std::move(strategy)) {}

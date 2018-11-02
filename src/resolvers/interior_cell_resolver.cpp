@@ -1,5 +1,6 @@
 #include "engine/conversions.hpp"
 #include "esp.hpp"
+#include "esp_coordinator.hpp"
 #include "formid.hpp"
 #include "records.hpp"
 #include "resolvers/interior_cell_resolver.hpp"
@@ -23,7 +24,7 @@ InteriorCell::~InteriorCell() {
 auto Resolver<record::CELL>::peek(BaseId baseId) const -> peek_t {
   const auto entry{mMap.find(baseId)};
   if (entry == mMap.end()) return nullptr;
-  else return entry->second.record.get();
+  else return entry->second.mRecord.get();
 }
 
 auto Resolver<record::CELL>::get(BaseId baseId) const -> get_t {
@@ -36,7 +37,7 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
 
   // If this cell has been loaded before and is still loaded, then we can return
   // a new shared_ptr to it. Also update the currently loaded cell.
-  auto &cell{entry->second.cell};
+  auto &cell{entry->second.mCell};
   if (!cell.expired()) {
     mStrategy->notify(cell.lock());
     return cell.lock();
@@ -49,7 +50,7 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
   cell = std::weak_ptr(ptr);
 
   // Fill in the scene data from the cell record, which we already have.
-  const auto &rec{entry->second.record};
+  const auto &rec{entry->second.mRecord};
   ptr->name = (rec->data.name ? rec->data.name->data : "");
   if (auto lighting{rec->data.lighting}; lighting) {
     const auto ambient{lighting->data.ambient};
@@ -62,21 +63,22 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
 
   Processor processor(*ptr, mResolvers);
 
-  // TODO: Lock a mutex here
-  mIs.seekg(entry->second.tell);
-  record::skipRecord(mIs);
-  esp::readCellChildren(mIs, processor, processor, processor);
+  // Read from a copy so subsequent reads work if the CELL is unloaded
+  esp::EspAccessor accessor{entry->second.mAccessor};
+  accessor.skipRecord();
+  esp::readCellChildren(accessor, processor, processor, processor);
 
   return ptr;
 }
 
-bool Resolver<record::CELL>::add(BaseId baseId, store_t entry) {
-  return mMap.try_emplace(BaseId{entry.record->id}, std::move(entry)).second;
+bool Resolver<record::CELL>::add(BaseId, store_t entry) {
+  const BaseId baseId{entry.mRecord->id};
+  return mMap.try_emplace(baseId, std::move(entry)).second;
 }
 
 template<>
-void Resolver<record::CELL>::Processor::readRecord<record::REFR>(std::istream &is) {
-  const auto ref{record::readRecord<record::REFR>(is)};
+void Resolver<record::CELL>::Processor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
+  const auto ref{accessor.readRecord<record::REFR>().value};
   auto *const node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
   const BaseId baseId{ref.data.baseID.data};
   const RefId refId{ref.id};
