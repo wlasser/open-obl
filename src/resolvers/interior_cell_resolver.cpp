@@ -1,4 +1,4 @@
-#include "engine/conversions.hpp"
+#include "conversions.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
 #include "formid.hpp"
@@ -8,8 +8,6 @@
 #include <gsl/gsl>
 #include <OgreRoot.h>
 #include <OgreSceneNode.h>
-
-namespace engine {
 
 InteriorCell::~InteriorCell() {
   auto root{Ogre::Root::getSingletonPtr()};
@@ -125,5 +123,3 @@ void Resolver<record::CELL>::Processor::readRecord<record::REFR>(esp::EspAccesso
     mCell.scnMgr->destroySceneNode(node);
   }
 }
-
-} // namespace engine

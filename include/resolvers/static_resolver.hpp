@@ -12,8 +12,6 @@
 #include <string>
 #include <unordered_map>
 
-namespace engine {
-
 using StaticResolver = Resolver<record::STAT>;
 
 template<>
@@ -35,7 +33,5 @@ class Resolver<record::STAT> {
   bool add(BaseId baseId, store_t entry);
   bool contains(BaseId baseId) const noexcept;
 };
-
-} // namespace engine
 
 #endif // OPENOBLIVION_STATIC_RESOLVER_HPP

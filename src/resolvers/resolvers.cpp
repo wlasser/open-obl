@@ -1,8 +1,6 @@
 #include "resolvers/resolvers.hpp"
 #include <OgreMesh.h>
 
-namespace engine {
-
 Ogre::RigidBody *
 loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr) {
   if (!entity) return nullptr;
@@ -62,5 +60,3 @@ void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId) {
   auto formId{static_cast<FormId>(refId)};
   rigidBody->getRigidBody()->setUserPointer(encodeFormId(formId));
 }
-
-} // namespace engine

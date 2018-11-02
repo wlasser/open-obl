@@ -1,8 +1,6 @@
 #include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
 
-namespace engine {
-
 auto Resolver<record::STAT>::make(BaseId baseId,
                                   gsl::not_null<Ogre::SceneManager *> mgr,
                                   std::optional<RefId> id) const -> make_t {
@@ -29,5 +27,3 @@ bool Resolver<record::STAT>::add(BaseId baseId, store_t entry) {
 bool Resolver<record::STAT>::contains(BaseId baseId) const noexcept {
   return mMap.find(baseId) != mMap.end();
 }
-
-} // namespace engine

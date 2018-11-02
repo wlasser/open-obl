@@ -10,8 +10,6 @@
 #include <OgreSceneManager.h>
 #include <string>
 
-namespace engine {
-
 using LightResolver = Resolver<record::LIGH>;
 
 template<>
@@ -54,7 +52,5 @@ class Resolver<record::LIGH> {
   bool add(BaseId baseId, store_t entry);
   bool contains(BaseId baseId) const noexcept;
 };
-
-} // namespace engine
 
 #endif // OPENOBLIVION_LIGHT_RESOLVER_HPP

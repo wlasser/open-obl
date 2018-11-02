@@ -1,8 +1,6 @@
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/resolvers.hpp"
 
-namespace engine {
-
 auto Resolver<record::DOOR>::make(BaseId baseId,
                                   gsl::not_null<Ogre::SceneManager *> mgr,
                                   std::optional<RefId> id) const -> make_t {
@@ -29,5 +27,3 @@ bool Resolver<record::DOOR>::add(BaseId baseId, store_t entry) {
 bool Resolver<record::DOOR>::contains(BaseId baseId) const noexcept {
   return mMap.find(baseId) != mMap.end();
 }
-
-} // namespace engine

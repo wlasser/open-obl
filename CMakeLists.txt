@@ -32,102 +32,36 @@ add_subdirectory(src/ogrebullet)
 add_subdirectory(src/ogreimgui)
 add_subdirectory(src/sdl)
 
-# Engine library
-add_library(OpenOblivionEngine OBJECT)
-target_include_directories(OpenOblivionEngine PUBLIC include)
-target_sources(OpenOblivionEngine PUBLIC
-        src/engine/character_controller/jump_state.cpp
-        src/engine/character_controller/player_controller.cpp
-        src/engine/character_controller/run_state.cpp
-        src/engine/character_controller/sneak_jump_state.cpp
-        src/engine/character_controller/sneak_stand_state.cpp
-        src/engine/character_controller/stand_state.cpp
-        src/engine/character_controller/walk_state.cpp
-        src/engine/gui/gui.cpp
-        src/engine/gui/stack/program.cpp
-        src/engine/gui/stack/types.cpp
-        src/engine/gui/trait.cpp
-        src/engine/gui/traits.cpp
-        src/engine/gui/trait_selector.cpp
-        src/engine/gui/xml.cpp
-        src/engine/nifloader/loader.cpp
-        src/engine/nifloader/loader_state.cpp
-        src/engine/nifloader/collision_object_loader.cpp
-        src/engine/nifloader/collision_object_loader_state.cpp
-        src/engine/nifloader/mesh_loader.cpp
-        src/engine/nifloader/mesh_loader_state.cpp
-        include/bullet/collision.hpp
-        include/bullet/configuration.hpp
-        include/engine/character_controller/abilities.hpp
-        include/engine/character_controller/fallback_state.hpp
-        include/engine/character_controller/jump_state.hpp
-        include/engine/character_controller/player_controller.hpp
-        include/engine/character_controller/player_controller_impl.hpp
-        include/engine/character_controller/run_state.hpp
-        include/engine/character_controller/sneak_jump_state.hpp
-        include/engine/character_controller/sneak_stand_state.hpp
-        include/engine/character_controller/stand_state.hpp
-        include/engine/character_controller/walk_state.hpp
-        include/engine/controls.hpp
-        include/engine/conversions.hpp
-        include/engine/gui/elements/image.hpp
-        include/engine/gui/elements/rect.hpp
-        include/engine/gui/elements/text.hpp
-        include/engine/gui/gui.hpp
-        include/engine/gui/menu.hpp
-        include/engine/gui/menus/loading_menu.hpp
-        include/engine/gui/screen.hpp
-        include/engine/gui/stack/instructions.hpp
-        include/engine/gui/stack/meta.hpp
-        include/engine/gui/stack/program.hpp
-        include/engine/gui/stack/types.hpp
-        include/engine/gui/strings.hpp
-        include/engine/gui/trait.hpp
-        include/engine/gui/traits.hpp
-        include/engine/gui/trait_selector.hpp
-        include/engine/gui/ui_element.hpp
-        include/engine/gui/xml.hpp
-        include/engine/keep_strategy.hpp
-        include/engine/nifloader/loader.hpp
-        include/engine/nifloader/loader_state.hpp
-        include/engine/nifloader/collision_object_loader.hpp
-        include/engine/nifloader/collision_object_loader_state.hpp
-        include/engine/nifloader/mesh_loader.hpp
-        include/engine/nifloader/mesh_loader_state.hpp
-        include/engine/settings.hpp)
-
-target_include_directories(OpenOblivionEngine PUBLIC
-        ${BULLET_INCLUDE_DIRS})
-
-target_link_libraries(OpenOblivionEngine PUBLIC
-        OpenOblivion::OpenOblivionIO
-        OpenOblivion::OpenOblivionFS
-        OpenOblivion::OpenOblivionNif
-        OpenOblivion::OpenOblivionRecord
-        OpenOblivion::OpenOblivionOgre
-        OpenOblivion::OpenOblivionOgreBullet
-        OpenOblivion::OpenOblivionOgreImGui
-        OpenOblivion::OpenOblivionSDL
-        Boost::boost
-        OgreMain
-        spdlog
-        stdc++fs
-        GSL
-        pugixml
-        polymorphic_value
-        ${BULLET_LIBRARIES})
-
 add_executable(OpenOblivion)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
-        $<TARGET_OBJECTS:OpenOblivionEngine>
         src/application.cpp
         src/bsa/bsa.cpp
         src/bsa_archive_factory.cpp
+        src/character_controller/jump_state.cpp
+        src/character_controller/player_controller.cpp
+        src/character_controller/run_state.cpp
+        src/character_controller/sneak_jump_state.cpp
+        src/character_controller/sneak_stand_state.cpp
+        src/character_controller/stand_state.cpp
+        src/character_controller/walk_state.cpp
         src/esp_coordinator.cpp
         src/formid.cpp
+        src/gui/gui.cpp
+        src/gui/stack/program.cpp
+        src/gui/stack/types.cpp
+        src/gui/trait.cpp
+        src/gui/traits.cpp
+        src/gui/trait_selector.cpp
+        src/gui/xml.cpp
         src/initial_processor.cpp
         src/main.cpp
+        src/nifloader/loader.cpp
+        src/nifloader/loader_state.cpp
+        src/nifloader/collision_object_loader.cpp
+        src/nifloader/collision_object_loader_state.cpp
+        src/nifloader/mesh_loader.cpp
+        src/nifloader/mesh_loader_state.cpp
         src/records.cpp
         src/resolvers/door_resolver.cpp
         src/resolvers/interior_cell_resolver.cpp
@@ -143,13 +77,51 @@ target_sources(OpenOblivion PRIVATE
         include/bitflag.hpp
         include/bsa/bsa.hpp
         include/bsa_archive_factory.hpp
+        include/bullet/collision.hpp
+        include/bullet/configuration.hpp
+        include/character_controller/abilities.hpp
+        include/character_controller/fallback_state.hpp
+        include/character_controller/jump_state.hpp
+        include/character_controller/player_controller.hpp
+        include/character_controller/player_controller_impl.hpp
+        include/character_controller/run_state.hpp
+        include/character_controller/sneak_jump_state.hpp
+        include/character_controller/sneak_stand_state.hpp
+        include/character_controller/stand_state.hpp
+        include/character_controller/walk_state.hpp
+        include/controls.hpp
+        include/conversions.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
         include/formid.hpp
         include/game_settings.hpp
+        include/gui/elements/image.hpp
+        include/gui/elements/rect.hpp
+        include/gui/elements/text.hpp
+        include/gui/gui.hpp
+        include/gui/menu.hpp
+        include/gui/menus/loading_menu.hpp
+        include/gui/screen.hpp
+        include/gui/stack/instructions.hpp
+        include/gui/stack/meta.hpp
+        include/gui/stack/program.hpp
+        include/gui/stack/types.hpp
+        include/gui/strings.hpp
+        include/gui/trait.hpp
+        include/gui/traits.hpp
+        include/gui/trait_selector.hpp
+        include/gui/ui_element.hpp
+        include/gui/xml.hpp
         include/initial_processor.hpp
+        include/keep_strategy.hpp
         include/magic_effects.hpp
+        include/nifloader/loader.hpp
+        include/nifloader/loader_state.hpp
+        include/nifloader/collision_object_loader.hpp
+        include/nifloader/collision_object_loader_state.hpp
+        include/nifloader/mesh_loader.hpp
+        include/nifloader/mesh_loader_state.hpp
         include/resolvers/door_resolver.hpp
         include/resolvers/helpers.hpp
         include/resolvers/interior_cell_resolver.hpp
@@ -157,6 +129,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/resolvers.hpp
         include/resolvers/static_resolver.hpp
         include/save_state.hpp
+        include/settings.hpp
         include/subrecords.hpp
         include/system_time.hpp)
 
@@ -239,10 +212,10 @@ target_sources(Test PRIVATE
         test/io/write_bytes.cpp
         test/engine/gui/stack.cpp)
 target_sources(Test PRIVATE
-        src/engine/gui/stack/program.cpp
-        src/engine/gui/stack/types.cpp
-        src/engine/gui/trait.cpp
-        src/engine/gui/trait_selector.cpp
-        src/engine/gui/xml.cpp)
+        src/gui/stack/program.cpp
+        src/gui/stack/types.cpp
+        src/gui/trait.cpp
+        src/gui/trait_selector.cpp
+        src/gui/xml.cpp)
 target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch
         pugixml)

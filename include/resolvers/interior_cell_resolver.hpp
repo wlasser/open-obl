@@ -2,7 +2,7 @@
 #define OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP
 
 #include "bullet/configuration.hpp"
-#include "engine/keep_strategy.hpp"
+#include "keep_strategy.hpp"
 #include "esp_coordinator.hpp"
 #include "formid.hpp"
 #include "record/record_header.hpp"
@@ -19,8 +19,6 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-namespace engine {
 
 struct InteriorCell {
   std::string name{};
@@ -130,7 +128,5 @@ class Resolver<record::CELL> {
   make_t make(BaseId baseId) const;
   bool add(BaseId baseId, store_t entry);
 };
-
-} // namespace engine
 
 #endif // OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP

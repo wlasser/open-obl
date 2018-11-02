@@ -9,8 +9,6 @@
 #include <tuple>
 #include <type_traits>
 
-namespace engine {
-
 // The types returned by Resolver<T>::make are composed of pointers to Ogre
 // objects, so lend themselves to an entity component system. Passing tuples
 // around is good enough here though.
@@ -113,7 +111,5 @@ attachAll(gsl::not_null<Ogre::SceneNode *> node,
 
   return node;
 }
-
-} // namespace engine
 
 #endif // OPENOBLIVION_RESOLVERS_HELPERS_HPP

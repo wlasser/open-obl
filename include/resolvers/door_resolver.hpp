@@ -7,8 +7,6 @@
 #include <OgreEntity.h>
 #include <string>
 
-namespace engine {
-
 using DoorResolver = Resolver<record::DOOR>;
 
 template<>
@@ -35,7 +33,5 @@ class Resolver<record::DOOR> {
   bool add(BaseId baseId, store_t entry);
   bool contains(BaseId baseId) const noexcept;
 };
-
-} // namespace engine
 
 #endif // OPENOBLIVION_DOOR_RESOLVER_HPP

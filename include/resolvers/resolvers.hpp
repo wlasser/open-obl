@@ -7,8 +7,6 @@
 #include <OgreSceneManager.h>
 #include <optional>
 
-namespace engine {
-
 // At runtime it is necessary to conver BaseIds into the base records that they
 // identify, usually either to view information about the base record or to
 // create a concrete realisation of it in the form of a reference record.
@@ -48,7 +46,5 @@ class Resolver {
 // `Ogre::SceneManager` argument, the `Resolver` can construct the reference in-
 // place; it should not be the caller's responsibility to know how to link all
 // the components together into a scene.
-
-} // namespace engine
 
 #endif // OPENOBLIVION_RESOLVERS_HPP

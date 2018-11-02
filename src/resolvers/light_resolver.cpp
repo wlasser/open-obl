@@ -1,8 +1,6 @@
-#include "engine/conversions.hpp"
+#include "conversions.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
-
-namespace engine {
 
 auto Resolver<record::LIGH>::peek(BaseId baseId) const -> peek_t {
   const auto entry{mMap.find(baseId)};
@@ -65,5 +63,3 @@ bool Resolver<record::LIGH>::add(BaseId baseId, store_t entry) {
 bool Resolver<record::LIGH>::contains(BaseId baseId) const noexcept {
   return mMap.find(baseId) != mMap.end();
 }
-
-} // namespace engine

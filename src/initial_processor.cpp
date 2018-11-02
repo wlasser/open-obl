@@ -1,4 +1,4 @@
-#include "engine/conversions.hpp"
+#include "conversions.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "game_settings.hpp"
@@ -7,8 +7,6 @@
 #include "record/io.hpp"
 #include "records.hpp"
 #include <cctype>
-
-namespace engine {
 
 template<>
 void InitialProcessor::readRecord<record::STAT>(esp::EspAccessor &accessor) {
@@ -90,5 +88,3 @@ void InitialProcessor::readRecord<record::GMST>(esp::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::GMST>().value};
   GameSettings::getSingleton().load(rec, true);
 }
-
-} // namespace engine

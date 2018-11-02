@@ -1,8 +1,8 @@
 #include "application.hpp"
 #include "bullet/collision.hpp"
-#include "engine/conversions.hpp"
-#include "engine/keep_strategy.hpp"
-#include "engine/settings.hpp"
+#include "conversions.hpp"
+#include "keep_strategy.hpp"
+#include "settings.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
@@ -26,8 +26,6 @@
 #include <map>
 #include <memory>
 #include <string>
-
-namespace engine {
 
 Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
@@ -448,7 +446,7 @@ void Application::enableBulletDebugDraw(bool enable) {
 
 RefId Application::getCrosshairRef() {
   using namespace Ogre::conversions;
-  using namespace engine::conversions;
+  using namespace conversions;
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
   auto *const camera{playerController->getCamera()};
@@ -501,5 +499,3 @@ bool Application::frameRenderingQueued(const Ogre::FrameEvent &event) {
 bool Application::frameEnded(const Ogre::FrameEvent &event) {
   return true;
 }
-
-} // namespace engine

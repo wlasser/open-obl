@@ -4,11 +4,11 @@
 #include "bullet/configuration.hpp"
 #include "bullet/collision.hpp"
 #include "bsa_archive_factory.hpp"
-#include "engine/character_controller/player_controller.hpp"
-#include "engine/controls.hpp"
-#include "engine/gui/gui.hpp"
-#include "engine/nifloader/mesh_loader.hpp"
-#include "engine/nifloader/collision_object_loader.hpp"
+#include "character_controller/player_controller.hpp"
+#include "controls.hpp"
+#include "gui/gui.hpp"
+#include "nifloader/mesh_loader.hpp"
+#include "nifloader/collision_object_loader.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "ogrebullet/debug_drawer.hpp"
@@ -28,8 +28,6 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 #include <string>
-
-namespace engine {
 
 class Application : public Ogre::FrameListener {
  private:
@@ -127,7 +125,5 @@ struct overloaded : Ts ... {
   using Ts::operator()...;
 };
 template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
-} // namespace engine
 
 #endif // OPENOBLIVION_APPLICATION_HPP

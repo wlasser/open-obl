@@ -9,8 +9,6 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 
-namespace engine {
-
 class InitialProcessor {
  private:
   DoorResolver *doorRes;
@@ -51,7 +49,5 @@ class InitialProcessor {
   template<>
   void readRecord<record::GMST>(esp::EspAccessor &accessor);
 };
-
-} // namespace engine
 
 #endif // OPENOBLIVION_INITIAL_PROCESSOR_HPP
