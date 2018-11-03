@@ -71,7 +71,7 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
 
 bool Resolver<record::CELL>::add(BaseId, store_t entry) {
   const BaseId baseId{entry.mRecord->id};
-  return mMap.try_emplace(baseId, std::move(entry)).second;
+  return mMap.insert_or_assign(baseId, std::move(entry)).second;
 }
 
 template<>

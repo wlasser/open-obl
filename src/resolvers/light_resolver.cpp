@@ -57,7 +57,7 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
 }
 
 bool Resolver<record::LIGH>::add(BaseId baseId, store_t entry) {
-  return mMap.try_emplace(baseId, entry).second;
+  return mMap.insert_or_assign(baseId, entry).second;
 }
 
 bool Resolver<record::LIGH>::contains(BaseId baseId) const noexcept {

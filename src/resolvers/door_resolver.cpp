@@ -21,7 +21,7 @@ auto Resolver<record::DOOR>::make(BaseId baseId,
 }
 
 bool Resolver<record::DOOR>::add(BaseId baseId, store_t entry) {
-  return mMap.try_emplace(baseId, entry).second;
+  return mMap.insert_or_assign(baseId, entry).second;
 }
 
 bool Resolver<record::DOOR>::contains(BaseId baseId) const noexcept {

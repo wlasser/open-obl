@@ -21,7 +21,7 @@ auto Resolver<record::STAT>::make(BaseId baseId,
 }
 
 bool Resolver<record::STAT>::add(BaseId baseId, store_t entry) {
-  return mMap.try_emplace(baseId, entry).second;
+  return mMap.insert_or_assign(baseId, entry).second;
 }
 
 bool Resolver<record::STAT>::contains(BaseId baseId) const noexcept {
