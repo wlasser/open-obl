@@ -34,8 +34,6 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
 
-  std::ifstream esmStream;
-
   std::shared_ptr<spdlog::logger> logger{};
   std::unique_ptr<Ogre::LogManager> ogreLogMgr{};
   std::unique_ptr<Ogre::LogListener> ogreLogListener{};
@@ -101,6 +99,11 @@ class Application : public Ogre::FrameListener {
 
   // Declare all the resources in the given bsa archive
   void declareBsaResources(const fs::Path &bsaFilename);
+
+  // Return all esm files in the masterPath sorted by decreasing modification
+  // date, followed by all esp files in the masterPath sorted by decreasing
+  // modification date.
+  std::vector<std::string> getLoadOrder(const fs::Path &masterPath);
 
   void pollEvents();
 

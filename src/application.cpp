@@ -125,12 +125,11 @@ Application::Application(std::string windowName) : FrameListener() {
   menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
 
   // Load esp files
-  // TODO: Get the actual load order
-  std::vector<std::string> loadOrder{"Oblivion.esm"};
-  std::transform(loadOrder.begin(), loadOrder.end(), loadOrder.begin(),
-                 [&dataPath](const std::string &s) -> std::string {
-                   return (dataPath / fs::Path{s}).sysPath();
-                 });
+  const auto loadOrder{getLoadOrder(dataPath)};
+  logger->info("Mod load order:");
+  for (int i = 0; i < loadOrder.size(); ++i) {
+    logger->info("0x{:0>2x} {}", i, loadOrder[i]);
+  }
   espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
                                                          loadOrder.end());
 
@@ -151,7 +150,9 @@ Application::Application(std::string windowName) : FrameListener() {
                                     lightRes.get(),
                                     staticRes.get(),
                                     interiorCellRes.get());
-  esp::readEsp(*espCoordinator, 0, initialProcessor);
+  for (int i = 0; i < loadOrder.size(); ++i) {
+    esp::readEsp(*espCoordinator, i, initialProcessor);
+  }
 
   // Load a test cell
   currentCell = interiorCellRes->make(BaseId{0x00'048706});
@@ -345,6 +346,32 @@ void Application::declareBsaResources(const fs::Path &bsaFilename) {
   for (const auto &filename : *files) {
     declareResource(fs::Path{filename}, settings::resourceGroup);
   }
+}
+
+std::vector<std::string> Application::getLoadOrder(const fs::Path &masterPath) {
+  const auto sysPath{masterPath.sysPath()};
+  std::vector<std::filesystem::directory_entry> files{};
+  std::filesystem::directory_iterator dirIt{sysPath};
+  auto espFilter = [](const auto &entry) {
+    const std::filesystem::path ext{entry.path().extension()};
+    return entry.is_regular_file() && (ext == ".esp" || ext == ".esm");
+  };
+
+  // C++20: Ranges
+  std::copy_if(begin(dirIt), end(dirIt), std::back_inserter(files), espFilter);
+  std::sort(files.begin(), files.end(), [](const auto &a, const auto &b) {
+    return a.last_write_time() > b.last_write_time();
+  });
+  std::stable_partition(files.begin(), files.end(), [](const auto &entry) {
+    return entry.path().extension() == ".esm";
+  });
+
+  std::vector<std::string> out(files.size());
+  std::transform(files.begin(), files.end(), out.begin(), [](const auto &e) {
+    return std::string{e.path()};
+  });
+
+  return out;
 }
 
 void Application::pollEvents() {
