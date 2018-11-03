@@ -42,7 +42,8 @@ class EspCoordinator {
   struct EspEntry {
     // Path of the esp file.
     fs::Path filename{};
-    // Local load order of the esp given as indices into mLoadOrder
+    // Local load order of the esp given as indices into mLoadOrder. The last
+    // element is the index of this esp.
     std::vector<int> localLoadOrder{};
     // Iterator to the stream in mStreams that is currently open to this file.
     Streams::iterator it{};
@@ -116,6 +117,11 @@ class EspCoordinator {
   void close(int modIndex);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  // Take a FormId whose mod index is local to the given mod and return the same
+  // FormId but with its mod index translated to the global load order.
+  FormId translateFormId(FormId id, int modIndex) const;
+  //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
+
   using SeekPos = std::ifstream::pos_type;
 
   template<class T>
@@ -151,6 +157,81 @@ class EspCoordinator {
   std::optional<record::Group::GroupType>
   peekGroupType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
+
+  template<class T>
+  T translateFormIds(T rec, int modIndex) const;
+
+  template<>
+  BaseId translateFormIds(BaseId rec, int modIndex) const;
+
+  template<>
+  RefId translateFormIds(RefId rec, int modIndex) const;
+
+  template<>
+  FormId translateFormIds(FormId rec, int modIndex) const;
+
+  template<>
+  record::raw::DATA_MGEF
+  translateFormIds(record::raw::DATA_MGEF rec, int modIndex) const;
+
+  template<>
+  record::raw::DNAM translateFormIds(record::raw::DNAM rec, int modIndex) const;
+
+  template<>
+  record::raw::ENAM translateFormIds(record::raw::ENAM rec, int modIndex) const;
+
+  template<>
+  record::raw::HNAM translateFormIds(record::raw::HNAM rec, int modIndex) const;
+
+  template<>
+  record::raw::SCIT translateFormIds(record::raw::SCIT rec, int modIndex) const;
+
+  template<>
+  record::raw::VNAM translateFormIds(record::raw::VNAM rec, int modIndex) const;
+
+  template<>
+  record::raw::XESP translateFormIds(record::raw::XESP rec, int modIndex) const;
+
+  template<>
+  record::raw::XLOC translateFormIds(record::raw::XLOC rec, int modIndex) const;
+
+  template<>
+  record::raw::XNAM translateFormIds(record::raw::XNAM rec, int modIndex) const;
+
+  template<>
+  record::raw::RACE translateFormIds(record::raw::RACE rec, int modIndex) const;
+
+  template<>
+  record::raw::MGEF translateFormIds(record::raw::MGEF rec, int modIndex) const;
+
+  template<>
+  record::raw::LTEX translateFormIds(record::raw::LTEX rec, int modIndex) const;
+
+  template<>
+  record::raw::BSGN translateFormIds(record::raw::BSGN rec, int modIndex) const;
+
+  template<>
+  record::raw::DOOR translateFormIds(record::raw::DOOR rec, int modIndex) const;
+
+  template<>
+  record::raw::LIGH translateFormIds(record::raw::LIGH rec, int modIndex) const;
+
+  template<>
+  record::raw::MISC translateFormIds(record::raw::MISC rec, int modIndex) const;
+
+  template<>
+  record::raw::CELL translateFormIds(record::raw::CELL rec, int modIndex) const;
+
+  template<>
+  record::raw::REFR translateFormIds(record::raw::REFR rec, int modIndex) const;
+
+  template<class T, uint32_t c>
+  record::Record<T, c>
+  translateFormIds(record::Record<T, c> rec, int modIndex) const;
+
+  template<>
+  record::RecordHeader
+  translateFormIds(record::RecordHeader rec, int modIndex) const;
 };
 
 class EspAccessor {
@@ -194,7 +275,10 @@ template<class InputIt>
 EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
   auto out{std::back_inserter(mLoadOrder)};
   std::transform(first, last, out, [&](const fs::Path &childPath) {
-    const auto masters{getMasters(childPath)};
+    // Putting the child esp at the end of its own master list ensures that
+    // the child esp appears last in its local load order.
+    auto masters{getMasters(childPath)};
+    masters.push_back(childPath);
     std::vector<int> loadOrder{};
     loadOrder.reserve(masters.size());
 
@@ -220,7 +304,8 @@ EspCoordinator::readRecord(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
   if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
-  return {record::readRecord<T>(it->stream), it->pos = it->stream.tellg()};
+  return {translateFormIds(record::readRecord<T>(it->stream), modIndex),
+      it->pos = it->stream.tellg()};
 };
 
 template<class T>
@@ -228,6 +313,19 @@ EspAccessor::ReadResult<T> EspAccessor::readRecord() {
   auto r{mCoordinator->readRecord<T>(mIndex, mPos)};
   mPos = r.end;
   return r;
+}
+
+template<class T>
+T EspCoordinator::translateFormIds(T rec, int modIndex) const {
+  return rec;
+}
+
+template<class T, uint32_t c>
+record::Record<T, c>
+EspCoordinator::translateFormIds(record::Record<T, c> rec, int modIndex) const {
+  rec.id = translateFormIds(rec.id, modIndex);
+  rec.data = translateFormIds(rec.data, modIndex);
+  return rec;
 }
 
 } // namespace esp
