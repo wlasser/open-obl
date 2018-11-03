@@ -103,7 +103,7 @@ class Application : public Ogre::FrameListener {
   // Return all esm files in the masterPath sorted by decreasing modification
   // date, followed by all esp files in the masterPath sorted by decreasing
   // modification date.
-  std::vector<std::string> getLoadOrder(const fs::Path &masterPath);
+  std::vector<fs::Path> getLoadOrder(const fs::Path &masterPath);
 
   void pollEvents();
 

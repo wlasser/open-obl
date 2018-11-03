@@ -1,6 +1,23 @@
 #include "esp_coordinator.hpp"
+#include "game_settings.hpp"
 
 namespace esp {
+
+std::vector<fs::Path> getMasters(const fs::Path &espFilename) {
+  const auto &gameSettings{GameSettings::getSingleton()};
+  const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
+
+  std::ifstream esp(espFilename.sysPath(), std::ifstream::binary);
+  auto masters{record::readRecord<record::TES4>(esp).data.masters};
+
+  std::vector<fs::Path> paths(masters.size());
+  std::transform(masters.begin(), masters.end(), paths.begin(),
+                 [&dataPath](const record::raw::TES4::Master &entry) {
+                   std::string masterBasename{entry.master.data};
+                   return dataPath / fs::Path{masterBasename};
+                 });
+  return paths;
+}
 
 void EspCoordinator::invalidateEsp(Streams::iterator it) {
   for (auto &entry : mLoadOrder) {
@@ -11,7 +28,7 @@ void EspCoordinator::invalidateEsp(Streams::iterator it) {
 void EspCoordinator::openStreamForEsp(EspEntry &esp, Streams::iterator it) {
   invalidateEsp(it);
   it->stream.close();
-  it->stream.open(esp.filename, std::ifstream::binary);
+  it->stream.open(esp.filename.sysPath(), std::ifstream::binary);
   it->pos = 0;
   esp.it = it;
 }
@@ -56,7 +73,7 @@ EspAccessor EspCoordinator::makeAccessor(int modIndex) {
   return EspAccessor(modIndex, this);
 }
 
-std::optional<int> EspCoordinator::getModIndex(std::string_view modName) const {
+std::optional<int> EspCoordinator::getModIndex(fs::Path modName) const {
   const auto begin{mLoadOrder.begin()};
   const auto end{mLoadOrder.end()};
   const auto it{std::find_if(begin, end, [modName](const EspEntry &e) {

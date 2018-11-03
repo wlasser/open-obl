@@ -128,7 +128,7 @@ Application::Application(std::string windowName) : FrameListener() {
   const auto loadOrder{getLoadOrder(dataPath)};
   logger->info("Mod load order:");
   for (int i = 0; i < loadOrder.size(); ++i) {
-    logger->info("0x{:0>2x} {}", i, loadOrder[i]);
+    logger->info("0x{:0>2x} {}", i, loadOrder[i].view());
   }
   espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
                                                          loadOrder.end());
@@ -348,7 +348,8 @@ void Application::declareBsaResources(const fs::Path &bsaFilename) {
   }
 }
 
-std::vector<std::string> Application::getLoadOrder(const fs::Path &masterPath) {
+std::vector<fs::Path> Application::getLoadOrder(const fs::Path &masterPath) {
+  // TODO: Use an fs::DirectoryIterator for case-insensitivity
   const auto sysPath{masterPath.sysPath()};
   std::vector<std::filesystem::directory_entry> files{};
   std::filesystem::directory_iterator dirIt{sysPath};
@@ -366,9 +367,9 @@ std::vector<std::string> Application::getLoadOrder(const fs::Path &masterPath) {
     return entry.path().extension() == ".esm";
   });
 
-  std::vector<std::string> out(files.size());
+  std::vector<fs::Path> out(files.size());
   std::transform(files.begin(), files.end(), out.begin(), [](const auto &e) {
-    return std::string{e.path()};
+    return fs::Path{std::string{e.path()}};
   });
 
   return out;

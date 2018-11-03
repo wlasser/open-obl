@@ -1,8 +1,12 @@
 #ifndef OPENOBLIVION_ESP_COORDINATOR_HPP
 #define OPENOBLIVION_ESP_COORDINATOR_HPP
 
+#include "fs/path.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
+#include "records.hpp"
+#include "settings.hpp"
+#include <spdlog/spdlog.h>
 #include <array>
 #include <algorithm>
 #include <fstream>
@@ -36,14 +40,19 @@ class EspCoordinator {
   Streams mStreams{};
 
   struct EspEntry {
-    // Base name of the esp file.
-    std::string filename{};
+    // Path of the esp file.
+    fs::Path filename{};
+    // Local load order of the esp given as indices into mLoadOrder
+    std::vector<int> localLoadOrder{};
     // Iterator to the stream in mStreams that is currently open to this file.
     Streams::iterator it{};
 
     EspEntry() = delete;
-    EspEntry(std::string name, Streams::iterator it)
-        : filename(std::move(name)), it(it) {}
+    template<class InputIt>
+    EspEntry(fs::Path name, Streams::iterator it, InputIt loadOrderStart,
+             InputIt loadOrderEnd) : filename(std::move(name)), it(it) {
+      localLoadOrder.insert(localLoadOrder.end(), loadOrderStart, loadOrderEnd);
+    }
 
     ~EspEntry() = default;
 
@@ -78,7 +87,7 @@ class EspCoordinator {
   Streams::iterator getAvailableStream(EspEntry &esp);
 
  public:
-  // first and last are iterators to a collection of strings equal to the mod
+  // first and last are iterators to a collection of fs::Paths equal to the mod
   // filenames sorted in load order from 'load first' to 'load last'.
   template<class InputIt>
   EspCoordinator(InputIt first, InputIt last);
@@ -95,7 +104,7 @@ class EspCoordinator {
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
   // Return the mod index (i.e. position in the load order) of the given mod.
-  std::optional<int> getModIndex(std::string_view modName) const;
+  std::optional<int> getModIndex(fs::Path modName) const;
 
   // Returns the number of mods in the load order
   int getNumMods() const;
@@ -176,11 +185,32 @@ class EspAccessor {
   std::optional<record::Group::GroupType> peekGroupType();
 };
 
+// Load espFilename, read the TES4 record, and return the names of its masters.
+// espFilename should be prefixed with the data folder. The returned names will
+// be prefixed by the data folder.
+std::vector<fs::Path> getMasters(const fs::Path &espFilename);
+
 template<class InputIt>
 EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
   auto out{std::back_inserter(mLoadOrder)};
-  std::transform(first, last, out, [this](std::string name) {
-    return EspEntry(std::move(name), mStreams.end());
+  std::transform(first, last, out, [&](const fs::Path &childPath) {
+    const auto masters{getMasters(childPath)};
+    std::vector<int> loadOrder{};
+    loadOrder.reserve(masters.size());
+
+    for (const auto &master : masters) {
+      if (const auto it{std::find(first, last, master)}; it != last) {
+        loadOrder.push_back(it - first);
+      } else {
+        spdlog::get(settings::log)->critical(
+            "{} depends on master {} which is not loaded",
+            childPath.view(), master.view());
+        throw std::runtime_error("Dependency not met");
+      }
+    }
+
+    return EspEntry(childPath, mStreams.end(),
+                    loadOrder.begin(), loadOrder.end());
   });
 }
 
