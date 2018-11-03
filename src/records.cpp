@@ -88,9 +88,11 @@ std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
 // TES4 specialization
 template<>
 uint32_t TES4::size() const {
-  uint32_t size = data.header.entireSize() + data.offsets.entireSize()
-      + data.deleted.entireSize() + data.author.entireSize()
-      + data.description.entireSize();
+  uint32_t size = data.header.entireSize()
+      + (data.offsets ? data.offsets->entireSize() : 0u)
+      + (data.deleted ? data.deleted->entireSize() : 0u)
+      + (data.author ? data.author->entireSize() : 0u)
+      + (data.description ? data.description->entireSize() : 0u);
   for (const auto &master : data.masters) {
     size += master.master.entireSize() + master.fileSize.entireSize();
   }
@@ -100,7 +102,11 @@ uint32_t TES4::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
-  os << t.header << t.offsets << t.deleted << t.author << t.description;
+  os << t.header;
+  if (t.offsets) os << *t.offsets;
+  if (t.deleted) os << *t.deleted;
+  if (t.author) os << *t.author;
+  if (t.description) os << *t.description;
   for (const auto &master : t.masters) {
     os << master.master << master.fileSize;
   }

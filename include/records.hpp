@@ -48,10 +48,10 @@ struct TES4 {
     record::DATA_TES4 fileSize{};
   };
   record::HEDR header{};
-  record::OFST offsets{};
-  record::DELE deleted{};
-  record::CNAM_TES4 author{};
-  record::SNAM description{};
+  std::optional<record::OFST> offsets{};
+  std::optional<record::DELE> deleted{};
+  std::optional<record::CNAM_TES4> author{};
+  std::optional<record::SNAM> description{};
   // Optional TODO: Use std::optional, or leave as an empty vector?
   std::vector<Master> masters{};
 };
