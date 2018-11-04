@@ -2,6 +2,7 @@
 #define OPENOBLIVION_FORMID_HPP
 
 #include <cstdint>
+#include <iomanip>
 #include <string>
 
 // Every record in the game belongs to either the set of all *base records*, or
@@ -66,6 +67,10 @@ class BaseId {
 
   friend void io::readBytes(std::istream &is, BaseId &baseId);
   friend void io::writeBytes(std::ostream &os, const BaseId &baseId);
+  friend std::ostream &operator<<(std::ostream &os, BaseId baseId) {
+    os << "0x" << std::hex << std::setfill('0') << std::setw(8) << baseId.mId;
+    return os;
+  }
 
  private:
   FormId mId{};
@@ -95,6 +100,10 @@ class RefId {
 
   friend void io::readBytes(std::istream &is, RefId &refId);
   friend void io::writeBytes(std::ostream &os, const RefId &refId);
+  friend std::ostream &operator<<(std::ostream &os, RefId refId) {
+    os << "0x" << std::hex << std::setfill('0') << std::setw(8) << refId.mId;
+    return os;
+  }
 
  private:
   FormId mId{};

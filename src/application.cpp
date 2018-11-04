@@ -17,6 +17,7 @@
 #include "resolvers/static_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
+#include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <algorithm>
@@ -523,7 +524,7 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   RefId newRefUnderCrosshair = getCrosshairRef();
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
-    logger->info("Looking at 0x{:x}", static_cast<FormId>(refUnderCrosshair));
+    logger->info("Looking at {}", refUnderCrosshair);
   }
 
   if (drawBulletDebug) {
