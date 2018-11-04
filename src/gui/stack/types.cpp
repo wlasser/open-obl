@@ -1,4 +1,4 @@
-#include "gui/stack/meta.hpp"
+#include "meta.hpp"
 #include "gui/stack/types.hpp"
 #include <boost/convert.hpp>
 #include <boost/convert/stream.hpp>
@@ -19,7 +19,7 @@ ValueType parseValueType(std::string_view str) {
 }
 
 std::string appendSwitchCase(std::string name, const ValueType &val) {
-  return std::visit(meta::overloaded{
+  return std::visit(overloaded{
       [&name](int i) {
         return name.append(std::to_string(i));
       },

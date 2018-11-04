@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_STACK_INSTRUCTIONS_HPP
 
 #include "gui/stack/types.hpp"
+#include "meta.hpp"
 #include <cmath>
 #include <numeric>
 #include <random>
@@ -23,7 +24,7 @@ void invokeBinaryOperator(Stack &stack, F f) {
   std::visit([&stack, &f](const auto &lhs, const auto &rhs) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
       auto opt
-          {meta::try_functor<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
+          {try_functor<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
       if (opt.has_value()) {
         stack.emplace_back(*opt);
       } else {
@@ -48,7 +49,7 @@ void invokeBinaryPredicate(Stack &stack, F f) {
   std::visit([&stack, &f](const auto &lhs, const auto &rhs) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
       auto opt
-          {meta::try_predicate<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
+          {try_predicate<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
       if (opt.has_value()) {
         stack.emplace_back(*opt);
       } else {
@@ -69,7 +70,7 @@ struct nop_t {
 struct push_t {
   ArgumentType arg_t;
   void operator()(Stack &stack) const {
-    std::visit(meta::overloaded{
+    std::visit(overloaded{
         [&stack](const TraitName &traitName) {
           const std::string_view name{traitName.str};
           // Trailing underscore implies a switch statement using the working

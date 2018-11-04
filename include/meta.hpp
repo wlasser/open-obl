@@ -1,26 +1,39 @@
-#ifndef OPENOBLIVION_GUI_STACK_META_HPP
-#define OPENOBLIVION_GUI_STACK_META_HPP
+#ifndef OPENOBLIVION_META_HPP
+#define OPENOBLIVION_META_HPP
 
 #include <optional>
 #include <string>
 #include <type_traits>
 #include <variant>
 
-namespace gui::stack::meta {
+// Miscellaneous metaprogramming utilities.
 
-// Pointless metaprogramming. Appends a type to the end of a variant.
-template<class U, class ...Ts>
-auto variant_with_helper(std::variant<Ts...> v) -> std::variant<Ts..., U>;
-
-template<class V, class T>
-using variant_with = decltype(variant_with_helper<T>(std::declval<V>()));
-
-// Not pointless metaprogramming. Used for std::visit.
+// Helper type for std::visit. Let's you write (for example)
+// ```cpp
+// std::visit(overloaded{
+//     [](int i) { doInt(i); },
+//     [](float f) { doFloat(f); },
+//     [](auto x) { doFallback(x); }
+// }, var);
+// ```
+// instead of messing around with `if constexpr`.
+// C++20: If p0051 has been merged then replace this with std::overload
 template<class ...Ts>
 struct overloaded : Ts ... {
   using Ts::operator()...;
 };
 template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
+
+// Helper function for `variant_with`.
+template<class U, class ...Ts>
+auto variant_with_helper(std::variant<Ts...> v) -> std::variant<Ts..., U>;
+
+// Append a type to the end of a std::variant.
+template<class V, class T>
+using variant_with = decltype(variant_with_helper<T>(std::declval<V>()));
+
+static_assert(std::is_same_v<std::variant<int, float>,
+                             variant_with<std::variant<int>, float>>);
 
 // If f(*lhs, *rhs) makes sense then call it and return the result wrapped in an
 // optional. Return an empty optional otherwise. The pointers are a hack to get
@@ -54,6 +67,4 @@ std::optional<bool> {
   return std::nullopt;
 }
 
-} // namespace gui::stack::meta
-
-#endif // OPENOBLIVION_ENGINE_GUI_STACK_META_HPP
+#endif // OPENOBLIVION_META_HPP

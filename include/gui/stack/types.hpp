@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_GUI_STACK_TYPES_HPP
 #define OPENOBLIVION_GUI_STACK_TYPES_HPP
 
-#include "gui/stack/meta.hpp"
+#include "meta.hpp"
 #include <string>
 #include <variant>
 #include <vector>
@@ -21,7 +21,7 @@ inline bool operator!=(const TraitName &a, const TraitName &b) noexcept {
 }
 
 using ValueType = std::variant<int, float, bool, std::string>;
-using ArgumentType = meta::variant_with<ValueType, TraitName>;
+using ArgumentType = variant_with<ValueType, TraitName>;
 using Stack = std::vector<ValueType>;
 
 // Deduce the type of the value in `str` and return a ValueType with that value.

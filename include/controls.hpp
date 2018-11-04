@@ -36,11 +36,12 @@ struct Quick : KeyEvent {
 struct QuickSave : KeyEvent {};
 struct QuickLoad : KeyEvent {};
 struct Grab : KeyEvent {};
+struct Console : KeyEvent {};
 
 using KeyVariant = std::variant<
     Forward, Backward, SlideLeft, SlideRight, Use, Activate, Block, Cast,
     ReadyItem, Sneak, Run, AlwaysRun, AutoMove, Jump, TogglePov,
-    MenuMode, Rest, QuickMenu, Quick, QuickSave, QuickLoad, Grab>;
+    MenuMode, Rest, QuickMenu, Quick, QuickSave, QuickLoad, Grab, Console>;
 
 struct MouseEvent {
   float delta{};
@@ -94,7 +95,7 @@ constexpr static inline std::array<sdl::KeyCode, 256> directInputKeyMap{
     sdl::KeyCode::L,
     sdl::KeyCode::Semicolon,
     sdl::KeyCode::Quote,
-    sdl::KeyCode::Unknown,
+    sdl::KeyCode::Backquote,
     sdl::KeyCode::Lshift,
     sdl::KeyCode::Backslash,
     sdl::KeyCode::Z,
@@ -382,6 +383,7 @@ class KeyMap {
     attach<event::QuickSave>(getSetting("QuickSave", "003FFFFF"));
     attach<event::QuickLoad>(getSetting("QuickLoad", "0043FFFF"));
     attach<event::Grab>(getSetting("Grab", "002CFFFF"));
+    attach<event::Console>(getSetting("Console", "0029FFFF"));
   }
 };
 

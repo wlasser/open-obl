@@ -11,6 +11,7 @@
 #include "nifloader/collision_object_loader.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
+#include "meta.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
@@ -121,12 +122,5 @@ class Application : public Ogre::FrameListener {
   bool frameRenderingQueued(const Ogre::FrameEvent &event) override;
   bool frameEnded(const Ogre::FrameEvent &event) override;
 };
-
-// TODO: Move this somewhere central or use a library
-template<class ...Ts>
-struct overloaded : Ts ... {
-  using Ts::operator()...;
-};
-template<class ...Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 #endif // OPENOBLIVION_APPLICATION_HPP

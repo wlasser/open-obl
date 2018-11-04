@@ -2,7 +2,6 @@
 #define OPENOBLIVION_GUI_STACK_PROGRAM_HPP
 
 #include "gui/stack/instructions.hpp"
-#include "gui/stack/meta.hpp"
 #include "gui/stack/types.hpp"
 #include <pugixml.hpp>
 #include <cstdint>
