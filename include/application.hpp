@@ -72,9 +72,6 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
- public:
-  explicit Application(std::string windowName);
-
   // Set up the logger. Ogre's logging facilities are pretty good but fall down
   // when it comes to formatting. Using boost::format gets pretty tedious so
   // we use spdlog, which has the fmt library built in. Obviously we still want
@@ -113,6 +110,12 @@ class Application : public Ogre::FrameListener {
   RefId getCrosshairRef();
 
   void enableBulletDebugDraw(bool enable);
+
+  bool isKeyboardEvent(const sdl::Event &e) const noexcept;
+  bool isMouseEvent(const sdl::Event &e) const noexcept;
+
+ public:
+  explicit Application(std::string windowName);
 
   Ogre::Root *getRoot() {
     return ogreRoot.get();

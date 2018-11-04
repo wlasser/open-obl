@@ -37,11 +37,13 @@ struct QuickSave : KeyEvent {};
 struct QuickLoad : KeyEvent {};
 struct Grab : KeyEvent {};
 struct Console : KeyEvent {};
+struct SystemMenu : KeyEvent {};
 
 using KeyVariant = std::variant<
     Forward, Backward, SlideLeft, SlideRight, Use, Activate, Block, Cast,
     ReadyItem, Sneak, Run, AlwaysRun, AutoMove, Jump, TogglePov,
-    MenuMode, Rest, QuickMenu, Quick, QuickSave, QuickLoad, Grab, Console>;
+    MenuMode, Rest, QuickMenu, Quick, QuickSave, QuickLoad, Grab, Console,
+    SystemMenu>;
 
 struct MouseEvent {
   float delta{};
@@ -384,6 +386,7 @@ class KeyMap {
     attach<event::QuickLoad>(getSetting("QuickLoad", "0043FFFF"));
     attach<event::Grab>(getSetting("Grab", "002CFFFF"));
     attach<event::Console>(getSetting("Console", "0029FFFF"));
+    attach<event::SystemMenu>(getSetting("System Menu", "0001FFFF"));
   }
 };
 

@@ -381,22 +381,11 @@ void Application::pollEvents() {
   const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
-    const auto eventType{sdl::typeOf(sdlEvent)};
-
     // Pass event to ImGui and let ImGui consume it if it wants
     imguiMgr->handleEvent(sdlEvent);
     auto imguiIo{ImGui::GetIO()};
-    if (imguiIo.WantCaptureKeyboard &&
-        (eventType == sdl::EventType::KeyUp ||
-            eventType == sdl::EventType::KeyDown)) {
-      continue;
-    } else if (imguiIo.WantCaptureMouse &&
-        (eventType == sdl::EventType::MouseMotion ||
-            eventType == sdl::EventType::MouseButtonDown ||
-            eventType == sdl::EventType::MouseButtonUp ||
-            eventType == sdl::EventType::MouseWheel)) {
-      continue;
-    }
+    if (imguiIo.WantCaptureKeyboard && isKeyboardEvent(sdlEvent)) continue;
+    else if (imguiIo.WantCaptureMouse && isMouseEvent(sdlEvent)) continue;
 
     auto keyEvent{keyMap->translateKey(sdlEvent)};
     if (keyEvent) {
@@ -422,49 +411,18 @@ void Application::pollEvents() {
           [](event::Quick) {},
           [](event::QuickSave) {},
           [](event::QuickLoad) {},
-          [](event::Grab) {}
+          [](event::Grab) {},
+          [this](event::Console e) { logger->info("Console pressed"); },
+          [this](event::SystemMenu e) { ogreRoot->queueEndRendering(); }
       }, *keyEvent);
       continue;
     }
 
-    switch (eventType) {
-      case sdl::EventType::Quit: {
-        ogreRoot->queueEndRendering();
-        break;
-      }
-      case sdl::EventType::KeyDown: {
-        if (sdlEvent.key.repeat) break;
-        switch (sdl::keyCodeOf(sdlEvent.key)) {
-          case sdl::KeyCode::H: {
-            drawBulletDebug = !drawBulletDebug;
-            enableBulletDebugDraw(drawBulletDebug);
-            break;
-          }
-          case sdl::KeyCode::Escape: {
-            ogreRoot->queueEndRendering();
-            break;
-          }
-          default:break;
-        }
-        break;
-      }
-      case sdl::EventType::MouseMotion: {
-        const event::Pitch pitch{{sdlEvent.motion.yrel * sensitivity}};
-        const event::Yaw yaw{{sdlEvent.motion.xrel * sensitivity}};
-        playerController->handleEvent(pitch);
-        playerController->handleEvent(yaw);
-        break;
-      }
-      case sdl::EventType::WindowEvent: {
-        if (sdl::typeOf(sdlEvent.window) == sdl::WindowEventType::Resized) {
-          ogreWindow->resize(static_cast<unsigned int>(sdlEvent.window.data1),
-                             static_cast<unsigned int>(sdlEvent.window.data2));
-          ogreWindow->windowMovedOrResized();
-        }
-        break;
-      }
-
-      default:break;
+    if (sdl::typeOf(sdlEvent) == sdl::EventType::MouseMotion) {
+      const event::Pitch pitch{{sdlEvent.motion.yrel * sensitivity}};
+      const event::Yaw yaw{{sdlEvent.motion.xrel * sensitivity}};
+      playerController->handleEvent(pitch);
+      playerController->handleEvent(yaw);
     }
   }
 }
@@ -507,6 +465,22 @@ RefId Application::getCrosshairRef() {
   } else {
     return RefId{};
   }
+}
+
+bool Application::isKeyboardEvent(const sdl::Event &e) const noexcept {
+  const auto type{sdl::typeOf(e)};
+  return type == sdl::EventType::KeyUp
+      || type == sdl::EventType::KeyDown
+      || type == sdl::EventType::TextInput
+      || type == sdl::EventType::TextEditing;
+}
+
+bool Application::isMouseEvent(const sdl::Event &e) const noexcept {
+  const auto type{sdl::typeOf(e)};
+  return type == sdl::EventType::MouseMotion
+      || type == sdl::EventType::MouseButtonDown
+      || type == sdl::EventType::MouseButtonUp
+      || type == sdl::EventType::MouseWheel;
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
