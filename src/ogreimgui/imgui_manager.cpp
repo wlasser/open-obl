@@ -319,10 +319,9 @@ bool ImGuiManager::handleEvent(const sdl::KeyboardEvent &event, bool isDown) {
       break;
     }
     default: {
-      auto keyCode{static_cast<std::underlying_type_t<sdl::KeyCode>>(
-                       sdl::keyCodeOf(event))};
-      if (keyCode < IM_ARRAYSIZE(io.KeysDown)) {
-        io.KeysDown[keyCode] = isDown;
+      auto scanCode{asImGui(sdl::keyCodeOf(event))};
+      if (scanCode < IM_ARRAYSIZE(io.KeysDown)) {
+        io.KeysDown[scanCode] = isDown;
         return true;
       }
       return false;

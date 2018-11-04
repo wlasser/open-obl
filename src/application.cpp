@@ -380,8 +380,22 @@ void Application::pollEvents() {
   const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
+    const auto eventType{sdl::typeOf(sdlEvent)};
 
+    // Pass event to ImGui and let ImGui consume it if it wants
     imguiMgr->handleEvent(sdlEvent);
+    auto imguiIo{ImGui::GetIO()};
+    if (imguiIo.WantCaptureKeyboard &&
+        (eventType == sdl::EventType::KeyUp ||
+            eventType == sdl::EventType::KeyDown)) {
+      continue;
+    } else if (imguiIo.WantCaptureMouse &&
+        (eventType == sdl::EventType::MouseMotion ||
+            eventType == sdl::EventType::MouseButtonDown ||
+            eventType == sdl::EventType::MouseButtonUp ||
+            eventType == sdl::EventType::MouseWheel)) {
+      continue;
+    }
 
     auto keyEvent{keyMap->translateKey(sdlEvent)};
     if (keyEvent) {
@@ -412,7 +426,7 @@ void Application::pollEvents() {
       continue;
     }
 
-    switch (sdl::typeOf(sdlEvent)) {
+    switch (eventType) {
       case sdl::EventType::Quit: {
         ogreRoot->queueEndRendering();
         break;
@@ -495,11 +509,12 @@ RefId Application::getCrosshairRef() {
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
-  imguiMgr->newFrame(event.timeSinceLastFrame);
-  //bool showDemoWindow{true};
-  //ImGui::ShowDemoWindow(&showDemoWindow);
-
   pollEvents();
+
+  imguiMgr->newFrame(event.timeSinceLastFrame);
+  bool showDemoWindow{true};
+  ImGui::ShowDemoWindow(&showDemoWindow);
+
   playerController->update(event.timeSinceLastFrame);
   currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
   dispatchCollisions();
