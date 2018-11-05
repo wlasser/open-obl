@@ -32,11 +32,9 @@ class ApplicationContext {
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
 
   std::shared_ptr<spdlog::logger> logger{};
-  std::unique_ptr<Ogre::LogManager> ogreLogMgr{};
-  std::unique_ptr<Ogre::LogListener> ogreLogListener{};
 
   std::unique_ptr<Ogre::Root> ogreRoot{};
-  sdl::Init sdlInit;
+  std::unique_ptr<sdl::Init> sdlInit{};
 
   sdl::WindowPtr sdlWindow{nullptr, nullptr};
   Ogre::RenderWindowPtr ogreWindow;
@@ -44,6 +42,8 @@ class ApplicationContext {
   std::unique_ptr<KeyMap> keyMap{};
 
   std::unique_ptr<bullet::Configuration> bulletConf{};
+
+  std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
   nifloader::MeshLoader nifLoader{};
   nifloader::CollisionObjectLoader nifCollisionLoader{};
@@ -58,7 +58,6 @@ class ApplicationContext {
   std::unique_ptr<StaticResolver> staticRes{};
   std::unique_ptr<InteriorCellResolver> interiorCellRes{};
 
-  std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
  public:
   std::shared_ptr<spdlog::logger> getLogger() {

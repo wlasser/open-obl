@@ -37,29 +37,18 @@ Application::Application(std::string windowName) : FrameListener() {
   loadIniConfiguration();
   auto &gameSettings = GameSettings::getSingleton();
 
-  // Override the logger levels with user-provided ones, if any
-  if (const auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
-    spdlog::get(settings::ogreLog)->set_level(spdlog::level::from_str(*level));
-  }
-  if (const auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
-    spdlog::get(settings::log)->set_level(spdlog::level::from_str(*level));
-  }
+  ctx.ogreRoot = createOgreRoot();
 
-  // Start Ogre and set the rendering system
-  ctx.ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
-  setRenderSystem("OpenGL 3+ Rendering Subsystem");
-  ctx.ogreRoot->initialise(false);
-  ctx.ogreRoot->addFrameListener(this);
-
-  // Create the window
-  ctx.sdlInit = sdl::Init();
-  createWindow(windowName);
+  ctx.sdlInit = std::make_unique<sdl::Init>();
+  std::tie(ctx.sdlWindow, ctx.ogreWindow) = createWindow(windowName);
 
   // Set the keyboard configuration
   ctx.keyMap = std::make_unique<KeyMap>(gameSettings);
 
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
+
+  ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
   // Add the resource managers
   ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
@@ -70,9 +59,8 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
   // Add the main resource group
-  const std::string resourceGroup{settings::resourceGroup};
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
-  resGrpMgr.createResourceGroup(resourceGroup);
+  resGrpMgr.createResourceGroup(settings::resourceGroup);
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
@@ -89,7 +77,9 @@ Application::Application(std::string windowName) : FrameListener() {
   // is case-sensitive on *nix, but we need case-insensitivity on all platforms.
   // Files must therefore have lowercase names to correctly override.
   // TODO: Replace FileSystem with a case-insensitive version
-  resGrpMgr.addResourceLocation(dataPath.c_str(), "FileSystem", resourceGroup,
+  resGrpMgr.addResourceLocation(dataPath.c_str(),
+                                "FileSystem",
+                                settings::resourceGroup,
                                 true);
 
   // Get list of bsa files from ini
@@ -107,7 +97,8 @@ Application::Application(std::string windowName) : FrameListener() {
   }
 
   // Shaders are not stored in the data folder (mostly for vcs reasons)
-  resGrpMgr.addResourceLocation("./shaders", "FileSystem", resourceGroup);
+  resGrpMgr.addResourceLocation("./shaders", "FileSystem",
+                                settings::resourceGroup);
 
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
@@ -143,13 +134,13 @@ Application::Application(std::string windowName) : FrameListener() {
     esp::readEsp(*ctx.espCoordinator, i, initialProcessor);
   }
 
-  ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
   modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
 }
 
 void Application::createLoggers() {
-  using namespace spdlog::sinks;
+  using spdlog::sinks::stdout_color_sink_mt;
+  using spdlog::sinks::basic_file_sink_mt;
 
   // The console gets info and above, in particular not debug
   auto consoleSink{std::make_shared<stdout_color_sink_mt>()};
@@ -165,11 +156,9 @@ void Application::createLoggers() {
   // Construct the default Ogre logger and register its spdlog listener
   auto ogreLogger{std::make_shared<spdlog::logger>(settings::ogreLog, sinks)};
   spdlog::register_logger(ogreLogger);
-  ctx.ogreLogMgr = std::make_unique<Ogre::LogManager>();
-  auto *defaultLog{ctx.ogreLogMgr->createLog("Default", true, true, true)};
-  ctx.ogreLogListener =
-      std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
-  defaultLog->addListener(ctx.ogreLogListener.get());
+  auto *defaultLog{ogreLogMgr.createLog("Default", true, true, true)};
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
+  defaultLog->addListener(ogreLogListener.get());
 
   // Construct our own logger
   auto logger{std::make_shared<spdlog::logger>(settings::log, sinks)};
@@ -183,43 +172,63 @@ void Application::createLoggers() {
 
 void Application::loadIniConfiguration() {
   auto &gameSettings{GameSettings::getSingleton()};
+  auto logger{spdlog::get(settings::log)};
 
-  ctx.logger->info("Parsing {}", settings::defaultIni);
+  logger->info("Parsing {}", settings::defaultIni);
   gameSettings.load(settings::defaultIni, true);
 
   if (std::filesystem::is_regular_file(settings::userIni)) {
-    ctx.logger->info("Parsing {}", settings::userIni);
+    logger->info("Parsing {}", settings::userIni);
     gameSettings.load(settings::userIni, true);
   } else {
-    ctx.logger->warn("User configuration {} not found", settings::userIni);
+    logger->warn("User configuration {} not found", settings::userIni);
+  }
+
+  // Override the logger levels with user-provided ones, if any
+  if (const auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
+    spdlog::get(settings::ogreLog)->set_level(spdlog::level::from_str(*level));
+  }
+  if (const auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
+    spdlog::get(settings::log)->set_level(spdlog::level::from_str(*level));
   }
 }
 
-void Application::setRenderSystem(const std::string &systemName) {
-  auto &root = Ogre::Root::getSingleton();
-  if (auto *renderSystem = root.getRenderSystemByName(systemName)) {
-    root.setRenderSystem(renderSystem);
+void Application::setRenderSystem(Ogre::Root *root,
+                                  const std::string &systemName) {
+  if (auto *renderSystem = root->getRenderSystemByName(systemName)) {
+    root->setRenderSystem(renderSystem);
   } else {
     // List the available render systems
-    ctx.logger->error("Render system {} not found", systemName);
-    ctx.logger->info("Available render systems are:");
-    for (const auto &system : root.getAvailableRenderers()) {
-      ctx.logger->info(" * {}", system->getName());
+    auto logger{spdlog::get(settings::log)};
+    logger->error("Render system {} not found", systemName);
+    logger->info("Available render systems are:");
+    for (const auto &system : root->getAvailableRenderers()) {
+      logger->info(" * {}", system->getName());
     }
     throw std::runtime_error("Invalid render system");
   }
 }
 
-void Application::createWindow(const std::string &windowName) {
+std::unique_ptr<Ogre::Root> Application::createOgreRoot() {
+  auto root{std::make_unique<Ogre::Root>("plugins.cfg", "", "")};
+  setRenderSystem(root.get(), "OpenGL 3+ Rendering Subsystem");
+  root->initialise(false);
+  root->addFrameListener(this);
+  return root;
+}
+
+std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
+Application::createWindow(const std::string &windowName) {
   const auto &gameSettings{GameSettings::getSingleton()};
+  auto logger{spdlog::get(settings::log)};
 
   // Grab the window dimensions
   const int windowWidth{gameSettings.iGet("Display.iSize W")};
   const int windowHeight{gameSettings.iGet("Display.iSize H")};
   if (windowHeight <= 0 || windowWidth <= 0) {
-    ctx.logger->critical("Cannot create a window with width {} and height {}",
-                         windowWidth, windowHeight);
-    ctx.logger->critical(
+    logger->critical("Cannot create a window with width {} and height {}",
+                     windowWidth, windowHeight);
+    logger->critical(
         "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
     throw std::runtime_error("Cannot create window with negative size");
   }
@@ -231,9 +240,9 @@ void Application::createWindow(const std::string &windowName) {
   }
 
   // Make the window and find its system parent handle
-  ctx.sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
-                                  windowFlags);
-  const auto sdlWindowInfo{sdl::getSysWMInfo(ctx.sdlWindow.get())};
+  auto sdlWindow{sdl::makeWindow(windowName, windowWidth, windowHeight,
+                                 windowFlags)};
+  const auto sdlWindowInfo{sdl::getSysWMInfo(sdlWindow.get())};
   const auto parent{sdl::getWindowParent(sdlWindowInfo)};
 
   // Make cursor behaviour more sensible
@@ -244,12 +253,14 @@ void Application::createWindow(const std::string &windowName) {
   const std::map<std::string, std::string> params{
       {"parentWindowHandle", parent}
   };
-  ctx.ogreWindow = Ogre::makeRenderWindow(
-      ctx.ogreRoot.get(),
+  auto ogreWindow{Ogre::makeRenderWindow(
+      Ogre::Root::getSingletonPtr(),
       windowName,
       static_cast<const unsigned>(windowWidth),
       static_cast<const unsigned>(windowHeight),
-      &params);
+      &params)};
+
+  return {std::move(sdlWindow), std::move(ogreWindow)};
 }
 
 std::vector<fs::Path>
@@ -354,7 +365,7 @@ void Application::pollEvents() {
   }
 }
 
-bool Application::isKeyboardEvent(const sdl::Event &e) const noexcept {
+bool Application::isKeyboardEvent(const sdl::Event &e) noexcept {
   const auto type{sdl::typeOf(e)};
   return type == sdl::EventType::KeyUp
       || type == sdl::EventType::KeyDown
@@ -362,7 +373,7 @@ bool Application::isKeyboardEvent(const sdl::Event &e) const noexcept {
       || type == sdl::EventType::TextEditing;
 }
 
-bool Application::isMouseEvent(const sdl::Event &e) const noexcept {
+bool Application::isMouseEvent(const sdl::Event &e) noexcept {
   const auto type{sdl::typeOf(e)};
   return type == sdl::EventType::MouseMotion
       || type == sdl::EventType::MouseButtonDown
