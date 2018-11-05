@@ -56,6 +56,7 @@ target_sources(OpenOblivion PRIVATE
         src/gui/xml.cpp
         src/initial_processor.cpp
         src/main.cpp
+        src/modes/game_mode.cpp
         src/nifloader/loader.cpp
         src/nifloader/loader_state.cpp
         src/nifloader/collision_object_loader.cpp
@@ -73,6 +74,7 @@ target_sources(OpenOblivion PRIVATE
         src/system_time.cpp
         include/actor_value.hpp
         include/application.hpp
+        include/application_context.hpp
         include/attribute.hpp
         include/bitflag.hpp
         include/bsa/bsa.hpp
@@ -104,7 +106,6 @@ target_sources(OpenOblivion PRIVATE
         include/gui/menus/loading_menu.hpp
         include/gui/screen.hpp
         include/gui/stack/instructions.hpp
-        include/gui/stack/meta.hpp
         include/gui/stack/program.hpp
         include/gui/stack/types.hpp
         include/gui/strings.hpp
@@ -117,6 +118,7 @@ target_sources(OpenOblivion PRIVATE
         include/keep_strategy.hpp
         include/magic_effects.hpp
         include/meta.hpp
+        include/modes/game_mode.hpp
         include/nifloader/loader.hpp
         include/nifloader/loader_state.hpp
         include/nifloader/collision_object_loader.hpp

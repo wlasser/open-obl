@@ -1,76 +1,21 @@
 #ifndef OPENOBLIVION_APPLICATION_HPP
 #define OPENOBLIVION_APPLICATION_HPP
 
-#include "bullet/configuration.hpp"
-#include "bullet/collision.hpp"
-#include "bsa_archive_factory.hpp"
-#include "character_controller/player_controller.hpp"
+#include "application_context.hpp"
 #include "controls.hpp"
-#include "gui/gui.hpp"
-#include "nifloader/mesh_loader.hpp"
-#include "nifloader/collision_object_loader.hpp"
-#include "esp_coordinator.hpp"
 #include "fs/path.hpp"
-#include "meta.hpp"
-#include "ogrebullet/debug_drawer.hpp"
-#include "ogrebullet/collision_object_manager.hpp"
-#include "ogrebullet/rigid_body.hpp"
-#include "ogreimgui/imgui_manager.hpp"
-#include "ogre/text_resource_manager.hpp"
-#include "ogre/window.hpp"
-#include "resolvers/interior_cell_resolver.hpp"
-#include "resolvers/door_resolver.hpp"
-#include "resolvers/light_resolver.hpp"
-#include "resolvers/static_resolver.hpp"
+#include "modes/game_mode.hpp"
 #include "sdl/sdl.hpp"
-#include <boost/format.hpp>
 #include <Ogre.h>
-#include <SDL2/SDL.h>
-#include <spdlog/spdlog.h>
-#include <memory>
 #include <string>
+#include <vector>
+
+using ModeVariant = std::variant<GameMode>;
 
 class Application : public Ogre::FrameListener {
  private:
-  std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
-  std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
-
-  std::shared_ptr<spdlog::logger> logger{};
-  std::unique_ptr<Ogre::LogManager> ogreLogMgr{};
-  std::unique_ptr<Ogre::LogListener> ogreLogListener{};
-
-  std::unique_ptr<Ogre::Root> ogreRoot{};
-  sdl::Init sdlInit;
-
-  sdl::WindowPtr sdlWindow{nullptr, nullptr};
-  Ogre::RenderWindowPtr ogreWindow;
-
-  std::unique_ptr<KeyMap> keyMap{};
-
-  std::unique_ptr<bullet::Configuration> bulletConf{};
-
-  nifloader::MeshLoader nifLoader{};
-  nifloader::CollisionObjectLoader nifCollisionLoader{};
-
-  std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
-  std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
-
-  std::unique_ptr<gui::LoadingMenu> menuLoadingMenu{};
-
-  std::unique_ptr<esp::EspCoordinator> espCoordinator{};
-
-  std::unique_ptr<DoorResolver> doorRes{};
-  std::unique_ptr<LightResolver> lightRes{};
-  std::unique_ptr<StaticResolver> staticRes{};
-  std::unique_ptr<InteriorCellResolver> interiorCellRes{};
-
-  std::shared_ptr<InteriorCell> currentCell{};
-  bullet::CollisionCaller collisionCaller{};
-  std::unique_ptr<character::PlayerController> playerController{};
-
-  bool drawBulletDebug{false};
-  std::unique_ptr<Ogre::DebugDrawer> debugDrawer{};
-  std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
+  ApplicationContext ctx{};
+  std::vector<ModeVariant> modeStack{};
 
   /// Set up the logger.
   /// Ogre's logging facilities are pretty good but fall down when it comes to
@@ -126,20 +71,8 @@ class Application : public Ogre::FrameListener {
   /// modification date.
   std::vector<fs::Path> getLoadOrder(const fs::Path &masterPath);
 
-  /// Poll for SDL events and process all that have occured.
+  /// Poll for SDL events and process all that have occurred.
   void pollEvents();
-
-  /// Run all registered collision callbacks with the collisions for this frame.
-  void dispatchCollisions();
-
-  /// Return a reference to the object under the crosshair.
-  /// This works by raytesting against all collision objects in the current
-  /// cell within `iActivatePickLength` units. If no object is found, return the
-  /// null reference `0`.
-  RefId getCrosshairRef();
-
-  /// Turn the display of collision wireframes on or off.
-  void enableBulletDebugDraw(bool enable);
 
   /// Return true iff `e` is an sdl::EventType::KeyUp, sdl::EventType::KeyDown,
   /// sdl::EventType::TextInput, or sdl::EventType::TextEditing event.
@@ -154,7 +87,7 @@ class Application : public Ogre::FrameListener {
   explicit Application(std::string windowName);
 
   Ogre::Root *getRoot() {
-    return ogreRoot.get();
+    return ctx.ogreRoot.get();
   }
 
   bool frameStarted(const Ogre::FrameEvent &event) override;

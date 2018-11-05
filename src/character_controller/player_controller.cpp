@@ -4,6 +4,8 @@
 #include <OgreMath.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
+#include <optional>
+#include <variant>
 
 namespace character {
 

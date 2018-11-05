@@ -8,6 +8,7 @@
 #include "fs/path.hpp"
 #include "game_settings.hpp"
 #include "initial_processor.hpp"
+#include "meta.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
@@ -27,10 +28,11 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
-  logger = spdlog::get(settings::log);
+  ctx.logger = spdlog::get(settings::log);
 
   loadIniConfiguration();
   auto &gameSettings = GameSettings::getSingleton();
@@ -44,28 +46,28 @@ Application::Application(std::string windowName) : FrameListener() {
   }
 
   // Start Ogre and set the rendering system
-  ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
+  ctx.ogreRoot = std::make_unique<Ogre::Root>("plugins.cfg", "", "");
   setRenderSystem("OpenGL 3+ Rendering Subsystem");
-  ogreRoot->initialise(false);
-  ogreRoot->addFrameListener(this);
+  ctx.ogreRoot->initialise(false);
+  ctx.ogreRoot->addFrameListener(this);
 
   // Create the window
-  sdlInit = sdl::Init();
+  ctx.sdlInit = sdl::Init();
   createWindow(windowName);
 
   // Set the keyboard configuration
-  keyMap = std::make_unique<KeyMap>(gameSettings);
+  ctx.keyMap = std::make_unique<KeyMap>(gameSettings);
 
   // Construct the Bullet configuration
-  bulletConf = std::make_unique<bullet::Configuration>();
+  ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
   // Add the resource managers
-  collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
-  textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
+  ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
+  ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
 
   // Add the factories
-  rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
-  ogreRoot->addMovableObjectFactory(rigidBodyFactory.get());
+  ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
+  ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
   // Add the main resource group
   const std::string resourceGroup{settings::resourceGroup};
@@ -74,8 +76,8 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
-  bsaArchiveFactory = std::make_unique<Ogre::BsaArchiveFactory>();
-  archiveMgr.addArchiveFactory(bsaArchiveFactory.get());
+  ctx.bsaArchiveFactory = std::make_unique<Ogre::BsaArchiveFactory>();
+  archiveMgr.addArchiveFactory(ctx.bsaArchiveFactory.get());
 
   // Grab the data folder from the ini file
   const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
@@ -111,81 +113,39 @@ Application::Application(std::string windowName) : FrameListener() {
   // groups. This won't initialise the default groups.
   resGrpMgr.initialiseAllResourceGroups();
 
-  // Instantiate the menus
-  auto &txtResMgr = Ogre::TextResourceManager::getSingleton();
-  std::string menuPath = "menus/loading_menu.xml";
-  auto menuPtr = txtResMgr.getByName(menuPath, resourceGroup);
-  if (!menuPtr) {
-    logger->error("Resource does not exist");
-    throw std::runtime_error(boost::str(
-        boost::format("Failed to open %s") % menuPath));
-  }
-  menuPtr->load(false);
-  std::stringstream menuStream{menuPtr->getString()};
-  //gui::parseMenu(menuStream);
-  menuLoadingMenu = std::make_unique<gui::LoadingMenu>();
-
   // Load esp files
   const auto loadOrder{getLoadOrder(dataPath)};
-  logger->info("Mod load order:");
+  ctx.logger->info("Mod load order:");
   for (int i = 0; i < loadOrder.size(); ++i) {
-    logger->info("0x{:0>2x} {}", i, loadOrder[i].view());
+    ctx.logger->info("0x{:0>2x} {}", i, loadOrder[i].view());
   }
-  espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
-                                                         loadOrder.end());
+  ctx.espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
+                                                             loadOrder.end());
 
   // Create the engine managers
-  doorRes = std::make_unique<DoorResolver>();
-  lightRes = std::make_unique<LightResolver>();
-  staticRes = std::make_unique<StaticResolver>();
+  ctx.doorRes = std::make_unique<DoorResolver>();
+  ctx.lightRes = std::make_unique<LightResolver>();
+  ctx.staticRes = std::make_unique<StaticResolver>();
   InteriorCellResolver::resolvers_t resolvers{
-      *doorRes, *lightRes, *staticRes
+      *ctx.doorRes, *ctx.lightRes, *ctx.staticRes
   };
-  interiorCellRes = std::make_unique<InteriorCellResolver>(
+  ctx.interiorCellRes = std::make_unique<InteriorCellResolver>(
       resolvers,
-      *bulletConf,
+      *ctx.bulletConf,
       std::make_unique<strategy::KeepCurrent<InteriorCell>>());
 
   // Read the main esm
-  InitialProcessor initialProcessor(doorRes.get(),
-                                    lightRes.get(),
-                                    staticRes.get(),
-                                    interiorCellRes.get());
+  InitialProcessor initialProcessor(ctx.doorRes.get(),
+                                    ctx.lightRes.get(),
+                                    ctx.staticRes.get(),
+                                    ctx.interiorCellRes.get());
   for (int i = 0; i < loadOrder.size(); ++i) {
-    esp::readEsp(*espCoordinator, i, initialProcessor);
+    esp::readEsp(*ctx.espCoordinator, i, initialProcessor);
   }
 
-  // Load a test cell
-  currentCell = interiorCellRes->make(BaseId{0x00'048706});
-  //currentCell = interiorCellRes->make(BaseId{0x00'031b59});
-  logger->info("Loaded test cell");
+  ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
-  playerController =
-      std::make_unique<character::PlayerController>(currentCell->scnMgr);
-  currentCell->physicsWorld->addRigidBody(playerController->getRigidBody());
-  collisionCaller.addCallback(
-      playerController->getRigidBody(),
-      [this](const auto *other, const auto &contact) {
-        playerController->handleCollision(other, contact);
-      });
-
-  ogreWindow->addViewport(playerController->getCamera());
-  ogreRoot->getRenderSystem()
-      ->_setViewport(playerController->getCamera()->getViewport());
-
-  auto startPos = conversions::fromBSCoordinates({0, 0, 0});
-  //auto startPos = conversions::fromBSCoordinates({-1954.8577f, -473.5773f, -318.9890f});
-  startPos.y += 4.0f;
-  playerController->moveTo(startPos);
-
-  debugDrawer = std::make_unique<Ogre::DebugDrawer>(currentCell->scnMgr,
-                                                    resourceGroup);
-  currentCell->scnMgr->getRootSceneNode()->createChildSceneNode()
-      ->attachObject(debugDrawer->getObject());
-  debugDrawer->enable(false);
-
-  imguiMgr = std::make_unique<Ogre::ImGuiManager>();
-  currentCell->scnMgr->addRenderQueueListener(imguiMgr.get());
+  modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
 }
 
 void Application::createLoggers() {
@@ -205,10 +165,11 @@ void Application::createLoggers() {
   // Construct the default Ogre logger and register its spdlog listener
   auto ogreLogger{std::make_shared<spdlog::logger>(settings::ogreLog, sinks)};
   spdlog::register_logger(ogreLogger);
-  ogreLogMgr = std::make_unique<Ogre::LogManager>();
-  auto *defaultLog{ogreLogMgr->createLog("Default", true, true, true)};
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
-  defaultLog->addListener(ogreLogListener.get());
+  ctx.ogreLogMgr = std::make_unique<Ogre::LogManager>();
+  auto *defaultLog{ctx.ogreLogMgr->createLog("Default", true, true, true)};
+  ctx.ogreLogListener =
+      std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
+  defaultLog->addListener(ctx.ogreLogListener.get());
 
   // Construct our own logger
   auto logger{std::make_shared<spdlog::logger>(settings::log, sinks)};
@@ -223,26 +184,27 @@ void Application::createLoggers() {
 void Application::loadIniConfiguration() {
   auto &gameSettings{GameSettings::getSingleton()};
 
-  logger->info("Parsing {}", settings::defaultIni);
+  ctx.logger->info("Parsing {}", settings::defaultIni);
   gameSettings.load(settings::defaultIni, true);
 
   if (std::filesystem::is_regular_file(settings::userIni)) {
-    logger->info("Parsing {}", settings::userIni);
+    ctx.logger->info("Parsing {}", settings::userIni);
     gameSettings.load(settings::userIni, true);
   } else {
-    logger->warn("User configuration {} not found", settings::userIni);
+    ctx.logger->warn("User configuration {} not found", settings::userIni);
   }
 }
 
 void Application::setRenderSystem(const std::string &systemName) {
-  if (auto *renderSystem = ogreRoot->getRenderSystemByName(systemName)) {
-    ogreRoot->setRenderSystem(renderSystem);
+  auto &root = Ogre::Root::getSingleton();
+  if (auto *renderSystem = root.getRenderSystemByName(systemName)) {
+    root.setRenderSystem(renderSystem);
   } else {
     // List the available render systems
-    logger->error("Render system {} not found", systemName);
-    logger->info("Available render systems are:");
-    for (const auto &system : ogreRoot->getAvailableRenderers()) {
-      logger->info(" * {}", system->getName());
+    ctx.logger->error("Render system {} not found", systemName);
+    ctx.logger->info("Available render systems are:");
+    for (const auto &system : root.getAvailableRenderers()) {
+      ctx.logger->info(" * {}", system->getName());
     }
     throw std::runtime_error("Invalid render system");
   }
@@ -255,9 +217,9 @@ void Application::createWindow(const std::string &windowName) {
   const int windowWidth{gameSettings.iGet("Display.iSize W")};
   const int windowHeight{gameSettings.iGet("Display.iSize H")};
   if (windowHeight <= 0 || windowWidth <= 0) {
-    logger->critical("Cannot create a window with width {} and height {}",
-                     windowWidth, windowHeight);
-    logger->critical(
+    ctx.logger->critical("Cannot create a window with width {} and height {}",
+                         windowWidth, windowHeight);
+    ctx.logger->critical(
         "Set 'Display.iSize W' and 'Display.iSize H' to sensible values");
     throw std::runtime_error("Cannot create window with negative size");
   }
@@ -269,9 +231,9 @@ void Application::createWindow(const std::string &windowName) {
   }
 
   // Make the window and find its system parent handle
-  sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
-                              windowFlags);
-  const auto sdlWindowInfo{sdl::getSysWMInfo(sdlWindow.get())};
+  ctx.sdlWindow = sdl::makeWindow(windowName, windowWidth, windowHeight,
+                                  windowFlags);
+  const auto sdlWindowInfo{sdl::getSysWMInfo(ctx.sdlWindow.get())};
   const auto parent{sdl::getWindowParent(sdlWindowInfo)};
 
   // Make cursor behaviour more sensible
@@ -282,11 +244,12 @@ void Application::createWindow(const std::string &windowName) {
   const std::map<std::string, std::string> params{
       {"parentWindowHandle", parent}
   };
-  ogreWindow = Ogre::makeRenderWindow(ogreRoot.get(),
-                                      windowName,
-                                      static_cast<const unsigned>(windowWidth),
-                                      static_cast<const unsigned>(windowHeight),
-                                      &params);
+  ctx.ogreWindow = Ogre::makeRenderWindow(
+      ctx.ogreRoot.get(),
+      windowName,
+      static_cast<const unsigned>(windowWidth),
+      static_cast<const unsigned>(windowHeight),
+      &params);
 }
 
 std::vector<fs::Path>
@@ -322,9 +285,9 @@ void Application::declareResource(const fs::Path &path,
 
   if (ext == "nif"sv) {
     resGrpMgr.declareResource(path.c_str(), "Mesh",
-                              resourceGroup, &nifLoader);
+                              resourceGroup, &ctx.nifLoader);
     resGrpMgr.declareResource(path.c_str(), "CollisionObject",
-                              resourceGroup, &nifCollisionLoader);
+                              resourceGroup, &ctx.nifCollisionLoader);
   } else if (ext == "dds"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   } else if (ext == "xml"sv || ext == "txt"sv) {
@@ -377,93 +340,17 @@ std::vector<fs::Path> Application::getLoadOrder(const fs::Path &masterPath) {
 }
 
 void Application::pollEvents() {
-  const auto &settings{GameSettings::getSingleton()};
-  const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
     // Pass event to ImGui and let ImGui consume it if it wants
-    imguiMgr->handleEvent(sdlEvent);
+    ctx.imguiMgr->handleEvent(sdlEvent);
     auto imguiIo{ImGui::GetIO()};
     if (imguiIo.WantCaptureKeyboard && isKeyboardEvent(sdlEvent)) continue;
     else if (imguiIo.WantCaptureMouse && isMouseEvent(sdlEvent)) continue;
 
-    auto keyEvent{keyMap->translateKey(sdlEvent)};
-    if (keyEvent) {
-      std::visit(overloaded{
-          [this](event::Forward e) { playerController->handleEvent(e); },
-          [this](event::Backward e) { playerController->handleEvent(e); },
-          [this](event::SlideLeft e) { playerController->handleEvent(e); },
-          [this](event::SlideRight e) { playerController->handleEvent(e); },
-          [](event::Use) {},
-          [](event::Activate) {},
-          [](event::Block) {},
-          [](event::Cast) {},
-          [](event::ReadyItem) {},
-          [this](event::Sneak e) { playerController->handleEvent(e); },
-          [this](event::Run e) { playerController->handleEvent(e); },
-          [this](event::AlwaysRun e) { playerController->handleEvent(e); },
-          [](event::AutoMove) {},
-          [this](event::Jump e) { playerController->handleEvent(e); },
-          [](event::TogglePov) {},
-          [](event::MenuMode) {},
-          [](event::Rest) {},
-          [](event::QuickMenu) {},
-          [](event::Quick) {},
-          [](event::QuickSave) {},
-          [](event::QuickLoad) {},
-          [](event::Grab) {},
-          [this](event::Console e) { logger->info("Console pressed"); },
-          [this](event::SystemMenu e) { ogreRoot->queueEndRendering(); }
-      }, *keyEvent);
-      continue;
-    }
-
-    if (sdl::typeOf(sdlEvent) == sdl::EventType::MouseMotion) {
-      const event::Pitch pitch{{sdlEvent.motion.yrel * sensitivity}};
-      const event::Yaw yaw{{sdlEvent.motion.xrel * sensitivity}};
-      playerController->handleEvent(pitch);
-      playerController->handleEvent(yaw);
-    }
-  }
-}
-
-void Application::dispatchCollisions() {
-  auto *const btDispatcher{currentCell->physicsWorld->getDispatcher()};
-  gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(btDispatcher)};
-  collisionCaller.runCallbacks(dispatcher);
-}
-
-void Application::enableBulletDebugDraw(bool enable) {
-  if (enable) {
-    currentCell->physicsWorld->setDebugDrawer(debugDrawer.get());
-  } else {
-    currentCell->physicsWorld->setDebugDrawer(nullptr);
-    debugDrawer->clearLines();
-    debugDrawer->build();
-  }
-
-  debugDrawer->enable(enable);
-}
-
-RefId Application::getCrosshairRef() {
-  using Ogre::conversions::toBullet;
-  GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
-
-  auto *const camera{playerController->getCamera()};
-  const auto cameraPos{toBullet(camera->getDerivedPosition())};
-  const auto cameraDir{toBullet(camera->getDerivedDirection())};
-  const auto rayStart{cameraPos + 0.5f * cameraDir};
-  const float rayLength
-      {*iActivatePickLength * conversions::metersPerUnit<float>};
-  const auto rayEnd{cameraPos + rayLength * cameraDir};
-
-  btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
-  currentCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
-
-  if (callback.hasHit()) {
-    return RefId{decodeFormId(callback.m_collisionObject->getUserPointer())};
-  } else {
-    return RefId{};
+    std::visit(overloaded{
+        [this, sdlEvent](GameMode &mode) { mode.handleEvent(ctx, sdlEvent); }
+    }, modeStack.back());
   }
 }
 
@@ -486,26 +373,15 @@ bool Application::isMouseEvent(const sdl::Event &e) const noexcept {
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
 
-  imguiMgr->newFrame(event.timeSinceLastFrame);
+  ctx.imguiMgr->newFrame(event.timeSinceLastFrame);
   bool showDemoWindow{true};
   ImGui::ShowDemoWindow(&showDemoWindow);
 
-  playerController->update(event.timeSinceLastFrame);
-  currentCell->physicsWorld->stepSimulation(event.timeSinceLastFrame);
-  dispatchCollisions();
-
-  static RefId refUnderCrosshair{0};
-  RefId newRefUnderCrosshair = getCrosshairRef();
-  if (newRefUnderCrosshair != refUnderCrosshair) {
-    refUnderCrosshair = newRefUnderCrosshair;
-    logger->info("Looking at {}", refUnderCrosshair);
-  }
-
-  if (drawBulletDebug) {
-    debugDrawer->clearLines();
-    currentCell->physicsWorld->debugDrawWorld();
-    debugDrawer->build();
-  }
+  std::visit(overloaded{
+      [this, &event](GameMode &mode) {
+        mode.update(ctx, event.timeSinceLastFrame);
+      }
+  }, modeStack.back());
 
   return true;
 }
