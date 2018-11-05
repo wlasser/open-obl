@@ -39,16 +39,17 @@ Application::Application(std::string windowName) : FrameListener() {
 
   ctx.ogreRoot = createOgreRoot();
 
+  // Creating an Ogre::RenderWindow initialises the render system, which is
+  // necessary to create shaders (including reading scripts), so this has to be
+  // done early.
   ctx.sdlInit = std::make_unique<sdl::Init>();
-  std::tie(ctx.sdlWindow, ctx.ogreWindow) = createWindow(windowName);
+  ctx.windows = createWindow(windowName);
 
   // Set the keyboard configuration
   ctx.keyMap = std::make_unique<KeyMap>(gameSettings);
 
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
-
-  ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
   // Add the resource managers
   ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
@@ -58,9 +59,24 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
   ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
+  // Create the engine managers
+  ctx.doorRes = std::make_unique<DoorResolver>();
+  ctx.lightRes = std::make_unique<LightResolver>();
+  ctx.staticRes = std::make_unique<StaticResolver>();
+  ctx.interiorCellRes = std::make_unique<InteriorCellResolver>(
+      InteriorCellResolver::resolvers_t{
+          *ctx.doorRes, *ctx.lightRes, *ctx.staticRes
+      },
+      *ctx.bulletConf,
+      std::make_unique<strategy::KeepCurrent<InteriorCell>>());
+
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
   resGrpMgr.createResourceGroup(settings::resourceGroup);
+
+  // Shaders are not stored in the data folder (mostly for vcs reasons)
+  resGrpMgr.addResourceLocation("./shaders", "FileSystem",
+                                settings::resourceGroup);
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
@@ -96,13 +112,11 @@ Application::Application(std::string windowName) : FrameListener() {
     declareBsaResources(bsa);
   }
 
-  // Shaders are not stored in the data folder (mostly for vcs reasons)
-  resGrpMgr.addResourceLocation("./shaders", "FileSystem",
-                                settings::resourceGroup);
-
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
   resGrpMgr.initialiseAllResourceGroups();
+
+  ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
   // Load esp files
   const auto loadOrder{getLoadOrder(dataPath)};
@@ -112,19 +126,6 @@ Application::Application(std::string windowName) : FrameListener() {
   }
   ctx.espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
                                                              loadOrder.end());
-
-  // Create the engine managers
-  ctx.doorRes = std::make_unique<DoorResolver>();
-  ctx.lightRes = std::make_unique<LightResolver>();
-  ctx.staticRes = std::make_unique<StaticResolver>();
-  InteriorCellResolver::resolvers_t resolvers{
-      *ctx.doorRes, *ctx.lightRes, *ctx.staticRes
-  };
-  ctx.interiorCellRes = std::make_unique<InteriorCellResolver>(
-      resolvers,
-      *ctx.bulletConf,
-      std::make_unique<strategy::KeepCurrent<InteriorCell>>());
-
   // Read the main esm
   InitialProcessor initialProcessor(ctx.doorRes.get(),
                                     ctx.lightRes.get(),
@@ -133,7 +134,6 @@ Application::Application(std::string windowName) : FrameListener() {
   for (int i = 0; i < loadOrder.size(); ++i) {
     esp::readEsp(*ctx.espCoordinator, i, initialProcessor);
   }
-
 
   modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
 }

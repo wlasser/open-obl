@@ -36,8 +36,10 @@ class ApplicationContext {
   std::unique_ptr<Ogre::Root> ogreRoot{};
   std::unique_ptr<sdl::Init> sdlInit{};
 
-  sdl::WindowPtr sdlWindow{nullptr, nullptr};
-  Ogre::RenderWindowPtr ogreWindow;
+  std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr> windows{
+      std::make_tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>(
+          {nullptr, nullptr}, nullptr
+      )};
 
   std::unique_ptr<KeyMap> keyMap{};
 
@@ -51,13 +53,12 @@ class ApplicationContext {
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
 
-  std::unique_ptr<esp::EspCoordinator> espCoordinator{};
-
   std::unique_ptr<DoorResolver> doorRes{};
   std::unique_ptr<LightResolver> lightRes{};
   std::unique_ptr<StaticResolver> staticRes{};
   std::unique_ptr<InteriorCellResolver> interiorCellRes{};
 
+  std::unique_ptr<esp::EspCoordinator> espCoordinator{};
 
  public:
   std::shared_ptr<spdlog::logger> getLogger() {
@@ -93,7 +94,7 @@ class ApplicationContext {
   }
 
   void setCamera(Ogre::Camera *camera) {
-    ogreWindow->addViewport(camera);
+    std::get<Ogre::RenderWindowPtr>(windows)->addViewport(camera);
     ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
   }
 };
