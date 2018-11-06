@@ -353,14 +353,25 @@ std::vector<fs::Path> Application::getLoadOrder(const fs::Path &masterPath) {
 void Application::pollEvents() {
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
+    if (sdl::typeOf(sdlEvent) == sdl::EventType::Quit) {
+      ctx.ogreRoot->queueEndRendering();
+      return;
+    }
+
     // Pass event to ImGui and let ImGui consume it if it wants
     ctx.imguiMgr->handleEvent(sdlEvent);
     auto imguiIo{ImGui::GetIO()};
     if (imguiIo.WantCaptureKeyboard && isKeyboardEvent(sdlEvent)) continue;
     else if (imguiIo.WantCaptureMouse && isMouseEvent(sdlEvent)) continue;
 
-    std::visit(overloaded{
-        [this, sdlEvent](GameMode &mode) { mode.handleEvent(ctx, sdlEvent); }
+    std::visit([this, sdlEvent](auto &mode) {
+      auto[pop, push]{mode.handleEvent(ctx, sdlEvent)};
+      if (pop) modeStack.pop_back();
+      if (push) {
+        std::visit([this](auto &&newState) {
+          modeStack.emplace_back(newState);
+        }, *push);
+      }
     }, modeStack.back());
   }
 }
@@ -385,13 +396,9 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
 
   ctx.imguiMgr->newFrame(event.timeSinceLastFrame);
-  bool showDemoWindow{true};
-  ImGui::ShowDemoWindow(&showDemoWindow);
 
-  std::visit(overloaded{
-      [this, &event](GameMode &mode) {
-        mode.update(ctx, event.timeSinceLastFrame);
-      }
+  std::visit([this, &event](auto &mode) {
+    mode.update(ctx, event.timeSinceLastFrame);
   }, modeStack.back());
 
   return true;

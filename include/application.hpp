@@ -4,13 +4,14 @@
 #include "application_context.hpp"
 #include "controls.hpp"
 #include "fs/path.hpp"
+#include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <Ogre.h>
 #include <string>
 #include <vector>
 
-using ModeVariant = std::variant<GameMode>;
+using ModeVariant = std::variant<GameMode, ConsoleMode>;
 
 class Application : public Ogre::FrameListener {
  private:

@@ -1,39 +1,71 @@
 #include "game_settings.hpp"
 #include "meta.hpp"
+#include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
-void GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
+GameMode::transition_t
+GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
   if (keyEvent) {
-    std::visit(overloaded{
-        [this](event::Forward e) { mPlayerController->handleEvent(e); },
-        [this](event::Backward e) { mPlayerController->handleEvent(e); },
-        [this](event::SlideLeft e) { mPlayerController->handleEvent(e); },
-        [this](event::SlideRight e) { mPlayerController->handleEvent(e); },
-        [](event::Use) {},
-        [](event::Activate) {},
-        [](event::Block) {},
-        [](event::Cast) {},
-        [](event::ReadyItem) {},
-        [this](event::Sneak e) { mPlayerController->handleEvent(e); },
-        [this](event::Run e) { mPlayerController->handleEvent(e); },
-        [this](event::AlwaysRun e) { mPlayerController->handleEvent(e); },
-        [](event::AutoMove) {},
-        [this](event::Jump e) { mPlayerController->handleEvent(e); },
-        [](event::TogglePov) {},
-        [](event::MenuMode) {},
-        [](event::Rest) {},
-        [](event::QuickMenu) {},
-        [](event::Quick) {},
-        [](event::QuickSave) {},
-        [](event::QuickLoad) {},
-        [](event::Grab) {},
-        [&ctx](event::Console e) { ctx.getLogger()->info("Console pressed"); },
-        [&ctx](event::SystemMenu e) { ctx.getRoot().queueEndRendering(); }
+    return std::visit(overloaded{
+        [this](event::Forward e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [this](event::Backward e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [this](event::SlideLeft e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [this](event::SlideRight e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [](event::Use) -> transition_t { return {}; },
+        [](event::Activate) -> transition_t { return {}; },
+        [](event::Block) -> transition_t { return {}; },
+        [](event::Cast) -> transition_t { return {}; },
+        [](event::ReadyItem) -> transition_t { return {}; },
+        [this](event::Sneak e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [this](event::Run e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [this](event::AlwaysRun e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [](event::AutoMove) -> transition_t { return {}; },
+        [this](event::Jump e) -> transition_t {
+          mPlayerController->handleEvent(e);
+          return {};
+        },
+        [](event::TogglePov) -> transition_t { return {}; },
+        [](event::MenuMode) -> transition_t { return {}; },
+        [](event::Rest) -> transition_t { return {}; },
+        [](event::QuickMenu) -> transition_t { return {}; },
+        [](event::Quick) -> transition_t { return {}; },
+        [](event::QuickSave) -> transition_t { return {}; },
+        [](event::QuickLoad) -> transition_t { return {}; },
+        [](event::Grab) -> transition_t { return {}; },
+        [&ctx](event::Console e) -> transition_t {
+          ctx.getLogger()->info("Console pressed");
+          if (e.down) return {false, ConsoleMode(ctx)};
+          return {};
+        },
+        [&ctx](event::SystemMenu e) -> transition_t {
+          ctx.getRoot().queueEndRendering();
+          return {};
+        }
     }, *keyEvent);
-    return;
   }
 
   if (sdl::typeOf(event) == sdl::EventType::MouseMotion) {
@@ -44,6 +76,7 @@ void GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
     mPlayerController->handleEvent(pitch);
     mPlayerController->handleEvent(yaw);
   }
+  return {false, std::nullopt};
 }
 
 void GameMode::dispatchCollisions() {

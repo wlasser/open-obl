@@ -5,9 +5,15 @@
 #include "bullet/collision.hpp"
 #include "character_controller/player_controller.hpp"
 #include "formid.hpp"
+#include "modes/mode.hpp"
 #include "resolvers/interior_cell_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <memory>
+#include <optional>
+#include <tuple>
+#include <variant>
+
+class ConsoleMode;
 
 class GameMode {
  private:
@@ -28,13 +34,15 @@ class GameMode {
   void loadCell(ApplicationContext &ctx, BaseId cellId);
 
  public:
+  using transition_t = ModeTransition<ConsoleMode>;
+
   explicit GameMode(ApplicationContext &ctx) {
     loadCell(ctx, BaseId{0x00'048706});
   }
 
   /// Poll for SDL events and process all that have occurred.
   /// This is called at the start of Application::frameStarted.
-  void handleEvent(ApplicationContext &ctx, const sdl::Event &event);
+  transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
 
   /// Step the game world forward `delta` seconds.
   /// This is called during Application::frameStarted after pollEvents.

@@ -56,6 +56,7 @@ target_sources(OpenOblivion PRIVATE
         src/gui/xml.cpp
         src/initial_processor.cpp
         src/main.cpp
+        src/modes/console_mode.cpp
         src/modes/game_mode.cpp
         src/nifloader/loader.cpp
         src/nifloader/loader_state.cpp
@@ -118,7 +119,9 @@ target_sources(OpenOblivion PRIVATE
         include/keep_strategy.hpp
         include/magic_effects.hpp
         include/meta.hpp
+        include/modes/console_mode.hpp
         include/modes/game_mode.hpp
+        include/modes/mode.hpp
         include/nifloader/loader.hpp
         include/nifloader/loader_state.hpp
         include/nifloader/collision_object_loader.hpp
