@@ -89,7 +89,7 @@ class Application : public Ogre::FrameListener {
 
   /// Pop the top mode off the stack, if any.
   void popMode() {
-    if (modeStack.size() > 0) modeStack.pop_back();
+    if (!modeStack.empty()) modeStack.pop_back();
   }
 
   /// Push a mode onto the stack and call its enter method.
@@ -103,7 +103,7 @@ class Application : public Ogre::FrameListener {
 
   /// Refocus the top mode on the stack, if any.
   void refocusMode() {
-    if (modeStack.size() == 0) return;
+    if (modeStack.empty()) return;
     std::visit([this](auto &&state) { state.refocus(ctx); }, modeStack.back());
   }
 
