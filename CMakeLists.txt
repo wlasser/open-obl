@@ -74,7 +74,6 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/static_resolver.cpp
         src/save_state.cpp
         src/subrecords.cpp
-        src/system_time.cpp
         include/actor_value.hpp
         include/application.hpp
         include/application_context.hpp
@@ -140,8 +139,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/static_resolver.hpp
         include/save_state.hpp
         include/settings.hpp
-        include/subrecords.hpp
-        include/system_time.hpp)
+        include/subrecords.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

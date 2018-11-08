@@ -1,123 +1,180 @@
 #ifndef OPENOBLIVION_SAVE_STATE_HPP
 #define OPENOBLIVION_SAVE_STATE_HPP
 
-#include <string>
+#include "formid.hpp"
+#include "io/io.hpp"
+#include <Ogre.h>
 #include <cctype>
 #include <memory>
+#include <string>
+#include <tuple>
 #include <vector>
-#include "system_time.hpp"
-#include "formid.hpp"
+
+struct SystemTime : io::byte_direct_ioable_tag {
+  uint16_t year;
+  uint16_t month;
+  uint16_t dayOfWeek;
+  uint16_t day;
+  uint16_t hour;
+  uint16_t minute;
+  uint16_t second;
+  uint16_t millisecond;
+
+  std::string toISO8601() const;
+};
+static_assert(sizeof(SystemTime) == 16u);
 
 class SaveState {
-
-  struct Screenshot {
-    uint32_t width;
-    uint32_t height;
-    uint8_t *data;
-  };
-
+ private:
   struct PCLocation {
-    FormId cell;
-    float x, y, z;
+    FormId cell{};
+    // Position in cell in world units
+    float x{};
+    float y{};
+    float z{};
   };
-  static const std::size_t PCLocationSize = sizeof(FormId) + 3 * sizeof(float);
+  static_assert(sizeof(PCLocation) == 16u);
 
-  struct Global {
-    IRef iref;
-    float value;
+  struct Global : io::byte_direct_ioable_tag {
+    IRef iref{};
+    /// This is broken in the same way as record::GLOB.
+    float value{};
   };
-  static const std::size_t GlobalSize = sizeof(IRef) + sizeof(float);
+  static_assert(sizeof(Global) == 8u);
 
   struct DeathCount {
-    // IRef to base form
-    IRef actor;
-    // Number of times an instance of this actor has died
-    uint16_t deathCount;
+    /// IRef to base form
+    IRef mActor{};
+    /// Number of times an instance of this actor has died
+    uint16_t mCount{};
+    // uint16_t padding;
   };
-  static const std::size_t DeathCountSize = sizeof(IRef) + sizeof(uint16_t);
 
  public:
 
-  /// File header
-  uint8_t majorVersion;
-  uint8_t minorVersion;
-  // Time when game executable was last modified
-  struct SystemTime exeTime;
+  /// \name File Header
+  ///@{
 
-  /// Save game header
-  uint32_t headerVersion;
-  // Size in bytes of the save game header not including this variable
-  // This is actually redundant as the header size is easily inferred
-  uint32_t saveHeaderSize;
-  uint32_t saveNum;
-  std::string pcName;
-  uint16_t pcLevel;
-  // Player's current cell
-  std::string pcLocationStr;
-  // Days that have passed in game
-  float gameDays;
-  // Ticks elapsed during gameplay
-  uint32_t gameTicks;
-  // Time that the save file was created
-  struct SystemTime gameTime;
-  // Screenshot at time of save
-  struct Screenshot screenshot;
+  /// File format version.
+  /// Always 125, though UESP says that 126 has been reported but unconfirmed.
+  uint8_t mVersion{};
 
-  /// Plugins
-  // Number of plugins including masters
-  uint8_t pluginsNum;
-  // Plugin names in load order
-  std::vector<std::string> plugins;
+  /// Time when the game executable was last modified.
+  SystemTime mExeTime{};
 
-  /// Global
-  // The absolute address of formIdsNum later in the file
-  uint32_t formIdsOffset;
-  // Number of change records
-  uint32_t recordsNum;
-  // Number of next dynamic formid i.e. 0xff000000
-  FormId nextObjectId;
-  // Worldspace information
-  FormId worldId;
-  uint32_t worldX;
-  uint32_t worldY;
-  // Player location
-  struct PCLocation pcLocation;
-  // Array of global variables
-  uint16_t globalsNum;
-  std::vector<Global> globals;
-  // Size of upcoming data form death count and game mode time.
-  // This is unnecessary but it is given in the file so we store it
-  uint16_t tesClassSize;
-  // Array of death counts for actors
-  uint32_t numDeathCounts;
-  std::vector<DeathCount> deathCounts;
-  // Seconds elapsed in game mode (menus closed)
-  float gameModeSeconds;
-  // Processes data
-  uint16_t processesSize;
-  uint8_t *processesData;
-  // Spectator event data
-  uint16_t specEventSize;
-  uint8_t *specEventData;
-  // Weather data
-  uint16_t weatherSize;
-  uint8_t *weatherData;
-  // Number of actors in combat with the player
-  uint32_t playerCombatCount;
-  // Number of created items?
-  uint32_t createdNum;
+  ///@}
 
-  // Constructor
-  explicit SaveState(std::istream &);
-  ~SaveState() {
-    delete[] screenshot.data;
-    if (processesSize > 0) delete[] processesData;
-    if (specEventSize > 0) delete[] specEventData;
-    if (weatherSize > 0) delete[] weatherData;
-  }
+  /// \name Save Game Header
+  ///@{
 
-  // Save the screenshot as a ppm file
-  bool saveScreenshotPPM(const char *filename);
+  /// Save game version.
+  /// Should equal mVersion.
+  uint32_t mHeaderVersion{};
+
+  /// Number of save games for the character prior to this save.
+  uint32_t mSaveNumber;
+
+  /// Player character's name.
+  std::string mPCName{};
+
+  /// Player character's level.
+  uint16_t mPCLevel{};
+
+  /// Name of the cell the player character is currently in.
+  /// Specifically, the record::FULL of the current record::CELL.
+  std::string mPCCellName{};
+
+  /// Number of days that have passed in game.
+  /// According to UESP this begins at 1.042, as the start time of the game is
+  /// 1am on day 1, namely Morndas 27th of Last Seed.
+  /// gameDaysPassed is therefore the amount of time, in days, that have passed
+  /// since 12am Sundas 26th of Last Seed.
+  float mGameDaysPassed{};
+
+  /// Number of milliseconds elapsed while playing this save game.
+  uint32_t mGameTicksPassed{};
+
+  /// Time that the save file was created.
+  struct SystemTime mSaveTime{};
+
+  /// Screenshot of GameMode at time of save.
+  Ogre::Image mScreenshot{};
+
+  ///@}
+
+  /// \name Plugins
+  ///@{
+
+  /// Number of active plugins, including masters.
+  uint8_t mNumPlugins{};
+
+  /// Plugin names in load order.
+  /// Names are filepaths relative to General.SLocalMasterPath, e.g.
+  /// 'Oblivion.esm'.
+  std::vector<std::string> mPlugins{};
+
+  ///@}
+
+  /// \name Global
+  /// @{
+
+  /// Position in bytes of mNumFormIds from the start of the file.
+  uint32_t mFormIdsOffset{};
+
+  /// Number of entries in mChangeRecords
+  uint32_t mNumChangeRecords{};
+
+  /// Number of next dynamic FormId `0xffxxxxxx`
+  FormId mNextFormId{};
+
+  /// FormId of last world space the player was in before saving.
+  /// If the player is in an interior cell then this is not necessarily the
+  /// worldspace the player is currently in.
+  FormId mWorldspaceId{};
+
+  /// Exterior cell grid position of the exterior cell the player is in.
+  /// Specifically, the $(x,y)$ components of the record::XCLC of the current
+  /// exterior record::CELL. This is present but meaningless if the player is
+  /// not in an exterior cell.
+  std::tuple<uint32_t, uint32_t> mWorldPos{};
+
+  /// FormId of the record::CELL the player is currently in.
+  FormId mPCCellId{};
+
+  /// $(x,y,z)$ coordinates, in world units, of the player in the current
+  /// record::CELL.
+  std::tuple<float, float, float> mPCPosition{};
+
+  /// Array of global variables.
+  std::vector<Global> mGlobals{};
+
+  /// List of death counts for actors.
+  std::vector<DeathCount> mDeathCounts{};
+
+  /// Number of seconds elapsed during GameMode
+  float mGameModeSecondsPassed{};
+
+  /// Processes data.
+  /// \todo This needs to be decoded.
+  std::vector<uint8_t> mProcessesData{};
+
+  /// Spectator event data
+  /// \todo This needs to be decoded.
+  std::vector<uint8_t> mSpecEventData{};
+
+  /// Weather data.
+  /// \todo This needs to be decoded.
+  std::vector<uint8_t> mWeatherData{};
+
+  /// Number of actors in combat with the player.
+  uint32_t mPlayerCombatCount{};
+
+  /// Number of created records.
+  uint32_t mNumCreatedRecords{};
+
+  ///@}
+
+  explicit SaveState(std::istream &is);
 };
 
 #endif // OPENOBLIVION_SAVE_STATE_HPP

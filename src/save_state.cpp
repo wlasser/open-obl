@@ -1,117 +1,121 @@
-#include <istream>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include "save_state.hpp"
 #include "formid.hpp"
-#include "records.hpp"
-#include "record/record.hpp"
+#include "io/memstream.hpp"
+#include "io/read_bytes.hpp"
 #include "io/string.hpp"
+#include "record/record.hpp"
+#include "records.hpp"
+#include "save_state.hpp"
+#include <OgreDataStream.h>
+#include <fstream>
+#include <istream>
+#include <string>
 
-bool SaveState::saveScreenshotPPM(const char *filename) {
-  std::ofstream s(filename);
-  // Header
-  s << "P6\n"
-    << screenshot.width << ' '
-    << screenshot.height << "\n255\n";
-  // Data
-  s.write(reinterpret_cast<char *>(screenshot.data),
-          screenshot.width * screenshot.height * 3);
-  return true;
+std::string SystemTime::toISO8601() const {
+  std::stringstream s;
+  s << year << '-'
+    << std::setfill('0') << std::setw(2) << month << '-'
+    << std::setfill('0') << std::setw(2) << day << 'T'
+    << std::setfill('0') << std::setw(2) << hour << ':'
+    << std::setfill('0') << std::setw(2) << minute << ':'
+    << std::setfill('0') << std::setw(2) << second;
+  return s.str();
 }
 
-SaveState::SaveState(std::istream &s) {
-  /// File header
-  char fileId[12];
-  s.get(fileId, 13);
-  std::string fileIdStr(fileId);
-  if (fileIdStr != "TES4SAVEGAME") {
+SaveState::SaveState(std::istream &is) {
+  // UESP says this is a 12 byte string without a null-terminator, followed by
+  // a major version number byte, which is conveniently always zero. Might it
+  // simply be a null-terminator? It is safe to assume so regardless.
+  std::string headerStr{};
+  io::readBytes(is, headerStr);
+  if (headerStr != "TES4SAVEGAME") {
     throw std::runtime_error("Invalid file signature");
   }
-  s.read(reinterpret_cast<char *>(&majorVersion), sizeof(majorVersion));
-  s.read(reinterpret_cast<char *>(&minorVersion), sizeof(minorVersion));
-  s.read(reinterpret_cast<char *>(&exeTime), SystemTimeSize);
+  io::readBytes(is, mVersion);
+  io::readBytes(is, mExeTime);
 
-  /// Save game header
-  s.read(reinterpret_cast<char *>(&headerVersion), sizeof(headerVersion));
-  s.read(reinterpret_cast<char *>(&saveHeaderSize), sizeof(saveHeaderSize));
-  s.read(reinterpret_cast<char *>(&saveNum), sizeof(saveNum));
+  io::readBytes(is, mHeaderVersion);
 
-  pcName = io::readBzString(s);
-  s.read(reinterpret_cast<char *>(&pcLevel), sizeof(pcLevel));
-  pcLocationStr = io::readBzString(s);
-  s.read(reinterpret_cast<char *>(&gameDays), sizeof(float));
-  s.read(reinterpret_cast<char *>(&gameTicks), sizeof(gameTicks));
-  s.read(reinterpret_cast<char *>(&gameTime), SystemTimeSize);
+  // Size in bytes of the remaining save game header. This is not needed.
+  uint32_t headerSize{};
+  io::readBytes(is, headerSize);
 
-  uint32_t screenshotSize = 0;
-  s.read(reinterpret_cast<char *>(&screenshotSize), 4);
-  s.read(reinterpret_cast<char *>(&screenshot.width), 4);
-  s.read(reinterpret_cast<char *>(&screenshot.height), 4);
-  screenshotSize -= 8;
-  screenshot.data = new uint8_t[screenshotSize];
-  s.read(reinterpret_cast<char *>(screenshot.data), screenshotSize);
+  io::readBytes(is, mSaveNumber);
 
-  /// Plugins
-  s.read(reinterpret_cast<char *>(&pluginsNum), 1);
-  for (int i = 0; i < pluginsNum; ++i) {
-    plugins.push_back(io::readBString(s));
+  mPCName = io::readBzString(is);
+  io::readBytes(is, mPCLevel);
+  mPCCellName = io::readBzString(is);
+
+  io::readBytes(is, mGameDaysPassed);
+  io::readBytes(is, mGameTicksPassed);
+  io::readBytes(is, mSaveTime);
+
+  // Entire size of the screenshot, *including* the width and height.
+  uint32_t screenshotSize{0};
+  io::readBytes(is, screenshotSize);
+
+  uint32_t screenshotWidth{0};
+  io::readBytes(is, screenshotWidth);
+
+  uint32_t screenshotHeight{0};
+  io::readBytes(is, screenshotHeight);
+
+  std::vector<uint8_t> pixels(screenshotSize - 8u);
+  is.read(reinterpret_cast<char *>(pixels.data()), pixels.size());
+  auto stream{std::make_shared<Ogre::MemoryDataStream>(
+      pixels.data(), pixels.size())};
+
+  const uint32_t screenshotDepth{1u};
+  mScreenshot.loadRawData(stream, screenshotWidth, screenshotHeight,
+                          screenshotDepth, Ogre::PixelFormat::PF_BYTE_RGB);
+
+  io::readBytes(is, mNumPlugins);
+  for (uint8_t i = 0; i < mNumPlugins; ++i) {
+    mPlugins.emplace_back(io::readBString(is));
   }
 
-  /// Globals
-  s.read(reinterpret_cast<char *>(&formIdsOffset), sizeof(formIdsOffset));
-  s.read(reinterpret_cast<char *>(&recordsNum), sizeof(recordsNum));
-  s.read(reinterpret_cast<char *>(&nextObjectId), sizeof(nextObjectId));
-  s.read(reinterpret_cast<char *>(&worldId), sizeof(worldId));
-  s.read(reinterpret_cast<char *>(&worldX), sizeof(worldX));
-  s.read(reinterpret_cast<char *>(&worldY), sizeof(worldY));
-  s.read(reinterpret_cast<char *>(&pcLocation), PCLocationSize);
-  s.read(reinterpret_cast<char *>(&globalsNum), sizeof(globalsNum));
-  if (globalsNum > 0) {
-    for (int i = 0; i < globalsNum; ++i) {
-      Global g{};
-      s.read(reinterpret_cast<char *>(&g), GlobalSize);
-      globals.push_back(g);
-    }
-  }
-  s.read(reinterpret_cast<char *>(&tesClassSize), sizeof(tesClassSize));
-  s.read(reinterpret_cast<char *>(&numDeathCounts), sizeof(numDeathCounts));
-  if (numDeathCounts > 0) {
-    for (auto i = 0u; i < numDeathCounts; ++i) {
-      DeathCount d{};
-      s.read(reinterpret_cast<char *>(&d), DeathCountSize);
-      deathCounts.push_back(d);
-    }
-  }
-  s.read(reinterpret_cast<char *>(&gameModeSeconds), sizeof(gameModeSeconds));
-  s.read(reinterpret_cast<char *>(&processesSize), sizeof(processesSize));
-  if (processesSize > 0) {
-    processesData = new uint8_t[processesSize];
-    s.read(reinterpret_cast<char *>(processesData), processesSize);
-  }
-  s.read(reinterpret_cast<char *>(&specEventSize), sizeof(specEventSize));
-  if (specEventSize > 0) {
-    specEventData = new uint8_t[specEventSize];
-    s.read(reinterpret_cast<char *>(specEventData), specEventSize);
-  }
-  s.read(reinterpret_cast<char *>(&weatherSize), sizeof(weatherSize));
-  if (weatherSize > 0) {
-    weatherData = new uint8_t[weatherSize];
-    s.read(reinterpret_cast<char *>(weatherData), weatherSize);
+  io::readBytes(is, mFormIdsOffset);
+  io::readBytes(is, mNumChangeRecords);
+  io::readBytes(is, mNextFormId);
+
+  io::readBytes(is, mWorldspaceId);
+  io::readBytes(is, mWorldPos);
+  io::readBytes(is, mPCCellId);
+  io::readBytes(is, mPCPosition);
+
+  uint16_t numGlobals{};
+  io::readBytes(is, numGlobals);
+  mGlobals.assign(numGlobals, {});
+  for (auto &global : mGlobals) {
+    io::readBytes(is, global);
   }
 
-  s.read(reinterpret_cast<char *>(&playerCombatCount),
-         sizeof(playerCombatCount));
-  s.read(reinterpret_cast<char *>(&createdNum), sizeof(createdNum));
+  // Size of mDeathCounts and mGameModeSeconds.
+  uint16_t tesClassSize{};
+  io::readBytes(is, tesClassSize);
 
-  for (uint32_t i = 0; i < createdNum; ++i) {
-    using namespace record;
-    // Sometimes there is a single null byte
-    std::string type = peekRecordType(s);
-    if (type == "ALCH") {
-      ALCH rec(raw::ALCH(), ALCH::Flag::None, 0, 0);
-      s >> rec;
-      std::cout << rec;
-    }
+  uint32_t numDeathCounts{};
+  io::readBytes(is, numDeathCounts);
+  mDeathCounts.assign(numDeathCounts, {});
+  for (auto &deathCount : mDeathCounts) {
+    io::readBytes(is, deathCount.mActor);
+    io::readBytes(is, deathCount.mCount);
   }
+
+  io::readBytes(is, mGameModeSecondsPassed);
+
+  uint16_t processesDataSize{};
+  io::readBytes(is, processesDataSize);
+  io::readBytes(is, mProcessesData, processesDataSize);
+
+  uint16_t specEventDataSize{};
+  io::readBytes(is, specEventDataSize);
+  io::readBytes(is, mSpecEventData, specEventDataSize);
+
+  uint16_t weatherDataSize{};
+  io::readBytes(is, weatherDataSize);
+  io::readBytes(is, mWeatherData, weatherDataSize);
+
+  io::readBytes(is, mPlayerCombatCount);
+
+  io::readBytes(is, mNumCreatedRecords);
 }
