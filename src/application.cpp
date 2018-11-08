@@ -52,6 +52,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
   // Add the resource managers
+  ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
   ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
   ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
 
@@ -295,6 +296,7 @@ void Application::declareResource(const fs::Path &path,
   const auto ext{path.extension()};
 
   if (ext == "nif"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Nif", resourceGroup);
     resGrpMgr.declareResource(path.c_str(), "Mesh",
                               resourceGroup, &ctx.nifLoader);
     resGrpMgr.declareResource(path.c_str(), "CollisionObject",

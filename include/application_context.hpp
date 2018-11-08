@@ -7,6 +7,7 @@
 #include "controls.hpp"
 #include "esp_coordinator.hpp"
 #include "nifloader/mesh_loader.hpp"
+#include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
@@ -50,6 +51,7 @@ class ApplicationContext {
   nifloader::MeshLoader nifLoader{};
   nifloader::CollisionObjectLoader nifCollisionLoader{};
 
+  std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
 

@@ -1,7 +1,8 @@
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/mesh_loader_state.hpp"
+#include "nifloader/nif_resource_manager.hpp"
 #include "settings.hpp"
-#include "ogre/ogre_stream_wrappers.hpp"
+#include <OgreException.h>
 
 namespace nifloader {
 
@@ -11,18 +12,18 @@ void MeshLoader::loadResource(Ogre::Resource *resource) {
   // TODO: Handle this properly
   assert(mesh != nullptr);
 
-  logger->info("Mesh: {}", resource->getName());
-
   // TODO: If the mesh doesn't exist, dynamically generate a placeholder
-  auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
-      ->openResource(mesh->getName(), mesh->getGroup());
+  auto nifPtr{Ogre::NifResourceManager::getSingleton()
+                  .getByName(mesh->getName(), mesh->getGroup())};
+  if (!nifPtr) {
+    OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                "Could not load nif resource backing this mesh",
+                "MeshLoader::loadResource()");
+  }
+  nifPtr->load();
 
-  auto ogreDataStreamBuffer = Ogre::OgreDataStreambuf{ogreDataStream};
-  std::istream is{&ogreDataStreamBuffer};
-
-  auto blocks = createBlockGraph(is);
-
-  MeshLoaderState instance(mesh, blocks);
+  logger->info("Mesh: {}", resource->getName());
+  MeshLoaderState instance(mesh, nifPtr->getBlockGraph());
 }
 
 } // namespace nifloader

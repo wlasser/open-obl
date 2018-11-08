@@ -1,8 +1,9 @@
 #include "nifloader/collision_object_loader.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
-#include "nifloader/loader.hpp"
-#include "ogre/ogre_stream_wrappers.hpp"
+#include "nifloader/nif_resource_manager.hpp"
+#include "settings.hpp"
 #include "ogrebullet/collision_object.hpp"
+#include <OgreException.h>
 
 namespace nifloader {
 
@@ -12,16 +13,17 @@ void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
   // TODO: Handle this properly
   assert (collisionObject != nullptr);
 
+  auto nifPtr{Ogre::NifResourceManager::getSingleton()
+                  .getByName(collisionObject->getName(),
+                             collisionObject->getGroup())};
+  if (!nifPtr) {
+    OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
+                "Could not load nif resource backing this collision object",
+                "CollisionObjectLoader::loadResource()");
+  }
+
   logger->info("CollisionObject: {}", resource->getName());
-
-  auto ogreDataStream = Ogre::ResourceGroupManager::getSingletonPtr()
-      ->openResource(collisionObject->getName(), collisionObject->getGroup());
-
-  auto ogreDataStreamBuffer = Ogre::OgreDataStreambuf{ogreDataStream};
-  std::istream is{&ogreDataStreamBuffer};
-
-  CollisionObjectLoaderState instance(collisionObject,
-                                      nifloader::createBlockGraph(is));
+  CollisionObjectLoaderState instance(collisionObject, nifPtr->getBlockGraph());
 }
 
 } // namespace nifloader

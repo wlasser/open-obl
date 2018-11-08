@@ -64,6 +64,8 @@ target_sources(OpenOblivion PRIVATE
         src/nifloader/collision_object_loader_state.cpp
         src/nifloader/mesh_loader.cpp
         src/nifloader/mesh_loader_state.cpp
+        src/nifloader/nif_resource.cpp
+        src/nifloader/nif_resource_manager.cpp
         src/records.cpp
         src/resolvers/door_resolver.cpp
         src/resolvers/interior_cell_resolver.cpp
@@ -128,6 +130,8 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/collision_object_loader_state.hpp
         include/nifloader/mesh_loader.hpp
         include/nifloader/mesh_loader_state.hpp
+        include/nifloader/nif_resource.hpp
+        include/nifloader/nif_resource_manager.hpp
         include/resolvers/door_resolver.hpp
         include/resolvers/helpers.hpp
         include/resolvers/interior_cell_resolver.hpp
