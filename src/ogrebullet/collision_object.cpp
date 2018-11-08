@@ -13,20 +13,48 @@ CollisionObject::CollisionObject(Ogre::ResourceManager *creator,
                                  Ogre::ManualResourceLoader *loader)
     : Resource(creator, name, handle, group, isManual, loader) {}
 
-RigidBodyInfo *CollisionObject::getRigidBodyInfo() const {
+const RigidBodyInfo *CollisionObject::getRigidBodyInfo() const noexcept {
   return mInfo.get();
 }
 
-btCollisionShape *CollisionObject::getCollisionShape() const {
+const btCollisionShape *CollisionObject::getCollisionShape() const noexcept {
   return mCollisionShape.get();
 }
 
 void CollisionObject::loadImpl() {
-  // This needs to be implemented by a ManualResourceLoader
+  OGRE_EXCEPT(Exception::ERR_NOT_IMPLEMENTED,
+              "There is no default loader, please supply a ManualResourceLoader",
+              "CollisionObject::load()");
 }
 
 void CollisionObject::unloadImpl() {
-  // TODO: Actually unload the thing
+  mInfo.reset();
+  mCollisionShape.reset();
+  mIndexBuffer.clear();
+  mIndexBuffer.shrink_to_fit();
+  mVertexBuffer.clear();
+  mVertexBuffer.shrink_to_fit();
+  mMeshInterface.reset();
+}
+
+void CollisionObject::_setRigidBodyInfo(std::unique_ptr<RigidBodyInfo> info) noexcept {
+  mInfo = std::move(info);
+}
+
+void CollisionObject::_setCollisionShape(std::unique_ptr<btCollisionShape> shape) noexcept {
+  mCollisionShape = std::move(shape);
+}
+
+void CollisionObject::_setMeshInterface(std::unique_ptr<btStridingMeshInterface> mesh) noexcept {
+  mMeshInterface = std::move(mesh);
+}
+
+std::vector<uint16_t> &CollisionObject::_getIndexBuffer() noexcept {
+  return mIndexBuffer;
+}
+
+std::vector<float> &CollisionObject::_getVertexBuffer() noexcept {
+  return mVertexBuffer;
 }
 
 } // namespace Ogre

@@ -81,8 +81,8 @@ void CollisionObjectVisitor::parseCollisionObject(const Graph &g,
   // TODO: target
   const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
   auto[collisionShape, info]{parseWorldObject(g, worldObj)};
-  if (collisionShape) mRigidBody->mCollisionShape = std::move(collisionShape);
-  if (info) mRigidBody->mInfo = std::move(info);
+  if (collisionShape) mRigidBody->_setCollisionShape(std::move(collisionShape));
+  if (info) mRigidBody->_setRigidBodyInfo(std::move(info));
 }
 
 std::pair<std::unique_ptr<btCollisionShape>,
@@ -292,16 +292,17 @@ CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
   mesh.m_vertexType = PHY_FLOAT;
   mesh.m_vertexStride = 3u * sizeof(float);
 
-  mesh.m_triangleIndexBase = fillIndexBuffer(mRigidBody->mIndexBuffer, block);
-  mesh.m_vertexBase = fillVertexBuffer(mRigidBody->mVertexBuffer, block);
+  mesh.m_triangleIndexBase = fillIndexBuffer(mRigidBody->_getIndexBuffer(),
+                                             block);
+  mesh.m_vertexBase = fillVertexBuffer(mRigidBody->_getVertexBuffer(),
+                                       block);
 
-  // Construct the actual mesh and give ownership to the rigid body
+  // Construct the actual mesh and give ownership to the rigid body.
   auto collisionMesh{std::make_unique<btTriangleIndexVertexArray>()};
   collisionMesh->addIndexedMesh(mesh, PHY_SHORT);
-  mRigidBody->mCollisionMesh = std::move(collisionMesh);
-
-  return std::make_unique<btBvhTriangleMeshShape>(
-      mRigidBody->mCollisionMesh.get(), false);
+  auto *collisionMeshPtr{collisionMesh.get()};
+  mRigidBody->_setMeshInterface(std::move(collisionMesh));
+  return std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr, false);
 
   // TODO: Support dynamic concave geometry
 }

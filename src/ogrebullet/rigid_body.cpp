@@ -54,7 +54,7 @@ btRigidBody *RigidBody::getRigidBody() const {
 
 RigidBody::RigidBody(const String &name, CollisionObjectPtr collisionObject)
     : MovableObject(name), mCollisionObject(std::move(collisionObject)) {
-  if (auto *info = mCollisionObject->getRigidBodyInfo()) {
+  if (const auto *info{mCollisionObject->getRigidBodyInfo()}) {
     mRigidBody = std::make_unique<btRigidBody>(*info);
   } else {
     OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
@@ -92,13 +92,13 @@ void RigidBody::setScale(const Vector3 &scale) {
     return;
   }
 
-  btCollisionShape *base{mCollisionObject->getCollisionShape()};
+  const btCollisionShape *base{mCollisionObject->getCollisionShape()};
 
   // We can't copy the base in general
-  if (auto *triMesh{dynamic_cast<btBvhTriangleMeshShape *>(base)}) {
+  if (auto *triMesh{dynamic_cast<const btBvhTriangleMeshShape *>(base)}) {
     mCollisionShapeOverride =
         std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
-  } else if (auto *convexHull{dynamic_cast<btConvexHullShape *>(base)}) {
+  } else if (auto *convexHull{dynamic_cast<const btConvexHullShape *>(base)}) {
     auto override{std::make_unique<btConvexHullShape>()};
     auto points{gsl::make_span(convexHull->getUnscaledPoints(),
                                convexHull->getNumPoints())};

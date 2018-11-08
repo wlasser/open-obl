@@ -24,16 +24,22 @@ class CollisionObject : public Ogre::Resource {
     unload();
   }
 
-  RigidBodyInfo *getRigidBodyInfo() const;
+  const RigidBodyInfo *getRigidBodyInfo() const noexcept;
 
-  btCollisionShape *getCollisionShape() const;
+  const btCollisionShape *getCollisionShape() const noexcept;
+
+  void _setRigidBodyInfo(std::unique_ptr<RigidBodyInfo> info) noexcept;
+  void _setCollisionShape(std::unique_ptr<btCollisionShape> shape) noexcept;
+  void _setMeshInterface(std::unique_ptr<btStridingMeshInterface> mesh) noexcept;
+
+  std::vector<uint16_t> &_getIndexBuffer() noexcept;
+  std::vector<float> &_getVertexBuffer() noexcept;
 
  protected:
   void loadImpl() override;
   void unloadImpl() override;
 
-  // TODO: private:
- public:
+ private:
   std::unique_ptr<RigidBodyInfo> mInfo{};
 
   // For performance reasons we don't want to duplicate the collision shape
@@ -46,7 +52,9 @@ class CollisionObject : public Ogre::Resource {
   // Necessary for mesh-based collision shapes, Bullet does not take ownership.
   std::vector<uint16_t> mIndexBuffer{};
   std::vector<float> mVertexBuffer{};
-  std::unique_ptr<btStridingMeshInterface> mCollisionMesh{};
+
+  std::unique_ptr<btStridingMeshInterface> mMeshInterface{};
+
 };
 
 using CollisionObjectPtr = std::shared_ptr<CollisionObject>;
