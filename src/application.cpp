@@ -136,6 +136,9 @@ Application::Application(std::string windowName) : FrameListener() {
   }
 
   modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
+  std::visit([this](auto &&state) {
+    state.enter(ctx);
+  }, modeStack.back());
 }
 
 void Application::createLoggers() {
@@ -244,9 +247,6 @@ Application::createWindow(const std::string &windowName) {
                                  windowFlags)};
   const auto sdlWindowInfo{sdl::getSysWMInfo(sdlWindow.get())};
   const auto parent{sdl::getWindowParent(sdlWindowInfo)};
-
-  // Make cursor behaviour more sensible
-  //sdl::setRelativeMouseMode(true);
 
   // Construct a render window with the SDL window as a parent; SDL handles the
   // window itself, Ogre manages the OpenGL context.
@@ -366,11 +366,11 @@ void Application::pollEvents() {
 
     std::visit([this, sdlEvent](auto &mode) {
       auto[pop, push]{mode.handleEvent(ctx, sdlEvent)};
-      if (pop) modeStack.pop_back();
+      if (pop) popMode();
       if (push) {
-        std::visit([this](auto &&newState) {
-          modeStack.emplace_back(newState);
-        }, *push);
+        pushMode(*push);
+      } else {
+        refocusMode();
       }
     }, modeStack.back());
   }

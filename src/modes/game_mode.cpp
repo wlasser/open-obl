@@ -57,7 +57,6 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         [](event::QuickLoad) -> transition_t { return {}; },
         [](event::Grab) -> transition_t { return {}; },
         [&ctx](event::Console e) -> transition_t {
-          ctx.getLogger()->info("Console pressed");
           if (e.down) return {false, ConsoleMode(ctx)};
           return {};
         },

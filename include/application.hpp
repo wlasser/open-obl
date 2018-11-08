@@ -87,6 +87,26 @@ class Application : public Ogre::FrameListener {
   /// Poll for SDL events and process all that have occurred.
   void pollEvents();
 
+  /// Pop the top mode off the stack, if any.
+  void popMode() {
+    if (modeStack.size() > 0) modeStack.pop_back();
+  }
+
+  /// Push a mode onto the stack and call its enter method.
+  /// \tparam Ts Should model the Mode concept, see GameMode and ConsoleMode.
+  template<class ...Ts>
+  void pushMode(const std::variant<Ts...> &mode) {
+    // First visit copies into a new variant so need a second visit.
+    std::visit([this](auto &&state) { modeStack.emplace_back(state); }, mode);
+    std::visit([this](auto &&state) { state.enter(ctx); }, modeStack.back());
+  }
+
+  /// Refocus the top mode on the stack, if any.
+  void refocusMode() {
+    if (modeStack.size() == 0) return;
+    std::visit([this](auto &&state) { state.refocus(ctx); }, modeStack.back());
+  }
+
   /// Return true iff `e` is an sdl::EventType::KeyUp, sdl::EventType::KeyDown,
   /// sdl::EventType::TextInput, or sdl::EventType::TextEditing event.
   static bool isKeyboardEvent(const sdl::Event &e) noexcept;

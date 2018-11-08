@@ -36,8 +36,15 @@ class GameMode {
  public:
   using transition_t = ModeTransition<ConsoleMode>;
 
-  explicit GameMode(ApplicationContext &ctx) {
+  explicit GameMode(ApplicationContext &ctx) {}
+
+  void enter(ApplicationContext &ctx) {
     loadCell(ctx, BaseId{0x00'048706});
+    refocus(ctx);
+  }
+
+  void refocus(ApplicationContext &) {
+    sdl::setRelativeMouseMode(true);
   }
 
   /// Poll for SDL events and process all that have occurred.

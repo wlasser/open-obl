@@ -36,6 +36,14 @@ class ConsoleMode {
 
   explicit ConsoleMode(ApplicationContext &ctx) {}
 
+  void enter(ApplicationContext &ctx) {
+    refocus(ctx);
+  }
+
+  void refocus(ApplicationContext &) {
+    sdl::setRelativeMouseMode(false);
+  }
+
   /// Pops this state if event::Console is pressed.
   /// All other events are already forwarded to ImGui by Application so do not
   /// need to be handled again.
