@@ -259,6 +259,16 @@ struct BSGN {
   std::vector<record::SPLO> spells{};
 };
 
+struct ACTI {
+  record::EDID editorID{};
+  std::optional<record::FULL> name{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> script{};
+  std::optional<record::SNAM_ACTI> sound{};
+};
+
 struct DOOR {
   record::EDID editorID{};
   std::optional<record::FULL> name{};
@@ -408,6 +418,7 @@ using LTEX = Record<raw::LTEX, "LTEX"_rec>;
 using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
 using BSGN = Record<raw::BSGN, "BSGN"_rec>;
+using ACTI = Record<raw::ACTI, "ACTI"_rec>;
 using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
@@ -431,6 +442,7 @@ DECLARE_SPECIALIZED_RECORD(LTEX);
 DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(SPEL);
 DECLARE_SPECIALIZED_RECORD(BSGN);
+DECLARE_SPECIALIZED_RECORD(ACTI);
 DECLARE_SPECIALIZED_RECORD(DOOR);
 DECLARE_SPECIALIZED_RECORD(LIGH);
 DECLARE_SPECIALIZED_RECORD(MISC);

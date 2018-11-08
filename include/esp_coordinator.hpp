@@ -211,6 +211,9 @@ class EspCoordinator {
   record::raw::BSGN translateFormIds(record::raw::BSGN rec, int modIndex) const;
 
   template<>
+  record::raw::ACTI translateFormIds(record::raw::ACTI rec, int modIndex) const;
+
+  template<>
   record::raw::DOOR translateFormIds(record::raw::DOOR rec, int modIndex) const;
 
   template<>

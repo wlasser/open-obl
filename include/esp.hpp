@@ -163,6 +163,9 @@ void readEsp(EspCoordinator &coordinator, int modIndex, Processor &processor) {
             case "BSGN"_rec:
               processor.template readRecord<record::BSGN>(accessor);
               break;
+            case "ACTI"_rec:
+              processor.template readRecord<record::ACTI>(accessor);
+              break;
             case "DOOR"_rec:
               processor.template readRecord<record::DOOR>(accessor);
               break;

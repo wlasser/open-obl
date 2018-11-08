@@ -326,6 +326,18 @@ EspCoordinator::translateFormIds(record::raw::BSGN rec, int modIndex) const {
 }
 
 template<>
+record::raw::ACTI
+EspCoordinator::translateFormIds(record::raw::ACTI rec, int modIndex) const {
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
+  }
+  if (rec.sound) {
+    rec.sound->data = translateFormIds(rec.sound->data, modIndex);
+  }
+  return rec;
+}
+
+template<>
 record::raw::DOOR
 EspCoordinator::translateFormIds(record::raw::DOOR rec, int modIndex) const {
   if (rec.script) {

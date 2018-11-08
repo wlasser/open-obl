@@ -1161,4 +1161,43 @@ std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
   return is;
 }
 
+// ACTI specialization
+template<>
+uint32_t ACTI::size() const {
+  return data.editorID.entireSize()
+      + (data.name ? data.name->entireSize() : 0u)
+      + data.modelFilename.entireSize()
+      + data.boundRadius.entireSize()
+      + (data.textureHash ? data.textureHash->entireSize() : 0u)
+      + (data.script ? data.script->entireSize() : 0u)
+      + (data.sound ? data.sound->entireSize() : 0u);
+}
+
+template<>
+std::ostream &
+raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
+  os << t.editorID;
+  if (t.name) os << *t.name;
+  os << t.modelFilename;
+  os << t.boundRadius;
+  if (t.textureHash) os << *t.textureHash;
+  if (t.script) os << *t.script;
+  if (t.sound) os << *t.sound;
+
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID, "EDID");
+  readRecord(is, t.name, "FULL");
+  readRecord(is, t.modelFilename, "MODL");
+  readRecord(is, t.boundRadius, "MODB");
+  readRecord(is, t.textureHash, "MODT");
+  readRecord(is, t.script, "SCRI");
+  readRecord(is, t.sound, "SNAM");
+
+  return is;
+}
+
 } // namespace record

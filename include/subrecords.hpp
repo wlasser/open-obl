@@ -122,6 +122,8 @@ using RNAM = uint32_t;
 using SCRI = BaseId;
 // ESM/ESP description. Also max 512 bytes
 using SNAM = std::string;
+// Sound to play for an activator
+using SNAM_ACTI = BaseId;
 // Sound to play for a door opening
 using SNAM_DOOR = BaseId;
 // Sound to play for a light
@@ -903,6 +905,7 @@ using INDX_SKIL = Subrecord<raw::INDX_SKIL, "INDX"_rec>;
 using JNAM_SKIL = Subrecord<raw::JNAM_SKIL, "JNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
+using SNAM_ACTI = Subrecord<raw::SNAM_ACTI, "SNAM"_rec>;
 using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
 using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
