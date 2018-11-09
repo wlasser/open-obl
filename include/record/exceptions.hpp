@@ -3,18 +3,18 @@
 
 #include <boost/format.hpp>
 #include <stdexcept>
-#include <string>
+#include <string_view>
 
 namespace record {
 
 struct RecordReadError : virtual std::runtime_error {
-  explicit RecordReadError(const std::string &recordType) :
+  explicit RecordReadError(std::string_view recordType) :
       std::runtime_error(boost::str(
           boost::format("Failed to read %s record") % recordType)) {}
 };
 
 struct RecordNotFoundError : virtual std::runtime_error {
-  RecordNotFoundError(const std::string &expected, const std::string &actual) :
+  RecordNotFoundError(std::string_view expected, std::string_view actual) :
       std::runtime_error(boost::str(
           boost::format("Expected %s, found %s") % expected % actual)) {}
 };

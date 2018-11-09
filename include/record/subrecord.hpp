@@ -71,8 +71,7 @@ std::istream &operator>>(std::istream &is, Subrecord<T, c> &subrecord) {
   std::array<char, 4> type{};
   io::readBytes(is, type);
   if (recOf(type) != subrecord.type) {
-    throw RecordNotFoundError(std::string{recOf<c>()},
-                              std::string(type.data(), 4));
+    throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
   }
 
   uint16_t size{};

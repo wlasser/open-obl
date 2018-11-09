@@ -87,8 +87,7 @@ std::istream &operator>>(std::istream &is, Record<T, c> &record) {
   std::array<char, 4> type{};
   io::readBytes(is, type);
   if (recOf(type) != record.type) {
-    throw RecordNotFoundError(std::string{recOf<c>()},
-                              std::string(type.data(), 4));
+    throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
   }
 
   uint32_t size{};
