@@ -39,16 +39,16 @@ bool raw::Effect::isNext(std::istream &is) {
 // ALCH specialization
 template<>
 uint32_t ALCH::size() const {
-  return (data.editorID ? data.editorID->entireSize() : 0u)
-      + data.itemName.entireSize()
-      + data.modelFilename.entireSize()
-      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
-      + (data.textureHash ? data.textureHash->entireSize() : 0u)
-      + (data.iconFilename ? data.iconFilename->entireSize() : 0u)
-      + (data.itemScript ? data.itemScript->entireSize() : 0u)
-      + data.itemWeight.entireSize()
-      + data.itemValue.entireSize()
-      + std::accumulate(data.effects.begin(), data.effects.end(), 0u,
+  return (editorID ? editorID->entireSize() : 0u)
+      + itemName.entireSize()
+      + modelFilename.entireSize()
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + (textureHash ? textureHash->entireSize() : 0u)
+      + (iconFilename ? iconFilename->entireSize() : 0u)
+      + (itemScript ? itemScript->entireSize() : 0u)
+      + itemWeight.entireSize()
+      + itemValue.entireSize()
+      + std::accumulate(effects.begin(), effects.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.size();
                         });
@@ -88,12 +88,12 @@ std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
 // TES4 specialization
 template<>
 uint32_t TES4::size() const {
-  uint32_t size = data.header.entireSize()
-      + (data.offsets ? data.offsets->entireSize() : 0u)
-      + (data.deleted ? data.deleted->entireSize() : 0u)
-      + (data.author ? data.author->entireSize() : 0u)
-      + (data.description ? data.description->entireSize() : 0u);
-  for (const auto &master : data.masters) {
+  uint32_t size = header.entireSize()
+      + (offsets ? offsets->entireSize() : 0u)
+      + (deleted ? deleted->entireSize() : 0u)
+      + (author ? author->entireSize() : 0u)
+      + (description ? description->entireSize() : 0u);
+  for (const auto &master : masters) {
     size += master.master.entireSize() + master.fileSize.entireSize();
   }
   return size;
@@ -133,7 +133,7 @@ std::istream &raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
 // GMST specialization
 template<>
 uint32_t GMST::size() const {
-  return data.editorID.entireSize() + data.value.entireSize();
+  return editorID.entireSize() + value.entireSize();
 }
 
 template<>
@@ -153,8 +153,8 @@ std::istream &raw::read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
 // GLOB specialization
 template<>
 uint32_t GLOB::size() const {
-  return data.editorID.entireSize() + data.type.entireSize()
-      + data.value.entireSize();
+  return editorID.entireSize() + type.entireSize()
+      + value.entireSize();
 }
 
 template<>
@@ -175,9 +175,9 @@ std::istream &raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
 // CLAS specialization
 template<>
 uint32_t CLAS::size() const {
-  return data.editorID.entireSize() + data.name.entireSize()
-      + data.description.entireSize() + data.iconFilename.entireSize()
-      + data.data.entireSize();
+  return editorID.entireSize() + name.entireSize()
+      + description.entireSize() + iconFilename.entireSize()
+      + data.entireSize();
 }
 
 template<>
@@ -200,12 +200,12 @@ std::istream &raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
 // FACT specialization
 template<>
 uint32_t FACT::size() const {
-  uint32_t size = data.editorID.entireSize() + data.name.entireSize()
-      + data.flags.entireSize() + data.crimeGoldMultiplier.entireSize();
-  for (const auto &r : data.relations) {
+  uint32_t size = editorID.entireSize() + name.entireSize()
+      + flags.entireSize() + crimeGoldMultiplier.entireSize();
+  for (const auto &r : relations) {
     size += r.entireSize();
   }
-  for (const auto &r : data.ranks) {
+  for (const auto &r : ranks) {
     size += r.index.entireSize() + r.maleName.entireSize()
         + r.femaleName.entireSize() + r.iconFilename.entireSize();
   }
@@ -252,10 +252,10 @@ std::istream &raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
 // HAIR specialization
 template<>
 uint32_t HAIR::size() const {
-  return data.editorID.entireSize() + data.name.entireSize()
-      + data.modelFilename.entireSize() + data.boundRadius.entireSize()
-      + data.boundRadius.entireSize() + data.textureHash.entireSize()
-      + data.iconFilename.entireSize() + data.flags.entireSize();
+  return editorID.entireSize() + name.entireSize()
+      + modelFilename.entireSize() + boundRadius.entireSize()
+      + boundRadius.entireSize() + textureHash.entireSize()
+      + iconFilename.entireSize() + flags.entireSize();
 }
 
 template<>
@@ -282,8 +282,8 @@ std::istream &raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
 // EYES specialization
 template<>
 uint32_t EYES::size() const {
-  return data.editorID.entireSize() + data.name.entireSize()
-      + data.iconFilename.entireSize() + data.flags.entireSize();
+  return editorID.entireSize() + name.entireSize()
+      + iconFilename.entireSize() + flags.entireSize();
 }
 
 template<>
@@ -306,50 +306,50 @@ std::istream &raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
 // RACE specialization
 template<>
 uint32_t RACE::size() const {
-  uint32_t size = data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + data.description.entireSize();
-  for (const auto &power : data.powers) size += power.entireSize();
-  for (const auto &relation : data.relations) size += relation.entireSize();
-  size += data.data.entireSize();
-  if (data.voices) size += data.voices.value().entireSize();
-  if (data.defaultHair) size += data.defaultHair.value().entireSize();
-  size += data.defaultHairColor.entireSize()
-      + (data.facegenMainClamp ? data.facegenMainClamp->entireSize() : 0u)
-      + (data.facegenFaceClamp ? data.facegenFaceClamp->entireSize() : 0u)
-      + data.baseAttributes.entireSize() + data.faceMarker.entireSize();
-  for (const auto &faceData : data.faceData) {
+  uint32_t size = editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + description.entireSize();
+  for (const auto &power : powers) size += power.entireSize();
+  for (const auto &relation : relations) size += relation.entireSize();
+  size += data.entireSize();
+  if (voices) size += voices.value().entireSize();
+  if (defaultHair) size += defaultHair.value().entireSize();
+  size += defaultHairColor.entireSize()
+      + (facegenMainClamp ? facegenMainClamp->entireSize() : 0u)
+      + (facegenFaceClamp ? facegenFaceClamp->entireSize() : 0u)
+      + baseAttributes.entireSize() + faceMarker.entireSize();
+  for (const auto &faceData : faceData) {
     size += faceData.type.entireSize()
         + (faceData.modelFilename ? faceData.modelFilename->entireSize() : 0u)
         + (faceData.boundRadius ? faceData.boundRadius->entireSize() : 0u)
         + (faceData.textureFilename ? faceData.textureFilename->entireSize()
                                     : 0u);
   }
-  size += data.bodyMarker.entireSize() + data.maleBodyMarker.entireSize();
-  if (data.maleTailModel) {
-    size += data.maleTailModel->model.entireSize()
-        + data.maleTailModel->boundRadius.entireSize();
+  size += bodyMarker.entireSize() + maleBodyMarker.entireSize();
+  if (maleTailModel) {
+    size += maleTailModel->model.entireSize()
+        + maleTailModel->boundRadius.entireSize();
   }
-  for (const auto &bodyData : data.maleBodyData) {
+  for (const auto &bodyData : maleBodyData) {
     size += bodyData.type.entireSize();
     if (bodyData.textureFilename) {
       size += bodyData.textureFilename.value().entireSize();
     }
   }
-  size += data.femaleBodyMarker.entireSize();
-  if (data.femaleTailModel) {
-    size += data.femaleTailModel->model.entireSize()
-        + data.femaleTailModel->boundRadius.entireSize();
+  size += femaleBodyMarker.entireSize();
+  if (femaleTailModel) {
+    size += femaleTailModel->model.entireSize()
+        + femaleTailModel->boundRadius.entireSize();
   }
-  for (const auto &bodyData : data.femaleBodyData) {
+  for (const auto &bodyData : femaleBodyData) {
     size += bodyData.type.entireSize();
     if (bodyData.textureFilename) {
       size += bodyData.textureFilename.value().entireSize();
     }
   }
-  size += data.hair.entireSize() + data.eyes.entireSize()
-      + data.fggs.entireSize() + data.fgga.entireSize() + data.fgts.entireSize()
-      + data.unused.entireSize();
+  size += hair.entireSize() + eyes.entireSize()
+      + fggs.entireSize() + fgga.entireSize() + fgts.entireSize()
+      + unused.entireSize();
   return size;
 }
 
@@ -481,7 +481,7 @@ std::istream &raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
 // SOUN specialization
 template<>
 uint32_t SOUN::size() const {
-  return data.editorID.entireSize() + data.filename.entireSize()
+  return editorID.entireSize() + filename.entireSize()
       + std::visit([](auto &&r) {
         using T = std::decay_t<decltype(r)>;
         if constexpr (std::is_same_v<T, record::SNDD>) {
@@ -491,7 +491,7 @@ uint32_t SOUN::size() const {
         } else {
           return 0;
         }
-      }, data.sound);
+      }, sound);
 }
 
 template<>
@@ -529,12 +529,12 @@ std::istream &raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
 // SKIL specialization
 template<>
 uint32_t SKIL::size() const {
-  return data.editorID.entireSize() + data.index.entireSize()
-      + data.description.entireSize()
-      + (data.iconFilename ? data.iconFilename->entireSize() : 0u)
-      + data.data.entireSize() + data.apprenticeText.entireSize()
-      + data.journeymanText.entireSize() + data.expertText.entireSize()
-      + data.expertText.entireSize();
+  return editorID.entireSize() + index.entireSize()
+      + description.entireSize()
+      + (iconFilename ? iconFilename->entireSize() : 0u)
+      + data.entireSize() + apprenticeText.entireSize()
+      + journeymanText.entireSize() + expertText.entireSize()
+      + expertText.entireSize();
 }
 
 template<>
@@ -565,12 +565,12 @@ std::istream &raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
 // MGEF specialization
 template<>
 uint32_t MGEF::size() const {
-  return data.editorID.entireSize() + data.effectName.entireSize()
-      + data.description.entireSize()
-      + (data.iconFilename ? data.iconFilename->entireSize() : 0u)
-      + (data.effectModel ? data.effectModel->entireSize() : 0u)
-      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
-      + data.data.entireSize() + data.counterEffects.entireSize();
+  return editorID.entireSize() + effectName.entireSize()
+      + description.entireSize()
+      + (iconFilename ? iconFilename->entireSize() : 0u)
+      + (effectModel ? effectModel->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + data.entireSize() + counterEffects.entireSize();
 }
 
 template<>
@@ -602,10 +602,10 @@ std::istream &raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
 // LTEX specialization
 template<>
 uint32_t LTEX::size() const {
-  uint32_t size = data.editorID.entireSize() + data.textureFilename.entireSize()
-      + (data.havokData ? data.havokData->entireSize() : 0u)
-      + (data.specularExponent ? data.specularExponent->entireSize() : 0u);
-  for (const auto &grass : data.potentialGrasses) {
+  uint32_t size = editorID.entireSize() + textureFilename.entireSize()
+      + (havokData ? havokData->entireSize() : 0u)
+      + (specularExponent ? specularExponent->entireSize() : 0u);
+  for (const auto &grass : potentialGrasses) {
     size += grass.entireSize();
   }
   return size;
@@ -641,9 +641,9 @@ std::istream &raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
 // STAT specialization
 template<>
 uint32_t STAT::size() const {
-  return data.editorID.entireSize() + data.modelFilename.entireSize()
-      + data.boundRadius.entireSize()
-      + (data.textureHash ? data.textureHash->entireSize() : 0u);
+  return editorID.entireSize() + modelFilename.entireSize()
+      + boundRadius.entireSize()
+      + (textureHash ? textureHash->entireSize() : 0u);
 }
 
 template<>
@@ -672,10 +672,10 @@ std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
 // ENCH specialization
 template<>
 uint32_t ENCH::size() const {
-  return data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + data.enchantmentData.entireSize()
-      + std::accumulate(data.effects.begin(), data.effects.end(), 0,
+  return editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + enchantmentData.entireSize()
+      + std::accumulate(effects.begin(), effects.end(), 0,
                         [](auto a, const auto &b) {
                           return a + b.size();
                         });
@@ -705,10 +705,10 @@ raw::write(std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
 // SPEL specialization
 template<>
 uint32_t SPEL::size() const {
-  return data.editorID.entireSize()
-      + data.name.entireSize()
-      + data.data.entireSize()
-      + std::accumulate(data.effects.begin(), data.effects.end(), 0u,
+  return editorID.entireSize()
+      + name.entireSize()
+      + data.entireSize()
+      + std::accumulate(effects.begin(), effects.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.size();
                         });
@@ -736,19 +736,19 @@ raw::write(std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
 // CELL specialization
 template<>
 uint32_t CELL::size() const {
-  return data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + data.data.entireSize()
-      + (data.lighting ? data.lighting->entireSize() : 0u)
-      + (data.music ? data.music->entireSize() : 0u)
-      + (data.owner ? data.owner->entireSize() : 0u)
-      + (data.ownershipGlobal ? data.ownershipGlobal->entireSize() : 0u)
-      + (data.ownershipRank ? data.ownershipRank->entireSize() : 0u)
-      + (data.climate ? data.climate->entireSize() : 0u)
-      + (data.water ? data.water->entireSize() : 0u)
-      + (data.waterHeight ? data.waterHeight->entireSize() : 0u)
-      + (data.regions ? data.regions->entireSize() : 0u)
-      + (data.grid ? data.grid->entireSize() : 0u);
+  return editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + data.entireSize()
+      + (lighting ? lighting->entireSize() : 0u)
+      + (music ? music->entireSize() : 0u)
+      + (owner ? owner->entireSize() : 0u)
+      + (ownershipGlobal ? ownershipGlobal->entireSize() : 0u)
+      + (ownershipRank ? ownershipRank->entireSize() : 0u)
+      + (climate ? climate->entireSize() : 0u)
+      + (water ? water->entireSize() : 0u)
+      + (waterHeight ? waterHeight->entireSize() : 0u)
+      + (regions ? regions->entireSize() : 0u)
+      + (grid ? grid->entireSize() : 0u);
 }
 
 template<>
@@ -817,32 +817,32 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
 // REFR specialization
 template<>
 uint32_t REFR::size() const {
-  return data.baseID.entireSize()
-      + (data.editorID ? data.editorID->entireSize() : 0u)
-      + (data.description ? data.description->entireSize() : 0u)
-      + (data.scale ? data.scale->entireSize() : 0u)
-      + (data.parent ? data.parent->entireSize() : 0u)
-      + (data.target ? data.target->entireSize() : 0u)
-      + (data.unusedCellID ? data.unusedCellID->entireSize() : 0u)
-      + (data.unusedCellName ? data.unusedCellName->entireSize() : 0u)
-      + (data.action ? data.action->entireSize() : 0u)
-      + (data.ragdollData ? data.ragdollData->entireSize() : 0u)
-      + (data.mapMarker ? data.mapFlags->entireSize() : 0u)
-      + (data.mapFlags ? data.mapFlags->entireSize() : 0u)
-      + (data.markerType ? data.markerType->entireSize() : 0u)
-      + (data.owner ? data.owner->entireSize() : 0u)
-      + (data.ownershipGlobal ? data.ownershipGlobal->entireSize() : 0u)
-      + (data.ownershipRank ? data.ownershipRank->entireSize() : 0u)
-      + (data.teleport ? data.teleport->entireSize() : 0u)
-      + (data.teleportParent ? data.teleportParent->entireSize() : 0u)
-      + (data.openByDefault ? data.openByDefault->entireSize() : 0u)
-      + (data.lockInfo ? data.lockInfo->entireSize() : 0u)
-      + (data.speedTree ? data.speedTree->entireSize() : 0u)
-      + (data.lod ? data.lod->entireSize() : 0u)
-      + (data.levelModifier ? data.levelModifier->entireSize() : 0u)
-      + (data.count ? data.count->entireSize() : 0u)
-      + (data.soul ? data.soul->entireSize() : 0u)
-      + data.positionRotation.entireSize();
+  return baseID.entireSize()
+      + (editorID ? editorID->entireSize() : 0u)
+      + (description ? description->entireSize() : 0u)
+      + (scale ? scale->entireSize() : 0u)
+      + (parent ? parent->entireSize() : 0u)
+      + (target ? target->entireSize() : 0u)
+      + (unusedCellID ? unusedCellID->entireSize() : 0u)
+      + (unusedCellName ? unusedCellName->entireSize() : 0u)
+      + (action ? action->entireSize() : 0u)
+      + (ragdollData ? ragdollData->entireSize() : 0u)
+      + (mapMarker ? mapFlags->entireSize() : 0u)
+      + (mapFlags ? mapFlags->entireSize() : 0u)
+      + (markerType ? markerType->entireSize() : 0u)
+      + (owner ? owner->entireSize() : 0u)
+      + (ownershipGlobal ? ownershipGlobal->entireSize() : 0u)
+      + (ownershipRank ? ownershipRank->entireSize() : 0u)
+      + (teleport ? teleport->entireSize() : 0u)
+      + (teleportParent ? teleportParent->entireSize() : 0u)
+      + (openByDefault ? openByDefault->entireSize() : 0u)
+      + (lockInfo ? lockInfo->entireSize() : 0u)
+      + (speedTree ? speedTree->entireSize() : 0u)
+      + (lod ? lod->entireSize() : 0u)
+      + (levelModifier ? levelModifier->entireSize() : 0u)
+      + (count ? count->entireSize() : 0u)
+      + (soul ? soul->entireSize() : 0u)
+      + positionRotation.entireSize();
 }
 
 template<>
@@ -954,16 +954,16 @@ std::istream &raw::read(std::istream &is, raw::REFR &t, std::size_t size) {
 // LIGH specialization
 template<>
 uint32_t LIGH::size() const {
-  return data.editorID.entireSize()
-      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
-      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
-      + (data.textureHash ? data.textureHash->entireSize() : 0u)
-      + (data.itemScript ? data.itemScript->entireSize() : 0u)
-      + (data.name ? data.name->entireSize() : 0u)
-      + (data.icon ? data.icon->entireSize() : 0u)
-      + data.data.entireSize()
-      + (data.fadeValue ? data.fadeValue->entireSize() : 0u)
-      + (data.sound ? data.sound->entireSize() : 0u);
+  return editorID.entireSize()
+      + (modelFilename ? modelFilename->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + (textureHash ? textureHash->entireSize() : 0u)
+      + (itemScript ? itemScript->entireSize() : 0u)
+      + (name ? name->entireSize() : 0u)
+      + (icon ? icon->entireSize() : 0u)
+      + data.entireSize()
+      + (fadeValue ? fadeValue->entireSize() : 0u)
+      + (sound ? sound->entireSize() : 0u);
 }
 
 template<>
@@ -1023,11 +1023,11 @@ std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
 // BSGN specialization
 template<>
 uint32_t BSGN::size() const {
-  return data.editorID.entireSize()
-      + data.name.entireSize()
-      + data.icon.entireSize()
-      + (data.description ? data.description->entireSize() : 0u)
-      + std::accumulate(data.spells.begin(), data.spells.end(), 0u,
+  return editorID.entireSize()
+      + name.entireSize()
+      + icon.entireSize()
+      + (description ? description->entireSize() : 0u)
+      + std::accumulate(spells.begin(), spells.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
                         });
@@ -1062,14 +1062,14 @@ std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
 // MISC specialization
 template<>
 uint32_t MISC::size() const {
-  return data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
-      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
-      + (data.textureHash ? data.textureHash->entireSize() : 0u)
-      + (data.itemScript ? data.itemScript->entireSize() : 0u)
-      + (data.icon ? data.icon->entireSize() : 0u)
-      + data.data.entireSize();
+  return editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + (modelFilename ? modelFilename->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + (textureHash ? textureHash->entireSize() : 0u)
+      + (itemScript ? itemScript->entireSize() : 0u)
+      + (icon ? icon->entireSize() : 0u)
+      + data.entireSize();
 }
 
 template<>
@@ -1104,18 +1104,18 @@ std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
 // DOOR specialization
 template<>
 uint32_t DOOR::size() const {
-  return data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + (data.modelFilename ? data.modelFilename->entireSize() : 0u)
-      + (data.boundRadius ? data.boundRadius->entireSize() : 0u)
-      + (data.textureHash ? data.textureHash->entireSize() : 0u)
-      + (data.script ? data.script->entireSize() : 0u)
-      + (data.openSound ? data.openSound->entireSize() : 0u)
-      + (data.closeSound ? data.closeSound->entireSize() : 0u)
-      + (data.loopSound ? data.loopSound->entireSize() : 0u)
-      + data.flags.entireSize()
-      + std::accumulate(data.randomTeleports.begin(),
-                        data.randomTeleports.end(),
+  return editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + (modelFilename ? modelFilename->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + (textureHash ? textureHash->entireSize() : 0u)
+      + (script ? script->entireSize() : 0u)
+      + (openSound ? openSound->entireSize() : 0u)
+      + (closeSound ? closeSound->entireSize() : 0u)
+      + (loopSound ? loopSound->entireSize() : 0u)
+      + flags.entireSize()
+      + std::accumulate(randomTeleports.begin(),
+                        randomTeleports.end(),
                         0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
@@ -1164,13 +1164,13 @@ std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
 // ACTI specialization
 template<>
 uint32_t ACTI::size() const {
-  return data.editorID.entireSize()
-      + (data.name ? data.name->entireSize() : 0u)
-      + data.modelFilename.entireSize()
-      + data.boundRadius.entireSize()
-      + (data.textureHash ? data.textureHash->entireSize() : 0u)
-      + (data.script ? data.script->entireSize() : 0u)
-      + (data.sound ? data.sound->entireSize() : 0u);
+  return editorID.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + modelFilename.entireSize()
+      + boundRadius.entireSize()
+      + (textureHash ? textureHash->entireSize() : 0u)
+      + (script ? script->entireSize() : 0u)
+      + (sound ? sound->entireSize() : 0u);
 }
 
 template<>

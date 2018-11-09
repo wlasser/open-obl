@@ -19,7 +19,7 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
   const auto entry{mMap.find(baseId)};
   if (entry == mMap.end()) return {};
   const auto &rec{entry->second};
-  const auto &data{rec.data.data.data};
+  const auto &data{rec.data.data};
 
   auto *const light{mgr->createLight()};
   const Ogre::ColourValue lightColor = [&data]() -> Ogre::ColourValue {
@@ -35,7 +35,7 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
                                  * conversions::metersPerUnit<float>, 0.01f)};
   light->setAttenuation(radius, 1.0f, 3.0f / radius, 5.0f / (radius * radius));
 
-  light->setPowerScale(rec.data.fadeValue ? rec.data.fadeValue->data : 1.0f);
+  light->setPowerScale(rec.fadeValue ? rec.fadeValue->data : 1.0f);
 
   using Flag = record::raw::DATA_LIGH::Flag;
   const auto spotlightFlag{Flag::SpotLight | Flag::SpotShadow};
@@ -52,8 +52,8 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
   }
 
   Ogre::Entity *mesh = [&rec, mgr]() -> Ogre::Entity * {
-    if (rec.data.modelFilename) {
-      fs::Path rawPath{rec.data.modelFilename->data};
+    if (rec.modelFilename) {
+      fs::Path rawPath{rec.modelFilename->data};
       std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
       return loadMesh(meshName, mgr);
     } else return nullptr;

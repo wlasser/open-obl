@@ -326,8 +326,10 @@ T EspCoordinator::translateFormIds(T rec, int modIndex) const {
 template<class T, uint32_t c>
 record::Record<T, c>
 EspCoordinator::translateFormIds(record::Record<T, c> rec, int modIndex) const {
-  rec.id = translateFormIds(rec.id, modIndex);
-  rec.data = translateFormIds(rec.data, modIndex);
+  rec.mFormId = translateFormIds(rec.mFormId, modIndex);
+  // WTF, I didn't expect this to actually work!
+  T &rawRef{rec};
+  rawRef.operator=(translateFormIds(rawRef, modIndex));
   return rec;
 }
 

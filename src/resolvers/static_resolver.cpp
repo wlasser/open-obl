@@ -10,7 +10,7 @@ auto Resolver<record::STAT>::make(BaseId baseId,
   const store_t &rec{entry->second};
 
   Ogre::Entity *entity = [&rec, mgr]() -> Ogre::Entity * {
-    fs::Path rawPath{rec.data.modelFilename.data};
+    fs::Path rawPath{rec.modelFilename.data};
     std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
     return loadMesh(meshName, mgr);
   }();

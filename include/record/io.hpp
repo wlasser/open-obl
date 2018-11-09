@@ -74,8 +74,7 @@ T readRecord(std::istream &is) {
   T rec;
   is >> rec;
   if (!is.good()) {
-    throw io::IOReadError(std::string{recOf<rec.type>()},
-                          is.rdstate());
+    throw io::IOReadError(std::string{recOf<T::RecordType>()}, is.rdstate());
   }
   return rec;
 }

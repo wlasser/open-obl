@@ -49,8 +49,8 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
 
   // Fill in the scene data from the cell record, which we already have.
   const auto &rec{entry->second.mRecord};
-  ptr->name = (rec->data.name ? rec->data.name->data : "");
-  if (auto lighting{rec->data.lighting}; lighting) {
+  ptr->name = (rec->name ? rec->name->data : "");
+  if (auto lighting{rec->lighting}; lighting) {
     const auto ambient{lighting->data.ambient};
     ptr->ambientLight.setAsABGR(ambient.v);
     ptr->scnMgr->setAmbientLight(ptr->ambientLight);
@@ -70,7 +70,7 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
 }
 
 bool Resolver<record::CELL>::add(BaseId, store_t entry) {
-  const BaseId baseId{entry.mRecord->id};
+  const BaseId baseId{entry.mRecord->mFormId};
   return mMap.insert_or_assign(baseId, std::move(entry)).second;
 }
 
@@ -78,17 +78,17 @@ template<>
 void Resolver<record::CELL>::RecordVisitor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
   const auto ref{accessor.readRecord<record::REFR>().value};
   auto *const node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
-  const BaseId baseId{ref.data.baseID.data};
-  const RefId refId{ref.id};
+  const BaseId baseId{ref.baseID.data};
+  const RefId refId{ref.mFormId};
 
-  const auto &data{ref.data.positionRotation.data};
+  const auto &data{ref.positionRotation.data};
 
   // Set the position
   node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
 
   // Set the scale
-  if (ref.data.scale) {
-    const float scale{ref.data.scale->data};
+  if (ref.scale) {
+    const float scale{ref.scale->data};
     node->setScale(scale, scale, scale);
   }
 

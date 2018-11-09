@@ -40,24 +40,24 @@ class GameSettings {
   // Load the setting from a GMST record, optionally overwriting any existing
   // value with the new one.
   void load(const record::GMST &gmst, bool overwrite = true) {
-    std::string key = gmst.data.editorID.data;
+    std::string key = gmst.editorID.data;
     if (key.empty()) return;
     // put overwrites without question, so we have to query existence first if
     // overwrite is not set.
     switch (key[0]) {
       case 'f':
         if (overwrite || !tree.get_optional<float>(key)) {
-          tree.put<float>(key, gmst.data.value.data.f);
+          tree.put<float>(key, gmst.value.data.f);
         }
         break;
       case 'i':
         if (overwrite || !tree.get_optional<int>(key)) {
-          tree.put<int>(key, gmst.data.value.data.i);
+          tree.put<int>(key, gmst.value.data.i);
         }
         break;
       case 's':
         if (overwrite || !tree.get_optional<std::string>(key)) {
-          const auto &arr = gmst.data.value.data.s;
+          const auto &arr = gmst.value.data.s;
           std::string s(arr.begin(), arr.end());
           tree.put<std::string>(key, s);
         }

@@ -8,7 +8,7 @@ std::vector<fs::Path> getMasters(const fs::Path &espFilename) {
   const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
 
   std::ifstream esp(espFilename.sysPath(), std::ifstream::binary);
-  auto masters{record::readRecord<record::TES4>(esp).data.masters};
+  auto masters{record::readRecord<record::TES4>(esp).masters};
 
   std::vector<fs::Path> paths(masters.size());
   std::transform(masters.begin(), masters.end(), paths.begin(),
