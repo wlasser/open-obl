@@ -40,14 +40,10 @@ using Light = Component<Ogre::Light *>;
 
 } // namespace ecs
 
-// Expects a type
-// struct T {
-//   std::string modelFilename;
-// };
-template<class T>
-Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
-  if (rec.modelFilename.empty()) return nullptr;
-  else return mgr->createEntity(rec.modelFilename);
+inline Ogre::Entity *loadMesh(const std::string &modelFilename,
+                              gsl::not_null<Ogre::SceneManager *> mgr) {
+  if (modelFilename.empty()) return nullptr;
+  else return mgr->createEntity(modelFilename);
 }
 
 Ogre::RigidBody *

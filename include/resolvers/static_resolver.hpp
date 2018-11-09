@@ -17,15 +17,11 @@ using StaticResolver = Resolver<record::STAT>;
 template<>
 class Resolver<record::STAT> {
  private:
-  struct Entry {
-    std::string modelFilename{};
-  };
-
-  std::unordered_map<BaseId, Entry> mMap{};
+  std::unordered_map<BaseId, record::STAT> mMap{};
 
  public:
   using make_t = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using store_t = Entry;
+  using store_t = record::STAT;
 
   make_t make(BaseId baseId,
               gsl::not_null<Ogre::SceneManager *> mgr,

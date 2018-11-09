@@ -1,3 +1,4 @@
+#include "fs/path.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
 
@@ -8,8 +9,13 @@ auto Resolver<record::STAT>::make(BaseId baseId,
   if (entry == mMap.end()) return {};
   const store_t &rec{entry->second};
 
-  auto *const entity{loadMesh(rec, mgr)};
-  auto *const rigidBody{loadRigidBody(entity, mgr)};
+  Ogre::Entity *entity = [&rec, mgr]() -> Ogre::Entity * {
+    fs::Path rawPath{rec.data.modelFilename.data};
+    std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
+    return loadMesh(meshName, mgr);
+  }();
+
+  Ogre::RigidBody *rigidBody{loadRigidBody(entity, mgr)};
 
   if (rigidBody) {
     // TODO: Get a new RefId properly

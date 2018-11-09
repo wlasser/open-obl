@@ -15,34 +15,13 @@ using LightResolver = Resolver<record::LIGH>;
 template<>
 class Resolver<record::LIGH> {
  private:
-  struct ItemEntry {
-    std::string name{};
-    std::string iconFilename{};
-    int32_t value{};
-    float weight{};
-    int32_t time{};
-  };
-  struct Entry {
-    using Flag = record::raw::DATA_LIGH::Flag;
-    std::string modelFilename{};
-    BaseId sound{};
-    BaseId script{};
-    float fadeValue{1.0f};
-    float radius{300.0f};
-    float falloffExponent{1.0f};
-    float fov{90.0f};
-    Ogre::ColourValue color{};
-    Flag flags{Flag::make(Flag::None)};
-    std::optional<ItemEntry> item{};
-  };
-
-  std::unordered_map<BaseId, Entry> mMap{};
+  std::unordered_map<BaseId, record::LIGH> mMap{};
 
  public:
-  using peek_t = Entry;
-  using get_t = Entry;
+  using peek_t = record::LIGH;
+  using get_t = record::LIGH;
   using make_t = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
-  using store_t = Entry;
+  using store_t = record::LIGH;
 
   peek_t peek(BaseId baseId) const;
   get_t get(BaseId baseId) const;

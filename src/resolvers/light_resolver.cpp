@@ -1,4 +1,5 @@
 #include "conversions.hpp"
+#include "fs/path.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
 
@@ -18,34 +19,47 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
   const auto entry{mMap.find(baseId)};
   if (entry == mMap.end()) return {};
   const auto &rec{entry->second};
+  const auto &data{rec.data.data.data};
 
   auto *const light{mgr->createLight()};
-  light->setDiffuseColour(rec.color);
-  light->setSpecularColour(rec.color);
-  // TODO: These could do with more tuning
-  const auto radius
-      {std::max(rec.radius * conversions::metersPerUnit<float>, 0.01f)};
-  light->setAttenuation(radius,
-                        1.0f,
-                        3.0f / radius,
-                        5.0f / (radius * radius));
-  light->setPowerScale(rec.fadeValue);
+  const Ogre::ColourValue lightColor = [&data]() -> Ogre::ColourValue {
+    Ogre::ColourValue col{};
+    col.setAsABGR(data.color.v);
+    return col;
+  }();
+  light->setDiffuseColour(lightColor);
+  light->setSpecularColour(lightColor);
 
-  const auto spotlightFlag{Entry::Flag::SpotLight | Entry::Flag::SpotShadow};
-  if (rec.flags & spotlightFlag) {
+  // TODO: These could do with more tuning
+  const auto radius{std::max(gsl::narrow_cast<float>(data.radius)
+                                 * conversions::metersPerUnit<float>, 0.01f)};
+  light->setAttenuation(radius, 1.0f, 3.0f / radius, 5.0f / (radius * radius));
+
+  light->setPowerScale(rec.data.fadeValue ? rec.data.fadeValue->data : 1.0f);
+
+  using Flag = record::raw::DATA_LIGH::Flag;
+  const auto spotlightFlag{Flag::SpotLight | Flag::SpotShadow};
+  if (data.flags & spotlightFlag) {
     // Spotlights
     light->setType(Ogre::Light::LightTypes::LT_SPOTLIGHT);
     light->setSpotlightRange(Ogre::Radian(0.0f),
-                             Ogre::Degree(rec.fov),
-                             rec.falloffExponent);
+                             Ogre::Degree(data.fov),
+                             data.falloffExponent);
     light->setSpotlightNearClipDistance(0.0f);
   } else {
     // Point lights
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  auto *const mesh{loadMesh(rec, mgr)};
-  auto *const rigidBody{loadRigidBody(mesh, mgr)};
+  Ogre::Entity *mesh = [&rec, mgr]() -> Ogre::Entity * {
+    if (rec.data.modelFilename) {
+      fs::Path rawPath{rec.data.modelFilename->data};
+      std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
+      return loadMesh(meshName, mgr);
+    } else return nullptr;
+  }();
+
+  Ogre::RigidBody *rigidBody{loadRigidBody(mesh, mgr)};
 
   if (rigidBody) {
     // TODO: Get a new RefId properly

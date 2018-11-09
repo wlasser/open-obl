@@ -12,20 +12,11 @@ using DoorResolver = Resolver<record::DOOR>;
 template<>
 class Resolver<record::DOOR> {
  private:
-  struct Entry {
-    std::string modelFilename{};
-    bool oblivionGate{false};
-    bool automatic{false};
-    bool hidden{false};
-    bool minimalUses{false};
-    // TODO: Door sounds
-  };
-
-  std::unordered_map<BaseId, Entry> mMap{};
+  std::unordered_map<BaseId, record::DOOR> mMap{};
 
  public:
   using make_t = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using store_t = Entry;
+  using store_t = record::DOOR;
 
   make_t make(BaseId baseId,
               gsl::not_null<Ogre::SceneManager *> mgr,
