@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_INITIAL_PROCESSOR_HPP
-#define OPENOBLIVION_INITIAL_PROCESSOR_HPP
+#ifndef OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP
+#define OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP
 
 #include "esp_coordinator.hpp"
 #include "record/io.hpp"
@@ -9,7 +9,7 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 
-class InitialProcessor {
+class InitialRecordVisitor {
  private:
   DoorResolver *doorRes;
   LightResolver *lightRes;
@@ -17,10 +17,10 @@ class InitialProcessor {
   InteriorCellResolver *interiorCellRes;
 
  public:
-  InitialProcessor(DoorResolver *doorRes,
-                   LightResolver *lightRes,
-                   StaticResolver *staticRes,
-                   InteriorCellResolver *interiorCellRes) :
+  InitialRecordVisitor(DoorResolver *doorRes,
+                       LightResolver *lightRes,
+                       StaticResolver *staticRes,
+                       InteriorCellResolver *interiorCellRes) :
       doorRes(doorRes),
       lightRes(lightRes),
       staticRes(staticRes),
@@ -50,4 +50,4 @@ class InitialProcessor {
   void readRecord<record::GMST>(esp::EspAccessor &accessor);
 };
 
-#endif // OPENOBLIVION_INITIAL_PROCESSOR_HPP
+#endif // OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP

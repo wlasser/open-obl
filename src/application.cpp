@@ -7,7 +7,7 @@
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "game_settings.hpp"
-#include "initial_processor.hpp"
+#include "initial_record_visitor.hpp"
 #include "meta.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/spdlog_listener.hpp"
@@ -128,12 +128,12 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
                                                              loadOrder.end());
   // Read the main esm
-  InitialProcessor initialProcessor(ctx.doorRes.get(),
-                                    ctx.lightRes.get(),
-                                    ctx.staticRes.get(),
-                                    ctx.interiorCellRes.get());
+  InitialRecordVisitor initialRecordVisitor(ctx.doorRes.get(),
+                                            ctx.lightRes.get(),
+                                            ctx.staticRes.get(),
+                                            ctx.interiorCellRes.get());
   for (int i = 0; i < loadOrder.size(); ++i) {
-    esp::readEsp(*ctx.espCoordinator, i, initialProcessor);
+    esp::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }
 
   modeStack.emplace_back(std::in_place_type<GameMode>, ctx);

@@ -87,12 +87,12 @@ class Resolver<record::CELL> {
         doorRes(doorRes), lighRes(lighRes), statRes(statRes) {}
   };
 
-  class Processor {
+  class RecordVisitor {
    private:
     InteriorCell &mCell;
     Resolvers mResolvers;
    public:
-    explicit Processor(InteriorCell &cell, Resolvers resolvers) :
+    explicit RecordVisitor(InteriorCell &cell, Resolvers resolvers) :
         mCell(cell), mResolvers(resolvers) {}
 
     template<class R>

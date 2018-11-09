@@ -54,7 +54,7 @@ target_sources(OpenOblivion PRIVATE
         src/gui/traits.cpp
         src/gui/trait_selector.cpp
         src/gui/xml.cpp
-        src/initial_processor.cpp
+        src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
         src/modes/game_mode.cpp
@@ -116,7 +116,7 @@ target_sources(OpenOblivion PRIVATE
         include/gui/trait_selector.hpp
         include/gui/ui_element.hpp
         include/gui/xml.hpp
-        include/initial_processor.hpp
+        include/initial_record_visitor.hpp
         include/keep_strategy.hpp
         include/magic_effects.hpp
         include/meta.hpp

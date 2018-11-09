@@ -59,12 +59,12 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
   }
   ptr->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
 
-  Processor processor(*ptr, mResolvers);
+  RecordVisitor visitor(*ptr, mResolvers);
 
   // Read from a copy so subsequent reads work if the CELL is unloaded
   esp::EspAccessor accessor{entry->second.mAccessor};
   accessor.skipRecord();
-  esp::readCellChildren(accessor, processor, processor, processor);
+  esp::readCellChildren(accessor, visitor, visitor, visitor);
 
   return ptr;
 }
@@ -75,7 +75,7 @@ bool Resolver<record::CELL>::add(BaseId, store_t entry) {
 }
 
 template<>
-void Resolver<record::CELL>::Processor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
+void Resolver<record::CELL>::RecordVisitor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
   const auto ref{accessor.readRecord<record::REFR>().value};
   auto *const node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
   const BaseId baseId{ref.data.baseID.data};
