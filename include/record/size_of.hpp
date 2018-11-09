@@ -32,8 +32,13 @@ inline std::size_t SizeOf(const T &t) {
   return sizeof(t);
 }
 
+/// \warning A std::string beginning with a '\0' has length 1, otherwise the
+///          (trailing) '\0' is not counted in the length and must be added on.
+///          Empty std::string have length 0.
 inline std::size_t SizeOf(const std::string &t) {
-  return t.length();
+  if (t.empty()) return 0;
+  else if (t[0] == '\0') return 1;
+  else return static_cast<uint16_t>(t.length() + 1);
 }
 
 template<class T>

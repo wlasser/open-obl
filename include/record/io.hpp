@@ -5,6 +5,7 @@
 #include "io/write_bytes.hpp"
 #include "record/exceptions.hpp"
 #include "record/tuplifiable.hpp"
+#include "record/rec_of.hpp"
 #include "record/record_header.hpp"
 #include <cstddef>
 #include <istream>
@@ -72,7 +73,10 @@ template<class T>
 T readRecord(std::istream &is) {
   T rec;
   is >> rec;
-  if (!is.good()) throw io::IOReadError(rec.type, is.rdstate());
+  if (!is.good()) {
+    throw io::IOReadError(std::string{recOf<rec.type>()},
+                          is.rdstate());
+  }
   return rec;
 }
 

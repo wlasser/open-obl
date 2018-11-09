@@ -15,18 +15,17 @@
 namespace io {
 
 // Write raw bytes to a stream.
-template<class T>
-inline auto writeBytes(std::ostream &os, const T &data) ->
-    std::enable_if_t<is_byte_direct_ioable_v < T>,
-void> {
-os.write(reinterpret_cast
-<const char *>(std::addressof(data)),
-sizeof(data));
+// @formatter:off
+template <class T>
+inline auto writeBytes(std::ostream &os, const T &data)
+    -> std::enable_if_t<is_byte_direct_ioable_v<T>, void> {
+  os.write(reinterpret_cast<const char *>(std::addressof(data)), sizeof(data));
 }
+// @formatter::on
 
 // TODO: write null terminator?
-inline void writeBytes(std::ostream &os, const std::string &data) {
-  os.write(data.c_str(), data.length());
+inline void writeBytes(std::ostream &os, std::string_view data) {
+  os.write(data.data(), data.length());
 }
 
 template<class T, std::size_t N>

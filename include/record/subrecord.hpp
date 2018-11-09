@@ -14,78 +14,73 @@
 
 namespace record {
 
-// Wrapper for subrecords
+/// Wrapper class for subrecords.
+/// \tparam T The raw subrecord type to wrap. Must model the
+///           std::DefaultConstructible concept.
+/// \tparam c An integer representing the subrecord type. If the subrecord type
+///           is "ABCD" then `c == recOf("ABCD")`.
 template<class T, uint32_t c>
 struct Subrecord {
-  static const std::string type;
-  // Size of the subrecord data when written to disk (which may not be the size
-  // in memory).
+  /// The integer representation of the subrecord type.
+  constexpr static inline uint32_t type{c};
+
+  /// Size of the subrecord data when written to disk (which may not be the size
+  /// in memory).
+  /// \remark This should be specialized for each subrecord type whose raw type
+  ///         is of class type.
   uint16_t size() const {
     return static_cast<uint16_t>(SizeOf(data));
   }
-  // Size of the entire subrecord. This is needed when computing the size of
-  // records.
+
+  /// Size of the entire subrecord when written to disk.
+  /// This is needed when computing the size of records.
+  /// \remark This is a wrapper around size() taking into account header
+  ///         information and should *not* be specialized.
   uint32_t entireSize() const {
-    return 4 + 2 + size();
+    return 4u + 2u + size();
   }
+
+  /// Underlying raw subrecord.
   T data{};
 
   explicit Subrecord(const T &t) : data(t) {}
   explicit Subrecord() = default;
 };
 
+/// Write the Subrecord to the stream in the binary representation expected by
+/// esp files.
+/// \remark This should *not* be specialized for each subrecord type, raw::write
+///         should be specialized for `T` if necessary.
 template<class T, uint32_t c>
-const std::string Subrecord<T, c>::type = recOf<c>();
-
-// Read and write subrecords through a stream. These should not need to be
-// specialized, as they make use of the (possibly specialized) raw::read and
-// raw::write routines.
-template<class T, uint32_t c>
-std::ostream &operator<<(std::ostream &os, const Subrecord<T, c> &record) {
-  auto size = record.size();
-  os.write(record.type.c_str(), 4);
+std::ostream &operator<<(std::ostream &os, const Subrecord<T, c> &subrecord) {
+  auto size = subrecord.size();
+  io::writeBytes(os, recOf<c>());
   io::writeBytes(os, size);
-  raw::write(os, record.data, size);
+  raw::write(os, subrecord.data, size);
 
   return os;
 }
 
+/// Read a Subrecord stored in its binary representation used in esp files.
+/// \remark This should *not* be specialized for each subrecord type, raw::read
+///         should be specialized for `T` if necessary.
+/// \exception RecordNotFoundError Throw if the subrecord type read does not
+///                                match the type of the subrecord.
 template<class T, uint32_t c>
-std::istream &operator>>(std::istream &is, Subrecord<T, c> &record) {
-  char type[5]{};
-  is.read(type, 4);
-  if (record.type != type) throw RecordNotFoundError(record.type, type);
+std::istream &operator>>(std::istream &is, Subrecord<T, c> &subrecord) {
+  std::array<char, 4> type{};
+  io::readBytes(is, type);
+  if (recOf(type) != subrecord.type) {
+    throw RecordNotFoundError(std::string{recOf<c>()},
+                              std::string(type.data(), 4));
+  }
 
-  uint16_t size = 0;
+  uint16_t size{};
   io::readBytes(is, size);
-  raw::read(is, record.data, size);
+  raw::read(is, subrecord.data, size);
 
   return is;
 }
-
-// String specialization
-template<uint32_t c>
-struct Subrecord<std::string, c> {
-  static const std::string type;
-  uint16_t size() const {
-    // A string beginning with a null character has length 1, otherwise the null
-    // character is not counted in the length and must be added on. Empty
-    // strings have length 0.
-    if (data.empty()) return 0;
-    else if (data[0] == '\0') return 1;
-    else return static_cast<uint16_t>(data.length() + 1);
-  }
-  uint32_t entireSize() const {
-    return 4 + 2 + size();
-  }
-  std::string data;
-
-  explicit Subrecord(std::string t) : data(std::move(t)) {}
-  Subrecord() = default;
-};
-
-template<uint32_t c>
-const std::string Subrecord<std::string, c>::type = recOf<c>();
 
 } // namespace record
 
