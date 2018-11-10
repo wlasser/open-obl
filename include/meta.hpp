@@ -35,6 +35,11 @@ using variant_with = decltype(variant_with_helper<T>(std::declval<V>()));
 static_assert(std::is_same_v<std::variant<int, float>,
                              variant_with<std::variant<int>, float>>);
 
+// See Arthur O'Dwyer https://quuxplusone.github.io/blog/2018/04/02/false-v/
+// Used for a 'static_assert(false)' that isn't UB.
+template<class ...>
+inline constexpr bool false_v = false;
+
 // If f(*lhs, *rhs) makes sense then call it and return the result wrapped in an
 // optional. Return an empty optional otherwise. The pointers are a hack to get
 // a catch-all overload without using a variadic function, which cannot have

@@ -2,7 +2,10 @@
 #define OPENOBLIVION_RESOLVERS_HELPERS_HPP
 
 #include "formid.hpp"
+#include "fs/path.hpp"
+#include "meta.hpp"
 #include "ogrebullet/rigid_body.hpp"
+#include "records.hpp"
 #include <gsl/gsl>
 #include <OgreEntity.h>
 #include <OgreLight.h>
@@ -40,10 +43,20 @@ using Light = Component<Ogre::Light *>;
 
 } // namespace ecs
 
-inline Ogre::Entity *loadMesh(const std::string &modelFilename,
-                              gsl::not_null<Ogre::SceneManager *> mgr) {
-  if (modelFilename.empty()) return nullptr;
-  else return mgr->createEntity(modelFilename);
+template<class T>
+Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
+  fs::Path rawPath;
+  using modl_t = decltype(rec.modelFilename);
+  if constexpr (std::is_same_v<modl_t, std::optional<record::MODL>>) {
+    if (!rec.modelFilename) return nullptr;
+    rawPath = fs::Path{rec.modelFilename->data};
+  } else if constexpr (std::is_same_v<modl_t, record::MODL>) {
+    rawPath = fs::Path{rec.modelFilename.data};
+  } else {
+    static_assert(false_v<T>, "Missing MODL record");
+  }
+  std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
+  return mgr->createEntity(meshName);
 }
 
 Ogre::RigidBody *

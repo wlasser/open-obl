@@ -1,4 +1,4 @@
-#include "resolvers/resolvers.hpp"
+#include "resolvers/helpers.hpp"
 #include <OgreMesh.h>
 
 Ogre::RigidBody *

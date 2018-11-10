@@ -9,14 +9,7 @@ auto Resolver<record::DOOR>::make(BaseId baseId,
   if (entry == mMap.end()) return {};
   const store_t &rec{entry->second};
 
-  Ogre::Entity *entity = [&rec, mgr]() -> Ogre::Entity * {
-    if (rec.modelFilename) {
-      fs::Path rawPath{rec.modelFilename->data};
-      std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
-      return loadMesh(meshName, mgr);
-    } else return nullptr;
-  }();
-
+  Ogre::Entity *entity{loadMesh(rec, mgr)};
   Ogre::RigidBody *rigidBody{loadRigidBody(entity, mgr)};
 
   if (rigidBody) {

@@ -70,7 +70,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/door_resolver.cpp
         src/resolvers/interior_cell_resolver.cpp
         src/resolvers/light_resolver.cpp
-        src/resolvers/resolvers.cpp
+        src/resolvers/helpers.cpp
         src/resolvers/static_resolver.cpp
         src/save_state.cpp
         src/subrecords.cpp

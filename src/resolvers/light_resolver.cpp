@@ -51,14 +51,7 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  Ogre::Entity *mesh = [&rec, mgr]() -> Ogre::Entity * {
-    if (rec.modelFilename) {
-      fs::Path rawPath{rec.modelFilename->data};
-      std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
-      return loadMesh(meshName, mgr);
-    } else return nullptr;
-  }();
-
+  Ogre::Entity *mesh{loadMesh(rec, mgr)};
   Ogre::RigidBody *rigidBody{loadRigidBody(mesh, mgr)};
 
   if (rigidBody) {

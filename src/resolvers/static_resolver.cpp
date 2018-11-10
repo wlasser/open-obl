@@ -9,12 +9,7 @@ auto Resolver<record::STAT>::make(BaseId baseId,
   if (entry == mMap.end()) return {};
   const store_t &rec{entry->second};
 
-  Ogre::Entity *entity = [&rec, mgr]() -> Ogre::Entity * {
-    fs::Path rawPath{rec.modelFilename.data};
-    std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
-    return loadMesh(meshName, mgr);
-  }();
-
+  Ogre::Entity *entity{loadMesh(rec, mgr)};
   Ogre::RigidBody *rigidBody{loadRigidBody(entity, mgr)};
 
   if (rigidBody) {
