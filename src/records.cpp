@@ -20,7 +20,7 @@ uint32_t raw::Effect::size() const {
 
 void raw::Effect::read(std::istream &is) {
   is >> name >> data;
-  if (peekRecordType(is) == "SCIT") {
+  if (peekRecordType(is) == "SCIT"_rec) {
     ScriptEffectData sed{};
     is >> sed.data >> sed.name;
     script.emplace(std::move(sed));
@@ -33,7 +33,7 @@ void raw::Effect::write(std::ostream &os) const {
 }
 
 bool raw::Effect::isNext(std::istream &is) {
-  return peekRecordType(is) == "EFID";
+  return peekRecordType(is) == "EFID"_rec;
 }
 
 // ALCH specialization
@@ -71,15 +71,15 @@ raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.itemName, "FULL");
-  readRecord(is, t.modelFilename, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.textureHash, "MODT");
-  readRecord(is, t.iconFilename, "ICON");
-  readRecord(is, t.itemScript, "SCRI");
-  readRecord(is, t.itemWeight, "DATA");
-  readRecord(is, t.itemValue, "ENIT");
+  readRecord(is, t.editorID);
+  readRecord(is, t.itemName);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.itemScript);
+  readRecord(is, t.itemWeight);
+  readRecord(is, t.itemValue);
   while (Effect::isNext(is)) t.effects.emplace_back().read(is);
 
   return is;
@@ -115,16 +115,16 @@ raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
-  readRecord(is, t.header, "HEDR");
-  readRecord(is, t.offsets, "OFST");
-  readRecord(is, t.deleted, "DELE");
-  readRecord(is, t.author, "CNAM");
-  readRecord(is, t.description, "SNAM");
+  readRecord(is, t.header);
+  readRecord(is, t.offsets);
+  readRecord(is, t.deleted);
+  readRecord(is, t.author);
+  readRecord(is, t.description);
 
-  while (peekRecordType(is) == "MAST") {
+  while (peekRecordType(is) == "MAST"_rec) {
     raw::TES4::Master master{};
     is >> master.master;
-    readRecord(is, master.fileSize, "DATA");
+    readRecord(is, master.fileSize);
     t.masters.push_back(master);
   }
   return is;
@@ -145,8 +145,8 @@ raw::write(std::ostream &os, const raw::GMST &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.value, "DATA");
+  readRecord(is, t.editorID);
+  readRecord(is, t.value);
   return is;
 }
 
@@ -166,9 +166,9 @@ raw::write(std::ostream &os, const raw::GLOB &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.type, "FNAM");
-  readRecord(is, t.value, "FLTV");
+  readRecord(is, t.editorID);
+  readRecord(is, t.type);
+  readRecord(is, t.value);
   return is;
 }
 
@@ -189,11 +189,11 @@ raw::write(std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  if (peekRecordType(is) == "DESC") is >> t.description;
-  if (peekRecordType(is) == "ICON") is >> t.iconFilename;
-  readRecord(is, t.data, "DATA");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  if (peekRecordType(is) == "DESC"_rec) is >> t.description;
+  if (peekRecordType(is) == "ICON"_rec) is >> t.iconFilename;
+  readRecord(is, t.data);
   return is;
 }
 
@@ -228,21 +228,21 @@ raw::write(std::ostream &os, const raw::FACT &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  if (peekRecordType(is) == "FULL") is >> t.name;
-  while (peekRecordType(is) == "XNAM") {
+  readRecord(is, t.editorID);
+  if (peekRecordType(is) == "FULL"_rec) is >> t.name;
+  while (peekRecordType(is) == "XNAM"_rec) {
     record::XNAM r{};
     is >> r;
     t.relations.push_back(r);
   }
-  if (peekRecordType(is) == "DATA") is >> t.flags;
-  if (peekRecordType(is) == "CNAM") is >> t.crimeGoldMultiplier;
-  while (peekRecordType(is) == "RNAM") {
+  if (peekRecordType(is) == "DATA"_rec) is >> t.flags;
+  if (peekRecordType(is) == "CNAM"_rec) is >> t.crimeGoldMultiplier;
+  while (peekRecordType(is) == "RNAM"_rec) {
     raw::FACT::Rank r{};
     is >> r.index;
-    if (peekRecordType(is) == "MNAM") is >> r.maleName;
-    if (peekRecordType(is) == "FNAM") is >> r.femaleName;
-    if (peekRecordType(is) == "INAM") is >> r.iconFilename;
+    if (peekRecordType(is) == "MNAM"_rec) is >> r.maleName;
+    if (peekRecordType(is) == "FNAM"_rec) is >> r.femaleName;
+    if (peekRecordType(is) == "INAM"_rec) is >> r.iconFilename;
     t.ranks.push_back(r);
   }
 
@@ -268,13 +268,13 @@ raw::write(std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  if (peekRecordType(is) == "FULL") is >> t.name;
-  if (peekRecordType(is) == "MODL") is >> t.modelFilename;
-  if (peekRecordType(is) == "MODB") is >> t.boundRadius;
-  if (peekRecordType(is) == "MODT") is >> t.textureHash;
-  if (peekRecordType(is) == "ICON") is >> t.iconFilename;
-  if (peekRecordType(is) == "DATA") is >> t.flags;
+  readRecord(is, t.editorID);
+  if (peekRecordType(is) == "FULL"_rec) is >> t.name;
+  if (peekRecordType(is) == "MODL"_rec) is >> t.modelFilename;
+  if (peekRecordType(is) == "MODB"_rec) is >> t.boundRadius;
+  if (peekRecordType(is) == "MODT"_rec) is >> t.textureHash;
+  if (peekRecordType(is) == "ICON"_rec) is >> t.iconFilename;
+  if (peekRecordType(is) == "DATA"_rec) is >> t.flags;
 
   return is;
 }
@@ -295,10 +295,10 @@ raw::write(std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  if (peekRecordType(is) == "FULL") is >> t.name;
-  if (peekRecordType(is) == "ICON") is >> t.iconFilename;
-  if (peekRecordType(is) == "DATA") is >> t.flags;
+  readRecord(is, t.editorID);
+  if (peekRecordType(is) == "FULL"_rec) is >> t.name;
+  if (peekRecordType(is) == "ICON"_rec) is >> t.iconFilename;
+  if (peekRecordType(is) == "DATA"_rec) is >> t.flags;
 
   return is;
 }
@@ -397,83 +397,83 @@ raw::write(std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.description, "DESC");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.description);
 
-  while (peekRecordType(is) == "SPLO") {
+  while (peekRecordType(is) == "SPLO"_rec) {
     record::SPLO r{};
     is >> r;
     t.powers.push_back(r);
   }
 
-  while (peekRecordType(is) == "XNAM") {
+  while (peekRecordType(is) == "XNAM"_rec) {
     record::XNAM r{};
     is >> r;
     t.relations.push_back(r);
   }
 
-  readRecord(is, t.data, "DATA");
-  readRecord(is, t.voices, "VNAM");
-  readRecord(is, t.defaultHair, "DNAM");
-  readRecord(is, t.defaultHairColor, "CNAM");
-  readRecord(is, t.facegenMainClamp, "PNAM");
-  readRecord(is, t.facegenFaceClamp, "UNAM");
-  readRecord(is, t.baseAttributes, "ATTR");
-  readRecord(is, t.faceMarker, "NAM0");
+  readRecord(is, t.data);
+  readRecord(is, t.voices);
+  readRecord(is, t.defaultHair);
+  readRecord(is, t.defaultHairColor);
+  readRecord(is, t.facegenMainClamp);
+  readRecord(is, t.facegenFaceClamp);
+  readRecord(is, t.baseAttributes);
+  readRecord(is, t.faceMarker);
 
-  while (peekRecordType(is) == "INDX") {
+  while (peekRecordType(is) == "INDX"_rec) {
     raw::RACE::FaceData f{};
     is >> f.type;
-    readRecord(is, f.modelFilename, "MODL");
-    readRecord(is, f.boundRadius, "MODB");
-    readRecord(is, f.textureFilename, "ICON");
+    readRecord(is, f.modelFilename);
+    readRecord(is, f.boundRadius);
+    readRecord(is, f.textureFilename);
     t.faceData.push_back(f);
   }
 
-  readRecord(is, t.bodyMarker, "NAM1");
-  readRecord(is, t.maleBodyMarker, "MNAM");
+  readRecord(is, t.bodyMarker);
+  readRecord(is, t.maleBodyMarker);
 
-  if (peekRecordType(is) == "MODL") {
+  if (peekRecordType(is) == "MODL"_rec) {
     raw::RACE::TailData tail{};
     is >> tail.model;
-    readRecord(is, tail.boundRadius, "MODB");
+    readRecord(is, tail.boundRadius);
     t.maleTailModel.emplace(tail);
   } else {
     t.maleTailModel = std::nullopt;
   }
 
-  while (peekRecordType(is) == "INDX") {
+  while (peekRecordType(is) == "INDX"_rec) {
     raw::RACE::BodyData b{};
     is >> b.type;
-    readRecord(is, b.textureFilename, "ICON");
+    readRecord(is, b.textureFilename);
     t.maleBodyData.push_back(b);
   }
 
-  readRecord(is, t.femaleBodyMarker, "FNAM");
+  readRecord(is, t.femaleBodyMarker);
 
-  if (peekRecordType(is) == "MODL") {
+  if (peekRecordType(is) == "MODL"_rec) {
     raw::RACE::TailData tail{};
     is >> tail.model;
-    readRecord(is, tail.boundRadius, "MODB");
+    readRecord(is, tail.boundRadius);
     t.femaleTailModel.emplace(tail);
   } else {
     t.femaleTailModel = std::nullopt;
   }
 
-  while (peekRecordType(is) == "INDX") {
+  while (peekRecordType(is) == "INDX"_rec) {
     raw::RACE::BodyData b{};
     is >> b.type;
-    readRecord(is, b.textureFilename, "ICON");
+    readRecord(is, b.textureFilename);
     t.femaleBodyData.push_back(b);
   }
 
-  readRecord(is, t.hair, "HNAM");
-  readRecord(is, t.eyes, "ENAM");
-  readRecord(is, t.fggs, "FGGS");
-  readRecord(is, t.fgga, "FGGA");
-  readRecord(is, t.fgts, "FGTS");
-  readRecord(is, t.unused, "SNAM");
+  readRecord(is, t.hair);
+  readRecord(is, t.eyes);
+  readRecord(is, t.fggs);
+  readRecord(is, t.fgga);
+  readRecord(is, t.fgts);
+  readRecord(is, t.unused);
 
   return is;
 }
@@ -511,14 +511,14 @@ raw::write(std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.filename, "FNAM");
+  readRecord(is, t.editorID);
+  readRecord(is, t.filename);
 
-  if (peekRecordType(is) == "SNDD") {
+  if (peekRecordType(is) == "SNDD"_rec) {
     record::SNDD r{};
     is >> r;
     t.sound.emplace<0>(r);
-  } else if (peekRecordType(is) == "SNDX") {
+  } else if (peekRecordType(is) == "SNDX"_rec) {
     record::SNDX r{};
     is >> r;
     t.sound.emplace<1>(r);
@@ -549,15 +549,15 @@ raw::write(std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.index, "INDX");
-  readRecord(is, t.description, "DESC");
-  readRecord(is, t.iconFilename, "ICON");
-  readRecord(is, t.data, "DATA");
-  readRecord(is, t.apprenticeText, "ANAM");
-  readRecord(is, t.journeymanText, "JNAM");
-  readRecord(is, t.expertText, "ENAM");
-  readRecord(is, t.masterText, "MNAM");
+  readRecord(is, t.editorID);
+  readRecord(is, t.index);
+  readRecord(is, t.description);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.data);
+  readRecord(is, t.apprenticeText);
+  readRecord(is, t.journeymanText);
+  readRecord(is, t.expertText);
+  readRecord(is, t.masterText);
 
   return is;
 }
@@ -587,14 +587,14 @@ raw::write(std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.effectName, "FULL");
-  readRecord(is, t.description, "DESC");
-  readRecord(is, t.iconFilename, "ICON");
-  readRecord(is, t.effectModel, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.data, "DATA");
-  if (peekRecordType(is) == "ESCE") is >> t.counterEffects;
+  readRecord(is, t.editorID);
+  readRecord(is, t.effectName);
+  readRecord(is, t.description);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.effectModel);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.data);
+  if (peekRecordType(is) == "ESCE"_rec) is >> t.counterEffects;
 
   return is;
 }
@@ -626,11 +626,11 @@ raw::write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.textureFilename, "ICON");
-  readRecord(is, t.havokData, "HNAM");
-  readRecord(is, t.specularExponent, "SNAM");
-  while (peekRecordType(is) == "GNAM") {
+  readRecord(is, t.editorID);
+  readRecord(is, t.textureFilename);
+  readRecord(is, t.havokData);
+  readRecord(is, t.specularExponent);
+  while (peekRecordType(is) == "GNAM"_rec) {
     record::GNAM r{};
     is >> r;
     t.potentialGrasses.push_back(r);
@@ -660,11 +660,11 @@ std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
   // ARVineRising02 has no MODL, MODB, or MODT
   // Empty STAT (size 0) after PalaceDRug01
   if (size == 0) return is;
-  readRecord(is, t.editorID, "EDID");
-  if (peekRecordType(is) != "MODL") return is;
-  readRecord(is, t.modelFilename, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.textureHash, "MODT");
+  readRecord(is, t.editorID);
+  if (peekRecordType(is) != "MODL"_rec) return is;
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
 
   return is;
 }
@@ -683,9 +683,9 @@ uint32_t ENCH::size() const {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.enchantmentData, "DATA");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.enchantmentData);
   while (Effect::isNext(is)) t.effects.emplace_back().read(is);
 
   return is;
@@ -716,9 +716,9 @@ uint32_t SPEL::size() const {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.data, "SPIT");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.data);
   while (Effect::isNext(is)) t.effects.emplace_back().read(is);
 
   return is;
@@ -772,9 +772,9 @@ raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.data, "DATA");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.data);
   std::set<std::string> possibleSubrecords = {
       "XCLL", "XOWN", "XGLB", "XRNK", "XCMT",
       "XCCM", "XCLW", "XCWT", "XCLR", "XCLC"
@@ -788,25 +788,25 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
     }
     std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
     switch (recOf(recordArray)) {
-      case "XCLL"_rec:readRecord(is, t.lighting, "XCLL");
+      case "XCLL"_rec:readRecord(is, t.lighting);
         break;
-      case "XOWN"_rec:readRecord(is, t.owner, "XOWN");
+      case "XOWN"_rec:readRecord(is, t.owner);
         break;
-      case "XGLB"_rec:readRecord(is, t.ownershipGlobal, "XGLB");
+      case "XGLB"_rec:readRecord(is, t.ownershipGlobal);
         break;
-      case "XRNK"_rec:readRecord(is, t.ownershipRank, "XRNK");
+      case "XRNK"_rec:readRecord(is, t.ownershipRank);
         break;
-      case "XCMT"_rec:readRecord(is, t.music, "XCMT");
+      case "XCMT"_rec:readRecord(is, t.music);
         break;
-      case "XCCM"_rec:readRecord(is, t.climate, "XCCM");
+      case "XCCM"_rec:readRecord(is, t.climate);
         break;
-      case "XCLW"_rec:readRecord(is, t.waterHeight, "XCLW");
+      case "XCLW"_rec:readRecord(is, t.waterHeight);
         break;
-      case "XCWT"_rec:readRecord(is, t.water, "XCWT");
+      case "XCWT"_rec:readRecord(is, t.water);
         break;
-      case "XCLR"_rec:readRecord(is, t.regions, "XCLR");
+      case "XCLR"_rec:readRecord(is, t.regions);
         break;
-      case "XCLC"_rec:readRecord(is, t.grid, "XCLC");
+      case "XCLC"_rec:readRecord(is, t.grid);
         break;
       default: return is;
     }
@@ -880,74 +880,69 @@ raw::write(std::ostream &os, const raw::REFR &t, std::size_t size) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::REFR &t, std::size_t size) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.baseID, "NAME");
-  std::set<std::string> possibleSubrecords = {
-      "DESC", "XSCL", "XESP", "XTRG",
-      "XPCI", "FULL", "XACT", "XRGD", "XMRK",
-      "FNAM", "TNAM", "XOWN", "XGLB", "XRNK",
-      "XTEL", "XRTM", "ONAM", "XLOC", "XSED",
-      "XLOD", "XLCM", "XCNT", "XSOL"
+  readRecord(is, t.editorID);
+  readRecord(is, t.baseID);
+  std::set<uint32_t> possibleSubrecords = {
+      "DESC"_rec, "XSCL"_rec, "XESP"_rec, "XTRG"_rec,
+      "XPCI"_rec, "FULL"_rec, "XACT"_rec, "XRGD"_rec, "XMRK"_rec,
+      "FNAM"_rec, "TNAM"_rec, "XOWN"_rec, "XGLB"_rec, "XRNK"_rec,
+      "XTEL"_rec, "XRTM"_rec, "ONAM"_rec, "XLOC"_rec, "XSED"_rec,
+      "XLOD"_rec, "XLCM"_rec, "XCNT"_rec, "XSOL"_rec
   };
-  std::string rec;
+  uint32_t rec;
   while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    if (rec.length() != 4) {
-      throw std::runtime_error(
-          std::string("Expected a subrecord type, found ").append(rec));
-    }
-    std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
-    switch (recOf(recordArray)) {
-      case "DESC"_rec:readRecord(is, t.description, "DESC");
+    switch (rec) {
+      case "DESC"_rec:readRecord(is, t.description);
         break;
-      case "XSCL"_rec:readRecord(is, t.scale, "XSCL");
+      case "XSCL"_rec:readRecord(is, t.scale);
         break;
-      case "XESP"_rec:readRecord(is, t.parent, "XESP");
+      case "XESP"_rec:readRecord(is, t.parent);
         break;
-      case "XTRG"_rec:readRecord(is, t.target, "XTRG");
+      case "XTRG"_rec:readRecord(is, t.target);
         break;
-      case "XPCI"_rec:readRecord(is, t.unusedCellID, "XPCI");
+      case "XPCI"_rec:readRecord(is, t.unusedCellID);
         break;
-      case "FULL"_rec:readRecord(is, t.unusedCellName, "FULL");
+      case "FULL"_rec:readRecord(is, t.unusedCellName);
         break;
-      case "XACT"_rec:readRecord(is, t.action, "XACT");
+      case "XACT"_rec:readRecord(is, t.action);
         break;
-      case "XRGD"_rec:readRecord(is, t.ragdollData, "XRGD");
+      case "XRGD"_rec:readRecord(is, t.ragdollData);
         break;
-      case "XMRK"_rec:readRecord(is, t.mapMarker, "XMRK");
+      case "XMRK"_rec:readRecord(is, t.mapMarker);
         break;
-      case "FNAM"_rec:readRecord(is, t.mapFlags, "FNAM");
+      case "FNAM"_rec:readRecord(is, t.mapFlags);
         break;
-      case "TNAM"_rec:readRecord(is, t.markerType, "TNAM");
+      case "TNAM"_rec:readRecord(is, t.markerType);
         break;
-      case "XOWN"_rec:readRecord(is, t.owner, "XOWN");
+      case "XOWN"_rec:readRecord(is, t.owner);
         break;
-      case "XGLB"_rec:readRecord(is, t.ownershipGlobal, "XGLB");
+      case "XGLB"_rec:readRecord(is, t.ownershipGlobal);
         break;
-      case "XRNK"_rec:readRecord(is, t.ownershipRank, "XRNK");
+      case "XRNK"_rec:readRecord(is, t.ownershipRank);
         break;
-      case "XTEL"_rec:readRecord(is, t.teleport, "XTEL");
+      case "XTEL"_rec:readRecord(is, t.teleport);
         break;
-      case "XRTM"_rec:readRecord(is, t.teleportParent, "XRTM");
+      case "XRTM"_rec:readRecord(is, t.teleportParent);
         break;
-      case "ONAM"_rec:readRecord(is, t.openByDefault, "ONAM");
+      case "ONAM"_rec:readRecord(is, t.openByDefault);
         break;
-      case "XLOC"_rec:readRecord(is, t.lockInfo, "XLOC");
+      case "XLOC"_rec:readRecord(is, t.lockInfo);
         break;
-      case "XSED"_rec:readRecord(is, t.speedTree, "XSED");
+      case "XSED"_rec:readRecord(is, t.speedTree);
         break;
-      case "XLOD"_rec:readRecord(is, t.lod, "XLOD");
+      case "XLOD"_rec:readRecord(is, t.lod);
         break;
-      case "XLCM"_rec:readRecord(is, t.levelModifier, "XLCM");
+      case "XLCM"_rec:readRecord(is, t.levelModifier);
         break;
-      case "XCNT"_rec:readRecord(is, t.count, "XCNT");
+      case "XCNT"_rec:readRecord(is, t.count);
         break;
-      case "XSOL"_rec:readRecord(is, t.soul, "XSOL");
+      case "XSOL"_rec:readRecord(is, t.soul);
         break;
       default:break;
     }
   }
 
-  readRecord(is, t.positionRotation, "DATA");
+  readRecord(is, t.positionRotation);
   return is;
 }
 
@@ -985,37 +980,32 @@ raw::write(std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  std::set<std::string> possibleSubrecords = {
-      "MODL", "MODB", "MODT", "SCRI", "FULL", "ICON"
+  readRecord(is, t.editorID);
+  std::set<uint32_t> possibleSubrecords = {
+      "MODL"_rec, "MODB"_rec, "MODT"_rec, "SCRI"_rec, "FULL"_rec, "ICON"_rec
   };
-  std::string rec;
+  uint32_t rec;
   while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    if (rec.length() != 4) {
-      throw std::runtime_error(
-          std::string("Expected a subrecord type, found ").append(rec));
-    }
-    std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
-    switch (recOf(recordArray)) {
-      case "MODL"_rec:readRecord(is, t.modelFilename, "MODL");
+    switch (rec) {
+      case "MODL"_rec:readRecord(is, t.modelFilename);
         break;
-      case "MODB"_rec:readRecord(is, t.boundRadius, "MODB");
+      case "MODB"_rec:readRecord(is, t.boundRadius);
         break;
-      case "MODT"_rec:readRecord(is, t.textureHash, "MODT");
+      case "MODT"_rec:readRecord(is, t.textureHash);
         break;
-      case "SCRI"_rec:readRecord(is, t.itemScript, "SCRI");
+      case "SCRI"_rec:readRecord(is, t.itemScript);
         break;
-      case "FULL"_rec:readRecord(is, t.name, "FULL");
+      case "FULL"_rec:readRecord(is, t.name);
         break;
-      case "ICON"_rec:readRecord(is, t.icon, "ICON");
+      case "ICON"_rec:readRecord(is, t.icon);
         break;
       default:break;
     }
   }
 
-  readRecord(is, t.data, "DATA");
-  readRecord(is, t.fadeValue, "FNAM");
-  readRecord(is, t.sound, "SNAM");
+  readRecord(is, t.data);
+  readRecord(is, t.fadeValue);
+  readRecord(is, t.sound);
 
   return is;
 }
@@ -1047,11 +1037,11 @@ raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "NAME");
-  readRecord(is, t.icon, "ICON");
-  readRecord(is, t.description, "DESC");
-  while (peekRecordType(is) == "SPLO") {
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.icon);
+  readRecord(is, t.description);
+  while (peekRecordType(is) == "SPLO"_rec) {
     record::SPLO r{};
     is >> r;
     t.spells.push_back(r);
@@ -1089,14 +1079,14 @@ raw::write(std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.modelFilename, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.textureHash, "MODT");
-  readRecord(is, t.icon, "ICON");
-  readRecord(is, t.itemScript, "SCRI");
-  readRecord(is, t.data, "DATA");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.icon);
+  readRecord(is, t.itemScript);
+  readRecord(is, t.data);
 
   return is;
 }
@@ -1142,17 +1132,17 @@ raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.modelFilename, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.textureHash, "MODT");
-  readRecord(is, t.script, "SCRI");
-  readRecord(is, t.openSound, "SNAM");
-  readRecord(is, t.closeSound, "ANAM");
-  readRecord(is, t.loopSound, "BNAM");
-  readRecord(is, t.flags, "FNAM");
-  while (peekRecordType(is) == "TNAM") {
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.openSound);
+  readRecord(is, t.closeSound);
+  readRecord(is, t.loopSound);
+  readRecord(is, t.flags);
+  while (peekRecordType(is) == "TNAM"_rec) {
     record::TNAM_DOOR r{};
     is >> r;
     t.randomTeleports.push_back(r);
@@ -1189,13 +1179,13 @@ raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID, "EDID");
-  readRecord(is, t.name, "FULL");
-  readRecord(is, t.modelFilename, "MODL");
-  readRecord(is, t.boundRadius, "MODB");
-  readRecord(is, t.textureHash, "MODT");
-  readRecord(is, t.script, "SCRI");
-  readRecord(is, t.sound, "SNAM");
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.sound);
 
   return is;
 }

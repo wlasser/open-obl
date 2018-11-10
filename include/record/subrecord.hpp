@@ -22,7 +22,7 @@ namespace record {
 template<class T, uint32_t c>
 struct Subrecord {
   /// The integer representation of the subrecord type.
-  constexpr static inline uint32_t type{c};
+  constexpr static inline uint32_t RecordType{c};
 
   /// Size of the subrecord data when written to disk (which may not be the size
   /// in memory).
@@ -70,7 +70,7 @@ template<class T, uint32_t c>
 std::istream &operator>>(std::istream &is, Subrecord<T, c> &subrecord) {
   std::array<char, 4> type{};
   io::readBytes(is, type);
-  if (recOf(type) != subrecord.type) {
+  if (recOf(type) != c) {
     throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
   }
 

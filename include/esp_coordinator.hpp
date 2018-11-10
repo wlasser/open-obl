@@ -145,7 +145,7 @@ class EspCoordinator {
   ReadHeaderResult skipRecord(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
-  std::string peekRecordType(int modIndex, SeekPos seekPos);
+  uint32_t peekRecordType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
   ReadResult<record::Group> readGroup(int modIndex, SeekPos seekPos);
@@ -260,7 +260,7 @@ class EspAccessor {
 
   ReadHeaderResult skipRecord();
 
-  std::string peekRecordType();
+  uint32_t peekRecordType();
 
   ReadResult<record::Group> readGroup();
 

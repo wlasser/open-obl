@@ -124,7 +124,7 @@ EspCoordinator::skipRecord(int modIndex, SeekPos seekPos) {
       it->pos = it->stream.tellg()};
 };
 
-std::string EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
+uint32_t EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
   if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
@@ -170,7 +170,7 @@ EspAccessor::ReadHeaderResult EspAccessor::skipRecord() {
   return r;
 }
 
-std::string EspAccessor::peekRecordType() {
+uint32_t EspAccessor::peekRecordType() {
   return mCoordinator->peekRecordType(mIndex, mPos);
 }
 

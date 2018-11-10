@@ -16,10 +16,10 @@ std::istream &record::operator>>(std::istream &is, Group &grp) {
   if (!io::safeRead(is, type.data(), 4) || grp.type != type) {
     throw RecordNotFoundError(grp.type, type);
   }
-  readOrThrow(is, &grp.groupSize, 4, "GRUP");
-  readOrThrow(is, &grp.label, 4, "GRUP");
-  readOrThrow(is, &grp.groupType, 4, "GRUP");
-  readOrThrow(is, &grp.stamp, 4, "GRUP");
+  io::readBytes(is, grp.groupSize);
+  io::readBytes(is, grp.label);
+  io::readBytes(is, grp.groupType);
+  io::readBytes(is, grp.stamp);
 
   return is;
 }

@@ -73,13 +73,13 @@ void readEsp(EspCoordinator &coordinator,
   auto accessor{coordinator.makeAccessor(modIndex)};
 
   // First is always a TES4 record
-  if (const auto recType{accessor.peekRecordType()}; recType != "TES4") {
-    throw record::RecordNotFoundError("TES4", recType);
+  if (const auto recType{accessor.peekRecordType()}; recType != "TES4"_rec) {
+    throw record::RecordNotFoundError("TES4", recOf(recType));
   }
   visitor.template readRecord<record::TES4>(accessor);
 
   // Now we expect a collection of top groups
-  while (accessor.peekRecordType() == "GRUP") {
+  while (accessor.peekRecordType() == "GRUP"_rec) {
     const Group topGrp{accessor.readGroup().value};
 
     if (topGrp.groupType != record::Group::GroupType::Top) {
@@ -108,7 +108,7 @@ void readEsp(EspCoordinator &coordinator,
             const Group interiorCellSubblock{accessor.readGroup().value};
 
             // Expect a series of cells
-            while (accessor.peekRecordType() == "CELL") {
+            while (accessor.peekRecordType() == "CELL"_rec) {
               visitor.template readRecord<record::CELL>(accessor);
             }
           }
@@ -121,7 +121,8 @@ void readEsp(EspCoordinator &coordinator,
         break;
       default: {
         // Otherwise we expect a block of records all of the same type
-        while (accessor.peekRecordType() == topGrp.label.recordType) {
+        while (accessor.peekRecordType()
+            == recOf(std::string_view(topGrp.label.recordType, 4))) {
           switch (recType) {
             case "GMST"_rec:visitor.template readRecord<record::GMST>(accessor);
               break;
@@ -205,7 +206,7 @@ void readCellChildren(EspAccessor &accessor,
 
     // Unsure if PGRD is usually optional or not, but sometimes this entire
     // group is empty e.g. ImperialSewerSystemTG11
-    if (accessor.peekRecordType() == "PGRD") {
+    if (accessor.peekRecordType() == "PGRD"_rec) {
       // TODO: PGRD
       accessor.skipRecord();
     }
@@ -219,11 +220,11 @@ void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
   using namespace record;
   for (;;) {
     const auto type{accessor.peekRecordType()};
-    if (type == "REFR") {
+    if (type == "REFR"_rec) {
       visitor.template readRecord<record::REFR>(accessor);
-    } else if (type == "ACHR") {
+    } else if (type == "ACHR"_rec) {
       accessor.skipRecord();
-    } else if (type == "ACRE") {
+    } else if (type == "ACRE"_rec) {
       accessor.skipRecord();
     } else {
       return;

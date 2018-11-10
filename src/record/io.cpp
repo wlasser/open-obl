@@ -2,10 +2,9 @@
 #include <array>
 #include <string>
 
-std::string record::peekRecordType(std::istream &is) {
-  // Peek at the next 4 bytes
-  std::string type(4, ' ');
-  is.read(type.data(), 4);
+uint32_t record::peekRecordType(std::istream &is) {
+  uint32_t type{};
+  io::readBytes(is, type);
   is.seekg(-4, std::istream::cur);
   return type;
 }

@@ -472,8 +472,8 @@ raw::write(std::ostream &os, const raw::DATA_GMST &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::DATA_GMST &t, std::size_t size) {
-  t.s = std::vector<char>(size, '\0');
-  readOrThrow(is, t.s.data(), size * sizeof(char), "DATA_GMST");
+  t.s.clear();
+  io::readBytes(is, t.s, size);
   if (size == 4) {
     t.i = *reinterpret_cast<int32_t *>(t.s.data());
     t.f = *reinterpret_cast<float *>(t.s.data());

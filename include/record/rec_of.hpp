@@ -45,6 +45,18 @@ std::string_view recOf() noexcept {
   return std::string_view(r);
 }
 
+/// \overload recOf()
+inline std::string recOf(uint32_t t) noexcept {
+  std::array<char, 5> r{
+      static_cast<const char>(t & 0xffu),
+      static_cast<const char>((t & (0xffu << 8u)) >> 8u),
+      static_cast<const char>((t & (0xffu << 16u)) >> 16u),
+      static_cast<const char>((t & (0x0ffu << 24u)) >> 24u),
+      '\0'
+  };
+  return std::string(r.data());
+}
+
 } // namespace record
 
 #endif //OPENOBLIVION_RECORD_REC_OF_HPP
