@@ -57,13 +57,15 @@ uint32_t ALCH::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
-  if (t.editorID) os << *t.editorID;
-  os << t.itemName << t.modelFilename;
-  if (t.boundRadius) os << *t.boundRadius;
-  if (t.textureHash) os << *t.textureHash;
-  if (t.iconFilename) os << *t.iconFilename;
-  if (t.itemScript) os << *t.itemScript;
-  os << t.itemWeight << t.itemValue;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.itemName);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.itemScript);
+  writeRecord(os, t.itemWeight);
+  writeRecord(os, t.itemValue);
   for (const auto &effect : t.effects) effect.write(os);
 
   return os;
@@ -102,13 +104,13 @@ uint32_t TES4::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
-  os << t.header;
-  if (t.offsets) os << *t.offsets;
-  if (t.deleted) os << *t.deleted;
-  if (t.author) os << *t.author;
-  if (t.description) os << *t.description;
-  for (const auto &master : t.masters) {
-    os << master.master << master.fileSize;
+  writeRecord(os, t.header);
+  writeRecord(os, t.offsets);
+  writeRecord(os, t.author);
+  writeRecord(os, t.description);
+  for (const auto &entry : t.masters) {
+    writeRecord(os, entry.master);
+    writeRecord(os, entry.fileSize);
   }
   return os;
 }
@@ -139,7 +141,8 @@ uint32_t GMST::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::GMST &t, std::size_t /*size*/) {
-  os << t.editorID << t.value;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.value);
   return os;
 }
 
@@ -160,7 +163,9 @@ uint32_t GLOB::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::GLOB &t, std::size_t /*size*/) {
-  os << t.editorID << t.type << t.value;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.type);
+  writeRecord(os, t.value);
   return os;
 }
 
@@ -183,7 +188,11 @@ uint32_t CLAS::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
-  os << t.editorID << t.name << t.description << t.iconFilename << t.data;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.description);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.data);
   return os;
 }
 
@@ -215,13 +224,16 @@ uint32_t FACT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::FACT &t, std::size_t /*size*/) {
-  os << t.editorID << t.name;
-  for (const auto &r : t.relations) {
-    os << r;
-  }
-  os << t.flags << t.crimeGoldMultiplier;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  for (const auto &r : t.relations) writeRecord(os, r);
+  writeRecord(os, t.flags);
+  writeRecord(os, t.crimeGoldMultiplier);
   for (const auto &r : t.ranks) {
-    os << r.index << r.maleName << r.femaleName << r.iconFilename;
+    writeRecord(os, r.index);
+    writeRecord(os, r.maleName);
+    writeRecord(os, r.femaleName);
+    writeRecord(os, r.iconFilename);
   }
   return os;
 }
@@ -261,8 +273,14 @@ uint32_t HAIR::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
-  os << t.editorID << t.name << t.modelFilename << t.boundRadius
-     << t.textureHash << t.iconFilename << t.flags;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.flags);
+
   return os;
 }
 
@@ -289,7 +307,11 @@ uint32_t EYES::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
-  os << t.editorID << t.name << t.iconFilename << t.flags;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.flags);
+
   return os;
 }
 
@@ -356,41 +378,54 @@ uint32_t RACE::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
-  os << t.editorID;
-  if (t.name) os << t.name.value();
-  os << t.description;
-  for (const auto &power : t.powers) os << power;
-  for (const auto &relation : t.relations) os << relation;
-  os << t.data;
-  if (t.voices) os << t.voices.value();
-  if (t.defaultHair) os << t.defaultHair.value();
-  os << t.defaultHairColor;
-  if (t.facegenMainClamp) os << t.facegenMainClamp.value();
-  if (t.facegenFaceClamp) os << t.facegenFaceClamp.value();
-  os << t.baseAttributes << t.faceMarker;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.description);
+  for (const auto &power : t.powers) writeRecord(os, power);
+  for (const auto &relation : t.relations) writeRecord(os, relation);
+  writeRecord(os, t.data);
+  writeRecord(os, t.voices);
+  writeRecord(os, t.defaultHair);
+  writeRecord(os, t.defaultHairColor);
+  writeRecord(os, t.facegenMainClamp);
+  writeRecord(os, t.facegenFaceClamp);
+  writeRecord(os, t.baseAttributes);
+
+  writeRecord(os, t.faceMarker);
   for (const auto &faceData : t.faceData) {
-    os << faceData.type;
-    if (faceData.modelFilename) os << faceData.modelFilename.value();
-    if (faceData.boundRadius) os << faceData.boundRadius.value();
-    if (faceData.textureFilename) os << faceData.textureFilename.value();
+    writeRecord(os, faceData.type);
+    writeRecord(os, faceData.modelFilename);
+    writeRecord(os, faceData.boundRadius);
+    writeRecord(os, faceData.textureFilename);
   }
-  os << t.bodyMarker << t.maleBodyMarker;
+
+  writeRecord(os, t.bodyMarker);
+  writeRecord(os, t.maleBodyMarker);
   if (t.maleTailModel) {
-    os << t.maleTailModel->model << t.maleTailModel->boundRadius;
+    writeRecord(os, t.maleTailModel->model);
+    writeRecord(os, t.maleTailModel->boundRadius);
   }
   for (const auto &bodyData : t.maleBodyData) {
-    os << bodyData.type;
-    if (bodyData.textureFilename) os << bodyData.textureFilename.value();
+    writeRecord(os, bodyData.type);
+    writeRecord(os, bodyData.textureFilename);
   }
-  os << t.femaleBodyMarker;
+
+  writeRecord(os, t.femaleBodyMarker);
   if (t.femaleTailModel) {
-    os << t.femaleTailModel->model << t.femaleTailModel->boundRadius;
+    writeRecord(os, t.femaleTailModel->model);
+    writeRecord(os, t.femaleTailModel->boundRadius);
   }
   for (const auto &bodyData : t.femaleBodyData) {
-    os << bodyData.type;
-    if (bodyData.textureFilename) os << bodyData.textureFilename.value();
+    writeRecord(os, bodyData.type);
+    writeRecord(os, bodyData.textureFilename);
   }
-  os << t.hair << t.eyes << t.fggs << t.fgga << t.fgts << t.unused;
+
+  writeRecord(os, t.hair);
+  writeRecord(os, t.eyes);
+  writeRecord(os, t.fggs);
+  writeRecord(os, t.fgga);
+  writeRecord(os, t.fgts);
+  writeRecord(os, t.unused);
 
   return os;
 }
@@ -497,15 +532,10 @@ uint32_t SOUN::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
-  os << t.editorID << t.filename;
-  std::visit([&os](auto &&r) {
-    using T = std::decay_t<decltype(r)>;
-    if constexpr (std::is_same_v<T, record::SNDD>) {
-      os << r;
-    } else if constexpr(std::is_same_v<T, record::SNDX>) {
-      os << r;
-    }
-  }, t.sound);
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.filename);
+  std::visit([&os](const auto &r) { writeRecord(os, r); }, t.sound);
+
   return os;
 }
 
@@ -540,10 +570,16 @@ uint32_t SKIL::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
-  os << t.editorID << t.index << t.description;
-  if (t.iconFilename) os << t.iconFilename.value();
-  os << t.data << t.apprenticeText << t.journeymanText << t.expertText
-     << t.masterText;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.index);
+  writeRecord(os, t.description);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.data);
+  writeRecord(os, t.apprenticeText);
+  writeRecord(os, t.journeymanText);
+  writeRecord(os, t.expertText);
+  writeRecord(os, t.masterText);
+
   return os;
 }
 
@@ -576,11 +612,14 @@ uint32_t MGEF::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
-  os << t.editorID << t.effectName << t.description;
-  if (t.iconFilename) os << t.iconFilename.value();
-  if (t.effectModel) os << t.effectModel.value();
-  if (t.boundRadius) os << t.boundRadius.value();
-  os << t.data << t.counterEffects;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.effectName);
+  writeRecord(os, t.description);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.effectModel);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.data);
+  writeRecord(os, t.counterEffects);
 
   return os;
 }
@@ -614,12 +653,11 @@ uint32_t LTEX::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
-  os << t.editorID << t.textureFilename;
-  if (t.havokData) os << t.havokData.value();
-  if (t.specularExponent) os << t.specularExponent.value();
-  for (const auto &grass : t.potentialGrasses) {
-    os << grass;
-  }
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.textureFilename);
+  writeRecord(os, t.havokData);
+  writeRecord(os, t.specularExponent);
+  for (const auto &grass : t.potentialGrasses) writeRecord(os, grass);
 
   return os;
 }
@@ -649,8 +687,11 @@ uint32_t STAT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
-  os << t.editorID << t.modelFilename << t.boundRadius;
-  if (t.textureHash) os << t.textureHash.value();
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+
   return os;
 }
 
@@ -694,9 +735,9 @@ std::istream &raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
-  os << t.editorID;
-  if (t.name) os << *t.name;
-  os << t.enchantmentData;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.enchantmentData);
   for (const auto &effect : t.effects) effect.write(os);
 
   return os;
@@ -727,7 +768,9 @@ std::istream &raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
-  os << t.editorID << t.name << t.data;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.data);
   for (const auto &effect : t.effects) effect.write(os);
 
   return os;
@@ -754,19 +797,20 @@ uint32_t CELL::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
-  os << t.editorID;
-  if (t.name) os << t.name.value();
-  os << t.data;
-  if (t.lighting) os << t.lighting.value();
-  if (t.music) os << t.music.value();
-  if (t.owner) os << t.owner.value();
-  if (t.ownershipGlobal) os << t.ownershipGlobal.value();
-  if (t.ownershipRank) os << t.ownershipRank.value();
-  if (t.climate) os << t.climate.value();
-  if (t.waterHeight) os << t.waterHeight.value();
-  if (t.water) os << t.water.value();
-  if (t.regions) os << t.regions.value();
-  if (t.grid) os << t.grid.value();
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.data);
+  writeRecord(os, t.lighting);
+  writeRecord(os, t.music);
+  writeRecord(os, t.owner);
+  writeRecord(os, t.ownershipGlobal);
+  writeRecord(os, t.ownershipRank);
+  writeRecord(os, t.climate);
+  writeRecord(os, t.waterHeight);
+  writeRecord(os, t.water);
+  writeRecord(os, t.regions);
+  writeRecord(os, t.grid);
+
   return os;
 }
 
@@ -775,19 +819,13 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.data);
-  std::set<std::string> possibleSubrecords = {
-      "XCLL", "XOWN", "XGLB", "XRNK", "XCMT",
-      "XCCM", "XCLW", "XCWT", "XCLR", "XCLC"
+  std::set<uint32_t> possibleSubrecords = {
+      "XCLL"_rec, "XOWN"_rec, "XGLB"_rec, "XRNK"_rec, "XCMT"_rec,
+      "XCCM"_rec, "XCLW"_rec, "XCWT"_rec, "XCLR"_rec, "XCLC"_rec
   };
-  std::string rec;
+  uint32_t rec{};
   while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    // Convert to an integer to switch over
-    if (rec.length() != 4) {
-      throw std::runtime_error(
-          std::string("Expected a subrecord type, found ").append(rec));
-    }
-    std::array<char, 4> recordArray = {rec[0], rec[1], rec[2], rec[3]};
-    switch (recOf(recordArray)) {
+    switch (rec) {
       case "XCLL"_rec:readRecord(is, t.lighting);
         break;
       case "XOWN"_rec:readRecord(is, t.owner);
@@ -848,32 +886,32 @@ uint32_t REFR::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::REFR &t, std::size_t size) {
-  os << t.baseID;
-  if (t.editorID) os << *t.editorID;
-  if (t.description) os << *t.description;
-  if (t.scale) os << *t.scale;
-  if (t.parent) os << *t.parent;
-  if (t.target) os << *t.target;
-  if (t.unusedCellID) os << *t.unusedCellID;
-  if (t.unusedCellName) os << *t.unusedCellName;
-  if (t.action) os << *t.action;
-  if (t.ragdollData) os << *t.ragdollData;
-  if (t.mapMarker) os << *t.mapMarker;
-  if (t.mapFlags) os << *t.mapFlags;
-  if (t.markerType) os << *t.markerType;
-  if (t.owner) os << *t.owner;
-  if (t.ownershipGlobal) os << *t.ownershipGlobal;
-  if (t.ownershipRank) os << *t.ownershipRank;
-  if (t.teleport) os << *t.teleport;
-  if (t.teleportParent) os << *t.teleportParent;
-  if (t.openByDefault) os << *t.openByDefault;
-  if (t.lockInfo) os << *t.lockInfo;
-  if (t.speedTree) os << *t.speedTree;
-  if (t.lod) os << *t.lod;
-  if (t.levelModifier) os << *t.levelModifier;
-  if (t.count) os << *t.count;
-  if (t.soul) os << *t.soul;
-  os << t.positionRotation;
+  writeRecord(os, t.baseID);
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.description);
+  writeRecord(os, t.scale);
+  writeRecord(os, t.parent);
+  writeRecord(os, t.target);
+  writeRecord(os, t.unusedCellID);
+  writeRecord(os, t.unusedCellName);
+  writeRecord(os, t.action);
+  writeRecord(os, t.ragdollData);
+  writeRecord(os, t.mapMarker);
+  writeRecord(os, t.mapFlags);
+  writeRecord(os, t.markerType);
+  writeRecord(os, t.owner);
+  writeRecord(os, t.ownershipGlobal);
+  writeRecord(os, t.ownershipRank);
+  writeRecord(os, t.teleport);
+  writeRecord(os, t.teleportParent);
+  writeRecord(os, t.openByDefault);
+  writeRecord(os, t.lockInfo);
+  writeRecord(os, t.speedTree);
+  writeRecord(os, t.lod);
+  writeRecord(os, t.levelModifier);
+  writeRecord(os, t.count);
+  writeRecord(os, t.soul);
+  writeRecord(os, t.positionRotation);
 
   return os;
 }
@@ -964,16 +1002,16 @@ uint32_t LIGH::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
-  os << t.editorID;
-  if (t.modelFilename) os << *t.modelFilename;
-  if (t.boundRadius) os << *t.boundRadius;
-  if (t.textureHash) os << *t.textureHash;
-  if (t.itemScript) os << *t.itemScript;
-  if (t.name) os << *t.name;
-  if (t.icon) os << *t.icon;
-  os << t.data;
-  if (t.fadeValue) os << *t.fadeValue;
-  if (t.sound) os << *t.sound;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.itemScript);
+  writeRecord(os, t.name);
+  writeRecord(os, t.icon);
+  writeRecord(os, t.data);
+  writeRecord(os, t.fadeValue);
+  writeRecord(os, t.sound);
 
   return os;
 }
@@ -1026,11 +1064,11 @@ uint32_t BSGN::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
-  os << t.editorID;
-  os << t.name;
-  os << t.icon;
-  if (t.description) os << *t.description;
-  for (const auto &spell : t.spells) os << spell;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.icon);
+  writeRecord(os, t.description);
+  for (const auto &spell : t.spells) writeRecord(os, spell);
 
   return os;
 }
@@ -1065,14 +1103,14 @@ uint32_t MISC::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
-  os << t.editorID;
-  if (t.name) os << *t.name;
-  if (t.modelFilename) os << *t.modelFilename;
-  if (t.boundRadius) os << *t.boundRadius;
-  if (t.textureHash) os << *t.textureHash;
-  if (t.icon) os << *t.icon;
-  if (t.itemScript) os << *t.itemScript;
-  os << t.data;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.icon);
+  writeRecord(os, t.itemScript);
+  writeRecord(os, t.data);
 
   return os;
 }
@@ -1115,17 +1153,17 @@ uint32_t DOOR::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
-  os << t.editorID;
-  if (t.name) os << *t.name;
-  if (t.modelFilename) os << *t.modelFilename;
-  if (t.boundRadius) os << *t.boundRadius;
-  if (t.textureHash) os << *t.textureHash;
-  if (t.script) os << *t.script;
-  if (t.openSound) os << *t.openSound;
-  if (t.closeSound) os << *t.closeSound;
-  if (t.loopSound) os << *t.loopSound;
-  os << t.flags;
-  for (const auto &rec : t.randomTeleports) os << rec;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.openSound);
+  writeRecord(os, t.closeSound);
+  writeRecord(os, t.loopSound);
+  writeRecord(os, t.flags);
+  for (const auto &rec : t.randomTeleports) writeRecord(os, rec);
 
   return os;
 }
@@ -1166,13 +1204,13 @@ uint32_t ACTI::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
-  os << t.editorID;
-  if (t.name) os << *t.name;
-  os << t.modelFilename;
-  os << t.boundRadius;
-  if (t.textureHash) os << *t.textureHash;
-  if (t.script) os << *t.script;
-  if (t.sound) os << *t.sound;
+  writeRecord(os, t.editorID);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.sound);
 
   return os;
 }

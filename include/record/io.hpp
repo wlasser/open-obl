@@ -52,6 +52,22 @@ T readRecord(std::istream &is) {
   return rec;
 }
 
+/// Wrapper around operator<<(std::ostream &, const T&).
+/// \tparam T Should be a Subrecord or Record.
+/// \todo Fix the SFINAE on this to actually only match Subrecord or Record
+template<class T, uint32_t recType = T::RecordType>
+void writeRecord(std::ostream &os, const T &t) {
+  os << t;
+}
+
+/// If t has contents then write it with writeRecord(), otherwise no dothing.
+/// \tparam T Should be a Subrecord or Record.
+/// \todo Fix the SFINAE on this to actually only match Subrecord or Record
+template<class T, uint32_t recType = T::RecordType>
+void writeRecord(std::ostream &os, const std::optional<T> &t) {
+  if (t) os << *t;
+}
+
 /// Read the header of the next record and place `is` just before the body.
 /// Does not check that `is` is pointing to a record.
 RecordHeader readRecordHeader(std::istream &is);
@@ -66,9 +82,9 @@ void skipGroup(std::istream &is);
 
 namespace raw {
 
-// These read and write raw (sub)records as bytes to and from streams. This will
-// only match the desired output for integral types, and should be specialized
-// otherwise.
+/// Output the raw Record or raw Subrecord T in its esp binary representation.
+/// \remark Specialize this for each raw type of non-class type that is not
+///         Tuplifiable.
 template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
                                                                T>::value>>
 std::ostream &write(std::ostream &os, const T &t, std::size_t /*size*/) {
@@ -76,6 +92,9 @@ std::ostream &write(std::ostream &os, const T &t, std::size_t /*size*/) {
   return os;
 }
 
+/// Read a raw Record or raw Subrecord T in its esp binary representation.
+/// \remark Specialize this for each raw type of non-class type that is not
+///         Tuplifiable.
 template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
                                                                T>::value>>
 std::istream &read(std::istream &is, T &t, std::size_t size) {
@@ -83,6 +102,7 @@ std::istream &read(std::istream &is, T &t, std::size_t size) {
   return is;
 }
 
+/// \overload raw::write(std::ostream &, const T &, std::size_t)
 template<class ...T>
 std::ostream &write(std::ostream &os,
                     const Tuplifiable<T...> &t,
@@ -92,6 +112,7 @@ std::ostream &write(std::ostream &os,
   return os;
 }
 
+/// \overload raw::read(std::istream &, T &, std::size_t)
 template<class ...T>
 std::istream &read(std::istream &is, Tuplifiable<T...> &t, std::size_t size) {
   std::apply([&is](auto ...x) { (io::readBytes(is, *x), ...); }, t.asTuple());
