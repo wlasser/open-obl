@@ -13,23 +13,14 @@
 using LightResolver = Resolver<record::LIGH>;
 
 template<>
-class Resolver<record::LIGH> {
- private:
-  std::unordered_map<BaseId, record::LIGH> mMap{};
-
- public:
-  using peek_t = record::LIGH;
-  using get_t = record::LIGH;
-  using make_t = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
-  using store_t = record::LIGH;
-
-  peek_t peek(BaseId baseId) const;
-  get_t get(BaseId baseId) const;
-  make_t make(BaseId baseId,
-              gsl::not_null<Ogre::SceneManager *> mgr,
-              std::optional<RefId> id) const;
-  bool add(BaseId baseId, store_t entry);
-  bool contains(BaseId baseId) const noexcept;
+struct ReifyRecordTrait<record::LIGH> {
+  using type = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
 };
+
+template<>
+ReifyRecordTrait<record::LIGH>::type
+reifyRecord(const record::LIGH &rec,
+            gsl::not_null<Ogre::SceneManager *> scnMgr,
+            tl::optional<RefId> refId);
 
 #endif // OPENOBLIVION_LIGHT_RESOLVER_HPP

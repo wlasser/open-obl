@@ -10,19 +10,14 @@
 using DoorResolver = Resolver<record::DOOR>;
 
 template<>
-class Resolver<record::DOOR> {
- private:
-  std::unordered_map<BaseId, record::DOOR> mMap{};
-
- public:
-  using make_t = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using store_t = record::DOOR;
-
-  make_t make(BaseId baseId,
-              gsl::not_null<Ogre::SceneManager *> mgr,
-              std::optional<RefId> id) const;
-  bool add(BaseId baseId, store_t entry);
-  bool contains(BaseId baseId) const noexcept;
+struct ReifyRecordTrait<record::DOOR> {
+  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
 };
+
+template<>
+ReifyRecordTrait<record::DOOR>::type
+reifyRecord(const record::DOOR &rec,
+            gsl::not_null<Ogre::SceneManager *> scnMgr,
+            tl::optional<RefId> refId);
 
 #endif // OPENOBLIVION_DOOR_RESOLVER_HPP

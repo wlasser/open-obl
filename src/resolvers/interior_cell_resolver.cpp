@@ -113,11 +113,11 @@ void Resolver<record::CELL>::RecordVisitor::readRecord<record::REFR>(esp::EspAcc
   if (auto stat{mResolvers.statRes.get(baseId)}) {
     auto entity{reifyRecord(*stat, scnMgr, refId)};
     attachAll(workingNode, refId, world, entity);
-  } else if (mResolvers.doorRes.contains(baseId)) {
-    auto entity{mResolvers.doorRes.make(baseId, scnMgr, {})};
+  } else if (auto door{mResolvers.doorRes.get(baseId)}) {
+    auto entity{reifyRecord(*door, scnMgr, refId)};
     attachAll(workingNode, refId, world, entity);
-  } else if (mResolvers.lighRes.contains(baseId)) {
-    auto entity{mResolvers.lighRes.make(baseId, scnMgr, {})};
+  } else if (auto ligh{mResolvers.lighRes.get(baseId)}) {
+    auto entity{reifyRecord(*ligh, scnMgr, refId)};
     attachAll(workingNode, refId, world, entity);
   } else {
     mCell.scnMgr->destroySceneNode(node);

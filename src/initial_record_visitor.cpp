@@ -17,13 +17,13 @@ void InitialRecordVisitor::readRecord<record::STAT>(esp::EspAccessor &accessor) 
 template<>
 void InitialRecordVisitor::readRecord<record::DOOR>(esp::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::DOOR>().value};
-  doorRes->add(BaseId{rec.mFormId}, rec);
+  doorRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::LIGH>(esp::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::LIGH>().value};
-  lightRes->add(BaseId{rec.mFormId}, rec);
+  lightRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>

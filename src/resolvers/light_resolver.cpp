@@ -3,25 +3,14 @@
 #include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
 
-auto Resolver<record::LIGH>::peek(BaseId baseId) const -> peek_t {
-  const auto entry{mMap.find(baseId)};
-  if (entry == mMap.end()) return {};
-  return entry->second;
-}
-
-auto Resolver<record::LIGH>::get(BaseId baseId) const -> get_t {
-  return peek(baseId);
-}
-
-auto Resolver<record::LIGH>::make(BaseId baseId,
-                                  gsl::not_null<Ogre::SceneManager *> mgr,
-                                  std::optional<RefId> id) const -> make_t {
-  const auto entry{mMap.find(baseId)};
-  if (entry == mMap.end()) return {};
-  const auto &rec{entry->second};
+template<>
+ReifyRecordTrait<record::LIGH>::type
+reifyRecord(const record::LIGH &rec,
+            gsl::not_null<Ogre::SceneManager *> scnMgr,
+            tl::optional<RefId> refId) {
   const auto &data{rec.data.data};
 
-  auto *const light{mgr->createLight()};
+  auto *const light{scnMgr->createLight()};
   const Ogre::ColourValue lightColor = [&data]() -> Ogre::ColourValue {
     Ogre::ColourValue col{};
     col.setAsABGR(data.color.v);
@@ -51,22 +40,13 @@ auto Resolver<record::LIGH>::make(BaseId baseId,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  Ogre::Entity *mesh{loadMesh(rec, mgr)};
-  Ogre::RigidBody *rigidBody{loadRigidBody(mesh, mgr)};
+  Ogre::Entity *mesh{loadMesh(rec, scnMgr)};
+  Ogre::RigidBody *rigidBody{loadRigidBody(mesh, scnMgr)};
 
   if (rigidBody) {
     // TODO: Get a new RefId properly
-    const RefId refId{id ? *id : RefId{}};
-    setRefId(gsl::make_not_null(rigidBody), refId);
+    setRefId(gsl::make_not_null(rigidBody), refId ? *refId : RefId{});
   }
 
   return {ecs::Light{light}, ecs::RigidBody{rigidBody}, ecs::Mesh{mesh}};
-}
-
-bool Resolver<record::LIGH>::add(BaseId baseId, store_t entry) {
-  return mMap.insert_or_assign(baseId, entry).second;
-}
-
-bool Resolver<record::LIGH>::contains(BaseId baseId) const noexcept {
-  return mMap.find(baseId) != mMap.end();
 }
