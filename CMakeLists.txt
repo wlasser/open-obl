@@ -14,13 +14,9 @@ find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
 find_package(pugixml REQUIRED)
 
-set(SPDLOG_BUILD_EXAMPLES NO)
-set(SPDLOG_BUILD_TESTING NO)
-set(SPDLOG_BUILD_BENCH NO)
-add_subdirectory(lib/spdlog)
-
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
+add_subdirectory(lib/spdlog)
 add_subdirectory(lib/tl)
 
 add_subdirectory(src/io)

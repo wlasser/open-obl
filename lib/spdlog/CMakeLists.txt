@@ -42,11 +42,11 @@ include(cmake/sanitizers.cmake)
 add_library(spdlog INTERFACE)
 add_library(spdlog::spdlog ALIAS spdlog)
 
-option(SPDLOG_BUILD_EXAMPLES "Build examples" ON)
-option(SPDLOG_BUILD_BENCH "Build benchmarks" ON)
+option(SPDLOG_BUILD_EXAMPLES "Build examples" OFF)
+option(SPDLOG_BUILD_BENCH "Build benchmarks" OFF)
 
 cmake_dependent_option(SPDLOG_BUILD_TESTING
-    "Build spdlog tests" ON
+    "Build spdlog tests" OFF
     "BUILD_TESTING" OFF
 )
 
