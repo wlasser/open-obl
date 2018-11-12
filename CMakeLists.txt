@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOblivion)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+include(CheckIPOSupported)
+
+# Link-time optimization
+check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
+if (IPO_SUPPORTED)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else ()
+    message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
+endif ()
 
 option(USE_IWYU "Run include-what-you-use when building" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -29,6 +36,10 @@ add_subdirectory(src/ogreimgui)
 add_subdirectory(src/sdl)
 
 add_executable(OpenOblivion)
+target_compile_options(OpenOblivion PRIVATE -Wall)
+target_compile_features(OpenOblivion PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
+
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         src/application.cpp
