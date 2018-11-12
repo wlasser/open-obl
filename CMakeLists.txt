@@ -20,8 +20,8 @@ set(SPDLOG_BUILD_BENCH NO)
 add_subdirectory(lib/spdlog)
 
 add_subdirectory(lib/gsl)
-
 add_subdirectory(lib/polymorphic_value)
+add_subdirectory(lib/tl)
 
 add_subdirectory(src/io)
 add_subdirectory(src/fs)
@@ -160,6 +160,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OgreMain OgreGLSupport
         spdlog
         stdc++fs
+        tloptional
         GSL
         pugixml
         polymorphic_value
