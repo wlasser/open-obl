@@ -4,7 +4,8 @@
 
 uint32_t record::peekRecordType(std::istream &is) {
   uint32_t type{};
-  io::readBytes(is, type);
+  is.read(reinterpret_cast<char *>(&type), sizeof(type));
+  if (is.rdstate() != std::ios::goodbit) return 0;
   is.seekg(-4, std::istream::cur);
   return type;
 }
