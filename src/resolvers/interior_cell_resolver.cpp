@@ -110,8 +110,8 @@ void Resolver<record::CELL>::RecordVisitor::readRecord<record::REFR>(esp::EspAcc
   gsl::not_null<btDiscreteDynamicsWorld *> world{mCell.physicsWorld.get()};
 
   // Construct the actual entities and attach them to the node
-  if (mResolvers.statRes.contains(baseId)) {
-    auto entity{mResolvers.statRes.make(baseId, scnMgr, {})};
+  if (auto stat{mResolvers.statRes.get(baseId)}) {
+    auto entity{reifyRecord(*stat, scnMgr, refId)};
     attachAll(workingNode, refId, world, entity);
   } else if (mResolvers.doorRes.contains(baseId)) {
     auto entity{mResolvers.doorRes.make(baseId, scnMgr, {})};

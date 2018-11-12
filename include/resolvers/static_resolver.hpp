@@ -15,19 +15,14 @@
 using StaticResolver = Resolver<record::STAT>;
 
 template<>
-class Resolver<record::STAT> {
- private:
-  std::unordered_map<BaseId, record::STAT> mMap{};
-
- public:
-  using make_t = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using store_t = record::STAT;
-
-  make_t make(BaseId baseId,
-              gsl::not_null<Ogre::SceneManager *> mgr,
-              std::optional<RefId> id) const;
-  bool add(BaseId baseId, store_t entry);
-  bool contains(BaseId baseId) const noexcept;
+struct ReifyRecordTrait<record::STAT> {
+  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
 };
+
+template<>
+ReifyRecordTrait<record::STAT>::type
+reifyRecord(const record::STAT &rec,
+            gsl::not_null<Ogre::SceneManager *> scnMgr,
+            tl::optional<RefId> refId);
 
 #endif // OPENOBLIVION_STATIC_RESOLVER_HPP

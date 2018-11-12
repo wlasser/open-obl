@@ -24,7 +24,7 @@ struct InteriorCell {
   std::string name{};
   Ogre::ColourValue ambientLight{};
   Ogre::Light *directionalLight{};
-  gsl::not_null<Ogre::SceneManager *> scnMgr;
+  gsl::not_null<gsl::owner<Ogre::SceneManager *>> scnMgr;
   std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld{};
 
   explicit InteriorCell(std::unique_ptr<btDiscreteDynamicsWorld> physicsWorld)

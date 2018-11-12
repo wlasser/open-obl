@@ -11,7 +11,7 @@
 template<>
 void InitialRecordVisitor::readRecord<record::STAT>(esp::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::STAT>().value};
-  staticRes->add(BaseId{rec.mFormId}, rec);
+  staticRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>
@@ -37,7 +37,7 @@ void InitialRecordVisitor::readRecord<record::MISC>(esp::EspAccessor &accessor) 
                        rec.mRecordFlags,
                        rec.mFormId,
                        rec.mVersionControlInfo);
-  staticRes->add(BaseId{rec.mFormId}, statRec);
+  staticRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, statRec);
 }
 
 template<>
