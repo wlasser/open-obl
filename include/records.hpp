@@ -10,6 +10,7 @@
 #include "record/record.hpp"
 #include "record/subrecord.hpp"
 #include "record/tuplifiable.hpp"
+#include "reference_records.hpp"
 #include "subrecords.hpp"
 #include <array>
 #include <istream>
@@ -350,57 +351,6 @@ struct CELL {
   std::optional<record::XCLC> grid{};
 };
 
-// Unsure about the ordering in esm files
-struct REFR {
-  std::optional<record::EDID> editorID{};
-  record::NAME baseID{};
-  std::optional<record::DESC> description{};
-  std::optional<record::XSCL> scale{};
-
-  std::optional<record::XESP> parent{};
-  std::optional<record::XTRG> target{};
-
-  std::optional<record::XPCI> unusedCellID{};
-  std::optional<record::FULL> unusedCellName{};
-
-  std::optional<record::XACT> action{};
-  std::optional<record::XRGD> ragdollData{};
-
-  // if (marker)
-  std::optional<record::XMRK> mapMarker{};
-  std::optional<record::FNAM_REFR> mapFlags{};
-  std::optional<record::TNAM> markerType{};
-
-  // if (ownable)
-  std::optional<record::XOWN> owner{};
-  std::optional<record::XGLB> ownershipGlobal{};
-  std::optional<record::XRNK> ownershipRank{};
-
-  // if (door)
-  std::optional<record::XTEL> teleport{};
-  std::optional<record::XRTM> teleportParent{};
-  std::optional<record::ONAM> openByDefault{};
-
-  // if (locked)
-  std::optional<record::XLOC> lockInfo{};
-
-  // if (tree) ?
-  std::optional<record::XSED> speedTree{};
-  std::optional<record::XLOD> lod{};
-
-  // if (leveledCreature)
-  std::optional<record::XLCM> levelModifier{};
-
-  // if (item)
-  std::optional<record::XCNT> count{};
-
-  // if (soulgem)
-  std::optional<record::XSOL> soul{};
-
-  // TODO: Finish
-  record::DATA_REFR positionRotation{};
-};
-
 } // namespace raw
 
 using TES4 = Record<raw::TES4, "TES4"_rec>;
@@ -425,7 +375,6 @@ using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
-using REFR = Record<raw::REFR, "REFR"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(TES4);
 DECLARE_SPECIALIZED_RECORD(GMST);
@@ -449,7 +398,6 @@ DECLARE_SPECIALIZED_RECORD(MISC);
 DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
-DECLARE_SPECIALIZED_RECORD(REFR);
 
 } // namespace record
 

@@ -15,15 +15,15 @@
 ///
 /// At runtime it is necessary to convert BaseIds into the base records that
 /// they identify, usually to query information about the record or to create a
-/// concrete realization of it represented by a reference record. Occasionally
-/// it is also necessary to modify base records directly; OBSE provides several
-/// functions that do this.
+/// concrete realization of it represented by a reference record. Call the
+/// latter operation **cite** (because it creates a reference, get it? I'm
+/// really struggling to think of a good name here). Occasionally it is also
+/// necessary to modify base records directly; OBSE provides several functions
+/// that do this.
 ///
 /// This class abstracts away the lifetime difference of records obtained from
 /// esp files (call these 'esp records'), and those obtained from ess files or
-/// generated on the fly (call these 'ess records). The intent is that only the
-/// public-facing interface will need to be specialized for any given
-/// record::Record.
+/// generated on the fly (call these 'ess records).
 ///
 /// \remark This class does *not* support deferred loading of records or the
 ///         loading of records located in hierarchical top groups, namely
@@ -82,34 +82,60 @@ class Resolver {
   bool insertOrAssign(BaseId baseId, const R &rec);
 };
 
+/// Used for specializing the return type of citeRecord.
+/// This should be specialized for each type that citeRecord is specialized for
+/// in order to specify the return type of that specialization. Every
+/// specialization of CiteRecordTrait should define a public typedef or type
+/// alias called `type` for a reference record type, namely
+/// record::ACHR, record::ACRE, or any of the record::REFR_xxxx types.
+/// \see reference_records.hpp
 template<class R>
-struct ReifyRecordTrait {};
+struct CiteRecordTrait {};
 
-/// Construct a concrete realization of a record.
-/// This function template is intended to return both a reference record
-/// representing a concrete realization of the base record within the scope of
-/// the game engine, and some dependent type representing a concrete
-/// realization within the scope of the rendering engine.
+/// Construct a reference record representing a concrete realization of a base
+/// record.
+// \remark This function template is *not* intended for producing a concrete
+///        realization of a record within the scope of the *rendering engine*;
+///        see the function template reifyRecord for that
 /// \tparam R A record::Record. Specifically, the expression
 ///           `std::is_same_v<R, record::Record<R::Raw, R::RecordType>` must
 ///           evaluate to true.
-/// \param rec The base record to reify.
-/// \param scnMgr The reified record is constructed in and owned by the
-///               Ogre::SceneManager; it is not the caller's responsibility to
-///               known how to link the possible components of the type together
-///               in a scene.
+/// \param rec The base record to cite.
 /// \param refId The RefId to give the returned reference record. One will be
 ///              generated if refId is not provided.
 ///
 /// \remark This function template should be specialized for each record::Record
 ///         where it makes sense.
-/// \remark By a 'reference record' it is meant a record::REFR, record::ACHR,
-///         or record::ACRE.
+/// \remark By a 'reference record' it is meant a record::ACHR, record::ACRE, or
+///         any of the record::REFR_xxxx types. \see reference_records.hpp
+template<class R>
+typename CiteRecordTrait<R>::type
+citeRecord(const R &baseRec, tl::optional<RefId> refId);
+
+/// Used for specializing the return type of reifyRecord and the resolvers that
+/// must be supplied.
+/// This should be specialized for each type that reifyRecord is specialized for
+/// in order to specify the return type of that specialization. Every
+/// specialization of ReifyRecordTrait should define
+/// - a public typedef or type alias called `type` equal to the desired return
+///   type
+/// - a public typedef or type alias called `resolvers` equal to a tuple of
+///   const lvalue references to instantiations of Resolver<>. The tuple shall
+///   not have more than one element of the same type.
+template<class R>
+struct ReifyRecordTrait {};
+
+/// Construct a concrete realization of a reference record within the scope of
+/// the rendering engine.
+/// \tparam R A reference record.
+/// \param scnMgr The reified object is constructed in and owned by the
+///               Ogre::SceneManager; it is not the caller's responsibility to
+///               known how to link the possible components of the type together
+///               in a scene.
 template<class R>
 typename ReifyRecordTrait<R>::type
-reifyRecord(const R &rec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            tl::optional<RefId> refId);
+reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
+            typename ReifyRecordTrait<R>::resolvers resolvers);
 
 template<class R>
 std::pair<typename Resolver<R>::RecordIterator, bool>
@@ -147,10 +173,13 @@ template<class R>
 tl::optional<const R &> Resolver<R>::get(BaseId baseId) const {
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
-  return std::visit(overloaded{
-      [](const R &e) { return e; },
-      [](auto &&pair) { return pair.second ? *pair.second : pair.first; }
-  }, it->second);
+  const std::variant<std::pair<const R, tl::optional<R>>, R> &entry{it->second};
+  if (entry.index() == 0) {
+    const std::pair<const R, tl::optional<R>> &pair{std::get<0>(entry)};
+    return pair.second ? *pair.second : pair.first;
+  } else {
+    return std::get<1>(entry);
+  }
 }
 
 template<class R>

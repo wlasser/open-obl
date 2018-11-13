@@ -15,14 +15,24 @@
 using StaticResolver = Resolver<record::STAT>;
 
 template<>
-struct ReifyRecordTrait<record::STAT> {
-  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
+struct CiteRecordTrait<record::STAT> {
+  using type = record::REFR_STAT;
 };
 
 template<>
-ReifyRecordTrait<record::STAT>::type
-reifyRecord(const record::STAT &rec,
+struct ReifyRecordTrait<record::REFR_STAT> {
+  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
+  using resolvers = std::tuple<const Resolver<record::STAT> &>;
+};
+
+template<>
+CiteRecordTrait<record::STAT>::type
+citeRecord(const record::STAT &baseRec, tl::optional<RefId> refId);
+
+template<>
+ReifyRecordTrait<record::REFR_STAT>::type
+reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
-            tl::optional<RefId> refId);
+            ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers);
 
 #endif // OPENOBLIVION_STATIC_RESOLVER_HPP

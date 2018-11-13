@@ -131,6 +131,13 @@ uint32_t EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
   return record::peekRecordType(it->stream);
 };
 
+BaseId EspCoordinator::peekBaseId(int modIndex, SeekPos seekPos) {
+  std::scoped_lock lock{mMutex};
+  auto it{getAvailableStream(mLoadOrder[modIndex])};
+  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  return record::peekBaseOfReference(it->stream);
+}
+
 EspCoordinator::ReadResult<record::Group>
 EspCoordinator::readGroup(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
@@ -172,6 +179,10 @@ EspAccessor::ReadHeaderResult EspAccessor::skipRecord() {
 
 uint32_t EspAccessor::peekRecordType() {
   return mCoordinator->peekRecordType(mIndex, mPos);
+}
+
+BaseId EspAccessor::peekBaseId() {
+  return mCoordinator->peekBaseId(mIndex, mPos);
 }
 
 EspAccessor::ReadResult<record::Group> EspAccessor::readGroup() {
@@ -412,14 +423,28 @@ EspCoordinator::translateFormIds(record::raw::CELL rec, int modIndex) const {
 }
 
 template<>
-record::raw::REFR
-EspCoordinator::translateFormIds(record::raw::REFR rec, int modIndex) const {
+record::raw::REFR_ACTI
+EspCoordinator::translateFormIds(record::raw::REFR_ACTI rec,
+                                 int modIndex) const {
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
+  rec.baseID = translateFormIds(rec.baseID, modIndex);
   if (rec.target) {
     rec.target->data = translateFormIds(rec.target->data, modIndex);
   }
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_DOOR
+EspCoordinator::translateFormIds(record::raw::REFR_DOOR rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseID = translateFormIds(rec.baseID, modIndex);
   if (rec.owner) {
     rec.owner->data = translateFormIds(rec.owner->data, modIndex);
   }
@@ -438,6 +463,50 @@ EspCoordinator::translateFormIds(record::raw::REFR rec, int modIndex) const {
   if (rec.lockInfo) {
     rec.lockInfo->data = translateFormIds(rec.lockInfo->data, modIndex);
   }
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_LIGH
+EspCoordinator::translateFormIds(record::raw::REFR_LIGH rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseID = translateFormIds(rec.baseID, modIndex);
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_MISC
+EspCoordinator::translateFormIds(record::raw::REFR_MISC rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  if (rec.ownershipGlobal) {
+    rec.ownershipGlobal->data =
+        translateFormIds(rec.ownershipGlobal->data, modIndex);
+  }
+  if (rec.ownershipRank) {
+    rec.ownershipRank->data =
+        translateFormIds(rec.ownershipRank->data, modIndex);
+  }
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_STAT
+EspCoordinator::translateFormIds(record::raw::REFR_STAT rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseID = translateFormIds(rec.baseID, modIndex);
 
   return rec;
 }

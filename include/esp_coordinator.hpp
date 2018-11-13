@@ -148,6 +148,9 @@ class EspCoordinator {
   uint32_t peekRecordType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  BaseId peekBaseId(int modIndex, SeekPos seekPos);
+  //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
+
   ReadResult<record::Group> readGroup(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
@@ -226,7 +229,24 @@ class EspCoordinator {
   record::raw::CELL translateFormIds(record::raw::CELL rec, int modIndex) const;
 
   template<>
-  record::raw::REFR translateFormIds(record::raw::REFR rec, int modIndex) const;
+  record::raw::REFR_ACTI
+  translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;
+
+  template<>
+  record::raw::REFR_DOOR
+  translateFormIds(record::raw::REFR_DOOR rec, int modIndex) const;
+
+  template<>
+  record::raw::REFR_LIGH
+  translateFormIds(record::raw::REFR_LIGH rec, int modIndex) const;
+
+  template<>
+  record::raw::REFR_MISC
+  translateFormIds(record::raw::REFR_MISC rec, int modIndex) const;
+
+  template<>
+  record::raw::REFR_STAT
+  translateFormIds(record::raw::REFR_STAT rec, int modIndex) const;
 
   template<class T, uint32_t c>
   record::Record<T, c>
@@ -261,6 +281,8 @@ class EspAccessor {
   ReadHeaderResult skipRecord();
 
   uint32_t peekRecordType();
+
+  BaseId peekBaseId();
 
   ReadResult<record::Group> readGroup();
 

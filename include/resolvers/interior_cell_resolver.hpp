@@ -95,6 +95,9 @@ class Resolver<record::CELL> {
     explicit RecordVisitor(InteriorCell &cell, Resolvers resolvers) :
         mCell(cell), mResolvers(resolvers) {}
 
+    void setNodeTransform(Ogre::SceneNode *node,
+                          const record::raw::REFRTransformation &transform);
+
     template<class R>
     void readRecord(esp::EspAccessor &accessor) {
       accessor.skipRecord();

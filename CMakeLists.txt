@@ -138,6 +138,7 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/mesh_loader_state.hpp
         include/nifloader/nif_resource.hpp
         include/nifloader/nif_resource_manager.hpp
+        include/reference_records.hpp
         include/resolvers/door_resolver.hpp
         include/resolvers/helpers.hpp
         include/resolvers/interior_cell_resolver.hpp

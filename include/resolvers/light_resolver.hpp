@@ -13,14 +13,24 @@
 using LightResolver = Resolver<record::LIGH>;
 
 template<>
-struct ReifyRecordTrait<record::LIGH> {
-  using type = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
+struct CiteRecordTrait<record::LIGH> {
+  using type = record::REFR_LIGH;
 };
 
 template<>
-ReifyRecordTrait<record::LIGH>::type
-reifyRecord(const record::LIGH &rec,
+struct ReifyRecordTrait<record::REFR_LIGH> {
+  using type = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
+  using resolvers = std::tuple<const Resolver<record::LIGH> &>;
+};
+
+template<>
+CiteRecordTrait<record::LIGH>::type
+citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId);
+
+template<>
+ReifyRecordTrait<record::REFR_LIGH>::type
+reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
-            tl::optional<RefId> refId);
+            ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers);
 
 #endif // OPENOBLIVION_LIGHT_RESOLVER_HPP

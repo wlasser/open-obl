@@ -852,138 +852,6 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
   return is;
 }
 
-// REFR specialization
-template<>
-uint32_t REFR::size() const {
-  return baseID.entireSize()
-      + (editorID ? editorID->entireSize() : 0u)
-      + (description ? description->entireSize() : 0u)
-      + (scale ? scale->entireSize() : 0u)
-      + (parent ? parent->entireSize() : 0u)
-      + (target ? target->entireSize() : 0u)
-      + (unusedCellID ? unusedCellID->entireSize() : 0u)
-      + (unusedCellName ? unusedCellName->entireSize() : 0u)
-      + (action ? action->entireSize() : 0u)
-      + (ragdollData ? ragdollData->entireSize() : 0u)
-      + (mapMarker ? mapFlags->entireSize() : 0u)
-      + (mapFlags ? mapFlags->entireSize() : 0u)
-      + (markerType ? markerType->entireSize() : 0u)
-      + (owner ? owner->entireSize() : 0u)
-      + (ownershipGlobal ? ownershipGlobal->entireSize() : 0u)
-      + (ownershipRank ? ownershipRank->entireSize() : 0u)
-      + (teleport ? teleport->entireSize() : 0u)
-      + (teleportParent ? teleportParent->entireSize() : 0u)
-      + (openByDefault ? openByDefault->entireSize() : 0u)
-      + (lockInfo ? lockInfo->entireSize() : 0u)
-      + (speedTree ? speedTree->entireSize() : 0u)
-      + (lod ? lod->entireSize() : 0u)
-      + (levelModifier ? levelModifier->entireSize() : 0u)
-      + (count ? count->entireSize() : 0u)
-      + (soul ? soul->entireSize() : 0u)
-      + positionRotation.entireSize();
-}
-
-template<>
-std::ostream &
-raw::write(std::ostream &os, const raw::REFR &t, std::size_t size) {
-  writeRecord(os, t.baseID);
-  writeRecord(os, t.editorID);
-  writeRecord(os, t.description);
-  writeRecord(os, t.scale);
-  writeRecord(os, t.parent);
-  writeRecord(os, t.target);
-  writeRecord(os, t.unusedCellID);
-  writeRecord(os, t.unusedCellName);
-  writeRecord(os, t.action);
-  writeRecord(os, t.ragdollData);
-  writeRecord(os, t.mapMarker);
-  writeRecord(os, t.mapFlags);
-  writeRecord(os, t.markerType);
-  writeRecord(os, t.owner);
-  writeRecord(os, t.ownershipGlobal);
-  writeRecord(os, t.ownershipRank);
-  writeRecord(os, t.teleport);
-  writeRecord(os, t.teleportParent);
-  writeRecord(os, t.openByDefault);
-  writeRecord(os, t.lockInfo);
-  writeRecord(os, t.speedTree);
-  writeRecord(os, t.lod);
-  writeRecord(os, t.levelModifier);
-  writeRecord(os, t.count);
-  writeRecord(os, t.soul);
-  writeRecord(os, t.positionRotation);
-
-  return os;
-}
-
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR &t, std::size_t size) {
-  readRecord(is, t.editorID);
-  readRecord(is, t.baseID);
-  std::set<uint32_t> possibleSubrecords = {
-      "DESC"_rec, "XSCL"_rec, "XESP"_rec, "XTRG"_rec,
-      "XPCI"_rec, "FULL"_rec, "XACT"_rec, "XRGD"_rec, "XMRK"_rec,
-      "FNAM"_rec, "TNAM"_rec, "XOWN"_rec, "XGLB"_rec, "XRNK"_rec,
-      "XTEL"_rec, "XRTM"_rec, "ONAM"_rec, "XLOC"_rec, "XSED"_rec,
-      "XLOD"_rec, "XLCM"_rec, "XCNT"_rec, "XSOL"_rec
-  };
-  uint32_t rec;
-  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    switch (rec) {
-      case "DESC"_rec:readRecord(is, t.description);
-        break;
-      case "XSCL"_rec:readRecord(is, t.scale);
-        break;
-      case "XESP"_rec:readRecord(is, t.parent);
-        break;
-      case "XTRG"_rec:readRecord(is, t.target);
-        break;
-      case "XPCI"_rec:readRecord(is, t.unusedCellID);
-        break;
-      case "FULL"_rec:readRecord(is, t.unusedCellName);
-        break;
-      case "XACT"_rec:readRecord(is, t.action);
-        break;
-      case "XRGD"_rec:readRecord(is, t.ragdollData);
-        break;
-      case "XMRK"_rec:readRecord(is, t.mapMarker);
-        break;
-      case "FNAM"_rec:readRecord(is, t.mapFlags);
-        break;
-      case "TNAM"_rec:readRecord(is, t.markerType);
-        break;
-      case "XOWN"_rec:readRecord(is, t.owner);
-        break;
-      case "XGLB"_rec:readRecord(is, t.ownershipGlobal);
-        break;
-      case "XRNK"_rec:readRecord(is, t.ownershipRank);
-        break;
-      case "XTEL"_rec:readRecord(is, t.teleport);
-        break;
-      case "XRTM"_rec:readRecord(is, t.teleportParent);
-        break;
-      case "ONAM"_rec:readRecord(is, t.openByDefault);
-        break;
-      case "XLOC"_rec:readRecord(is, t.lockInfo);
-        break;
-      case "XSED"_rec:readRecord(is, t.speedTree);
-        break;
-      case "XLOD"_rec:readRecord(is, t.lod);
-        break;
-      case "XLCM"_rec:readRecord(is, t.levelModifier);
-        break;
-      case "XCNT"_rec:readRecord(is, t.count);
-        break;
-      case "XSOL"_rec:readRecord(is, t.soul);
-        break;
-      default:break;
-    }
-  }
-
-  readRecord(is, t.positionRotation);
-  return is;
-}
-
 // LIGH specialization
 template<>
 uint32_t LIGH::size() const {
@@ -1226,6 +1094,75 @@ std::istream &raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
   readRecord(is, t.sound);
 
   return is;
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR_ACTI &t,
+                         std::size_t) {
+  return t.write(os);
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t) {
+  return t.read(is);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR_DOOR &t,
+                         std::size_t) {
+  return t.write(os);
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t) {
+  return t.read(is);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR_LIGH &t,
+                         std::size_t) {
+  return t.write(os);
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t) {
+  return t.read(is);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR_MISC &t,
+                         std::size_t) {
+  return t.write(os);
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t) {
+  return t.read(is);
+}
+
+template<>
+std::ostream &raw::write(std::ostream &os,
+                         const raw::REFR_STAT &t,
+                         std::size_t) {
+  return t.write(os);
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
+  return t.read(is);
+}
+
+BaseId peekBaseOfReference(std::istream &is) {
+  const auto start{is.tellg()};
+  raw::REFRBase refr{};
+  readRecordHeader(is);
+  refr.read(is);
+  is.seekg(start, std::ios::beg);
+  return refr.baseID.data;
 }
 
 } // namespace record
