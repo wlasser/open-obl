@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_STATIC_RESOLVER_HPP
 #define OPENOBLIVION_STATIC_RESOLVER_HPP
 
-#include "formid.hpp"
-#include "records.hpp"
+#include "record/formid.hpp"
+#include "record/records.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>

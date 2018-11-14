@@ -1,14 +1,12 @@
-#include "formid.hpp"
-#include "io/write_bytes.hpp"
+#include "record/formid.hpp" // This must be included before io
 #include "io/read_bytes.hpp"
+#include "io/write_bytes.hpp"
 #include "record/record.hpp"
-#include "subrecords.hpp"
+#include "record/subrecords.hpp"
 #include <istream>
 #include <ostream>
 
 namespace record {
-
-using namespace io;
 
 // SPIT specialization
 template<>
@@ -19,10 +17,10 @@ uint16_t SPIT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SPIT &t, std::size_t /*size*/) {
-  writeBytes(os, t.type);
-  writeBytes(os, t.cost);
-  writeBytes(os, t.level);
-  writeBytes(os, t.flags);
+  io::writeBytes(os, t.type);
+  io::writeBytes(os, t.cost);
+  io::writeBytes(os, t.level);
+  io::writeBytes(os, t.flags);
 
   return os;
 }
@@ -30,10 +28,10 @@ raw::write(std::ostream &os, const raw::SPIT &t, std::size_t /*size*/) {
 template<>
 std::istream &
 raw::read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
-  readBytes(is, t.type);
-  readBytes(is, t.cost);
-  readBytes(is, t.level);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.type);
+  io::readBytes(is, t.cost);
+  io::readBytes(is, t.level);
+  io::readBytes(is, t.flags);
 
   return is;
 }
@@ -70,7 +68,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::XRGD &t, std::size_t /*size*/) {
   for (const auto byte : t.bytes) {
-    writeBytes(os, byte);
+    io::writeBytes(os, byte);
   }
   return os;
 }
@@ -78,7 +76,7 @@ raw::write(std::ostream &os, const raw::XRGD &t, std::size_t /*size*/) {
 template<>
 std::istream &raw::read(std::istream &is, raw::XRGD &t, std::size_t size) {
   const std::size_t length = size / 1u;
-  readBytes(is, t.bytes, length);
+  io::readBytes(is, t.bytes, length);
   return is;
 }
 
@@ -91,19 +89,19 @@ uint16_t XLOC::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::XLOC &t, std::size_t /*size*/) {
-  writeBytes(os, t.lockLevel);
-  writeBytes(os, t.key);
-  //writeBytes(os, t.unused);
-  writeBytes(os, t.flags);
+  io::writeBytes(os, t.lockLevel);
+  io::writeBytes(os, t.key);
+  //io::writeBytes(os, t.unused);
+  io::writeBytes(os, t.flags);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XLOC &t, std::size_t size) {
-  readBytes(is, t.lockLevel);
-  readBytes(is, t.key);
-  if (size == 16) readBytes(is, t.unused);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.lockLevel);
+  io::readBytes(is, t.key);
+  if (size == 16) io::readBytes(is, t.unused);
+  io::readBytes(is, t.flags);
   return is;
 }
 
@@ -116,15 +114,15 @@ uint16_t XESP::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::XESP &t, std::size_t /*size*/) {
-  writeBytes(os, t.parent);
-  writeBytes(os, t.flags);
+  io::writeBytes(os, t.parent);
+  io::writeBytes(os, t.flags);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XESP &t, std::size_t /*size*/) {
-  readBytes(is, t.parent);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.parent);
+  io::readBytes(is, t.flags);
   return is;
 }
 
@@ -138,7 +136,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::XCLR &t, std::size_t /*size*/) {
   for (const auto &region : t.regions) {
-    writeBytes(os, region);
+    io::writeBytes(os, region);
   }
   return os;
 }
@@ -159,18 +157,18 @@ uint16_t HNAM_LTEX::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::HNAM_LTEX &t, std::size_t /*size*/) {
-  writeBytes(os, t.type);
-  writeBytes(os, t.friction);
-  writeBytes(os, t.restitution);
+  io::writeBytes(os, t.type);
+  io::writeBytes(os, t.friction);
+  io::writeBytes(os, t.restitution);
   return os;
 }
 
 template<>
 std::istream &
 raw::read(std::istream &is, raw::HNAM_LTEX &t, std::size_t /*size*/) {
-  readBytes(is, t.type);
-  readBytes(is, t.friction);
-  readBytes(is, t.restitution);
+  io::readBytes(is, t.type);
+  io::readBytes(is, t.friction);
+  io::readBytes(is, t.restitution);
   return is;
 }
 
@@ -184,7 +182,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::HNAM &t, std::size_t /*size*/) {
   for (const auto hair : t.hair) {
-    writeBytes(os, hair);
+    io::writeBytes(os, hair);
   }
   return os;
 }
@@ -206,7 +204,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ENAM &t, std::size_t /*size*/) {
   for (const auto eye : t.eyes) {
-    writeBytes(os, eye);
+    io::writeBytes(os, eye);
   }
   return os;
 }
@@ -228,7 +226,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ESCE &t, std::size_t /*size*/) {
   for (const auto &effect : t.effects) {
-    writeBytes(os, effect);
+    io::writeBytes(os, effect);
   }
   return os;
 }
@@ -249,21 +247,21 @@ uint16_t SNDD::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SNDD &t, std::size_t /*size*/) {
-  writeBytes(os, t.minAttenuationDistance);
-  writeBytes(os, t.maxAttenuationDistance);
-  writeBytes(os, t.frequencyAdjustment);
-  writeBytes(os, t.unused);
-  writeBytes(os, t.flags);
+  io::writeBytes(os, t.minAttenuationDistance);
+  io::writeBytes(os, t.maxAttenuationDistance);
+  io::writeBytes(os, t.frequencyAdjustment);
+  io::writeBytes(os, t.unused);
+  io::writeBytes(os, t.flags);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SNDD &t, std::size_t /*size*/) {
-  readBytes(is, t.minAttenuationDistance);
-  readBytes(is, t.maxAttenuationDistance);
-  readBytes(is, t.frequencyAdjustment);
-  readBytes(is, t.unused);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.minAttenuationDistance);
+  io::readBytes(is, t.maxAttenuationDistance);
+  io::readBytes(is, t.frequencyAdjustment);
+  io::readBytes(is, t.unused);
+  io::readBytes(is, t.flags);
   return is;
 }
 
@@ -277,29 +275,29 @@ uint16_t SNDX::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SNDX &t, std::size_t /*size*/) {
-  writeBytes(os, t.minAttenuationDistance);
-  writeBytes(os, t.maxAttenuationDistance);
-  writeBytes(os, t.frequencyAdjustment);
-  writeBytes(os, t.unused);
-  writeBytes(os, t.flags);
-  writeBytes(os, t.unusedWord);
-  writeBytes(os, t.staticAttenuation);
-  writeBytes(os, t.startTime);
-  writeBytes(os, t.stopTime);
+  io::writeBytes(os, t.minAttenuationDistance);
+  io::writeBytes(os, t.maxAttenuationDistance);
+  io::writeBytes(os, t.frequencyAdjustment);
+  io::writeBytes(os, t.unused);
+  io::writeBytes(os, t.flags);
+  io::writeBytes(os, t.unusedWord);
+  io::writeBytes(os, t.staticAttenuation);
+  io::writeBytes(os, t.startTime);
+  io::writeBytes(os, t.stopTime);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SNDX &t, std::size_t size) {
-  readBytes(is, t.minAttenuationDistance);
-  readBytes(is, t.maxAttenuationDistance);
-  readBytes(is, t.frequencyAdjustment);
-  readBytes(is, t.unused);
-  readBytes(is, t.flags);
-  readBytes(is, t.unusedWord);
-  if (size > 12) readBytes(is, t.staticAttenuation);
-  if (size > 16) readBytes(is, t.startTime);
-  if (size > 17) readBytes(is, t.stopTime);
+  io::readBytes(is, t.minAttenuationDistance);
+  io::readBytes(is, t.maxAttenuationDistance);
+  io::readBytes(is, t.frequencyAdjustment);
+  io::readBytes(is, t.unused);
+  io::readBytes(is, t.flags);
+  io::readBytes(is, t.unusedWord);
+  if (size > 12) io::readBytes(is, t.staticAttenuation);
+  if (size > 16) io::readBytes(is, t.startTime);
+  if (size > 17) io::readBytes(is, t.stopTime);
   return is;
 }
 
@@ -314,52 +312,52 @@ uint16_t DATA_MGEF::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DATA_MGEF &t, std::size_t /*size*/) {
-  writeBytes(os, t.flags);
-  writeBytes(os, t.baseCost);
+  io::writeBytes(os, t.flags);
+  io::writeBytes(os, t.baseCost);
   std::visit([&os](auto &&v) {
-    writeBytes(os, v);
+    io::writeBytes(os, v);
   }, t.associatedObject);
-  writeBytes(os, t.school);
-  writeBytes(os, t.resist);
-  writeBytes(os, t.esceLength);
-  writeBytes(os, t.unused);
-  writeBytes(os, t.light);
-  writeBytes(os, t.projectileSpeed);
-  writeBytes(os, t.effectShader);
-  writeBytes(os, t.enchantEffect);
-  writeBytes(os, t.castingSound);
-  writeBytes(os, t.boltSound);
-  writeBytes(os, t.hitSound);
-  writeBytes(os, t.areaSound);
-  writeBytes(os, t.constantEffectEnchantmentFactor);
-  writeBytes(os, t.constantEffectBarterFactor);
+  io::writeBytes(os, t.school);
+  io::writeBytes(os, t.resist);
+  io::writeBytes(os, t.esceLength);
+  io::writeBytes(os, t.unused);
+  io::writeBytes(os, t.light);
+  io::writeBytes(os, t.projectileSpeed);
+  io::writeBytes(os, t.effectShader);
+  io::writeBytes(os, t.enchantEffect);
+  io::writeBytes(os, t.castingSound);
+  io::writeBytes(os, t.boltSound);
+  io::writeBytes(os, t.hitSound);
+  io::writeBytes(os, t.areaSound);
+  io::writeBytes(os, t.constantEffectEnchantmentFactor);
+  io::writeBytes(os, t.constantEffectBarterFactor);
   return os;
 }
 
 template<>
 std::istream &
 raw::read(std::istream &is, raw::DATA_MGEF &t, std::size_t size) {
-  readBytes(is, t.flags);
-  readBytes(is, t.baseCost);
+  io::readBytes(is, t.flags);
+  io::readBytes(is, t.baseCost);
   std::visit([&is](auto &&v) {
-    readBytes(is, v);
+    io::readBytes(is, v);
   }, t.associatedObject);
-  readBytes(is, t.school);
-  readBytes(is, t.resist);
-  readBytes(is, t.esceLength);
-  readBytes(is, t.unused);
-  readBytes(is, t.light);
-  readBytes(is, t.projectileSpeed);
-  readBytes(is, t.effectShader);
+  io::readBytes(is, t.school);
+  io::readBytes(is, t.resist);
+  io::readBytes(is, t.esceLength);
+  io::readBytes(is, t.unused);
+  io::readBytes(is, t.light);
+  io::readBytes(is, t.projectileSpeed);
+  io::readBytes(is, t.effectShader);
   // Blame the Darkness spell for this.
   if (size == 0x24) return is;
-  readBytes(is, t.enchantEffect);
-  readBytes(is, t.castingSound);
-  readBytes(is, t.boltSound);
-  readBytes(is, t.hitSound);
-  readBytes(is, t.areaSound);
-  readBytes(is, t.constantEffectEnchantmentFactor);
-  readBytes(is, t.constantEffectBarterFactor);
+  io::readBytes(is, t.enchantEffect);
+  io::readBytes(is, t.castingSound);
+  io::readBytes(is, t.boltSound);
+  io::readBytes(is, t.hitSound);
+  io::readBytes(is, t.areaSound);
+  io::readBytes(is, t.constantEffectEnchantmentFactor);
+  io::readBytes(is, t.constantEffectBarterFactor);
   return is;
 }
 
@@ -376,16 +374,16 @@ raw::write(std::ostream &os, const raw::DATA_RACE &t, std::size_t /*size*/) {
   for (const auto &pair : t.skillModifiers) {
     // Despite being an ActorValue, only the first byte is used
     auto av = static_cast<uint8_t>(pair.first);
-    writeBytes(os, av);
-    writeBytes(os, pair.second);
+    io::writeBytes(os, av);
+    io::writeBytes(os, pair.second);
   }
-  writeBytes(os, t.unused);
-  writeBytes(os, t.heightMale);
-  writeBytes(os, t.heightFemale);
-  writeBytes(os, t.heightFemale);
-  writeBytes(os, t.weightMale);
-  writeBytes(os, t.weightFemale);
-  writeBytes(os, t.flags);
+  io::writeBytes(os, t.unused);
+  io::writeBytes(os, t.heightMale);
+  io::writeBytes(os, t.heightFemale);
+  io::writeBytes(os, t.heightFemale);
+  io::writeBytes(os, t.weightMale);
+  io::writeBytes(os, t.weightFemale);
+  io::writeBytes(os, t.flags);
 
   return os;
 }
@@ -406,15 +404,15 @@ std::istream &raw::read(std::istream &is, raw::DATA_RACE &t, std::size_t size) {
   const auto numModifiers = allModifiersSize / singleModifierSize;
   for (auto i = 0u; i < numModifiers; ++i) {
     std::pair<uint8_t, int8_t> p{};
-    readBytes(is, p);
+    io::readBytes(is, p);
     t.skillModifiers.emplace_back(static_cast<ActorValue>(p.first), p.second);
   }
-  readBytes(is, t.unused);
-  readBytes(is, t.heightMale);
-  readBytes(is, t.heightFemale);
-  readBytes(is, t.weightMale);
-  readBytes(is, t.weightFemale);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.unused);
+  io::readBytes(is, t.heightMale);
+  io::readBytes(is, t.heightFemale);
+  io::readBytes(is, t.weightMale);
+  io::readBytes(is, t.weightFemale);
+  io::readBytes(is, t.flags);
 
   return is;
 }
@@ -428,31 +426,31 @@ uint16_t DATA_CLAS::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DATA_CLAS &t, std::size_t /*size*/) {
-  writeBytes(os, t.primaryAttributes);
-  writeBytes(os, t.specialization);
-  writeBytes(os, t.majorSkills);
-  writeBytes(os, t.playableFlag);
-  writeBytes(os, t.barterFlag);
+  io::writeBytes(os, t.primaryAttributes);
+  io::writeBytes(os, t.specialization);
+  io::writeBytes(os, t.majorSkills);
+  io::writeBytes(os, t.playableFlag);
+  io::writeBytes(os, t.barterFlag);
   if (t.hasTrainingInfo) {
-    writeBytes(os, t.skillTrained);
-    writeBytes(os, t.maxTrainingLevel);
-    writeBytes(os, t.unused);
+    io::writeBytes(os, t.skillTrained);
+    io::writeBytes(os, t.maxTrainingLevel);
+    io::writeBytes(os, t.unused);
   }
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::DATA_CLAS &t, std::size_t size) {
-  readBytes(is, t.primaryAttributes);
-  readBytes(is, t.specialization);
-  readBytes(is, t.majorSkills);
-  readBytes(is, t.playableFlag);
-  readBytes(is, t.barterFlag);
+  io::readBytes(is, t.primaryAttributes);
+  io::readBytes(is, t.specialization);
+  io::readBytes(is, t.majorSkills);
+  io::readBytes(is, t.playableFlag);
+  io::readBytes(is, t.barterFlag);
   if (size == 0x34) {
     t.hasTrainingInfo = true;
-    readBytes(is, t.skillTrained);
-    readBytes(is, t.maxTrainingLevel);
-    readBytes(is, t.unused);
+    io::readBytes(is, t.skillTrained);
+    io::readBytes(is, t.maxTrainingLevel);
+    io::readBytes(is, t.unused);
   }
   return is;
 }
@@ -490,30 +488,30 @@ uint16_t DATA_LIGH::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DATA_LIGH &t, std::size_t /*size*/) {
-  writeBytes(os, t.time);
-  writeBytes(os, t.radius);
-  writeBytes(os, t.color);
-  writeBytes(os, t.flags);
-  writeBytes(os, t.falloffExponent);
-  writeBytes(os, t.fov);
-  writeBytes(os, t.value);
-  writeBytes(os, t.weight);
+  io::writeBytes(os, t.time);
+  io::writeBytes(os, t.radius);
+  io::writeBytes(os, t.color);
+  io::writeBytes(os, t.flags);
+  io::writeBytes(os, t.falloffExponent);
+  io::writeBytes(os, t.fov);
+  io::writeBytes(os, t.value);
+  io::writeBytes(os, t.weight);
 
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
-  readBytes(is, t.time);
-  readBytes(is, t.radius);
-  readBytes(is, t.color);
-  readBytes(is, t.flags);
+  io::readBytes(is, t.time);
+  io::readBytes(is, t.radius);
+  io::readBytes(is, t.color);
+  io::readBytes(is, t.flags);
   if (size == 32) {
-    readBytes(is, t.falloffExponent);
-    readBytes(is, t.fov);
+    io::readBytes(is, t.falloffExponent);
+    io::readBytes(is, t.fov);
   }
-  readBytes(is, t.value);
-  readBytes(is, t.weight);
+  io::readBytes(is, t.value);
+  io::readBytes(is, t.weight);
 
   return is;
 }
@@ -527,13 +525,13 @@ uint16_t EFID::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::EFID &t, std::size_t /*size*/) {
-  writeBytes(os, t);
+  io::writeBytes(os, t);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::EFID &t, std::size_t /*size*/) {
-  readBytes(is, t);
+  io::readBytes(is, t);
   return is;
 }
 
@@ -547,7 +545,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::OFST &t, std::size_t /*size*/) {
   for (const auto &entry : t.unused) {
-    writeBytes(os, entry);
+    io::writeBytes(os, entry);
   }
   return os;
 }
@@ -594,9 +592,9 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::MODT &t, std::size_t /*size*/) {
   for (const auto &record : t.records) {
-    writeBytes(os, record.ddsHash);
-    writeBytes(os, record.ddxHash);
-    writeBytes(os, record.folderHash);
+    io::writeBytes(os, record.ddsHash);
+    io::writeBytes(os, record.ddxHash);
+    io::writeBytes(os, record.folderHash);
   }
   return os;
 }
@@ -606,9 +604,9 @@ std::istream &raw::read(std::istream &is, raw::MODT &t, std::size_t size) {
   t.records.reserve(size / (3 * 8));
   for (std::size_t i = 0; i < size / (3 * 8); ++i) {
     raw::MODT::MODTRecord record;
-    readBytes(is, record.ddsHash);
-    readBytes(is, record.ddxHash);
-    readBytes(is, record.folderHash);
+    io::readBytes(is, record.ddsHash);
+    io::readBytes(is, record.ddxHash);
+    io::readBytes(is, record.folderHash);
     t.records.emplace_back(record);
   }
   return is;
@@ -623,18 +621,18 @@ uint16_t ENIT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ENIT &t, std::size_t /*size*/) {
-  writeBytes(os, t.value);
-  writeBytes(os, t.flags);
-  writeBytes(os, t.unused);
+  io::writeBytes(os, t.value);
+  io::writeBytes(os, t.flags);
+  io::writeBytes(os, t.unused);
 
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ENIT &t, std::size_t /*size*/) {
-  readBytes(is, t.value);
-  readBytes(is, t.flags);
-  readBytes(is, t.unused);
+  io::readBytes(is, t.value);
+  io::readBytes(is, t.flags);
+  io::readBytes(is, t.unused);
   return is;
 }
 
@@ -647,11 +645,11 @@ uint16_t ENIT_ENCH::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ENIT_ENCH &t, std::size_t /*size*/) {
-  writeBytes(os, t.type);
-  writeBytes(os, t.chargeAmount);
-  writeBytes(os, t.chargeCost);
-  writeBytes(os, t.noAutoCalculate);
-  writeBytes(os, t.unused);
+  io::writeBytes(os, t.type);
+  io::writeBytes(os, t.chargeAmount);
+  io::writeBytes(os, t.chargeCost);
+  io::writeBytes(os, t.noAutoCalculate);
+  io::writeBytes(os, t.unused);
 
   return os;
 }
@@ -659,11 +657,11 @@ raw::write(std::ostream &os, const raw::ENIT_ENCH &t, std::size_t /*size*/) {
 template<>
 std::istream &
 raw::read(std::istream &is, raw::ENIT_ENCH &t, std::size_t /*size*/) {
-  readBytes(is, t.type);
-  readBytes(is, t.chargeAmount);
-  readBytes(is, t.chargeCost);
-  readBytes(is, t.noAutoCalculate);
-  readBytes(is, t.unused);
+  io::readBytes(is, t.type);
+  io::readBytes(is, t.chargeAmount);
+  io::readBytes(is, t.chargeCost);
+  io::readBytes(is, t.noAutoCalculate);
+  io::readBytes(is, t.unused);
 
   return is;
 }
@@ -677,24 +675,24 @@ uint16_t EFIT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::EFIT &t, std::size_t /*size*/) {
-  writeBytes(os, t.efid);
-  writeBytes(os, t.magnitude);
-  writeBytes(os, t.area);
-  writeBytes(os, t.duration);
-  writeBytes(os, t.type);
-  writeBytes(os, t.avIndex);
+  io::writeBytes(os, t.efid);
+  io::writeBytes(os, t.magnitude);
+  io::writeBytes(os, t.area);
+  io::writeBytes(os, t.duration);
+  io::writeBytes(os, t.type);
+  io::writeBytes(os, t.avIndex);
 
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::EFIT &t, std::size_t /*size*/) {
-  readBytes(is, t.efid);
-  readBytes(is, t.magnitude);
-  readBytes(is, t.area);
-  readBytes(is, t.duration);
-  readBytes(is, t.type);
-  readBytes(is, t.avIndex);
+  io::readBytes(is, t.efid);
+  io::readBytes(is, t.magnitude);
+  io::readBytes(is, t.area);
+  io::readBytes(is, t.duration);
+  io::readBytes(is, t.type);
+  io::readBytes(is, t.avIndex);
 
   return is;
 }
@@ -708,22 +706,22 @@ uint16_t SCIT::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::SCIT &t, std::size_t /*size*/) {
-  writeBytes(os, t.id);
-  writeBytes(os, t.school);
-  writeBytes(os, t.visualEffect);
-  writeBytes(os, t.flags);
-  writeBytes(os, t.unused);
+  io::writeBytes(os, t.id);
+  io::writeBytes(os, t.school);
+  io::writeBytes(os, t.visualEffect);
+  io::writeBytes(os, t.flags);
+  io::writeBytes(os, t.unused);
 
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
-  readBytes(is, t.id);
-  readBytes(is, t.school);
-  readBytes(is, t.visualEffect);
-  readBytes(is, t.flags);
-  readBytes(is, t.unused);
+  io::readBytes(is, t.id);
+  io::readBytes(is, t.school);
+  io::readBytes(is, t.visualEffect);
+  io::readBytes(is, t.flags);
+  io::readBytes(is, t.unused);
 
   return is;
 }

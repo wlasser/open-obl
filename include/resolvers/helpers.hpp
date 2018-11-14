@@ -1,11 +1,11 @@
 #ifndef OPENOBLIVION_RESOLVERS_HELPERS_HPP
 #define OPENOBLIVION_RESOLVERS_HELPERS_HPP
 
-#include "formid.hpp"
+#include "record/formid.hpp"
 #include "fs/path.hpp"
 #include "meta.hpp"
 #include "ogrebullet/rigid_body.hpp"
-#include "records.hpp"
+#include "record/records.hpp"
 #include <gsl/gsl>
 #include <OgreEntity.h>
 #include <OgreLight.h>

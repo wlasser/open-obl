@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_MAGIC_EFFECTS_HPP
 #define OPENOBLIVION_MAGIC_EFFECTS_HPP
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
 using EffectId = std::array<char, 4>;
 

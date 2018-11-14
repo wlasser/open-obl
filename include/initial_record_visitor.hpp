@@ -3,7 +3,7 @@
 
 #include "esp_coordinator.hpp"
 #include "record/io.hpp"
-#include "records.hpp"
+#include "record/records.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/interior_cell_resolver.hpp"
 #include "resolvers/light_resolver.hpp"

@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_RECORD_RECORD_HEADER_HPP
 #define OPENOBLIVION_RECORD_RECORD_HEADER_HPP
 
-#include "formid.hpp"
+#include "record/formid.hpp"
 #include <cstdint>
 
 namespace record {

@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_DOOR_RESOLVER_HPP
 #define OPENOBLIVION_DOOR_RESOLVER_HPP
 
-#include "records.hpp"
+#include "record/records.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>

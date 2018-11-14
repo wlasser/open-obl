@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_RESOLVERS_HPP
 #define OPENOBLIVION_RESOLVERS_HPP
 
-#include "formid.hpp"
+#include "record/formid.hpp"
 #include "resolvers/helpers.hpp"
 #include "meta.hpp"
 #include <gsl/gsl>

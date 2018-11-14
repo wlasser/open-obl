@@ -53,7 +53,6 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/esp_coordinator.cpp
-        src/formid.cpp
         src/gui/gui.cpp
         src/gui/stack/program.cpp
         src/gui/stack/types.cpp
@@ -73,18 +72,14 @@ target_sources(OpenOblivion PRIVATE
         src/nifloader/mesh_loader_state.cpp
         src/nifloader/nif_resource.cpp
         src/nifloader/nif_resource_manager.cpp
-        src/records.cpp
         src/resolvers/door_resolver.cpp
         src/resolvers/interior_cell_resolver.cpp
         src/resolvers/light_resolver.cpp
         src/resolvers/helpers.cpp
         src/resolvers/static_resolver.cpp
         src/save_state.cpp
-        src/subrecords.cpp
-        include/actor_value.hpp
         include/application.hpp
         include/application_context.hpp
-        include/attribute.hpp
         include/bitflag.hpp
         include/bsa/bsa.hpp
         include/bsa_archive_factory.hpp
@@ -105,7 +100,6 @@ target_sources(OpenOblivion PRIVATE
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
-        include/formid.hpp
         include/game_settings.hpp
         include/gui/elements/image.hpp
         include/gui/elements/rect.hpp
@@ -125,7 +119,6 @@ target_sources(OpenOblivion PRIVATE
         include/gui/xml.hpp
         include/initial_record_visitor.hpp
         include/keep_strategy.hpp
-        include/magic_effects.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
         include/modes/game_mode.hpp
@@ -138,7 +131,6 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/mesh_loader_state.hpp
         include/nifloader/nif_resource.hpp
         include/nifloader/nif_resource_manager.hpp
-        include/reference_records.hpp
         include/resolvers/door_resolver.hpp
         include/resolvers/helpers.hpp
         include/resolvers/interior_cell_resolver.hpp
@@ -146,8 +138,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/resolvers.hpp
         include/resolvers/static_resolver.hpp
         include/save_state.hpp
-        include/settings.hpp
-        include/subrecords.hpp)
+        include/settings.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

@@ -1,13 +1,13 @@
 #ifndef OPENOBLIVION_SUBRECORDS_HPP
 #define OPENOBLIVION_SUBRECORDS_HPP
 
-#include "actor_value.hpp"
-#include "attribute.hpp"
 #include "bitflag.hpp"
-#include "formid.hpp"
-#include "magic_effects.hpp"
+#include "record/actor_value.hpp"
+#include "record/attribute.hpp"
 #include "record/definition_helpers.hpp"
+#include "record/formid.hpp"
 #include "record/io.hpp"
+#include "record/magic_effects.hpp"
 #include "record/record.hpp"
 #include "record/subrecord.hpp"
 #include "record/tuplifiable.hpp"

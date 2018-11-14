@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_SAVE_STATE_HPP
 #define OPENOBLIVION_SAVE_STATE_HPP
 
-#include "formid.hpp"
 #include "io/io.hpp"
+#include "record/formid.hpp"
 #include <Ogre.h>
 #include <cctype>
 #include <memory>

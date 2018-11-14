@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_GAME_SETTINGS_HPP
 #define OPENOBLIVION_GAME_SETTINGS_HPP
 
-#include "records.hpp"
+#include "record/records.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <filesystem>

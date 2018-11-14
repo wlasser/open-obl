@@ -1,9 +1,9 @@
 #ifndef OPENOBLIVION_RECORD_SIZE_OF_HPP
 #define OPENOBLIVION_RECORD_SIZE_OF_HPP
 
-#include "record/tuplifiable.hpp"
 #include "bitflag.hpp"
-#include "formid.hpp"
+#include "record/tuplifiable.hpp"
+#include "record/formid.hpp"
 #include <array>
 #include <optional>
 #include <string>

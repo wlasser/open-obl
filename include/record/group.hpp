@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_RECORD_GROUP_HPP
 #define OPENOBLIVION_RECORD_GROUP_HPP
 
-#include "formid.hpp"
+#include "record/formid.hpp"
 #include <cstdint>
 #include <istream>
 #include <optional>

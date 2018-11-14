@@ -4,7 +4,7 @@
 #include "fs/path.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
-#include "records.hpp"
+#include "record/records.hpp"
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 #include <array>

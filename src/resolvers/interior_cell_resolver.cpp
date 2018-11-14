@@ -1,8 +1,8 @@
 #include "conversions.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
-#include "formid.hpp"
-#include "records.hpp"
+#include "record/formid.hpp"
+#include "record/records.hpp"
 #include "resolvers/interior_cell_resolver.hpp"
 #include "resolvers/resolvers.hpp"
 #include <gsl/gsl>

@@ -1,13 +1,13 @@
 #ifndef OPENOBLIVION_RECORD_RECORD_HPP
 #define OPENOBLIVION_RECORD_RECORD_HPP
 
-#include "formid.hpp"
-#include "io/write_bytes.hpp"
 #include "io/read_bytes.hpp"
+#include "io/write_bytes.hpp"
 #include "record/exceptions.hpp"
+#include "record/formid.hpp"
+#include "record/io.hpp"
 #include "record/record_header.hpp"
 #include "record/rec_of.hpp"
-#include "record/io.hpp"
 #include "record/size_of.hpp"
 #include <cstdint>
 #include <string>

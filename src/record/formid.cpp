@@ -1,6 +1,6 @@
 #include "io/read_bytes.hpp"
 #include "io/write_bytes.hpp"
-#include "formid.hpp"
+#include "record/formid.hpp"
 
 std::string formIdString(FormId formId) noexcept {
   static const char *table = "0123456789abcdef";
