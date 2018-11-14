@@ -7,7 +7,7 @@ template<>
 CiteRecordTrait<record::LIGH>::type
 citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId) {
   record::REFR_LIGH::Raw rawRefRec{};
-  rawRefRec.baseID = record::NAME(BaseId{baseRec.mFormId});
+  rawRefRec.baseId = record::NAME(BaseId{baseRec.mFormId});
   const record::REFR_LIGH refRec(rawRefRec,
                                  record::RecordFlag::None,
       // TODO: Get a new RefId properly
@@ -22,7 +22,7 @@ reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
   const auto &lighRes{std::get<const Resolver<record::LIGH> &>(resolvers)};
-  auto baseRec{lighRes.get(refRec.baseID.data)};
+  auto baseRec{lighRes.get(refRec.baseId.data)};
   if (!baseRec) {
     return {ecs::Light{nullptr}, ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
   }

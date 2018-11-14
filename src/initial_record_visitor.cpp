@@ -29,7 +29,7 @@ void InitialRecordVisitor::readRecord<record::LIGH>(esp::EspAccessor &accessor) 
 template<>
 void InitialRecordVisitor::readRecord<record::MISC>(esp::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::MISC>().value};
-  record::raw::STAT rawStat{rec.editorID,
+  record::raw::STAT rawStat{rec.editorId,
                             rec.modelFilename.value_or(record::MODL{}),
                             rec.boundRadius.value_or(record::MODB{}),
                             rec.textureHash};

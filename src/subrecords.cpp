@@ -221,7 +221,7 @@ std::istream &raw::read(std::istream &is, raw::ENAM &t, std::size_t size) {
 // ESCE specialization
 template<>
 uint16_t ESCE::size() const {
-  return data.effects.size() * sizeof(EffectID);
+  return data.effects.size() * sizeof(EffectId);
 }
 
 template<>
@@ -235,7 +235,7 @@ raw::write(std::ostream &os, const raw::ESCE &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ESCE &t, std::size_t size) {
-  const std::size_t length = size / sizeof(EffectID);
+  const std::size_t length = size / sizeof(EffectId);
   io::readBytes(is, t.effects, length);
   return is;
 }

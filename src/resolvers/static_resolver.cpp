@@ -6,7 +6,7 @@ template<>
 CiteRecordTrait<record::STAT>::type
 citeRecord(const record::STAT &baseRec, tl::optional<RefId> refId) {
   record::REFR_STAT::Raw rawRefRec{};
-  rawRefRec.baseID = record::NAME(BaseId{baseRec.mFormId});
+  rawRefRec.baseId = record::NAME(BaseId{baseRec.mFormId});
   const record::REFR_STAT refRec(rawRefRec,
                                  record::RecordFlag::None,
       // TODO: Get a new RefId properly
@@ -21,7 +21,7 @@ reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers) {
   const auto &statRes{std::get<const Resolver<record::STAT> &>(resolvers)};
-  auto baseRec{statRes.get(refRec.baseID.data)};
+  auto baseRec{statRes.get(refRec.baseId.data)};
   if (!baseRec) return {ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
 
   Ogre::Entity *mesh{loadMesh(*baseRec, scnMgr)};

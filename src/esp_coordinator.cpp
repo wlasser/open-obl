@@ -286,7 +286,7 @@ EspCoordinator::translateFormIds(record::raw::XLOC rec, int modIndex) const {
 template<>
 record::raw::XNAM
 EspCoordinator::translateFormIds(record::raw::XNAM rec, int modIndex) const {
-  rec.factionID = translateFormIds(rec.factionID, modIndex);
+  rec.factionId = translateFormIds(rec.factionId, modIndex);
   return rec;
 }
 
@@ -429,7 +429,7 @@ EspCoordinator::translateFormIds(record::raw::REFR_ACTI rec,
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
-  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
   if (rec.target) {
     rec.target->data = translateFormIds(rec.target->data, modIndex);
   }
@@ -444,7 +444,7 @@ EspCoordinator::translateFormIds(record::raw::REFR_DOOR rec,
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
-  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
   if (rec.owner) {
     rec.owner->data = translateFormIds(rec.owner->data, modIndex);
   }
@@ -474,7 +474,7 @@ EspCoordinator::translateFormIds(record::raw::REFR_LIGH rec,
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
-  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
 
   return rec;
 }
@@ -486,7 +486,7 @@ EspCoordinator::translateFormIds(record::raw::REFR_MISC rec,
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
-  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
   if (rec.ownershipGlobal) {
     rec.ownershipGlobal->data =
         translateFormIds(rec.ownershipGlobal->data, modIndex);
@@ -506,7 +506,7 @@ EspCoordinator::translateFormIds(record::raw::REFR_STAT rec,
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
   }
-  rec.baseID = translateFormIds(rec.baseID, modIndex);
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
 
   return rec;
 }

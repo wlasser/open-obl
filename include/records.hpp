@@ -57,10 +57,10 @@ struct TES4 {
   std::vector<Master> masters{};
 };
 
-// Game settings. First character of the editorID determines the type of the
+// Game settings. First character of the editorId determines the type of the
 // value; s for string, f for float, and i for int.
 struct GMST {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::DATA_GMST value{};
 };
 
@@ -68,14 +68,14 @@ struct GMST {
 // float bit pattern, even when it is supposed to represent a long, causing loss
 // of precision for large values.
 struct GLOB {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FNAM_GLOB type{};
   record::FLTV value{};
 };
 
 // Player and NPC character class
 struct CLAS {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL name{};
   // TODO: Use std::optional
   record::DESC description{};
@@ -93,7 +93,7 @@ struct FACT {
     record::FNAM_FACT femaleName{};
     record::INAM iconFilename{};
   };
-  record::EDID editorID{};
+  record::EDID editorId{};
   // TODO: Use std::optional
   record::FULL name{};
   std::vector<record::XNAM> relations{};
@@ -105,7 +105,7 @@ struct FACT {
 // Hair
 // TODO: Look at entire optional structure of this record
 struct HAIR {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL name{};
   record::MODL modelFilename{};
   record::MODB boundRadius{};
@@ -117,7 +117,7 @@ struct HAIR {
 // Eyes
 // TODO: Look at entire optional structure of this record
 struct EYES {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL name{};
   record::ICON iconFilename{};
   record::DATA_EYES flags{};
@@ -143,16 +143,16 @@ struct RACE {
     record::MODL model{};
     record::MODB boundRadius{};
   };
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   record::DESC description{};
-  // FormIDs of greater/lesser powers, racial abilities
+  // FormIds of greater/lesser powers, racial abilities
   std::vector<record::SPLO> powers{};
   // FormId corresponds to races, not factions
   std::vector<record::XNAM> relations{};
   // Skill modifiers, height, weight, flags
   record::DATA_RACE data{};
-  // FormIDs of races that determine the male and female voices.
+  // FormIds of races that determine the male and female voices.
   // Many races do not have this, including Imperial.
   std::optional<record::VNAM> voices{};
   // Default male and female hair
@@ -183,7 +183,7 @@ struct RACE {
   std::optional<TailData> femaleTailModel{};
   std::vector<BodyData> femaleBodyData{};
 
-  // Available hair (vector of FormIDs for hair)
+  // Available hair (vector of FormIds for hair)
   record::HNAM hair{};
   // Available eyes
   record::ENAM eyes{};
@@ -198,13 +198,13 @@ struct RACE {
 };
 
 struct SOUN {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FNAM_SOUN filename{};
   std::variant<record::SNDD, record::SNDX> sound{};
 };
 
 struct SKIL {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::INDX_SKIL index{};
   record::DESC description{};
   std::optional<record::ICON> iconFilename{};
@@ -217,7 +217,7 @@ struct SKIL {
 
 struct MGEF {
   // Must be 4 characters TODO: Limit to 4 characters
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL effectName{};
   record::DESC description{};
   std::optional<record::ICON> iconFilename{};
@@ -231,7 +231,7 @@ struct MGEF {
 };
 
 struct LTEX {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::ICON textureFilename{};
   std::optional<record::HNAM_LTEX> havokData{};
   std::optional<record::SNAM_LTEX> specularExponent{};
@@ -239,21 +239,21 @@ struct LTEX {
 };
 
 struct ENCH {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   record::ENIT_ENCH enchantmentData{};
   std::vector<Effect> effects{};
 };
 
 struct SPEL {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL name{};
   record::SPIT data{};
   std::vector<Effect> effects{};
 };
 
 struct BSGN {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::FULL name{};
   record::ICON icon{};
   std::optional<record::DESC> description{};
@@ -261,7 +261,7 @@ struct BSGN {
 };
 
 struct ACTI {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   record::MODL modelFilename{};
   record::MODB boundRadius{};
@@ -271,7 +271,7 @@ struct ACTI {
 };
 
 struct DOOR {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   std::optional<record::MODL> modelFilename{};
   std::optional<record::MODB> boundRadius{};
@@ -285,7 +285,7 @@ struct DOOR {
 };
 
 struct LIGH {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::MODL> modelFilename{};
   std::optional<record::MODB> boundRadius{};
   std::optional<record::MODT> textureHash{};
@@ -298,7 +298,7 @@ struct LIGH {
 };
 
 struct MISC {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   std::optional<record::MODL> modelFilename{};
   std::optional<record::MODB> boundRadius{};
@@ -309,7 +309,7 @@ struct MISC {
 };
 
 struct STAT {
-  record::EDID editorID{};
+  record::EDID editorId{};
   record::MODL modelFilename{};
   record::MODB boundRadius{};
   std::optional<record::MODT> textureHash{};
@@ -318,7 +318,7 @@ struct STAT {
 // Potion
 struct ALCH {
   // Not present in save games for player-made potions and poisons
-  std::optional<record::EDID> editorID{};
+  std::optional<record::EDID> editorId{};
   record::FULL itemName{};
   record::MODL modelFilename{};
   std::optional<record::MODB> boundRadius{};
@@ -336,7 +336,7 @@ struct ALCH {
 // For internal consistency, we destroy the external order and reverse to the
 // order below.
 struct CELL {
-  record::EDID editorID{};
+  record::EDID editorId{};
   std::optional<record::FULL> name{};
   record::DATA_CELL data{};
   std::optional<record::XCLL> lighting{};

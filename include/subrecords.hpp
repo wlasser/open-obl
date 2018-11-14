@@ -55,10 +55,10 @@ using DATA_ALCH = float;
 using DATA_TES4 = uint64_t;
 // Class description
 using DESC = std::string;
-// Editor ID
+// Editor Id
 using EDID = std::string;
-// Magic effect ID
-using EFID = EffectID;
+// Magic effect Id
+using EFID = EffectId;
 // Expert skill text
 using ENAM_SKIL = std::string;
 // Facegen geometry (symmetric)
@@ -483,7 +483,7 @@ struct DATA_SKIL : Tuplifiable<ActorValue,
   MAKE_AS_TUPLE(&index, &attribute, &specialization, &experiencePerAction)
 };
 
-// Unknown. Used to to mark deleted FormIDs, probably unused now
+// Unknown. Used to to mark deleted FormIds, probably unused now
 struct DELE {
   uint32_t size = 0;
 };
@@ -502,7 +502,7 @@ struct EFIT {
     Touch = 1u,
     Target = 2u
   };
-  EffectID efid{};
+  EffectId efid{};
   uint32_t magnitude = 0;
   uint32_t area = 0;
   uint32_t duration = 0;
@@ -548,7 +548,7 @@ struct ENIT_ENCH {
 
 // Counter effects for magic effects
 struct ESCE {
-  std::vector<EffectID> effects;
+  std::vector<EffectId> effects;
 };
 
 // ESM/ESP header
@@ -556,9 +556,9 @@ struct HEDR : Tuplifiable<float, int32_t, uint32_t> {
   float version = 0.8f;
   // Number of records and groups in the file, not including the TES4 record
   int32_t numRecords = 0;
-  // Next available object ID?
-  uint32_t nextObjectID = 0;
-  MAKE_AS_TUPLE(&version, &numRecords, &nextObjectID)
+  // Next available object Id?
+  uint32_t nextObjectId = 0;
+  MAKE_AS_TUPLE(&version, &numRecords, &nextObjectId)
 };
 
 // Hair
@@ -629,7 +629,7 @@ struct SCIT {
   };
   BaseId id{};
   MagicSchool school{};
-  EffectID visualEffect{};
+  EffectId visualEffect{};
   Flag flags{Flag::make(Flag::None)};
   // Unused
   std::array<uint8_t, 3> unused{};
@@ -766,9 +766,9 @@ struct XLOC {
 // Disposition modifier between members of different factions
 // Also used for racial relations
 struct XNAM : Tuplifiable<BaseId, int32_t> {
-  BaseId factionID{};
+  BaseId factionId{};
   int32_t relationModifier = 0;
-  MAKE_AS_TUPLE(&factionID, &relationModifier)
+  MAKE_AS_TUPLE(&factionId, &relationModifier)
 };
 
 // Ragdoll data
@@ -783,7 +783,7 @@ struct XSED {
 
 // Teleport information for a door
 struct XTEL : Tuplifiable<RefId, float, float, float, float, float, float> {
-  RefId destinationID{};
+  RefId destinationId{};
   // Destination position
   float x{};
   float y{};
@@ -792,7 +792,7 @@ struct XTEL : Tuplifiable<RefId, float, float, float, float, float, float> {
   float aX{};
   float aY{};
   float aZ{};
-  MAKE_AS_TUPLE(&destinationID, &x, &y, &z, &aX, &aY, &aZ);
+  MAKE_AS_TUPLE(&destinationId, &x, &y, &z, &aX, &aY, &aZ);
 };
 
 } // namespace raw

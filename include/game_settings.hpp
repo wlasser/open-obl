@@ -40,7 +40,7 @@ class GameSettings {
   // Load the setting from a GMST record, optionally overwriting any existing
   // value with the new one.
   void load(const record::GMST &gmst, bool overwrite = true) {
-    std::string key = gmst.editorID.data;
+    std::string key = gmst.editorId.data;
     if (key.empty()) return;
     // put overwrites without question, so we have to query existence first if
     // overwrite is not set.

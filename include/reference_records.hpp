@@ -21,26 +21,26 @@ namespace record {
 namespace raw {
 
 struct REFRBase {
-  std::optional<record::EDID> editorID{};
-  record::NAME baseID{};
+  std::optional<record::EDID> editorId{};
+  record::NAME baseId{};
   std::optional<record::XESP> parent{};
 
   virtual uint32_t size() const {
-    return baseID.entireSize()
-        + (editorID ? editorID->entireSize() : 0u)
+    return baseId.entireSize()
+        + (editorId ? editorId->entireSize() : 0u)
         + (parent ? parent->entireSize() : 0u);
   }
 
   virtual std::ostream &write(std::ostream &os) const {
-    writeRecord(os, editorID);
-    writeRecord(os, baseID);
+    writeRecord(os, editorId);
+    writeRecord(os, baseId);
     writeRecord(os, parent);
     return os;
   }
 
   virtual std::istream &read(std::istream &is) {
-    readRecord(is, editorID);
-    readRecord(is, baseID);
+    readRecord(is, editorId);
+    readRecord(is, baseId);
     readRecord(is, parent);
     return is;
   }
@@ -146,9 +146,9 @@ struct REFRLeveled : RecordTuplifiable<std::optional<record::XLCM>> {
 
 struct REFRUnused : RecordTuplifiable<std::optional<record::XPCI>,
                                       std::optional<record::FULL>> {
-  std::optional<record::XPCI> unusedCellID{};
+  std::optional<record::XPCI> unusedCellId{};
   std::optional<record::FULL> unusedCellName{};
-  RECORD_MAKE_AS_TUPLE(&unusedCellID, &unusedCellName);
+  RECORD_MAKE_AS_TUPLE(&unusedCellId, &unusedCellName);
 };
 
 struct REFRRagdoll : RecordTuplifiable<std::optional<record::XRGD>> {

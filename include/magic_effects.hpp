@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <array>
 
-using EffectID = std::array<char, 4>;
+using EffectId = std::array<char, 4>;
 
 enum class MagicSchool : uint32_t {
   Alteration = 0,
