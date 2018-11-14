@@ -2,7 +2,7 @@
 #include <optional>
 #include <sstream>
 #include <variant>
-#include "io/write_bytes.hpp"
+#include "io/io.hpp"
 
 TEST_CASE("can write fundamental types", "[io]") {
   std::ostringstream os{};

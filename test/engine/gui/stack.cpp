@@ -1,12 +1,12 @@
-#include "engine/gui/stack/instructions.hpp"
-#include "engine/gui/stack/meta.hpp"
-#include "engine/gui/stack/program.hpp"
-#include "engine/gui/stack/types.hpp"
+#include "gui/stack/instructions.hpp"
+#include "meta.hpp"
+#include "gui/stack/program.hpp"
+#include "gui/stack/types.hpp"
 #include <catch.hpp>
 #include <string>
 #include <variant>
 
-namespace engine::gui::stack {
+namespace gui::stack {
 
 namespace meta {
 
@@ -351,4 +351,4 @@ TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
   REQUIRE(std::get<int>(ret) == 3);
 }
 
-} // namespace engine::gui::stack
+} // namespace gui::stack

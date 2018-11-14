@@ -227,3 +227,6 @@ target_sources(Test PRIVATE
         src/gui/xml.cpp)
 target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch
         pugixml)
+target_compile_options(Test PRIVATE -Wall)
+target_compile_features(Test PUBLIC cxx_std_17)
+set_property(TARGET Test PROPERTY CXX_EXTENSION OFF)
