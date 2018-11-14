@@ -37,8 +37,7 @@ bool raw::Effect::isNext(std::istream &is) {
 }
 
 // ALCH specialization
-template<>
-uint32_t ALCH::size() const {
+template<> uint32_t ALCH::size() const {
   return (editorID ? editorID->entireSize() : 0u)
       + itemName.entireSize()
       + modelFilename.entireSize()
@@ -54,8 +53,7 @@ uint32_t ALCH::size() const {
                         });
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.itemName);
@@ -71,8 +69,8 @@ raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.itemName);
   readRecord(is, t.modelFilename);
@@ -88,8 +86,7 @@ std::istream &raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
 }
 
 // TES4 specialization
-template<>
-uint32_t TES4::size() const {
+template<> uint32_t TES4::size() const {
   uint32_t size = header.entireSize()
       + (offsets ? offsets->entireSize() : 0u)
       + (deleted ? deleted->entireSize() : 0u)
@@ -101,8 +98,7 @@ uint32_t TES4::size() const {
   return size;
 };
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
   writeRecord(os, t.header);
   writeRecord(os, t.offsets);
@@ -115,8 +111,8 @@ raw::write(std::ostream &os, const raw::TES4 &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
   readRecord(is, t.header);
   readRecord(is, t.offsets);
   readRecord(is, t.deleted);
@@ -133,35 +129,31 @@ std::istream &raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
 }
 
 // GMST specialization
-template<>
-uint32_t GMST::size() const {
+template<> uint32_t GMST::size() const {
   return editorID.entireSize() + value.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::GMST &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.value);
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.value);
   return is;
 }
 
 // GLOB specialization
-template<>
-uint32_t GLOB::size() const {
+template<> uint32_t GLOB::size() const {
   return editorID.entireSize() + type.entireSize()
       + value.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::GLOB &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.type);
@@ -169,8 +161,8 @@ raw::write(std::ostream &os, const raw::GLOB &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.type);
   readRecord(is, t.value);
@@ -178,15 +170,13 @@ std::istream &raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
 }
 
 // CLAS specialization
-template<>
-uint32_t CLAS::size() const {
+template<> uint32_t CLAS::size() const {
   return editorID.entireSize() + name.entireSize()
       + description.entireSize() + iconFilename.entireSize()
       + data.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -196,8 +186,8 @@ raw::write(std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   if (peekRecordType(is) == "DESC"_rec) is >> t.description;
@@ -207,8 +197,7 @@ std::istream &raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
 }
 
 // FACT specialization
-template<>
-uint32_t FACT::size() const {
+template<> uint32_t FACT::size() const {
   uint32_t size = editorID.entireSize() + name.entireSize()
       + flags.entireSize() + crimeGoldMultiplier.entireSize();
   for (const auto &r : relations) {
@@ -221,8 +210,7 @@ uint32_t FACT::size() const {
   return size;
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::FACT &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -238,8 +226,8 @@ raw::write(std::ostream &os, const raw::FACT &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   if (peekRecordType(is) == "FULL"_rec) is >> t.name;
   while (peekRecordType(is) == "XNAM"_rec) {
@@ -262,16 +250,14 @@ std::istream &raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
 }
 
 // HAIR specialization
-template<>
-uint32_t HAIR::size() const {
+template<> uint32_t HAIR::size() const {
   return editorID.entireSize() + name.entireSize()
       + modelFilename.entireSize() + boundRadius.entireSize()
       + boundRadius.entireSize() + textureHash.entireSize()
       + iconFilename.entireSize() + flags.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -284,8 +270,8 @@ raw::write(std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   if (peekRecordType(is) == "FULL"_rec) is >> t.name;
   if (peekRecordType(is) == "MODL"_rec) is >> t.modelFilename;
@@ -298,14 +284,12 @@ std::istream &raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
 }
 
 // EYES specialization
-template<>
-uint32_t EYES::size() const {
+template<> uint32_t EYES::size() const {
   return editorID.entireSize() + name.entireSize()
       + iconFilename.entireSize() + flags.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -315,8 +299,8 @@ raw::write(std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   if (peekRecordType(is) == "FULL"_rec) is >> t.name;
   if (peekRecordType(is) == "ICON"_rec) is >> t.iconFilename;
@@ -326,8 +310,7 @@ std::istream &raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
 }
 
 // RACE specialization
-template<>
-uint32_t RACE::size() const {
+template<> uint32_t RACE::size() const {
   uint32_t size = editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + description.entireSize();
@@ -375,8 +358,7 @@ uint32_t RACE::size() const {
   return size;
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -430,8 +412,8 @@ raw::write(std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.description);
@@ -514,8 +496,7 @@ std::istream &raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
 }
 
 // SOUN specialization
-template<>
-uint32_t SOUN::size() const {
+template<> uint32_t SOUN::size() const {
   return editorID.entireSize() + filename.entireSize()
       + std::visit([](auto &&r) {
         using T = std::decay_t<decltype(r)>;
@@ -529,8 +510,7 @@ uint32_t SOUN::size() const {
       }, sound);
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.filename);
@@ -539,8 +519,8 @@ raw::write(std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.filename);
 
@@ -557,8 +537,7 @@ std::istream &raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
 }
 
 // SKIL specialization
-template<>
-uint32_t SKIL::size() const {
+template<> uint32_t SKIL::size() const {
   return editorID.entireSize() + index.entireSize()
       + description.entireSize()
       + (iconFilename ? iconFilename->entireSize() : 0u)
@@ -567,8 +546,7 @@ uint32_t SKIL::size() const {
       + expertText.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.index);
@@ -583,8 +561,8 @@ raw::write(std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.index);
   readRecord(is, t.description);
@@ -599,8 +577,7 @@ std::istream &raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
 }
 
 // MGEF specialization
-template<>
-uint32_t MGEF::size() const {
+template<> uint32_t MGEF::size() const {
   return editorID.entireSize() + effectName.entireSize()
       + description.entireSize()
       + (iconFilename ? iconFilename->entireSize() : 0u)
@@ -609,8 +586,7 @@ uint32_t MGEF::size() const {
       + data.entireSize() + counterEffects.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.effectName);
@@ -624,8 +600,8 @@ raw::write(std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.effectName);
   readRecord(is, t.description);
@@ -639,8 +615,7 @@ std::istream &raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
 }
 
 // LTEX specialization
-template<>
-uint32_t LTEX::size() const {
+template<> uint32_t LTEX::size() const {
   uint32_t size = editorID.entireSize() + textureFilename.entireSize()
       + (havokData ? havokData->entireSize() : 0u)
       + (specularExponent ? specularExponent->entireSize() : 0u);
@@ -650,8 +625,7 @@ uint32_t LTEX::size() const {
   return size;
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.textureFilename);
@@ -662,8 +636,8 @@ raw::write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
+template<> std::istream &
+raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
   readRecord(is, t.editorID);
   readRecord(is, t.textureFilename);
   readRecord(is, t.havokData);
@@ -677,15 +651,13 @@ std::istream &raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
 }
 
 // STAT specialization
-template<>
-uint32_t STAT::size() const {
+template<> uint32_t STAT::size() const {
   return editorID.entireSize() + modelFilename.entireSize()
       + boundRadius.entireSize()
       + (textureHash ? textureHash->entireSize() : 0u);
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.modelFilename);
@@ -695,8 +667,8 @@ raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
+template<> std::istream &
+raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
   // There are a few corrupted records making this harder than it needs to be:
   // ARVineRising02 has no MODL, MODB, or MODT
   // Empty STAT (size 0) after PalaceDRug01
@@ -711,8 +683,7 @@ std::istream &raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
 }
 
 // ENCH specialization
-template<>
-uint32_t ENCH::size() const {
+template<> uint32_t ENCH::size() const {
   return editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + enchantmentData.entireSize()
@@ -722,18 +693,7 @@ uint32_t ENCH::size() const {
                         });
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID);
-  readRecord(is, t.name);
-  readRecord(is, t.enchantmentData);
-  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
-
-  return is;
-}
-
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -743,9 +703,18 @@ raw::write(std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
   return os;
 }
 
+template<> std::istream
+raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.enchantmentData);
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
 // SPEL specialization
-template<>
-uint32_t SPEL::size() const {
+template<> uint32_t SPEL::size() const {
   return editorID.entireSize()
       + name.entireSize()
       + data.entireSize()
@@ -755,18 +724,7 @@ uint32_t SPEL::size() const {
                         });
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
-  readRecord(is, t.editorID);
-  readRecord(is, t.name);
-  readRecord(is, t.data);
-  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
-
-  return is;
-}
-
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -776,9 +734,18 @@ raw::write(std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
   return os;
 }
 
+template<> std::istream &
+raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
+  readRecord(is, t.editorID);
+  readRecord(is, t.name);
+  readRecord(is, t.data);
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
 // CELL specialization
-template<>
-uint32_t CELL::size() const {
+template<> uint32_t CELL::size() const {
   return editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + data.entireSize()
@@ -794,8 +761,7 @@ uint32_t CELL::size() const {
       + (grid ? grid->entireSize() : 0u);
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -814,8 +780,8 @@ raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
+template<> std::istream &
+raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.data);
@@ -853,8 +819,7 @@ std::istream &raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
 }
 
 // LIGH specialization
-template<>
-uint32_t LIGH::size() const {
+template<> uint32_t LIGH::size() const {
   return editorID.entireSize()
       + (modelFilename ? modelFilename->entireSize() : 0u)
       + (boundRadius ? boundRadius->entireSize() : 0u)
@@ -867,8 +832,7 @@ uint32_t LIGH::size() const {
       + (sound ? sound->entireSize() : 0u);
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.modelFilename);
@@ -884,8 +848,8 @@ raw::write(std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   std::set<uint32_t> possibleSubrecords = {
       "MODL"_rec, "MODB"_rec, "MODT"_rec, "SCRI"_rec, "FULL"_rec, "ICON"_rec
@@ -917,8 +881,7 @@ std::istream &raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
 }
 
 // BSGN specialization
-template<>
-uint32_t BSGN::size() const {
+template<> uint32_t BSGN::size() const {
   return editorID.entireSize()
       + name.entireSize()
       + icon.entireSize()
@@ -929,8 +892,7 @@ uint32_t BSGN::size() const {
                         });
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -941,8 +903,8 @@ raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.icon);
@@ -956,8 +918,7 @@ std::istream &raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
 }
 
 // MISC specialization
-template<>
-uint32_t MISC::size() const {
+template<> uint32_t MISC::size() const {
   return editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + (modelFilename ? modelFilename->entireSize() : 0u)
@@ -968,8 +929,7 @@ uint32_t MISC::size() const {
       + data.entireSize();
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -983,8 +943,8 @@ raw::write(std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -998,8 +958,7 @@ std::istream &raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
 }
 
 // DOOR specialization
-template<>
-uint32_t DOOR::size() const {
+template<> uint32_t DOOR::size() const {
   return editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + (modelFilename ? modelFilename->entireSize() : 0u)
@@ -1018,8 +977,7 @@ uint32_t DOOR::size() const {
                         });
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -1036,8 +994,8 @@ raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -1058,8 +1016,7 @@ std::istream &raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
 }
 
 // ACTI specialization
-template<>
-uint32_t ACTI::size() const {
+template<> uint32_t ACTI::size() const {
   return editorID.entireSize()
       + (name ? name->entireSize() : 0u)
       + modelFilename.entireSize()
@@ -1069,8 +1026,7 @@ uint32_t ACTI::size() const {
       + (sound ? sound->entireSize() : 0u);
 }
 
-template<>
-std::ostream &
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
   writeRecord(os, t.editorID);
   writeRecord(os, t.name);
@@ -1083,8 +1039,8 @@ raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
   return os;
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
+template<> std::istream &
+raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
   readRecord(is, t.editorID);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -1096,63 +1052,53 @@ std::istream &raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
   return is;
 }
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_ACTI &t,
-                         std::size_t) {
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_ACTI &t, std::size_t) {
   return t.write(os);
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t) {
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t) {
   return t.read(is);
 }
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_DOOR &t,
-                         std::size_t) {
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_DOOR &t, std::size_t) {
   return t.write(os);
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t) {
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t) {
   return t.read(is);
 }
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_LIGH &t,
-                         std::size_t) {
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_LIGH &t, std::size_t) {
   return t.write(os);
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t) {
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t) {
   return t.read(is);
 }
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_MISC &t,
-                         std::size_t) {
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_MISC &t, std::size_t) {
   return t.write(os);
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t) {
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t) {
   return t.read(is);
 }
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_STAT &t,
-                         std::size_t) {
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_STAT &t, std::size_t) {
   return t.write(os);
 }
 
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
   return t.read(is);
 }
 

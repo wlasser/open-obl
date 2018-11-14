@@ -217,40 +217,35 @@ using REFR_STAT = raw::REFR<"STAT"_rec, REFRTargetable>;
 
 } // namespace raw
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_ACTI &t,
-                         std::size_t);
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t);
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_ACTI &t, std::size_t);
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_DOOR &t,
-                         std::size_t);
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t);
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t);
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_LIGH &t,
-                         std::size_t);
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t);
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_DOOR &t, std::size_t);
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_MISC &t,
-                         std::size_t);
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t);
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t);
 
-template<>
-std::ostream &raw::write(std::ostream &os,
-                         const raw::REFR_STAT &t,
-                         std::size_t);
-template<>
-std::istream &raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t);
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_LIGH &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t);
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_MISC &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t);
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_STAT &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t);
 
 using REFR_ACTI = Record<raw::REFR_ACTI, "REFR"_rec>;
 using REFR_DOOR = Record<raw::REFR_DOOR, "REFR"_rec>;
