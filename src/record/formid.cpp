@@ -1,5 +1,3 @@
-#include "io/read_bytes.hpp"
-#include "io/write_bytes.hpp"
 #include "record/formid.hpp"
 
 std::string formIdString(FormId formId) noexcept {
@@ -26,20 +24,20 @@ FormId decodeFormId(void *ptr) noexcept {
 
 namespace io {
 
-void readBytes(std::istream &is, BaseId &baseId) {
-  readBytes(is, baseId.mId);
+void BinaryIo<BaseId>::writeBytes(std::ostream &os, const BaseId &data) {
+  BinaryIo<FormId>::writeBytes(os, data.mId);
 }
 
-void writeBytes(std::ostream &os, const BaseId &baseId) {
-  writeBytes(os, baseId.mId);
+void BinaryIo<BaseId>::readBytes(std::istream &is, BaseId &data) {
+  BinaryIo<FormId>::readBytes(is, data.mId);
 }
 
-void readBytes(std::istream &is, RefId &refId) {
-  readBytes(is, refId.mId);
+void BinaryIo<RefId>::writeBytes(std::ostream &os, const RefId &data) {
+  BinaryIo<FormId>::writeBytes(os, data.mId);
 }
 
-void writeBytes(std::ostream &os, const RefId &refId) {
-  writeBytes(os, refId.mId);
+void BinaryIo<RefId>::readBytes(std::istream &is, RefId &data) {
+  BinaryIo<FormId>::readBytes(is, data.mId);
 }
 
 } // namespace io

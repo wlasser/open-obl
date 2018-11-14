@@ -1,8 +1,7 @@
 #ifndef OPENOBLIVION_RECORD_SUBRECORD_HPP
 #define OPENOBLIVION_RECORD_SUBRECORD_HPP
 
-#include "io/write_bytes.hpp"
-#include "io/read_bytes.hpp"
+#include "io/io.hpp"
 #include "record/io.hpp"
 #include "record/size_of.hpp"
 #include "record/rec_of.hpp"

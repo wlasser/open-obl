@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_NIF_VERSIONABLE_HPP
 #define OPENOBLIVION_NIF_VERSIONABLE_HPP
 
-#include "io/read_bytes.hpp"
+#include "io/io.hpp"
 #include <array>
 #include <optional>
 #include <stdexcept>
@@ -311,13 +311,7 @@ class Versionable {
   template<class T, Version ver1, Version ver2>
   friend std::istream &operator>>(std::istream &, T &);
 
-  template<class T, nif::Version ver1, nif::Version ver2>
-  friend void ::io::readBytes(std::istream &,
-                              VersionOptional<T, ver1, ver2> &);
-
-  template<class L, class R, nif::Version ver1, nif::Version ver2>
-  friend void ::io::readBytes(std::istream &,
-                              VersionEither<L, R, ver1, ver2> &);
+ public:
 };
 
 // Convert a version string into its integer representation.
@@ -372,22 +366,45 @@ constexpr Version operator ""_ver(const char *str, std::size_t size) {
 
 namespace io {
 
+struct VersionableHelper : ::nif::Versionable {
+  template<class L, class R, nif::Version ver1, nif::Version ver2>
+  using VersionEitherType = VersionEither<L, R, ver1, ver2>;
+
+  template<class T, nif::Version ver1, nif::Version ver2>
+  using VersionOptionalType = VersionOptional<T, ver1, ver2>;
+};
+
 template<class L, class R, nif::Version ver1, nif::Version ver2>
-void readBytes(std::istream &,
-               nif::Versionable::VersionEither<L, R, ver1, ver2> &);
+struct BinaryIo<VersionableHelper::VersionEitherType<L, R, ver1, ver2>> {
+  using VersionEither = VersionableHelper::VersionEitherType<L, R, ver1, ver2>;
+
+  static void
+  writeBytes(std::ostream &os, const VersionEither &data) {
+    if (data) BinaryIo<R>::writeBytes(os, data.template value<true>());
+    else BinaryIo<L>::writeBytes(os, data.template value<false>());
+  }
+
+  static void
+  readBytes(std::istream &is, VersionEither &data) {
+    if (data) BinaryIo<R>::readBytes(is, data.template value<true>());
+    else BinaryIo<L>::readBytes(is, data.template value<false>());
+  }
+};
 
 template<class T, nif::Version ver1, nif::Version ver2>
-void readBytes(std::istream &is,
-               nif::Versionable::VersionOptional<T, ver1, ver2> &t) {
-  if (t) io::readBytes(is, t.value());
-}
+struct BinaryIo<VersionableHelper::VersionOptionalType<T, ver1, ver2>> {
+  using VersionOptional = VersionableHelper::VersionOptionalType<T, ver1, ver2>;
 
-template<class L, class R, nif::Version ver1, nif::Version ver2>
-void readBytes(std::istream &is,
-               nif::Versionable::VersionEither<L, R, ver1, ver2> &t) {
-  if (t) io::readBytes(is, t.template value<true>());
-  else io::readBytes(is, t.template value<false>());
-}
+  static void
+  writeBytes(std::ostream &os, const VersionOptional &data) {
+    if (data) BinaryIo<T>::writeBytes(os, data.value());
+  }
+
+  static void
+  readBytes(std::istream &is, VersionOptional &data) {
+    if (data) BinaryIo<T>::readBytes(is, data.value());
+  }
+};
 
 } // namespace io
 

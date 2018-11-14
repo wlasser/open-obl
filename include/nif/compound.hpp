@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_NIF_COMPOUND_HPP
 #define OPENOBLIVION_NIF_COMPOUND_HPP
 
-#include "io/read_bytes.hpp"
+#include "io/io.hpp"
 #include "nif/basic.hpp"
 #include "nif/enum.hpp"
 #include "nif/versionable.hpp"

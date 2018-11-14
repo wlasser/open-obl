@@ -4,6 +4,8 @@
 #include <bitset>
 #include <type_traits>
 
+struct BitflagMarker {};
+
 // Alternative to scoped enums for implementing bit flags, without using macros.
 // Usage is
 //
@@ -18,7 +20,7 @@
 // if (flags & MyFlags::DoBar) doBar();
 //
 template<std::size_t N, class Self>
-class Bitflag {
+class Bitflag : public BitflagMarker {
  protected:
   using bitset_t = std::bitset<N>;
 

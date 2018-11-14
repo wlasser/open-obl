@@ -1,6 +1,5 @@
-#include "record/formid.hpp" // This must be included before io
-#include "io/read_bytes.hpp"
-#include "io/write_bytes.hpp"
+#include "io/io.hpp"
+#include "record/formid.hpp"
 #include "record/record.hpp"
 #include "record/subrecords.hpp"
 #include <istream>
@@ -20,7 +19,7 @@ raw::write(std::ostream &os, const raw::SPIT &t, std::size_t /*size*/) {
   io::writeBytes(os, t.type);
   io::writeBytes(os, t.cost);
   io::writeBytes(os, t.level);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
 
   return os;
 }
@@ -31,7 +30,7 @@ raw::read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
   io::readBytes(is, t.type);
   io::readBytes(is, t.cost);
   io::readBytes(is, t.level);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
 
   return is;
 }
@@ -92,7 +91,7 @@ raw::write(std::ostream &os, const raw::XLOC &t, std::size_t /*size*/) {
   io::writeBytes(os, t.lockLevel);
   io::writeBytes(os, t.key);
   //io::writeBytes(os, t.unused);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   return os;
 }
 
@@ -101,7 +100,7 @@ std::istream &raw::read(std::istream &is, raw::XLOC &t, std::size_t size) {
   io::readBytes(is, t.lockLevel);
   io::readBytes(is, t.key);
   if (size == 16) io::readBytes(is, t.unused);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   return is;
 }
 
@@ -115,14 +114,14 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::XESP &t, std::size_t /*size*/) {
   io::writeBytes(os, t.parent);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   return os;
 }
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XESP &t, std::size_t /*size*/) {
   io::readBytes(is, t.parent);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   return is;
 }
 
@@ -251,7 +250,7 @@ raw::write(std::ostream &os, const raw::SNDD &t, std::size_t /*size*/) {
   io::writeBytes(os, t.maxAttenuationDistance);
   io::writeBytes(os, t.frequencyAdjustment);
   io::writeBytes(os, t.unused);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   return os;
 }
 
@@ -261,7 +260,7 @@ std::istream &raw::read(std::istream &is, raw::SNDD &t, std::size_t /*size*/) {
   io::readBytes(is, t.maxAttenuationDistance);
   io::readBytes(is, t.frequencyAdjustment);
   io::readBytes(is, t.unused);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   return is;
 }
 
@@ -279,7 +278,7 @@ raw::write(std::ostream &os, const raw::SNDX &t, std::size_t /*size*/) {
   io::writeBytes(os, t.maxAttenuationDistance);
   io::writeBytes(os, t.frequencyAdjustment);
   io::writeBytes(os, t.unused);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.unusedWord);
   io::writeBytes(os, t.staticAttenuation);
   io::writeBytes(os, t.startTime);
@@ -293,7 +292,7 @@ std::istream &raw::read(std::istream &is, raw::SNDX &t, std::size_t size) {
   io::readBytes(is, t.maxAttenuationDistance);
   io::readBytes(is, t.frequencyAdjustment);
   io::readBytes(is, t.unused);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   io::readBytes(is, t.unusedWord);
   if (size > 12) io::readBytes(is, t.staticAttenuation);
   if (size > 16) io::readBytes(is, t.startTime);
@@ -312,7 +311,7 @@ uint16_t DATA_MGEF::size() const {
 template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DATA_MGEF &t, std::size_t /*size*/) {
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.baseCost);
   std::visit([&os](auto &&v) {
     io::writeBytes(os, v);
@@ -337,7 +336,7 @@ raw::write(std::ostream &os, const raw::DATA_MGEF &t, std::size_t /*size*/) {
 template<>
 std::istream &
 raw::read(std::istream &is, raw::DATA_MGEF &t, std::size_t size) {
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   io::readBytes(is, t.baseCost);
   std::visit([&is](auto &&v) {
     io::readBytes(is, v);
@@ -383,7 +382,7 @@ raw::write(std::ostream &os, const raw::DATA_RACE &t, std::size_t /*size*/) {
   io::writeBytes(os, t.heightFemale);
   io::writeBytes(os, t.weightMale);
   io::writeBytes(os, t.weightFemale);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
 
   return os;
 }
@@ -412,7 +411,7 @@ std::istream &raw::read(std::istream &is, raw::DATA_RACE &t, std::size_t size) {
   io::readBytes(is, t.heightFemale);
   io::readBytes(is, t.weightMale);
   io::readBytes(is, t.weightFemale);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
 
   return is;
 }
@@ -429,8 +428,8 @@ raw::write(std::ostream &os, const raw::DATA_CLAS &t, std::size_t /*size*/) {
   io::writeBytes(os, t.primaryAttributes);
   io::writeBytes(os, t.specialization);
   io::writeBytes(os, t.majorSkills);
-  io::writeBytes(os, t.playableFlag);
-  io::writeBytes(os, t.barterFlag);
+  raw::write(os, t.playableFlag, 0);
+  raw::write(os, t.barterFlag, 0);
   if (t.hasTrainingInfo) {
     io::writeBytes(os, t.skillTrained);
     io::writeBytes(os, t.maxTrainingLevel);
@@ -444,8 +443,8 @@ std::istream &raw::read(std::istream &is, raw::DATA_CLAS &t, std::size_t size) {
   io::readBytes(is, t.primaryAttributes);
   io::readBytes(is, t.specialization);
   io::readBytes(is, t.majorSkills);
-  io::readBytes(is, t.playableFlag);
-  io::readBytes(is, t.barterFlag);
+  raw::read(is, t.playableFlag, 0);
+  raw::read(is, t.barterFlag, 0);
   if (size == 0x34) {
     t.hasTrainingInfo = true;
     io::readBytes(is, t.skillTrained);
@@ -491,7 +490,7 @@ raw::write(std::ostream &os, const raw::DATA_LIGH &t, std::size_t /*size*/) {
   io::writeBytes(os, t.time);
   io::writeBytes(os, t.radius);
   io::writeBytes(os, t.color);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.falloffExponent);
   io::writeBytes(os, t.fov);
   io::writeBytes(os, t.value);
@@ -505,7 +504,7 @@ std::istream &raw::read(std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
   io::readBytes(is, t.time);
   io::readBytes(is, t.radius);
   io::readBytes(is, t.color);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   if (size == 32) {
     io::readBytes(is, t.falloffExponent);
     io::readBytes(is, t.fov);
@@ -622,7 +621,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::ENIT &t, std::size_t /*size*/) {
   io::writeBytes(os, t.value);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.unused);
 
   return os;
@@ -631,7 +630,7 @@ raw::write(std::ostream &os, const raw::ENIT &t, std::size_t /*size*/) {
 template<>
 std::istream &raw::read(std::istream &is, raw::ENIT &t, std::size_t /*size*/) {
   io::readBytes(is, t.value);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   io::readBytes(is, t.unused);
   return is;
 }
@@ -709,7 +708,7 @@ raw::write(std::ostream &os, const raw::SCIT &t, std::size_t /*size*/) {
   io::writeBytes(os, t.id);
   io::writeBytes(os, t.school);
   io::writeBytes(os, t.visualEffect);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.unused);
 
   return os;
@@ -720,7 +719,7 @@ std::istream &raw::read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
   io::readBytes(is, t.id);
   io::readBytes(is, t.school);
   io::readBytes(is, t.visualEffect);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
   io::readBytes(is, t.unused);
 
   return is;

@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_FORMID_HPP
 #define OPENOBLIVION_FORMID_HPP
 
+#include "io/io.hpp"
 #include <cstdint>
 #include <iomanip>
 #include <string>
@@ -44,10 +45,17 @@ class RefId;
 
 namespace io {
 
-void readBytes(std::istream &, BaseId &);
-void writeBytes(std::ostream &, const BaseId &);
-void readBytes(std::istream &, RefId &);
-void writeBytes(std::ostream &, const RefId &);
+template<>
+struct BinaryIo<BaseId> {
+  static void writeBytes(std::ostream &os, const BaseId &data);
+  static void readBytes(std::istream &is, BaseId &data);
+};
+
+template<>
+struct BinaryIo<RefId> {
+  static void writeBytes(std::ostream &os, const RefId &data);
+  static void readBytes(std::istream &is, RefId &data);
+};
 
 }
 
@@ -65,8 +73,8 @@ class BaseId {
     return formIdString(static_cast<FormId>(*this));
   }
 
-  friend void io::readBytes(std::istream &is, BaseId &baseId);
-  friend void io::writeBytes(std::ostream &os, const BaseId &baseId);
+  friend io::BinaryIo<BaseId>;
+
   friend std::ostream &operator<<(std::ostream &os, BaseId baseId) {
     os << "0x" << std::hex << std::setfill('0') << std::setw(8) << baseId.mId;
     return os;
@@ -98,8 +106,8 @@ class RefId {
     return formIdString(static_cast<FormId>(*this));
   }
 
-  friend void io::readBytes(std::istream &is, RefId &refId);
-  friend void io::writeBytes(std::ostream &os, const RefId &refId);
+  friend io::BinaryIo<RefId>;
+
   friend std::ostream &operator<<(std::ostream &os, RefId refId) {
     os << "0x" << std::hex << std::setfill('0') << std::setw(8) << refId.mId;
     return os;

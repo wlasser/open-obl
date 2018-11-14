@@ -1,8 +1,7 @@
 #ifndef OPENOBLIVION_RECORD_IO_HPP
 #define OPENOBLIVION_RECORD_IO_HPP
 
-#include "io/read_bytes.hpp"
-#include "io/write_bytes.hpp"
+#include "io/io.hpp"
 #include "record/exceptions.hpp"
 #include "record/tuplifiable.hpp"
 #include "record/rec_of.hpp"
@@ -84,9 +83,10 @@ namespace raw {
 
 /// Output the raw Record or raw Subrecord T in its esp binary representation.
 /// \remark Specialize this for each raw type of non-class type that is not
-///         Tuplifiable.
-template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
-                                                               T>::value>>
+///         Tuplifiable or a Bitflag.
+template<class T, typename = std::enable_if_t<
+    !std::is_base_of<TuplifiableMarker, T>::value
+        && !std::is_base_of<BitflagMarker, T>::value>>
 std::ostream &write(std::ostream &os, const T &t, std::size_t /*size*/) {
   io::writeBytes(os, t);
   return os;
@@ -95,10 +95,23 @@ std::ostream &write(std::ostream &os, const T &t, std::size_t /*size*/) {
 /// Read a raw Record or raw Subrecord T in its esp binary representation.
 /// \remark Specialize this for each raw type of non-class type that is not
 ///         Tuplifiable.
-template<class T, typename = std::enable_if_t<!std::is_base_of<TuplifiableMarker,
-                                                               T>::value>>
+template<class T, typename = std::enable_if_t<
+    !std::is_base_of<TuplifiableMarker, T>::value
+        && !std::is_base_of<BitflagMarker, T>::value>>
 std::istream &read(std::istream &is, T &t, std::size_t size) {
   if (size != 0) io::readBytes(is, t);
+  return is;
+}
+
+template<std::size_t N, class T>
+std::ostream &write(std::ostream &os, const Bitflag<N, T> &t, std::size_t) {
+  io::writeBytes(os, t);
+  return os;
+}
+
+template<std::size_t N, class T>
+std::istream &read(std::istream &is, Bitflag<N, T> &t, std::size_t) {
+  io::readBytes(is, t);
   return is;
 }
 

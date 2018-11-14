@@ -2,7 +2,7 @@
 #define OPENOBLIVION_NIF_BASIC_HPP
 
 #include "nif/versionable.hpp"
-#include "io/read_bytes.hpp"
+#include "io/io.hpp"
 #include <cstdint>
 #include <limits>
 #include <stdexcept>
@@ -83,13 +83,5 @@ std::istream &operator>>(std::istream &is, LineString &t);
 
 } // namespace basic
 } // namespace nif
-
-namespace io {
-
-template<>
-void readBytes(std::istream &is, std::vector<nif::basic::Byte> &data,
-               std::size_t length);
-
-} // namespace io
 
 #endif // OPENOBLIVION_NIF_BASIC_HPP

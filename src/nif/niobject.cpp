@@ -1,4 +1,4 @@
-#include "io/read_bytes.hpp"
+#include "io/io.hpp"
 #include "nif/niobject.hpp"
 
 namespace nif {

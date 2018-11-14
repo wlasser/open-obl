@@ -1,6 +1,5 @@
 #include "bsa/bsa.hpp"
 #include "io/io.hpp"
-#include "io/read_bytes.hpp"
 #include "io/string.hpp"
 #include <boost/format.hpp>
 #include <algorithm>

@@ -14,11 +14,8 @@ target_include_directories(OpenOblivionIO PUBLIC
 target_sources(OpenOblivionIO PRIVATE
         ${CMAKE_SOURCE_DIR}/include/io/io.hpp
         ${CMAKE_SOURCE_DIR}/include/io/memstream.hpp
-        ${CMAKE_SOURCE_DIR}/include/io/read_bytes.hpp
         ${CMAKE_SOURCE_DIR}/include/io/string.hpp
-        ${CMAKE_SOURCE_DIR}/include/io/write_bytes.hpp
         io.cpp
-        read_bytes.cpp
         string.cpp)
 
 target_link_libraries(OpenOblivionIO PRIVATE Boost::boost)

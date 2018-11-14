@@ -1,8 +1,7 @@
 #ifndef OPENOBLIVION_RECORD_RECORD_HPP
 #define OPENOBLIVION_RECORD_RECORD_HPP
 
-#include "io/read_bytes.hpp"
-#include "io/write_bytes.hpp"
+#include "io/io.hpp"
 #include "record/exceptions.hpp"
 #include "record/formid.hpp"
 #include "record/io.hpp"
