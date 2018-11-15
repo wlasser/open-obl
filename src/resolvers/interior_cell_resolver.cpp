@@ -19,6 +19,14 @@ InteriorCell::~InteriorCell() {
   }
 }
 
+Resolver<record::CELL>::Entry::Entry(esp::EspAccessor accessor)
+    : mAccessor(accessor) {
+  // Read from a copy to keep mAccessor pointing to the start of the record.
+  esp::EspAccessor localAccessor{mAccessor};
+  mRecord = std::make_unique<record::CELL>(
+      localAccessor.readRecord<record::CELL>().value);
+}
+
 auto Resolver<record::CELL>::peek(BaseId baseId) const -> peek_t {
   const auto entry{mMap.find(baseId)};
   if (entry == mMap.end()) return nullptr;
@@ -59,7 +67,7 @@ auto Resolver<record::CELL>::make(BaseId baseId) const -> make_t {
   }
   ptr->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
 
-  RecordVisitor visitor(*ptr, mResolvers);
+  CellRecordVisitor visitor(*ptr, mResolvers);
 
   // Read from a copy so subsequent reads work if the CELL is unloaded
   esp::EspAccessor accessor{entry->second.mAccessor};
@@ -74,8 +82,8 @@ bool Resolver<record::CELL>::add(BaseId, store_t entry) {
   return mMap.insert_or_assign(baseId, std::move(entry)).second;
 }
 
-void Resolver<record::CELL>::RecordVisitor::setNodeTransform(Ogre::SceneNode *node,
-                                                             const record::raw::REFRTransformation &transform) {
+void CellRecordVisitor::setNodeTransform(Ogre::SceneNode *node,
+                                         const record::raw::REFRTransformation &transform) {
   const auto &data{transform.positionRotation.data};
 
   node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
@@ -100,34 +108,30 @@ void Resolver<record::CELL>::RecordVisitor::setNodeTransform(Ogre::SceneNode *no
 }
 
 template<>
-void Resolver<record::CELL>::RecordVisitor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
-  auto scnMgr{mCell.scnMgr};
-  gsl::not_null<btDiscreteDynamicsWorld *> world{mCell.physicsWorld.get()};
-  gsl::not_null<Ogre::SceneNode *> node
-      {mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
+void CellRecordVisitor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
+  gsl::not_null<Ogre::SceneNode *>
+      node{mCell.scnMgr->getRootSceneNode()->createChildSceneNode()};
 
   const BaseId baseId{accessor.peekBaseId()};
 
-  const auto &statRes{mResolvers.statRes};
-  const auto &doorRes{mResolvers.doorRes};
-  const auto &lighRes{mResolvers.lighRes};
+  const auto &statRes{std::get<Resolver<record::STAT> &>(mResolvers)};
+  const auto &doorRes{std::get<Resolver<record::DOOR> &>(mResolvers)};
+  const auto &lighRes{std::get<Resolver<record::LIGH> &>(mResolvers)};
+
   if (auto stat{statRes.get(baseId)}) {
-    const auto ref{accessor.readRecord<record::REFR_STAT>().value};
-    auto entity{reifyRecord(ref, scnMgr, std::make_tuple(mResolvers.statRes))};
-    setNodeTransform(node, ref);
-    attachAll(node, RefId{ref.mFormId}, world, entity);
+    readAndAttach<record::REFR_STAT>(accessor,
+                                     node,
+                                     std::forward_as_tuple(statRes));
   } else if (auto door{doorRes.get(baseId)}) {
-    const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
-    auto entity{reifyRecord(ref, scnMgr, std::make_tuple(mResolvers.doorRes))};
-    setNodeTransform(node, ref);
-    attachAll(node, RefId{ref.mFormId}, world, entity);
+    readAndAttach<record::REFR_DOOR>(accessor,
+                                     node,
+                                     std::forward_as_tuple(doorRes));
   } else if (auto ligh{lighRes.get(baseId)}) {
-    const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
-    auto entity{reifyRecord(ref, scnMgr, std::make_tuple(mResolvers.lighRes))};
-    setNodeTransform(node, ref);
-    attachAll(node, RefId{ref.mFormId}, world, entity);
+    readAndAttach<record::REFR_LIGH>(accessor,
+                                     node,
+                                     std::forward_as_tuple(lighRes));
   } else {
     accessor.skipRecord();
-    scnMgr->destroySceneNode(node);
+    mCell.scnMgr->destroySceneNode(node);
   }
 }

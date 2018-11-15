@@ -57,12 +57,7 @@ class Resolver<record::CELL> {
     std::unique_ptr<record::CELL> mRecord{};
     mutable std::weak_ptr<InteriorCell> mCell{};
 
-    explicit Entry(esp::EspAccessor accessor) : mAccessor(accessor) {
-      // Read from a copy to keep mAccessor pointing to the start of the record.
-      esp::EspAccessor localAccessor{mAccessor};
-      mRecord = std::make_unique<record::CELL>(
-          localAccessor.readRecord<record::CELL>().value);
-    }
+    explicit Entry(esp::EspAccessor accessor);
 
     ~Entry() = default;
 
@@ -74,39 +69,9 @@ class Resolver<record::CELL> {
   };
 
   using Strategy = strategy::KeepStrategy<InteriorCell>;
-
-  class Resolvers {
-   public:
-    Resolver<record::DOOR> &doorRes;
-    Resolver<record::LIGH> &lighRes;
-    Resolver<record::STAT> &statRes;
-
-    Resolvers(Resolver<record::DOOR> &doorRes,
-              Resolver<record::LIGH> &lighRes,
-              Resolver<record::STAT> &statRes) :
-        doorRes(doorRes), lighRes(lighRes), statRes(statRes) {}
-  };
-
-  class RecordVisitor {
-   private:
-    InteriorCell &mCell;
-    Resolvers mResolvers;
-   public:
-    explicit RecordVisitor(InteriorCell &cell, Resolvers resolvers) :
-        mCell(cell), mResolvers(resolvers) {}
-
-    void setNodeTransform(Ogre::SceneNode *node,
-                          const record::raw::REFRTransformation &transform);
-
-    template<class R>
-    void readRecord(esp::EspAccessor &accessor) {
-      accessor.skipRecord();
-    }
-
-    template<>
-    void readRecord<record::REFR>(esp::EspAccessor &accessor);
-  };
-
+  using Resolvers = std::tuple<Resolver<record::DOOR> &,
+                               Resolver<record::LIGH> &,
+                               Resolver<record::STAT> &>;
   Resolvers mResolvers;
   bullet::Configuration &mBulletConf;
   std::unordered_map<BaseId, Entry> mMap{};
@@ -119,10 +84,10 @@ class Resolver<record::CELL> {
   using make_t = std::shared_ptr<InteriorCell>;
   using resolvers_t = Resolvers;
 
-  explicit Resolver(Resolvers resolvers,
+  explicit Resolver(resolvers_t resolvers,
                     bullet::Configuration &bulletConf,
                     std::unique_ptr<Strategy> strategy) :
-      mResolvers(resolvers),
+      mResolvers(std::move(resolvers)),
       mBulletConf(bulletConf),
       mStrategy(std::move(strategy)) {}
 
@@ -130,6 +95,40 @@ class Resolver<record::CELL> {
   get_t get(BaseId baseId) const;
   make_t make(BaseId baseId) const;
   bool add(BaseId baseId, store_t entry);
+};
+
+class CellRecordVisitor {
+ private:
+  InteriorCell &mCell;
+  Resolver<record::CELL>::resolvers_t mResolvers;
+ public:
+  explicit CellRecordVisitor(InteriorCell &cell,
+                             Resolver<record::CELL>::resolvers_t resolvers) :
+      mCell(cell), mResolvers(std::move(resolvers)) {}
+
+  void setNodeTransform(Ogre::SceneNode *node,
+                        const record::raw::REFRTransformation &transform);
+
+  template<class R>
+  void readRecord(esp::EspAccessor &accessor) {
+    accessor.skipRecord();
+  }
+
+  template<>
+  void readRecord<record::REFR>(esp::EspAccessor &accessor);
+
+  template<class Refr, class ...Res>
+  void readAndAttach(esp::EspAccessor &accessor,
+                     gsl::not_null<Ogre::SceneNode *> node,
+                     std::tuple<const Res &...> resolvers) {
+    auto scnMgr{mCell.scnMgr};
+    gsl::not_null<btDiscreteDynamicsWorld *> world{mCell.physicsWorld.get()};
+
+    const auto ref{accessor.readRecord<Refr>().value};
+    auto entity{reifyRecord(ref, scnMgr, std::move(resolvers))};
+    setNodeTransform(node, ref);
+    attachAll(node, RefId{ref.mFormId}, world, entity);
+  }
 };
 
 #endif // OPENOBLIVION_INTERIOR_CELL_RESOLVER_HPP
