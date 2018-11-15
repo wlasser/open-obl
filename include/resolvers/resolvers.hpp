@@ -53,9 +53,12 @@ class Resolver {
   std::pair<RecordIterator, bool>
   insertOrAssignEspRecord(BaseId baseId, const R &rec);
 
-  /// \overload insertOrAssignEspRecord(BaseId, const R &)
+  /// Insert an esp record if there is not esp or ess record with that baseId.
+  /// \return The iterator component points to the inserted or already existing
+  ///         esp record. The boolean component is true if insertion took place,
+  ///         and false otherwise.
   std::pair<RecordIterator, bool>
-  insertOrAssignEspRecord(BaseId baseId, R &&rec);
+  insertEspRecord(BaseId baseId, const R &rec);
 
   friend class InitialRecordVisitor;
  public:
@@ -80,6 +83,10 @@ class Resolver {
   /// Insert a new ess record or replace an existing one.
   /// \return true if insertion took place and false if assignment took place.
   bool insertOrAssign(BaseId baseId, const R &rec);
+
+  /// Insert a new ess record, doing nothing if an esp or ess record already
+  /// exists with that baseId.
+  bool insert(BaseId baseId, const R &rec);
 };
 
 /// Used for specializing the return type of citeRecord.
@@ -155,18 +162,8 @@ Resolver<R>::insertOrAssignEspRecord(BaseId baseId, const R &rec) {
 
 template<class R>
 std::pair<typename Resolver<R>::RecordIterator, bool>
-Resolver<R>::insertOrAssignEspRecord(BaseId baseId, R &&rec) {
-  auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<0>,
-                                          rec, tl::nullopt)};
-  if (inserted) return {it, inserted};
-  if (it->second.index() == 0) {
-    std::pair<const R, tl::optional<R>> &pair{std::get<0>(it->second)};
-    if (!pair.second) {
-      it->second.template emplace<0>(rec, tl::nullopt);
-      return {it, true};
-    }
-  }
-  return {it, false};
+Resolver<R>::insertEspRecord(BaseId baseId, const R &rec) {
+  return mRecords.try_emplace(baseId, std::in_place_index<0>, rec, tl::nullopt);
 }
 
 template<class R>
@@ -216,6 +213,11 @@ bool Resolver<R>::insertOrAssign(BaseId baseId, const R &rec) {
         return doInsert;
       }
   }, it->second);
+}
+
+template<class R>
+bool Resolver<R>::insert(BaseId baseId, const R &rec) {
+  return mRecords.try_emplace(baseId, std::in_place_index<1>, rec).second;
 }
 
 #endif // OPENOBLIVION_RESOLVERS_HPP
