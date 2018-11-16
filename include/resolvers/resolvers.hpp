@@ -28,8 +28,11 @@
 /// \remark This class does *not* support deferred loading of records or the
 ///         loading of records located in hierarchical top groups, namely
 ///         record::CELL, record::WRLD, and record::DIAL.
-template<class R>
+template<class R, class Id = BaseId>
 class Resolver {
+ public:
+  using IdType = Id;
+
  private:
   /// Holds a record with an immutable backup of the original.
   /// Used to provide something like 'opt-out CoW access' to records.
@@ -41,9 +44,11 @@ class Resolver {
   using RecordEntry = std::variant<std::pair<const R, tl::optional<R>>, R>;
 
   /// Record storage.
-  std::unordered_map<BaseId, RecordEntry> mRecords{};
+  std::unordered_map<IdType, RecordEntry> mRecords{};
 
   using RecordIterator = typename decltype(mRecords)::iterator;
+
+ public:
 
   /// Insert an esp record or replace an existing one, doing nothing if baseId
   /// refers to an ess record.
@@ -51,17 +56,15 @@ class Resolver {
   ///         record, or already existing ess record. The boolean component is
   ///         true if insertion *or assignment* took place, and false otherwise.
   std::pair<RecordIterator, bool>
-  insertOrAssignEspRecord(BaseId baseId, const R &rec);
+  insertOrAssignEspRecord(IdType baseId, const R &rec);
 
   /// Insert an esp record if there is not esp or ess record with that baseId.
   /// \return The iterator component points to the inserted or already existing
   ///         esp record. The boolean component is true if insertion took place,
   ///         and false otherwise.
   std::pair<RecordIterator, bool>
-  insertEspRecord(BaseId baseId, const R &rec);
+  insertEspRecord(IdType baseId, const R &rec);
 
-  friend class InitialRecordVisitor;
- public:
   /// The integer representation of the record type.
   constexpr static inline uint32_t RecordType{R::RecordType};
 
@@ -72,21 +75,21 @@ class Resolver {
                 "Template parameter must be a Record");
 
   /// Return the base record, performing disk io if necessary.
-  tl::optional<const R &> get(BaseId baseId) const;
+  tl::optional<const R &> get(IdType baseId) const;
 
-  /// \overload get(BaseId)
-  tl::optional<R &> get(BaseId baseId);
+  /// \overload get(IdType)
+  tl::optional<R &> get(IdType baseId);
 
   /// Checks if there is a record of type R with the baseId.
-  bool contains(BaseId baseId) const;
+  bool contains(IdType baseId) const;
 
   /// Insert a new ess record or replace an existing one.
   /// \return true if insertion took place and false if assignment took place.
-  bool insertOrAssign(BaseId baseId, const R &rec);
+  bool insertOrAssign(IdType baseId, const R &rec);
 
   /// Insert a new ess record, doing nothing if an esp or ess record already
   /// exists with that baseId.
-  bool insert(BaseId baseId, const R &rec);
+  bool insert(IdType baseId, const R &rec);
 };
 
 /// Used for specializing the return type of citeRecord.
@@ -144,9 +147,9 @@ typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
             typename ReifyRecordTrait<R>::resolvers resolvers);
 
-template<class R>
-std::pair<typename Resolver<R>::RecordIterator, bool>
-Resolver<R>::insertOrAssignEspRecord(BaseId baseId, const R &rec) {
+template<class R, class IdType>
+std::pair<typename Resolver<R, IdType>::RecordIterator, bool>
+Resolver<R, IdType>::insertOrAssignEspRecord(IdType baseId, const R &rec) {
   auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<0>,
                                           rec, tl::nullopt)};
   if (inserted) return {it, inserted};
@@ -160,14 +163,14 @@ Resolver<R>::insertOrAssignEspRecord(BaseId baseId, const R &rec) {
   return {it, false};
 }
 
-template<class R>
-std::pair<typename Resolver<R>::RecordIterator, bool>
-Resolver<R>::insertEspRecord(BaseId baseId, const R &rec) {
+template<class R, class IdType>
+std::pair<typename Resolver<R, IdType>::RecordIterator, bool>
+Resolver<R, IdType>::insertEspRecord(IdType baseId, const R &rec) {
   return mRecords.try_emplace(baseId, std::in_place_index<0>, rec, tl::nullopt);
 }
 
-template<class R>
-tl::optional<const R &> Resolver<R>::get(BaseId baseId) const {
+template<class R, class IdType>
+tl::optional<const R &> Resolver<R, IdType>::get(IdType baseId) const {
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const std::variant<std::pair<const R, tl::optional<R>>, R> &entry{it->second};
@@ -179,8 +182,8 @@ tl::optional<const R &> Resolver<R>::get(BaseId baseId) const {
   }
 }
 
-template<class R>
-tl::optional<R &> Resolver<R>::get(BaseId baseId) {
+template<class R, class IdType>
+tl::optional<R &> Resolver<R, IdType>::get(IdType baseId) {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   RecordEntry &entry{it->second};
@@ -193,13 +196,13 @@ tl::optional<R &> Resolver<R>::get(BaseId baseId) {
   return std::get<1>(entry);
 }
 
-template<class R>
-bool Resolver<R>::contains(BaseId baseId) const {
+template<class R, class IdType>
+bool Resolver<R, IdType>::contains(IdType baseId) const {
   return mRecords.find(baseId) != mRecords.end();
 }
 
-template<class R>
-bool Resolver<R>::insertOrAssign(BaseId baseId, const R &rec) {
+template<class R, class IdType>
+bool Resolver<R, IdType>::insertOrAssign(IdType baseId, const R &rec) {
   auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<1>, rec)};
   if (inserted) return true;
   return std::visit(overloaded{
@@ -215,8 +218,8 @@ bool Resolver<R>::insertOrAssign(BaseId baseId, const R &rec) {
   }, it->second);
 }
 
-template<class R>
-bool Resolver<R>::insert(BaseId baseId, const R &rec) {
+template<class R, class IdType>
+bool Resolver<R, IdType>::insert(IdType baseId, const R &rec) {
   return mRecords.try_emplace(baseId, std::in_place_index<1>, rec).second;
 }
 

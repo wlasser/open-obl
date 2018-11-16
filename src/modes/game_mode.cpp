@@ -107,7 +107,26 @@ RefId GameMode::getCrosshairRef() {
 }
 
 void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
-  mCell = ctx.getInteriorCellResolver().make(cellId);
+  auto &cellRes = ctx.getCellResolver();
+  if (!cellRes.contains(cellId)) {
+    throw std::runtime_error("Cell does not exist");
+  }
+  const auto cellRec{cellRes.get(cellId)};
+  cellRes.load(cellId,
+               std::forward_as_tuple(ctx.getRefrStaticResolver(),
+                                     ctx.getRefrDoorResolver(),
+                                     ctx.getRefrLightResolver()),
+               std::forward_as_tuple(ctx.getStaticResolver(),
+                                     ctx.getDoorResolver(),
+                                     ctx.getLightResolver()));
+  mCell = reifyRecord(*cellRec,
+                      std::forward_as_tuple(ctx.getStaticResolver(),
+                                            ctx.getDoorResolver(),
+                                            ctx.getLightResolver(),
+                                            ctx.getRefrStaticResolver(),
+                                            ctx.getRefrDoorResolver(),
+                                            ctx.getRefrLightResolver(),
+                                            ctx.getCellResolver()));
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
   mPlayerController =

@@ -25,7 +25,7 @@ class Configuration {
   };
 
  public:
-  std::unique_ptr<btDiscreteDynamicsWorld> makeDynamicsWorld() {
+  std::unique_ptr<btDiscreteDynamicsWorld> makeDynamicsWorld() const {
     auto world = std::make_unique<btDiscreteDynamicsWorld>(
         dispatcher.get(),
         broadphase.get(),

@@ -5,7 +5,7 @@
 #include "record/io.hpp"
 #include "record/records.hpp"
 #include "resolvers/door_resolver.hpp"
-#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/cell_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 
@@ -14,17 +14,26 @@ class InitialRecordVisitor {
   DoorResolver *doorRes;
   LightResolver *lightRes;
   StaticResolver *staticRes;
-  InteriorCellResolver *interiorCellRes;
+  RefrDoorResolver *refrDoorRes;
+  RefrLightResolver *refrLightRes;
+  RefrStaticResolver *refrStaticRes;
+  CellResolver *cellRes;
 
  public:
   InitialRecordVisitor(DoorResolver *doorRes,
                        LightResolver *lightRes,
                        StaticResolver *staticRes,
-                       InteriorCellResolver *interiorCellRes) :
+                       RefrDoorResolver *refrDoorRes,
+                       RefrLightResolver *refrLightRes,
+                       RefrStaticResolver *refrStaticRes,
+                       CellResolver *cellRes) :
       doorRes(doorRes),
       lightRes(lightRes),
       staticRes(staticRes),
-      interiorCellRes(interiorCellRes) {}
+      refrDoorRes(refrDoorRes),
+      refrLightRes(refrLightRes),
+      refrStaticRes(refrStaticRes),
+      cellRes(cellRes) {}
 
   template<class R>
   void readRecord(esp::EspAccessor &accessor) {

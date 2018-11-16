@@ -88,7 +88,7 @@ class SaveState {
   /// According to UESP this begins at 1.042, as the start time of the game is
   /// 1am on day 1, namely Morndas 27th of Last Seed.
   /// gameDaysPassed is therefore the amount of time, in days, that have passed
-  /// since 12am Sundas 26th of Last Seed.
+  /// since the epoch 12am Sundas 26th of Last Seed.
   float mGameDaysPassed{};
 
   /// Number of milliseconds elapsed while playing this save game.

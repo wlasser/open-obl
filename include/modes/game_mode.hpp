@@ -6,7 +6,7 @@
 #include "character_controller/player_controller.hpp"
 #include "record/formid.hpp"
 #include "modes/mode.hpp"
-#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/cell_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <memory>
 #include <optional>
@@ -17,7 +17,7 @@ class ConsoleMode;
 
 class GameMode {
  private:
-  std::shared_ptr<InteriorCell> mCell{};
+  std::shared_ptr<Cell> mCell{};
   std::unique_ptr<character::PlayerController> mPlayerController{};
   bullet::CollisionCaller mCollisionCaller{};
 

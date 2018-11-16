@@ -8,6 +8,7 @@
 #include <string>
 
 using DoorResolver = Resolver<record::DOOR>;
+using RefrDoorResolver = Resolver<record::REFR_DOOR, RefId>;
 
 template<>
 struct CiteRecordTrait<record::DOOR> {

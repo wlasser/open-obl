@@ -44,6 +44,8 @@ struct REFRBase {
     readRecord(is, parent);
     return is;
   }
+
+  virtual ~REFRBase() = default;
 };
 
 struct REFRTransformation {
@@ -66,6 +68,8 @@ struct REFRTransformation {
     readRecord(is, positionRotation);
     return is;
   }
+
+  virtual ~REFRTransformation() = default;
 };
 
 template<class ...T>

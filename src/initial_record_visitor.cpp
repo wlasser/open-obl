@@ -42,13 +42,9 @@ void InitialRecordVisitor::readRecord<record::MISC>(esp::EspAccessor &accessor) 
 
 template<>
 void InitialRecordVisitor::readRecord<record::CELL>(esp::EspAccessor &accessor) {
-  // Constructor takes accessor by *value* so it can be stored for deferred
-  // loading. It therefore calls readRecord on the *copy*, so does not advance
-  // our accessor.
-  Resolver<record::CELL>::store_t entry(accessor);
-  accessor.skipRecord();
-  const BaseId baseId{entry.mRecord->mFormId};
-  interiorCellRes->add(baseId, std::move(entry));
+  const auto rec{accessor.readRecord<record::CELL>().value};
+  const BaseId baseId{rec.mFormId};
+  cellRes->insertOrAppend(baseId, rec, accessor);
   // Children will be loaded later, so if this cell has any then skip over them
   if (accessor.peekGroupType() == record::Group::GroupType::CellChildren) {
     accessor.skipGroup();

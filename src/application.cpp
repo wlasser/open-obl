@@ -14,7 +14,6 @@
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogreimgui/imgui_manager.hpp"
-#include "resolvers/interior_cell_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
@@ -64,12 +63,11 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.doorRes = std::make_unique<DoorResolver>();
   ctx.lightRes = std::make_unique<LightResolver>();
   ctx.staticRes = std::make_unique<StaticResolver>();
-  ctx.interiorCellRes = std::make_unique<InteriorCellResolver>(
-      InteriorCellResolver::resolvers_t{
-          *ctx.doorRes, *ctx.lightRes, *ctx.staticRes
-      },
-      *ctx.bulletConf,
-      std::make_unique<strategy::KeepCurrent<InteriorCell>>());
+  ctx.refrDoorRes = std::make_unique<RefrDoorResolver>();
+  ctx.refrLightRes = std::make_unique<RefrLightResolver>();
+  ctx.refrStaticRes = std::make_unique<RefrStaticResolver>();
+
+  ctx.cellRes = std::make_unique<CellResolver>(*ctx.bulletConf);
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
@@ -131,7 +129,10 @@ Application::Application(std::string windowName) : FrameListener() {
   InitialRecordVisitor initialRecordVisitor(ctx.doorRes.get(),
                                             ctx.lightRes.get(),
                                             ctx.staticRes.get(),
-                                            ctx.interiorCellRes.get());
+                                            ctx.refrDoorRes.get(),
+                                            ctx.refrLightRes.get(),
+                                            ctx.refrStaticRes.get(),
+                                            ctx.cellRes.get());
   for (int i = 0; i < loadOrder.size(); ++i) {
     esp::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }

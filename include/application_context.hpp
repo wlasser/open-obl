@@ -14,7 +14,7 @@
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "ogreimgui/imgui_manager.hpp"
-#include "resolvers/interior_cell_resolver.hpp"
+#include "resolvers/cell_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
@@ -58,7 +58,10 @@ class ApplicationContext {
   std::unique_ptr<DoorResolver> doorRes{};
   std::unique_ptr<LightResolver> lightRes{};
   std::unique_ptr<StaticResolver> staticRes{};
-  std::unique_ptr<InteriorCellResolver> interiorCellRes{};
+  std::unique_ptr<RefrDoorResolver> refrDoorRes{};
+  std::unique_ptr<RefrLightResolver> refrLightRes{};
+  std::unique_ptr<RefrStaticResolver> refrStaticRes{};
+  std::unique_ptr<CellResolver> cellRes{};
 
   std::unique_ptr<esp::EspCoordinator> espCoordinator{};
 
@@ -79,20 +82,32 @@ class ApplicationContext {
     return imguiMgr.get();
   }
 
-  const DoorResolver &getDoorResolver() const {
+  DoorResolver &getDoorResolver() const {
     return *doorRes;
   }
 
-  const LightResolver &getLightResolvers() const {
+  LightResolver &getLightResolver() const {
     return *lightRes;
   }
 
-  const StaticResolver &getStaticResolver() const {
+  StaticResolver &getStaticResolver() const {
     return *staticRes;
   }
 
-  const InteriorCellResolver &getInteriorCellResolver() const {
-    return *interiorCellRes;
+  RefrDoorResolver &getRefrDoorResolver() const {
+    return *refrDoorRes;
+  }
+
+  RefrLightResolver &getRefrLightResolver() const {
+    return *refrLightRes;
+  }
+
+  RefrStaticResolver &getRefrStaticResolver() const {
+    return *refrStaticRes;
+  }
+
+  CellResolver &getCellResolver() const {
+    return *cellRes;
   }
 
   void setCamera(Ogre::Camera *camera) {
