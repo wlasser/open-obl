@@ -104,16 +104,12 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
   // Read data and uncompress if necessary
   std::vector<uint8_t> data(uncompressedSize);
   if (file.compressed) {
-    std::vector<unsigned char> compressedData(compressedSize);
-    if (!io::safeRead(owner.is, compressedData.data(), compressedSize)) {
-      throw io::IOReadError("compressed data", owner.is.rdstate());
-    }
+    std::vector<unsigned char> compressedData;
+    io::readBytes(owner.is, compressedData, compressedSize);
     unsigned long zlibSize{uncompressedSize};
     uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
   } else {
-    if (!io::safeRead(owner.is, data.data(), uncompressedSize)) {
-      throw io::IOReadError("uncompressed data", owner.is.rdstate());
-    }
+    io::readBytes(owner.is, data, uncompressedSize);
   }
   return FileData{std::move(data), uncompressedSize};
 }
