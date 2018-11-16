@@ -65,7 +65,8 @@ class GroupError : std::runtime_error {
   explicit GroupError(const std::string &what) : std::runtime_error(what) {}
 };
 
-std::optional<record::Group::GroupType> peekGroupType(std::istream &is);
+std::optional<record::Group::GroupType>
+peekGroupType(std::istream &is) noexcept;
 
 } // namespace record
 

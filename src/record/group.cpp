@@ -1,5 +1,6 @@
 #include "record/io.hpp"
 #include "record/group.hpp"
+#include <gsl/gsl>
 #include <array>
 #include <istream>
 
@@ -30,21 +31,32 @@ std::istream &record::operator>>(std::istream &is, Group &grp) {
   return is;
 }
 
-std::optional<record::Group::GroupType> record::peekGroupType(std::istream &is) {
-  std::array<char, 4> type{};
-  io::readBytes(is, type);
+std::optional<record::Group::GroupType>
+record::peekGroupType(std::istream &is) noexcept {
+  // Ensure that the stream is always returned to its original position.
+  const auto startPos{is.tellg()};
+  const auto seekGuard = gsl::finally([&]() {
+    is.clear();
+    is.seekg(startPos, std::ios_base::beg);
+  });
 
-  const std::string_view typeView(type.data(), 4);
-  if (typeView != Group::type) {
-    is.seekg(-4, std::istream::cur);
+  std::array<char, 4> type{};
+  try {
+    io::readBytes(is, type);
+  } catch (const io::IOReadError &e) {
     return std::nullopt;
   }
+  const std::string_view typeView(type.data(), 4);
+  if (typeView != Group::type) return std::nullopt;
 
   // Skip past groupSize and label
   is.seekg(8, std::istream::cur);
   record::Group::GroupType groupType{};
-  io::readBytes(is, groupType);
-  is.seekg(-16, std::istream::cur);
+  try {
+    io::readBytes(is, groupType);
+  } catch (io::IOReadError &e) {
+    return std::nullopt;
+  }
 
   return groupType;
 }

@@ -18,7 +18,7 @@ namespace record {
 
 /// Return the integer representation of the next 4 bytes, which is hopefully a
 /// record type.
-uint32_t peekRecordType(std::istream &is);
+uint32_t peekRecordType(std::istream &is) noexcept;
 
 /// Wrapper around operator>>(std::istream &, T&)
 /// \tparam T Should be a Subrecord or Record

@@ -1,12 +1,23 @@
 #include "record/io.hpp"
+#include <gsl/gsl>
 #include <array>
 #include <string>
 
-uint32_t record::peekRecordType(std::istream &is) {
+uint32_t record::peekRecordType(std::istream &is) noexcept {
+  // Ensure that the stream is always returned to its original position.
+  const auto startPos{is.tellg()};
+  const auto seekGuard = gsl::finally([&]() {
+    is.clear();
+    is.seekg(startPos, std::ios_base::beg);
+  });
+
   uint32_t type{};
-  is.read(reinterpret_cast<char *>(&type), sizeof(type));
-  if (is.rdstate() != std::ios::goodbit) return 0;
-  is.seekg(-4, std::istream::cur);
+  try {
+    io::readBytes(is, type);
+  } catch (const io::IOReadError &e) {
+    return 0;
+  }
+
   return type;
 }
 
@@ -26,9 +37,11 @@ record::RecordHeader record::readRecordHeader(std::istream &is) {
 
 void record::skipGroup(std::istream &is) {
   std::array<char, 4> type{};
-  is.read(type.data(), 4);
+  io::readBytes(is, type);
+
   uint32_t size;
-  is.read(reinterpret_cast<char *>(&size), 4);
+  io::readBytes(is, size);
+
   // Group size includes the header, unlike records and subrecords
   is.seekg(size - 8, std::istream::cur);
 }

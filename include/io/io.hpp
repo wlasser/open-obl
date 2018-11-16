@@ -60,6 +60,7 @@ void writeBytes(std::ostream &os, const T &data) {
 template<class T>
 void readBytes(std::istream &is, T &data) {
   BinaryIo<T>::readBytes(is, data);
+  if (!is) throw IOReadError(is.rdstate());
 }
 
 template<class T>
