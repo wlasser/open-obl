@@ -2,17 +2,45 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivion)
 
 include(CheckIPOSupported)
+include(FetchContent)
+
+option(USE_IWYU "Run include-what-you-use when building" OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# As of commit a06c4a1 Abseil has a bug where GoogleTest cannot be downloaded
+# when Abseil is included as a subdirectory. Turn this option on and remove the
+# FetchContent for GoogleTest when this is fixed.
+# TODO: Let Abseil download GoogleTest
+set(ABSL_USE_GOOGLETEST_HEAD OFF CACHE BOOL "")
+set(ABSL_RUN_TESTS ON CACHE BOOL "")
+
+FetchContent_Declare(GoogleTest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG origin/master)
+FetchContent_Declare(Abseil
+        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+        GIT_TAG origin/master)
+
+FetchContent_GetProperties(GoogleTest)
+if (NOT GoogleTest_populated)
+    FetchContent_Populate(GoogleTest)
+    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(Abseil)
+if (NOT Abseil_populated)
+    FetchContent_Populate(Abseil)
+    add_subdirectory(${abseil_SOURCE_DIR} ${abseil_BINARY_DIR})
+endif ()
 
 # Link-time optimization
+cmake_policy(SET CMP0069 NEW)
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
 if (IPO_SUPPORTED)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 else ()
     message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
 endif ()
-
-option(USE_IWYU "Run include-what-you-use when building" OFF)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 2.0 REQUIRED)
