@@ -7,6 +7,7 @@
 #include <optional>
 #include <ostream>
 #include <stdexcept>
+#include <string_view>
 
 namespace record {
 
@@ -19,14 +20,13 @@ class Group {
  private:
 
   friend std::ostream &operator<<(std::ostream &, const Group &);
-
   friend std::istream &operator>>(std::istream &, Group &);
 
  public:
-  typedef struct {
+  struct Grid {
     uint16_t y;
     uint16_t x;
-  } Grid;
+  };
   union Label {
     char recordType[4];
     FormId parent;
@@ -47,14 +47,14 @@ class Group {
     CellTemporaryChildren,
     CellVisibleDistantChildren
   };
-  const std::string type = "GRUP";
+  constexpr static inline std::string_view type{"GRUP"};
   // Size of the group, including the data in this header
-  uint32_t groupSize = 0;
+  uint32_t groupSize{};
   // Generally parent information or record type, depends on type
   Label label{};
-  GroupType groupType = GroupType::Top;
+  GroupType groupType{GroupType::Top};
   // Date stamp
-  uint32_t stamp = 0;
+  uint32_t stamp{};
 };
 
 std::ostream &operator<<(std::ostream &, const Group &);
