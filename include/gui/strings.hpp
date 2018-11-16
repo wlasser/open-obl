@@ -4,6 +4,7 @@
 #include "settings.hpp"
 #include "gui/trait.hpp"
 #include "ogre/text_resource_manager.hpp"
+#include <absl/container/flat_hash_map.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
@@ -12,7 +13,7 @@ namespace gui {
 
 class StringsElement {
  private:
-  std::unordered_map<std::string, std::string> mStrings{};
+  absl::flat_hash_map<std::string, std::string> mStrings{};
   Ogre::TextResourceManager &txtMgr{Ogre::TextResourceManager::getSingleton()};
 
   std::stringstream openXMLStream(const std::string &filename) const {

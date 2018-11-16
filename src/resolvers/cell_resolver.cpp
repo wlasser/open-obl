@@ -74,7 +74,7 @@ void Resolver<record::CELL>::load(BaseId baseId,
   }
 }
 
-tl::optional<const std::unordered_set<RefId> &>
+tl::optional<const absl::flat_hash_set<RefId> &>
 Resolver<record::CELL>::getReferences(BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;

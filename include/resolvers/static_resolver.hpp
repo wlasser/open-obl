@@ -10,7 +10,6 @@
 #include <OgreSceneManager.h>
 #include <optional>
 #include <string>
-#include <unordered_map>
 
 using StaticResolver = Resolver<record::STAT>;
 using RefrStaticResolver = Resolver<record::REFR_STAT, RefId>;

@@ -4,6 +4,7 @@
 #include "record/formid.hpp"
 #include "resolvers/helpers.hpp"
 #include "meta.hpp"
+#include <absl/container/flat_hash_map.h>
 #include <gsl/gsl>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
@@ -44,7 +45,7 @@ class Resolver {
   using RecordEntry = std::variant<std::pair<const R, tl::optional<R>>, R>;
 
   /// Record storage.
-  std::unordered_map<IdType, RecordEntry> mRecords{};
+  absl::flat_hash_map<IdType, RecordEntry> mRecords{};
 
   using RecordIterator = typename decltype(mRecords)::iterator;
 

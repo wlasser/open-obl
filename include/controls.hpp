@@ -3,8 +3,8 @@
 
 #include "sdl/sdl.hpp"
 #include "game_settings.hpp"
+#include <absl/container/flat_hash_map.h>
 #include <string_view>
-#include <unordered_map>
 #include <variant>
 
 namespace event {
@@ -294,8 +294,8 @@ class KeyMap {
  private:
   // SDL keycodes are not necessarily contiguous and can be arbitrarily large up
   // to UINT32_MAX, so cannot use an array.
-  std::unordered_map<sdl::KeyCode, event::KeyVariant> mKeys{};
-  std::unordered_map<sdl::MouseButton, event::KeyVariant> mMouse{};
+  absl::flat_hash_map<sdl::KeyCode, event::KeyVariant> mKeys{};
+  absl::flat_hash_map<sdl::MouseButton, event::KeyVariant> mMouse{};
   // TODO: Joysticks and controllers
 
  public:

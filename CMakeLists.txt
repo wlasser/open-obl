@@ -191,6 +191,8 @@ target_link_libraries(OpenOblivion PRIVATE
         GSL
         pugixml
         polymorphic_value
+        absl::container
+        absl::hash
         ${BULLET_LIBRARIES})
 
 if (USE_IWYU)

@@ -5,11 +5,11 @@
 #include "gui/gui.hpp"
 #include "gui/xml.hpp"
 #include "settings.hpp"
+#include <absl/container/flat_hash_map.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
-#include <unordered_map>
 
 namespace gui {
 
@@ -133,7 +133,7 @@ namespace xml {
 
 template<>
 MenuType parseEntity(const std::string &entity) {
-  const static std::unordered_map<std::string, MenuType> map{
+  const static absl::flat_hash_map<std::string, MenuType> map{
       {"&AlchemyMenu;", MenuType::AlchemyMenu},
       {"&AudioMenu;", MenuType::AudioMenu},
       {"&BookMenu;", MenuType::BookMenu},

@@ -15,7 +15,6 @@
 #include <stdexcept>
 #include <tuple>
 #include <type_traits>
-#include <unordered_map>
 #include <variant>
 
 // Every element has a set of named values called traits, given as children of

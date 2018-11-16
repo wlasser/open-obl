@@ -8,12 +8,13 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
+#include <absl/container/flat_hash_map.h>
+#include <absl/container/flat_hash_set.h>
 #include <btBulletDynamicsCommon.h>
 #include <tl/optional.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <memory>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -30,7 +31,7 @@ class Resolver<record::CELL> {
     std::vector<esp::EspAccessor> mAccessors{};
     /// All reference records inside the cell.
     /// This includes both esp records and ess records.
-    std::unordered_set<RefId> mReferences{};
+    absl::flat_hash_set<RefId> mReferences{};
   };
 
   /// Holds a record with an immutable backup of the original.
@@ -40,7 +41,7 @@ class Resolver<record::CELL> {
   using WrappedRecordEntry = std::pair<RecordEntry, Metadata>;
 
   /// Record storage.
-  std::unordered_map<BaseId, WrappedRecordEntry> mRecords{};
+  absl::flat_hash_map<BaseId, WrappedRecordEntry> mRecords{};
 
   /// Bullet configuration, for constructing physics worlds.
   const bullet::Configuration &mBulletConf;
@@ -97,7 +98,7 @@ class Resolver<record::CELL> {
   /// Return the RefIds of all reference records in the cell.
   /// \warning This will return an empty std::vector if the cell has not been
   ///          loaded first with a call to load.
-  tl::optional<const std::unordered_set<RefId> &>
+  tl::optional<const absl::flat_hash_set<RefId> &>
   getReferences(BaseId baseId) const;
 };
 
