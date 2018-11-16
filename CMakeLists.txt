@@ -191,6 +191,9 @@ if (PkgConfig_FOUND)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/bsabrowser/)
 
     add_executable(BSABrowser)
+    target_compile_options(BSABrowser PRIVATE -Wall)
+    target_compile_features(BSABrowser PUBLIC cxx_std_17)
+    set_property(TARGET BSABrowser PROPERTY CXX_EXTENSION OFF)
     target_include_directories(BSABrowser PRIVATE include)
     target_sources(BSABrowser PRIVATE
             src/bsa/application.cpp

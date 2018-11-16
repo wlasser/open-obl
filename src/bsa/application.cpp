@@ -58,14 +58,14 @@ void ApplicationWindow::open_file_view(const Glib::RefPtr<Gio::File> &file) {
   page.reader = std::make_unique<BsaReader>(file->get_parse_name());
   for (const FolderRecord &folder : *page.reader) {
     const Gtk::TreeRow &row = *(page.treeStore->append());
-    uint64_t folderHash = genHash(folder.name, true);
+    uint64_t folderHash = genHash(folder.name, HashType::Folder);
 
     row[mColumns.mColName] = folder.name;
     row[mColumns.mColHash] = folderHash;
 
     for (const auto &filename : folder.files) {
       const Gtk::TreeRow &childRow = *(page.treeStore->append(row.children()));
-      uint64_t fileHash = genHash(filename, false);
+      uint64_t fileHash = genHash(filename, HashType::File);
       const auto fileRecord = page.reader->getRecord(folderHash, fileHash);
       childRow[mColumns.mColName] = filename;
       childRow[mColumns.mColSize] = fileRecord->size;
