@@ -13,6 +13,7 @@
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <memory>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -29,7 +30,7 @@ class Resolver<record::CELL> {
     std::vector<esp::EspAccessor> mAccessors{};
     /// All reference records inside the cell.
     /// This includes both esp records and ess records.
-    std::vector<RefId> mReferences{};
+    std::unordered_set<RefId> mReferences{};
   };
 
   /// Holds a record with an immutable backup of the original.
@@ -96,7 +97,8 @@ class Resolver<record::CELL> {
   /// Return the RefIds of all reference records in the cell.
   /// \warning This will return an empty std::vector if the cell has not been
   ///          loaded first with a call to load.
-  tl::optional<const std::vector<RefId> &> getReferences(BaseId baseId) const;
+  tl::optional<const std::unordered_set<RefId> &>
+  getReferences(BaseId baseId) const;
 };
 
 class Resolver<record::CELL>::CellVisitor {

@@ -74,7 +74,7 @@ void Resolver<record::CELL>::load(BaseId baseId,
   }
 }
 
-tl::optional<const std::vector<RefId> &>
+tl::optional<const std::unordered_set<RefId> &>
 Resolver<record::CELL>::getReferences(BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -96,15 +96,15 @@ Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(esp::EspAccessor &
   if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
     refrStatRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
-    mMeta.mReferences.emplace_back(ref.mFormId);
+    mMeta.mReferences.emplace(ref.mFormId);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
     refrDoorRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
-    mMeta.mReferences.emplace_back(ref.mFormId);
+    mMeta.mReferences.emplace(ref.mFormId);
   } else if (lighRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
     refrLighRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
-    mMeta.mReferences.emplace_back(ref.mFormId);
+    mMeta.mReferences.emplace(ref.mFormId);
   } else {
     accessor.skipRecord();
   }

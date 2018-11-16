@@ -1,5 +1,6 @@
 #include "record/io.hpp"
 #include "record/group.hpp"
+#include <istream>
 
 std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
   os.write(grp.type.data(), 4);

@@ -1,5 +1,6 @@
 #include "esp_coordinator.hpp"
 #include "game_settings.hpp"
+#include <fstream>
 
 namespace esp {
 
@@ -29,7 +30,6 @@ void EspCoordinator::openStreamForEsp(EspEntry &esp, Streams::iterator it) {
   invalidateEsp(it);
   it->stream.close();
   it->stream.open(esp.filename.sysPath(), std::ifstream::binary);
-  it->pos = 0;
   esp.it = it;
 }
 
@@ -51,6 +51,7 @@ auto EspCoordinator::getAvailableStream(EspEntry &esp) -> Streams::iterator {
     }
     openStreamForEsp(esp, streamIt);
   }
+  streamIt->stream.clear();
   return streamIt;
 }
 
@@ -110,31 +111,39 @@ EspCoordinator::ReadHeaderResult
 EspCoordinator::readRecordHeader(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return {translateFormIds(record::readRecordHeader(it->stream), modIndex),
-      it->pos = it->stream.tellg()};
+          it->stream.tellg()};
 };
 
 EspCoordinator::ReadHeaderResult
 EspCoordinator::skipRecord(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return {translateFormIds(record::skipRecord(it->stream), modIndex),
-      it->pos = it->stream.tellg()};
+          it->stream.tellg()};
 };
 
 uint32_t EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return record::peekRecordType(it->stream);
 };
 
 BaseId EspCoordinator::peekBaseId(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return record::peekBaseOfReference(it->stream);
 }
 
@@ -142,17 +151,21 @@ EspCoordinator::ReadResult<record::Group>
 EspCoordinator::readGroup(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   record::Group g{};
   it->stream >> g;
-  return {g, it->pos = it->stream.tellg()};
+  return {g, it->stream.tellg()};
 }
 
 EspCoordinator::SeekPos
 EspCoordinator::skipGroup(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   record::skipGroup(it->stream);
   return it->stream.tellg();
 }
@@ -161,7 +174,9 @@ std::optional<record::Group::GroupType>
 EspCoordinator::peekGroupType(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return record::peekGroupType(it->stream);
 }
 

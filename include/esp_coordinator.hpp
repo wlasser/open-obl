@@ -31,7 +31,6 @@ class EspCoordinator {
 
   struct Stream {
     std::ifstream stream{};
-    std::ifstream::pos_type pos{};
   };
 
   using Streams = std::array<Stream, MaxOpenStreams>;
@@ -328,9 +327,11 @@ EspCoordinator::ReadResult<T>
 EspCoordinator::readRecord(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
   auto it{getAvailableStream(mLoadOrder[modIndex])};
-  if (seekPos != it->pos) it->stream.seekg(seekPos, std::ifstream::beg);
+  if (seekPos != it->stream.tellg()) {
+    it->stream.seekg(seekPos, std::ifstream::beg);
+  }
   return {translateFormIds(record::readRecord<T>(it->stream), modIndex),
-      it->pos = it->stream.tellg()};
+          it->stream.tellg()};
 };
 
 template<class T>
