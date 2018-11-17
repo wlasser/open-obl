@@ -27,6 +27,19 @@ class Path {
   mutable std::optional<std::filesystem::path> mSysPath{};
   mutable std::mutex mSysPathMutex{};
 
+  /// Copy the given range, without leading and trailing characters satisfying
+  /// the predicated `p`.
+  /// This is faster than boost::algorithm::trim_copy_if for our purposes.
+  template<class InputIt, class OutputIt, class Predicate>
+  void trim_copy(InputIt first, InputIt last, OutputIt out, Predicate &&p) {
+    auto begIt{first};
+    auto endIt{last};
+    if (begIt == endIt) return;
+    while (p(*begIt)) ++begIt;
+    while (p(*(endIt - 1))) --endIt;
+    std::copy(begIt, endIt, out);
+  }
+
  public:
   Path(const Path &other);
   Path &operator=(const Path &other);

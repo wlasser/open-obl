@@ -1,6 +1,23 @@
 #include <catch.hpp>
 #include "fs/path.hpp"
 
+TEST_CASE("Can construct paths from strings", "[fs]") {
+  fs::Path path1{"hello"};
+  REQUIRE(path1.view() == "hello");
+
+  fs::Path path2{"HelLo world"};
+  REQUIRE(path2.view() == "hello world");
+
+  fs::Path path3{"hello/world"};
+  REQUIRE(path3.view() == "hello/world");
+
+  fs::Path path4{"./hello"};
+  REQUIRE(path4.view() == "hello");
+
+  fs::Path path5{"./hello/world///"};
+  REQUIRE(path5.view() == "hello/world");
+}
+
 TEST_CASE("Can match paths", "[fs]") {
   // Internal wildcards
   fs::Path pat1{"h*o"};

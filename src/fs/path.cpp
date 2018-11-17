@@ -1,5 +1,4 @@
 #include "fs/path.hpp"
-#include <boost/algorithm/string/trim.hpp>
 #include <stdexcept>
 
 namespace fs {
@@ -39,19 +38,24 @@ Path &Path::operator=(Path &&other) noexcept {
 }
 
 Path::Path(const std::string &path) {
-  // This might overshoot a little due to the trim in the next step
-  mPath.reserve(path.size());
-  // Drop all trailing / and .
-  boost::algorithm::trim_copy_if(std::back_inserter(mPath), path,
-                                 boost::algorithm::is_any_of("\\/."));
-  // Lowercase
-  std::transform(mPath.begin(), mPath.end(), mPath.begin(),
-      // We only care about ascii, this is much faster than tolower.
-                 [](unsigned char c) -> unsigned char {
-                   if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
-                   else if (c == '\\') return '/';
-                   else return c;
-                 });
+  if (path.empty()) {
+    mPath = path;
+  } else {
+    // This might overshoot a little due to the trim in the next step
+    mPath.reserve(path.size());
+    // Drop all trailing / and .
+    trim_copy(path.begin(), path.end(), std::back_inserter(mPath), [](char c) {
+      return c == '\\' || c == '/' || c == '.';
+    });
+    // Lowercase
+    std::transform(mPath.begin(), mPath.end(), mPath.begin(),
+        // We only care about ascii, this is much faster than tolower.
+                   [](unsigned char c) -> unsigned char {
+                     if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
+                     else if (c == '\\') return '/';
+                     else return c;
+                   });
+  }
 }
 
 std::string_view Path::filename() const {
