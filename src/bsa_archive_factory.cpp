@@ -85,7 +85,7 @@ BsaArchive::find(const Ogre::String &pattern,
     fs::Path folderPath{folder.name};
     if (dirs) {
       // Only want to check directories, not files
-      if (Ogre::StringUtil::match(folder.name, pattern, isCaseSensitive())) {
+      if (folderPath.match(patternPath)) {
         ret->push_back(f(folderPath));
       }
     } else {
@@ -93,7 +93,7 @@ BsaArchive::find(const Ogre::String &pattern,
       for (const auto &file : folder.files) {
         const fs::Path filePath{file};
         const auto path{fileOnly ? filePath : (folderPath / filePath)};
-        if (Ogre::StringUtil::match(path.c_str(), pattern, isCaseSensitive())) {
+        if (path.match(patternPath)) {
           ret->push_back(f(folderPath / filePath));
         }
       }

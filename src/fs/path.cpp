@@ -38,7 +38,6 @@ Path &Path::operator=(Path &&other) noexcept {
   return *this;
 }
 
-// Store a normalized representation of the given path
 Path::Path(const std::string &path) {
   mPath.reserve(path.size());
   std::transform(path.begin(), path.end(), std::back_inserter(mPath),
@@ -52,9 +51,6 @@ Path::Path(const std::string &path) {
   boost::algorithm::trim_if(mPath, boost::algorithm::is_any_of("/."));
 }
 
-// Return the part of the path after the last '/', not including the '/'.
-// This may not be an actual file, for example if the path points to a folder.
-// If there is no '/' then the entire path is returned.
 std::string_view Path::filename() const {
   const std::string_view sv{mPath};
   // mPath does not end with a '/', but it might not have any at all
@@ -62,17 +58,12 @@ std::string_view Path::filename() const {
   return sep == std::string_view::npos ? sv : sv.substr(sep + 1);
 };
 
-// Return the complement of filename() without the trailing '/'
 std::string_view Path::folder() const {
   const std::string_view sv{mPath};
   const auto sep{sv.find_last_of('/')};
   return sep == std::string_view::npos ? "" : sv.substr(0, sep);
 };
 
-// Return the part of the filename strictly after the last '.' that does not
-// occur at the beginning of the filename, i.e. including the '.' itself.
-// Note that this is different to std::filesystem::path::extension, which
-// includes the '.'.
 std::string_view Path::extension() const {
   auto sv{filename()};
   if (sv.empty()) return sv;
@@ -83,9 +74,6 @@ std::string_view Path::extension() const {
   else return sv.substr(dot + 1);
 };
 
-// Return true if this path refers to an existing file or folder. Because of
-// case-insensitivity, the file/folder need not be unique.
-// This is not a cheap operation.
 bool Path::exists() const {
   namespace stdfs = std::filesystem;
   // Iteration order is unspecified, so we cannot assume that it is the same
@@ -104,10 +92,6 @@ bool Path::exists() const {
   return false;
 }
 
-// Return the path of an actual file or folder on the system whose Path is the
-// same as this. If there are multiple such files/folders, the returned
-// file/folder is unspecified, but will always be the same for repeated calls
-// on the same Path. If no such file/folder exists, throw.
 std::filesystem::path Path::sysPath() const {
   if (mSysPath) {
     return *mSysPath;
@@ -116,6 +100,41 @@ std::filesystem::path Path::sysPath() const {
   } else {
     throw std::runtime_error("No such file or folder");
   }
+}
+
+bool Path::match(const fs::Path &pattern) const {
+  // Every character in the pattern corresponds to at least one in the src.
+  if (pattern.mPath.size() > mPath.size()) return false;
+
+  auto srcIt{mPath.begin()};
+  const auto srcEnd{mPath.end()};
+
+  auto patIt{pattern.mPath.begin()};
+  const auto patEnd{pattern.mPath.end()};
+
+  for (; srcIt != srcEnd && patIt != patEnd; ++srcIt) {
+    if (*patIt == '*') {
+      if (const auto nextIt{patIt + 1}; nextIt == patEnd) {
+        // Last character is a wildcard so this is a match
+        return true;
+      } else if (*nextIt == *srcIt) {
+        // src matches the character after the wildcard so stop wildcard match
+        patIt += 2;
+        continue;
+      }
+      // Don't advance the pattern, just the src
+      continue;
+    } else if (*patIt != *srcIt) {
+      // src does not patch pattern and pattern is not a wildcard, so fail
+      return false;
+    }
+    // Non-wildcard so advance both pattern and src
+    ++patIt;
+  }
+  // Pattern does not end in a star and we cannot run out of src before running
+  // out of pattern. If both run out at once, it's a match, otherwise the src is
+  // longer than the pattern and there's no match.
+  return srcIt == srcEnd && patIt == patEnd;
 }
 
 Path operator/(const Path &lhs, const Path &rhs) {
