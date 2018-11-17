@@ -39,16 +39,19 @@ Path &Path::operator=(Path &&other) noexcept {
 }
 
 Path::Path(const std::string &path) {
+  // This might overshoot a little due to the trim in the next step
   mPath.reserve(path.size());
-  std::transform(path.begin(), path.end(), std::back_inserter(mPath),
+  // Drop all trailing / and .
+  boost::algorithm::trim_copy_if(std::back_inserter(mPath), path,
+                                 boost::algorithm::is_any_of("\\/."));
+  // Lowercase
+  std::transform(mPath.begin(), mPath.end(), mPath.begin(),
       // We only care about ascii, this is much faster than tolower.
                  [](unsigned char c) -> unsigned char {
                    if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
                    else if (c == '\\') return '/';
                    else return c;
                  });
-  // Drop all trailing / and .
-  boost::algorithm::trim_if(mPath, boost::algorithm::is_any_of("/."));
 }
 
 std::string_view Path::filename() const {
