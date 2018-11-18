@@ -7,7 +7,7 @@ std::string io::readBzString(std::istream &s) {
   // (which stops at the first null).
   uint8_t len{0};
   s.read(reinterpret_cast<char *>(&len), 1);
-  if (len <= 1u) return "";
+  if (len < 1u) return "";
   std::string str(len, '\0');
   s.read(str.data(), len);
   str.pop_back();
