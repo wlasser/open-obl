@@ -4,6 +4,8 @@
 #include <variant>
 #include "io/io.hpp"
 
+using std::string_literals::operator ""s;
+
 TEST_CASE("can write fundamental types", "[io]") {
   std::ostringstream os{};
   int i = 0x12345678;
@@ -15,7 +17,7 @@ TEST_CASE("can write strings", "[io]") {
   std::ostringstream os{};
   std::string s = "hello, world";
   io::writeBytes(os, s);
-  REQUIRE(os.str() == "hello, world");
+  REQUIRE(os.str() == "hello, world\0"s);
 }
 
 TEST_CASE("can write pairs", "[io]") {
@@ -24,7 +26,7 @@ TEST_CASE("can write pairs", "[io]") {
   std::string s = "hello, world";
   auto p = std::make_pair(i, s);
   io::writeBytes(os, p);
-  REQUIRE(os.str() == "\x78\x56\x34\x12hello, world");
+  REQUIRE(os.str() == "\x78\x56\x34\x12hello, world\0"s);
 }
 
 TEST_CASE("can write optionals", "[io]") {
@@ -42,5 +44,5 @@ TEST_CASE("can write tuples", "[io]") {
   std::ostringstream os{};
   std::tuple<int, std::string, int> t{0x12345678, "hello", 0xabcdef01};
   io::writeBytes(os, t);
-  REQUIRE(os.str() == "\x78\x56\x34\x12hello\x01\xef\xcd\xab");
+  REQUIRE(os.str() == "\x78\x56\x34\x12hello\0\x01\xef\xcd\xab"s);
 }

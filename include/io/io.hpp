@@ -146,13 +146,14 @@ void readBytes(std::istream &is, std::vector<T> &data, std::size_t length) {
 }
 
 /// Customization for std::string.
-/// \warning Expects a null-terminator when reading, does not output one when
-///          writing!
-/// \todo Make this output a null-terminator.
+/// \remark Input strings are expected to be null-terminated, and a
+///         null-terminator is appended on output. For non-null-terminated
+///         output, use the specialization for std::string_view.
 template<>
 struct BinaryIo<std::string> {
   static void writeBytes(std::ostream &os, const std::string &data) {
     os.write(data.data(), data.length());
+    os.put('\0');
   }
 
   static void readBytes(std::istream &is, std::string &data) {
