@@ -251,7 +251,7 @@ add_executable(Test test/tests.cpp)
 target_include_directories(Test PRIVATE include)
 target_sources(Test PRIVATE
         test/fs/path.cpp
-        test/io/write_bytes.cpp
+        test/io/io.cpp
         test/engine/gui/stack.cpp)
 target_sources(Test PRIVATE
         src/fs/path.cpp
