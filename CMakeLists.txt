@@ -23,6 +23,9 @@ FetchContent_Declare(Abseil
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v2.4.2)
+FetchContent_Declare(PEGTL
+        GIT_REPOSITORY https://github.com/taocpp/PEGTL.git
+        GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
 
 FetchContent_GetProperties(GoogleTest)
 if (NOT GoogleTest_populated)
@@ -40,6 +43,12 @@ FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
     FetchContent_Populate(Catch)
     add_subdirectory(${catch_SOURCE_DIR} ${catch_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(PEGTL)
+if (NOT PEGTL_populated)
+    FetchContent_Populate(PEGTL)
+    add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR})
 endif ()
 
 # Link-time optimization
@@ -71,6 +80,7 @@ add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
 add_subdirectory(src/ogreimgui)
 add_subdirectory(src/sdl)
+add_subdirectory(src/scripting)
 
 add_subdirectory(test)
 

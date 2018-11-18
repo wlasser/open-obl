@@ -11,6 +11,7 @@ target_include_directories(OpenOblivionTest PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_subdirectory(fs)
 add_subdirectory(gui)
 add_subdirectory(io)
+add_subdirectory(scripting)
 
 target_sources(OpenOblivionTest PRIVATE
         ${CMAKE_SOURCE_DIR}/src/gui/stack/program.cpp
@@ -22,5 +23,6 @@ target_sources(OpenOblivionTest PRIVATE
 target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionFS
+        OpenOblivion::OpenOblivionScripting
         Catch2::Catch2
         pugixml)

@@ -1,0 +1,1 @@
+target_sources(OpenOblivionTest PRIVATE scripting/grammar.cpp)
