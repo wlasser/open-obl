@@ -1,5 +1,5 @@
-#include <catch.hpp>
 #include "fs/path.hpp"
+#include <catch2/catch.hpp>
 
 TEST_CASE("Can construct paths from strings", "[fs]") {
   fs::Path path1{"hello"};

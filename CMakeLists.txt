@@ -20,6 +20,9 @@ FetchContent_Declare(GoogleTest
 FetchContent_Declare(Abseil
         GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
         GIT_TAG origin/master)
+FetchContent_Declare(Catch
+        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+        GIT_TAG v2.4.2)
 
 FetchContent_GetProperties(GoogleTest)
 if (NOT GoogleTest_populated)
@@ -31,6 +34,12 @@ FetchContent_GetProperties(Abseil)
 if (NOT Abseil_populated)
     FetchContent_Populate(Abseil)
     add_subdirectory(${abseil_SOURCE_DIR} ${abseil_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(Catch)
+if (NOT Catch_populated)
+    FetchContent_Populate(Catch)
+    add_subdirectory(${catch_SOURCE_DIR} ${catch_BINARY_DIR})
 endif ()
 
 # Link-time optimization
@@ -62,6 +71,8 @@ add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
 add_subdirectory(src/ogreimgui)
 add_subdirectory(src/sdl)
+
+add_subdirectory(test)
 
 add_executable(OpenOblivion)
 target_compile_options(OpenOblivion PRIVATE -Wall)
@@ -243,25 +254,3 @@ if (PkgConfig_FOUND)
             GSL
             stdc++fs)
 endif ()
-
-add_library(Catch INTERFACE)
-target_include_directories(Catch INTERFACE lib/catch)
-
-add_executable(Test test/tests.cpp)
-target_include_directories(Test PRIVATE include)
-target_sources(Test PRIVATE
-        test/fs/path.cpp
-        test/io/io.cpp
-        test/engine/gui/stack.cpp)
-target_sources(Test PRIVATE
-        src/fs/path.cpp
-        src/gui/stack/program.cpp
-        src/gui/stack/types.cpp
-        src/gui/trait.cpp
-        src/gui/trait_selector.cpp
-        src/gui/xml.cpp)
-target_link_libraries(Test PRIVATE OpenOblivion::OpenOblivionIO Catch
-        pugixml)
-target_compile_options(Test PRIVATE -Wall)
-target_compile_features(Test PUBLIC cxx_std_17)
-set_property(TARGET Test PROPERTY CXX_EXTENSION OFF)

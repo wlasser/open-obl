@@ -1,5 +1,5 @@
 #include "io/io.hpp"
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <array>
 #include <optional>
 #include <sstream>

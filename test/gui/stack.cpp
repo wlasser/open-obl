@@ -2,7 +2,7 @@
 #include "meta.hpp"
 #include "gui/stack/program.hpp"
 #include "gui/stack/types.hpp"
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 #include <string>
 #include <variant>
 
