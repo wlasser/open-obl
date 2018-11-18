@@ -102,11 +102,13 @@ struct BinaryIo {
   static_assert(is_byte_direct_ioable_v<T>, "Specialize for other types");
 
   static void writeBytes(std::ostream &os, const T &data) {
+    if constexpr (std::is_empty_v<T>) return;
     os.write(reinterpret_cast<const char *>(std::addressof(data)),
              sizeof(data));
   }
 
   static void readBytes(std::istream &is, T &data) {
+    if constexpr (std::is_empty_v<T>) return;
     is.read(reinterpret_cast<char *>(std::addressof(data)), sizeof(data));
   }
 };
