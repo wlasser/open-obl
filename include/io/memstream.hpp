@@ -5,7 +5,9 @@
 
 namespace io {
 
-// Stream wrapping binary data. Does not take ownership.
+/// Non-owning std::istream wrapper for binary data.
+/// Provides a standard std::istream interface to an existing container of
+/// bytes.
 class memstream : public std::istream {
  private:
   class membuf : public std::basic_streambuf<char> {
