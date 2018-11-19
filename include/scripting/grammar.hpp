@@ -31,6 +31,18 @@ struct StrBegin : pegtl::string<'b', 'e', 'g', 'i', 'n'> {};
 /// `StrEnd <- "end"`
 struct StrEnd : pegtl::string<'e', 'n', 'd'> {};
 
+/// `StrShort <- "short"`
+struct StrShort : pegtl::string<'s', 'h', 'o', 'r', 't'> {};
+
+/// `StrLong <- "long"`
+struct StrLong : pegtl::string<'l', 'o', 'n', 'g'> {};
+
+/// `StrFloat <- "float"`
+struct StrFloat : pegtl::string<'f', 'l', 'o', 'a', 't'> {};
+
+/// `StrRef <- "ref"`
+struct StrRef : pegtl::string<'r', 'e', 'f'> {};
+
 /// `IdChar <- [a-zA-Z0-9]`
 struct IdChar : pegtl::alnum {};
 
@@ -71,6 +83,18 @@ struct RawBegin : StrBegin {};
 
 /// `RawEnd <- StrEnd`
 struct RawEnd : StrEnd {};
+
+/// `RawShort <- StrShort`
+struct RawShort : StrShort {};
+
+/// `RawLong <- StrLong`
+struct RawLong : StrLong {};
+
+/// `RawFloat <- StrFloat`
+struct RawFloat : StrFloat {};
+
+/// `RawRef <- StrRef`
+struct RawRef : StrRef {};
 
 /// `Scriptname <- RawScriptname Spacing`
 struct Scriptname : impl::Spaced<RawScriptname> {};
@@ -151,6 +175,21 @@ struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};
 /// `Identifier <- RawIdentifier Spacing`
 struct Identifier : impl::Spaced<RawIdentifier> {};
 
+/// `ShortType <- RawShort`
+struct ShortType : impl::Spaced<RawShort> {};
+
+/// `LongType <- RawLong`
+struct LongType : impl::Spaced<RawLong> {};
+
+/// `FloatType <- RawFloat`
+struct FloatType : impl::Spaced<RawFloat> {};
+
+/// `RefType <- RawRef`
+struct RefType : impl::Spaced<RawRef> {};
+
+/// `Type <- ShortType / LongType / FloatType / RefType`
+struct Type : pegtl::sor<ShortType, LongType, FloatType, RefType> {};
+
 /// `RawScriptnameStatement <- Scriptname Identifier`
 struct RawScriptnameStatement : pegtl::seq<Scriptname, Identifier> {};
 
@@ -158,6 +197,9 @@ struct RawScriptnameStatement : pegtl::seq<Scriptname, Identifier> {};
 struct ScriptnameStatement : pegtl::seq<RawScriptnameStatement,
                                         pegtl::sor<Spacing, pegtl::eolf>> {
 };
+
+/// `DeclarationStatement <- Type Identifier`
+struct DeclarationStatement : pegtl::seq<Type, Identifier> {};
 
 struct BlockBeginStatement : pegtl::seq<Begin,
                                         Identifier,
@@ -168,7 +210,7 @@ struct BlockBeginStatement : pegtl::seq<Begin,
 struct BlockEndStatement : End {};
 
 struct BlockStatement : pegtl::seq<BlockBeginStatement,
-    /* (Statement)* */
+                                   pegtl::star<DeclarationStatement>,
                                    BlockEndStatement> {
 };
 
@@ -189,6 +231,11 @@ template<> struct AstSelector<StringLiteralContents> : std::true_type {};
 template<> struct AstSelector<IntegerLiteral> : std::true_type {};
 template<> struct AstSelector<RefLiteralContents> : std::true_type {};
 template<> struct AstSelector<FloatLiteral> : std::true_type {};
+template<> struct AstSelector<DeclarationStatement> : std::true_type {};
+template<> struct AstSelector<RawShort> : std::true_type {};
+template<> struct AstSelector<RawLong> : std::true_type {};
+template<> struct AstSelector<RawFloat> : std::true_type {};
+template<> struct AstSelector<RawRef> : std::true_type {};
 
 template<class F, class State>
 void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {

@@ -513,3 +513,57 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     requireHasFloat(*root, 3.1f);
   }
 }
+
+TEST_CASE("can declare variables", "[scripting]") {
+  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
+  REQUIRE(numIssues == 0);
+
+  auto requireVariable = [](const pegtl::parse_tree::node &node,
+                            auto &&type, const std::string &name) {
+    REQUIRE(node.children.size() == 2);
+    REQUIRE(node.children[0]->id == type);
+    REQUIRE(node.children[1]->has_content());
+    REQUIRE(node.children[1]->content() == name);
+  };
+
+  // All variable declarations follow the same pattern, so there is minimal
+  // advantage to testing them all separately.
+
+  const char *script = R"script(
+scn MyScript
+begin GameMode
+    short MyVar ; This is a short
+      short    my2Var39
+    ref myRef
+
+    ; It's pretty long
+    long long ; looong
+    short long;Yes, you can use keywords as identifiers
+
+    float
+       f
+end
+    )script";
+  pegtl::memory_input in(script, "");
+  const auto root = parseScript(in);
+  REQUIRE(root != nullptr);
+  REQUIRE(root->children.size() > 8);
+
+  const auto &decl1{root->children[2]};
+  requireVariable(*decl1, &typeid(scripting::RawShort), "MyVar");
+
+  const auto &decl2{root->children[3]};
+  requireVariable(*decl2, &typeid(scripting::RawShort), "my2Var39");
+
+  const auto &decl3{root->children[4]};
+  requireVariable(*decl3, &typeid(scripting::RawRef), "myRef");
+
+  const auto &decl4{root->children[5]};
+  requireVariable(*decl4, &typeid(scripting::RawLong), "long");
+
+  const auto &decl5{root->children[6]};
+  requireVariable(*decl5, &typeid(scripting::RawShort), "long");
+
+  const auto &decl6{root->children[7]};
+  requireVariable(*decl6, &typeid(scripting::RawFloat), "f");
+}
