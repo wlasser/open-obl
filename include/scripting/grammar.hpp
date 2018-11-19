@@ -7,13 +7,12 @@
 #include <string_view>
 #include <variant>
 
+/// \addtogroup OpenOblivionScripting Scripting
+/// Parser for the built-in default scripting language.
+/// @{
 namespace scripting {
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
-
-/// \name Strings
-/// Literal strings used for constructing keywords, types, etc.
-///@{
 
 /// `StrScriptname <- "scriptname"`
 struct StrScriptname : pegtl::string<'s', 'c', 'r', 'i', 'p', 't',
@@ -32,21 +31,11 @@ struct StrBegin : pegtl::string<'b', 'e', 'g', 'i', 'n'> {};
 /// `StrEnd <- "end"`
 struct StrEnd : pegtl::string<'e', 'n', 'd'> {};
 
-///@}
-
-/// \name Character classes
-///@{
-
 /// `IdChar <- [a-zA-Z0-9]`
 struct IdChar : pegtl::alnum {};
 
 /// `InitialIdChar <- [a-zA-Z]`
 struct InitialIdChar : pegtl::alpha {};
-
-///@}
-
-/// \name Spacing
-///@{
 
 /// `Comment <- ";" (!EndOfLine .)* EndOfLine`
 struct Comment : pegtl::seq<StrSemicolon,
@@ -58,8 +47,6 @@ struct Comment : pegtl::seq<StrSemicolon,
 /// `Spacing <- (Space / Comment)*`
 struct Spacing : pegtl::star<pegtl::sor<pegtl::space, Comment>> {};
 
-///@}
-
 namespace impl {
 
 /// Convenience class template for allowing trailing space.
@@ -69,9 +56,6 @@ template<class Raw>
 struct Spaced : pegtl::seq<Raw, Spacing> {};
 
 }
-
-/// \name Raw keywords
-///@{
 
 /// `ScriptnameLong <- StrScriptname`
 struct ScriptnameLong : StrScriptname {};
@@ -88,11 +72,6 @@ struct RawBegin : StrBegin {};
 /// `RawEnd <- StrEnd`
 struct RawEnd : StrEnd {};
 
-///@}
-
-/// \name Spaced keywords
-///@{
-
 /// `Scriptname <- RawScriptname Spacing`
 struct Scriptname : impl::Spaced<RawScriptname> {};
 
@@ -101,11 +80,6 @@ struct Begin : impl::Spaced<RawBegin> {};
 
 /// `End <- RawEnd Spacing`
 struct End : impl::Spaced<RawEnd> {};
-
-///@}
-
-/// \name Literals
-///@{
 
 /// `StringLiteralBannedChar <- ["] / eolf`
 struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
@@ -172,15 +146,10 @@ struct Literal : pegtl::sor<StringLiteral,
                             RefLiteral> {
 };
 
-///@}
-
 /// `RawIdentifier <- InitialIdChar IdChar*
 struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};
 /// `Identifier <- RawIdentifier Spacing`
 struct Identifier : impl::Spaced<RawIdentifier> {};
-
-/// \name Statements
-///@{
 
 /// `RawScriptnameStatement <- Scriptname Identifier`
 struct RawScriptnameStatement : pegtl::seq<Scriptname, Identifier> {};
@@ -202,8 +171,6 @@ struct BlockStatement : pegtl::seq<BlockBeginStatement,
     /* (Statement)* */
                                    BlockEndStatement> {
 };
-
-///@}
 
 struct Grammar : pegtl::must<Spacing,
                              ScriptnameStatement,
@@ -230,5 +197,7 @@ void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {
 }
 
 } // namespace scripting
+
+/// @}
 
 #endif // OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
