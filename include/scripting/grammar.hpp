@@ -132,6 +132,15 @@ struct IntegerLiteral : pegtl::sor<pegtl::one<'0'>,
 
 };
 
+/// `RefLiteralPrefix <- "#"`
+struct RefLiteralPrefix : pegtl::one<'#'> {};
+
+/// `RefLiteralContents [0-9a-fA-F]+`
+struct RefLiteralContents : pegtl::plus<pegtl::xdigit> {};
+
+/// `RefLiteral <- RefLiteralPrefix RefLiteralContents`
+struct RefLiteral : pegtl::seq<RefLiteralPrefix, RefLiteralContents> {};
+
 ///@}
 
 /// `RawIdentifier <- InitialIdChar IdChar*
@@ -180,6 +189,7 @@ template<> struct AstSelector<BlockBeginStatement> : std::true_type {};
 template<> struct AstSelector<BlockEndStatement> : std::true_type {};
 template<> struct AstSelector<StringLiteralContents> : std::true_type {};
 template<> struct AstSelector<IntegerLiteral> : std::true_type {};
+template<> struct AstSelector<RefLiteralContents> : std::true_type {};
 
 template<class F, class State>
 void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {

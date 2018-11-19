@@ -1,3 +1,4 @@
+#include <record/formid.hpp>
 #include "scripting/grammar.hpp"
 #include <catch2/catch.hpp>
 #include <tao/pegtl/analyze.hpp>
@@ -384,5 +385,55 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     requireHasInteger(*root, std::numeric_limits<int>::max());
+  }
+}
+
+TEST_CASE("can parse ref literals", "[scripting]") {
+  auto parseLiteral = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::RefLiteral,
+                                    scripting::AstSelector>(in);
+  };
+
+  auto requireHasReference = [](const pegtl::parse_tree::node &root,
+                                FormId expected) {
+    REQUIRE_FALSE(root.children.empty());
+    const auto &content{root.children[0]};
+    REQUIRE(content->id == &typeid(scripting::RefLiteralContents));
+    REQUIRE(content->has_content());
+    REQUIRE(std::stoi(content->content(), nullptr, 16) == expected);
+  };
+
+  {
+    const auto *script = "#00103a5F";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasReference(*root, 0x00103a5f);
+  }
+
+  {
+    const auto *script = "#";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = "##509a";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = "30915fab";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = "#000";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasReference(*root, 0);
   }
 }
