@@ -125,7 +125,7 @@ struct StringLiteral : pegtl::seq<pegtl::one<'"'>,
                                   pegtl::one<'"'>> {
 };
 
-/// `IntegerLiteral <- "0" / ([1-9] [0-9]*)
+/// `IntegerLiteral <- "0" / ([1-9] [0-9]*)`
 struct IntegerLiteral : pegtl::sor<pegtl::one<'0'>,
                                    pegtl::seq<pegtl::range<'1', '9'>,
                                               pegtl::star<pegtl::digit>>> {
@@ -140,6 +140,37 @@ struct RefLiteralContents : pegtl::plus<pegtl::xdigit> {};
 
 /// `RefLiteral <- RefLiteralPrefix RefLiteralContents`
 struct RefLiteral : pegtl::seq<RefLiteralPrefix, RefLiteralContents> {};
+
+/// `FloatLiteralSupUnity <- [1-9] [0-9]* "." [0-9]*`
+struct FloatLiteralSupUnity : pegtl::seq<pegtl::range<'1', '9'>,
+                                         pegtl::star<pegtl::digit>,
+                                         pegtl::one<'.'>,
+                                         pegtl::star<pegtl::digit>> {
+};
+
+/// `FloatLiteralSubUnity <- "0." [0-9]*`
+struct FloatLiteralSubUnity : pegtl::seq<pegtl::string<'0', '.'>,
+                                         pegtl::star<pegtl::digit>> {
+};
+
+/// `FloatLiteralLeadingPoint <- "." [0-9]+`
+struct FloatLiteralLeadingPoint : pegtl::seq<pegtl::one<'.'>,
+                                             pegtl::plus<pegtl::digit>> {
+};
+
+/// `FloatLiteral <- FloatLiteralSupUnity / FloatLiteralSubUnity
+///                  / FloatLiteralLeadingPoint`
+struct FloatLiteral : pegtl::sor<FloatLiteralSupUnity,
+                                 FloatLiteralSubUnity,
+                                 FloatLiteralLeadingPoint> {
+};
+
+/// `Literal <- StringLiteral / IntegerLiteral / FloatLiteral / RefLiteral`
+struct Literal : pegtl::sor<StringLiteral,
+                            IntegerLiteral,
+                            FloatLiteral,
+                            RefLiteral> {
+};
 
 ///@}
 
@@ -190,6 +221,7 @@ template<> struct AstSelector<BlockEndStatement> : std::true_type {};
 template<> struct AstSelector<StringLiteralContents> : std::true_type {};
 template<> struct AstSelector<IntegerLiteral> : std::true_type {};
 template<> struct AstSelector<RefLiteralContents> : std::true_type {};
+template<> struct AstSelector<FloatLiteral> : std::true_type {};
 
 template<class F, class State>
 void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {

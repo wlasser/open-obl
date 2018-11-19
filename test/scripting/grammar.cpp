@@ -437,3 +437,79 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     requireHasReference(*root, 0);
   }
 }
+
+TEST_CASE("can parse floating point literals", "[scripting]") {
+  auto parseLiteral = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::FloatLiteral,
+                                    scripting::AstSelector>(in);
+  };
+
+  auto requireHasFloat = [](const pegtl::parse_tree::node &root,
+                            float expected) {
+    REQUIRE_FALSE(root.children.empty());
+    const auto &content{root.children[0]};
+    REQUIRE(content->id == &typeid(scripting::FloatLiteral));
+    REQUIRE(content->has_content());
+    REQUIRE_THAT(std::stof(content->content()), Catch::WithinULP(expected, 1));
+  };
+
+  {
+    const auto *script = "3.14159";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 3.14159f);
+  }
+
+  {
+    const auto *script = "0.142";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 0.142f);
+  }
+
+  {
+    const auto *script = "0.0001";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 0.0001f);
+  }
+
+  {
+    const auto *script = ".142";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 0.142f);
+  }
+
+  {
+    const auto *script = ".0001";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 0.0001f);
+  }
+
+  {
+    const auto *script = "01.32";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = ".";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = "3.1.4";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasFloat(*root, 3.1f);
+  }
+}
