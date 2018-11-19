@@ -7,6 +7,8 @@ include(FetchContent)
 option(USE_IWYU "Run include-what-you-use when building" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(FETCHCONTENT_QUIET OFF)
+
 # As of commit a06c4a1 Abseil has a bug where GoogleTest cannot be downloaded
 # when Abseil is included as a subdirectory. Turn this option on and remove the
 # FetchContent for GoogleTest when this is fixed.
