@@ -1,6 +1,9 @@
 #include "scripting/grammar.hpp"
 #include <catch2/catch.hpp>
 #include <tao/pegtl/analyze.hpp>
+#include <limits>
+#include <string>
+#include <string_view>
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
@@ -156,6 +159,35 @@ end
   REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
 }
 
+TEST_CASE("can parse block statements with integer modes", "[scripting]") {
+  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
+  REQUIRE(numIssues == 0);
+
+  const auto *script = R"script(
+scn MyScript
+begin MenuMode 4329 ; Some menu type
+end
+)script";
+  pegtl::memory_input in(script, "");
+  const auto root = parseScript(in);
+  REQUIRE(root != nullptr);
+  const auto &beginStatement{root->children[1]};
+  REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
+  REQUIRE(beginStatement->children.size() > 1);
+
+  const auto &blockName{beginStatement->children[0]};
+  REQUIRE(blockName->has_content());
+  REQUIRE(blockName->content() == "MenuMode");
+
+  const auto &blockType{beginStatement->children[1]};
+  REQUIRE(blockType->id == &typeid(scripting::IntegerLiteral));
+  REQUIRE(blockType->has_content());
+  REQUIRE(std::stoi(blockType->content()) == 4329);
+
+  const auto &endStatement{root->children[2]};
+  REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
+}
+
 TEST_CASE("can parse multiple block statements", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
@@ -240,6 +272,16 @@ end
     pegtl::memory_input in(script, "");
     REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
   }
+
+  {
+    const char *script = R"script(
+scn MyScript
+begin GameMode
+; No end statement!
+    )script";
+    pegtl::memory_input in(script, "");
+    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+  }
 }
 
 TEST_CASE("can parse string literals", "[scripting]") {
@@ -302,5 +344,45 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     requireHasString(*root, R"(This is )");
+  }
+}
+
+TEST_CASE("can parse integer literals", "[scripting]") {
+  auto parseLiteral = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::IntegerLiteral,
+                                    scripting::AstSelector>(in);
+  };
+
+  auto requireHasInteger = [](const pegtl::parse_tree::node &root,
+                              int expected) {
+    REQUIRE_FALSE(root.children.empty());
+    const auto &content{root.children[0]};
+    REQUIRE(content->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(content->has_content());
+    REQUIRE(std::stoi(content->content()) == expected);
+  };
+
+  {
+    const auto *script = "153";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasInteger(*root, 153);
+  }
+
+  {
+    const auto *script = "0";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasInteger(*root, 0);
+  }
+
+  {
+    const auto script = std::to_string(std::numeric_limits<int>::max());
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasInteger(*root, std::numeric_limits<int>::max());
   }
 }

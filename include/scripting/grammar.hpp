@@ -115,7 +115,7 @@ struct StringLiteralContents : pegtl::star<
     pegtl::seq<pegtl::not_at<StringLiteralBannedChar>, pegtl::any>> {
 };
 
-/// `StringLiteral <- ["] / StringLiteralContents / ["]
+/// `StringLiteral <- ["] / StringLiteralContents / ["]`
 /// \remark Unlike in most languages, there are no escape sequences in strings.
 ///         For example, `\\t` is a literal backslash followed by a `t`, not a
 ///         tab. In particular, string literals cannot contain double quotes
@@ -123,6 +123,13 @@ struct StringLiteralContents : pegtl::star<
 struct StringLiteral : pegtl::seq<pegtl::one<'"'>,
                                   StringLiteralContents,
                                   pegtl::one<'"'>> {
+};
+
+/// `IntegerLiteral <- "0" / ([1-9] [0-9]*)
+struct IntegerLiteral : pegtl::sor<pegtl::one<'0'>,
+                                   pegtl::seq<pegtl::range<'1', '9'>,
+                                              pegtl::star<pegtl::digit>>> {
+
 };
 
 ///@}
@@ -144,8 +151,9 @@ struct ScriptnameStatement : pegtl::seq<RawScriptnameStatement,
 };
 
 struct BlockBeginStatement : pegtl::seq<Begin,
-                                        Identifier
-    /* [IntegerLiteral]? */> {
+                                        Identifier,
+                                        pegtl::opt<IntegerLiteral>,
+                                        Spacing> {
 };
 
 struct BlockEndStatement : End {};
@@ -171,6 +179,7 @@ template<> struct AstSelector<RawIdentifier> : std::true_type {};
 template<> struct AstSelector<BlockBeginStatement> : std::true_type {};
 template<> struct AstSelector<BlockEndStatement> : std::true_type {};
 template<> struct AstSelector<StringLiteralContents> : std::true_type {};
+template<> struct AstSelector<IntegerLiteral> : std::true_type {};
 
 template<class F, class State>
 void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {
