@@ -241,3 +241,66 @@ end
     REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
   }
 }
+
+TEST_CASE("can parse string literals", "[scripting]") {
+  auto parseLiteral = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::StringLiteral,
+                                    scripting::AstSelector>(in);
+  };
+
+  auto requireHasString = [](const pegtl::parse_tree::node &root,
+                             const std::string &expected) {
+    REQUIRE_FALSE(root.children.empty());
+    const auto &content{root.children[0]};
+    REQUIRE(content->id == &typeid(scripting::StringLiteralContents));
+    REQUIRE(content->has_content());
+    REQUIRE(content->content() == expected);
+  };
+
+  {
+    const auto *script = R"("Hello")";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasString(*root, "Hello");
+  }
+
+  {
+    const auto *script = R"("")";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasString(*root, "");
+  }
+
+  {
+    const auto *script = R"("This \t is not escaped")";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasString(*root, R"(This \t is not escaped)");
+  }
+
+  {
+    const auto *script = R"("This is not
+        a string)";
+    pegtl::memory_input in(script, "");
+    REQUIRE(parseLiteral(in) == nullptr);
+  }
+
+  {
+    const auto *script = R"("This string" "Is two strings")";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasString(*root, R"(This string)");
+  }
+
+  {
+    const auto *script = R"("This is " not a string)";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    requireHasString(*root, R"(This is )");
+  }
+}

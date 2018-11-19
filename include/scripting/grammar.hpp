@@ -104,6 +104,29 @@ struct End : impl::Spaced<RawEnd> {};
 
 ///@}
 
+/// \name Literals
+///@{
+
+/// `StringLiteralBannedChar <- ["] / eolf`
+struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
+
+/// `StringLiteralContents <- (!StringLiteralBannedChar .)*`
+struct StringLiteralContents : pegtl::star<
+    pegtl::seq<pegtl::not_at<StringLiteralBannedChar>, pegtl::any>> {
+};
+
+/// `StringLiteral <- ["] / StringLiteralContents / ["]
+/// \remark Unlike in most languages, there are no escape sequences in strings.
+///         For example, `\\t` is a literal backslash followed by a `t`, not a
+///         tab. In particular, string literals cannot contain double quotes
+///         directly.
+struct StringLiteral : pegtl::seq<pegtl::one<'"'>,
+                                  StringLiteralContents,
+                                  pegtl::one<'"'>> {
+};
+
+///@}
+
 /// `RawIdentifier <- InitialIdChar IdChar*
 struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};
 /// `Identifier <- RawIdentifier Spacing`
@@ -147,6 +170,7 @@ template<> struct AstSelector<RawScriptname> : std::true_type {};
 template<> struct AstSelector<RawIdentifier> : std::true_type {};
 template<> struct AstSelector<BlockBeginStatement> : std::true_type {};
 template<> struct AstSelector<BlockEndStatement> : std::true_type {};
+template<> struct AstSelector<StringLiteralContents> : std::true_type {};
 
 template<class F, class State>
 void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {
