@@ -163,12 +163,15 @@ struct FloatLiteral : pegtl::sor<FloatLiteralSupUnity,
                                  FloatLiteralLeadingPoint> {
 };
 
-/// `Literal <- StringLiteral / IntegerLiteral / FloatLiteral / RefLiteral`
-struct Literal : pegtl::sor<StringLiteral,
-                            IntegerLiteral,
-                            FloatLiteral,
-                            RefLiteral> {
+/// `RawLiteral <- StringLiteral / IntegerLiteral / FloatLiteral / RefLiteral`
+struct RawLiteral : pegtl::sor<StringLiteral,
+                               FloatLiteral,
+                               IntegerLiteral,
+                               RefLiteral> {
 };
+
+/// `Literal <- RawLiteral Spacing`
+struct Literal : pegtl::seq<RawLiteral, Spacing> {};
 
 /// `RawIdentifier <- InitialIdChar IdChar*
 struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};

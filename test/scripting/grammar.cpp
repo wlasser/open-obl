@@ -514,6 +514,57 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 }
 
+TEST_CASE("can parse literals", "[scripting]") {
+  auto parseLiteral = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::Literal,
+                                    scripting::AstSelector>(in);
+  };
+
+  {
+    const auto *script = "3.14";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::FloatLiteral));
+  }
+
+  {
+    const auto *script = "359";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = "0";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = R"("359")";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::StringLiteralContents));
+  }
+  {
+    const auto *script = "#59";
+    pegtl::memory_input in(script, "");
+    const auto root = parseLiteral(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::RefLiteralContents));
+  }
+}
+
 TEST_CASE("can declare variables", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
