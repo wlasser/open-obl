@@ -1,40 +1,13 @@
-#include <record/formid.hpp>
+#include "helpers.hpp"
+#include "record/formid.hpp"
 #include "scripting/grammar.hpp"
 #include <catch2/catch.hpp>
 #include <tao/pegtl/analyze.hpp>
 #include <limits>
+#include <memory>
 #include <string>
-#include <string_view>
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
-
-[[nodiscard]] bool isStatement(const pegtl::parse_tree::node &node) {
-  const std::string_view name{node.id->name()};
-  return name.find("Statement") != std::string_view::npos;
-}
-
-[[nodiscard]] std::string
-printVisitor(const pegtl::parse_tree::node &node, const std::string &indent) {
-  if (node.is_root()) {
-    std::cout << "ROOT\n";
-  } else {
-    std::cout << indent << node.name();
-    if (node.has_content() && !isStatement(node)) {
-      std::cout << " \"" << node.content() << '"';
-    }
-    std::cout << " at " << node.begin() << " to " << node.end() << '\n';
-  }
-  return indent + "| ";
-};
-
-void printAst(const pegtl::parse_tree::node &node) {
-  scripting::visitAst(node, std::string{}, printVisitor);
-}
-
-template<class T> [[nodiscard]] auto parseScript(T &&in) {
-  return pegtl::parse_tree::parse<scripting::Grammar,
-                                  scripting::AstSelector>(in);
-}
 
 TEST_CASE("grammar is valid", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
@@ -50,7 +23,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
   SECTION("parse minimal scriptname") {
     const char *script = "scriptname MyScript";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   SECTION("parse scriptname with surrounding comments") {
@@ -60,7 +33,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
    ; Script body goes here!
     )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   REQUIRE(root != nullptr);
@@ -83,25 +56,25 @@ TEST_CASE("fails to parse invalid scriptname", "[scripting]") {
   {
     const char *script = "scriptname ;This is a comment";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
     const char *script = "scriptname 12hello";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
     const char *script = "scnmore MyScript";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
     const char *script = "";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 }
 
@@ -120,7 +93,7 @@ begin GameMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   SECTION("parse block statement with surrounding comments") {
@@ -131,7 +104,7 @@ begin   GameMode ; Runs during gameplay
      end ; End of script
     )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   SECTION("parse block statement with unexpected name") {
@@ -141,7 +114,7 @@ begin begin
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
     expectedBlockname = "begin";
   }
 
@@ -170,7 +143,7 @@ begin MenuMode 4329 ; Some menu type
 end
 )script";
   pegtl::memory_input in(script, "");
-  const auto root = parseScript(in);
+  const auto root = scripting::parseScript(in);
   REQUIRE(root != nullptr);
   const auto &beginStatement{root->children[1]};
   REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
@@ -208,7 +181,7 @@ begin MenuMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   SECTION("parse poorly formatted blocks") {
@@ -217,7 +190,7 @@ scn MyScript begin GameMode end begin MenuMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = parseScript(in);
+    root = scripting::parseScript(in);
   }
 
   REQUIRE(root != nullptr);
@@ -261,7 +234,7 @@ begin ; No block name
 end
 )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
@@ -271,7 +244,7 @@ begin begin begin
 end
     )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
@@ -281,7 +254,7 @@ begin GameMode
 ; No end statement!
     )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 }
 
@@ -291,21 +264,12 @@ TEST_CASE("can parse string literals", "[scripting]") {
                                     scripting::AstSelector>(in);
   };
 
-  auto requireHasString = [](const pegtl::parse_tree::node &root,
-                             const std::string &expected) {
-    REQUIRE_FALSE(root.children.empty());
-    const auto &content{root.children[0]};
-    REQUIRE(content->id == &typeid(scripting::StringLiteralContents));
-    REQUIRE(content->has_content());
-    REQUIRE(content->content() == expected);
-  };
-
   {
     const auto *script = R"("Hello")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasString(*root, "Hello");
+    scripting::requireHasString(*root, "Hello");
   }
 
   {
@@ -313,7 +277,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasString(*root, "");
+    scripting::requireHasString(*root, "");
   }
 
   {
@@ -321,7 +285,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasString(*root, R"(This \t is not escaped)");
+    scripting::requireHasString(*root, R"(This \t is not escaped)");
   }
 
   {
@@ -336,7 +300,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasString(*root, R"(This string)");
+    scripting::requireHasString(*root, R"(This string)");
   }
 
   {
@@ -344,7 +308,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasString(*root, R"(This is )");
+    scripting::requireHasString(*root, R"(This is )");
   }
 }
 
@@ -354,21 +318,12 @@ TEST_CASE("can parse integer literals", "[scripting]") {
                                     scripting::AstSelector>(in);
   };
 
-  auto requireHasInteger = [](const pegtl::parse_tree::node &root,
-                              int expected) {
-    REQUIRE_FALSE(root.children.empty());
-    const auto &content{root.children[0]};
-    REQUIRE(content->id == &typeid(scripting::IntegerLiteral));
-    REQUIRE(content->has_content());
-    REQUIRE(std::stoi(content->content()) == expected);
-  };
-
   {
     const auto *script = "153";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasInteger(*root, 153);
+    scripting::requireHasInteger(*root, 153);
   }
 
   {
@@ -376,7 +331,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasInteger(*root, 0);
+    scripting::requireHasInteger(*root, 0);
   }
 
   {
@@ -384,7 +339,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasInteger(*root, std::numeric_limits<int>::max());
+    scripting::requireHasInteger(*root, std::numeric_limits<int>::max());
   }
 }
 
@@ -394,21 +349,12 @@ TEST_CASE("can parse ref literals", "[scripting]") {
                                     scripting::AstSelector>(in);
   };
 
-  auto requireHasReference = [](const pegtl::parse_tree::node &root,
-                                FormId expected) {
-    REQUIRE_FALSE(root.children.empty());
-    const auto &content{root.children[0]};
-    REQUIRE(content->id == &typeid(scripting::RefLiteralContents));
-    REQUIRE(content->has_content());
-    REQUIRE(std::stoi(content->content(), nullptr, 16) == expected);
-  };
-
   {
     const auto *script = "#00103a5F";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasReference(*root, 0x00103a5f);
+    scripting::requireHasReference(*root, 0x00103a5f);
   }
 
   {
@@ -434,7 +380,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasReference(*root, 0);
+    scripting::requireHasReference(*root, 0);
   }
 }
 
@@ -444,21 +390,12 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
                                     scripting::AstSelector>(in);
   };
 
-  auto requireHasFloat = [](const pegtl::parse_tree::node &root,
-                            float expected) {
-    REQUIRE_FALSE(root.children.empty());
-    const auto &content{root.children[0]};
-    REQUIRE(content->id == &typeid(scripting::FloatLiteral));
-    REQUIRE(content->has_content());
-    REQUIRE_THAT(std::stof(content->content()), Catch::WithinULP(expected, 1));
-  };
-
   {
     const auto *script = "3.14159";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 3.14159f);
+    scripting::requireHasFloat(*root, 3.14159f);
   }
 
   {
@@ -466,7 +403,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 0.142f);
+    scripting::requireHasFloat(*root, 0.142f);
   }
 
   {
@@ -474,7 +411,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 0.0001f);
+    scripting::requireHasFloat(*root, 0.0001f);
   }
 
   {
@@ -482,7 +419,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 0.142f);
+    scripting::requireHasFloat(*root, 0.142f);
   }
 
   {
@@ -490,7 +427,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 0.0001f);
+    scripting::requireHasFloat(*root, 0.0001f);
   }
 
   {
@@ -510,7 +447,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    requireHasFloat(*root, 3.1f);
+    scripting::requireHasFloat(*root, 3.1f);
   }
 }
 
@@ -596,7 +533,7 @@ begin GameMode
 end
     )script";
   pegtl::memory_input in(script, "");
-  const auto root = parseScript(in);
+  const auto root = scripting::parseScript(in);
   REQUIRE(root != nullptr);
   REQUIRE(root->children.size() > 8);
 
