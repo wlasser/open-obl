@@ -519,75 +519,6 @@ TEST_CASE("can parse literals", "[scripting]") {
   }
 }
 
-TEST_CASE("can declare variables", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
-  // All variable declarations follow the same pattern, so there is minimal
-  // advantage to testing them all separately.
-
-  {
-    const char *script = R"script(
-scn MyScript
-begin GameMode
-    short MyVar ; This is a short
-      short    my2Var39
-    ref myRef
-
-    ; It's pretty long
-    long long ; looong
-    short long;Yes, you can use keywords as identifiers
-
-    float
-       f
-end
-    )script";
-    pegtl::memory_input in(script, "");
-    const auto root = scripting::parseScript(in);
-    REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() > 8);
-
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[2],
-                                                       "MyVar");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
-                                                       "my2Var39");
-    scripting::requireHasVariable<scripting::RawRef>(*root->children[4],
-                                                     "myRef");
-    scripting::requireHasVariable<scripting::RawLong>(*root->children[5],
-                                                      "long");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[6],
-                                                       "long");
-    scripting::requireHasVariable<scripting::RawFloat>(*root->children[7],
-                                                       "f");
-  }
-
-  {
-    const char *script = R"script(
-scn MyScript
-short myGlobal
-begin GameMode
-end float myOtherGlobal
-begin MenuMode long myLocal
-end
-short uselessVariable
-    )script";
-
-    pegtl::memory_input in(script, "");
-    const auto root = scripting::parseScript(in);
-    REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() == 9);
-
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[1],
-                                                       "myGlobal");
-    scripting::requireHasVariable<scripting::RawFloat>(*root->children[4],
-                                                       "myOtherGlobal");
-    scripting::requireHasVariable<scripting::RawLong>(*root->children[6],
-                                                      "myLocal");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[8],
-                                                       "uselessVariable");
-  }
-}
-
 TEST_CASE("can parse expressions", "[scripting]") {
   auto parseExpression = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::Expression,
@@ -794,5 +725,179 @@ TEST_CASE("can parse expressions", "[scripting]") {
 
     scripting::requireIsInteger(*neqOp->children[0], 3);
     scripting::requireIsInteger(*neqOp->children[1], 4);
+  }
+}
+
+TEST_CASE("can declare and assign to variables", "[scripting]") {
+  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
+  REQUIRE(numIssues == 0);
+
+  // All variable declarations follow the same pattern, so there is minimal
+  // advantage to testing them all separately.
+
+  {
+    const char *script = R"script(
+scn MyScript
+begin GameMode
+    short MyVar ; This is a short
+      short    my2Var39
+    ref myRef
+
+    ; It's pretty long
+    long long ; looong
+    short long;Yes, you can use keywords as identifiers
+
+    float
+       f
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() > 8);
+
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[2],
+                                                       "MyVar");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
+                                                       "my2Var39");
+    scripting::requireHasVariable<scripting::RawRef>(*root->children[4],
+                                                     "myRef");
+    scripting::requireHasVariable<scripting::RawLong>(*root->children[5],
+                                                      "long");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[6],
+                                                       "long");
+    scripting::requireHasVariable<scripting::RawFloat>(*root->children[7],
+                                                       "f");
+  }
+
+  {
+    const char *script = R"script(
+scn MyScript
+short myGlobal
+begin GameMode
+end float myOtherGlobal
+begin MenuMode long myLocal
+end
+short uselessVariable
+    )script";
+
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 9);
+
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[1],
+                                                       "myGlobal");
+    scripting::requireHasVariable<scripting::RawFloat>(*root->children[4],
+                                                       "myOtherGlobal");
+    scripting::requireHasVariable<scripting::RawLong>(*root->children[6],
+                                                      "myLocal");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[8],
+                                                       "uselessVariable");
+  }
+
+  {
+    const char *script = R"script(
+scn MyScript
+begin GameMode
+float short
+short float
+set float  to    3 ; Totally not confusing
+set short to3.5 ; Isn't this language great?
+end
+    )script";
+
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 7);
+
+    scripting::requireHasVariable<scripting::RawFloat>(*root->children[2],
+                                                       "short");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
+                                                       "float");
+    const auto &set1{root->children[4]};
+    REQUIRE(set1->is<scripting::SetStatement>());
+    REQUIRE(set1->children.size() == 2);
+
+    const auto &set1Name{set1->children[0]};
+    REQUIRE(set1Name->has_content());
+    REQUIRE(set1Name->content() == "float");
+    scripting::requireIsInteger(*set1->children[1], 3);
+
+    const auto &set2{root->children[5]};
+    REQUIRE(set2->is<scripting::SetStatement>());
+    REQUIRE(set2->children.size() == 2);
+
+    const auto &set2Name{set2->children[0]};
+    REQUIRE(set2Name->has_content());
+    REQUIRE(set2Name->content() == "short");
+    scripting::requireIsFloat(*set2->children[1], 3.5f);
+  }
+
+  {
+    const char *script = R"script(
+scn MyScript
+begin GameMode
+set SomeQuest.foo to SomeQuest.foo * 2
+set #001234ab.bar to 8
+end
+    )script";
+
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 5);
+
+    const auto &set1{root->children[2]};
+    REQUIRE(set1->is<scripting::SetStatement>());
+    REQUIRE(set1->children.size() == 2);
+
+    const auto &set1Dest{set1->children[0]};
+    REQUIRE(set1Dest->is<scripting::MemberAccess>());
+    REQUIRE(set1Dest->children.size() == 2);
+
+    REQUIRE(set1Dest->children[0]->is<scripting::RawIdentifier>());
+    REQUIRE(set1Dest->children[0]->has_content());
+    REQUIRE(set1Dest->children[0]->content() == "SomeQuest");
+
+    REQUIRE(set1Dest->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set1Dest->children[1]->has_content());
+    REQUIRE(set1Dest->children[1]->content() == "foo");
+
+    const auto &set1Src{set1->children[1]};
+    REQUIRE(set1Src->is<scripting::StrStar>());
+    REQUIRE(set1Src->children.size() == 2);
+    scripting::requireIsInteger(*set1Src->children[1], 2);
+
+    const auto &set1SrcVar{set1Src->children[0]};
+    REQUIRE(set1SrcVar->is<scripting::MemberAccess>());
+    REQUIRE(set1SrcVar->children.size() == 2);
+
+    REQUIRE(set1SrcVar->children[0]->is<scripting::RawIdentifier>());
+    REQUIRE(set1SrcVar->children[0]->has_content());
+    REQUIRE(set1SrcVar->children[0]->content() == "SomeQuest");
+
+    REQUIRE(set1SrcVar->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set1SrcVar->children[1]->has_content());
+    REQUIRE(set1SrcVar->children[1]->content() == "foo");
+
+    const auto &set2{root->children[3]};
+    REQUIRE(set2->is<scripting::SetStatement>());
+    REQUIRE(set2->children.size() == 2);
+
+    const auto &set2Dest{set2->children[0]};
+    REQUIRE(set2Dest->is<scripting::MemberAccess>());
+    REQUIRE(set2Dest->children.size() == 2);
+
+    REQUIRE(set2Dest->children[0]->is<scripting::RefLiteralContents>());
+    REQUIRE(set2Dest->children[0]->has_content());
+    REQUIRE(set2Dest->children[0]->content() == "001234ab");
+
+    REQUIRE(set2Dest->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set2Dest->children[1]->has_content());
+    REQUIRE(set2Dest->children[1]->content() == "bar");
+
+    scripting::requireIsInteger(*set2->children[1], 8);
   }
 }

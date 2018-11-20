@@ -94,6 +94,12 @@ struct StrSlash : pegtl::one<'/'> {};
 /// `StrDot <- "."`
 struct StrDot : pegtl::one<'.'> {};
 
+/// `StrSet <- "set"`
+struct StrSet : pegtl::string<'s', 'e', 't'> {};
+
+/// `StrTo <- "to"`
+struct StrTo : pegtl::string<'t', 'o'> {};
+
 /// `IdChar <- [a-zA-Z0-9]`
 struct IdChar : pegtl::alnum {};
 
@@ -207,6 +213,12 @@ struct Slash : impl::Spaced<StrSlash> {};
 /// `Dot <- StrDot Spacing`
 struct Dot : impl::Spaced<StrDot> {};
 
+/// `Set <- StrSet Spacing`
+struct Set : impl::Spaced<StrSet> {};
+
+/// `To <- StrTo Spacing`
+struct To : impl::Spaced<StrTo> {};
+
 /// `StringLiteralBannedChar <- ["] / eolf`
 struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
 
@@ -295,14 +307,14 @@ struct RefType : impl::Spaced<RawRef> {};
 /// `Type <- ShortType / LongType / FloatType / RefType`
 struct Type : pegtl::sor<ShortType, LongType, FloatType, RefType> {};
 
-/// `MemberAccess <- (RefLiteral / Identifier) "."`
+/// `MemberAccess <- (RefLiteral / Identifier) "." Identifier`
 struct MemberAccess : pegtl::seq<pegtl::sor<RefLiteral, Identifier>,
-                                 pegtl::one<'.'>> {
+                                 pegtl::one<'.'>,
+                                 Identifier> {
 };
 
-/// `Variable <- Identifier / (MemberAccess Identifier)`
-struct Variable : pegtl::sor<Identifier,
-                             pegtl::seq<MemberAccess, Identifier>> {
+/// `Variable <- Identifier / MemberAccess`
+struct Variable : pegtl::sor<MemberAccess, Identifier> {
 };
 
 struct Expression;
@@ -376,6 +388,11 @@ struct ScriptnameStatement : pegtl::seq<RawScriptnameStatement,
 /// `DeclarationStatement <- Type Identifier`
 struct DeclarationStatement : pegtl::seq<Type, Identifier> {};
 
+/// `SetStatement <- Set Variable To Expression`
+struct SetStatement : pegtl::seq<Set, Variable, To, Expression> {};
+
+struct Statement : pegtl::sor<DeclarationStatement, SetStatement> {};
+
 struct BlockBeginStatement : pegtl::seq<Begin,
                                         Identifier,
                                         pegtl::opt<IntegerLiteral>,
@@ -385,7 +402,7 @@ struct BlockBeginStatement : pegtl::seq<Begin,
 struct BlockEndStatement : End {};
 
 struct BlockStatement : pegtl::seq<BlockBeginStatement,
-                                   pegtl::star<DeclarationStatement>,
+                                   pegtl::star<Statement>,
                                    BlockEndStatement> {
 };
 
@@ -441,12 +458,12 @@ template<> struct AstSelector<IntegerLiteral> : std::true_type {};
 template<> struct AstSelector<RefLiteralContents> : std::true_type {};
 template<> struct AstSelector<FloatLiteral> : std::true_type {};
 template<> struct AstSelector<DeclarationStatement> : std::true_type {};
+template<> struct AstSelector<SetStatement> : std::true_type {};
 template<> struct AstSelector<RawShort> : std::true_type {};
 template<> struct AstSelector<RawLong> : std::true_type {};
 template<> struct AstSelector<RawFloat> : std::true_type {};
 template<> struct AstSelector<RawRef> : std::true_type {};
 template<> struct AstSelector<MemberAccess> : std::true_type {};
-template<> struct AstSelector<Variable> : std::true_type {};
 template<> struct AstSelector<StrPlus> : std::true_type {};
 template<> struct AstSelector<StrDash> : std::true_type {};
 template<> struct AstSelector<StrStar> : std::true_type {};
