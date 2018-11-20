@@ -204,7 +204,7 @@ PrimaryExpression <- FunctionCall / Variable / Literal
 UnaryExpression   <- [+-]? PrimaryExpression
 MulExpression     <- UnaryExpression ((STAR / SLASH) UnaryExpression)*
 AddExpression     <- MulExpression ((PLUS / DASH) MulExpression)*
-CondExpression    <- Expression ((LTEQ / GTEQ / LT / GT) Expression)*
+CondExpression    <- AddExpression ((LTEQ / GTEQ / LT / GT) AddExpression)*
 EqExpression      <- CondExpression ((EQEQ / NEQ) CondExpression)*
 # DR3 applied to give && higher predence than ||
 AndExpression     <- EqExpression (AND EqExpression)*

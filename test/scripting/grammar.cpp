@@ -618,3 +618,161 @@ end
   const auto &decl6{root->children[7]};
   requireVariable(*decl6, &typeid(scripting::RawFloat), "f");
 }
+
+TEST_CASE("can parse expressions", "[scripting]") {
+  auto parseExpression = [](auto &&in) {
+    return pegtl::parse_tree::parse<scripting::Expression,
+                                    scripting::AstSelector>(in);
+  };
+
+  {
+    const auto *script = "3.75";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+    REQUIRE(root->children[0]->id == &typeid(scripting::FloatLiteral));
+  }
+
+  {
+    const auto *script = "-75";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE(!root->children.empty());
+
+    const auto &op{root->children[0]};
+    REQUIRE(op->id == &typeid(scripting::StrDash));
+    REQUIRE_FALSE(op->children.empty());
+
+    const auto &literal{op->children[0]};
+    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = "+75";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &op{root->children[0]};
+    REQUIRE(op->id == &typeid(scripting::StrPlus));
+    REQUIRE_FALSE(op->children.empty());
+
+    const auto &literal{op->children[0]};
+    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = "(75)";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &literal{root->children[0]};
+    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = "(  ( (((75) ))  ))";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &literal{root->children[0]};
+    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+  }
+
+  {
+    const auto *script = "39 || -75";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &op{root->children[0]};
+    REQUIRE(op->id == &typeid(scripting::StrOr));
+    REQUIRE(op->children.size() == 2);
+
+    const auto &literal{op->children[0]};
+    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+
+    const auto &subExpr{op->children[1]};
+    REQUIRE(subExpr->id == &typeid(scripting::StrDash));
+  }
+
+  {
+    const auto *script = "1 && 2 || 3 && 4";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &orOp{root->children[0]};
+    REQUIRE(orOp->id == &typeid(scripting::StrOr));
+    REQUIRE(orOp->children.size() == 2);
+
+    const auto &lhs{orOp->children[0]};
+    REQUIRE(lhs->id == &typeid(scripting::StrAnd));
+
+    const auto &rhs{orOp->children[1]};
+    REQUIRE(rhs->id == &typeid(scripting::StrAnd));
+  }
+
+  {
+    const auto *script = "(1 || 2) && (3 || 4)";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &andOp{root->children[0]};
+    REQUIRE(andOp->id == &typeid(scripting::StrAnd));
+    REQUIRE(andOp->children.size() == 2);
+
+    const auto &lhs{andOp->children[0]};
+    REQUIRE(lhs->id == &typeid(scripting::StrOr));
+
+    const auto &rhs{andOp->children[1]};
+    REQUIRE(rhs->id == &typeid(scripting::StrOr));
+  }
+
+  {
+    const auto *script = "2 * 3 / 4 * 2";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &mulOp{root->children[0]};
+    REQUIRE(mulOp->id == &typeid(scripting::StrStar));
+    REQUIRE(mulOp->children.size() == 2);
+
+    const auto &divOp{mulOp->children[0]};
+    REQUIRE(divOp->id == &typeid(scripting::StrSlash));
+    REQUIRE(divOp->children.size() == 2);
+
+    const auto &mulOp2{divOp->children[0]};
+    REQUIRE(mulOp2->id == &typeid(scripting::StrStar));
+    REQUIRE(mulOp2->children.size() == 2);
+
+    const auto &mul2Lhs{mulOp2->children[0]};
+    REQUIRE(mul2Lhs->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(std::stoi(mul2Lhs->content()) == 2);
+
+    const auto &mul2Rhs{mulOp2->children[1]};
+    REQUIRE(mul2Rhs->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(std::stoi(mul2Rhs->content()) == 3);
+
+    const auto &divRhs{divOp->children[1]};
+    REQUIRE(divRhs->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(std::stoi(divRhs->content()) == 4);
+
+    const auto &mulRhs{mulOp->children[1]};
+    REQUIRE(mulRhs->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(std::stoi(mulRhs->content()) == 2);
+  }
+}
