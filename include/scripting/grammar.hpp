@@ -391,7 +391,8 @@ struct BlockStatement : pegtl::seq<BlockBeginStatement,
 
 struct Grammar : pegtl::must<Spacing,
                              ScriptnameStatement,
-                             pegtl::star<BlockStatement>,
+                             pegtl::star<pegtl::sor<DeclarationStatement,
+                                                    BlockStatement>>,
                              pegtl::eof> {
 };
 

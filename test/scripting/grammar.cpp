@@ -526,7 +526,8 @@ TEST_CASE("can declare variables", "[scripting]") {
   // All variable declarations follow the same pattern, so there is minimal
   // advantage to testing them all separately.
 
-  const char *script = R"script(
+  {
+    const char *script = R"script(
 scn MyScript
 begin GameMode
     short MyVar ; This is a short
@@ -541,28 +542,50 @@ begin GameMode
        f
 end
     )script";
-  pegtl::memory_input in(script, "");
-  const auto root = scripting::parseScript(in);
-  REQUIRE(root != nullptr);
-  REQUIRE(root->children.size() > 8);
+    pegtl::memory_input in(script, "");
+    const auto root = scripting::parseScript(in);
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() > 8);
 
-  const auto &decl1{root->children[2]};
-  scripting::requireHasVariable<scripting::RawShort>(*decl1, "MyVar");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[2],
+                                                       "MyVar");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
+                                                       "my2Var39");
+    scripting::requireHasVariable<scripting::RawRef>(*root->children[4],
+                                                     "myRef");
+    scripting::requireHasVariable<scripting::RawLong>(*root->children[5],
+                                                      "long");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[6],
+                                                       "long");
+    scripting::requireHasVariable<scripting::RawFloat>(*root->children[7],
+                                                       "f");
+  }
 
-  const auto &decl2{root->children[3]};
-  scripting::requireHasVariable<scripting::RawShort>(*decl2, "my2Var39");
+  {
+    const char *script = R"script(
+scn MyScript
+short myGlobal
+begin GameMode
+end float myOtherGlobal
+begin MenuMode long myLocal
+end
+short uselessVariable
+    )script";
 
-  const auto &decl3{root->children[4]};
-  scripting::requireHasVariable<scripting::RawRef>(*decl3, "myRef");
+    pegtl::memory_input in(script, "");
+    const auto root = scripting::parseScript(in);
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 9);
 
-  const auto &decl4{root->children[5]};
-  scripting::requireHasVariable<scripting::RawLong>(*decl4, "long");
-
-  const auto &decl5{root->children[6]};
-  scripting::requireHasVariable<scripting::RawShort>(*decl5, "long");
-
-  const auto &decl6{root->children[7]};
-  scripting::requireHasVariable<scripting::RawFloat>(*decl6, "f");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[1],
+                                                       "myGlobal");
+    scripting::requireHasVariable<scripting::RawFloat>(*root->children[4],
+                                                       "myOtherGlobal");
+    scripting::requireHasVariable<scripting::RawLong>(*root->children[6],
+                                                      "myLocal");
+    scripting::requireHasVariable<scripting::RawShort>(*root->children[8],
+                                                       "uselessVariable");
+  }
 }
 
 TEST_CASE("can parse expressions", "[scripting]") {
