@@ -331,7 +331,7 @@ struct MulExpression : pegtl::seq<UnaryExpression,
 struct AddExpression : pegtl::seq<MulExpression,
                                   pegtl::star<
                                       pegtl::seq<pegtl::sor<Plus, Dash>,
-                                                 UnaryExpression>>> {
+                                                 MulExpression>>> {
 };
 
 /// `CondExpression <- AddExpression ((Lteq / Gteq / Lt / Gt) AddExpression)*`

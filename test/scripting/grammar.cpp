@@ -705,16 +705,71 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(mulOp2->is<scripting::StrStar>());
     REQUIRE(mulOp2->children.size() == 2);
 
-    const auto &mul2Lhs{mulOp2->children[0]};
-    scripting::requireIsInteger(*mul2Lhs, 2);
+    scripting::requireIsInteger(*mulOp2->children[0], 2);
+    scripting::requireIsInteger(*mulOp2->children[1], 3);
+    scripting::requireIsInteger(*divOp->children[1], 4);
+    scripting::requireIsInteger(*mulOp->children[1], 2);
+  }
 
-    const auto &mul2Rhs{mulOp2->children[1]};
-    scripting::requireIsInteger(*mul2Rhs, 3);
+  {
+    const auto *script = "1 + 2 * 3";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
 
-    const auto &divRhs{divOp->children[1]};
-    scripting::requireIsInteger(*divRhs, 4);
+    const auto &plusOp{root->children[0]};
+    REQUIRE(plusOp->is<scripting::StrPlus>());
+    REQUIRE(plusOp->children.size() == 2);
 
-    const auto &mulRhs{mulOp->children[1]};
-    scripting::requireIsInteger(*mulRhs, 2);
+    scripting::requireIsInteger(*plusOp->children[0], 1);
+
+    const auto &mulOp{plusOp->children[1]};
+    REQUIRE(mulOp->is<scripting::StrStar>());
+    REQUIRE(mulOp->children.size() == 2);
+
+    scripting::requireIsInteger(*mulOp->children[0], 2);
+    scripting::requireIsInteger(*mulOp->children[1], 3);
+  }
+
+  {
+    const auto *script = "1 && 2 * 3 <= 4";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &andOp{root->children[0]};
+    REQUIRE(andOp->is<scripting::StrAnd>());
+    REQUIRE(andOp->children.size() == 2);
+
+    scripting::requireIsInteger(*andOp->children[0], 1);
+
+    const auto &lteqOp{andOp->children[1]};
+    REQUIRE(lteqOp->is<scripting::StrLteq>());
+    REQUIRE(lteqOp->children.size() == 2);
+
+    const auto &mulOp{lteqOp->children[0]};
+    REQUIRE(mulOp->is<scripting::StrStar>());
+    REQUIRE(mulOp->children.size() == 2);
+
+    scripting::requireIsInteger(*mulOp->children[0], 2);
+    scripting::requireIsInteger(*mulOp->children[1], 3);
+    scripting::requireIsInteger(*lteqOp->children[1], 4);
+  }
+
+  {
+    const auto *script = "3 != 4";
+    pegtl::memory_input in(script, "");
+    const auto root = parseExpression(in);
+    REQUIRE(root != nullptr);
+    REQUIRE_FALSE(root->children.empty());
+
+    const auto &neqOp{root->children[0]};
+    REQUIRE(neqOp->is<scripting::StrNeq>());
+    REQUIRE(neqOp->children.size() == 2);
+
+    scripting::requireIsInteger(*neqOp->children[0], 3);
+    scripting::requireIsInteger(*neqOp->children[1], 4);
   }
 }
