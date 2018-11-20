@@ -29,37 +29,29 @@ void printAst(const pegtl::parse_tree::node &node) {
   scripting::visitAst(node, std::string{}, printVisitor);
 }
 
-void requireHasString(const pegtl::parse_tree::node &root,
-                      const std::string &expected) {
-  REQUIRE_FALSE(root.children.empty());
-  const auto &content{root.children[0]};
-  REQUIRE(content->id == &typeid(scripting::StringLiteralContents));
-  REQUIRE(content->has_content());
-  REQUIRE(content->content() == expected);
+void requireIsString(const pegtl::parse_tree::node &node,
+                     const std::string &expected) {
+  REQUIRE(node.id == &typeid(scripting::StringLiteralContents));
+  REQUIRE(node.has_content());
+  REQUIRE(node.content() == expected);
 }
 
-void requireHasInteger(const pegtl::parse_tree::node &root, int expected) {
-  REQUIRE_FALSE(root.children.empty());
-  const auto &content{root.children[0]};
-  REQUIRE(content->id == &typeid(scripting::IntegerLiteral));
-  REQUIRE(content->has_content());
-  REQUIRE(std::stoi(content->content()) == expected);
+void requireIsInteger(const pegtl::parse_tree::node &node, int expected) {
+  REQUIRE(node.id == &typeid(scripting::IntegerLiteral));
+  REQUIRE(node.has_content());
+  REQUIRE(std::stoi(node.content()) == expected);
 }
 
-void requireHasReference(const pegtl::parse_tree::node &root, FormId expected) {
-  REQUIRE_FALSE(root.children.empty());
-  const auto &content{root.children[0]};
-  REQUIRE(content->id == &typeid(scripting::RefLiteralContents));
-  REQUIRE(content->has_content());
-  REQUIRE(std::stoi(content->content(), nullptr, 16) == expected);
+void requireIsReference(const pegtl::parse_tree::node &node, FormId expected) {
+  REQUIRE(node.id == &typeid(scripting::RefLiteralContents));
+  REQUIRE(node.has_content());
+  REQUIRE(std::stoi(node.content(), nullptr, 16) == expected);
 }
 
-void requireHasFloat(const pegtl::parse_tree::node &root, float expected) {
-  REQUIRE_FALSE(root.children.empty());
-  const auto &content{root.children[0]};
-  REQUIRE(content->id == &typeid(scripting::FloatLiteral));
-  REQUIRE(content->has_content());
-  REQUIRE_THAT(std::stof(content->content()), Catch::WithinULP(expected, 1));
+void requireIsFloat(const pegtl::parse_tree::node &node, float expected) {
+  REQUIRE(node.id == &typeid(scripting::FloatLiteral));
+  REQUIRE(node.has_content());
+  REQUIRE_THAT(std::stof(node.content()), Catch::WithinULP(expected, 1));
 }
 
 } // namespace scripting

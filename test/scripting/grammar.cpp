@@ -43,7 +43,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
   REQUIRE(scriptnameStatement->children.size() > 1);
 
   const auto &keyword{scriptnameStatement->children[0]};
-  REQUIRE(keyword->id == &typeid(scripting::RawScriptname));
+  REQUIRE(keyword->is<scripting::RawScriptname>());
   const auto &scriptname{scriptnameStatement->children[1]};
   REQUIRE(scriptname->has_content());
   REQUIRE(scriptname->content() == "MyScript");
@@ -122,7 +122,7 @@ end
   REQUIRE(root->children.size() > 2);
 
   const auto &beginStatement{root->children[1]};
-  REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
+  REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
   REQUIRE_FALSE(beginStatement->children.empty());
 
   const auto &blockName{beginStatement->children[0]};
@@ -130,7 +130,7 @@ end
   REQUIRE(blockName->content() == expectedBlockname);
 
   const auto &endStatement{root->children[2]};
-  REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
+  REQUIRE(endStatement->is<scripting::BlockEndStatement>());
 }
 
 TEST_CASE("can parse block statements with integer modes", "[scripting]") {
@@ -146,7 +146,7 @@ end
   const auto root = scripting::parseScript(in);
   REQUIRE(root != nullptr);
   const auto &beginStatement{root->children[1]};
-  REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
+  REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
   REQUIRE(beginStatement->children.size() > 1);
 
   const auto &blockName{beginStatement->children[0]};
@@ -154,12 +154,12 @@ end
   REQUIRE(blockName->content() == "MenuMode");
 
   const auto &blockType{beginStatement->children[1]};
-  REQUIRE(blockType->id == &typeid(scripting::IntegerLiteral));
+  REQUIRE(blockType->is<scripting::IntegerLiteral>());
   REQUIRE(blockType->has_content());
   REQUIRE(std::stoi(blockType->content()) == 4329);
 
   const auto &endStatement{root->children[2]};
-  REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
+  REQUIRE(endStatement->is<scripting::BlockEndStatement>());
 }
 
 TEST_CASE("can parse multiple block statements", "[scripting]") {
@@ -198,7 +198,7 @@ end
 
   {
     const auto &beginStatement{root->children[1]};
-    REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
+    REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
     REQUIRE_FALSE(beginStatement->children.empty());
 
     const auto &blockName{beginStatement->children[0]};
@@ -206,12 +206,12 @@ end
     REQUIRE(blockName->content() == "GameMode");
 
     const auto &endStatement{root->children[2]};
-    REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
+    REQUIRE(endStatement->is<scripting::BlockEndStatement>());
   }
 
   {
     const auto &beginStatement{root->children[3]};
-    REQUIRE(beginStatement->id == &typeid(scripting::BlockBeginStatement));
+    REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
     REQUIRE_FALSE(beginStatement->children.empty());
 
     const auto &blockName{beginStatement->children[0]};
@@ -219,7 +219,7 @@ end
     REQUIRE(blockName->content() == "MenuMode");
 
     const auto &endStatement{root->children[4]};
-    REQUIRE(endStatement->id == &typeid(scripting::BlockEndStatement));
+    REQUIRE(endStatement->is<scripting::BlockEndStatement>());
   }
 }
 
@@ -269,7 +269,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasString(*root, "Hello");
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsString(*root->children[0], "Hello");
   }
 
   {
@@ -277,7 +278,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasString(*root, "");
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsString(*root->children[0], "");
   }
 
   {
@@ -285,7 +287,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasString(*root, R"(This \t is not escaped)");
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsString(*root->children[0], R"(This \t is not escaped)");
   }
 
   {
@@ -300,7 +303,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasString(*root, R"(This string)");
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsString(*root->children[0], R"(This string)");
   }
 
   {
@@ -308,7 +312,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasString(*root, R"(This is )");
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsString(*root->children[0], R"(This is )");
   }
 }
 
@@ -323,7 +328,8 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasInteger(*root, 153);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsInteger(*root->children[0], 153);
   }
 
   {
@@ -331,7 +337,8 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasInteger(*root, 0);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsInteger(*root->children[0], 0);
   }
 
   {
@@ -339,7 +346,9 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasInteger(*root, std::numeric_limits<int>::max());
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsInteger(*root->children[0],
+                                std::numeric_limits<int>::max());
   }
 }
 
@@ -354,7 +363,8 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasReference(*root, 0x00103a5f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsReference(*root->children[0], 0x00103a5f);
   }
 
   {
@@ -380,7 +390,8 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasReference(*root, 0);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsReference(*root->children[0], 0);
   }
 }
 
@@ -395,7 +406,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 3.14159f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 3.14159f);
   }
 
   {
@@ -403,7 +415,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 0.142f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 0.142f);
   }
 
   {
@@ -411,7 +424,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 0.0001f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 0.0001f);
   }
 
   {
@@ -419,7 +433,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 0.142f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 0.142f);
   }
 
   {
@@ -427,7 +442,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 0.0001f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 0.0001f);
   }
 
   {
@@ -447,7 +463,8 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
-    scripting::requireHasFloat(*root, 3.1f);
+    REQUIRE_FALSE(root->children.empty());
+    scripting::requireIsFloat(*root->children[0], 3.1f);
   }
 }
 
@@ -463,7 +480,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::FloatLiteral));
+    REQUIRE(root->children[0]->is<scripting::FloatLiteral>());
   }
 
   {
@@ -472,7 +489,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(root->children[0]->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -481,7 +498,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(root->children[0]->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -490,7 +507,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::StringLiteralContents));
+    REQUIRE(root->children[0]->is<scripting::StringLiteralContents>());
   }
   {
     const auto *script = "#59";
@@ -498,21 +515,13 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::RefLiteralContents));
+    REQUIRE(root->children[0]->is<scripting::RefLiteralContents>());
   }
 }
 
 TEST_CASE("can declare variables", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
-
-  auto requireVariable = [](const pegtl::parse_tree::node &node,
-                            auto &&type, const std::string &name) {
-    REQUIRE(node.children.size() == 2);
-    REQUIRE(node.children[0]->id == type);
-    REQUIRE(node.children[1]->has_content());
-    REQUIRE(node.children[1]->content() == name);
-  };
 
   // All variable declarations follow the same pattern, so there is minimal
   // advantage to testing them all separately.
@@ -538,22 +547,22 @@ end
   REQUIRE(root->children.size() > 8);
 
   const auto &decl1{root->children[2]};
-  requireVariable(*decl1, &typeid(scripting::RawShort), "MyVar");
+  scripting::requireHasVariable<scripting::RawShort>(*decl1, "MyVar");
 
   const auto &decl2{root->children[3]};
-  requireVariable(*decl2, &typeid(scripting::RawShort), "my2Var39");
+  scripting::requireHasVariable<scripting::RawShort>(*decl2, "my2Var39");
 
   const auto &decl3{root->children[4]};
-  requireVariable(*decl3, &typeid(scripting::RawRef), "myRef");
+  scripting::requireHasVariable<scripting::RawRef>(*decl3, "myRef");
 
   const auto &decl4{root->children[5]};
-  requireVariable(*decl4, &typeid(scripting::RawLong), "long");
+  scripting::requireHasVariable<scripting::RawLong>(*decl4, "long");
 
   const auto &decl5{root->children[6]};
-  requireVariable(*decl5, &typeid(scripting::RawShort), "long");
+  scripting::requireHasVariable<scripting::RawShort>(*decl5, "long");
 
   const auto &decl6{root->children[7]};
-  requireVariable(*decl6, &typeid(scripting::RawFloat), "f");
+  scripting::requireHasVariable<scripting::RawFloat>(*decl6, "f");
 }
 
 TEST_CASE("can parse expressions", "[scripting]") {
@@ -568,7 +577,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->id == &typeid(scripting::FloatLiteral));
+    REQUIRE(root->children[0]->is<scripting::FloatLiteral>());
   }
 
   {
@@ -579,11 +588,11 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(!root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->id == &typeid(scripting::StrDash));
+    REQUIRE(op->is<scripting::StrDash>());
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(literal->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -594,11 +603,11 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->id == &typeid(scripting::StrPlus));
+    REQUIRE(op->is<scripting::StrPlus>());
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(literal->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -609,7 +618,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &literal{root->children[0]};
-    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(literal->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -620,7 +629,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &literal{root->children[0]};
-    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(literal->is<scripting::IntegerLiteral>());
   }
 
   {
@@ -631,14 +640,14 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->id == &typeid(scripting::StrOr));
+    REQUIRE(op->is<scripting::StrOr>());
     REQUIRE(op->children.size() == 2);
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->id == &typeid(scripting::IntegerLiteral));
+    REQUIRE(literal->is<scripting::IntegerLiteral>());
 
     const auto &subExpr{op->children[1]};
-    REQUIRE(subExpr->id == &typeid(scripting::StrDash));
+    REQUIRE(subExpr->is<scripting::StrDash>());
   }
 
   {
@@ -649,14 +658,14 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &orOp{root->children[0]};
-    REQUIRE(orOp->id == &typeid(scripting::StrOr));
+    REQUIRE(orOp->is<scripting::StrOr>());
     REQUIRE(orOp->children.size() == 2);
 
     const auto &lhs{orOp->children[0]};
-    REQUIRE(lhs->id == &typeid(scripting::StrAnd));
+    REQUIRE(lhs->is<scripting::StrAnd>());
 
     const auto &rhs{orOp->children[1]};
-    REQUIRE(rhs->id == &typeid(scripting::StrAnd));
+    REQUIRE(rhs->is<scripting::StrAnd>());
   }
 
   {
@@ -667,14 +676,14 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &andOp{root->children[0]};
-    REQUIRE(andOp->id == &typeid(scripting::StrAnd));
+    REQUIRE(andOp->is<scripting::StrAnd>());
     REQUIRE(andOp->children.size() == 2);
 
     const auto &lhs{andOp->children[0]};
-    REQUIRE(lhs->id == &typeid(scripting::StrOr));
+    REQUIRE(lhs->is<scripting::StrOr>());
 
     const auto &rhs{andOp->children[1]};
-    REQUIRE(rhs->id == &typeid(scripting::StrOr));
+    REQUIRE(rhs->is<scripting::StrOr>());
   }
 
   {
@@ -685,31 +694,27 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &mulOp{root->children[0]};
-    REQUIRE(mulOp->id == &typeid(scripting::StrStar));
+    REQUIRE(mulOp->is<scripting::StrStar>());
     REQUIRE(mulOp->children.size() == 2);
 
     const auto &divOp{mulOp->children[0]};
-    REQUIRE(divOp->id == &typeid(scripting::StrSlash));
+    REQUIRE(divOp->is<scripting::StrSlash>());
     REQUIRE(divOp->children.size() == 2);
 
     const auto &mulOp2{divOp->children[0]};
-    REQUIRE(mulOp2->id == &typeid(scripting::StrStar));
+    REQUIRE(mulOp2->is<scripting::StrStar>());
     REQUIRE(mulOp2->children.size() == 2);
 
     const auto &mul2Lhs{mulOp2->children[0]};
-    REQUIRE(mul2Lhs->id == &typeid(scripting::IntegerLiteral));
-    REQUIRE(std::stoi(mul2Lhs->content()) == 2);
+    scripting::requireIsInteger(*mul2Lhs, 2);
 
     const auto &mul2Rhs{mulOp2->children[1]};
-    REQUIRE(mul2Rhs->id == &typeid(scripting::IntegerLiteral));
-    REQUIRE(std::stoi(mul2Rhs->content()) == 3);
+    scripting::requireIsInteger(*mul2Rhs, 3);
 
     const auto &divRhs{divOp->children[1]};
-    REQUIRE(divRhs->id == &typeid(scripting::IntegerLiteral));
-    REQUIRE(std::stoi(divRhs->content()) == 4);
+    scripting::requireIsInteger(*divRhs, 4);
 
     const auto &mulRhs{mulOp->children[1]};
-    REQUIRE(mulRhs->id == &typeid(scripting::IntegerLiteral));
-    REQUIRE(std::stoi(mulRhs->content()) == 2);
+    scripting::requireIsInteger(*mulRhs, 2);
   }
 }

@@ -3,6 +3,7 @@
 
 #include "record/formid.hpp"
 #include "scripting/grammar.hpp"
+#include <catch2/catch.hpp>
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
@@ -23,14 +24,23 @@ template<class T> [[nodiscard]] auto parseScript(T &&in) {
                                   scripting::AstSelector>(in);
 }
 
-void requireHasString(const pegtl::parse_tree::node &root,
-                      const std::string &expected);
+void requireIsString(const pegtl::parse_tree::node &node,
+                     const std::string &expected);
 
-void requireHasInteger(const pegtl::parse_tree::node &root, int expected);
+void requireIsInteger(const pegtl::parse_tree::node &node, int expected);
 
-void requireHasReference(const pegtl::parse_tree::node &root, FormId expected);
+void requireIsReference(const pegtl::parse_tree::node &node, FormId expected);
 
-void requireHasFloat(const pegtl::parse_tree::node &root, float expected);
+void requireIsFloat(const pegtl::parse_tree::node &node, float expected);
+
+template<class T>
+void requireHasVariable(const pegtl::parse_tree::node &root,
+                        const std::string &name) {
+  REQUIRE(root.children.size() == 2);
+  REQUIRE(root.children[0]->is<T>());
+  REQUIRE(root.children[1]->has_content());
+  REQUIRE(root.children[1]->content() == name);
+}
 
 } // namespace scripting
 
