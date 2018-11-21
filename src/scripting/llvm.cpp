@@ -12,8 +12,7 @@ llvm::Value *LlvmVisitor::visit(const pegtl::parse_tree::node &node) {
   if (auto v = visitHelper<RawScriptnameStatement>(node)) return v;
   if (auto v = visitHelper<RawScriptname>(node)) return v;
   if (auto v = visitHelper<RawIdentifier>(node)) return v;
-  if (auto v = visitHelper<BlockBeginStatement>(node)) return v;
-  if (auto v = visitHelper<BlockEndStatement>(node)) return v;
+  if (auto v = visitHelper<BlockStatement>(node)) return v;
   if (auto v = visitHelper<StringLiteralContents>(node)) return v;
   if (auto v = visitHelper<IntegerLiteral>(node)) return v;
   if (auto v = visitHelper<RefLiteralContents>(node)) return v;

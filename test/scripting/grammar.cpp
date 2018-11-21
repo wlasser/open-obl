@@ -119,18 +119,15 @@ end
   }
 
   REQUIRE(root != nullptr);
-  REQUIRE(root->children.size() > 2);
+  REQUIRE(root->children.size() == 2);
 
-  const auto &beginStatement{root->children[1]};
-  REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
-  REQUIRE_FALSE(beginStatement->children.empty());
+  const auto &blockStatement{root->children[1]};
+  REQUIRE(blockStatement->is<scripting::BlockStatement>());
+  REQUIRE_FALSE(blockStatement->children.empty());
 
-  const auto &blockName{beginStatement->children[0]};
+  const auto &blockName{blockStatement->children[0]};
   REQUIRE(blockName->has_content());
   REQUIRE(blockName->content() == expectedBlockname);
-
-  const auto &endStatement{root->children[2]};
-  REQUIRE(endStatement->is<scripting::BlockEndStatement>());
 }
 
 TEST_CASE("can parse block statements with integer modes", "[scripting]") {
@@ -145,21 +142,19 @@ end
   pegtl::memory_input in(script, "");
   const auto root = scripting::parseScript(in);
   REQUIRE(root != nullptr);
-  const auto &beginStatement{root->children[1]};
-  REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
-  REQUIRE(beginStatement->children.size() > 1);
 
-  const auto &blockName{beginStatement->children[0]};
+  const auto &blockStatement{root->children[1]};
+  REQUIRE(blockStatement->is<scripting::BlockStatement>());
+  REQUIRE(blockStatement->children.size() == 2);
+
+  const auto &blockName{blockStatement->children[0]};
   REQUIRE(blockName->has_content());
   REQUIRE(blockName->content() == "MenuMode");
 
-  const auto &blockType{beginStatement->children[1]};
+  const auto &blockType{blockStatement->children[1]};
   REQUIRE(blockType->is<scripting::IntegerLiteral>());
   REQUIRE(blockType->has_content());
   REQUIRE(std::stoi(blockType->content()) == 4329);
-
-  const auto &endStatement{root->children[2]};
-  REQUIRE(endStatement->is<scripting::BlockEndStatement>());
 }
 
 TEST_CASE("can parse multiple block statements", "[scripting]") {
@@ -194,32 +189,26 @@ end
   }
 
   REQUIRE(root != nullptr);
-  REQUIRE(root->children.size() > 4);
+  REQUIRE(root->children.size() == 3);
 
   {
-    const auto &beginStatement{root->children[1]};
-    REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
-    REQUIRE_FALSE(beginStatement->children.empty());
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->is<scripting::BlockStatement>());
+    REQUIRE_FALSE(blockStatement->children.empty());
 
-    const auto &blockName{beginStatement->children[0]};
+    const auto &blockName{blockStatement->children[0]};
     REQUIRE(blockName->has_content());
     REQUIRE(blockName->content() == "GameMode");
-
-    const auto &endStatement{root->children[2]};
-    REQUIRE(endStatement->is<scripting::BlockEndStatement>());
   }
 
   {
-    const auto &beginStatement{root->children[3]};
-    REQUIRE(beginStatement->is<scripting::BlockBeginStatement>());
-    REQUIRE_FALSE(beginStatement->children.empty());
+    const auto &blockStatement{root->children[2]};
+    REQUIRE(blockStatement->is<scripting::BlockStatement>());
+    REQUIRE_FALSE(blockStatement->children.empty());
 
-    const auto &blockName{beginStatement->children[0]};
+    const auto &blockName{blockStatement->children[0]};
     REQUIRE(blockName->has_content());
     REQUIRE(blockName->content() == "MenuMode");
-
-    const auto &endStatement{root->children[4]};
-    REQUIRE(endStatement->is<scripting::BlockEndStatement>());
   }
 }
 
@@ -755,19 +744,22 @@ end
     pegtl::memory_input in(script, "");
     const auto root{scripting::parseScript(in)};
     REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() > 8);
+    REQUIRE(root->children.size() == 2);
 
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[2],
+    const auto &block{root->children[1]};
+    REQUIRE(block->children.size() == 7);
+
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[1],
                                                        "MyVar"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[3],
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[2],
                                                        "my2Var39"));
-    REQUIRE(scripting::isVariable<scripting::RawRef>(*root->children[4],
+    REQUIRE(scripting::isVariable<scripting::RawRef>(*block->children[3],
                                                      "myRef"));
-    REQUIRE(scripting::isVariable<scripting::RawLong>(*root->children[5],
+    REQUIRE(scripting::isVariable<scripting::RawLong>(*block->children[4],
                                                       "long"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[6],
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[5],
                                                        "long"));
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[7],
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*block->children[6],
                                                        "f"));
   }
 
@@ -785,16 +777,19 @@ short uselessVariable
     pegtl::memory_input in(script, "");
     const auto root{scripting::parseScript(in)};
     REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() == 9);
+    REQUIRE(root->children.size() == 6);
 
     REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[1],
                                                        "myGlobal"));
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[4],
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[3],
                                                        "myOtherGlobal"));
-    REQUIRE(scripting::isVariable<scripting::RawLong>(*root->children[6],
-                                                      "myLocal"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[8],
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[5],
                                                        "uselessVariable"));
+
+    const auto &block{root->children[4]};
+    REQUIRE(block->children.size() == 2);
+    REQUIRE(scripting::isVariable<scripting::RawLong>(*block->children[1],
+                                                      "myLocal"));
   }
 
   {
@@ -811,14 +806,17 @@ end
     pegtl::memory_input in(script, "");
     const auto root{scripting::parseScript(in)};
     REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() == 7);
+    REQUIRE(root->children.size() == 2);
 
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[2],
+    const auto &block{root->children[1]};
+    REQUIRE(block->children.size() == 5);
+
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*block->children[1],
                                                        "short"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[3],
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[2],
                                                        "float"));
 
-    const auto &set1{root->children[4]};
+    const auto &set1{block->children[3]};
     REQUIRE(set1->is<scripting::SetStatement>());
     REQUIRE(set1->children.size() == 2);
 
@@ -827,7 +825,7 @@ end
     REQUIRE(set1Name->content() == "float");
     REQUIRE(scripting::isInteger(*set1->children[1], 3));
 
-    const auto &set2{root->children[5]};
+    const auto &set2{block->children[4]};
     REQUIRE(set2->is<scripting::SetStatement>());
     REQUIRE(set2->children.size() == 2);
 
@@ -849,9 +847,12 @@ end
     pegtl::memory_input in(script, "");
     const auto root{scripting::parseScript(in)};
     REQUIRE(root != nullptr);
-    REQUIRE(root->children.size() == 5);
+    REQUIRE(root->children.size() == 2);
 
-    const auto &set1{root->children[2]};
+    const auto &block{root->children[1]};
+    REQUIRE(block->children.size() == 3);
+
+    const auto &set1{block->children[1]};
     REQUIRE(set1->is<scripting::SetStatement>());
     REQUIRE(set1->children.size() == 2);
 
@@ -884,7 +885,7 @@ end
     REQUIRE(set1SrcVar->children[1]->has_content());
     REQUIRE(set1SrcVar->children[1]->content() == "foo");
 
-    const auto &set2{root->children[3]};
+    const auto &set2{block->children[2]};
     REQUIRE(set2->is<scripting::SetStatement>());
     REQUIRE(set2->children.size() == 2);
 
