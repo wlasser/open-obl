@@ -21,13 +21,13 @@ TEST_CASE("can parse scriptname", "[scripting]") {
   std::unique_ptr<pegtl::parse_tree::node> root{};
 
   SECTION("parse minimal scriptname") {
-    const char *script = "scriptname MyScript";
+    std::string_view script = "scriptname MyScript";
     pegtl::memory_input in(script, "");
     root = scripting::parseScript(in);
   }
 
   SECTION("parse scriptname with surrounding comments") {
-    const char *script = R"script(
+    std::string_view script = R"script(
 ; First comment
  scn MyScript ; This is the script name
    ; Script body goes here!
@@ -54,25 +54,25 @@ TEST_CASE("fails to parse invalid scriptname", "[scripting]") {
   REQUIRE(numIssues == 0);
 
   {
-    const char *script = "scriptname ;This is a comment";
+    std::string_view script = "scriptname ;This is a comment";
     pegtl::memory_input in(script, "");
     REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
-    const char *script = "scriptname 12hello";
+    std::string_view script = "scriptname 12hello";
     pegtl::memory_input in(script, "");
     REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
-    const char *script = "scnmore MyScript";
+    std::string_view script = "scnmore MyScript";
     pegtl::memory_input in(script, "");
     REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
 
   {
-    const char *script = "";
+    std::string_view script = "";
     pegtl::memory_input in(script, "");
     REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
   }
@@ -86,7 +86,7 @@ TEST_CASE("can parse block statements", "[scripting]") {
   std::string expectedBlockname{"GameMode"};
 
   SECTION("parse minimal block statement") {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 
 begin GameMode
@@ -97,7 +97,7 @@ end
   }
 
   SECTION("parse block statement with surrounding comments") {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin   GameMode ; Runs during gameplay
 ; This is where I'd put my script, if I had one
@@ -108,7 +108,7 @@ begin   GameMode ; Runs during gameplay
   }
 
   SECTION("parse block statement with unexpected name") {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin begin
 end
@@ -137,7 +137,7 @@ TEST_CASE("can parse block statements with integer modes", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
 
-  const auto *script = R"script(
+  std::string_view script = R"script(
 scn MyScript
 begin MenuMode 4329 ; Some menu type
 end
@@ -169,7 +169,7 @@ TEST_CASE("can parse multiple block statements", "[scripting]") {
   std::unique_ptr<pegtl::parse_tree::node> root{};
 
   SECTION("parse nicely formatted blocks") {
-    const auto *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 
 ; First block
@@ -185,7 +185,7 @@ end
   }
 
   SECTION("parse poorly formatted blocks") {
-    const auto *script = R"script(
+    std::string_view script = R"script(
 scn MyScript begin GameMode end begin MenuMode
 end
 )script";
@@ -228,7 +228,7 @@ TEST_CASE("fails to parse invalid block statements", "[scripting]") {
   REQUIRE(numIssues == 0);
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin ; No block name
 end
@@ -238,7 +238,7 @@ end
   }
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin begin begin
 end
@@ -248,7 +248,7 @@ end
   }
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin GameMode
 ; No end statement!
@@ -265,7 +265,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
   };
 
   {
-    const auto *script = R"("Hello")";
+    std::string_view script = R"("Hello")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -274,7 +274,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
   }
 
   {
-    const auto *script = R"("")";
+    std::string_view script = R"("")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -283,7 +283,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
   }
 
   {
-    const auto *script = R"("This \t is not escaped")";
+    std::string_view script = R"("This \t is not escaped")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -293,14 +293,14 @@ TEST_CASE("can parse string literals", "[scripting]") {
   }
 
   {
-    const auto *script = R"("This is not
+    std::string_view script = R"("This is not
         a string)";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = R"("This string" "Is two strings")";
+    std::string_view script = R"("This string" "Is two strings")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -309,7 +309,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
   }
 
   {
-    const auto *script = R"("This is " not a string)";
+    std::string_view script = R"("This is " not a string)";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -325,7 +325,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
   };
 
   {
-    const auto *script = "153";
+    std::string_view script = "153";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -334,7 +334,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
   }
 
   {
-    const auto *script = "0";
+    std::string_view script = "0";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -360,7 +360,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
   };
 
   {
-    const auto *script = "#00103a5F";
+    std::string_view script = "#00103a5F";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -369,25 +369,25 @@ TEST_CASE("can parse ref literals", "[scripting]") {
   }
 
   {
-    const auto *script = "#";
+    std::string_view script = "#";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = "##509a";
+    std::string_view script = "##509a";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = "30915fab";
+    std::string_view script = "30915fab";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = "#000";
+    std::string_view script = "#000";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -403,7 +403,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   };
 
   {
-    const auto *script = "3.14159";
+    std::string_view script = "3.14159";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -412,7 +412,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 
   {
-    const auto *script = "0.142";
+    std::string_view script = "0.142";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -421,7 +421,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 
   {
-    const auto *script = "0.0001";
+    std::string_view script = "0.0001";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -430,7 +430,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 
   {
-    const auto *script = ".142";
+    std::string_view script = ".142";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -439,7 +439,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 
   {
-    const auto *script = ".0001";
+    std::string_view script = ".0001";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -448,19 +448,19 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
   }
 
   {
-    const auto *script = "01.32";
+    std::string_view script = "01.32";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = ".";
+    std::string_view script = ".";
     pegtl::memory_input in(script, "");
     REQUIRE(parseLiteral(in) == nullptr);
   }
 
   {
-    const auto *script = "3.1.4";
+    std::string_view script = "3.1.4";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -476,7 +476,7 @@ TEST_CASE("can parse literals", "[scripting]") {
   };
 
   {
-    const auto *script = "3.14";
+    std::string_view script = "3.14";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -485,7 +485,7 @@ TEST_CASE("can parse literals", "[scripting]") {
   }
 
   {
-    const auto *script = "359";
+    std::string_view script = "359";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -494,7 +494,7 @@ TEST_CASE("can parse literals", "[scripting]") {
   }
 
   {
-    const auto *script = "0";
+    std::string_view script = "0";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -503,7 +503,7 @@ TEST_CASE("can parse literals", "[scripting]") {
   }
 
   {
-    const auto *script = R"("359")";
+    std::string_view script = R"("359")";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -511,7 +511,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     REQUIRE(root->children[0]->is<scripting::StringLiteralContents>());
   }
   {
-    const auto *script = "#59";
+    std::string_view script = "#59";
     pegtl::memory_input in(script, "");
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
@@ -527,7 +527,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   };
 
   {
-    const auto *script = "3.75";
+    std::string_view script = "3.75";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -536,7 +536,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "-75";
+    std::string_view script = "-75";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -551,7 +551,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "+75";
+    std::string_view script = "+75";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -566,7 +566,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "(75)";
+    std::string_view script = "(75)";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -577,7 +577,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "(  ( (((75) ))  ))";
+    std::string_view script = "(  ( (((75) ))  ))";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -588,7 +588,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "39 || -75";
+    std::string_view script = "39 || -75";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -606,7 +606,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "1 && 2 || 3 && 4";
+    std::string_view script = "1 && 2 || 3 && 4";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -624,7 +624,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "(1 || 2) && (3 || 4)";
+    std::string_view script = "(1 || 2) && (3 || 4)";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -642,7 +642,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "2 * 3 / 4 * 2";
+    std::string_view script = "2 * 3 / 4 * 2";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -667,7 +667,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "1 + 2 * 3";
+    std::string_view script = "1 + 2 * 3";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -688,7 +688,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "1 && 2 * 3 <= 4";
+    std::string_view script = "1 && 2 * 3 <= 4";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -714,7 +714,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
   }
 
   {
-    const auto *script = "3 != 4";
+    std::string_view script = "3 != 4";
     pegtl::memory_input in(script, "");
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
@@ -737,7 +737,7 @@ TEST_CASE("can declare and assign to variables", "[scripting]") {
   // advantage to testing them all separately.
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin GameMode
     short MyVar ; This is a short
@@ -772,7 +772,7 @@ end
   }
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 short myGlobal
 begin GameMode
@@ -798,7 +798,7 @@ short uselessVariable
   }
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin GameMode
 float short
@@ -838,7 +838,7 @@ end
   }
 
   {
-    const char *script = R"script(
+    std::string_view script = R"script(
 scn MyScript
 begin GameMode
 set SomeQuest.foo to SomeQuest.foo * 2
