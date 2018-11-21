@@ -29,29 +29,32 @@ void printAst(const pegtl::parse_tree::node &node) {
   scripting::visitAst(node, std::string{}, printVisitor);
 }
 
-void requireIsString(const pegtl::parse_tree::node &node,
-                     const std::string &expected) {
-  REQUIRE(node.id == &typeid(scripting::StringLiteralContents));
-  REQUIRE(node.has_content());
-  REQUIRE(node.content() == expected);
+[[nodiscard]] bool
+isString(const pegtl::parse_tree::node &node, std::string_view expected) {
+  return node.is<scripting::StringLiteralContents>()
+      && node.has_content()
+      && node.content() == expected;
 }
 
-void requireIsInteger(const pegtl::parse_tree::node &node, int expected) {
-  REQUIRE(node.id == &typeid(scripting::IntegerLiteral));
-  REQUIRE(node.has_content());
-  REQUIRE(std::stoi(node.content()) == expected);
+[[nodiscard]] bool
+isInteger(const pegtl::parse_tree::node &node, int expected) {
+  return node.is<scripting::IntegerLiteral>()
+      && node.has_content()
+      && std::stoi(node.content()) == expected;
 }
 
-void requireIsReference(const pegtl::parse_tree::node &node, FormId expected) {
-  REQUIRE(node.id == &typeid(scripting::RefLiteralContents));
-  REQUIRE(node.has_content());
-  REQUIRE(std::stoi(node.content(), nullptr, 16) == expected);
+[[nodiscard]] bool
+isReference(const pegtl::parse_tree::node &node, FormId expected) {
+  return node.is<scripting::RefLiteralContents>()
+      && node.has_content()
+      && std::stoi(node.content(), nullptr, 16) == expected;
 }
 
-void requireIsFloat(const pegtl::parse_tree::node &node, float expected) {
-  REQUIRE(node.id == &typeid(scripting::FloatLiteral));
-  REQUIRE(node.has_content());
-  REQUIRE_THAT(std::stof(node.content()), Catch::WithinULP(expected, 1));
+[[nodiscard]] bool
+isFloat(const pegtl::parse_tree::node &node, float expected) {
+  return node.id == &typeid(scripting::FloatLiteral)
+      && node.has_content()
+      && Catch::WithinULP(expected, 1).match(std::stof(node.content()));
 }
 
 } // namespace scripting

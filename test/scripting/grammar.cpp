@@ -270,7 +270,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsString(*root->children[0], "Hello");
+    REQUIRE(scripting::isString(*root->children[0], "Hello"));
   }
 
   {
@@ -279,7 +279,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsString(*root->children[0], "");
+    REQUIRE(scripting::isString(*root->children[0], ""));
   }
 
   {
@@ -288,7 +288,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsString(*root->children[0], R"(This \t is not escaped)");
+    REQUIRE(scripting::isString(*root->children[0],
+                                R"(This \t is not escaped)"));
   }
 
   {
@@ -304,7 +305,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsString(*root->children[0], R"(This string)");
+    REQUIRE(scripting::isString(*root->children[0], R"(This string)"));
   }
 
   {
@@ -313,7 +314,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsString(*root->children[0], R"(This is )");
+    REQUIRE(scripting::isString(*root->children[0], R"(This is )"));
   }
 }
 
@@ -329,7 +330,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsInteger(*root->children[0], 153);
+    REQUIRE(scripting::isInteger(*root->children[0], 153));
   }
 
   {
@@ -338,7 +339,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsInteger(*root->children[0], 0);
+    REQUIRE(scripting::isInteger(*root->children[0], 0));
   }
 
   {
@@ -347,8 +348,8 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsInteger(*root->children[0],
-                                std::numeric_limits<int>::max());
+    REQUIRE(scripting::isInteger(*root->children[0],
+                                 std::numeric_limits<int>::max()));
   }
 }
 
@@ -364,7 +365,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsReference(*root->children[0], 0x00103a5f);
+    REQUIRE(scripting::isReference(*root->children[0], 0x00103a5f));
   }
 
   {
@@ -391,7 +392,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsReference(*root->children[0], 0);
+    REQUIRE(scripting::isReference(*root->children[0], 0));
   }
 }
 
@@ -407,7 +408,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 3.14159f);
+    REQUIRE(scripting::isFloat(*root->children[0], 3.14159f));
   }
 
   {
@@ -416,7 +417,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 0.142f);
+    REQUIRE(scripting::isFloat(*root->children[0], 0.142f));
   }
 
   {
@@ -425,7 +426,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 0.0001f);
+    REQUIRE(scripting::isFloat(*root->children[0], 0.0001f));
   }
 
   {
@@ -434,7 +435,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 0.142f);
+    REQUIRE(scripting::isFloat(*root->children[0], 0.142f));
   }
 
   {
@@ -443,7 +444,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 0.0001f);
+    REQUIRE(scripting::isFloat(*root->children[0], 0.0001f));
   }
 
   {
@@ -464,7 +465,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    scripting::requireIsFloat(*root->children[0], 3.1f);
+    REQUIRE(scripting::isFloat(*root->children[0], 3.1f));
   }
 }
 
@@ -659,10 +660,10 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(mulOp2->is<scripting::StrStar>());
     REQUIRE(mulOp2->children.size() == 2);
 
-    scripting::requireIsInteger(*mulOp2->children[0], 2);
-    scripting::requireIsInteger(*mulOp2->children[1], 3);
-    scripting::requireIsInteger(*divOp->children[1], 4);
-    scripting::requireIsInteger(*mulOp->children[1], 2);
+    REQUIRE(scripting::isInteger(*mulOp2->children[0], 2));
+    REQUIRE(scripting::isInteger(*mulOp2->children[1], 3));
+    REQUIRE(scripting::isInteger(*divOp->children[1], 4));
+    REQUIRE(scripting::isInteger(*mulOp->children[1], 2));
   }
 
   {
@@ -676,14 +677,14 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(plusOp->is<scripting::StrPlus>());
     REQUIRE(plusOp->children.size() == 2);
 
-    scripting::requireIsInteger(*plusOp->children[0], 1);
+    REQUIRE(scripting::isInteger(*plusOp->children[0], 1));
 
     const auto &mulOp{plusOp->children[1]};
     REQUIRE(mulOp->is<scripting::StrStar>());
     REQUIRE(mulOp->children.size() == 2);
 
-    scripting::requireIsInteger(*mulOp->children[0], 2);
-    scripting::requireIsInteger(*mulOp->children[1], 3);
+    REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
+    REQUIRE(scripting::isInteger(*mulOp->children[1], 3));
   }
 
   {
@@ -697,7 +698,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(andOp->is<scripting::StrAnd>());
     REQUIRE(andOp->children.size() == 2);
 
-    scripting::requireIsInteger(*andOp->children[0], 1);
+    REQUIRE(scripting::isInteger(*andOp->children[0], 1));
 
     const auto &lteqOp{andOp->children[1]};
     REQUIRE(lteqOp->is<scripting::StrLteq>());
@@ -707,9 +708,9 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(mulOp->is<scripting::StrStar>());
     REQUIRE(mulOp->children.size() == 2);
 
-    scripting::requireIsInteger(*mulOp->children[0], 2);
-    scripting::requireIsInteger(*mulOp->children[1], 3);
-    scripting::requireIsInteger(*lteqOp->children[1], 4);
+    REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
+    REQUIRE(scripting::isInteger(*mulOp->children[1], 3));
+    REQUIRE(scripting::isInteger(*lteqOp->children[1], 4));
   }
 
   {
@@ -723,8 +724,8 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(neqOp->is<scripting::StrNeq>());
     REQUIRE(neqOp->children.size() == 2);
 
-    scripting::requireIsInteger(*neqOp->children[0], 3);
-    scripting::requireIsInteger(*neqOp->children[1], 4);
+    REQUIRE(scripting::isInteger(*neqOp->children[0], 3));
+    REQUIRE(scripting::isInteger(*neqOp->children[1], 4));
   }
 }
 
@@ -756,18 +757,18 @@ end
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() > 8);
 
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[2],
-                                                       "MyVar");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
-                                                       "my2Var39");
-    scripting::requireHasVariable<scripting::RawRef>(*root->children[4],
-                                                     "myRef");
-    scripting::requireHasVariable<scripting::RawLong>(*root->children[5],
-                                                      "long");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[6],
-                                                       "long");
-    scripting::requireHasVariable<scripting::RawFloat>(*root->children[7],
-                                                       "f");
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[2],
+                                                       "MyVar"));
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[3],
+                                                       "my2Var39"));
+    REQUIRE(scripting::isVariable<scripting::RawRef>(*root->children[4],
+                                                     "myRef"));
+    REQUIRE(scripting::isVariable<scripting::RawLong>(*root->children[5],
+                                                      "long"));
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[6],
+                                                       "long"));
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[7],
+                                                       "f"));
   }
 
   {
@@ -786,14 +787,14 @@ short uselessVariable
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 9);
 
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[1],
-                                                       "myGlobal");
-    scripting::requireHasVariable<scripting::RawFloat>(*root->children[4],
-                                                       "myOtherGlobal");
-    scripting::requireHasVariable<scripting::RawLong>(*root->children[6],
-                                                      "myLocal");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[8],
-                                                       "uselessVariable");
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[1],
+                                                       "myGlobal"));
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[4],
+                                                       "myOtherGlobal"));
+    REQUIRE(scripting::isVariable<scripting::RawLong>(*root->children[6],
+                                                      "myLocal"));
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[8],
+                                                       "uselessVariable"));
   }
 
   {
@@ -812,10 +813,11 @@ end
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 7);
 
-    scripting::requireHasVariable<scripting::RawFloat>(*root->children[2],
-                                                       "short");
-    scripting::requireHasVariable<scripting::RawShort>(*root->children[3],
-                                                       "float");
+    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[2],
+                                                       "short"));
+    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[3],
+                                                       "float"));
+
     const auto &set1{root->children[4]};
     REQUIRE(set1->is<scripting::SetStatement>());
     REQUIRE(set1->children.size() == 2);
@@ -823,7 +825,7 @@ end
     const auto &set1Name{set1->children[0]};
     REQUIRE(set1Name->has_content());
     REQUIRE(set1Name->content() == "float");
-    scripting::requireIsInteger(*set1->children[1], 3);
+    REQUIRE(scripting::isInteger(*set1->children[1], 3));
 
     const auto &set2{root->children[5]};
     REQUIRE(set2->is<scripting::SetStatement>());
@@ -832,7 +834,7 @@ end
     const auto &set2Name{set2->children[0]};
     REQUIRE(set2Name->has_content());
     REQUIRE(set2Name->content() == "short");
-    scripting::requireIsFloat(*set2->children[1], 3.5f);
+    REQUIRE(scripting::isFloat(*set2->children[1], 3.5f));
   }
 
   {
@@ -868,7 +870,7 @@ end
     const auto &set1Src{set1->children[1]};
     REQUIRE(set1Src->is<scripting::StrStar>());
     REQUIRE(set1Src->children.size() == 2);
-    scripting::requireIsInteger(*set1Src->children[1], 2);
+    REQUIRE(scripting::isInteger(*set1Src->children[1], 2));
 
     const auto &set1SrcVar{set1Src->children[0]};
     REQUIRE(set1SrcVar->is<scripting::MemberAccess>());
@@ -898,6 +900,6 @@ end
     REQUIRE(set2Dest->children[1]->has_content());
     REQUIRE(set2Dest->children[1]->content() == "bar");
 
-    scripting::requireIsInteger(*set2->children[1], 8);
+    REQUIRE(scripting::isInteger(*set2->children[1], 8));
   }
 }
