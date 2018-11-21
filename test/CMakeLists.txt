@@ -25,4 +25,5 @@ target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionFS
         OpenOblivion::OpenOblivionScripting
         Catch2::Catch2
-        pugixml)
+        pugixml
+        LLVM)

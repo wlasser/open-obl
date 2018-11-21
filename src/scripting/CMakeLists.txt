@@ -14,9 +14,11 @@ target_include_directories(OpenOblivionScripting PUBLIC
 
 target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
-        grammar.cpp)
+        ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
+        grammar.cpp
+        llvm.cpp)
 
-target_link_libraries(OpenOblivionScripting PUBLIC taocpp::pegtl)
+target_link_libraries(OpenOblivionScripting PUBLIC taocpp::pegtl LLVM)
 
 install(TARGETS OpenOblivionScripting EXPORT OpenOblivionScriptingTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
