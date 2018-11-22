@@ -24,6 +24,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
     std::string_view script = "scriptname MyScript";
     pegtl::memory_input in(script, "");
     root = scripting::parseScript(in);
+    scripting::printAst(*root);
   }
 
   SECTION("parse scriptname with surrounding comments") {
@@ -250,6 +251,7 @@ begin GameMode
 TEST_CASE("can parse string literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::StringLiteral,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 
@@ -310,6 +312,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
 TEST_CASE("can parse integer literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::IntegerLiteral,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 
@@ -345,6 +348,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
 TEST_CASE("can parse ref literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::RefLiteral,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 
@@ -388,6 +392,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
 TEST_CASE("can parse floating point literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::FloatLiteral,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 
@@ -461,6 +466,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
 TEST_CASE("can parse literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::Literal,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 
@@ -512,6 +518,7 @@ TEST_CASE("can parse literals", "[scripting]") {
 TEST_CASE("can parse expressions", "[scripting]") {
   auto parseExpression = [](auto &&in) {
     return pegtl::parse_tree::parse<scripting::Expression,
+                                    scripting::AstNode,
                                     scripting::AstSelector>(in);
   };
 

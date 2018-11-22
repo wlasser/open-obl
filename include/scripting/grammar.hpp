@@ -5,10 +5,13 @@
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <variant>
 
 /// \addtogroup OpenOblivionScripting Scripting
 /// Parser for the built-in default scripting language.
+/// This document describes the parsing and execution method for user-defined
+/// scripts. For information on the scripting language itself, see scripting.md.
 /// @{
 namespace scripting {
 
@@ -327,52 +330,74 @@ struct PrimaryExpression : pegtl::sor<Variable,
                                                  Rparen>> {
 };
 
-/// `UnaryExpression <- [+-]? PrimaryExpression`
-struct UnaryExpression : pegtl::seq<pegtl::opt<pegtl::sor<StrPlus, StrDash>>,
+/// `UnaryOperator <- StrPlus / StrDash`
+struct UnaryOperator : pegtl::sor<StrPlus, StrDash> {};
+
+/// `MultiplicativeBinaryOperator <- Star / Slash`
+struct MultiplicativeBinaryOperator : pegtl::sor<Star, Slash> {};
+
+/// `AdditiveBinaryOperator <- Plus / Dash`
+struct AdditiveBinaryOperator : pegtl::sor<Plus, Dash> {};
+
+/// `ConditionalBinaryOperator <- Lteq / Gteq / Lt / Gt`
+struct ConditionalBinaryOperator : pegtl::sor<Lteq, Gteq, Lt, Gt> {};
+
+/// `EqualityBinaryOperator <- Eqeq / Neq`
+struct EqualityBinaryOperator : pegtl::sor<Eqeq, Neq> {};
+
+/// `ConjunctionBinaryOperator <- And`
+struct ConjunctionBinaryOperator : And {};
+
+/// `DisjunctionBinaryOperator <- Or`
+struct DisjunctionBinaryOperator : Or {};
+
+/// `UnaryExpression <- UnaryOperator? PrimaryExpression`
+struct UnaryExpression : pegtl::seq<pegtl::opt<UnaryOperator>,
                                     PrimaryExpression> {
 };
 
-/// `MulExpression <- UnaryExpression ((Star / Slash) UnaryExpression)*`
+/// `MulExpression <- UnaryExpression (MultiplicativeBinaryOperator UnaryExpression)*`
 struct MulExpression : pegtl::seq<UnaryExpression,
                                   pegtl::star<
-                                      pegtl::seq<pegtl::sor<Star, Slash>,
+                                      pegtl::seq<MultiplicativeBinaryOperator,
                                                  UnaryExpression>>> {
 };
 
-/// `AddExpression <- MulExpression ((Plus / Dash) MulExpression)*`
+/// `AddExpression <- MulExpression (AdditiveBinaryOperator MulExpression)*`
 struct AddExpression : pegtl::seq<MulExpression,
                                   pegtl::star<
-                                      pegtl::seq<pegtl::sor<Plus, Dash>,
+                                      pegtl::seq<AdditiveBinaryOperator,
                                                  MulExpression>>> {
 };
 
-/// `CondExpression <- AddExpression ((Lteq / Gteq / Lt / Gt) AddExpression)*`
+/// `CondExpression <- AddExpression (ConditionalBinaryOperator AddExpression)*`
 struct CondExpression : pegtl::seq<AddExpression,
                                    pegtl::star<
-                                       pegtl::seq<pegtl::sor<Lteq,
-                                                             Gteq,
-                                                             Lt,
-                                                             Gt>,
+                                       pegtl::seq<ConditionalBinaryOperator,
                                                   AddExpression>>> {
 };
 
-/// `EqExpression <- CondExpression ((Eqeq / Neq) CondExpression)*`
+/// `EqExpression <- CondExpression (EqualityBinaryOperator CondExpression)*`
 struct EqExpression : pegtl::seq<CondExpression,
                                  pegtl::star<
-                                     pegtl::seq<pegtl::sor<Eqeq, Neq>,
+                                     pegtl::seq<EqualityBinaryOperator,
                                                 CondExpression>>> {
 };
 
-/// `AndExpression <- EqExpression (And EqExpression)*`
+/// `AndExpression <- EqExpression (ConjunctionBinaryOperator EqExpression)*`
 /// \remark DR3 has been applied.
 struct AndExpression : pegtl::seq<EqExpression,
-                                  pegtl::star<pegtl::seq<And, EqExpression>>> {
+                                  pegtl::star<
+                                      pegtl::seq<ConjunctionBinaryOperator,
+                                                 EqExpression>>> {
 };
 
-/// `OrExpression <- AndExpression (Or AndExpression)*`
+/// `OrExpression <- AndExpression (DisjunctionBinaryOperator AndExpression)*`
 /// \remark DR3 has been applied.
 struct OrExpression : pegtl::seq<AndExpression,
-                                 pegtl::star<pegtl::seq<Or, AndExpression>>> {
+                                 pegtl::star<
+                                     pegtl::seq<DisjunctionBinaryOperator,
+                                                AndExpression>>> {
 };
 
 struct Expression : OrExpression {};
@@ -413,8 +438,190 @@ struct Grammar : pegtl::must<Spacing,
                              pegtl::eof> {
 };
 
-/// Shorthand for node type of the AST emitted by parseScript.
-using AstNode = pegtl::parse_tree::node;
+namespace impl {
+
+/// Provides a member type `type` equal to `T`.
+/// Used to store a type instead of an instance of that type.
+/// \remark Equivalent to std::type_identity proposed in
+///         [P0887](https://wg21.link/p0887), which has been merged into C++20.
+///         A major motivation there was to inhibit template argument deduction.
+//C++20: Remove and use std::type_identity
+template<class T> struct type_identity {
+  using type = T;
+};
+
+/// Helper variable template for type_identity.
+template<class T> using type_identity_t = typename type_identity<T>::type;
+
+/// Provide the member constant `value` equal to `true` if `T` has the member
+/// type `type`, and `false` otherwise.
+/// \tparam T The type to check
+template<class T, class = void>
+struct has_type : std::false_type {};
+
+template<class T>
+struct has_type<T, std::conditional_t<false, typename T::type, void>>
+    : std::true_type {
+};
+
+template<class T>
+static inline constexpr bool has_type_v = has_type<T>::value;
+
+}
+
+/// A node in the AST produced by PEGTL.
+class AstNode {
+  /// The possible types this AstNode can represent.
+  /// Should be all those types `T` for which AstSelector<T> defines the member
+  /// value `value` equal to `true`.
+  using type_variant_t = std::variant<
+      impl::type_identity<std::tuple<>>,
+      impl::type_identity<RawScriptnameStatement>,
+      impl::type_identity<RawScriptname>,
+      impl::type_identity<RawIdentifier>,
+      impl::type_identity<BlockStatement>,
+      impl::type_identity<StringLiteralContents>,
+      impl::type_identity<IntegerLiteral>,
+      impl::type_identity<RefLiteralContents>,
+      impl::type_identity<FloatLiteral>,
+      impl::type_identity<DeclarationStatement>,
+      impl::type_identity<SetStatement>,
+      impl::type_identity<RawShort>,
+      impl::type_identity<RawLong>,
+      impl::type_identity<RawFloat>,
+      impl::type_identity<RawRef>,
+      impl::type_identity<MemberAccess>,
+      impl::type_identity<StrPlus>,
+      impl::type_identity<StrDash>,
+      impl::type_identity<StrStar>,
+      impl::type_identity<StrSlash>,
+      impl::type_identity<StrLteq>,
+      impl::type_identity<StrGteq>,
+      impl::type_identity<StrLt>,
+      impl::type_identity<StrGt>,
+      impl::type_identity<StrEqeq>,
+      impl::type_identity<StrNeq>,
+      impl::type_identity<StrAnd>,
+      impl::type_identity<StrOr>,
+      impl::type_identity<UnaryOperator>,
+      impl::type_identity<MultiplicativeBinaryOperator>,
+      impl::type_identity<AdditiveBinaryOperator>,
+      impl::type_identity<ConditionalBinaryOperator>,
+      impl::type_identity<EqualityBinaryOperator>,
+      impl::type_identity<ConjunctionBinaryOperator>,
+      impl::type_identity<DisjunctionBinaryOperator>,
+      impl::type_identity<PrimaryExpression>,
+      impl::type_identity<UnaryExpression>,
+      impl::type_identity<MulExpression>,
+      impl::type_identity<AddExpression>,
+      impl::type_identity<CondExpression>,
+      impl::type_identity<EqExpression>,
+      impl::type_identity<AndExpression>,
+      impl::type_identity<OrExpression>,
+      impl::type_identity<Expression>>;
+
+  /// The current type represented by the AstNode.
+  type_variant_t mCurrentType{std::in_place_index<0>};
+
+  std::string mSource{};
+  pegtl::internal::iterator mBegin{};
+  pegtl::internal::iterator mEnd{};
+
+ public:
+  std::vector<std::unique_ptr<AstNode>> children{};
+
+  /// Return `true` if this node represents a `T`, and `false` otherwise.
+  template<class T>
+  [[nodiscard]] constexpr bool is() const noexcept {
+    return std::holds_alternative<impl::type_identity<T>>(mCurrentType);
+  }
+
+  /// Return `true` if this node is the root of the AST, and `false` otherwise.
+  [[nodiscard]] constexpr bool is_root() const noexcept {
+    return mCurrentType.index() == 0;
+  }
+
+  /// The name of the type represented by this node.
+  /// \todo This uses RTTI via `typeid` and requires the impl::has_type
+  ///       machinery because of it. An alternative would be to std::visit the
+  ///       current type with overloaded and hardcode the names. This would also
+  ///       make it easy to customise the output for each type---like not
+  ///       showing the content of statements---without asking the caller to do
+  ///       that. Perhaps that is more suited to another member function.
+  [[nodiscard]] std::string name() const noexcept {
+    return std::visit([](auto t) -> std::string {
+      using T = decltype(t);
+      if constexpr (impl::has_type_v<T>) {
+        return pegtl::internal::demangle(typeid(typename T::type).name());
+      } else {
+        return "";
+      }
+    }, mCurrentType);
+  }
+
+  /// Starting position of the content of this node in the input.
+  [[nodiscard]] pegtl::position begin() const noexcept {
+    return pegtl::position(mBegin, mSource);
+  }
+
+  /// Ending position of the content of this node in the input.
+  [[nodiscard]] pegtl::position end() const noexcept {
+    return pegtl::position(mEnd, mSource);
+  }
+
+  /// Returns `true` if this node has any content in the input, and `false`
+  /// otherwise.
+  [[nodiscard]] bool has_content() const noexcept {
+    return mEnd.data != nullptr;
+  }
+
+  /// Return the content of the input that generated this node, if any.
+  /// \pre `has_content() == true`.
+  [[nodiscard]] std::string content() const noexcept
+  /*C++20: [[expects: has_content()]]*/ {
+    assert(has_content());
+    return std::string(mBegin.data, mEnd.data);
+  }
+
+  /// Delete the content held by this node.
+  /// \post `has_content() == false`.
+  void remove_content() noexcept {
+    mEnd.reset();
+  }
+
+  AstNode() = default;
+  ~AstNode() = default;
+
+  AstNode(const AstNode &) = delete;
+  AstNode &operator=(const AstNode &) = delete;
+
+  AstNode(AstNode &&) noexcept = default;
+  AstNode &operator=(AstNode &&) noexcept = default;
+
+  /// Called by PEGTL to initialize the (non-root) node.
+  template<class Rule, class Input>
+  void start(const Input &in) {
+    mCurrentType.emplace<impl::type_identity<Rule>>();
+    mSource = in.source();
+    mBegin = in.iterator();
+  }
+
+  /// Called by PEGTL when parsing the Rule succeeded.
+  template<class Rule, class Input>
+  void success(const Input &in) noexcept {
+    mEnd = in.iterator();
+  }
+
+  /// Called by PEGTL when parsing the Rule failed.
+  template<class Rule, class Input>
+  void failure(const Input &in) noexcept {}
+
+  /// Called by PEGTL to append a child when parsing the node succeeded and the
+  /// node was not removed by a transform.
+  void emplace_back(std::unique_ptr<AstNode> child) {
+    children.emplace_back(std::move(child));
+  }
+};
 
 /// Rearrange expression nodes into operator nodes.
 /// \remark Adapted from the parse_tree.cpp example in PEGTL.
@@ -498,7 +705,7 @@ void visitAst(const AstNode &node, State state, F &&visitor) {
 /// \tparam T a valid PEGTL input, e.g. pegtl::memory_input.
 template<class T> [[nodiscard]] std::unique_ptr<AstNode>
 parseScript(T &&in) {
-  return pegtl::parse_tree::parse<Grammar, AstSelector>(in);
+  return pegtl::parse_tree::parse<Grammar, AstNode, AstSelector>(in);
 }
 
 } // namespace scripting

@@ -7,7 +7,7 @@
 namespace scripting {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
-  const std::string_view name{node.id->name()};
+  const std::string_view name{node.name()};
   return name.find("Statement") != std::string_view::npos;
 }
 
@@ -48,7 +48,7 @@ void printAst(const AstNode &node) {
 }
 
 [[nodiscard]] bool isFloat(const AstNode &node, float expected) {
-  return node.id == &typeid(scripting::FloatLiteral)
+  return node.is<scripting::FloatLiteral>()
       && node.has_content()
       && Catch::WithinULP(expected, 1).match(std::stof(node.content()));
 }
