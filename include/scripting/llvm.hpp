@@ -17,12 +17,12 @@ class LLVMVisitor {
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
 
   template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
-  llvm::Value *visitImpl(const pegtl::parse_tree::node &node) {
+  llvm::Value *visitImpl(const AstNode &node) {
     return nullptr;
   }
 
   template<class NodeType>
-  auto visitHelper(const pegtl::parse_tree::node &node)
+  auto visitHelper(const AstNode &node)
   -> decltype(visitImpl<NodeType>(node)) {
     if (node.is<NodeType>()) return visitImpl<NodeType>(node);
     return nullptr;
@@ -62,7 +62,7 @@ class LLVMVisitor {
   explicit LLVMVisitor(llvm::StringRef moduleName)
       : mIrBuilder(mCtx), mModule(moduleName, mCtx) {}
 
-  llvm::Value *visit(const pegtl::parse_tree::node &node);
+  llvm::Value *visit(const AstNode &node);
 
   void print() {
     mModule.print(llvm::errs(), nullptr);
@@ -70,28 +70,28 @@ class LLVMVisitor {
 };
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<IntegerLiteral>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<FloatLiteral>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<StrPlus>(const AstNode &node);
 
 } // namespace scripting
 

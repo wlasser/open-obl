@@ -413,10 +413,13 @@ struct Grammar : pegtl::must<Spacing,
                              pegtl::eof> {
 };
 
+/// Shorthand for node type of the AST emitted by parseScript.
+using AstNode = pegtl::parse_tree::node;
+
 /// Rearrange expression nodes into operator nodes.
 /// \remark Adapted from the parse_tree.cpp example in PEGTL.
 struct ExpressionRearranger : std::true_type {
-  static void transform(std::unique_ptr<pegtl::parse_tree::node> &node) {
+  static void transform(std::unique_ptr<AstNode> &node) {
     if (node == nullptr || node->children.empty()) return;
 
     // Only one child, so replace the parent with the child.
@@ -486,9 +489,16 @@ template<> struct AstSelector<OrExpression> : ExpressionRearranger {};
 template<> struct AstSelector<Expression> : ExpressionRearranger {};
 
 template<class F, class State>
-void visitAst(const pegtl::parse_tree::node &node, State state, F &&visitor) {
+void visitAst(const AstNode &node, State state, F &&visitor) {
   state = visitor(node, state);
   for (const auto &child : node.children) visitAst(*child, state, visitor);
+}
+
+/// Parse a script from the given input source and produce an AST for it.
+/// \tparam T a valid PEGTL input, e.g. pegtl::memory_input.
+template<class T> [[nodiscard]] std::unique_ptr<AstNode>
+parseScript(T &&in) {
+  return pegtl::parse_tree::parse<Grammar, AstSelector>(in);
 }
 
 } // namespace scripting

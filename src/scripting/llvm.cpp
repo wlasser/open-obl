@@ -10,7 +10,7 @@
 
 namespace scripting {
 
-llvm::Value *LLVMVisitor::visit(const pegtl::parse_tree::node &node) {
+llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (node.is_root()) {
     for (const auto &child : node.children) {
       visit(*child);
@@ -48,12 +48,12 @@ llvm::Value *LLVMVisitor::visit(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node) {
   return nullptr;
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node) {
   auto it{mNamedValues.find(node.content())};
   if (it == mNamedValues.end()) {
     // TODO: Variable does not exist
@@ -63,7 +63,7 @@ LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
   if (node.children.empty()) return nullptr;
 
   auto blockStart = node.children.begin() + 1;
@@ -95,20 +95,20 @@ LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<IntegerLiteral>(const AstNode &node) {
   const std::string sVal{node.content()};
   return llvm::ConstantInt::get(mCtx, llvm::APInt(32u, sVal, 10u));
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<FloatLiteral>(const AstNode &node) {
   const std::string sVal{node.content()};
   const llvm::APFloat fVal(llvm::APFloat::IEEEsingle(), sVal);
   return llvm::ConstantFP::get(mCtx, fVal);
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
   std::string varName{node.children[1]->content()};
   llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
 
@@ -142,7 +142,7 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
   llvm::Value *src{visit(*node.children[1])};
   if (src == nullptr) {
     // TODO: RHS is ill-formed
@@ -198,7 +198,7 @@ LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<StrPlus>(const AstNode &node) {
   if (node.children.size() != 2) return nullptr;
   llvm::Value *lhs{visit(*node.children[0])};
   llvm::Value *rhs{visit(*node.children[1])};

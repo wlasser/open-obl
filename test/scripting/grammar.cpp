@@ -18,7 +18,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
 
-  std::unique_ptr<pegtl::parse_tree::node> root{};
+  std::unique_ptr<scripting::AstNode> root{};
 
   SECTION("parse minimal scriptname") {
     std::string_view script = "scriptname MyScript";
@@ -82,7 +82,7 @@ TEST_CASE("can parse block statements", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
 
-  std::unique_ptr<pegtl::parse_tree::node> root{};
+  std::unique_ptr<scripting::AstNode> root{};
   std::string expectedBlockname{"GameMode"};
 
   SECTION("parse minimal block statement") {
@@ -161,7 +161,7 @@ TEST_CASE("can parse multiple block statements", "[scripting]") {
   const auto numIssues{pegtl::analyze<scripting::Grammar>()};
   REQUIRE(numIssues == 0);
 
-  std::unique_ptr<pegtl::parse_tree::node> root{};
+  std::unique_ptr<scripting::AstNode> root{};
 
   SECTION("parse nicely formatted blocks") {
     std::string_view script = R"script(
