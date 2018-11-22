@@ -21,11 +21,11 @@ class LLVMVisitor {
     return nullptr;
   }
 
+  /// Helper used in visit to write the NodeType only once per type, not twice.
+  //C++20: Make this a lambda template in visit
   template<class NodeType>
-  auto visitHelper(const AstNode &node)
-  -> decltype(visitImpl<NodeType>(node)) {
-    if (node.is<NodeType>()) return visitImpl<NodeType>(node);
-    return nullptr;
+  auto visitHelper(const AstNode &node) -> decltype(visitImpl<NodeType>(node)) {
+    return node.is<NodeType>() ? visitImpl<NodeType>(node) : nullptr;
   }
 
   /// Create an alloca instruction in the entry block of the function.
@@ -40,16 +40,16 @@ class LLVMVisitor {
           || std::is_same_v<Type, RawRef>>>
   llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *fun,
                                            const std::string &varName) {
-    // IRBuilder to start of function entry block
-    llvm::IRBuilder<> irBuilder(&fun->getEntryBlock(),
-                                fun->getEntryBlock().begin());
+    llvm::BasicBlock &entryBlock{fun->getEntryBlock()};
+    llvm::IRBuilder irBuilder(&entryBlock, entryBlock.begin());
+
     llvm::Type *type{};
+    // TODO: Treat references correctly
     if constexpr (std::is_same_v<Type, RawShort>) {
       type = llvm::Type::getInt16Ty(mCtx);
     } else if constexpr (std::is_same_v<Type, RawLong>) {
       type = llvm::Type::getInt32Ty(mCtx);
     } else if constexpr (std::is_same_v<Type, RawRef>) {
-      // TODO: Treat references correctly
       type = llvm::Type::getInt32Ty(mCtx);
     } else {
       type = llvm::Type::getFloatTy(mCtx);

@@ -15,6 +15,7 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
     for (const auto &child : node.children) {
       visit(*child);
     }
+    return nullptr;
   }
   if (auto v = visitHelper<RawScriptnameStatement>(node)) return v;
   if (auto v = visitHelper<RawScriptname>(node)) return v;
@@ -66,7 +67,7 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
   if (node.children.empty()) return nullptr;
 
-  auto blockStart = node.children.begin() + 1;
+  auto blockStart{node.children.begin() + 1};
   std::string blockName{node.children[0]->content()};
 
   // TODO: Do more sophisticated name resolution by talking to the GUI
@@ -116,6 +117,7 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
   llvm::AllocaInst *alloca{};
   llvm::Value *init{};
 
+  // TODO: Handle reference variables correctly
   if (node.children[0]->is<RawShort>()) {
     alloca = createEntryBlockAlloca<RawShort>(fun, varName);
     init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
@@ -123,7 +125,6 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
     alloca = createEntryBlockAlloca<RawLong>(fun, varName);
     init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
   } else if (node.children[0]->is<RawRef>()) {
-    // TODO: Handle reference variables correctly
     alloca = createEntryBlockAlloca<RawRef>(fun, varName);
     init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
   } else {
@@ -174,24 +175,20 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
 
   // Zero extend i16 into i32 and trunc i32 into i16.
   if (srcType->isIntegerTy() && destType->isIntegerTy()) {
-    llvm::Value *converted{mIrBuilder.CreateZExtOrTrunc(src, destType)};
-    return mIrBuilder.CreateStore(converted, dest);
+    llvm::Value *newSrc{mIrBuilder.CreateZExtOrTrunc(src, destType)};
+    return mIrBuilder.CreateStore(newSrc, dest);
   }
 
-  // Round float into i32 or i16
-  if (destType->isIntegerTy()) {
-    if (srcType == llvm::Type::getFloatTy(mCtx)) {
-      llvm::Value *fptosi{mIrBuilder.CreateFPToSI(src, destType)};
-      return mIrBuilder.CreateStore(fptosi, dest);
-    }
+  // Round float into i32 or i16.
+  if (destType->isIntegerTy() && srcType == llvm::Type::getFloatTy(mCtx)) {
+    llvm::Value *newSrc{mIrBuilder.CreateFPToSI(src, destType)};
+    return mIrBuilder.CreateStore(newSrc, dest);
   }
 
-  // Promote i16 or i32 into float
-  if (destType->isFloatTy()) {
-    if (srcType->isIntegerTy()) {
-      llvm::Value *sitofp{mIrBuilder.CreateSIToFP(src, destType)};
-      return mIrBuilder.CreateStore(sitofp, dest);
-    }
+  // Promote i16 or i32 into float.
+  if (destType->isFloatTy() && srcType->isIntegerTy()) {
+    llvm::Value *newSrc{mIrBuilder.CreateSIToFP(src, destType)};
+    return mIrBuilder.CreateStore(newSrc, dest);
   }
 
   return nullptr;
