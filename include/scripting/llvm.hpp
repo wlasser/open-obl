@@ -9,7 +9,7 @@
 
 namespace scripting {
 
-class LlvmVisitor {
+class LLVMVisitor {
  private:
   llvm::LLVMContext mCtx{};
   llvm::IRBuilder<> mIrBuilder;
@@ -59,7 +59,7 @@ class LlvmVisitor {
 
  public:
 
-  explicit LlvmVisitor(llvm::StringRef moduleName)
+  explicit LLVMVisitor(llvm::StringRef moduleName)
       : mIrBuilder(mCtx), mModule(moduleName, mCtx) {}
 
   llvm::Value *visit(const pegtl::parse_tree::node &node);
@@ -70,28 +70,28 @@ class LlvmVisitor {
 };
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node);
 
 } // namespace scripting
 

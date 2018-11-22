@@ -28,7 +28,7 @@ end
   REQUIRE(root != nullptr);
   scripting::printAst(*root);
 
-  scripting::LlvmVisitor visitor("MyScript");
+  scripting::LLVMVisitor visitor("MyScript");
   visitor.visit(*root);
   //llvm::Value *v = visitor.visit(*root);
   visitor.print();

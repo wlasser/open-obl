@@ -10,7 +10,7 @@
 
 namespace scripting {
 
-llvm::Value *LlvmVisitor::visit(const pegtl::parse_tree::node &node) {
+llvm::Value *LLVMVisitor::visit(const pegtl::parse_tree::node &node) {
   if (node.is_root()) {
     for (const auto &child : node.children) {
       visit(*child);
@@ -48,7 +48,7 @@ llvm::Value *LlvmVisitor::visit(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
   auto it{mNamedValues.find(node.content())};
   if (it == mNamedValues.end()) {
     // TODO: Variable does not exist
@@ -58,20 +58,20 @@ LlvmVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node) {
   const std::string sVal{node.content()};
   return llvm::ConstantInt::get(mCtx, llvm::APInt(32u, sVal, 10u));
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node) {
   const std::string sVal{node.content()};
   const llvm::APFloat fVal(llvm::APFloat::IEEEsingle(), sVal);
   return llvm::ConstantFP::get(mCtx, fVal);
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
   if (node.children.size() != 2) return nullptr;
   llvm::Value *lhs{visit(*node.children[0])};
   llvm::Value *rhs{visit(*node.children[1])};
@@ -110,7 +110,7 @@ LlvmVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
   llvm::Value *src{visit(*node.children[1])};
   if (src == nullptr) {
     // TODO: RHS is ill-formed
@@ -166,7 +166,7 @@ LlvmVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node) {
   std::string varName{node.children[1]->content()};
   llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
 
@@ -200,12 +200,12 @@ LlvmVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node) {
   return nullptr;
 }
 
 template<> llvm::Value *
-LlvmVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
+LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
   if (node.children.empty()) return nullptr;
 
   auto blockStart = node.children.begin() + 1;
