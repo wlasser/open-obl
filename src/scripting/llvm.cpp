@@ -48,6 +48,36 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   return nullptr;
 }
 
+[[nodiscard]] std::pair<llvm::Value *, llvm::Value *>
+LLVMVisitor::promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs) {
+  llvm::Type *int16Type{llvm::Type::getInt16Ty(mCtx)};
+  llvm::Type *int32Type{llvm::Type::getInt32Ty(mCtx)};
+  llvm::Type *floatType{llvm::Type::getFloatTy(mCtx)};
+
+  llvm::Type *lhsType{lhs->getType()};
+  llvm::Type *rhsType{rhs->getType()};
+
+  // As in C++, if either operand is float then the other is converted to float
+  if (lhsType == floatType && rhsType->isIntegerTy()) {
+    llvm::Value *rhsProm{mIrBuilder.CreateSIToFP(rhs, lhsType)};
+    return {lhs, rhsProm};
+  } else if (lhsType->isIntegerTy() && rhsType == floatType) {
+    llvm::Value *lhsProm{mIrBuilder.CreateSIToFP(lhs, rhsType)};
+    return {lhsProm, rhs};
+  }
+
+  // As in C++, promote i16 -> i32
+  if (lhsType == int32Type && rhsType == int16Type) {
+    llvm::Value *rhsProm{mIrBuilder.CreateZExt(rhs, lhsType)};
+    return {lhs, rhsProm};
+  } else if (lhsType == int16Type && rhsType == int32Type) {
+    llvm::Value *lhsProm{mIrBuilder.CreateZExt(lhs, rhsType)};
+    return {lhsProm, rhs};
+  }
+
+  return {lhs, rhs};
+}
+
 template<> llvm::Value *
 LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node) {
   return nullptr;
@@ -201,36 +231,53 @@ LLVMVisitor::visitImpl<StrPlus>(const AstNode &node) {
   llvm::Value *rhs{visit(*node.children[1])};
   if (!lhs || !rhs) return nullptr;
 
-  llvm::Type *lhsType{lhs->getType()};
-  llvm::Type *rhsType{rhs->getType()};
-
-  llvm::Type *int16Type{llvm::Type::getInt16Ty(mCtx)};
-  llvm::Type *int32Type{llvm::Type::getInt32Ty(mCtx)};
-  llvm::Type *floatType{llvm::Type::getFloatTy(mCtx)};
-
-  if (lhsType == rhsType) {
-    return mIrBuilder.CreateAdd(lhs, rhs, "addtmp");
+  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
+  if (newLhs->getType()->isFloatTy()) {
+    return mIrBuilder.CreateFAdd(newLhs, newRhs);
   }
+  return mIrBuilder.CreateAdd(newLhs, newRhs);
+}
 
-  // As in C++, if either operand is float then the other is converted to float
-  if (lhsType == floatType && rhsType->isIntegerTy()) {
-    llvm::Value *rhsProm{mIrBuilder.CreateSIToFP(rhs, lhsType)};
-    return mIrBuilder.CreateFAdd(lhs, rhsProm);
-  } else if (lhsType->isIntegerTy() && rhsType == floatType) {
-    llvm::Value *lhsProm{mIrBuilder.CreateSIToFP(lhs, rhsType)};
-    return mIrBuilder.CreateFAdd(lhsProm, rhs);
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrDash>(const AstNode &node) {
+  if (node.children.size() != 2) return nullptr;
+  llvm::Value *lhs{visit(*node.children[0])};
+  llvm::Value *rhs{visit(*node.children[1])};
+  if (!lhs || !rhs) return nullptr;
+
+  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
+  if (newLhs->getType()->isFloatTy()) {
+    return mIrBuilder.CreateFSub(newLhs, newRhs);
   }
+  return mIrBuilder.CreateSub(newLhs, newRhs);
+}
 
-  // As in C++, promote i16 -> i32
-  if (lhsType == int32Type && rhsType == int16Type) {
-    llvm::Value *rhsProm{mIrBuilder.CreateZExt(rhs, lhsType)};
-    return mIrBuilder.CreateAdd(lhs, rhsProm);
-  } else if (lhsType == int16Type && rhsType == int32Type) {
-    llvm::Value *lhsProm{mIrBuilder.CreateZExt(lhs, rhsType)};
-    return mIrBuilder.CreateAdd(lhsProm, rhs);
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrStar>(const AstNode &node) {
+  if (node.children.size() != 2) return nullptr;
+  llvm::Value *lhs{visit(*node.children[0])};
+  llvm::Value *rhs{visit(*node.children[1])};
+  if (!lhs || !rhs) return nullptr;
+
+  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
+  if (newLhs->getType()->isFloatTy()) {
+    return mIrBuilder.CreateFMul(newLhs, newRhs);
   }
+  return mIrBuilder.CreateMul(newLhs, newRhs);
+}
 
-  return nullptr;
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrSlash>(const AstNode &node) {
+  if (node.children.size() != 2) return nullptr;
+  llvm::Value *lhs{visit(*node.children[0])};
+  llvm::Value *rhs{visit(*node.children[1])};
+  if (!lhs || !rhs) return nullptr;
+
+  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
+  if (newLhs->getType()->isFloatTy()) {
+    return mIrBuilder.CreateFDiv(newLhs, newRhs);
+  }
+  return mIrBuilder.CreateSDiv(newLhs, newRhs);
 }
 
 } // namespace scripting

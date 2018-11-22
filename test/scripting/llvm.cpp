@@ -13,13 +13,13 @@ begin GameMode
   set smallInt to 360
 
   long myVar
-  set myVar to 512 + 10
+  set myVar to 512 / 10
 
   float foo
   set foo to 3.15 + 10
 
   long aLong
-  set aLong to myVar + 10 + smallInt
+  set aLong to myVar + 10 * smallInt
 end
   )script";
 

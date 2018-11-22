@@ -57,6 +57,18 @@ class LLVMVisitor {
     return irBuilder.CreateAlloca(type, nullptr, varName);
   }
 
+  /// Promote/convert lhs and rhs to a common type.
+  /// Emits instructions to convert lhs and rhs to a common type, if necessary,
+  /// then returns the converted values. If a conversion is not necessary for an
+  /// argument, then the argument is returned unmodified. The types conversions
+  /// are performed as in C++:
+  /// - If either operand is a `float`, the other operand is converted to a
+  ///   `float`.
+  /// - If one operand is a `short` and the other a `long`, the `short` operand
+  ///   is converted to a `long`.
+  [[nodiscard]] std::pair<llvm::Value *, llvm::Value *>
+  promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs);
+
  public:
 
   explicit LLVMVisitor(llvm::StringRef moduleName)
@@ -92,6 +104,15 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<StrPlus>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrDash>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrStar>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<StrSlash>(const AstNode &node);
 
 } // namespace scripting
 
