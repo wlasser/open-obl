@@ -48,6 +48,11 @@ llvm::Value *LLVMVisitor::visit(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node) {
+  return nullptr;
+}
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
   auto it{mNamedValues.find(node.content())};
   if (it == mNamedValues.end()) {
@@ -55,6 +60,38 @@ LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node) {
     return nullptr;
   }
   return mIrBuilder.CreateLoad(it->second);
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
+  if (node.children.empty()) return nullptr;
+
+  auto blockStart = node.children.begin() + 1;
+  std::string blockName{node.children[0]->content()};
+
+  // TODO: Do more sophisticated name resolution by talking to the GUI
+  if (node.children.size() > 1 && node.children[1]->is<IntegerLiteral>()) {
+    blockName = node.children[0]->content() + node.children[1]->content();
+    ++blockStart;
+  }
+
+  auto *funType{llvm::FunctionType::get(llvm::Type::getVoidTy(mCtx), false)};
+  auto *fun{llvm::Function::Create(funType,
+                                   llvm::Function::ExternalLinkage,
+                                   blockName,
+                                   &mModule)};
+  auto *bb{llvm::BasicBlock::Create(mCtx, "entry", fun)};
+  mIrBuilder.SetInsertPoint(bb);
+
+  for (auto it{blockStart}; it != node.children.end(); ++it) {
+    const auto &statement{*it};
+    visit(*statement);
+  }
+
+  mIrBuilder.CreateRetVoid();
+  llvm::verifyFunction(*fun);
+
+  return fun;
 }
 
 template<> llvm::Value *
@@ -71,42 +108,37 @@ LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
-  if (node.children.size() != 2) return nullptr;
-  llvm::Value *lhs{visit(*node.children[0])};
-  llvm::Value *rhs{visit(*node.children[1])};
-  if (!lhs || !rhs) return nullptr;
+LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node) {
+  std::string varName{node.children[1]->content()};
+  llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
 
-  llvm::Type *lhsType{lhs->getType()};
-  llvm::Type *rhsType{rhs->getType()};
+  // Create an alloca instruction and default value for the variable
+  llvm::AllocaInst *alloca{};
+  llvm::Value *init{};
 
-  llvm::Type *int16Type{llvm::Type::getInt16Ty(mCtx)};
-  llvm::Type *int32Type{llvm::Type::getInt32Ty(mCtx)};
-  llvm::Type *floatType{llvm::Type::getFloatTy(mCtx)};
-
-  if (lhsType == rhsType) {
-    return mIrBuilder.CreateAdd(lhs, rhs, "addtmp");
+  if (node.children[0]->is<RawShort>()) {
+    alloca = createEntryBlockAlloca<RawShort>(fun, varName);
+    init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
+  } else if (node.children[0]->is<RawLong>()) {
+    alloca = createEntryBlockAlloca<RawLong>(fun, varName);
+    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
+  } else if (node.children[0]->is<RawRef>()) {
+    // TODO: Handle reference variables correctly
+    alloca = createEntryBlockAlloca<RawRef>(fun, varName);
+    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
+  } else {
+    alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
+    init = llvm::ConstantFP::get(mCtx,
+                                 llvm::APFloat(llvm::APFloat::IEEEsingle(), 0));
   }
 
-  // As in C++, if either operand is float then the other is converted to float
-  if (lhsType == floatType && rhsType->isIntegerTy()) {
-    llvm::Value *rhsProm{mIrBuilder.CreateSIToFP(rhs, lhsType)};
-    return mIrBuilder.CreateFAdd(lhs, rhsProm);
-  } else if (lhsType->isIntegerTy() && rhsType == floatType) {
-    llvm::Value *lhsProm{mIrBuilder.CreateSIToFP(lhs, rhsType)};
-    return mIrBuilder.CreateFAdd(lhsProm, rhs);
-  }
+  // Keep track of it in the local function table
+  mNamedValues[varName] = alloca;
 
-  // As in C++, promote i16 -> i32
-  if (lhsType == int32Type && rhsType == int16Type) {
-    llvm::Value *rhsProm{mIrBuilder.CreateZExt(rhs, lhsType)};
-    return mIrBuilder.CreateAdd(lhs, rhsProm);
-  } else if (lhsType == int16Type && rhsType == int32Type) {
-    llvm::Value *lhsProm{mIrBuilder.CreateZExt(lhs, rhsType)};
-    return mIrBuilder.CreateAdd(lhsProm, rhs);
-  }
+  // Store an initial value
+  mIrBuilder.CreateStore(init, alloca);
 
-  return nullptr;
+  return alloca;
 }
 
 template<> llvm::Value *
@@ -166,74 +198,42 @@ LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node) {
-  std::string varName{node.children[1]->content()};
-  llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
+LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node) {
+  if (node.children.size() != 2) return nullptr;
+  llvm::Value *lhs{visit(*node.children[0])};
+  llvm::Value *rhs{visit(*node.children[1])};
+  if (!lhs || !rhs) return nullptr;
 
-  // Create an alloca instruction and default value for the variable
-  llvm::AllocaInst *alloca{};
-  llvm::Value *init{};
+  llvm::Type *lhsType{lhs->getType()};
+  llvm::Type *rhsType{rhs->getType()};
 
-  if (node.children[0]->is<RawShort>()) {
-    alloca = createEntryBlockAlloca<RawShort>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
-  } else if (node.children[0]->is<RawLong>()) {
-    alloca = createEntryBlockAlloca<RawLong>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
-  } else if (node.children[0]->is<RawRef>()) {
-    // TODO: Handle reference variables correctly
-    alloca = createEntryBlockAlloca<RawRef>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
-  } else {
-    alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
-    init = llvm::ConstantFP::get(mCtx,
-                                 llvm::APFloat(llvm::APFloat::IEEEsingle(), 0));
+  llvm::Type *int16Type{llvm::Type::getInt16Ty(mCtx)};
+  llvm::Type *int32Type{llvm::Type::getInt32Ty(mCtx)};
+  llvm::Type *floatType{llvm::Type::getFloatTy(mCtx)};
+
+  if (lhsType == rhsType) {
+    return mIrBuilder.CreateAdd(lhs, rhs, "addtmp");
   }
 
-  // Keep track of it in the local function table
-  mNamedValues[varName] = alloca;
+  // As in C++, if either operand is float then the other is converted to float
+  if (lhsType == floatType && rhsType->isIntegerTy()) {
+    llvm::Value *rhsProm{mIrBuilder.CreateSIToFP(rhs, lhsType)};
+    return mIrBuilder.CreateFAdd(lhs, rhsProm);
+  } else if (lhsType->isIntegerTy() && rhsType == floatType) {
+    llvm::Value *lhsProm{mIrBuilder.CreateSIToFP(lhs, rhsType)};
+    return mIrBuilder.CreateFAdd(lhsProm, rhs);
+  }
 
-  // Store an initial value
-  mIrBuilder.CreateStore(init, alloca);
+  // As in C++, promote i16 -> i32
+  if (lhsType == int32Type && rhsType == int16Type) {
+    llvm::Value *rhsProm{mIrBuilder.CreateZExt(rhs, lhsType)};
+    return mIrBuilder.CreateAdd(lhs, rhsProm);
+  } else if (lhsType == int16Type && rhsType == int32Type) {
+    llvm::Value *lhsProm{mIrBuilder.CreateZExt(lhs, rhsType)};
+    return mIrBuilder.CreateAdd(lhsProm, rhs);
+  }
 
-  return alloca;
-}
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node) {
   return nullptr;
-}
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node) {
-  if (node.children.empty()) return nullptr;
-
-  auto blockStart = node.children.begin() + 1;
-  std::string blockName{node.children[0]->content()};
-
-  // TODO: Do more sophisticated name resolution by talking to the GUI
-  if (node.children.size() > 1 && node.children[1]->is<IntegerLiteral>()) {
-    blockName = node.children[0]->content() + node.children[1]->content();
-    ++blockStart;
-  }
-
-  auto *funType{llvm::FunctionType::get(llvm::Type::getVoidTy(mCtx), false)};
-  auto *fun{llvm::Function::Create(funType,
-                                   llvm::Function::ExternalLinkage,
-                                   blockName,
-                                   &mModule)};
-  auto *bb{llvm::BasicBlock::Create(mCtx, "entry", fun)};
-  mIrBuilder.SetInsertPoint(bb);
-
-  for (auto it{blockStart}; it != node.children.end(); ++it) {
-    const auto &statement{*it};
-    visit(*statement);
-  }
-
-  mIrBuilder.CreateRetVoid();
-  llvm::verifyFunction(*fun);
-
-  return fun;
 }
 
 } // namespace scripting

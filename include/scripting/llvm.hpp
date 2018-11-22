@@ -70,10 +70,13 @@ class LLVMVisitor {
 };
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node);
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<RawIdentifier>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<IntegerLiteral>(const pegtl::parse_tree::node &node);
@@ -82,16 +85,13 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<FloatLiteral>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<DeclarationStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<SetStatement>(const pegtl::parse_tree::node &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const pegtl::parse_tree::node &node);
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const pegtl::parse_tree::node &node);
+LLVMVisitor::visitImpl<StrPlus>(const pegtl::parse_tree::node &node);
 
 } // namespace scripting
 
