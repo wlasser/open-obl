@@ -930,3 +930,36 @@ end
     REQUIRE(scripting::isInteger(*set2->children[1], 8));
   }
 }
+
+TEST_CASE("can explicitly return from blocks", "[scripting]") {
+  std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  return
+  float foo
+end
+
+begin MenuMode
+  return 7.5 + 10
+end
+  )script";
+
+  pegtl::memory_input in(script, "");
+  const auto root{scripting::parseScript(in)};
+  REQUIRE(root != nullptr);
+  REQUIRE(root->children.size() == 3);
+
+  const auto &gameBlock{root->children[1]};
+  REQUIRE(gameBlock->children.size() == 3);
+
+  const auto &gameRet{gameBlock->children[1]};
+  REQUIRE(gameRet->is<scripting::ReturnStatement>());
+  REQUIRE(gameRet->children.empty());
+
+  const auto &menuBlock{root->children[2]};
+  REQUIRE(menuBlock->children.size() == 2);
+
+  const auto &menuRet{menuBlock->children[1]};
+  REQUIRE(menuRet->is<scripting::ReturnStatement>());
+  REQUIRE(menuRet->children.size() == 1);
+}

@@ -104,6 +104,9 @@ struct StrSet : pegtl::string<'s', 'e', 't'> {};
 /// `StrTo <- "to"`
 struct StrTo : pegtl::string<'t', 'o'> {};
 
+/// `StrReturn <- "return"`
+struct StrReturn : pegtl::string<'r', 'e', 't', 'u', 'r', 'n'> {};
+
 /// `IdChar <- [a-zA-Z0-9]`
 struct IdChar : pegtl::alnum {};
 
@@ -222,6 +225,9 @@ struct Set : impl::Spaced<StrSet> {};
 
 /// `To <- StrTo Spacing`
 struct To : impl::Spaced<StrTo> {};
+
+/// `Return <- StrReturn Spacing`
+struct Return : impl::Spaced<StrReturn> {};
 
 /// `StringLiteralBannedChar <- ["] / eolf`
 struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
@@ -436,7 +442,19 @@ struct DeclarationStatement : pegtl::seq<Type, Identifier> {};
 /// `SetStatement <- Set Variable To Expression`
 struct SetStatement : pegtl::seq<Set, Variable, To, Expression> {};
 
-struct Statement : pegtl::sor<DeclarationStatement, SetStatement> {};
+/// `ReturnStatement <- (StrReturn [ \t]+ Expression) / Return`
+/// This awkward rule is required in order to match the core `return` with no
+/// argugments, as well as a `return expr` for arbitrary expressions without
+/// the core `return` stealing whatever is on the next line.
+struct ReturnStatement : pegtl::sor<pegtl::seq<StrReturn,
+                                               pegtl::plus<pegtl::blank>,
+                                               Expression>, Return> {
+};
+
+struct Statement : pegtl::sor<DeclarationStatement,
+                              SetStatement,
+                              ReturnStatement> {
+};
 
 struct BlockBeginStatement : pegtl::seq<Begin,
                                         Identifier,
@@ -513,6 +531,7 @@ class AstNode {
       impl::type_identity<FloatLiteral>,
       impl::type_identity<DeclarationStatement>,
       impl::type_identity<SetStatement>,
+      impl::type_identity<ReturnStatement>,
       impl::type_identity<RawShort>,
       impl::type_identity<RawLong>,
       impl::type_identity<RawFloat>,
@@ -757,6 +776,7 @@ template<> struct AstSelector<RefLiteralContents> : std::true_type {};
 template<> struct AstSelector<FloatLiteral> : std::true_type {};
 template<> struct AstSelector<DeclarationStatement> : std::true_type {};
 template<> struct AstSelector<SetStatement> : std::true_type {};
+template<> struct AstSelector<ReturnStatement> : std::true_type {};
 template<> struct AstSelector<RawShort> : std::true_type {};
 template<> struct AstSelector<RawLong> : std::true_type {};
 template<> struct AstSelector<RawFloat> : std::true_type {};
