@@ -20,6 +20,9 @@ printVisitor(const AstNode &node, const std::string &indent) {
     if (node.has_content() && !isStatement(node)) {
       std::cout << " \"" << node.content() << '"';
     }
+    if (!node.getValue().empty()) {
+      std::cout << " \"" << node.getValue() << '"';
+    }
     std::cout << " at " << node.begin() << " to " << node.end() << '\n';
   }
   return indent + "| ";

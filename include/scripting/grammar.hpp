@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
 #define OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
 
+#include "meta.hpp"
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
@@ -351,6 +352,22 @@ struct ConjunctionBinaryOperator : And {};
 /// `DisjunctionBinaryOperator <- Or`
 struct DisjunctionBinaryOperator : Or {};
 
+/// `BinaryOperator <- MultiplicativeBinaryOperator /
+///                    AdditiveBinaryOperator /
+///                    ConditionalBinaryOperator /
+///                    EqualityBinaryOperator /
+///                    ConjunctionBinaryOperator /
+///                    DisjunctionBinaryOperator`.
+/// Not used in the grammar, used as a more convenient representation of a
+/// binary operator in the AST, to mirror UnaryOperator.
+struct BinaryOperator : pegtl::sor<MultiplicativeBinaryOperator,
+                                   AdditiveBinaryOperator,
+                                   ConditionalBinaryOperator,
+                                   EqualityBinaryOperator,
+                                   ConjunctionBinaryOperator,
+                                   DisjunctionBinaryOperator> {
+};
+
 /// `UnaryExpression <- UnaryOperator? PrimaryExpression`
 struct UnaryExpression : pegtl::seq<pegtl::opt<UnaryOperator>,
                                     PrimaryExpression> {
@@ -470,7 +487,14 @@ static inline constexpr bool has_type_v = has_type<T>::value;
 }
 
 /// A node in the AST produced by PEGTL.
+/// The content() refers to the string of characters in the input that was
+/// matched by some rule in order to create this node; this is consistent with
+/// the default pegtl::parse_tree::node.
+/// The value() is a writable string used to store additional information about
+/// the node. The exact content is dependent on the type represented by the
+/// node.
 class AstNode {
+ public:
   /// The possible types this AstNode can represent.
   /// Should be all those types `T` for which AstSelector<T> defines the member
   /// value `value` equal to `true`.
@@ -503,6 +527,7 @@ class AstNode {
       impl::type_identity<StrNeq>,
       impl::type_identity<StrAnd>,
       impl::type_identity<StrOr>,
+      impl::type_identity<BinaryOperator>,
       impl::type_identity<UnaryOperator>,
       impl::type_identity<MultiplicativeBinaryOperator>,
       impl::type_identity<AdditiveBinaryOperator>,
@@ -520,12 +545,15 @@ class AstNode {
       impl::type_identity<OrExpression>,
       impl::type_identity<Expression>>;
 
+ private:
   /// The current type represented by the AstNode.
   type_variant_t mCurrentType{std::in_place_index<0>};
 
   std::string mSource{};
   pegtl::internal::iterator mBegin{};
   pegtl::internal::iterator mEnd{};
+
+  std::string mValue{};
 
  public:
   std::vector<std::unique_ptr<AstNode>> children{};
@@ -587,6 +615,24 @@ class AstNode {
   /// \post `has_content() == false`.
   void remove_content() noexcept {
     mEnd.reset();
+  }
+
+  [[nodiscard]] constexpr std::string_view getValue() const noexcept {
+    return mValue;
+  }
+
+  void setValue(const std::string &value) {
+    mValue = value;
+  }
+
+  template<class Visitor>
+  auto visit(Visitor &&visitor) {
+    return std::visit(visitor, mCurrentType);
+  }
+
+  template<class T>
+  void setType() {
+    mCurrentType.emplace<impl::type_identity<T>>();
   }
 
   AstNode() = default;
@@ -656,6 +702,36 @@ struct ExpressionRearranger : std::true_type {
   }
 };
 
+struct OperatorRearranger : std::true_type {
+  static void transform(std::unique_ptr<AstNode> &node) {
+    if (node == nullptr || node->children.empty()) return;
+
+    node->remove_content();
+    auto &children{node->children};
+
+    // Move the first child of the operator node (i.e. the operator itself) into
+    // the value of the operator node, and transform the operator node into a
+    // generic BinaryOperator or UnaryOperator.
+    auto op{std::move(children.front())};
+    children.erase(children.begin());
+    node->setValue(op->content());
+    node->visit([&node](auto t) {
+      using T = decltype(t);
+      if constexpr (impl::has_type_v<T>) {
+        using Type = typename T::type;
+        if constexpr (std::is_same_v<Type, MultiplicativeBinaryOperator> ||
+            std::is_same_v<Type, AdditiveBinaryOperator> ||
+            std::is_same_v<Type, ConditionalBinaryOperator> ||
+            std::is_same_v<Type, EqualityBinaryOperator> ||
+            std::is_same_v<Type, ConjunctionBinaryOperator> ||
+            std::is_same_v<Type, DisjunctionBinaryOperator>) {
+          node->setType<BinaryOperator>();
+        }
+      }
+    });
+  }
+};
+
 template<class Rule> struct AstSelector : std::false_type {};
 
 template<> struct AstSelector<RawScriptnameStatement> : std::true_type {};
@@ -685,6 +761,20 @@ template<> struct AstSelector<StrEqeq> : std::true_type {};
 template<> struct AstSelector<StrNeq> : std::true_type {};
 template<> struct AstSelector<StrAnd> : std::true_type {};
 template<> struct AstSelector<StrOr> : std::true_type {};
+
+template<> struct AstSelector<BinaryOperator> : std::true_type {};
+template<> struct AstSelector<UnaryOperator> : OperatorRearranger {};
+template<>
+struct AstSelector<MultiplicativeBinaryOperator> : OperatorRearranger {};
+template<> struct AstSelector<AdditiveBinaryOperator> : OperatorRearranger {};
+template<>
+struct AstSelector<ConditionalBinaryOperator> : OperatorRearranger {};
+template<> struct AstSelector<EqualityBinaryOperator> : OperatorRearranger {};
+template<>
+struct AstSelector<ConjunctionBinaryOperator> : OperatorRearranger {};
+template<>
+struct AstSelector<DisjunctionBinaryOperator> : OperatorRearranger {};
+
 template<> struct AstSelector<PrimaryExpression> : ExpressionRearranger {};
 template<> struct AstSelector<UnaryExpression> : ExpressionRearranger {};
 template<> struct AstSelector<MulExpression> : ExpressionRearranger {};

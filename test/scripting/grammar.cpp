@@ -24,7 +24,6 @@ TEST_CASE("can parse scriptname", "[scripting]") {
     std::string_view script = "scriptname MyScript";
     pegtl::memory_input in(script, "");
     root = scripting::parseScript(in);
-    scripting::printAst(*root);
   }
 
   SECTION("parse scriptname with surrounding comments") {
@@ -539,7 +538,8 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(!root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::StrDash>());
+    REQUIRE(op->is<scripting::UnaryOperator>());
+    REQUIRE(op->getValue() == "-");
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
@@ -554,7 +554,8 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::StrPlus>());
+    REQUIRE(op->is<scripting::UnaryOperator>());
+    REQUIRE(op->getValue() == "+");
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
@@ -591,14 +592,16 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::StrOr>());
+    REQUIRE(op->is<scripting::BinaryOperator>());
+    REQUIRE(op->getValue() == "||");
     REQUIRE(op->children.size() == 2);
 
     const auto &literal{op->children[0]};
     REQUIRE(literal->is<scripting::IntegerLiteral>());
 
     const auto &subExpr{op->children[1]};
-    REQUIRE(subExpr->is<scripting::StrDash>());
+    REQUIRE(subExpr->is<scripting::UnaryOperator>());
+    REQUIRE(subExpr->getValue() == "-");
   }
 
   {
@@ -609,14 +612,17 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &orOp{root->children[0]};
-    REQUIRE(orOp->is<scripting::StrOr>());
+    REQUIRE(orOp->is<scripting::BinaryOperator>());
+    REQUIRE(orOp->getValue() == "||");
     REQUIRE(orOp->children.size() == 2);
 
     const auto &lhs{orOp->children[0]};
-    REQUIRE(lhs->is<scripting::StrAnd>());
+    REQUIRE(lhs->is<scripting::BinaryOperator>());
+    REQUIRE(lhs->getValue() == "&&");
 
     const auto &rhs{orOp->children[1]};
-    REQUIRE(rhs->is<scripting::StrAnd>());
+    REQUIRE(rhs->is<scripting::BinaryOperator>());
+    REQUIRE(rhs->getValue() == "&&");
   }
 
   {
@@ -627,14 +633,17 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &andOp{root->children[0]};
-    REQUIRE(andOp->is<scripting::StrAnd>());
+    REQUIRE(andOp->is<scripting::BinaryOperator>());
+    REQUIRE(andOp->getValue() == "&&");
     REQUIRE(andOp->children.size() == 2);
 
     const auto &lhs{andOp->children[0]};
-    REQUIRE(lhs->is<scripting::StrOr>());
+    REQUIRE(lhs->is<scripting::BinaryOperator>());
+    REQUIRE(lhs->getValue() == "||");
 
     const auto &rhs{andOp->children[1]};
-    REQUIRE(rhs->is<scripting::StrOr>());
+    REQUIRE(rhs->is<scripting::BinaryOperator>());
+    REQUIRE(rhs->getValue() == "||");
   }
 
   {
@@ -645,15 +654,18 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &mulOp{root->children[0]};
-    REQUIRE(mulOp->is<scripting::StrStar>());
+    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
     const auto &divOp{mulOp->children[0]};
-    REQUIRE(divOp->is<scripting::StrSlash>());
+    REQUIRE(divOp->is<scripting::BinaryOperator>());
+    REQUIRE(divOp->getValue() == "/");
     REQUIRE(divOp->children.size() == 2);
 
     const auto &mulOp2{divOp->children[0]};
-    REQUIRE(mulOp2->is<scripting::StrStar>());
+    REQUIRE(mulOp2->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp2->getValue() == "*");
     REQUIRE(mulOp2->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*mulOp2->children[0], 2));
@@ -670,13 +682,15 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &plusOp{root->children[0]};
-    REQUIRE(plusOp->is<scripting::StrPlus>());
+    REQUIRE(plusOp->is<scripting::BinaryOperator>());
+    REQUIRE(plusOp->getValue() == "+");
     REQUIRE(plusOp->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*plusOp->children[0], 1));
 
     const auto &mulOp{plusOp->children[1]};
-    REQUIRE(mulOp->is<scripting::StrStar>());
+    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
@@ -691,17 +705,20 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &andOp{root->children[0]};
-    REQUIRE(andOp->is<scripting::StrAnd>());
+    REQUIRE(andOp->is<scripting::BinaryOperator>());
+    REQUIRE(andOp->getValue() == "&&");
     REQUIRE(andOp->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*andOp->children[0], 1));
 
     const auto &lteqOp{andOp->children[1]};
-    REQUIRE(lteqOp->is<scripting::StrLteq>());
+    REQUIRE(lteqOp->is<scripting::BinaryOperator>());
+    REQUIRE(lteqOp->getValue() == "<=");
     REQUIRE(lteqOp->children.size() == 2);
 
     const auto &mulOp{lteqOp->children[0]};
-    REQUIRE(mulOp->is<scripting::StrStar>());
+    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
@@ -717,7 +734,8 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &neqOp{root->children[0]};
-    REQUIRE(neqOp->is<scripting::StrNeq>());
+    REQUIRE(neqOp->is<scripting::BinaryOperator>());
+    REQUIRE(neqOp->getValue() == "!=");
     REQUIRE(neqOp->children.size() == 2);
 
     REQUIRE(scripting::isInteger(*neqOp->children[0], 3));
@@ -876,7 +894,8 @@ end
     REQUIRE(set1Dest->children[1]->content() == "foo");
 
     const auto &set1Src{set1->children[1]};
-    REQUIRE(set1Src->is<scripting::StrStar>());
+    REQUIRE(set1Src->is<scripting::BinaryOperator>());
+    REQUIRE(set1Src->getValue() == "*");
     REQUIRE(set1Src->children.size() == 2);
     REQUIRE(scripting::isInteger(*set1Src->children[1], 2));
 
