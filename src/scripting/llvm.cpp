@@ -138,7 +138,18 @@ LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
     ++blockStart;
   }
 
-  auto *funType{llvm::FunctionType::get(llvm::Type::getVoidTy(mCtx), false)};
+  llvm::FunctionType *funType = [&]() {
+    if (blockName == "TestLong") {
+      return llvm::FunctionType::get(llvm::Type::getInt32Ty(mCtx), false);
+    } else if (blockName == "TestShort") {
+      return llvm::FunctionType::get(llvm::Type::getInt16Ty(mCtx), false);
+    } else if (blockName == "TestFloat") {
+      return llvm::FunctionType::get(llvm::Type::getFloatTy(mCtx), false);
+    } else {
+      return llvm::FunctionType::get(llvm::Type::getVoidTy(mCtx), false);
+    }
+  }();
+
   auto *fun{llvm::Function::Create(funType,
                                    llvm::Function::ExternalLinkage,
                                    blockName,
@@ -151,7 +162,19 @@ LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
     visit(*statement);
   }
 
-  mIrBuilder.CreateRetVoid();
+  if (funType->getReturnType()->isVoidTy()) {
+    mIrBuilder.CreateRetVoid();
+  } else if (funType->getReturnType()->isIntegerTy(16u)) {
+    llvm::Value *zero{llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0))};
+    mIrBuilder.CreateRet(zero);
+  } else if (funType->getReturnType()->isIntegerTy(32u)) {
+    llvm::Value *zero{llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0))};
+    mIrBuilder.CreateRet(zero);
+  } else if (funType->getReturnType()->isFloatTy()) {
+    llvm::Value *zero{llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0)};
+    mIrBuilder.CreateRet(zero);
+  }
+
   llvm::verifyFunction(*fun);
 
   mPassManager.run(*fun, mAnalysisManager);
