@@ -124,6 +124,9 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<ReturnStatement>(const AstNode &node);
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node);
 
 template<> llvm::Value *

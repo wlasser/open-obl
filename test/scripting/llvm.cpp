@@ -8,18 +8,20 @@ namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 TEST_CASE("can use llvm", "[scripting]") {
   const auto *script = R"script(
 scn MyScript
-begin GameMode
+begin TestLong
   short smallInt
   set smallInt to 360
 
   long myVar
-  set myVar to 512 / 10
+  set myVar to 512 && 10
 
   float foo
   set foo to 3.15 + 10
 
   long aLong
-  set aLong to myVar + 10 * smallInt
+  set aLong to foo + myVar + 10 * smallInt
+
+  return aLong
 end
   )script";
 
@@ -27,13 +29,7 @@ end
   const auto root = scripting::parseScript(in);
   REQUIRE(root != nullptr);
   scripting::printAst(*root);
-
   scripting::LLVMVisitor visitor("MyScript");
   visitor.visit(*root);
-  //llvm::Value *v = visitor.visit(*root);
   visitor.print();
-
-  //REQUIRE(v != nullptr);
-  //v->print(llvm::errs());
-  //llvm::errs() << '\n';
 }

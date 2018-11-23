@@ -27,6 +27,7 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (auto v = visitHelper<FloatLiteral>(node)) return v;
   if (auto v = visitHelper<DeclarationStatement>(node)) return v;
   if (auto v = visitHelper<SetStatement>(node)) return v;
+  if (auto v = visitHelper<ReturnStatement>(node)) return v;
   if (auto v = visitHelper<RawShort>(node)) return v;
   if (auto v = visitHelper<RawLong>(node)) return v;
   if (auto v = visitHelper<RawFloat>(node)) return v;
@@ -290,6 +291,24 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
   }
 
   return nullptr;
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<ReturnStatement>(const AstNode &node) {
+  if (node.children.empty()) {
+    return mIrBuilder.CreateRetVoid();
+  }
+
+  llvm::Value *val{visit(*node.children[0])};
+  if (!val) return nullptr;
+
+  llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
+  if (val->getType() != fun->getReturnType()) {
+    // TODO: Wrong return type, attempt to convert otherwise fail
+    return nullptr;
+  }
+
+  return mIrBuilder.CreateRet(val);
 }
 
 template<> llvm::Value *
