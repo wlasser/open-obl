@@ -103,16 +103,10 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const AstNode &node);
+LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrDash>(const AstNode &node);
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<StrStar>(const AstNode &node);
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<StrSlash>(const AstNode &node);
+LLVMVisitor::visitImpl<BinaryOperator>(const AstNode &node);
 
 } // namespace scripting
 

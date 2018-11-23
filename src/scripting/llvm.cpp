@@ -32,18 +32,8 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (auto v = visitHelper<RawFloat>(node)) return v;
   if (auto v = visitHelper<RawRef>(node)) return v;
   if (auto v = visitHelper<MemberAccess>(node)) return v;
-  if (auto v = visitHelper<StrPlus>(node)) return v;
-  if (auto v = visitHelper<StrDash>(node)) return v;
-  if (auto v = visitHelper<StrStar>(node)) return v;
-  if (auto v = visitHelper<StrSlash>(node)) return v;
-  if (auto v = visitHelper<StrLteq>(node)) return v;
-  if (auto v = visitHelper<StrGteq>(node)) return v;
-  if (auto v = visitHelper<StrLt>(node)) return v;
-  if (auto v = visitHelper<StrGt>(node)) return v;
-  if (auto v = visitHelper<StrEqeq>(node)) return v;
-  if (auto v = visitHelper<StrNeq>(node)) return v;
-  if (auto v = visitHelper<StrAnd>(node)) return v;
-  if (auto v = visitHelper<StrOr>(node)) return v;
+  if (auto v = visitHelper<BinaryOperator>(node)) return v;
+  if (auto v = visitHelper<UnaryOperator>(node)) return v;
 
   return nullptr;
 }
@@ -225,59 +215,57 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrPlus>(const AstNode &node) {
+LLVMVisitor::visitImpl<BinaryOperator>(const AstNode &node) {
   if (node.children.size() != 2) return nullptr;
   llvm::Value *lhs{visit(*node.children[0])};
   llvm::Value *rhs{visit(*node.children[1])};
   if (!lhs || !rhs) return nullptr;
 
   auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
-  if (newLhs->getType()->isFloatTy()) {
-    return mIrBuilder.CreateFAdd(newLhs, newRhs);
+
+  std::string_view op{node.getValue()};
+  if (op == "+") {
+    if (newLhs->getType()->isFloatTy()) {
+      return mIrBuilder.CreateFAdd(newLhs, newRhs);
+    }
+    return mIrBuilder.CreateAdd(newLhs, newRhs);
+  } else if (op == "-") {
+    if (newLhs->getType()->isFloatTy()) {
+      return mIrBuilder.CreateFSub(newLhs, newRhs);
+    }
+    return mIrBuilder.CreateSub(newLhs, newRhs);
+  } else if (op == "*") {
+    if (newLhs->getType()->isFloatTy()) {
+      return mIrBuilder.CreateFMul(newLhs, newRhs);
+    }
+    return mIrBuilder.CreateMul(newLhs, newRhs);
+  } else if (op == "/") {
+    if (newLhs->getType()->isFloatTy()) {
+      return mIrBuilder.CreateFDiv(newLhs, newRhs);
+    }
+    return mIrBuilder.CreateSDiv(newLhs, newRhs);
   }
-  return mIrBuilder.CreateAdd(newLhs, newRhs);
+
+  return nullptr;
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<StrDash>(const AstNode &node) {
-  if (node.children.size() != 2) return nullptr;
-  llvm::Value *lhs{visit(*node.children[0])};
-  llvm::Value *rhs{visit(*node.children[1])};
-  if (!lhs || !rhs) return nullptr;
+LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node) {
+  if (node.children.size() != 1) return nullptr;
+  llvm::Value *rhs{visit(*node.children[0])};
+  if (!rhs) return nullptr;
 
-  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
-  if (newLhs->getType()->isFloatTy()) {
-    return mIrBuilder.CreateFSub(newLhs, newRhs);
+  std::string_view op{node.getValue()};
+  if (op == "+") {
+    return rhs;
+  } else if (op == "-") {
+    if (rhs->getType()->isFloatTy()) {
+      return mIrBuilder.CreateFNeg(rhs);
+    }
+    return mIrBuilder.CreateNeg(rhs);
   }
-  return mIrBuilder.CreateSub(newLhs, newRhs);
-}
 
-template<> llvm::Value *
-LLVMVisitor::visitImpl<StrStar>(const AstNode &node) {
-  if (node.children.size() != 2) return nullptr;
-  llvm::Value *lhs{visit(*node.children[0])};
-  llvm::Value *rhs{visit(*node.children[1])};
-  if (!lhs || !rhs) return nullptr;
-
-  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
-  if (newLhs->getType()->isFloatTy()) {
-    return mIrBuilder.CreateFMul(newLhs, newRhs);
-  }
-  return mIrBuilder.CreateMul(newLhs, newRhs);
-}
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<StrSlash>(const AstNode &node) {
-  if (node.children.size() != 2) return nullptr;
-  llvm::Value *lhs{visit(*node.children[0])};
-  llvm::Value *rhs{visit(*node.children[1])};
-  if (!lhs || !rhs) return nullptr;
-
-  auto[newLhs, newRhs]{promoteArithmeticOperands(lhs, rhs)};
-  if (newLhs->getType()->isFloatTy()) {
-    return mIrBuilder.CreateFDiv(newLhs, newRhs);
-  }
-  return mIrBuilder.CreateSDiv(newLhs, newRhs);
+  return nullptr;
 }
 
 } // namespace scripting
