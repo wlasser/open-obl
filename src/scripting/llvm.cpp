@@ -154,6 +154,8 @@ LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
   mIrBuilder.CreateRetVoid();
   llvm::verifyFunction(*fun);
 
+  mPassManager.run(*fun, mAnalysisManager);
+
   return fun;
 }
 

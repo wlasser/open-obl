@@ -5,6 +5,12 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Transforms/InstCombine/InstCombine.h>
+#include <llvm/Transforms/Scalar/NewGVN.h>
+#include <llvm/Transforms/Scalar/SimplifyCFG.h>
+#include <llvm/Transforms/Utils/Mem2Reg.h>
 #include <optional>
 
 namespace scripting {
@@ -14,6 +20,8 @@ class LLVMVisitor {
   llvm::LLVMContext mCtx{};
   llvm::IRBuilder<> mIrBuilder;
   llvm::Module mModule;
+  llvm::FunctionPassManager mPassManager{};
+  llvm::FunctionAnalysisManager mAnalysisManager{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
 
   template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
@@ -78,7 +86,14 @@ class LLVMVisitor {
  public:
 
   explicit LLVMVisitor(llvm::StringRef moduleName)
-      : mIrBuilder(mCtx), mModule(moduleName, mCtx) {}
+      : mIrBuilder(mCtx), mModule(moduleName, mCtx) {
+    mPassManager.addPass(llvm::InstCombinePass{});
+    mPassManager.addPass(llvm::NewGVNPass{});
+    mPassManager.addPass(llvm::SimplifyCFGPass{});
+    mPassManager.addPass(llvm::PromotePass{});
+    llvm::PassBuilder passBuilder{};
+    passBuilder.registerFunctionAnalyses(mAnalysisManager);
+  }
 
   llvm::Value *visit(const AstNode &node);
 
