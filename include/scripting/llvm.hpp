@@ -69,6 +69,12 @@ class LLVMVisitor {
   [[nodiscard]] std::pair<llvm::Value *, llvm::Value *>
   promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs);
 
+  /// Convert the argument to an i1.
+  /// Emits instructions to convert lhs to an i1 if is not already an i1 by
+  /// comparing against zero. In particular, the returned value is `0` if lhs is
+  /// zero, and `1` otherwise.
+  [[nodiscard]] llvm::Value *convertToBool(llvm::Value *lhs);
+
  public:
 
   explicit LLVMVisitor(llvm::StringRef moduleName)
