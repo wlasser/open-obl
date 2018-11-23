@@ -103,8 +103,8 @@ LLVMVisitor::promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs) {
   }
 
   if (lhsType->isFloatTy()) {
-    auto zero = llvm::APFloat(llvm::APFloat::IEEEsingle(), 0);
-    return mIrBuilder.CreateFCmpUNE(lhs, llvm::ConstantFP::get(mCtx, zero));
+    auto zero = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
+    return mIrBuilder.CreateFCmpUNE(lhs, zero);
   }
 
   return lhs;
@@ -216,8 +216,7 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
     init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
   } else {
     alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
-    init = llvm::ConstantFP::get(mCtx,
-                                 llvm::APFloat(llvm::APFloat::IEEEsingle(), 0));
+    init = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
   }
 
   // Keep track of it in the local function table
