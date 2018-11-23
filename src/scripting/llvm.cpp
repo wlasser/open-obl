@@ -58,10 +58,10 @@ LLVMVisitor::promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs) {
 
   // As in C++, promote i16 -> i32
   if (lhsType == int32Type && rhsType == int16Type) {
-    llvm::Value *rhsProm{mIrBuilder.CreateZExt(rhs, lhsType)};
+    llvm::Value *rhsProm{mIrBuilder.CreateSExt(rhs, lhsType)};
     return {lhs, rhsProm};
   } else if (lhsType == int16Type && rhsType == int32Type) {
-    llvm::Value *lhsProm{mIrBuilder.CreateZExt(lhs, rhsType)};
+    llvm::Value *lhsProm{mIrBuilder.CreateSExt(lhs, rhsType)};
     return {lhsProm, rhs};
   }
 
@@ -195,7 +195,7 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
 
   // Zero extend i16 into i32 and trunc i32 into i16.
   if (srcType->isIntegerTy() && destType->isIntegerTy()) {
-    llvm::Value *newSrc{mIrBuilder.CreateZExtOrTrunc(src, destType)};
+    llvm::Value *newSrc{mIrBuilder.CreateSExtOrTrunc(src, destType)};
     return mIrBuilder.CreateStore(newSrc, dest);
   }
 
