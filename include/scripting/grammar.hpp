@@ -291,8 +291,9 @@ struct RawLiteral : pegtl::sor<StringLiteral,
 /// `Literal <- RawLiteral Spacing`
 struct Literal : pegtl::seq<RawLiteral, Spacing> {};
 
-/// `RawIdentifier <- InitialIdChar IdChar*
+/// `RawIdentifier <- InitialIdChar IdChar*`
 struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};
+
 /// `Identifier <- RawIdentifier Spacing`
 struct Identifier : impl::Spaced<RawIdentifier> {};
 
@@ -352,14 +353,16 @@ struct ConjunctionBinaryOperator : And {};
 /// `DisjunctionBinaryOperator <- Or`
 struct DisjunctionBinaryOperator : Or {};
 
-/// `BinaryOperator <- MultiplicativeBinaryOperator /
-///                    AdditiveBinaryOperator /
-///                    ConditionalBinaryOperator /
-///                    EqualityBinaryOperator /
-///                    ConjunctionBinaryOperator /
-///                    DisjunctionBinaryOperator`.
 /// Not used in the grammar, used as a more convenient representation of a
 /// binary operator in the AST, to mirror UnaryOperator.
+/// ```peg
+/// BinaryOperator <- MultiplicativeBinaryOperator
+///                    / AdditiveBinaryOperator
+///                    / ConditionalBinaryOperator
+///                    / EqualityBinaryOperator
+///                    / ConjunctionBinaryOperator
+///                    / DisjunctionBinaryOperator
+/// ```
 struct BinaryOperator : pegtl::sor<MultiplicativeBinaryOperator,
                                    AdditiveBinaryOperator,
                                    ConditionalBinaryOperator,
@@ -670,8 +673,11 @@ class AstNode {
 };
 
 /// Rearrange expression nodes into operator nodes.
+/// Explicitly, performs the transformations
+/// - `(BinaryExpression (Op Arg1 Arg2)) -> (Op (Arg1 Arg2))`
+/// - `(UnaryExpression (Op Arg1)) -> (Op (Arg1))`.
 /// \remark Adapted from the parse_tree.cpp example in PEGTL.
-struct ExpressionRearranger : std::true_type {
+struct ExprTransform : std::true_type {
   static void transform(std::unique_ptr<AstNode> &node) {
     if (node == nullptr || node->children.empty()) return;
 
@@ -702,7 +708,12 @@ struct ExpressionRearranger : std::true_type {
   }
 };
 
-struct OperatorRearranger : std::true_type {
+/// Transform specific BinaryOperators into the generic BinaryOperator with a
+/// value equal to the parsed operator. A similar procedure should be done for
+/// UnaryOperators too if more than one category of UnaryOperator is added.
+/// For example, performs the transformation
+/// `(AdditiveBinaryOperator (StrMul Arg1 Arg2)) -> (BinaryOperator:"+" (Arg1 Arg2))`
+struct OpTransform : std::true_type {
   static void transform(std::unique_ptr<AstNode> &node) {
     if (node == nullptr || node->children.empty()) return;
 
@@ -732,6 +743,8 @@ struct OperatorRearranger : std::true_type {
   }
 };
 
+/// Specifies which node types should be kept in the AST and which
+/// transformations should be performed to each node.
 template<class Rule> struct AstSelector : std::false_type {};
 
 template<> struct AstSelector<RawScriptnameStatement> : std::true_type {};
@@ -763,27 +776,23 @@ template<> struct AstSelector<StrAnd> : std::true_type {};
 template<> struct AstSelector<StrOr> : std::true_type {};
 
 template<> struct AstSelector<BinaryOperator> : std::true_type {};
-template<> struct AstSelector<UnaryOperator> : OperatorRearranger {};
-template<>
-struct AstSelector<MultiplicativeBinaryOperator> : OperatorRearranger {};
-template<> struct AstSelector<AdditiveBinaryOperator> : OperatorRearranger {};
-template<>
-struct AstSelector<ConditionalBinaryOperator> : OperatorRearranger {};
-template<> struct AstSelector<EqualityBinaryOperator> : OperatorRearranger {};
-template<>
-struct AstSelector<ConjunctionBinaryOperator> : OperatorRearranger {};
-template<>
-struct AstSelector<DisjunctionBinaryOperator> : OperatorRearranger {};
+template<> struct AstSelector<UnaryOperator> : OpTransform {};
+template<> struct AstSelector<MultiplicativeBinaryOperator> : OpTransform {};
+template<> struct AstSelector<AdditiveBinaryOperator> : OpTransform {};
+template<> struct AstSelector<ConditionalBinaryOperator> : OpTransform {};
+template<> struct AstSelector<EqualityBinaryOperator> : OpTransform {};
+template<> struct AstSelector<ConjunctionBinaryOperator> : OpTransform {};
+template<> struct AstSelector<DisjunctionBinaryOperator> : OpTransform {};
 
-template<> struct AstSelector<PrimaryExpression> : ExpressionRearranger {};
-template<> struct AstSelector<UnaryExpression> : ExpressionRearranger {};
-template<> struct AstSelector<MulExpression> : ExpressionRearranger {};
-template<> struct AstSelector<AddExpression> : ExpressionRearranger {};
-template<> struct AstSelector<CondExpression> : ExpressionRearranger {};
-template<> struct AstSelector<EqExpression> : ExpressionRearranger {};
-template<> struct AstSelector<AndExpression> : ExpressionRearranger {};
-template<> struct AstSelector<OrExpression> : ExpressionRearranger {};
-template<> struct AstSelector<Expression> : ExpressionRearranger {};
+template<> struct AstSelector<PrimaryExpression> : ExprTransform {};
+template<> struct AstSelector<UnaryExpression> : ExprTransform {};
+template<> struct AstSelector<MulExpression> : ExprTransform {};
+template<> struct AstSelector<AddExpression> : ExprTransform {};
+template<> struct AstSelector<CondExpression> : ExprTransform {};
+template<> struct AstSelector<EqExpression> : ExprTransform {};
+template<> struct AstSelector<AndExpression> : ExprTransform {};
+template<> struct AstSelector<OrExpression> : ExprTransform {};
+template<> struct AstSelector<Expression> : ExprTransform {};
 
 template<class F, class State>
 void visitAst(const AstNode &node, State state, F &&visitor) {
