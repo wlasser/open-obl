@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_SCRIPTING_LLVM_HPP
 #define OPENOBLIVION_SCRIPTING_LLVM_HPP
 
+#include "scripting/ast.hpp"
 #include "scripting/grammar.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
@@ -12,6 +13,7 @@
 #include <llvm/Transforms/Scalar/SimplifyCFG.h>
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #include <optional>
+#include <type_traits>
 
 namespace oo {
 

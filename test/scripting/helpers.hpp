@@ -2,14 +2,13 @@
 #define OPENOBLIVION_TEST_SCRIPTING_HELPERS_HPP
 
 #include "record/formid.hpp"
-#include "scripting/grammar.hpp"
+#include "scripting/ast.hpp"
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
+#include <string_view>
 
 namespace oo {
-
-namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 [[nodiscard]] bool isStatement(const AstNode &node);
 

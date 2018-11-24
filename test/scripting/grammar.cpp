@@ -1,13 +1,12 @@
 #include "helpers.hpp"
 #include "record/formid.hpp"
+#include "scripting/ast.hpp"
 #include "scripting/grammar.hpp"
 #include <catch2/catch.hpp>
 #include <tao/pegtl/analyze.hpp>
 #include <limits>
 #include <memory>
 #include <string>
-
-namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 TEST_CASE("grammar is valid", "[scripting]") {
   const auto numIssues{pegtl::analyze<oo::grammar::Grammar>()};

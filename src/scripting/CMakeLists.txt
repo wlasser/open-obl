@@ -13,8 +13,10 @@ target_include_directories(OpenOblivionScripting PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 target_sources(OpenOblivionScripting PRIVATE
+        ${CMAKE_SOURCE_DIR}/include/scripting/ast.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
         grammar.cpp
         llvm.cpp)
 

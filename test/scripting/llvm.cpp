@@ -1,6 +1,6 @@
 #include "helpers.hpp"
-#include "scripting/grammar.hpp"
 #include "scripting/llvm.hpp"
+#include "scripting/pegtl.hpp"
 #include <catch2/catch.hpp>
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
