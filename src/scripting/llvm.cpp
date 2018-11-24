@@ -32,7 +32,7 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (auto v = visitHelper<RawLong>(node)) return v;
   if (auto v = visitHelper<RawFloat>(node)) return v;
   if (auto v = visitHelper<RawRef>(node)) return v;
-  if (auto v = visitHelper<MemberAccess>(node)) return v;
+  if (auto v = visitHelper<RawMemberAccess>(node)) return v;
   if (auto v = visitHelper<BinaryOperator>(node)) return v;
   if (auto v = visitHelper<UnaryOperator>(node)) return v;
 
@@ -158,10 +158,14 @@ LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
   auto *bb{llvm::BasicBlock::Create(mCtx, "entry", fun)};
   mIrBuilder.SetInsertPoint(bb);
 
+  auto namedValues{mNamedValues};
+
   for (auto it{blockStart}; it != node.children.end(); ++it) {
     const auto &statement{*it};
     visit(*statement);
   }
+
+  mNamedValues = namedValues;
 
   if (funType->getReturnType()->isVoidTy()) {
     mIrBuilder.CreateRetVoid();

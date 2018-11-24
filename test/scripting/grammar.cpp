@@ -882,7 +882,7 @@ end
     REQUIRE(set1->children.size() == 2);
 
     const auto &set1Dest{set1->children[0]};
-    REQUIRE(set1Dest->is<scripting::MemberAccess>());
+    REQUIRE(set1Dest->is<scripting::RawMemberAccess>());
     REQUIRE(set1Dest->children.size() == 2);
 
     REQUIRE(set1Dest->children[0]->is<scripting::RawIdentifier>());
@@ -900,7 +900,7 @@ end
     REQUIRE(scripting::isInteger(*set1Src->children[1], 2));
 
     const auto &set1SrcVar{set1Src->children[0]};
-    REQUIRE(set1SrcVar->is<scripting::MemberAccess>());
+    REQUIRE(set1SrcVar->is<scripting::RawMemberAccess>());
     REQUIRE(set1SrcVar->children.size() == 2);
 
     REQUIRE(set1SrcVar->children[0]->is<scripting::RawIdentifier>());
@@ -916,7 +916,7 @@ end
     REQUIRE(set2->children.size() == 2);
 
     const auto &set2Dest{set2->children[0]};
-    REQUIRE(set2Dest->is<scripting::MemberAccess>());
+    REQUIRE(set2Dest->is<scripting::RawMemberAccess>());
     REQUIRE(set2Dest->children.size() == 2);
 
     REQUIRE(set2Dest->children[0]->is<scripting::RefLiteralContents>());
@@ -962,4 +962,110 @@ end
   const auto &menuRet{menuBlock->children[1]};
   REQUIRE(menuRet->is<scripting::ReturnStatement>());
   REQUIRE(menuRet->children.size() == 1);
+}
+
+TEST_CASE("can call free functions", "[scripting]") {
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  set foo to MyFunc 124 3.14 #01abcdef someArg
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &setStatement{blockStatement->children[1]};
+    REQUIRE(setStatement->children.size() == 2);
+
+    const auto &src{setStatement->children[1]};
+    REQUIRE(src->is<scripting::RawCall>());
+    REQUIRE(src->getValue() == "MyFunc");
+    REQUIRE(src->children.size() == 4);
+
+    REQUIRE(scripting::isInteger(*src->children[0], 124));
+    REQUIRE(scripting::isFloat(*src->children[1], 3.14f));
+    REQUIRE(scripting::isReference(*src->children[2], 0x01abcdef));
+    REQUIRE(src->children[3]->is<scripting::RawIdentifier>());
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  set foo to Func1 10 * Func2 30
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &setStatement{blockStatement->children[1]};
+    REQUIRE(setStatement->children.size() == 2);
+
+    const auto &src{setStatement->children[1]};
+    REQUIRE(src->is<scripting::BinaryOperator>());
+    REQUIRE(src->children.size() == 2);
+
+    const auto &lhs{src->children[0]};
+    REQUIRE(lhs->is<scripting::RawCall>());
+    REQUIRE(lhs->getValue() == "Func1");
+    REQUIRE(lhs->children.size() == 1);
+    REQUIRE(scripting::isInteger(*lhs->children[0], 10));
+
+    const auto &rhs{src->children[1]};
+    REQUIRE(rhs->is<scripting::RawCall>());
+    REQUIRE(rhs->getValue() == "Func2");
+    REQUIRE(rhs->children.size() == 1);
+    REQUIRE(scripting::isInteger(*rhs->children[0], 30));
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  set foo to Func1 Global.Value
+end
+)script";
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+    REQUIRE(root != nullptr);
+  }
+}
+
+TEST_CASE("can call member functions", "[scripting]") {
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  set foo to obj.Func 10
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{scripting::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &setStatement{blockStatement->children[1]};
+    REQUIRE(setStatement->children.size() == 2);
+
+    const auto &src{setStatement->children[1]};
+    REQUIRE(src->is<scripting::RawCall>());
+    REQUIRE(src->getValue() == "Func");
+    REQUIRE(src->children.size() == 2);
+    REQUIRE(src->children[0]->is<scripting::RawIdentifier>());
+    REQUIRE(scripting::isInteger(*src->children[1], 10));
+  }
 }

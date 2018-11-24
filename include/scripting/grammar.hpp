@@ -318,21 +318,45 @@ struct RefType : impl::Spaced<RawRef> {};
 /// `Type <- ShortType / LongType / FloatType / RefType`
 struct Type : pegtl::sor<ShortType, LongType, FloatType, RefType> {};
 
-/// `MemberAccess <- (RefLiteral / Identifier) "." Identifier`
-struct MemberAccess : pegtl::seq<pegtl::sor<RefLiteral, Identifier>,
-                                 pegtl::one<'.'>,
-                                 Identifier> {
+/// `RawMemberAccess <- (RefLiteral / Identifier) "." RawIdentifier`
+struct RawMemberAccess : pegtl::seq<pegtl::sor<RefLiteral, Identifier>,
+                                    pegtl::one<'.'>,
+                                    RawIdentifier> {
 };
 
-/// `Variable <- Identifier / MemberAccess`
-struct Variable : pegtl::sor<MemberAccess, Identifier> {
+/// `MemberAccess <- RawMemberAccess Spacing`
+struct MemberAccess : pegtl::seq<RawMemberAccess, Spacing> {};
+
+/// `Variable <- MemberAccess / Identifier`
+struct Variable : pegtl::sor<MemberAccess, Identifier> {};
+
+/// `RawArgument <- RawMemberAccess / RawVariable / RawLiteral`
+struct RawArgument : pegtl::sor<RawMemberAccess, RawIdentifier, RawLiteral> {};
+
+/// `RawMemberCall <- RawMemberAccess (blank+ RawArgument)*`
+struct RawMemberCall : pegtl::seq<RawMemberAccess,
+                                  pegtl::plus<pegtl::plus<pegtl::blank>,
+                                              RawArgument>> {
 };
+
+/// `RawFreeCall <- RawIdentifier (blank+ RawArgument)*`
+struct RawFreeCall : pegtl::seq<RawIdentifier,
+                                pegtl::plus<pegtl::plus<pegtl::blank>,
+                                            RawArgument>> {
+};
+
+/// `RawCall <- RawMemberCall / RawFreeCall`
+struct RawCall : pegtl::sor<RawMemberCall, RawFreeCall> {};
+
+/// `Call <- RawCall Spacing`
+struct Call : pegtl::seq<RawCall, Spacing> {};
 
 struct Expression;
 
 /// `PrimaryExpression <- Variable / Literal / (LParen Expression RParen)`
-struct PrimaryExpression : pegtl::sor<Variable,
-                                      Literal,
+struct PrimaryExpression : pegtl::sor<Literal,
+                                      Call,
+                                      Variable,
                                       pegtl::seq<Lparen,
                                                  Expression,
                                                  Rparen>> {
@@ -536,7 +560,7 @@ class AstNode {
       impl::type_identity<RawLong>,
       impl::type_identity<RawFloat>,
       impl::type_identity<RawRef>,
-      impl::type_identity<MemberAccess>,
+      impl::type_identity<RawMemberAccess>,
       impl::type_identity<StrPlus>,
       impl::type_identity<StrDash>,
       impl::type_identity<StrStar>,
@@ -549,6 +573,7 @@ class AstNode {
       impl::type_identity<StrNeq>,
       impl::type_identity<StrAnd>,
       impl::type_identity<StrOr>,
+      impl::type_identity<RawCall>,
       impl::type_identity<BinaryOperator>,
       impl::type_identity<UnaryOperator>,
       impl::type_identity<MultiplicativeBinaryOperator>,
@@ -762,6 +787,40 @@ struct OpTransform : std::true_type {
   }
 };
 
+/// Transforms member calls to free calls with `this` as the first argument.
+struct CallTransform : std::true_type {
+  static void transform(std::unique_ptr<AstNode> &node) {
+    if (node == nullptr || node->children.empty()) return;
+
+    auto &children{node->children};
+
+    if (children.front()->is<RawMemberAccess>()) {
+      auto rawMemberAccess{std::move(children.front())};
+      children.erase(children.begin());
+
+      // First child of rawMemberAccess becomes the first parameter, the second
+      // becomes the content of the call node.
+      if (rawMemberAccess->children.size() != 2) {
+        // TODO: Ill-formed member access, throw
+        return;
+      }
+
+      auto funName{std::move(rawMemberAccess->children[1])};
+      auto thisArg{std::move(rawMemberAccess->children[0])};
+
+      node->remove_content();
+      node->setValue(funName->content());
+      children.insert(children.begin(), std::move(thisArg));
+    } else if (children.front()->is<RawIdentifier>()) {
+      auto funName{std::move(children.front())};
+      children.erase(children.begin());
+
+      node->remove_content();
+      node->setValue(funName->content());
+    }
+  }
+};
+
 /// Specifies which node types should be kept in the AST and which
 /// transformations should be performed to each node.
 template<class Rule> struct AstSelector : std::false_type {};
@@ -781,7 +840,7 @@ template<> struct AstSelector<RawShort> : std::true_type {};
 template<> struct AstSelector<RawLong> : std::true_type {};
 template<> struct AstSelector<RawFloat> : std::true_type {};
 template<> struct AstSelector<RawRef> : std::true_type {};
-template<> struct AstSelector<MemberAccess> : std::true_type {};
+template<> struct AstSelector<RawMemberAccess> : std::true_type {};
 template<> struct AstSelector<StrPlus> : std::true_type {};
 template<> struct AstSelector<StrDash> : std::true_type {};
 template<> struct AstSelector<StrStar> : std::true_type {};
@@ -794,6 +853,7 @@ template<> struct AstSelector<StrEqeq> : std::true_type {};
 template<> struct AstSelector<StrNeq> : std::true_type {};
 template<> struct AstSelector<StrAnd> : std::true_type {};
 template<> struct AstSelector<StrOr> : std::true_type {};
+template<> struct AstSelector<RawCall> : CallTransform {};
 
 template<> struct AstSelector<BinaryOperator> : std::true_type {};
 template<> struct AstSelector<UnaryOperator> : OpTransform {};
