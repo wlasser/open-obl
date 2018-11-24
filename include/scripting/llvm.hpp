@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_SCRIPTING_LLVM_HPP
 #define OPENOBLIVION_SCRIPTING_LLVM_HPP
 
+#include "meta.hpp"
 #include "scripting/ast.hpp"
 #include "scripting/grammar.hpp"
 #include <llvm/IR/IRBuilder.h>
@@ -26,6 +27,9 @@ class LLVMVisitor {
   llvm::FunctionAnalysisManager mAnalysisManager{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
+  llvm::StringMap<llvm::Function *> mFunctions{
+      {"Func", makeProto<grammar::RawLong, grammar::RawLong>("Func")}
+  };
 
   template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
   llvm::Value *visitImpl(const AstNode &node) {
@@ -39,33 +43,56 @@ class LLVMVisitor {
     return node.is<NodeType>() ? visitImpl<NodeType>(node) : nullptr;
   }
 
+  template<class Type>
+  static constexpr inline bool
+      isAstType = std::is_same_v<Type, grammar::RawShort>
+      || std::is_same_v<Type, grammar::RawLong>
+      || std::is_same_v<Type, grammar::RawRef>
+      || std::is_same_v<Type, grammar::RawFloat>;
+
+  /// Convert a type from the AST into an LLVM type.
+  // TODO: Treat references correctly
+  template<class Type>
+  llvm::Type *typeToLLVM() {
+    if constexpr (std::is_same_v<Type, grammar::RawShort>) {
+      return llvm::Type::getInt16Ty(mCtx);
+    } else if constexpr (std::is_same_v<Type, grammar::RawLong>) {
+      return llvm::Type::getInt32Ty(mCtx);
+    } else if constexpr (std::is_same_v<Type, grammar::RawRef>) {
+      return llvm::Type::getInt32Ty(mCtx);
+    } else if constexpr (std::is_same_v<Type, grammar::RawFloat>) {
+      return llvm::Type::getFloatTy(mCtx);
+    } else {
+      static_assert(false_v<Type>, "Type must be an AstType");
+      return nullptr; // Unreachable
+    }
+  }
+
   /// Create an alloca instruction in the entry block of the function.
   /// Use this for mutable local variables so that the mem2reg optimization pass
   /// can find them.
   /// \tparam Type The type of the variable to create an alloca instruction for.
   ///              Must be a RawShort, RawLong, RawFloat, or RawRef.
-  template<class Type, class = std::enable_if_t<
-      std::is_same_v<Type, grammar::RawShort>
-          || std::is_same_v<Type, grammar::RawLong>
-          || std::is_same_v<Type, grammar::RawFloat>
-          || std::is_same_v<Type, grammar::RawRef>>>
+  template<class Type, class = std::enable_if_t<isAstType<Type>>>
   llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *fun,
                                            const std::string &varName) {
     llvm::BasicBlock &entryBlock{fun->getEntryBlock()};
     llvm::IRBuilder irBuilder(&entryBlock, entryBlock.begin());
 
-    llvm::Type *type{};
-    // TODO: Treat references correctly
-    if constexpr (std::is_same_v<Type, grammar::RawShort>) {
-      type = llvm::Type::getInt16Ty(mCtx);
-    } else if constexpr (std::is_same_v<Type, grammar::RawLong>) {
-      type = llvm::Type::getInt32Ty(mCtx);
-    } else if constexpr (std::is_same_v<Type, grammar::RawRef>) {
-      type = llvm::Type::getInt32Ty(mCtx);
-    } else {
-      type = llvm::Type::getFloatTy(mCtx);
-    }
-    return irBuilder.CreateAlloca(type, nullptr, varName);
+    return irBuilder.CreateAlloca(typeToLLVM<Type>(), nullptr, varName);
+  }
+
+  /// Create a prototype for a function returning Ret and taking Args as its
+  /// arguments.
+  template<class Ret, class ... Args>
+  llvm::Function *makeProto(llvm::StringRef name) {
+    static_assert((isAstType<Ret> && ... && isAstType<Args>),
+    "Ret and Args... must all be AstTypes");
+
+    std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
+    auto *funType{llvm::FunctionType::get(typeToLLVM<Ret>(), args, false)};
+    return llvm::Function::Create(funType, llvm::Function::ExternalLinkage,
+                                  name, &mModule);
   }
 
   /// Promote/convert lhs and rhs to a common type.
@@ -128,6 +155,9 @@ LLVMVisitor::visitImpl<grammar::SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::UnaryOperator>(const AstNode &node);

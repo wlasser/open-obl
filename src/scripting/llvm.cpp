@@ -33,6 +33,7 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (auto v = visitHelper<grammar::RawFloat>(node)) return v;
   if (auto v = visitHelper<grammar::RawRef>(node)) return v;
   if (auto v = visitHelper<grammar::RawMemberAccess>(node)) return v;
+  if (auto v = visitHelper<grammar::RawCall>(node)) return v;
   if (auto v = visitHelper<grammar::BinaryOperator>(node)) return v;
   if (auto v = visitHelper<grammar::UnaryOperator>(node)) return v;
 
@@ -363,6 +364,39 @@ LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node) {
   }
 
   return mIrBuilder.CreateRet(val);
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node) {
+  std::string funName{node.getValue()};
+  llvm::Function *proto{};
+
+  if (auto it{mFunctions.find(funName)}; it != mFunctions.end()) {
+    proto = it->second;
+  } else {
+    // TODO: No function with that name exists
+    return nullptr;
+  }
+
+  if (node.children.size() != proto->arg_size()) {
+    // TODO: Incorrect number of arguments
+    return nullptr;
+  }
+
+  llvm::SmallVector<llvm::Value *, 4> args{};
+  for (std::size_t i = 0; i < node.children.size(); ++i) {
+    const auto &child{node.children[i]};
+    const auto &arg{proto->arg_begin() + i};
+
+    args.emplace_back(visit(*child));
+
+    if (args.back()->getType() != arg->getType()) {
+      // TODO: Argument mismatch, throw or convert
+      return nullptr;
+    }
+  }
+
+  return mIrBuilder.CreateCall(proto, args);
 }
 
 template<> llvm::Value *

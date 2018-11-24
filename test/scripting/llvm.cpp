@@ -15,7 +15,7 @@ begin TestLong
   set smallInt to 360
 
   long myVar
-  set myVar to 512 && 10
+  set myVar to Func 512 + Func 10
 
   float foo
   set foo to 3.15 + 10
