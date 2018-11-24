@@ -8,7 +8,7 @@
 namespace oo {
 
 void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
-  if (!logger) logger = spdlog::get(settings::ogreLog);
+  if (!logger) logger = spdlog::get(oo::OGRE_LOG);
   auto collisionObject = dynamic_cast<Ogre::CollisionObject *>(resource);
   // TODO: Handle this properly
   assert (collisionObject != nullptr);

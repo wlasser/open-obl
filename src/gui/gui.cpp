@@ -30,7 +30,7 @@ MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
 }
 
 pugi::xml_document loadDocument(std::istream &is) {
-  auto logger = spdlog::get(settings::log);
+  auto logger = spdlog::get(oo::LOG);
 
   pugi::xml_document doc{};
   pugi::xml_parse_result result = doc.load(is);

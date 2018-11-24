@@ -36,7 +36,7 @@ SneakJumpState::handleCollision(PlayerControllerImpl &impl,
                                 const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
-  spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
+  spdlog::get(oo::LOG)->info("Player received of impulse {} N", impulse);
   if (r.normalized().dot(impl.rigidBody->getGravity().normalized()) > 0.7) {
     return SneakStandState{};
   }

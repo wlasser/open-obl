@@ -33,7 +33,7 @@ class Application : public Ogre::FrameListener {
   /// \pre createLoggers() has been called. In particular,
   /// `spdlog::get(settings::log) != nullptr`.
   static void loadIniConfiguration();
-  //C++20: [[expects: spdlog::get(settings::log) != nullptr]];
+  //C++20: [[expects: spdlog::get(oo::LOG) != nullptr]];
 
   /// Set the Ogre render system.
   /// systemName must be one of

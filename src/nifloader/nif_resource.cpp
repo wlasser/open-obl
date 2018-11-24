@@ -20,7 +20,7 @@ NifResource::BlockGraph NifResource::getBlockGraph() const {
 }
 
 void NifResource::loadImpl() {
-  auto logger{spdlog::get(settings::ogreLog)};
+  auto logger{spdlog::get(oo::OGRE_LOG)};
   auto &resGrpMgr{ResourceGroupManager::getSingleton()};
 
   logger->info("Nif: {}", getName());

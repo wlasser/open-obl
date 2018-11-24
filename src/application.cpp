@@ -31,7 +31,7 @@
 
 Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
-  ctx.logger = spdlog::get(settings::log);
+  ctx.logger = spdlog::get(oo::LOG);
 
   loadIniConfiguration();
   auto &gameSettings = GameSettings::getSingleton();
@@ -71,11 +71,11 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
-  resGrpMgr.createResourceGroup(settings::resourceGroup);
+  resGrpMgr.createResourceGroup(oo::RESOURCE_GROUP);
 
   // Shaders are not stored in the data folder (mostly for vcs reasons)
   resGrpMgr.addResourceLocation("./shaders", "FileSystem",
-                                settings::resourceGroup);
+                                oo::RESOURCE_GROUP);
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
@@ -94,7 +94,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // TODO: Replace FileSystem with a case-insensitive version
   resGrpMgr.addResourceLocation(dataPath.c_str(),
                                 "FileSystem",
-                                settings::resourceGroup,
+                                oo::RESOURCE_GROUP,
                                 true);
 
   // Get list of bsa files from ini
@@ -159,14 +159,14 @@ void Application::createLoggers() {
   const std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
 
   // Construct the default Ogre logger and register its spdlog listener
-  auto ogreLogger{std::make_shared<spdlog::logger>(settings::ogreLog, sinks)};
+  auto ogreLogger{std::make_shared<spdlog::logger>(oo::OGRE_LOG, sinks)};
   spdlog::register_logger(ogreLogger);
   auto *defaultLog{ogreLogMgr.createLog("Default", true, true, true)};
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(settings::ogreLog);
+  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(oo::OGRE_LOG);
   defaultLog->addListener(ogreLogListener.get());
 
   // Construct our own logger
-  auto logger{std::make_shared<spdlog::logger>(settings::log, sinks)};
+  auto logger{std::make_shared<spdlog::logger>(oo::LOG, sinks)};
   spdlog::register_logger(logger);
 
   // Set the starting logger levels. These will be modified later according to
@@ -177,24 +177,24 @@ void Application::createLoggers() {
 
 void Application::loadIniConfiguration() {
   auto &gameSettings{GameSettings::getSingleton()};
-  auto logger{spdlog::get(settings::log)};
+  auto logger{spdlog::get(oo::LOG)};
 
-  logger->info("Parsing {}", settings::defaultIni);
-  gameSettings.load(settings::defaultIni, true);
+  logger->info("Parsing {}", oo::DEFAULT_INI);
+  gameSettings.load(oo::DEFAULT_INI, true);
 
-  if (std::filesystem::is_regular_file(settings::userIni)) {
-    logger->info("Parsing {}", settings::userIni);
-    gameSettings.load(settings::userIni, true);
+  if (std::filesystem::is_regular_file(oo::USER_INI)) {
+    logger->info("Parsing {}", oo::USER_INI);
+    gameSettings.load(oo::USER_INI, true);
   } else {
-    logger->warn("User configuration {} not found", settings::userIni);
+    logger->warn("User configuration {} not found", oo::USER_INI);
   }
 
   // Override the logger levels with user-provided ones, if any
   if (const auto level = gameSettings.get<std::string>("Debug.sOgreLogLevel")) {
-    spdlog::get(settings::ogreLog)->set_level(spdlog::level::from_str(*level));
+    spdlog::get(oo::OGRE_LOG)->set_level(spdlog::level::from_str(*level));
   }
   if (const auto level = gameSettings.get<std::string>("Debug.sLogLevel")) {
-    spdlog::get(settings::log)->set_level(spdlog::level::from_str(*level));
+    spdlog::get(oo::LOG)->set_level(spdlog::level::from_str(*level));
   }
 }
 
@@ -204,7 +204,7 @@ void Application::setRenderSystem(Ogre::Root *root,
     root->setRenderSystem(renderSystem);
   } else {
     // List the available render systems
-    auto logger{spdlog::get(settings::log)};
+    auto logger{spdlog::get(oo::LOG)};
     logger->error("Render system {} not found", systemName);
     logger->info("Available render systems are:");
     for (const auto &system : root->getAvailableRenderers()) {
@@ -225,7 +225,7 @@ std::unique_ptr<Ogre::Root> Application::createOgreRoot() {
 std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
 Application::createWindow(const std::string &windowName) {
   const auto &gameSettings{GameSettings::getSingleton()};
-  auto logger{spdlog::get(settings::log)};
+  auto logger{spdlog::get(oo::LOG)};
 
   // Grab the window dimensions
   const int windowWidth{gameSettings.iGet("Display.iSize W")};
@@ -312,7 +312,7 @@ void Application::declareResource(const oo::Path &path,
 void Application::declareBsaArchive(const oo::Path &bsaFilename) {
   auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
   const auto sysPath{bsaFilename.sysPath()};
-  resGrpMgr.addResourceLocation(sysPath, "BSA", settings::resourceGroup);
+  resGrpMgr.addResourceLocation(sysPath, "BSA", oo::RESOURCE_GROUP);
 }
 
 void Application::declareBsaResources(const oo::Path &bsaFilename) {
@@ -322,7 +322,7 @@ void Application::declareBsaResources(const oo::Path &bsaFilename) {
   const Ogre::StringVectorPtr files{archive->list()};
 
   for (const auto &filename : *files) {
-    declareResource(oo::Path{filename}, settings::resourceGroup);
+    declareResource(oo::Path{filename}, oo::RESOURCE_GROUP);
   }
 }
 

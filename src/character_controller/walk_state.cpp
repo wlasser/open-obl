@@ -23,7 +23,7 @@ WalkState::update(PlayerControllerImpl &impl, float elapsed) {
 
 void WalkState::enter(PlayerControllerImpl &impl) {
   impl.isRunning = false;
-  spdlog::get(settings::log)->info("Entered WalkState");
+  spdlog::get(oo::LOG)->info("Entered WalkState");
 }
 
 } // namespace oo

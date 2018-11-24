@@ -107,7 +107,7 @@ const AddVertexMap &getAddVertexMap() {
 
 BlockGraph createBlockGraph(std::istream &is) {
   using namespace nif;
-  auto logger{spdlog::get(settings::log)};
+  auto logger{spdlog::get(oo::LOG)};
 
   const Version nifVersion{peekVersion(is)};
   compound::Header header{nifVersion};

@@ -7,7 +7,7 @@
 namespace oo {
 
 void MeshLoader::loadResource(Ogre::Resource *resource) {
-  if (!logger) logger = spdlog::get(settings::ogreLog);
+  if (!logger) logger = spdlog::get(oo::OGRE_LOG);
   auto mesh = dynamic_cast<Ogre::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);

@@ -23,7 +23,7 @@ RunState::update(PlayerControllerImpl &impl, float elapsed) {
 
 void RunState::enter(PlayerControllerImpl &impl) {
   impl.isRunning = true;
-  spdlog::get(settings::log)->info("Entered RunState");
+  spdlog::get(oo::LOG)->info("Entered RunState");
 }
 
 } // namespace oo

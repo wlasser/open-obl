@@ -310,7 +310,7 @@ EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
       if (const auto it{std::find(first, last, master)}; it != last) {
         loadOrder.push_back(it - first);
       } else {
-        spdlog::get(settings::log)->critical(
+        spdlog::get(oo::LOG)->critical(
             "{} depends on master {} which is not loaded",
             childPath.view(), master.view());
         throw std::runtime_error("Dependency not met");

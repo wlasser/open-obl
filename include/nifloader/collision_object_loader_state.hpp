@@ -35,7 +35,7 @@ struct CollisionObjectVisitor {
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
   explicit CollisionObjectVisitor(Ogre::CollisionObject *rigidBody)
-      : mRigidBody(rigidBody), mLogger(spdlog::get(settings::log)) {}
+      : mRigidBody(rigidBody), mLogger(spdlog::get(oo::LOG)) {}
 
  private:
   Ogre::CollisionObject *mRigidBody{};

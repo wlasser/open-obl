@@ -17,9 +17,9 @@ class StringsElement {
   Ogre::TextResourceManager &txtMgr{Ogre::TextResourceManager::getSingleton()};
 
   std::stringstream openXMLStream(const std::string &filename) const {
-    auto logger{spdlog::get(settings::log)};
+    auto logger{spdlog::get(oo::LOG)};
     auto &txtMgr{Ogre::TextResourceManager::getSingleton()};
-    auto stringsPtr{txtMgr.getByName(filename, settings::resourceGroup)};
+    auto stringsPtr{txtMgr.getByName(filename, oo::RESOURCE_GROUP)};
     if (!stringsPtr) {
       logger->error("Resource {} does not exist", filename);
       throw std::runtime_error("Failed to open strings file");
@@ -29,7 +29,7 @@ class StringsElement {
   }
 
   pugi::xml_document readXMLDocument(std::stringstream &is) const {
-    auto logger{spdlog::get(settings::log)};
+    auto logger{spdlog::get(oo::LOG)};
     pugi::xml_document doc{};
     pugi::xml_parse_result result{doc.load(is)};
     if (!result) {
@@ -42,7 +42,7 @@ class StringsElement {
 
  public:
   explicit StringsElement(const std::string &filename) {
-    auto logger{spdlog::get(settings::log)};
+    auto logger{spdlog::get(oo::LOG)};
     auto menuStream{openXMLStream(filename)};
     auto doc{readXMLDocument(menuStream)};
 
@@ -62,7 +62,7 @@ class StringsElement {
   Trait<std::string> makeTrait(const std::string &name) const {
     auto it{mStrings.find(name)};
     if (it == mStrings.end()) {
-      spdlog::get(settings::log)->warn("{} is not a strings() trait", name);
+      spdlog::get(oo::LOG)->warn("{} is not a strings() trait", name);
       return Trait<std::string>(name, "");
     }
     const std::string value{it->second};

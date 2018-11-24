@@ -37,7 +37,7 @@ JumpState::handleCollision(PlayerControllerImpl &impl,
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
   const auto gravityVector{impl.rigidBody->getGravity()};
-  spdlog::get(settings::log)->info("Player received of impulse {} N", impulse);
+  spdlog::get(oo::LOG)->info("Player received of impulse {} N", impulse);
   if (r.normalized().dot(gravityVector.normalized()) > std::sqrt(2.0f) / 2.0f) {
     return StandState{};
   }

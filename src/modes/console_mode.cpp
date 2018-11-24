@@ -18,7 +18,7 @@ int ConsoleMode::textEditCallback(gsl::not_null<ImGuiInputTextCallbackData *> da
 }
 
 std::string ConsoleMode::executeCommand(const std::string &cmd) {
-  spdlog::get(settings::log)->info("Console: {}", cmd);
+  spdlog::get(oo::LOG)->info("Console: {}", cmd);
   // TODO: Actually parse this, preferably with the scripting engine
   if (cmd == "QuitGame" || cmd == "qqq") {
     Ogre::Root::getSingleton().queueEndRendering();
