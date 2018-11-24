@@ -23,6 +23,7 @@ class LLVMVisitor {
   llvm::FunctionPassManager mPassManager{};
   llvm::FunctionAnalysisManager mAnalysisManager{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
+  llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
 
   template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
   llvm::Value *visitImpl(const AstNode &node) {

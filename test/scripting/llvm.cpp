@@ -8,8 +8,10 @@ namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 TEST_CASE("can use llvm", "[scripting]") {
   const auto *script = R"script(
 scn MyScript
+
+short smallInt
+
 begin TestLong
-  short smallInt
   set smallInt to 360
 
   long myVar

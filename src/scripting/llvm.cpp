@@ -118,12 +118,16 @@ LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node) {
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node) {
-  auto it{mNamedValues.find(node.content())};
-  if (it == mNamedValues.end()) {
-    // TODO: Variable does not exist
-    return nullptr;
+  if (auto it{mNamedValues.find(node.content())}; it != mNamedValues.end()) {
+    return mIrBuilder.CreateLoad(it->second);
   }
-  return mIrBuilder.CreateLoad(it->second);
+
+  if (auto it{mGlobals.find(node.content())}; it != mGlobals.end()) {
+    return mIrBuilder.CreateLoad(it->second);
+  }
+
+  // TODO: Variable does not exist
+  return nullptr;
 }
 
 template<> llvm::Value *
@@ -203,34 +207,71 @@ LLVMVisitor::visitImpl<FloatLiteral>(const AstNode &node) {
 template<> llvm::Value *
 LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
   std::string varName{node.children[1]->content()};
-  llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
+  llvm::BasicBlock *bb{mIrBuilder.GetInsertBlock()};
 
-  // Create an alloca instruction and default value for the variable
-  llvm::AllocaInst *alloca{};
-  llvm::Value *init{};
+  // Global variable
+  if (!bb) {
+    const auto linkage{llvm::GlobalVariable::ExternalLinkage};
+    llvm::Constant *init{};
+    llvm::Type *type{};
 
-  // TODO: Handle reference variables correctly
-  if (node.children[0]->is<RawShort>()) {
-    alloca = createEntryBlockAlloca<RawShort>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
-  } else if (node.children[0]->is<RawLong>()) {
-    alloca = createEntryBlockAlloca<RawLong>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
-  } else if (node.children[0]->is<RawRef>()) {
-    alloca = createEntryBlockAlloca<RawRef>(fun, varName);
-    init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
+    const auto &declType{node.children[0]};
+    const auto &declName{node.children[1]->content()};
+
+    if (declType->is<RawShort>()) {
+      type = llvm::Type::getInt16Ty(mCtx);
+      init = llvm::ConstantInt::get(type, 0, true);
+    } else if (declType->is<RawLong>()) {
+      type = llvm::Type::getInt32Ty(mCtx);
+      init = llvm::ConstantInt::get(type, 0, true);
+    } else if (declType->is<RawRef>()) {
+      type = llvm::Type::getInt32Ty(mCtx);
+      init = llvm::ConstantInt::get(type, 0, true);
+    } else if (declType->is<RawFloat>()) {
+      type = llvm::Type::getFloatTy(mCtx);
+      init = llvm::ConstantFP::get(type, 0.0);
+    }
+
+    // Create a global variable initialized to zero
+    mModule.getOrInsertGlobal(declName, type);
+    llvm::GlobalVariable *glob{mModule.getNamedGlobal(declName)};
+    glob->setInitializer(init);
+    glob->setDSOLocal(true);
+    glob->setLinkage(linkage);
+
+    mGlobals[declName] = glob;
+
+    return glob;
   } else {
-    alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
-    init = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
+    llvm::Function *fun{bb->getParent()};
+
+    // Create an alloca instruction and default value for the variable
+    llvm::AllocaInst *alloca{};
+    llvm::Value *init{};
+
+    // TODO: Handle reference variables correctly
+    if (node.children[0]->is<RawShort>()) {
+      alloca = createEntryBlockAlloca<RawShort>(fun, varName);
+      init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
+    } else if (node.children[0]->is<RawLong>()) {
+      alloca = createEntryBlockAlloca<RawLong>(fun, varName);
+      init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
+    } else if (node.children[0]->is<RawRef>()) {
+      alloca = createEntryBlockAlloca<RawRef>(fun, varName);
+      init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
+    } else {
+      alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
+      init = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
+    }
+
+    // Keep track of it in the local function table
+    mNamedValues[varName] = alloca;
+
+    // Store an initial value
+    mIrBuilder.CreateStore(init, alloca);
+
+    return alloca;
   }
-
-  // Keep track of it in the local function table
-  mNamedValues[varName] = alloca;
-
-  // Store an initial value
-  mIrBuilder.CreateStore(init, alloca);
-
-  return alloca;
 }
 
 template<> llvm::Value *
@@ -241,13 +282,21 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
     return nullptr;
   }
 
-  auto destIt{mNamedValues.find(node.children[0]->content())};
-  if (destIt == mNamedValues.end()) {
+  llvm::Value *dest = [&]() -> llvm::Value * {
+    auto destName{node.children[0]->content()};
+    if (auto it{mNamedValues.find(destName)}; it != mNamedValues.end()) {
+      return it->second;
+    }
+    if (auto it{mGlobals.find(destName)}; it != mGlobals.end()) {
+      return it->second;
+    }
+    return nullptr;
+  }();
+
+  if (!dest) {
     // TODO: Variable does not exist
     return nullptr;
   }
-
-  llvm::AllocaInst *dest{destIt->second};
 
   // Storing a value into itself does nothing
   if (src == dest) return nullptr;
