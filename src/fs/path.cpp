@@ -1,7 +1,7 @@
 #include "fs/path.hpp"
 #include <stdexcept>
 
-namespace fs {
+namespace oo {
 
 Path::Path(const Path &other) {
   std::unique_lock lock{other.mSysPathMutex};
@@ -109,7 +109,7 @@ std::filesystem::path Path::sysPath() const {
   }
 }
 
-bool Path::match(const fs::Path &pattern) const {
+bool Path::match(const oo::Path &pattern) const {
   // Every character in the pattern corresponds to at least one in the src.
   if (pattern.mPath.size() > mPath.size()) return false;
 
@@ -156,4 +156,4 @@ bool operator!=(const Path &lhs, const Path &rhs) {
   return !(lhs == rhs);
 }
 
-} // namespace fs
+} // namespace oo

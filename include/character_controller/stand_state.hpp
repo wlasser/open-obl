@@ -7,7 +7,7 @@
 #include <optional>
 #include <variant>
 
-namespace character {
+namespace oo {
 
 class JumpState;
 class SneakStandState;
@@ -35,6 +35,6 @@ class StandState : public FallbackState<StandState>,
   void exit(PlayerControllerImpl &) {}
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_STAND_STATE_HPP

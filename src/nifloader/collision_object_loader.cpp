@@ -5,7 +5,7 @@
 #include "ogrebullet/collision_object.hpp"
 #include <OgreException.h>
 
-namespace nifloader {
+namespace oo {
 
 void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
   if (!logger) logger = spdlog::get(settings::ogreLog);
@@ -26,4 +26,4 @@ void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
   CollisionObjectLoaderState instance(collisionObject, nifPtr->getBlockGraph());
 }
 
-} // namespace nifloader
+} // namespace oo

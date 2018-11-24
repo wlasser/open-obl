@@ -42,14 +42,14 @@ class ApplicationContext {
           {nullptr, nullptr}, nullptr
       )};
 
-  std::unique_ptr<KeyMap> keyMap{};
+  std::unique_ptr<oo::event::KeyMap> keyMap{};
 
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
-  nifloader::MeshLoader nifLoader{};
-  nifloader::CollisionObjectLoader nifCollisionLoader{};
+  oo::MeshLoader nifLoader{};
+  oo::CollisionObjectLoader nifCollisionLoader{};
 
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
@@ -63,7 +63,7 @@ class ApplicationContext {
   std::unique_ptr<RefrStaticResolver> refrStaticRes{};
   std::unique_ptr<CellResolver> cellRes{};
 
-  std::unique_ptr<esp::EspCoordinator> espCoordinator{};
+  std::unique_ptr<oo::EspCoordinator> espCoordinator{};
 
  public:
   std::shared_ptr<spdlog::logger> getLogger() {
@@ -74,7 +74,7 @@ class ApplicationContext {
     return *ogreRoot;
   }
 
-  KeyMap &getKeyMap() {
+  oo::event::KeyMap &getKeyMap() {
     return *keyMap;
   }
 

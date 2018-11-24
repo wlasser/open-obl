@@ -8,7 +8,7 @@
 #include <optional>
 #include <variant>
 
-namespace character {
+namespace oo {
 
 using KeyVariant = std::variant<
     event::Forward, event::Backward, event::SlideLeft, event::SlideRight,
@@ -30,6 +30,6 @@ class FallbackState {
   void handleEvent(PlayerControllerImpl &, const event::MouseEvent &) {}
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP

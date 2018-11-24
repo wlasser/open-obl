@@ -6,11 +6,11 @@
 #include <algorithm>
 #include <numeric>
 
-namespace nifloader {
+namespace oo {
 
 Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
                                     Ogre::Matrix4 transformation) {
-  using namespace conversions;
+  using namespace oo;
   const auto fltMin = std::numeric_limits<float>::lowest();
   const auto fltMax = std::numeric_limits<float>::max();
   Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
@@ -44,7 +44,7 @@ bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
 
 long numCCWTriangles(const nif::NiTriShapeData &block) {
   assert(block.hasNormals);
-  using conversions::fromNif;
+  using oo::fromNif;
   return std::count_if(block.triangles.begin(), block.triangles.end(),
                        [&](const auto &tri) {
                          return isWindingOrderCCW(
@@ -145,7 +145,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : block.vertices) {
-      using namespace conversions;
+      using namespace oo;
       const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
       const auto v{transformation * ogreV};
       *it = v.x;
@@ -164,7 +164,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block.normals) {
-      using namespace conversions;
+      using namespace oo;
       const Ogre::Vector4 ogreN{fromBSCoordinates(fromNif(normal))};
       const auto n{normalTransformation * ogreN};
       *it = n.x;
@@ -213,7 +213,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (bitangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
-      using namespace conversions;
+      using namespace oo;
       const Ogre::Vector4 ogreBt{fromBSCoordinates(fromNif(bitangent))};
       const auto bt{normalTransformation * ogreBt};
       *it = bt.x;
@@ -230,7 +230,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (tangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
-      using namespace conversions;
+      using namespace oo;
       const Ogre::Vector4 ogreT{fromBSCoordinates(fromNif(tangent))};
       const auto t{normalTransformation * ogreT};
       *it = t.x;
@@ -314,7 +314,7 @@ void setSourceTexture(const nif::NiSourceTexture &block,
       using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
       auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
       // TODO: Use fs not std::fs
-      tex->setTextureName(conversions::normalizePath(
+      tex->setTextureName(oo::normalizePath(
           texFile.filename.string.str()));
     }
   } else {
@@ -469,17 +469,17 @@ void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
 
 void setMaterialProperties(const nif::NiMaterialProperty &block,
                            Ogre::Pass *pass) {
-  pass->setAmbient(conversions::fromNif(block.ambientColor));
+  pass->setAmbient(oo::fromNif(block.ambientColor));
 
-  auto diffuse{conversions::fromNif(block.diffuseColor)};
+  auto diffuse{oo::fromNif(block.diffuseColor)};
   diffuse.a = block.alpha;
   pass->setDiffuse(diffuse);
 
-  auto specular{conversions::fromNif(block.specularColor)};
+  auto specular{oo::fromNif(block.specularColor)};
   specular.a = block.alpha;
   pass->setSpecular(specular);
 
-  pass->setEmissive(conversions::fromNif(block.emissiveColor));
+  pass->setEmissive(oo::fromNif(block.emissiveColor));
 
   // TODO: How to convert from nif glossiness to Ogre shininess?
   pass->setShininess(block.glossiness);
@@ -802,4 +802,4 @@ void TBGVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
   }
 }
 
-} // namespace nifloader
+} // namespace oo

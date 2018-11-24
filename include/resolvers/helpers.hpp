@@ -45,17 +45,17 @@ using Light = Component<Ogre::Light *>;
 
 template<class T>
 Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
-  fs::Path rawPath;
+  oo::Path rawPath;
   using modl_t = decltype(rec.modelFilename);
   if constexpr (std::is_same_v<modl_t, std::optional<record::MODL>>) {
     if (!rec.modelFilename) return nullptr;
-    rawPath = fs::Path{rec.modelFilename->data};
+    rawPath = oo::Path{rec.modelFilename->data};
   } else if constexpr (std::is_same_v<modl_t, record::MODL>) {
-    rawPath = fs::Path{rec.modelFilename.data};
+    rawPath = oo::Path{rec.modelFilename.data};
   } else {
     static_assert(false_v<T>, "Missing MODL record");
   }
-  std::string meshName{(fs::Path{"meshes"} / rawPath).c_str()};
+  std::string meshName{(oo::Path{"meshes"} / rawPath).c_str()};
   return mgr->createEntity(meshName);
 }
 

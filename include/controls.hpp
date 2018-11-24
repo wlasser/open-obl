@@ -7,7 +7,7 @@
 #include <string_view>
 #include <variant>
 
-namespace event {
+namespace oo::event {
 
 struct KeyEvent {
   bool down{true};
@@ -52,8 +52,6 @@ struct Pitch : MouseEvent {};
 struct Yaw : MouseEvent {};
 
 using MouseVariant = std::variant<Pitch, Yaw>;
-
-} // namespace event
 
 constexpr static inline std::array<sdl::KeyCode, 256> directInputKeyMap{
     sdl::KeyCode::Unknown,
@@ -389,5 +387,7 @@ class KeyMap {
     attach<event::SystemMenu>(getSetting("System Menu", "0001FFFF"));
   }
 };
+
+} // namespace oo::event
 
 #endif // OPENOBLIVION_CONTROLS_HPP

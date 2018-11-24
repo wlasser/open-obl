@@ -40,7 +40,7 @@ reifyRecord(const record::REFR_LIGH &refRec,
 
   // TODO: These could do with more tuning
   const auto radius{std::max(gsl::narrow_cast<float>(data.radius)
-                                 * conversions::metersPerUnit<float>, 0.01f)};
+                                 * oo::metersPerUnit<float>, 0.01f)};
   light->setAttenuation(radius, 1.0f, 3.0f / radius, 5.0f / (radius * radius));
 
   light->setPowerScale(baseRec->fadeValue ? baseRec->fadeValue->data : 1.0f);

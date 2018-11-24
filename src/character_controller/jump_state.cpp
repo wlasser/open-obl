@@ -7,7 +7,7 @@
 #include <cmath>
 #include <optional>
 
-namespace character {
+namespace oo {
 
 std::optional<JumpState>
 JumpState::update(PlayerControllerImpl &impl, float elapsed) {
@@ -44,4 +44,4 @@ JumpState::handleCollision(PlayerControllerImpl &impl,
   return std::nullopt;
 }
 
-} // namespace character
+} // namespace oo

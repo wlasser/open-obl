@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-namespace fs {
+namespace oo {
 
 /// Lightweight alternative to dealing with std::filesystem::path when paths are
 /// very simple. This class represents a case-insensitive file or directory path
@@ -87,7 +87,7 @@ class Path {
   /// The subsequence `**` of a pattern acts consistently; it will match every
   /// character in the path until a literal `*` is found. There is no way to
   /// explicitly match for a literal `*`.
-  bool match(const fs::Path &pattern) const;
+  bool match(const oo::Path &pattern) const;
 
   inline std::string_view view() const {
     return std::string_view{mPath};
@@ -116,6 +116,6 @@ class Path {
   friend bool operator!=(const Path &lhs, const Path &rhs);
 };
 
-} // namespace fs
+} // namespace oo
 
 #endif // OPENOBLIVION_FS_PATH_HPP

@@ -7,7 +7,7 @@
 #include <cmath>
 #include <memory>
 
-namespace character {
+namespace oo {
 
 std::optional<SneakJumpState>
 SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
@@ -43,4 +43,4 @@ SneakJumpState::handleCollision(PlayerControllerImpl &impl,
   return std::nullopt;
 }
 
-} // namespace character
+} // namespace oo

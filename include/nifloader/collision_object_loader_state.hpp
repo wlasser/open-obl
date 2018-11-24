@@ -10,12 +10,12 @@
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 
-namespace nifloader {
+namespace oo {
 
 class CollisionObjectLoaderState {
  public:
   CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
-                             nifloader::BlockGraph blocks);
+                             oo::BlockGraph blocks);
 };
 
 struct CollisionObjectVisitor {
@@ -103,6 +103,6 @@ struct CollisionObjectVisitor {
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
 
-} // namespace nifloader
+} // namespace oo
 
 #endif // OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_STATE_HPP

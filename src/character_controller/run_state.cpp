@@ -3,7 +3,7 @@
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
-namespace character {
+namespace oo {
 
 std::optional<WalkState>
 RunState::handleEvent(PlayerControllerImpl &impl, const event::Run &event) {
@@ -26,4 +26,4 @@ void RunState::enter(PlayerControllerImpl &impl) {
   spdlog::get(settings::log)->info("Entered RunState");
 }
 
-} // namespace character
+} // namespace oo

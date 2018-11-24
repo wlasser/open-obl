@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <vector>
 
-namespace nifloader {
+namespace oo {
 
 // Ogre::SubMeshes do not store bounding box information, only Ogre::Meshes do,
 // but we need it to compute the overall bounding box.
@@ -198,6 +198,6 @@ auto MeshLoaderState::getBlockIndex(const T &block) {
                       comp);
 }
 
-} // namespace nifloader
+} // namespace oo
 
 #endif // OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP

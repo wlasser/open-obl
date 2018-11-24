@@ -6,7 +6,7 @@
 #include "character_controller/player_controller_impl.hpp"
 #include <optional>
 
-namespace character {
+namespace oo {
 
 class RunState;
 
@@ -29,6 +29,6 @@ class WalkState : public FallbackState<WalkState>,
   void exit(PlayerControllerImpl &) {}
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_WALK_STATE_HPP

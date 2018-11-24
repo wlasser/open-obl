@@ -10,7 +10,7 @@
 #include <string>
 #include <string_view>
 
-namespace nifloader {
+namespace oo {
 
 nif::Version peekVersion(std::istream &is) {
   const auto startPos{is.tellg()};
@@ -218,5 +218,5 @@ BlockGraph createBlockGraph(std::istream &is) {
   return blocks;
 }
 
-} // namespace nifloader
+} // namespace oo
 

@@ -8,7 +8,7 @@
 #include <OgreMath.h>
 #include <optional>
 
-namespace character {
+namespace oo {
 
 template<class State>
 struct MoveAbility {
@@ -57,6 +57,6 @@ struct CollideAbility {
   }
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_ABILITIES_HPP

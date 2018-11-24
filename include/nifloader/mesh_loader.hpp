@@ -5,7 +5,7 @@
 #include <Ogre.h>
 #include <memory>
 
-namespace nifloader {
+namespace oo {
 
 // Handles custom loading of Nif files for Ogre. Each instance of this class is
 // expected to load more than one nif file, so it cannot really be stateful.
@@ -22,6 +22,6 @@ class MeshLoader : public Ogre::ManualResourceLoader {
   //void prepareResource(Ogre::Resource *resource) override;
 };
 
-} // namespace nifloader
+} // namespace oo
 
 #endif // OPENOBLIVION_NIFLOADER_MESH_LOADER_HPP

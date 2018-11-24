@@ -25,9 +25,9 @@ class BsaArchive : public Ogre::Archive {
   find(const Ogre::String &pattern,
        bool recursive,
        bool dirs,
-       const std::function<T(fs::Path)> &f) const;
+       const std::function<T(oo::Path)> &f) const;
 
-  Ogre::FileInfo getFileInfo(const fs::Path &path) const;
+  Ogre::FileInfo getFileInfo(const oo::Path &path) const;
 
  public:
   BsaArchive(const Ogre::String &name, const Ogre::String &archType);
@@ -71,18 +71,18 @@ std::shared_ptr<std::vector<T>>
 BsaArchive::find(const Ogre::String &pattern,
                  bool recursive,
                  bool dirs,
-                 const std::function<T(fs::Path)> &f) const {
+                 const std::function<T(oo::Path)> &f) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
 
   // If the pattern involves a folder, then we match both the folder and the
   // filename, otherwise we match only the filename in any folder.
-  fs::Path patternPath{pattern};
+  oo::Path patternPath{pattern};
   const bool fileOnly{patternPath.folder().empty()};
 
   auto ret{std::make_shared<std::vector<T>>()};
 
   for (const auto &folder : *reader) {
-    fs::Path folderPath{folder.name};
+    oo::Path folderPath{folder.name};
     if (dirs) {
       // Only want to check directories, not files
       if (folderPath.match(patternPath)) {
@@ -91,7 +91,7 @@ BsaArchive::find(const Ogre::String &pattern,
     } else {
       // Want to check for files
       for (const auto &file : folder.files) {
-        const fs::Path filePath{file};
+        const oo::Path filePath{file};
         const auto path{fileOnly ? filePath : (folderPath / filePath)};
         if (path.match(patternPath)) {
           ret->push_back(f(folderPath / filePath));
@@ -103,7 +103,7 @@ BsaArchive::find(const Ogre::String &pattern,
   return ret;
 }
 
-Ogre::FileInfo BsaArchive::getFileInfo(const fs::Path &path) const {
+Ogre::FileInfo BsaArchive::getFileInfo(const oo::Path &path) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
 
   Ogre::FileInfo info;
@@ -140,7 +140,7 @@ BsaArchive::BsaArchive(const Ogre::String &name,
 
 bool BsaArchive::exists(const Ogre::String &filename) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
-  fs::Path path{filename};
+  oo::Path path{filename};
   const auto file{path.filename()};
   const auto folder{path.folder()};
   return reader->contains(std::string{folder}, std::string{file});
@@ -148,7 +148,7 @@ bool BsaArchive::exists(const Ogre::String &filename) const {
 
 Ogre::StringVectorPtr BsaArchive::find(const Ogre::String &pattern,
                                        bool recursive, bool dirs) const {
-  return find<std::string>(pattern, recursive, dirs, [](const fs::Path &path) {
+  return find<std::string>(pattern, recursive, dirs, [](const oo::Path &path) {
     return std::string{path.c_str()};
   });
 }
@@ -157,7 +157,7 @@ Ogre::FileInfoListPtr BsaArchive::findFileInfo(const Ogre::String &pattern,
                                                bool recursive,
                                                bool dirs) const {
   return find<Ogre::FileInfo>(pattern, recursive, dirs,
-                              [this](const fs::Path &path) {
+                              [this](const oo::Path &path) {
                                 return getFileInfo(path);
                               });
 }
@@ -182,7 +182,7 @@ void BsaArchive::unload() {
 Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
                                      bool /*readOnly*/) const {
   if (!exists(filename)) return std::shared_ptr<Ogre::DataStream>(nullptr);
-  const fs::Path path{filename};
+  const oo::Path path{filename};
   const auto file{path.filename()};
   const auto folder{path.folder()};
   return std::make_shared<BsaArchiveStream>(

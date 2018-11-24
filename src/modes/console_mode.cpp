@@ -109,7 +109,7 @@ ConsoleMode::transition_t
 ConsoleMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   // Pop if a event::Console is down
   if (auto keyEvent{ctx.getKeyMap().translateKey(event)}; keyEvent) {
-    if (auto *conEvent{std::get_if<event::Console>(&*keyEvent)}; conEvent) {
+    if (auto *conEvent{std::get_if<oo::event::Console>(&*keyEvent)}; conEvent) {
       return {conEvent->down, std::nullopt};
     }
   }

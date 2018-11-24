@@ -2,20 +2,20 @@
 #include "game_settings.hpp"
 #include <fstream>
 
-namespace esp {
+namespace oo {
 
-std::vector<fs::Path> getMasters(const fs::Path &espFilename) {
+std::vector<oo::Path> getMasters(const oo::Path &espFilename) {
   const auto &gameSettings{GameSettings::getSingleton()};
-  const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
+  const oo::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
 
   std::ifstream esp(espFilename.sysPath(), std::ifstream::binary);
   auto masters{record::readRecord<record::TES4>(esp).masters};
 
-  std::vector<fs::Path> paths(masters.size());
+  std::vector<oo::Path> paths(masters.size());
   std::transform(masters.begin(), masters.end(), paths.begin(),
                  [&dataPath](const record::raw::TES4::Master &entry) {
                    std::string masterBasename{entry.master.data};
-                   return dataPath / fs::Path{masterBasename};
+                   return dataPath / oo::Path{masterBasename};
                  });
   return paths;
 }
@@ -74,7 +74,7 @@ EspAccessor EspCoordinator::makeAccessor(int modIndex) {
   return EspAccessor(modIndex, this);
 }
 
-std::optional<int> EspCoordinator::getModIndex(fs::Path modName) const {
+std::optional<int> EspCoordinator::getModIndex(oo::Path modName) const {
   const auto begin{mLoadOrder.begin()};
   const auto end{mLoadOrder.end()};
   const auto it{std::find_if(begin, end, [modName](const EspEntry &e) {
@@ -533,4 +533,4 @@ EspCoordinator::translateFormIds(record::RecordHeader rec, int modIndex) const {
   return rec;
 }
 
-} // namespace esp
+} // namespace oo

@@ -10,7 +10,7 @@
 #include <memory>
 #include <optional>
 
-namespace character {
+namespace oo {
 
 struct PlayerControllerImpl {
   GameSetting<float> fMoveCharWalkMin{"fMoveCharWalkMin", 90.0f};
@@ -104,7 +104,7 @@ struct PlayerControllerImpl {
                  bool hasWeaponOut) const noexcept {
     return baseSpeed(speedAttribute) * runModifier(athleticsSkill)
         * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * conversions::metersPerUnit<float>;
+        * oo::metersPerUnit<float>;
   }
 
   // Overall movement speed while walking, in m/s.
@@ -115,7 +115,7 @@ struct PlayerControllerImpl {
                   bool hasWeaponOut) const noexcept {
     return baseSpeed(speedAttribute)
         * encumbranceModifier(wornWeight, hasWeaponOut)
-        * height * conversions::metersPerUnit<float>;
+        * height * oo::metersPerUnit<float>;
   }
 
   // Overall movement speed while 'running' in water, in m/s.
@@ -126,7 +126,7 @@ struct PlayerControllerImpl {
                      bool hasWeaponOut) const noexcept {
     return baseSpeed(speedAttribute) * swimRunModifier(athleticsSkill)
         * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * conversions::metersPerUnit<float>;
+        * oo::metersPerUnit<float>;
   }
 
   // Overall movement speed while 'walking' in water, in m/s.
@@ -137,17 +137,17 @@ struct PlayerControllerImpl {
                       bool hasWeaponOut) const noexcept {
     return baseSpeed(speedAttribute) * swimWalkModifier(athleticsSkill)
         * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * conversions::metersPerUnit<float>;
+        * oo::metersPerUnit<float>;
   }
 
   // Distance from jump apex to ground, in m.
   float jumpHeight(float acrobaticsSkill) const noexcept {
     const float heightRange{*fJumpHeightMax - *fJumpHeightMin};
     return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
-        * conversions::metersPerUnit<float>;
+        * oo::metersPerUnit<float>;
   }
 
-  float height{raceHeight * 128 * conversions::metersPerUnit < float > };
+  float height{raceHeight * 128 * oo::metersPerUnit<float>};
   float mass{80.0f};
 
   Ogre::Radian pitch{0.0f};
@@ -165,7 +165,7 @@ struct PlayerControllerImpl {
 
   float getMoveSpeed() const noexcept {
     const float base{baseSpeed(speedAttribute) * raceHeight
-                         * conversions::metersPerUnit<float>};
+                         * oo::metersPerUnit<float>};
     const float weightMult{encumbranceModifier(wornWeight, hasWeaponOut)};
     return base * weightMult
         * (speedModifier ? speedModifier(hasWeaponOut, isRunning) : 1.0f);
@@ -189,9 +189,8 @@ struct PlayerControllerImpl {
     // This is a rotation of the standard basis, so is still in SO(3)
     const auto axes{cameraNode->getLocalAxes()};
     if (auto length = localVelocity.length() > 0.01f) {
-      using namespace Ogre::conversions;
       const auto v{rigidBody->getLinearVelocity()};
-      auto newV{toBullet(axes * localVelocity / length * speed)};
+      auto newV{Ogre::toBullet(axes * localVelocity / length * speed)};
       newV.setY(v.y());
       rigidBody->setLinearVelocity(newV);
     } else {
@@ -208,6 +207,6 @@ struct PlayerControllerImpl {
 
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP

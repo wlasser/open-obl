@@ -29,11 +29,11 @@ void NifResource::loadImpl() {
   auto dataStreamBuf{OgreDataStreambuf{dataStream}};
   std::istream is{&dataStreamBuf};
 
-  mBlockGraph = nifloader::createBlockGraph(is);
+  mBlockGraph = oo::createBlockGraph(is);
 }
 
 void NifResource::unloadImpl() {
-  mBlockGraph = nifloader::BlockGraph{};
+  mBlockGraph = oo::BlockGraph{};
 }
 
 } // namespace Ogre

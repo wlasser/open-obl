@@ -28,7 +28,7 @@ class Resolver<record::CELL> {
     /// This is measured from the epoch.
     int mDetachTime{};
     /// Accessors, in load order of mods that modify the contents of the cell.
-    std::vector<esp::EspAccessor> mAccessors{};
+    std::vector<oo::EspAccessor> mAccessors{};
     /// All reference records inside the cell.
     /// This includes both esp records and ess records.
     absl::flat_hash_set<RefId> mReferences{};
@@ -53,7 +53,7 @@ class Resolver<record::CELL> {
   std::pair<RecordIterator, bool>
   insertOrAppend(BaseId baseId,
                  const record::CELL &rec,
-                 esp::EspAccessor accessor);
+                 oo::EspAccessor accessor);
 
   friend class InitialRecordVisitor;
   class CellVisitor;
@@ -119,12 +119,12 @@ class Resolver<record::CELL>::CellVisitor {
         mBaseCtx(std::move(baseCtx)) {}
 
   template<class R>
-  void readRecord(esp::EspAccessor &accessor) {
+  void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();
   }
 
   template<>
-  void readRecord<record::REFR>(esp::EspAccessor &accessor);
+  void readRecord<record::REFR>(oo::EspAccessor &accessor);
 };
 
 class Cell {

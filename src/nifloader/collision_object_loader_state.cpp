@@ -8,11 +8,11 @@
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-namespace nifloader {
+namespace oo {
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject,
-    nifloader::BlockGraph blocks) {
+    oo::BlockGraph blocks) {
 
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto indexMap{boost::get(boost::vertex_index, blocks)};
@@ -116,12 +116,9 @@ CollisionObjectVisitor::parseWorldObject(const Graph &g,
 
 Ogre::RigidBodyInfo
 CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) const {
-  using namespace conversions;
-  using namespace Ogre::conversions;
-
   // This does not seem to affect the translation in any way.
   // TODO: What is the Havok origin used for?
-  const Ogre::Vector3 origin{fromNif(block.center).xyz()};
+  const Ogre::Vector3 origin{oo::fromNif(block.center).xyz()};
 
   // Bullet needs a diagonalized inertia tensor given as a vector, and the
   // file stores it as a 3x4 matrix. We ignore the last (w) column and
@@ -130,7 +127,7 @@ CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) 
   const Ogre::Matrix3 bsI{hkI.m11, hkI.m12, hkI.m13,
                           hkI.m21, hkI.m22, hkI.m23,
                           hkI.m31, hkI.m32, hkI.m33};
-  const Ogre::Matrix3 inertiaTensor{fromBSCoordinates(bsI)};
+  const Ogre::Matrix3 inertiaTensor{oo::fromBSCoordinates(bsI)};
   std::array<Ogre::Vector3, 3> principalAxes{};
   Ogre::Vector3 principalMoments{};
   inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
@@ -156,7 +153,7 @@ CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) 
   // TODO: Constraints
 
   // Convert the Ogre parameters to Bullet ones and set up the rigid body
-  const btVector3 bulletInertia{toBullet(principalMoments)};
+  const btVector3 bulletInertia{Ogre::toBullet(principalMoments)};
   btRigidBody::btRigidBodyConstructionInfo
       info(mass, nullptr, nullptr, bulletInertia);
   info.m_linearDamping = linearDamping;
@@ -221,7 +218,7 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 
   const Ogre::Matrix4 scaleMat = [&shape]() {
     Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-    s.setScale(conversions::fromNif(shape.scale).xyz());
+    s.setScale(oo::fromNif(shape.scale).xyz());
     return s;
   }();
 
@@ -242,11 +239,10 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   for (const auto &vertex : shape.vertices) {
-    using namespace conversions;
-    using namespace Ogre::conversions;
-    const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex).xyz()), 1.0f};
+    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex).xyz()),
+                              1.0f};
     const auto v{mTransform * ogreV * 7.0f};
-    collisionShape->addPoint(toBullet(v.xyz()));
+    collisionShape->addPoint(Ogre::toBullet(v.xyz()));
   }
   return collisionShape;
 }
@@ -261,15 +257,13 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   // If necessary, one could check that the box stays axis-aligned by
   // extracting the rotation and comparing the volumes of the original
   // axis-aligned box and the rotated axis-aligned box.
-  using namespace conversions;
-  using namespace Ogre::conversions;
   auto collisionShape{std::make_unique<btConvexHullShape>()};
-  const Ogre::Vector3 halfExtents{fromNif(shape.dimensions).xyz()};
+  const Ogre::Vector3 halfExtents{oo::fromNif(shape.dimensions).xyz()};
   const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
   for (const auto &corner : box.getAllCorners()) {
-    const Ogre::Vector4 ogreV{fromBSCoordinates(corner), 1.0f};
+    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(corner), 1.0f};
     const auto v{mTransform * ogreV * 7.0f};
-    collisionShape->addPoint(toBullet(v.xyz()));
+    collisionShape->addPoint(Ogre::toBullet(v.xyz()));
   }
   return collisionShape;
 }
@@ -327,7 +321,7 @@ CollisionObjectVisitor::fillVertexBuffer(std::vector<float> &vertexBuf,
   vertexBuf.assign(block.numVertices * 3u, 0.0f);
   auto it{vertexBuf.begin()};
   for (const auto &vertex : block.vertices) {
-    using namespace conversions;
+    using namespace oo;
     const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
     const auto v{mTransform * ogreV};
     *it++ = v.x;
@@ -338,7 +332,7 @@ CollisionObjectVisitor::fillVertexBuffer(std::vector<float> &vertexBuf,
 }
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
-  using namespace conversions;
+  using namespace oo;
   Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
   t.makeTransform(fromBSCoordinates(fromNif(body.translation).xyz()),
                   Ogre::Vector3::UNIT_SCALE,
@@ -346,4 +340,4 @@ Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
   return t;
 }
 
-} // namespace nifloader
+} // namespace oo

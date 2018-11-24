@@ -6,7 +6,7 @@
 std::pair<Resolver<record::CELL>::RecordIterator, bool>
 Resolver<record::CELL>::insertOrAppend(BaseId baseId,
                                        const record::CELL &rec,
-                                       esp::EspAccessor accessor) {
+                                       oo::EspAccessor accessor) {
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
   Metadata meta{0, {accessor}, {}};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
@@ -70,7 +70,7 @@ void Resolver<record::CELL>::load(BaseId baseId,
   CellVisitor visitor(meta, refrCtx, baseCtx);
   // Taking accessors by value so subsequent reads will work
   for (auto accessor : meta.mAccessors) {
-    esp::readCellChildren(accessor, visitor, visitor, visitor);
+    oo::readCellChildren(accessor, visitor, visitor, visitor);
   }
 }
 
@@ -82,7 +82,7 @@ Resolver<record::CELL>::getReferences(BaseId baseId) const {
 }
 
 template<> void
-Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(esp::EspAccessor &accessor) {
+Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
   const auto &statRes{std::get<const Resolver<record::STAT> &>(mBaseCtx)};
@@ -174,7 +174,7 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
                             const record::raw::REFRTransformation &transform) {
   const auto &data{transform.positionRotation.data};
 
-  node->setPosition(conversions::fromBSCoordinates({data.x, data.y, data.z}));
+  node->setPosition(oo::fromBSCoordinates({data.x, data.y, data.z}));
 
   if (transform.scale) {
     const float scale{transform.scale->data};
@@ -190,7 +190,7 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   rotX.FromAngleAxis(Ogre::Vector3::UNIT_X, Ogre::Radian(-data.aX));
   rotY.FromAngleAxis(Ogre::Vector3::UNIT_Y, Ogre::Radian(-data.aY));
   rotZ.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-data.aZ));
-  const auto rotMat{conversions::fromBSCoordinates(rotX * rotY * rotZ)};
+  const auto rotMat{oo::fromBSCoordinates(rotX * rotY * rotZ)};
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 }

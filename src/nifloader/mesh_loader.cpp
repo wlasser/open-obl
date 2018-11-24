@@ -4,7 +4,7 @@
 #include "settings.hpp"
 #include <OgreException.h>
 
-namespace nifloader {
+namespace oo {
 
 void MeshLoader::loadResource(Ogre::Resource *resource) {
   if (!logger) logger = spdlog::get(settings::ogreLog);
@@ -26,4 +26,4 @@ void MeshLoader::loadResource(Ogre::Resource *resource) {
   MeshLoaderState instance(mesh, nifPtr->getBlockGraph());
 }
 
-} // namespace nifloader
+} // namespace oo

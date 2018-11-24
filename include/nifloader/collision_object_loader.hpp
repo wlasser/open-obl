@@ -4,7 +4,7 @@
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 
-namespace nifloader {
+namespace oo {
 
 class CollisionObjectLoader : public Ogre::ManualResourceLoader {
  private:
@@ -16,6 +16,6 @@ class CollisionObjectLoader : public Ogre::ManualResourceLoader {
   void loadResource(Ogre::Resource *resource) override;
 };
 
-} // namespace nifloader
+} // namespace oo
 
 #endif // OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP

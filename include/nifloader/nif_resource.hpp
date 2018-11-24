@@ -20,7 +20,7 @@ class NifResource : public Ogre::Resource {
     unload();
   }
 
-  using BlockGraph = nifloader::BlockGraph;
+  using BlockGraph = oo::BlockGraph;
 
   BlockGraph getBlockGraph() const;
 

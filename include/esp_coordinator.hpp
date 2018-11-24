@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-namespace esp {
+namespace oo {
 
 class EspAccessor;
 
@@ -40,7 +40,7 @@ class EspCoordinator {
 
   struct EspEntry {
     // Path of the esp file.
-    fs::Path filename{};
+    oo::Path filename{};
     // Local load order of the esp given as indices into mLoadOrder. The last
     // element is the index of this esp.
     std::vector<int> localLoadOrder{};
@@ -49,7 +49,7 @@ class EspCoordinator {
 
     EspEntry() = delete;
     template<class InputIt>
-    EspEntry(fs::Path name, Streams::iterator it, InputIt loadOrderStart,
+    EspEntry(oo::Path name, Streams::iterator it, InputIt loadOrderStart,
              InputIt loadOrderEnd) : filename(std::move(name)), it(it) {
       localLoadOrder.insert(localLoadOrder.end(), loadOrderStart, loadOrderEnd);
     }
@@ -87,7 +87,7 @@ class EspCoordinator {
   Streams::iterator getAvailableStream(EspEntry &esp);
 
  public:
-  // first and last are iterators to a collection of fs::Paths equal to the mod
+  // first and last are iterators to a collection of oo::Paths equal to the mod
   // filenames sorted in load order from 'load first' to 'load last'.
   template<class InputIt>
   EspCoordinator(InputIt first, InputIt last);
@@ -104,7 +104,7 @@ class EspCoordinator {
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
   // Return the mod index (i.e. position in the load order) of the given mod.
-  std::optional<int> getModIndex(fs::Path modName) const;
+  std::optional<int> getModIndex(oo::Path modName) const;
 
   // Returns the number of mods in the load order
   int getNumMods() const;
@@ -293,12 +293,12 @@ class EspAccessor {
 // Load espFilename, read the TES4 record, and return the names of its masters.
 // espFilename should be prefixed with the data folder. The returned names will
 // be prefixed by the data folder.
-std::vector<fs::Path> getMasters(const fs::Path &espFilename);
+std::vector<oo::Path> getMasters(const oo::Path &espFilename);
 
 template<class InputIt>
 EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
   auto out{std::back_inserter(mLoadOrder)};
-  std::transform(first, last, out, [&](const fs::Path &childPath) {
+  std::transform(first, last, out, [&](const oo::Path &childPath) {
     // Putting the child esp at the end of its own master list ensures that
     // the child esp appears last in its local load order.
     auto masters{getMasters(childPath)};
@@ -356,6 +356,6 @@ EspCoordinator::translateFormIds(record::Record<T, c> rec, int modIndex) const {
   return rec;
 }
 
-} // namespace esp
+} // namespace oo
 
 #endif // OPENOBLIVION_ESP_COORDINATOR_HPP

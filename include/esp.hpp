@@ -35,7 +35,7 @@
 // When a CELL record appears, it is (almost) always followed by a CellChildren
 // subgroup. It is expected that `readRecord<CELL>` read (or skip) both the CELL
 // record and all its children. The `readCellChildren` method assists with this.
-namespace esp {
+namespace oo {
 
 // Read an entire esp file from the beginning, delegating the actual reading
 // to the visitor.
@@ -232,6 +232,6 @@ void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
   }
 }
 
-} // namespace esp
+} // namespace oo
 
 #endif // OPENOBLIVION_ESP_HPP

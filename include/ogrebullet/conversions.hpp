@@ -4,7 +4,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <Ogre.h>
 
-namespace Ogre::conversions {
+namespace Ogre {
 
 inline btVector3 toBullet(const Ogre::Vector3 &v) {
   return btVector3{v.x, v.y, v.z};
@@ -28,6 +28,6 @@ inline Ogre::Quaternion fromBullet(const btQuaternion &q) {
   return Ogre::Quaternion{q.w(), q.x(), q.y(), q.z()};
 }
 
-} // namespace Ogre::conversions
+} // namespace Ogre
 
 #endif // OPENOBLIVION_OGREBULLET_CONVERSIONS_HPP

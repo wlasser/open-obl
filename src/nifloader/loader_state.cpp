@@ -2,10 +2,10 @@
 #include "nifloader/loader_state.hpp"
 #include <stdexcept>
 
-namespace nifloader {
+namespace oo {
 
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
-  using namespace conversions;
+  using namespace oo;
   Ogre::Vector3 translation{fromBSCoordinates(fromNif(block.translation))};
 
   Ogre::Matrix3 rotationMatrix{fromBSCoordinates(fromNif(block.rotation))};
@@ -18,4 +18,4 @@ Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
   return trans;
 }
 
-} // namespace nifloader
+} // namespace oo

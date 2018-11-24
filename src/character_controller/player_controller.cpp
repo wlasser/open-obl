@@ -7,7 +7,7 @@
 #include <optional>
 #include <variant>
 
-namespace character {
+namespace oo {
 
 PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   impl.camera = scnMgr->createCamera("PlayerCamera");
@@ -185,4 +185,4 @@ void PlayerController::changeState(MovementStateVariant newState) {
   enter(movementState);
 }
 
-} // namespace character
+} // namespace oo

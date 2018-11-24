@@ -26,13 +26,13 @@ MotionState &MotionState::operator=(MotionState &&other) noexcept {
 
 void MotionState::getWorldTransform(btTransform &worldTrans) const {
   worldTrans.setIdentity();
-  worldTrans.setOrigin(conversions::toBullet(mPosition));
-  worldTrans.setRotation(conversions::toBullet(mOrientation));
+  worldTrans.setOrigin(Ogre::toBullet(mPosition));
+  worldTrans.setRotation(Ogre::toBullet(mOrientation));
 }
 
 void MotionState::setWorldTransform(const btTransform &worldTrans) {
-  mPosition = conversions::fromBullet(worldTrans.getOrigin());
-  mOrientation = conversions::fromBullet(worldTrans.getRotation());
+  mPosition = Ogre::fromBullet(worldTrans.getOrigin());
+  mOrientation = Ogre::fromBullet(worldTrans.getRotation());
   mNode->setPosition(mPosition);
   mNode->setOrientation(mOrientation);
 }

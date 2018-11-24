@@ -45,7 +45,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.windows = createWindow(windowName);
 
   // Set the keyboard configuration
-  ctx.keyMap = std::make_unique<KeyMap>(gameSettings);
+  ctx.keyMap = std::make_unique<oo::event::KeyMap>(gameSettings);
 
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
@@ -83,7 +83,7 @@ Application::Application(std::string windowName) : FrameListener() {
   archiveMgr.addArchiveFactory(ctx.bsaArchiveFactory.get());
 
   // Grab the data folder from the ini file
-  const fs::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
+  const oo::Path dataPath{gameSettings.get("General.SLocalMasterPath", "Data")};
 
   // Loading from the filesystem is favoured over bsa files so that mods can
   // replace data. Marking the folder as recursive means that files are
@@ -123,8 +123,8 @@ Application::Application(std::string windowName) : FrameListener() {
   for (int i = 0; i < loadOrder.size(); ++i) {
     ctx.logger->info("0x{:0>2x} {}", i, loadOrder[i].view());
   }
-  ctx.espCoordinator = std::make_unique<esp::EspCoordinator>(loadOrder.begin(),
-                                                             loadOrder.end());
+  ctx.espCoordinator = std::make_unique<oo::EspCoordinator>(loadOrder.begin(),
+                                                            loadOrder.end());
   // Read the main esm
   InitialRecordVisitor initialRecordVisitor(ctx.doorRes.get(),
                                             ctx.lightRes.get(),
@@ -134,7 +134,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                             ctx.refrStaticRes.get(),
                                             ctx.cellRes.get());
   for (int i = 0; i < loadOrder.size(); ++i) {
-    esp::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
+    oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }
 
   modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
@@ -265,19 +265,19 @@ Application::createWindow(const std::string &windowName) {
   return {std::move(sdlWindow), std::move(ogreWindow)};
 }
 
-std::vector<fs::Path>
-Application::parseBsaList(const fs::Path &masterPath, const std::string &list) {
+std::vector<oo::Path>
+Application::parseBsaList(const oo::Path &masterPath, const std::string &list) {
   std::vector<std::string> names{};
 
   // Split them on commas, this leaves trailing whitespace
   boost::split(names, list, [](char c) { return c == ','; });
 
   // Trim the whitespace and append the data folder
-  std::vector<fs::Path> filenames(names.size());
+  std::vector<oo::Path> filenames(names.size());
   std::transform(names.begin(), names.end(), filenames.begin(),
                  [&masterPath](std::string name) {
                    boost::trim(name);
-                   return masterPath / fs::Path{name};
+                   return masterPath / oo::Path{name};
                  });
 
   // Reject any invalid ones
@@ -290,7 +290,7 @@ Application::parseBsaList(const fs::Path &masterPath, const std::string &list) {
   return filenames;
 }
 
-void Application::declareResource(const fs::Path &path,
+void Application::declareResource(const oo::Path &path,
                                   const std::string &resourceGroup) {
   using namespace std::literals;
   auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
@@ -309,25 +309,25 @@ void Application::declareResource(const fs::Path &path,
   }
 }
 
-void Application::declareBsaArchive(const fs::Path &bsaFilename) {
+void Application::declareBsaArchive(const oo::Path &bsaFilename) {
   auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
   const auto sysPath{bsaFilename.sysPath()};
   resGrpMgr.addResourceLocation(sysPath, "BSA", settings::resourceGroup);
 }
 
-void Application::declareBsaResources(const fs::Path &bsaFilename) {
+void Application::declareBsaResources(const oo::Path &bsaFilename) {
   auto &archiveMgr{Ogre::ArchiveManager::getSingleton()};
   const auto sysPath{bsaFilename.sysPath()};
   const Ogre::Archive *archive{archiveMgr.load(sysPath, "BSA", true)};
   const Ogre::StringVectorPtr files{archive->list()};
 
   for (const auto &filename : *files) {
-    declareResource(fs::Path{filename}, settings::resourceGroup);
+    declareResource(oo::Path{filename}, settings::resourceGroup);
   }
 }
 
-std::vector<fs::Path> Application::getLoadOrder(const fs::Path &masterPath) {
-  // TODO: Use an fs::DirectoryIterator for case-insensitivity
+std::vector<oo::Path> Application::getLoadOrder(const oo::Path &masterPath) {
+  // TODO: Use an oo::DirectoryIterator for case-insensitivity
   const auto sysPath{masterPath.sysPath()};
   std::vector<std::filesystem::directory_entry> files{};
   std::filesystem::directory_iterator dirIt{sysPath};
@@ -345,9 +345,9 @@ std::vector<fs::Path> Application::getLoadOrder(const fs::Path &masterPath) {
     return entry.path().extension() == ".esm";
   });
 
-  std::vector<fs::Path> out(files.size());
+  std::vector<oo::Path> out(files.size());
   std::transform(files.begin(), files.end(), out.begin(), [](const auto &e) {
-    return fs::Path{std::string{e.path()}};
+    return oo::Path{std::string{e.path()}};
   });
 
   return out;

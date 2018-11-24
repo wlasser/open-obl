@@ -10,57 +10,57 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
   if (keyEvent) {
     return std::visit(overloaded{
-        [this](event::Forward e) -> transition_t {
+        [this](oo::event::Forward e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [this](event::Backward e) -> transition_t {
+        [this](oo::event::Backward e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [this](event::SlideLeft e) -> transition_t {
+        [this](oo::event::SlideLeft e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [this](event::SlideRight e) -> transition_t {
+        [this](oo::event::SlideRight e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [](event::Use) -> transition_t { return {}; },
-        [](event::Activate) -> transition_t { return {}; },
-        [](event::Block) -> transition_t { return {}; },
-        [](event::Cast) -> transition_t { return {}; },
-        [](event::ReadyItem) -> transition_t { return {}; },
-        [this](event::Sneak e) -> transition_t {
+        [](oo::event::Use) -> transition_t { return {}; },
+        [](oo::event::Activate) -> transition_t { return {}; },
+        [](oo::event::Block) -> transition_t { return {}; },
+        [](oo::event::Cast) -> transition_t { return {}; },
+        [](oo::event::ReadyItem) -> transition_t { return {}; },
+        [this](oo::event::Sneak e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [this](event::Run e) -> transition_t {
+        [this](oo::event::Run e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [this](event::AlwaysRun e) -> transition_t {
+        [this](oo::event::AlwaysRun e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [](event::AutoMove) -> transition_t { return {}; },
-        [this](event::Jump e) -> transition_t {
+        [](oo::event::AutoMove) -> transition_t { return {}; },
+        [this](oo::event::Jump e) -> transition_t {
           mPlayerController->handleEvent(e);
           return {};
         },
-        [](event::TogglePov) -> transition_t { return {}; },
-        [](event::MenuMode) -> transition_t { return {}; },
-        [](event::Rest) -> transition_t { return {}; },
-        [](event::QuickMenu) -> transition_t { return {}; },
-        [](event::Quick) -> transition_t { return {}; },
-        [](event::QuickSave) -> transition_t { return {}; },
-        [](event::QuickLoad) -> transition_t { return {}; },
-        [](event::Grab) -> transition_t { return {}; },
-        [&ctx](event::Console e) -> transition_t {
+        [](oo::event::TogglePov) -> transition_t { return {}; },
+        [](oo::event::MenuMode) -> transition_t { return {}; },
+        [](oo::event::Rest) -> transition_t { return {}; },
+        [](oo::event::QuickMenu) -> transition_t { return {}; },
+        [](oo::event::Quick) -> transition_t { return {}; },
+        [](oo::event::QuickSave) -> transition_t { return {}; },
+        [](oo::event::QuickLoad) -> transition_t { return {}; },
+        [](oo::event::Grab) -> transition_t { return {}; },
+        [&ctx](oo::event::Console e) -> transition_t {
           if (e.down) return {false, ConsoleMode(ctx)};
           return {};
         },
-        [&ctx](event::SystemMenu e) -> transition_t {
+        [&ctx](oo::event::SystemMenu e) -> transition_t {
           ctx.getRoot().queueEndRendering();
           return {};
         }
@@ -70,8 +70,8 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   if (sdl::typeOf(event) == sdl::EventType::MouseMotion) {
     const auto &settings{GameSettings::getSingleton()};
     const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
-    const event::Pitch pitch{{event.motion.yrel * sensitivity}};
-    const event::Yaw yaw{{event.motion.xrel * sensitivity}};
+    const oo::event::Pitch pitch{{event.motion.yrel * sensitivity}};
+    const oo::event::Yaw yaw{{event.motion.xrel * sensitivity}};
     mPlayerController->handleEvent(pitch);
     mPlayerController->handleEvent(yaw);
   }
@@ -85,15 +85,14 @@ void GameMode::dispatchCollisions() {
 }
 
 RefId GameMode::getCrosshairRef() {
-  using Ogre::conversions::toBullet;
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
   auto *const camera{mPlayerController->getCamera()};
-  const auto cameraPos{toBullet(camera->getDerivedPosition())};
-  const auto cameraDir{toBullet(camera->getDerivedDirection())};
+  const auto cameraPos{Ogre::toBullet(camera->getDerivedPosition())};
+  const auto cameraDir{Ogre::toBullet(camera->getDerivedDirection())};
   const auto rayStart{cameraPos + 0.5f * cameraDir};
   const float rayLength
-      {*iActivatePickLength * conversions::metersPerUnit<float>};
+      {*iActivatePickLength * oo::metersPerUnit<float>};
   const auto rayEnd{cameraPos + rayLength * cameraDir};
 
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
@@ -130,9 +129,9 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
   mPlayerController =
-      std::make_unique<character::PlayerController>(mCell->scnMgr);
+      std::make_unique<oo::PlayerController>(mCell->scnMgr);
   mCell->physicsWorld->addRigidBody(mPlayerController->getRigidBody());
-  character::PlayerController *controller{mPlayerController.get()};
+  oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),
       [controller](const auto *other, const auto &contact) {
@@ -142,7 +141,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   ctx.setCamera(mPlayerController->getCamera());
 
   const auto startPos = []() {
-    auto pos{conversions::fromBSCoordinates({0, 0, 0})};
+    auto pos{oo::fromBSCoordinates({0, 0, 0})};
     pos.y += 4.0f;
     return pos;
   }();

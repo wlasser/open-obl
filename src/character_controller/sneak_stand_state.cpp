@@ -5,7 +5,7 @@
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
-namespace character {
+namespace oo {
 
 std::optional<SneakJumpState>
 SneakStandState::handleEvent(PlayerControllerImpl &impl,
@@ -37,4 +37,4 @@ void SneakStandState::exit(PlayerControllerImpl &impl) {
   impl.cameraNode->setPosition({0.01, impl.height * 0.45f, 0.0f});
 }
 
-} // namespace character
+} // namespace oo

@@ -18,7 +18,7 @@ class ConsoleMode;
 class GameMode {
  private:
   std::shared_ptr<Cell> mCell{};
-  std::unique_ptr<character::PlayerController> mPlayerController{};
+  std::unique_ptr<oo::PlayerController> mPlayerController{};
   bullet::CollisionCaller mCollisionCaller{};
 
   /// Run all registered collision callbacks with the collisions for this frame.

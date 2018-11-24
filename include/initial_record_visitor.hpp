@@ -36,27 +36,27 @@ class InitialRecordVisitor {
       cellRes(cellRes) {}
 
   template<class R>
-  void readRecord(esp::EspAccessor &accessor) {
+  void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();
   }
 
   template<>
-  void readRecord<record::STAT>(esp::EspAccessor &accessor);
+  void readRecord<record::STAT>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::DOOR>(esp::EspAccessor &accessor);
+  void readRecord<record::DOOR>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::LIGH>(esp::EspAccessor &accessor);
+  void readRecord<record::LIGH>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::MISC>(esp::EspAccessor &accessor);
+  void readRecord<record::MISC>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::CELL>(esp::EspAccessor &accessor);
+  void readRecord<record::CELL>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::GMST>(esp::EspAccessor &accessor);
+  void readRecord<record::GMST>(oo::EspAccessor &accessor);
 };
 
 #endif // OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP

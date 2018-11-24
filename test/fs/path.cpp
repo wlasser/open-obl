@@ -2,53 +2,53 @@
 #include <catch2/catch.hpp>
 
 TEST_CASE("Can construct paths from strings", "[fs]") {
-  fs::Path path1{"hello"};
+  oo::Path path1{"hello"};
   REQUIRE(path1.view() == "hello");
 
-  fs::Path path2{"HelLo world"};
+  oo::Path path2{"HelLo world"};
   REQUIRE(path2.view() == "hello world");
 
-  fs::Path path3{"hello/world"};
+  oo::Path path3{"hello/world"};
   REQUIRE(path3.view() == "hello/world");
 
-  fs::Path path4{"./hello"};
+  oo::Path path4{"./hello"};
   REQUIRE(path4.view() == "hello");
 
-  fs::Path path5{"./hello/world///"};
+  oo::Path path5{"./hello/world///"};
   REQUIRE(path5.view() == "hello/world");
 }
 
 TEST_CASE("Can match paths", "[fs]") {
   // Internal wildcards
-  fs::Path pat1{"h*o"};
+  oo::Path pat1{"h*o"};
 
-  fs::Path src11{"hello"};
+  oo::Path src11{"hello"};
   REQUIRE(src11.match(pat1));
 
-  fs::Path src12{"hell"};
+  oo::Path src12{"hell"};
   REQUIRE_FALSE(src12.match(pat1));
 
-  fs::Path src13{"HelLo"};
+  oo::Path src13{"HelLo"};
   REQUIRE(src13.match(pat1));
 
-  fs::Path src14{"hello world"};
+  oo::Path src14{"hello world"};
   REQUIRE_FALSE(src14.match(pat1));
 
   // Trailing wildcards
-  fs::Path pat2{"hel*"};
+  oo::Path pat2{"hel*"};
 
-  fs::Path src21{"hello"};
+  oo::Path src21{"hello"};
   REQUIRE(src21.match(pat2));
 
-  fs::Path src22{"hell"};
+  oo::Path src22{"hell"};
   REQUIRE(src22.match(pat2));
 
-  fs::Path src23{"he"};
+  oo::Path src23{"he"};
   REQUIRE_FALSE(src23.match(pat2));
 
-  fs::Path src24{"hello world"};
+  oo::Path src24{"hello world"};
   REQUIRE(src24.match(pat2));
 
-  fs::Path src25{"HeLlO"};
+  oo::Path src25{"HeLlO"};
   REQUIRE(src25.match(pat2));
 }

@@ -18,7 +18,7 @@
 #include <Ogre.h>
 #include <variant>
 
-namespace character {
+namespace oo {
 
 using StateVariant = std::variant<StandState,
                                   JumpState,
@@ -61,6 +61,6 @@ class PlayerController {
   void changeState(MovementStateVariant newState);
 };
 
-} // namespace character
+} // namespace oo
 
 #endif // OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP

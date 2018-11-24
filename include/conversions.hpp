@@ -8,7 +8,7 @@
 #include <OgreVector.h>
 #include <filesystem>
 
-namespace conversions {
+namespace oo {
 
 // Game data uses 'u' has a unit of distance, with 64 u = 1 yd, but Bullet works
 // best with (needs?) SI units. By definition, 1 yd = 0.9144 m.
@@ -71,6 +71,6 @@ inline std::string normalizePath(std::string path) {
   return out;
 }
 
-} // namespace conversions
+} // namespace oo
 
 #endif // OPENOBLIVION_CONVERSIONS_HPP

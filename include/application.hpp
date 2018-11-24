@@ -66,23 +66,23 @@ class Application : public Ogre::FrameListener {
   /// \param list A comma and optionally whitespace-separated list of filenames,
   ///   such as `"Oblivion - Meshes.bsa, Oblivion - Sounds.bsa"`.
   ///   Trailing whitespace within each filename is ignored.
-  static std::vector<fs::Path>
-  parseBsaList(const fs::Path &masterPath, const std::string &list);
+  static std::vector<oo::Path>
+  parseBsaList(const oo::Path &masterPath, const std::string &list);
 
   /// Detect the resource type of path and declare it with the correct
   /// Ogre::ManualResourceLoader, if any.
-  void declareResource(const fs::Path &path, const std::string &resourceGroup);
+  void declareResource(const oo::Path &path, const std::string &resourceGroup);
 
   /// Add the given bsa archive as a resource location.
-  void declareBsaArchive(const fs::Path &bsaFilename);
+  void declareBsaArchive(const oo::Path &bsaFilename);
 
   /// Declare all the resources in the given bsa archive.
-  void declareBsaResources(const fs::Path &bsaFilename);
+  void declareBsaResources(const oo::Path &bsaFilename);
 
   /// Return all esm files in the `masterPath` sorted by decreasing modification
   /// date, followed by all esp files in the `masterPath` sorted by decreasing
   /// modification date.
-  static std::vector<fs::Path> getLoadOrder(const fs::Path &masterPath);
+  static std::vector<oo::Path> getLoadOrder(const oo::Path &masterPath);
 
   /// Poll for SDL events and process all that have occurred.
   void pollEvents();

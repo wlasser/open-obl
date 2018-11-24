@@ -17,7 +17,7 @@
 #include <string>
 #include <type_traits>
 
-namespace nifloader {
+namespace oo {
 
 // To instantiate a header we need a version, but we don't know the version
 // unless we've read the header. This function reads the first line of the
@@ -60,6 +60,6 @@ void addVertex(BlockGraph &blocks,
 using AddVertexMap = std::map<std::string, decltype(&addVertex<nif::NiNode>)>;
 const AddVertexMap &getAddVertexMap();
 
-} // namespace nifloader
+} // namespace oo
 
 #endif // OPENOBLIVION_NIF_LOADER_HPP

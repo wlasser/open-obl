@@ -25,8 +25,8 @@ const AxisAlignedBox &RigidBody::getBoundingBox() const {
   btVector3 min{};
   btVector3 max{};
   mRigidBody->getAabb(min, max);
-  mBox.setExtents(conversions::fromBullet(min),
-                  conversions::fromBullet(max));
+  mBox.setExtents(Ogre::fromBullet(min),
+                  Ogre::fromBullet(max));
   return mBox;
 }
 
@@ -85,7 +85,7 @@ void RigidBody::notify() {
 }
 
 void RigidBody::setScale(const Vector3 &scale) {
-  const auto localScale{conversions::toBullet(scale)};
+  const auto localScale{Ogre::toBullet(scale)};
 
   if (mCollisionShapeOverride) {
     mCollisionShapeOverride->setLocalScaling(localScale);

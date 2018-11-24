@@ -5,7 +5,7 @@
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
-namespace character {
+namespace oo {
 
 std::optional<JumpState>
 StandState::handleEvent(PlayerControllerImpl &impl,
@@ -33,4 +33,4 @@ void StandState::enter(PlayerControllerImpl &impl) {
   };
 }
 
-} // namespace character
+} // namespace oo
