@@ -13,8 +13,9 @@ namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 [[nodiscard]] bool isStatement(const AstNode &node);
 
-[[nodiscard]] std::string
-printVisitor(const AstNode &node, const std::string &indent);
+void printNode(const AstNode &node);
+
+void printAstImpl(const AstNode &node, const std::string &indent);
 
 void printAst(const AstNode &node);
 
