@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace scripting {
+namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
   const std::string_view name{node.name()};
@@ -12,7 +12,7 @@ namespace scripting {
 }
 
 void printNode(const AstNode &node) {
-  constexpr std::string_view prefix{"scripting::"};
+  constexpr std::string_view prefix{"oo::grammar::"};
   std::string name{node.name()};
   //C++20: if (name.begins_with(prefix)) {
   if (name.length() > prefix.length()) {
@@ -53,31 +53,31 @@ void printAstImpl(const AstNode &node, const std::string &indent) {
 }
 
 void printAst(const AstNode &node) {
-  scripting::printAstImpl(node, "");
+  oo::printAstImpl(node, "");
 }
 
 [[nodiscard]] bool isString(const AstNode &node, std::string_view expected) {
-  return node.is<scripting::StringLiteralContents>()
+  return node.is<oo::grammar::StringLiteralContents>()
       && node.has_content()
       && node.content() == expected;
 }
 
 [[nodiscard]] bool isInteger(const AstNode &node, int expected) {
-  return node.is<scripting::IntegerLiteral>()
+  return node.is<oo::grammar::IntegerLiteral>()
       && node.has_content()
       && std::stoi(node.content()) == expected;
 }
 
 [[nodiscard]] bool isReference(const AstNode &node, FormId expected) {
-  return node.is<scripting::RefLiteralContents>()
+  return node.is<oo::grammar::RefLiteralContents>()
       && node.has_content()
       && std::stoi(node.content(), nullptr, 16) == expected;
 }
 
 [[nodiscard]] bool isFloat(const AstNode &node, float expected) {
-  return node.is<scripting::FloatLiteral>()
+  return node.is<oo::grammar::FloatLiteral>()
       && node.has_content()
       && Catch::WithinULP(expected, 1).match(std::stof(node.content()));
 }
 
-} // namespace scripting
+} // namespace oo

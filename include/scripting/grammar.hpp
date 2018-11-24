@@ -14,9 +14,11 @@
 /// This document describes the parsing and execution method for user-defined
 /// scripts. For information on the scripting language itself, see scripting.md.
 /// @{
-namespace scripting {
+namespace oo {
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
+
+namespace grammar {
 
 /// `StrScriptname <- "scriptname"`
 struct StrScriptname : pegtl::string<'s', 'c', 'r', 'i', 'p', 't',
@@ -123,15 +125,11 @@ struct Comment : pegtl::seq<StrSemicolon,
 /// `Spacing <- (Space / Comment)*`
 struct Spacing : pegtl::star<pegtl::sor<pegtl::space, Comment>> {};
 
-namespace impl {
-
 /// Convenience class template for allowing trailing space.
 /// Keywords, types, and punctuation may all have trailing space, but we do not
 /// want the space to appear in the AST.
 template<class Raw>
 struct Spaced : pegtl::seq<Raw, Spacing> {};
-
-}
 
 /// `ScriptnameLong <- StrScriptname`
 struct ScriptnameLong : StrScriptname {};
@@ -161,73 +159,73 @@ struct RawFloat : StrFloat {};
 struct RawRef : StrRef {};
 
 /// `Scriptname <- RawScriptname Spacing`
-struct Scriptname : impl::Spaced<RawScriptname> {};
+struct Scriptname : Spaced<RawScriptname> {};
 
 /// `Begin <- RawBegin Spacing`
-struct Begin : impl::Spaced<RawBegin> {};
+struct Begin : Spaced<RawBegin> {};
 
 /// `End <- RawEnd Spacing`
-struct End : impl::Spaced<RawEnd> {};
+struct End : Spaced<RawEnd> {};
 
 /// `Eqeq <- StrEqeq Spacing`
-struct Eqeq : impl::Spaced<StrEqeq> {};
+struct Eqeq : Spaced<StrEqeq> {};
 
 /// `Neq <- StrNeq Spacing`
-struct Neq : impl::Spaced<StrNeq> {};
+struct Neq : Spaced<StrNeq> {};
 
 /// `Lteq <- StrLteq Spacing`
-struct Lteq : impl::Spaced<StrLteq> {};
+struct Lteq : Spaced<StrLteq> {};
 
 /// `Gteq <- StrGteq Spacing`
-struct Gteq : impl::Spaced<StrGteq> {};
+struct Gteq : Spaced<StrGteq> {};
 
 /// `Lt <- StrLt Spacing`
-struct Lt : impl::Spaced<StrLt> {};
+struct Lt : Spaced<StrLt> {};
 
 /// `Gt <- StrGt Spacing`
-struct Gt : impl::Spaced<StrGt> {};
+struct Gt : Spaced<StrGt> {};
 
 /// `And <- StrAnd Spacing`
-struct And : impl::Spaced<StrAnd> {};
+struct And : Spaced<StrAnd> {};
 
 /// `Or <- StrOr Spacing`
-struct Or : impl::Spaced<StrOr> {};
+struct Or : Spaced<StrOr> {};
 
 /// `Lparen <- StrLparen Spacing`
-struct Lparen : impl::Spaced<StrLparen> {};
+struct Lparen : Spaced<StrLparen> {};
 
 /// `Rparen <- StrRparen Spacing`
-struct Rparen : impl::Spaced<StrRparen> {};
+struct Rparen : Spaced<StrRparen> {};
 
 /// `Lbrack <- StrLbrack Spacing`
-struct Lbrack : impl::Spaced<StrLbrack> {};
+struct Lbrack : Spaced<StrLbrack> {};
 
 /// `Rbrack <- StrRbrack Spacing`
-struct Rbrack : impl::Spaced<StrRbrack> {};
+struct Rbrack : Spaced<StrRbrack> {};
 
 /// `Plus <- StrPlus Spacing`
-struct Plus : impl::Spaced<StrPlus> {};
+struct Plus : Spaced<StrPlus> {};
 
 /// `Star <- StrStar Spacing`
-struct Star : impl::Spaced<StrStar> {};
+struct Star : Spaced<StrStar> {};
 
 /// `Dash <- StrDash Spacing`
-struct Dash : impl::Spaced<StrDash> {};
+struct Dash : Spaced<StrDash> {};
 
 /// `Slash <- StrSlash Spacing`
-struct Slash : impl::Spaced<StrSlash> {};
+struct Slash : Spaced<StrSlash> {};
 
 /// `Dot <- StrDot Spacing`
-struct Dot : impl::Spaced<StrDot> {};
+struct Dot : Spaced<StrDot> {};
 
 /// `Set <- StrSet Spacing`
-struct Set : impl::Spaced<StrSet> {};
+struct Set : Spaced<StrSet> {};
 
 /// `To <- StrTo Spacing`
-struct To : impl::Spaced<StrTo> {};
+struct To : Spaced<StrTo> {};
 
 /// `Return <- StrReturn Spacing`
-struct Return : impl::Spaced<StrReturn> {};
+struct Return : Spaced<StrReturn> {};
 
 /// `StringLiteralBannedChar <- ["] / eolf`
 struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
@@ -301,19 +299,19 @@ struct Literal : pegtl::seq<RawLiteral, Spacing> {};
 struct RawIdentifier : pegtl::seq<InitialIdChar, pegtl::star<IdChar>> {};
 
 /// `Identifier <- RawIdentifier Spacing`
-struct Identifier : impl::Spaced<RawIdentifier> {};
+struct Identifier : Spaced<RawIdentifier> {};
 
 /// `ShortType <- RawShort`
-struct ShortType : impl::Spaced<RawShort> {};
+struct ShortType : Spaced<RawShort> {};
 
 /// `LongType <- RawLong`
-struct LongType : impl::Spaced<RawLong> {};
+struct LongType : Spaced<RawLong> {};
 
 /// `FloatType <- RawFloat`
-struct FloatType : impl::Spaced<RawFloat> {};
+struct FloatType : Spaced<RawFloat> {};
 
 /// `RefType <- RawRef`
-struct RefType : impl::Spaced<RawRef> {};
+struct RefType : Spaced<RawRef> {};
 
 /// `Type <- ShortType / LongType / FloatType / RefType`
 struct Type : pegtl::sor<ShortType, LongType, FloatType, RefType> {};
@@ -500,36 +498,7 @@ struct Grammar : pegtl::must<Spacing,
                              pegtl::eof> {
 };
 
-namespace impl {
-
-/// Provides a member type `type` equal to `T`.
-/// Used to store a type instead of an instance of that type.
-/// \remark Equivalent to std::type_identity proposed in
-///         [P0887](https://wg21.link/p0887), which has been merged into C++20.
-///         A major motivation there was to inhibit template argument deduction.
-//C++20: Remove and use std::type_identity
-template<class T> struct type_identity {
-  using type = T;
-};
-
-/// Helper variable template for type_identity.
-template<class T> using type_identity_t = typename type_identity<T>::type;
-
-/// Provide the member constant `value` equal to `true` if `T` has the member
-/// type `type`, and `false` otherwise.
-/// \tparam T The type to check
-template<class T, class = void>
-struct has_type : std::false_type {};
-
-template<class T>
-struct has_type<T, std::conditional_t<false, typename T::type, void>>
-    : std::true_type {
-};
-
-template<class T>
-static inline constexpr bool has_type_v = has_type<T>::value;
-
-}
+} // namespace grammar
 
 /// A node in the AST produced by PEGTL.
 /// The content() refers to the string of characters in the input that was
@@ -544,53 +513,53 @@ class AstNode {
   /// Should be all those types `T` for which AstSelector<T> defines the member
   /// value `value` equal to `true`.
   using type_variant_t = std::variant<
-      impl::type_identity<std::tuple<>>,
-      impl::type_identity<RawScriptnameStatement>,
-      impl::type_identity<RawScriptname>,
-      impl::type_identity<RawIdentifier>,
-      impl::type_identity<BlockStatement>,
-      impl::type_identity<StringLiteralContents>,
-      impl::type_identity<IntegerLiteral>,
-      impl::type_identity<RefLiteralContents>,
-      impl::type_identity<FloatLiteral>,
-      impl::type_identity<DeclarationStatement>,
-      impl::type_identity<SetStatement>,
-      impl::type_identity<ReturnStatement>,
-      impl::type_identity<RawShort>,
-      impl::type_identity<RawLong>,
-      impl::type_identity<RawFloat>,
-      impl::type_identity<RawRef>,
-      impl::type_identity<RawMemberAccess>,
-      impl::type_identity<StrPlus>,
-      impl::type_identity<StrDash>,
-      impl::type_identity<StrStar>,
-      impl::type_identity<StrSlash>,
-      impl::type_identity<StrLteq>,
-      impl::type_identity<StrGteq>,
-      impl::type_identity<StrLt>,
-      impl::type_identity<StrGt>,
-      impl::type_identity<StrEqeq>,
-      impl::type_identity<StrNeq>,
-      impl::type_identity<StrAnd>,
-      impl::type_identity<StrOr>,
-      impl::type_identity<RawCall>,
-      impl::type_identity<BinaryOperator>,
-      impl::type_identity<UnaryOperator>,
-      impl::type_identity<MultiplicativeBinaryOperator>,
-      impl::type_identity<AdditiveBinaryOperator>,
-      impl::type_identity<ConditionalBinaryOperator>,
-      impl::type_identity<EqualityBinaryOperator>,
-      impl::type_identity<ConjunctionBinaryOperator>,
-      impl::type_identity<DisjunctionBinaryOperator>,
-      impl::type_identity<PrimaryExpression>,
-      impl::type_identity<UnaryExpression>,
-      impl::type_identity<MulExpression>,
-      impl::type_identity<AddExpression>,
-      impl::type_identity<CondExpression>,
-      impl::type_identity<EqExpression>,
-      impl::type_identity<AndExpression>,
-      impl::type_identity<OrExpression>,
-      impl::type_identity<Expression>>;
+      type_identity<std::tuple<>>,
+      type_identity<grammar::RawScriptnameStatement>,
+      type_identity<grammar::RawScriptname>,
+      type_identity<grammar::RawIdentifier>,
+      type_identity<grammar::BlockStatement>,
+      type_identity<grammar::StringLiteralContents>,
+      type_identity<grammar::IntegerLiteral>,
+      type_identity<grammar::RefLiteralContents>,
+      type_identity<grammar::FloatLiteral>,
+      type_identity<grammar::DeclarationStatement>,
+      type_identity<grammar::SetStatement>,
+      type_identity<grammar::ReturnStatement>,
+      type_identity<grammar::RawShort>,
+      type_identity<grammar::RawLong>,
+      type_identity<grammar::RawFloat>,
+      type_identity<grammar::RawRef>,
+      type_identity<grammar::RawMemberAccess>,
+      type_identity<grammar::StrPlus>,
+      type_identity<grammar::StrDash>,
+      type_identity<grammar::StrStar>,
+      type_identity<grammar::StrSlash>,
+      type_identity<grammar::StrLteq>,
+      type_identity<grammar::StrGteq>,
+      type_identity<grammar::StrLt>,
+      type_identity<grammar::StrGt>,
+      type_identity<grammar::StrEqeq>,
+      type_identity<grammar::StrNeq>,
+      type_identity<grammar::StrAnd>,
+      type_identity<grammar::StrOr>,
+      type_identity<grammar::RawCall>,
+      type_identity<grammar::BinaryOperator>,
+      type_identity<grammar::UnaryOperator>,
+      type_identity<grammar::MultiplicativeBinaryOperator>,
+      type_identity<grammar::AdditiveBinaryOperator>,
+      type_identity<grammar::ConditionalBinaryOperator>,
+      type_identity<grammar::EqualityBinaryOperator>,
+      type_identity<grammar::ConjunctionBinaryOperator>,
+      type_identity<grammar::DisjunctionBinaryOperator>,
+      type_identity<grammar::PrimaryExpression>,
+      type_identity<grammar::UnaryExpression>,
+      type_identity<grammar::MulExpression>,
+      type_identity<grammar::AddExpression>,
+      type_identity<grammar::CondExpression>,
+      type_identity<grammar::EqExpression>,
+      type_identity<grammar::AndExpression>,
+      type_identity<grammar::OrExpression>,
+      type_identity<grammar::Expression>>;
 
  private:
   /// The current type represented by the AstNode.
@@ -608,7 +577,7 @@ class AstNode {
   /// Return `true` if this node represents a `T`, and `false` otherwise.
   template<class T>
   [[nodiscard]] constexpr bool is() const noexcept {
-    return std::holds_alternative<impl::type_identity<T>>(mCurrentType);
+    return std::holds_alternative<type_identity<T>>(mCurrentType);
   }
 
   /// Return `true` if this node is the root of the AST, and `false` otherwise.
@@ -626,7 +595,7 @@ class AstNode {
   [[nodiscard]] std::string name() const noexcept {
     return std::visit([](auto t) -> std::string {
       using T = decltype(t);
-      if constexpr (impl::has_type_v<T>) {
+      if constexpr (has_type_v<T>) {
         return pegtl::internal::demangle(typeid(typename T::type).name());
       } else {
         return "";
@@ -673,13 +642,13 @@ class AstNode {
   }
 
   template<class Visitor>
-  auto visit(Visitor &&visitor) {
+  constexpr auto visit(Visitor &&visitor) {
     return std::visit(visitor, mCurrentType);
   }
 
   template<class T>
-  void setType() {
-    mCurrentType.emplace<impl::type_identity<T>>();
+  constexpr void setType() noexcept {
+    mCurrentType.emplace<type_identity<T>>();
   }
 
   AstNode() = default;
@@ -694,7 +663,7 @@ class AstNode {
   /// Called by PEGTL to initialize the (non-root) node.
   template<class Rule, class Input>
   void start(const Input &in) {
-    mCurrentType.emplace<impl::type_identity<Rule>>();
+    mCurrentType.emplace<type_identity<Rule>>();
     mSource = in.source();
     mBegin = in.iterator();
   }
@@ -772,15 +741,16 @@ struct OpTransform : std::true_type {
     node->setValue(op->content());
     node->visit([&node](auto t) {
       using T = decltype(t);
-      if constexpr (impl::has_type_v<T>) {
+      if constexpr (has_type_v<T>) {
         using Type = typename T::type;
-        if constexpr (std::is_same_v<Type, MultiplicativeBinaryOperator> ||
-            std::is_same_v<Type, AdditiveBinaryOperator> ||
-            std::is_same_v<Type, ConditionalBinaryOperator> ||
-            std::is_same_v<Type, EqualityBinaryOperator> ||
-            std::is_same_v<Type, ConjunctionBinaryOperator> ||
-            std::is_same_v<Type, DisjunctionBinaryOperator>) {
-          node->setType<BinaryOperator>();
+        if constexpr (
+            std::is_same_v<Type, grammar::MultiplicativeBinaryOperator> ||
+                std::is_same_v<Type, grammar::AdditiveBinaryOperator> ||
+                std::is_same_v<Type, grammar::ConditionalBinaryOperator> ||
+                std::is_same_v<Type, grammar::EqualityBinaryOperator> ||
+                std::is_same_v<Type, grammar::ConjunctionBinaryOperator> ||
+                std::is_same_v<Type, grammar::DisjunctionBinaryOperator>) {
+          node->setType<grammar::BinaryOperator>();
         }
       }
     });
@@ -794,7 +764,7 @@ struct CallTransform : std::true_type {
 
     auto &children{node->children};
 
-    if (children.front()->is<RawMemberAccess>()) {
+    if (children.front()->is<grammar::RawMemberAccess>()) {
       auto rawMemberAccess{std::move(children.front())};
       children.erase(children.begin());
 
@@ -811,7 +781,7 @@ struct CallTransform : std::true_type {
       node->remove_content();
       node->setValue(funName->content());
       children.insert(children.begin(), std::move(thisArg));
-    } else if (children.front()->is<RawIdentifier>()) {
+    } else if (children.front()->is<grammar::RawIdentifier>()) {
       auto funName{std::move(children.front())};
       children.erase(children.begin());
 
@@ -825,54 +795,56 @@ struct CallTransform : std::true_type {
 /// transformations should be performed to each node.
 template<class Rule> struct AstSelector : std::false_type {};
 
-template<> struct AstSelector<RawScriptnameStatement> : std::true_type {};
-template<> struct AstSelector<RawScriptname> : std::true_type {};
-template<> struct AstSelector<RawIdentifier> : std::true_type {};
-template<> struct AstSelector<BlockStatement> : std::true_type {};
-template<> struct AstSelector<StringLiteralContents> : std::true_type {};
-template<> struct AstSelector<IntegerLiteral> : std::true_type {};
-template<> struct AstSelector<RefLiteralContents> : std::true_type {};
-template<> struct AstSelector<FloatLiteral> : std::true_type {};
-template<> struct AstSelector<DeclarationStatement> : std::true_type {};
-template<> struct AstSelector<SetStatement> : std::true_type {};
-template<> struct AstSelector<ReturnStatement> : std::true_type {};
-template<> struct AstSelector<RawShort> : std::true_type {};
-template<> struct AstSelector<RawLong> : std::true_type {};
-template<> struct AstSelector<RawFloat> : std::true_type {};
-template<> struct AstSelector<RawRef> : std::true_type {};
-template<> struct AstSelector<RawMemberAccess> : std::true_type {};
-template<> struct AstSelector<StrPlus> : std::true_type {};
-template<> struct AstSelector<StrDash> : std::true_type {};
-template<> struct AstSelector<StrStar> : std::true_type {};
-template<> struct AstSelector<StrSlash> : std::true_type {};
-template<> struct AstSelector<StrLteq> : std::true_type {};
-template<> struct AstSelector<StrGteq> : std::true_type {};
-template<> struct AstSelector<StrLt> : std::true_type {};
-template<> struct AstSelector<StrGt> : std::true_type {};
-template<> struct AstSelector<StrEqeq> : std::true_type {};
-template<> struct AstSelector<StrNeq> : std::true_type {};
-template<> struct AstSelector<StrAnd> : std::true_type {};
-template<> struct AstSelector<StrOr> : std::true_type {};
-template<> struct AstSelector<RawCall> : CallTransform {};
+// @formatter:off
+template<> struct AstSelector<grammar::RawScriptnameStatement> : std::true_type {};
+template<> struct AstSelector<grammar::RawScriptname> : std::true_type {};
+template<> struct AstSelector<grammar::RawIdentifier> : std::true_type {};
+template<> struct AstSelector<grammar::BlockStatement> : std::true_type {};
+template<> struct AstSelector<grammar::StringLiteralContents> : std::true_type {};
+template<> struct AstSelector<grammar::IntegerLiteral> : std::true_type {};
+template<> struct AstSelector<grammar::RefLiteralContents> : std::true_type {};
+template<> struct AstSelector<grammar::FloatLiteral> : std::true_type {};
+template<> struct AstSelector<grammar::DeclarationStatement> : std::true_type {};
+template<> struct AstSelector<grammar::SetStatement> : std::true_type {};
+template<> struct AstSelector<grammar::ReturnStatement> : std::true_type {};
+template<> struct AstSelector<grammar::RawShort> : std::true_type {};
+template<> struct AstSelector<grammar::RawLong> : std::true_type {};
+template<> struct AstSelector<grammar::RawFloat> : std::true_type {};
+template<> struct AstSelector<grammar::RawRef> : std::true_type {};
+template<> struct AstSelector<grammar::RawMemberAccess> : std::true_type {};
+template<> struct AstSelector<grammar::StrPlus> : std::true_type {};
+template<> struct AstSelector<grammar::StrDash> : std::true_type {};
+template<> struct AstSelector<grammar::StrStar> : std::true_type {};
+template<> struct AstSelector<grammar::StrSlash> : std::true_type {};
+template<> struct AstSelector<grammar::StrLteq> : std::true_type {};
+template<> struct AstSelector<grammar::StrGteq> : std::true_type {};
+template<> struct AstSelector<grammar::StrLt> : std::true_type {};
+template<> struct AstSelector<grammar::StrGt> : std::true_type {};
+template<> struct AstSelector<grammar::StrEqeq> : std::true_type {};
+template<> struct AstSelector<grammar::StrNeq> : std::true_type {};
+template<> struct AstSelector<grammar::StrAnd> : std::true_type {};
+template<> struct AstSelector<grammar::StrOr> : std::true_type {};
+template<> struct AstSelector<grammar::RawCall> : CallTransform {};
 
-template<> struct AstSelector<BinaryOperator> : std::true_type {};
-template<> struct AstSelector<UnaryOperator> : OpTransform {};
-template<> struct AstSelector<MultiplicativeBinaryOperator> : OpTransform {};
-template<> struct AstSelector<AdditiveBinaryOperator> : OpTransform {};
-template<> struct AstSelector<ConditionalBinaryOperator> : OpTransform {};
-template<> struct AstSelector<EqualityBinaryOperator> : OpTransform {};
-template<> struct AstSelector<ConjunctionBinaryOperator> : OpTransform {};
-template<> struct AstSelector<DisjunctionBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::BinaryOperator> : std::true_type {};
+template<> struct AstSelector<grammar::UnaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::MultiplicativeBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::AdditiveBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::ConditionalBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::EqualityBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::ConjunctionBinaryOperator> : OpTransform {};
+template<> struct AstSelector<grammar::DisjunctionBinaryOperator> : OpTransform {};
 
-template<> struct AstSelector<PrimaryExpression> : ExprTransform {};
-template<> struct AstSelector<UnaryExpression> : ExprTransform {};
-template<> struct AstSelector<MulExpression> : ExprTransform {};
-template<> struct AstSelector<AddExpression> : ExprTransform {};
-template<> struct AstSelector<CondExpression> : ExprTransform {};
-template<> struct AstSelector<EqExpression> : ExprTransform {};
-template<> struct AstSelector<AndExpression> : ExprTransform {};
-template<> struct AstSelector<OrExpression> : ExprTransform {};
-template<> struct AstSelector<Expression> : ExprTransform {};
+template<> struct AstSelector<grammar::PrimaryExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::UnaryExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::MulExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::AddExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::CondExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::EqExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::AndExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::OrExpression> : ExprTransform {};
+template<> struct AstSelector<grammar::Expression> : ExprTransform {};
+// @formatter:on
 
 template<class F, class State>
 void visitAst(const AstNode &node, State state, F &&visitor) {
@@ -884,10 +856,10 @@ void visitAst(const AstNode &node, State state, F &&visitor) {
 /// \tparam T a valid PEGTL input, e.g. pegtl::memory_input.
 template<class T> [[nodiscard]] std::unique_ptr<AstNode>
 parseScript(T &&in) {
-  return pegtl::parse_tree::parse<Grammar, AstNode, AstSelector>(in);
+  return pegtl::parse_tree::parse<grammar::Grammar, AstNode, AstSelector>(in);
 }
 
-} // namespace scripting
+} // namespace oo
 
 /// @}
 

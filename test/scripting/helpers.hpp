@@ -7,7 +7,7 @@
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
 
-namespace scripting {
+namespace oo {
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
@@ -35,6 +35,6 @@ template<class T>
       && node.children[1]->content() == name;
 }
 
-} // namespace scripting
+} // namespace oo
 
 #endif // OPENOBLIVION_TEST_SCRIPTING_HELPERS_HPP

@@ -28,10 +28,10 @@ end
   )script";
 
   pegtl::memory_input in(script, "");
-  const auto root = scripting::parseScript(in);
+  const auto root = oo::parseScript(in);
   REQUIRE(root != nullptr);
-  scripting::printAst(*root);
-  scripting::LLVMVisitor visitor("MyScript");
+  oo::printAst(*root);
+  oo::LLVMVisitor visitor("MyScript");
   visitor.visit(*root);
   visitor.print();
 }

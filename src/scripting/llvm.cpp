@@ -8,7 +8,7 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
 
-namespace scripting {
+namespace oo {
 
 llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (node.is_root()) {
@@ -17,24 +17,24 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
     }
     return nullptr;
   }
-  if (auto v = visitHelper<RawScriptnameStatement>(node)) return v;
-  if (auto v = visitHelper<RawScriptname>(node)) return v;
-  if (auto v = visitHelper<RawIdentifier>(node)) return v;
-  if (auto v = visitHelper<BlockStatement>(node)) return v;
-  if (auto v = visitHelper<StringLiteralContents>(node)) return v;
-  if (auto v = visitHelper<IntegerLiteral>(node)) return v;
-  if (auto v = visitHelper<RefLiteralContents>(node)) return v;
-  if (auto v = visitHelper<FloatLiteral>(node)) return v;
-  if (auto v = visitHelper<DeclarationStatement>(node)) return v;
-  if (auto v = visitHelper<SetStatement>(node)) return v;
-  if (auto v = visitHelper<ReturnStatement>(node)) return v;
-  if (auto v = visitHelper<RawShort>(node)) return v;
-  if (auto v = visitHelper<RawLong>(node)) return v;
-  if (auto v = visitHelper<RawFloat>(node)) return v;
-  if (auto v = visitHelper<RawRef>(node)) return v;
-  if (auto v = visitHelper<RawMemberAccess>(node)) return v;
-  if (auto v = visitHelper<BinaryOperator>(node)) return v;
-  if (auto v = visitHelper<UnaryOperator>(node)) return v;
+  if (auto v = visitHelper<grammar::RawScriptnameStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::RawScriptname>(node)) return v;
+  if (auto v = visitHelper<grammar::RawIdentifier>(node)) return v;
+  if (auto v = visitHelper<grammar::BlockStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::StringLiteralContents>(node)) return v;
+  if (auto v = visitHelper<grammar::IntegerLiteral>(node)) return v;
+  if (auto v = visitHelper<grammar::RefLiteralContents>(node)) return v;
+  if (auto v = visitHelper<grammar::FloatLiteral>(node)) return v;
+  if (auto v = visitHelper<grammar::DeclarationStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::SetStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::ReturnStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::RawShort>(node)) return v;
+  if (auto v = visitHelper<grammar::RawLong>(node)) return v;
+  if (auto v = visitHelper<grammar::RawFloat>(node)) return v;
+  if (auto v = visitHelper<grammar::RawRef>(node)) return v;
+  if (auto v = visitHelper<grammar::RawMemberAccess>(node)) return v;
+  if (auto v = visitHelper<grammar::BinaryOperator>(node)) return v;
+  if (auto v = visitHelper<grammar::UnaryOperator>(node)) return v;
 
   return nullptr;
 }
@@ -112,12 +112,12 @@ LLVMVisitor::promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &node) {
   return nullptr;
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::RawIdentifier>(const AstNode &node) {
   if (auto it{mNamedValues.find(node.content())}; it != mNamedValues.end()) {
     return mIrBuilder.CreateLoad(it->second);
   }
@@ -131,14 +131,15 @@ LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::BlockStatement>(const AstNode &node) {
   if (node.children.empty()) return nullptr;
 
   auto blockStart{node.children.begin() + 1};
   std::string blockName{node.children[0]->content()};
 
   // TODO: Do more sophisticated name resolution by talking to the GUI
-  if (node.children.size() > 1 && node.children[1]->is<IntegerLiteral>()) {
+  if (node.children.size() > 1
+      && node.children[1]->is<grammar::IntegerLiteral>()) {
     blockName = node.children[0]->content() + node.children[1]->content();
     ++blockStart;
   }
@@ -192,20 +193,20 @@ LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<IntegerLiteral>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::IntegerLiteral>(const AstNode &node) {
   const std::string sVal{node.content()};
   return llvm::ConstantInt::get(mCtx, llvm::APInt(32u, sVal, 10u));
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<FloatLiteral>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::FloatLiteral>(const AstNode &node) {
   const std::string sVal{node.content()};
   const llvm::APFloat fVal(llvm::APFloat::IEEEsingle(), sVal);
   return llvm::ConstantFP::get(mCtx, fVal);
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node) {
   std::string varName{node.children[1]->content()};
   llvm::BasicBlock *bb{mIrBuilder.GetInsertBlock()};
 
@@ -218,16 +219,16 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
     const auto &declType{node.children[0]};
     const auto &declName{node.children[1]->content()};
 
-    if (declType->is<RawShort>()) {
+    if (declType->is<grammar::RawShort>()) {
       type = llvm::Type::getInt16Ty(mCtx);
       init = llvm::ConstantInt::get(type, 0, true);
-    } else if (declType->is<RawLong>()) {
+    } else if (declType->is<grammar::RawLong>()) {
       type = llvm::Type::getInt32Ty(mCtx);
       init = llvm::ConstantInt::get(type, 0, true);
-    } else if (declType->is<RawRef>()) {
+    } else if (declType->is<grammar::RawRef>()) {
       type = llvm::Type::getInt32Ty(mCtx);
       init = llvm::ConstantInt::get(type, 0, true);
-    } else if (declType->is<RawFloat>()) {
+    } else if (declType->is<grammar::RawFloat>()) {
       type = llvm::Type::getFloatTy(mCtx);
       init = llvm::ConstantFP::get(type, 0.0);
     }
@@ -250,17 +251,17 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
     llvm::Value *init{};
 
     // TODO: Handle reference variables correctly
-    if (node.children[0]->is<RawShort>()) {
-      alloca = createEntryBlockAlloca<RawShort>(fun, varName);
+    if (node.children[0]->is<grammar::RawShort>()) {
+      alloca = createEntryBlockAlloca<grammar::RawShort>(fun, varName);
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
-    } else if (node.children[0]->is<RawLong>()) {
-      alloca = createEntryBlockAlloca<RawLong>(fun, varName);
+    } else if (node.children[0]->is<grammar::RawLong>()) {
+      alloca = createEntryBlockAlloca<grammar::RawLong>(fun, varName);
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
-    } else if (node.children[0]->is<RawRef>()) {
-      alloca = createEntryBlockAlloca<RawRef>(fun, varName);
+    } else if (node.children[0]->is<grammar::RawRef>()) {
+      alloca = createEntryBlockAlloca<grammar::RawRef>(fun, varName);
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
     } else {
-      alloca = createEntryBlockAlloca<RawFloat>(fun, varName);
+      alloca = createEntryBlockAlloca<grammar::RawFloat>(fun, varName);
       init = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
     }
 
@@ -275,7 +276,7 @@ LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::SetStatement>(const AstNode &node) {
   llvm::Value *src{visit(*node.children[1])};
   if (src == nullptr) {
     // TODO: RHS is ill-formed
@@ -347,7 +348,7 @@ LLVMVisitor::visitImpl<SetStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<ReturnStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node) {
   if (node.children.empty()) {
     return mIrBuilder.CreateRetVoid();
   }
@@ -365,7 +366,7 @@ LLVMVisitor::visitImpl<ReturnStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BinaryOperator>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::BinaryOperator>(const AstNode &node) {
   if (node.children.size() != 2) return nullptr;
   llvm::Value *lhs{visit(*node.children[0])};
   llvm::Value *rhs{visit(*node.children[1])};
@@ -414,7 +415,7 @@ LLVMVisitor::visitImpl<BinaryOperator>(const AstNode &node) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::UnaryOperator>(const AstNode &node) {
   if (node.children.size() != 1) return nullptr;
   llvm::Value *rhs{visit(*node.children[0])};
   if (!rhs) return nullptr;
@@ -432,6 +433,6 @@ LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node) {
   return nullptr;
 }
 
-} // namespace scripting
+} // namespace oo
 
 #pragma clang diagnostic pop

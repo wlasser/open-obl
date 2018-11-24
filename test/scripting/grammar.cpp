@@ -10,20 +10,17 @@
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 TEST_CASE("grammar is valid", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
+  const auto numIssues{pegtl::analyze<oo::grammar::Grammar>()};
   REQUIRE(numIssues == 0);
 }
 
 TEST_CASE("can parse scriptname", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
-  std::unique_ptr<scripting::AstNode> root{};
+  std::unique_ptr<oo::AstNode> root{};
 
   SECTION("parse minimal scriptname") {
     std::string_view script = "scriptname MyScript";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   SECTION("parse scriptname with surrounding comments") {
@@ -33,7 +30,7 @@ TEST_CASE("can parse scriptname", "[scripting]") {
    ; Script body goes here!
     )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   REQUIRE(root != nullptr);
@@ -43,46 +40,40 @@ TEST_CASE("can parse scriptname", "[scripting]") {
   REQUIRE(scriptnameStatement->children.size() > 1);
 
   const auto &keyword{scriptnameStatement->children[0]};
-  REQUIRE(keyword->is<scripting::RawScriptname>());
+  REQUIRE(keyword->is<oo::grammar::RawScriptname>());
   const auto &scriptname{scriptnameStatement->children[1]};
   REQUIRE(scriptname->has_content());
   REQUIRE(scriptname->content() == "MyScript");
 }
 
 TEST_CASE("fails to parse invalid scriptname", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
   {
     std::string_view script = "scriptname ;This is a comment";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 
   {
     std::string_view script = "scriptname 12hello";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 
   {
     std::string_view script = "scnmore MyScript";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 
   {
     std::string_view script = "";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 }
 
 TEST_CASE("can parse block statements", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
-  std::unique_ptr<scripting::AstNode> root{};
+  std::unique_ptr<oo::AstNode> root{};
   std::string expectedBlockname{"GameMode"};
 
   SECTION("parse minimal block statement") {
@@ -93,7 +84,7 @@ begin GameMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   SECTION("parse block statement with surrounding comments") {
@@ -104,7 +95,7 @@ begin   GameMode ; Runs during gameplay
      end ; End of script
     )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   SECTION("parse block statement with unexpected name") {
@@ -114,7 +105,7 @@ begin begin
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
     expectedBlockname = "begin";
   }
 
@@ -122,7 +113,7 @@ end
   REQUIRE(root->children.size() == 2);
 
   const auto &blockStatement{root->children[1]};
-  REQUIRE(blockStatement->is<scripting::BlockStatement>());
+  REQUIRE(blockStatement->is<oo::grammar::BlockStatement>());
   REQUIRE_FALSE(blockStatement->children.empty());
 
   const auto &blockName{blockStatement->children[0]};
@@ -131,7 +122,7 @@ end
 }
 
 TEST_CASE("can parse block statements with integer modes", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
+  const auto numIssues{pegtl::analyze<oo::grammar::Grammar>()};
   REQUIRE(numIssues == 0);
 
   std::string_view script = R"script(
@@ -140,11 +131,11 @@ begin MenuMode 4329 ; Some menu type
 end
 )script";
   pegtl::memory_input in(script, "");
-  const auto root = scripting::parseScript(in);
+  const auto root = oo::parseScript(in);
   REQUIRE(root != nullptr);
 
   const auto &blockStatement{root->children[1]};
-  REQUIRE(blockStatement->is<scripting::BlockStatement>());
+  REQUIRE(blockStatement->is<oo::grammar::BlockStatement>());
   REQUIRE(blockStatement->children.size() == 2);
 
   const auto &blockName{blockStatement->children[0]};
@@ -152,16 +143,13 @@ end
   REQUIRE(blockName->content() == "MenuMode");
 
   const auto &blockType{blockStatement->children[1]};
-  REQUIRE(blockType->is<scripting::IntegerLiteral>());
+  REQUIRE(blockType->is<oo::grammar::IntegerLiteral>());
   REQUIRE(blockType->has_content());
   REQUIRE(std::stoi(blockType->content()) == 4329);
 }
 
 TEST_CASE("can parse multiple block statements", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
-  std::unique_ptr<scripting::AstNode> root{};
+  std::unique_ptr<oo::AstNode> root{};
 
   SECTION("parse nicely formatted blocks") {
     std::string_view script = R"script(
@@ -176,7 +164,7 @@ begin MenuMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   SECTION("parse poorly formatted blocks") {
@@ -185,7 +173,7 @@ scn MyScript begin GameMode end begin MenuMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    root = scripting::parseScript(in);
+    root = oo::parseScript(in);
   }
 
   REQUIRE(root != nullptr);
@@ -193,7 +181,7 @@ end
 
   {
     const auto &blockStatement{root->children[1]};
-    REQUIRE(blockStatement->is<scripting::BlockStatement>());
+    REQUIRE(blockStatement->is<oo::grammar::BlockStatement>());
     REQUIRE_FALSE(blockStatement->children.empty());
 
     const auto &blockName{blockStatement->children[0]};
@@ -203,7 +191,7 @@ end
 
   {
     const auto &blockStatement{root->children[2]};
-    REQUIRE(blockStatement->is<scripting::BlockStatement>());
+    REQUIRE(blockStatement->is<oo::grammar::BlockStatement>());
     REQUIRE_FALSE(blockStatement->children.empty());
 
     const auto &blockName{blockStatement->children[0]};
@@ -213,9 +201,6 @@ end
 }
 
 TEST_CASE("fails to parse invalid block statements", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
   {
     std::string_view script = R"script(
 scn MyScript
@@ -223,7 +208,7 @@ begin ; No block name
 end
 )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 
   {
@@ -233,7 +218,7 @@ begin begin begin
 end
     )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 
   {
@@ -243,15 +228,15 @@ begin GameMode
 ; No end statement!
     )script";
     pegtl::memory_input in(script, "");
-    REQUIRE_THROWS_AS(scripting::parseScript(in), pegtl::parse_error);
+    REQUIRE_THROWS_AS(oo::parseScript(in), pegtl::parse_error);
   }
 }
 
 TEST_CASE("can parse string literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::StringLiteral,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::StringLiteral,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -260,7 +245,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isString(*root->children[0], "Hello"));
+    REQUIRE(oo::isString(*root->children[0], "Hello"));
   }
 
   {
@@ -269,7 +254,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isString(*root->children[0], ""));
+    REQUIRE(oo::isString(*root->children[0], ""));
   }
 
   {
@@ -278,8 +263,8 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isString(*root->children[0],
-                                R"(This \t is not escaped)"));
+    REQUIRE(oo::isString(*root->children[0],
+                         R"(This \t is not escaped)"));
   }
 
   {
@@ -295,7 +280,7 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isString(*root->children[0], R"(This string)"));
+    REQUIRE(oo::isString(*root->children[0], R"(This string)"));
   }
 
   {
@@ -304,15 +289,15 @@ TEST_CASE("can parse string literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isString(*root->children[0], R"(This is )"));
+    REQUIRE(oo::isString(*root->children[0], R"(This is )"));
   }
 }
 
 TEST_CASE("can parse integer literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::IntegerLiteral,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::IntegerLiteral,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -321,7 +306,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isInteger(*root->children[0], 153));
+    REQUIRE(oo::isInteger(*root->children[0], 153));
   }
 
   {
@@ -330,7 +315,7 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isInteger(*root->children[0], 0));
+    REQUIRE(oo::isInteger(*root->children[0], 0));
   }
 
   {
@@ -339,16 +324,16 @@ TEST_CASE("can parse integer literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isInteger(*root->children[0],
-                                 std::numeric_limits<int>::max()));
+    REQUIRE(oo::isInteger(*root->children[0],
+                          std::numeric_limits<int>::max()));
   }
 }
 
 TEST_CASE("can parse ref literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::RefLiteral,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::RefLiteral,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -357,7 +342,7 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isReference(*root->children[0], 0x00103a5f));
+    REQUIRE(oo::isReference(*root->children[0], 0x00103a5f));
   }
 
   {
@@ -384,15 +369,15 @@ TEST_CASE("can parse ref literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isReference(*root->children[0], 0));
+    REQUIRE(oo::isReference(*root->children[0], 0));
   }
 }
 
 TEST_CASE("can parse floating point literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::FloatLiteral,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::FloatLiteral,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -401,7 +386,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 3.14159f));
+    REQUIRE(oo::isFloat(*root->children[0], 3.14159f));
   }
 
   {
@@ -410,7 +395,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 0.142f));
+    REQUIRE(oo::isFloat(*root->children[0], 0.142f));
   }
 
   {
@@ -419,7 +404,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 0.0001f));
+    REQUIRE(oo::isFloat(*root->children[0], 0.0001f));
   }
 
   {
@@ -428,7 +413,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 0.142f));
+    REQUIRE(oo::isFloat(*root->children[0], 0.142f));
   }
 
   {
@@ -437,7 +422,7 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 0.0001f));
+    REQUIRE(oo::isFloat(*root->children[0], 0.0001f));
   }
 
   {
@@ -458,15 +443,15 @@ TEST_CASE("can parse floating point literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(scripting::isFloat(*root->children[0], 3.1f));
+    REQUIRE(oo::isFloat(*root->children[0], 3.1f));
   }
 }
 
 TEST_CASE("can parse literals", "[scripting]") {
   auto parseLiteral = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::Literal,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::Literal,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -475,7 +460,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::FloatLiteral>());
+    REQUIRE(root->children[0]->is<oo::grammar::FloatLiteral>());
   }
 
   {
@@ -484,7 +469,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::IntegerLiteral>());
+    REQUIRE(root->children[0]->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -493,7 +478,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::IntegerLiteral>());
+    REQUIRE(root->children[0]->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -502,7 +487,7 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::StringLiteralContents>());
+    REQUIRE(root->children[0]->is<oo::grammar::StringLiteralContents>());
   }
   {
     std::string_view script = "#59";
@@ -510,15 +495,15 @@ TEST_CASE("can parse literals", "[scripting]") {
     const auto root = parseLiteral(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::RefLiteralContents>());
+    REQUIRE(root->children[0]->is<oo::grammar::RefLiteralContents>());
   }
 }
 
 TEST_CASE("can parse expressions", "[scripting]") {
   auto parseExpression = [](auto &&in) {
-    return pegtl::parse_tree::parse<scripting::Expression,
-                                    scripting::AstNode,
-                                    scripting::AstSelector>(in);
+    return pegtl::parse_tree::parse<oo::grammar::Expression,
+                                    oo::AstNode,
+                                    oo::AstSelector>(in);
   };
 
   {
@@ -527,7 +512,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     const auto root = parseExpression(in);
     REQUIRE(root != nullptr);
     REQUIRE_FALSE(root->children.empty());
-    REQUIRE(root->children[0]->is<scripting::FloatLiteral>());
+    REQUIRE(root->children[0]->is<oo::grammar::FloatLiteral>());
   }
 
   {
@@ -538,12 +523,12 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE(!root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::UnaryOperator>());
+    REQUIRE(op->is<oo::grammar::UnaryOperator>());
     REQUIRE(op->getValue() == "-");
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->is<scripting::IntegerLiteral>());
+    REQUIRE(literal->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -554,12 +539,12 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::UnaryOperator>());
+    REQUIRE(op->is<oo::grammar::UnaryOperator>());
     REQUIRE(op->getValue() == "+");
     REQUIRE_FALSE(op->children.empty());
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->is<scripting::IntegerLiteral>());
+    REQUIRE(literal->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -570,7 +555,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &literal{root->children[0]};
-    REQUIRE(literal->is<scripting::IntegerLiteral>());
+    REQUIRE(literal->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -581,7 +566,7 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &literal{root->children[0]};
-    REQUIRE(literal->is<scripting::IntegerLiteral>());
+    REQUIRE(literal->is<oo::grammar::IntegerLiteral>());
   }
 
   {
@@ -592,15 +577,15 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &op{root->children[0]};
-    REQUIRE(op->is<scripting::BinaryOperator>());
+    REQUIRE(op->is<oo::grammar::BinaryOperator>());
     REQUIRE(op->getValue() == "||");
     REQUIRE(op->children.size() == 2);
 
     const auto &literal{op->children[0]};
-    REQUIRE(literal->is<scripting::IntegerLiteral>());
+    REQUIRE(literal->is<oo::grammar::IntegerLiteral>());
 
     const auto &subExpr{op->children[1]};
-    REQUIRE(subExpr->is<scripting::UnaryOperator>());
+    REQUIRE(subExpr->is<oo::grammar::UnaryOperator>());
     REQUIRE(subExpr->getValue() == "-");
   }
 
@@ -612,16 +597,16 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &orOp{root->children[0]};
-    REQUIRE(orOp->is<scripting::BinaryOperator>());
+    REQUIRE(orOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(orOp->getValue() == "||");
     REQUIRE(orOp->children.size() == 2);
 
     const auto &lhs{orOp->children[0]};
-    REQUIRE(lhs->is<scripting::BinaryOperator>());
+    REQUIRE(lhs->is<oo::grammar::BinaryOperator>());
     REQUIRE(lhs->getValue() == "&&");
 
     const auto &rhs{orOp->children[1]};
-    REQUIRE(rhs->is<scripting::BinaryOperator>());
+    REQUIRE(rhs->is<oo::grammar::BinaryOperator>());
     REQUIRE(rhs->getValue() == "&&");
   }
 
@@ -633,16 +618,16 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &andOp{root->children[0]};
-    REQUIRE(andOp->is<scripting::BinaryOperator>());
+    REQUIRE(andOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(andOp->getValue() == "&&");
     REQUIRE(andOp->children.size() == 2);
 
     const auto &lhs{andOp->children[0]};
-    REQUIRE(lhs->is<scripting::BinaryOperator>());
+    REQUIRE(lhs->is<oo::grammar::BinaryOperator>());
     REQUIRE(lhs->getValue() == "||");
 
     const auto &rhs{andOp->children[1]};
-    REQUIRE(rhs->is<scripting::BinaryOperator>());
+    REQUIRE(rhs->is<oo::grammar::BinaryOperator>());
     REQUIRE(rhs->getValue() == "||");
   }
 
@@ -654,24 +639,24 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &mulOp{root->children[0]};
-    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
     const auto &divOp{mulOp->children[0]};
-    REQUIRE(divOp->is<scripting::BinaryOperator>());
+    REQUIRE(divOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(divOp->getValue() == "/");
     REQUIRE(divOp->children.size() == 2);
 
     const auto &mulOp2{divOp->children[0]};
-    REQUIRE(mulOp2->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp2->is<oo::grammar::BinaryOperator>());
     REQUIRE(mulOp2->getValue() == "*");
     REQUIRE(mulOp2->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*mulOp2->children[0], 2));
-    REQUIRE(scripting::isInteger(*mulOp2->children[1], 3));
-    REQUIRE(scripting::isInteger(*divOp->children[1], 4));
-    REQUIRE(scripting::isInteger(*mulOp->children[1], 2));
+    REQUIRE(oo::isInteger(*mulOp2->children[0], 2));
+    REQUIRE(oo::isInteger(*mulOp2->children[1], 3));
+    REQUIRE(oo::isInteger(*divOp->children[1], 4));
+    REQUIRE(oo::isInteger(*mulOp->children[1], 2));
   }
 
   {
@@ -682,19 +667,19 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &plusOp{root->children[0]};
-    REQUIRE(plusOp->is<scripting::BinaryOperator>());
+    REQUIRE(plusOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(plusOp->getValue() == "+");
     REQUIRE(plusOp->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*plusOp->children[0], 1));
+    REQUIRE(oo::isInteger(*plusOp->children[0], 1));
 
     const auto &mulOp{plusOp->children[1]};
-    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
-    REQUIRE(scripting::isInteger(*mulOp->children[1], 3));
+    REQUIRE(oo::isInteger(*mulOp->children[0], 2));
+    REQUIRE(oo::isInteger(*mulOp->children[1], 3));
   }
 
   {
@@ -705,25 +690,25 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &andOp{root->children[0]};
-    REQUIRE(andOp->is<scripting::BinaryOperator>());
+    REQUIRE(andOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(andOp->getValue() == "&&");
     REQUIRE(andOp->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*andOp->children[0], 1));
+    REQUIRE(oo::isInteger(*andOp->children[0], 1));
 
     const auto &lteqOp{andOp->children[1]};
-    REQUIRE(lteqOp->is<scripting::BinaryOperator>());
+    REQUIRE(lteqOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(lteqOp->getValue() == "<=");
     REQUIRE(lteqOp->children.size() == 2);
 
     const auto &mulOp{lteqOp->children[0]};
-    REQUIRE(mulOp->is<scripting::BinaryOperator>());
+    REQUIRE(mulOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(mulOp->getValue() == "*");
     REQUIRE(mulOp->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*mulOp->children[0], 2));
-    REQUIRE(scripting::isInteger(*mulOp->children[1], 3));
-    REQUIRE(scripting::isInteger(*lteqOp->children[1], 4));
+    REQUIRE(oo::isInteger(*mulOp->children[0], 2));
+    REQUIRE(oo::isInteger(*mulOp->children[1], 3));
+    REQUIRE(oo::isInteger(*lteqOp->children[1], 4));
   }
 
   {
@@ -734,28 +719,22 @@ TEST_CASE("can parse expressions", "[scripting]") {
     REQUIRE_FALSE(root->children.empty());
 
     const auto &neqOp{root->children[0]};
-    REQUIRE(neqOp->is<scripting::BinaryOperator>());
+    REQUIRE(neqOp->is<oo::grammar::BinaryOperator>());
     REQUIRE(neqOp->getValue() == "!=");
     REQUIRE(neqOp->children.size() == 2);
 
-    REQUIRE(scripting::isInteger(*neqOp->children[0], 3));
-    REQUIRE(scripting::isInteger(*neqOp->children[1], 4));
+    REQUIRE(oo::isInteger(*neqOp->children[0], 3));
+    REQUIRE(oo::isInteger(*neqOp->children[1], 4));
   }
 }
 
 TEST_CASE("can declare and assign to variables", "[scripting]") {
-  const auto numIssues{pegtl::analyze<scripting::Grammar>()};
-  REQUIRE(numIssues == 0);
-
-  // All variable declarations follow the same pattern, so there is minimal
-  // advantage to testing them all separately.
-
   {
     std::string_view script = R"script(
 scn MyScript
 begin GameMode
-    short MyVar ; This is a short
-      short    my2Var39
+    short v4r ; This is a short
+      short    var9
     ref myRef
 
     ; It's pretty long
@@ -767,54 +746,44 @@ begin GameMode
 end
     )script";
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
 
     const auto &block{root->children[1]};
     REQUIRE(block->children.size() == 7);
 
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[1],
-                                                       "MyVar"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[2],
-                                                       "my2Var39"));
-    REQUIRE(scripting::isVariable<scripting::RawRef>(*block->children[3],
-                                                     "myRef"));
-    REQUIRE(scripting::isVariable<scripting::RawLong>(*block->children[4],
-                                                      "long"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[5],
-                                                       "long"));
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*block->children[6],
-                                                       "f"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*block->children[1], "v4r"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*block->children[2], "var9"));
+    REQUIRE(oo::isVariable<oo::grammar::RawRef>(*block->children[3], "myRef"));
+    REQUIRE(oo::isVariable<oo::grammar::RawLong>(*block->children[4], "long"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*block->children[5], "long"));
+    REQUIRE(oo::isVariable<oo::grammar::RawFloat>(*block->children[6], "f"));
   }
 
   {
     std::string_view script = R"script(
 scn MyScript
-short myGlobal
+short glob1
 begin GameMode
-end float myOtherGlobal
-begin MenuMode long myLocal
+end float glob2
+begin MenuMode long loc1
 end
-short uselessVariable
+short noUse
     )script";
 
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 6);
 
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[1],
-                                                       "myGlobal"));
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*root->children[3],
-                                                       "myOtherGlobal"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*root->children[5],
-                                                       "uselessVariable"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*root->children[1], "glob1"));
+    REQUIRE(oo::isVariable<oo::grammar::RawFloat>(*root->children[3], "glob2"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*root->children[5], "noUse"));
 
     const auto &block{root->children[4]};
     REQUIRE(block->children.size() == 2);
-    REQUIRE(scripting::isVariable<scripting::RawLong>(*block->children[1],
-                                                      "myLocal"));
+    REQUIRE(oo::isVariable<oo::grammar::RawLong>(*block->children[1], "loc1"));
   }
 
   {
@@ -829,35 +798,35 @@ end
     )script";
 
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
 
     const auto &block{root->children[1]};
     REQUIRE(block->children.size() == 5);
 
-    REQUIRE(scripting::isVariable<scripting::RawFloat>(*block->children[1],
-                                                       "short"));
-    REQUIRE(scripting::isVariable<scripting::RawShort>(*block->children[2],
-                                                       "float"));
+    REQUIRE(oo::isVariable<oo::grammar::RawFloat>(*block->children[1],
+                                                  "short"));
+    REQUIRE(oo::isVariable<oo::grammar::RawShort>(*block->children[2],
+                                                  "float"));
 
     const auto &set1{block->children[3]};
-    REQUIRE(set1->is<scripting::SetStatement>());
+    REQUIRE(set1->is<oo::grammar::SetStatement>());
     REQUIRE(set1->children.size() == 2);
 
     const auto &set1Name{set1->children[0]};
     REQUIRE(set1Name->has_content());
     REQUIRE(set1Name->content() == "float");
-    REQUIRE(scripting::isInteger(*set1->children[1], 3));
+    REQUIRE(oo::isInteger(*set1->children[1], 3));
 
     const auto &set2{block->children[4]};
-    REQUIRE(set2->is<scripting::SetStatement>());
+    REQUIRE(set2->is<oo::grammar::SetStatement>());
     REQUIRE(set2->children.size() == 2);
 
     const auto &set2Name{set2->children[0]};
     REQUIRE(set2Name->has_content());
     REQUIRE(set2Name->content() == "short");
-    REQUIRE(scripting::isFloat(*set2->children[1], 3.5f));
+    REQUIRE(oo::isFloat(*set2->children[1], 3.5f));
   }
 
   {
@@ -870,7 +839,7 @@ end
     )script";
 
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
 
@@ -878,56 +847,56 @@ end
     REQUIRE(block->children.size() == 3);
 
     const auto &set1{block->children[1]};
-    REQUIRE(set1->is<scripting::SetStatement>());
+    REQUIRE(set1->is<oo::grammar::SetStatement>());
     REQUIRE(set1->children.size() == 2);
 
     const auto &set1Dest{set1->children[0]};
-    REQUIRE(set1Dest->is<scripting::RawMemberAccess>());
+    REQUIRE(set1Dest->is<oo::grammar::RawMemberAccess>());
     REQUIRE(set1Dest->children.size() == 2);
 
-    REQUIRE(set1Dest->children[0]->is<scripting::RawIdentifier>());
+    REQUIRE(set1Dest->children[0]->is<oo::grammar::RawIdentifier>());
     REQUIRE(set1Dest->children[0]->has_content());
     REQUIRE(set1Dest->children[0]->content() == "SomeQuest");
 
-    REQUIRE(set1Dest->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set1Dest->children[1]->is<oo::grammar::RawIdentifier>());
     REQUIRE(set1Dest->children[1]->has_content());
     REQUIRE(set1Dest->children[1]->content() == "foo");
 
     const auto &set1Src{set1->children[1]};
-    REQUIRE(set1Src->is<scripting::BinaryOperator>());
+    REQUIRE(set1Src->is<oo::grammar::BinaryOperator>());
     REQUIRE(set1Src->getValue() == "*");
     REQUIRE(set1Src->children.size() == 2);
-    REQUIRE(scripting::isInteger(*set1Src->children[1], 2));
+    REQUIRE(oo::isInteger(*set1Src->children[1], 2));
 
     const auto &set1SrcVar{set1Src->children[0]};
-    REQUIRE(set1SrcVar->is<scripting::RawMemberAccess>());
+    REQUIRE(set1SrcVar->is<oo::grammar::RawMemberAccess>());
     REQUIRE(set1SrcVar->children.size() == 2);
 
-    REQUIRE(set1SrcVar->children[0]->is<scripting::RawIdentifier>());
+    REQUIRE(set1SrcVar->children[0]->is<oo::grammar::RawIdentifier>());
     REQUIRE(set1SrcVar->children[0]->has_content());
     REQUIRE(set1SrcVar->children[0]->content() == "SomeQuest");
 
-    REQUIRE(set1SrcVar->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set1SrcVar->children[1]->is<oo::grammar::RawIdentifier>());
     REQUIRE(set1SrcVar->children[1]->has_content());
     REQUIRE(set1SrcVar->children[1]->content() == "foo");
 
     const auto &set2{block->children[2]};
-    REQUIRE(set2->is<scripting::SetStatement>());
+    REQUIRE(set2->is<oo::grammar::SetStatement>());
     REQUIRE(set2->children.size() == 2);
 
     const auto &set2Dest{set2->children[0]};
-    REQUIRE(set2Dest->is<scripting::RawMemberAccess>());
+    REQUIRE(set2Dest->is<oo::grammar::RawMemberAccess>());
     REQUIRE(set2Dest->children.size() == 2);
 
-    REQUIRE(set2Dest->children[0]->is<scripting::RefLiteralContents>());
+    REQUIRE(set2Dest->children[0]->is<oo::grammar::RefLiteralContents>());
     REQUIRE(set2Dest->children[0]->has_content());
     REQUIRE(set2Dest->children[0]->content() == "001234ab");
 
-    REQUIRE(set2Dest->children[1]->is<scripting::RawIdentifier>());
+    REQUIRE(set2Dest->children[1]->is<oo::grammar::RawIdentifier>());
     REQUIRE(set2Dest->children[1]->has_content());
     REQUIRE(set2Dest->children[1]->content() == "bar");
 
-    REQUIRE(scripting::isInteger(*set2->children[1], 8));
+    REQUIRE(oo::isInteger(*set2->children[1], 8));
   }
 }
 
@@ -945,7 +914,7 @@ end
   )script";
 
   pegtl::memory_input in(script, "");
-  const auto root{scripting::parseScript(in)};
+  const auto root{oo::parseScript(in)};
   REQUIRE(root != nullptr);
   REQUIRE(root->children.size() == 3);
 
@@ -953,14 +922,14 @@ end
   REQUIRE(gameBlock->children.size() == 3);
 
   const auto &gameRet{gameBlock->children[1]};
-  REQUIRE(gameRet->is<scripting::ReturnStatement>());
+  REQUIRE(gameRet->is<oo::grammar::ReturnStatement>());
   REQUIRE(gameRet->children.empty());
 
   const auto &menuBlock{root->children[2]};
   REQUIRE(menuBlock->children.size() == 2);
 
   const auto &menuRet{menuBlock->children[1]};
-  REQUIRE(menuRet->is<scripting::ReturnStatement>());
+  REQUIRE(menuRet->is<oo::grammar::ReturnStatement>());
   REQUIRE(menuRet->children.size() == 1);
 }
 
@@ -973,7 +942,7 @@ begin GameMode
 end
     )script";
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
 
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
@@ -984,14 +953,14 @@ end
     REQUIRE(setStatement->children.size() == 2);
 
     const auto &src{setStatement->children[1]};
-    REQUIRE(src->is<scripting::RawCall>());
+    REQUIRE(src->is<oo::grammar::RawCall>());
     REQUIRE(src->getValue() == "MyFunc");
     REQUIRE(src->children.size() == 4);
 
-    REQUIRE(scripting::isInteger(*src->children[0], 124));
-    REQUIRE(scripting::isFloat(*src->children[1], 3.14f));
-    REQUIRE(scripting::isReference(*src->children[2], 0x01abcdef));
-    REQUIRE(src->children[3]->is<scripting::RawIdentifier>());
+    REQUIRE(oo::isInteger(*src->children[0], 124));
+    REQUIRE(oo::isFloat(*src->children[1], 3.14f));
+    REQUIRE(oo::isReference(*src->children[2], 0x01abcdef));
+    REQUIRE(src->children[3]->is<oo::grammar::RawIdentifier>());
   }
 
   {
@@ -1002,7 +971,7 @@ begin GameMode
 end
     )script";
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
 
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
@@ -1013,20 +982,20 @@ end
     REQUIRE(setStatement->children.size() == 2);
 
     const auto &src{setStatement->children[1]};
-    REQUIRE(src->is<scripting::BinaryOperator>());
+    REQUIRE(src->is<oo::grammar::BinaryOperator>());
     REQUIRE(src->children.size() == 2);
 
     const auto &lhs{src->children[0]};
-    REQUIRE(lhs->is<scripting::RawCall>());
+    REQUIRE(lhs->is<oo::grammar::RawCall>());
     REQUIRE(lhs->getValue() == "Func1");
     REQUIRE(lhs->children.size() == 1);
-    REQUIRE(scripting::isInteger(*lhs->children[0], 10));
+    REQUIRE(oo::isInteger(*lhs->children[0], 10));
 
     const auto &rhs{src->children[1]};
-    REQUIRE(rhs->is<scripting::RawCall>());
+    REQUIRE(rhs->is<oo::grammar::RawCall>());
     REQUIRE(rhs->getValue() == "Func2");
     REQUIRE(rhs->children.size() == 1);
-    REQUIRE(scripting::isInteger(*rhs->children[0], 30));
+    REQUIRE(oo::isInteger(*rhs->children[0], 30));
   }
 
   {
@@ -1037,7 +1006,7 @@ begin GameMode
 end
 )script";
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
     REQUIRE(root != nullptr);
   }
 }
@@ -1051,7 +1020,7 @@ begin GameMode
 end
     )script";
     pegtl::memory_input in(script, "");
-    const auto root{scripting::parseScript(in)};
+    const auto root{oo::parseScript(in)};
 
     REQUIRE(root != nullptr);
     REQUIRE(root->children.size() == 2);
@@ -1062,10 +1031,10 @@ end
     REQUIRE(setStatement->children.size() == 2);
 
     const auto &src{setStatement->children[1]};
-    REQUIRE(src->is<scripting::RawCall>());
+    REQUIRE(src->is<oo::grammar::RawCall>());
     REQUIRE(src->getValue() == "Func");
     REQUIRE(src->children.size() == 2);
-    REQUIRE(src->children[0]->is<scripting::RawIdentifier>());
-    REQUIRE(scripting::isInteger(*src->children[1], 10));
+    REQUIRE(src->children[0]->is<oo::grammar::RawIdentifier>());
+    REQUIRE(oo::isInteger(*src->children[1], 10));
   }
 }

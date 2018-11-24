@@ -13,7 +13,7 @@
 #include <llvm/Transforms/Utils/Mem2Reg.h>
 #include <optional>
 
-namespace scripting {
+namespace oo {
 
 class LLVMVisitor {
  private:
@@ -43,10 +43,10 @@ class LLVMVisitor {
   /// \tparam Type The type of the variable to create an alloca instruction for.
   ///              Must be a RawShort, RawLong, RawFloat, or RawRef.
   template<class Type, class = std::enable_if_t<
-      std::is_same_v<Type, RawShort>
-          || std::is_same_v<Type, RawLong>
-          || std::is_same_v<Type, RawFloat>
-          || std::is_same_v<Type, RawRef>>>
+      std::is_same_v<Type, grammar::RawShort>
+          || std::is_same_v<Type, grammar::RawLong>
+          || std::is_same_v<Type, grammar::RawFloat>
+          || std::is_same_v<Type, grammar::RawRef>>>
   llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *fun,
                                            const std::string &varName) {
     llvm::BasicBlock &entryBlock{fun->getEntryBlock()};
@@ -54,11 +54,11 @@ class LLVMVisitor {
 
     llvm::Type *type{};
     // TODO: Treat references correctly
-    if constexpr (std::is_same_v<Type, RawShort>) {
+    if constexpr (std::is_same_v<Type, grammar::RawShort>) {
       type = llvm::Type::getInt16Ty(mCtx);
-    } else if constexpr (std::is_same_v<Type, RawLong>) {
+    } else if constexpr (std::is_same_v<Type, grammar::RawLong>) {
       type = llvm::Type::getInt32Ty(mCtx);
-    } else if constexpr (std::is_same_v<Type, RawRef>) {
+    } else if constexpr (std::is_same_v<Type, grammar::RawRef>) {
       type = llvm::Type::getInt32Ty(mCtx);
     } else {
       type = llvm::Type::getFloatTy(mCtx);
@@ -104,35 +104,35 @@ class LLVMVisitor {
 };
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawScriptnameStatement>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<RawIdentifier>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::RawIdentifier>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BlockStatement>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::BlockStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<IntegerLiteral>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::IntegerLiteral>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<FloatLiteral>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::FloatLiteral>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<DeclarationStatement>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<SetStatement>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::SetStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<ReturnStatement>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<UnaryOperator>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::UnaryOperator>(const AstNode &node);
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<BinaryOperator>(const AstNode &node);
+LLVMVisitor::visitImpl<grammar::BinaryOperator>(const AstNode &node);
 
-} // namespace scripting
+} // namespace oo
 
 #endif // OPENOBLIVION_SCRIPTING_LLVM_HPP
