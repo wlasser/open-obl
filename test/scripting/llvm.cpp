@@ -9,21 +9,23 @@ TEST_CASE("can use llvm", "[scripting]") {
   const auto *script = R"script(
 scn MyScript
 
-short smallInt
-
 begin TestLong
-  set smallInt to 360
+  long foo
+  set foo to 1
+  long bar
+  set bar to 0
 
-  long myVar
-  set myVar to Func 512 + Func 10
-
-  float foo
-  set foo to 3.15 + 10
-
-  long aLong
-  set aLong to foo + myVar + 10 * smallInt
-
-  return aLong
+  if foo < 1
+    return 1
+  elseif foo == 1
+    if bar == 0
+      return -1
+    else
+      return 10
+    endif
+  else
+    return 2
+  endif
 end
   )script";
 

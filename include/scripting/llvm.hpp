@@ -156,6 +156,15 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node);
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::ElseifStatement>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::ElseStatement>(const AstNode &node);
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node);
 
 template<> llvm::Value *

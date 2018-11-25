@@ -38,6 +38,9 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (auto v = visitHelper<grammar::DeclarationStatement>(node)) return v;
   if (auto v = visitHelper<grammar::SetStatement>(node)) return v;
   if (auto v = visitHelper<grammar::ReturnStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::IfStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::ElseifStatement>(node)) return v;
+  if (auto v = visitHelper<grammar::ElseStatement>(node)) return v;
   if (auto v = visitHelper<grammar::RawShort>(node)) return v;
   if (auto v = visitHelper<grammar::RawLong>(node)) return v;
   if (auto v = visitHelper<grammar::RawFloat>(node)) return v;
@@ -373,7 +376,147 @@ LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node) {
     return nullptr;
   }
 
-  return mIrBuilder.CreateRet(val);
+  llvm::Value *ret{mIrBuilder.CreateRet(val)};
+
+  // ret must end the basic block, so anything after this is dead code. Ideally
+  // we'd just stop generating and jump back up to the parent scope, but I'm not
+  // sure how to do that. Until that's done, start a new (unreachable) basic
+  // block that contains the subsequent instructions.
+  llvm::BasicBlock *bb{llvm::BasicBlock::Create(mCtx, "postreturn", fun)};
+  mIrBuilder.SetInsertPoint(bb);
+
+  return ret;
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
+  if (node.children.empty()) {
+    // TODO: If statement has no condition
+    return nullptr;
+  } else if (node.children.size() == 1) {
+    // TODO: If statement has no body
+    return nullptr;
+  }
+
+  llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
+
+  // Evaluate the condition and convert to bool
+  llvm::Value *arg{visit(*node.children[0])};
+  if (!arg) return nullptr;
+  llvm::Value *cond{convertToBool(arg)};
+  if (!cond) return nullptr;
+
+  const auto isElse = [](const std::unique_ptr<AstNode> &node) {
+    return node->is<grammar::ElseifStatement>()
+        || node->is<grammar::ElseStatement>();
+  };
+
+  // Iterator to start of the if body
+  const auto beginOfThen{node.children.begin() + 1};
+
+  // Iterator to one past the end of the if body
+  const auto endOfThen{std::find_if(node.children.begin(), node.children.end(),
+                                    isElse)};
+
+  // thenBB contains the body of the if statement and a jump out to contBB.
+  // If the if statement has an explicit else or elseif statement then elseBB
+  // contains that, followed by a jump to contBB, otherwise contBB is implicitly
+  // the else statement.
+  llvm::BasicBlock *thenBB{llvm::BasicBlock::Create(mCtx, "then", fun)};
+  llvm::BasicBlock *contBB{llvm::BasicBlock::Create(mCtx, "cont")};
+  llvm::BasicBlock *elseBB{contBB};
+
+  if (endOfThen != node.children.end()) {
+    elseBB = llvm::BasicBlock::Create(mCtx, "else");
+  }
+
+  // Create a conditional branch into the if body or elseBB.
+  mIrBuilder.CreateCondBr(cond, thenBB, elseBB);
+
+  // Start a new scope for the thenBB block and generate the if body
+  mIrBuilder.SetInsertPoint(thenBB);
+  const auto namedValues{mNamedValues};
+  for (auto it{beginOfThen}; it != endOfThen; ++it) visit(**it);
+  mNamedValues = namedValues;
+
+  // End of the if body so unconditionally jump to the merge block
+  mIrBuilder.CreateBr(contBB);
+  //thenBB = mIrBuilder.GetInsertBlock();
+
+  for (auto it{endOfThen}; it != node.children.end(); ++it) {
+    const auto &elseIfStatement{*it};
+    // Emit the elseBB
+    fun->getBasicBlockList().push_back(elseBB);
+    mIrBuilder.SetInsertPoint(elseBB);
+
+    if (elseIfStatement->is<grammar::ElseStatement>()) {
+      // Create a new scope and generate code for the children of the else
+      // statement.
+      auto elseNamedValues{mNamedValues};
+      for (const auto &child : elseIfStatement->children) visit(*child);
+      mNamedValues = elseNamedValues;
+
+      // There cannot be an elseif or else following this statement, so
+      // unconditionally branch to the original continuation.
+      mIrBuilder.CreateBr(contBB);
+      break;
+    } else {
+      if (elseIfStatement->children.empty()) {
+        // TODO: Elseif statement has no condition
+        return nullptr;
+      }
+
+      // Evaluate the condition and convert to bool
+      llvm::Value *elseIfArg{visit(*elseIfStatement->children[0])};
+      if (!elseIfArg) return nullptr;
+      llvm::Value *elseIfCond{convertToBool(elseIfArg)};
+      if (!elseIfCond) return nullptr;
+
+      // Create a new 'then' block. If this elseif statement is not followed by
+      // an elseif or else statement, then the 'else' for this elseif statement
+      // is just a jump to contBB. Otherwise, we reassign elseBB to a new block
+      // so that the subsequent else/elseif can be chained.
+      llvm::BasicBlock
+          *elseIfThenBB{llvm::BasicBlock::Create(mCtx, "then", fun)};
+      elseBB = contBB;
+      // If there are else/elseif statements after this
+      if (it + 1 != node.children.end()) {
+        elseBB = llvm::BasicBlock::Create(mCtx, "else");
+      }
+
+      // Conditionally branch into the new then or else blocks
+      mIrBuilder.CreateCondBr(elseIfCond, elseIfThenBB, elseBB);
+
+      // Create a new scope and generate code for the children of the elseif
+      mIrBuilder.SetInsertPoint(elseIfThenBB);
+      const auto elseIfNamedValues{mNamedValues};
+      auto beginOfElseIfThen{elseIfStatement->children.begin() + 1};
+      auto endOfElseIfThen{elseIfStatement->children.end()};
+      for (auto child{beginOfElseIfThen}; child != endOfElseIfThen; ++child) {
+        visit(**child);
+      }
+      mNamedValues = elseIfNamedValues;
+
+      // End of the elseif body so unconditionally jump to contBB
+      mIrBuilder.CreateBr(contBB);
+    }
+  }
+
+  // Emit the merge block
+  fun->getBasicBlockList().push_back(contBB);
+  mIrBuilder.SetInsertPoint(contBB);
+
+  return nullptr;
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::ElseifStatement>(const AstNode &node) {
+  return nullptr;
+}
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::ElseStatement>(const AstNode &node) {
+  return nullptr;
 }
 
 template<> llvm::Value *
