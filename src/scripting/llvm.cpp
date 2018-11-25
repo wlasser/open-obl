@@ -10,6 +10,16 @@
 
 namespace oo {
 
+LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName)
+    : mIrBuilder(mCtx), mModule(moduleName, mCtx) {
+  mPassManager.addPass(llvm::InstCombinePass{});
+  mPassManager.addPass(llvm::NewGVNPass{});
+  mPassManager.addPass(llvm::SimplifyCFGPass{});
+  mPassManager.addPass(llvm::PromotePass{});
+  llvm::PassBuilder passBuilder{};
+  passBuilder.registerFunctionAnalyses(mAnalysisManager);
+}
+
 llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   if (node.is_root()) {
     for (const auto &child : node.children) {
