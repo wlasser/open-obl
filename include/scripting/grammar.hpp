@@ -99,6 +99,18 @@ struct StrTo : pegtl::string<'t', 'o'> {};
 /// `StrReturn <- "return"`
 struct StrReturn : pegtl::string<'r', 'e', 't', 'u', 'r', 'n'> {};
 
+/// `StrIf <- "if"`
+struct StrIf : pegtl::string<'i', 'f'> {};
+
+/// `StrElseif <- "elseif"`
+struct StrElseIf : pegtl::string<'e', 'l', 's', 'e', 'i', 'f'> {};
+
+/// `StrElse <- "else"`
+struct StrElse : pegtl::string<'e', 'l', 's', 'e'> {};
+
+/// `StrEndif <- "endif"`
+struct StrEndif : pegtl::string<'e', 'n', 'd', 'i', 'f'> {};
+
 /// `IdChar <- [a-zA-Z0-9]`
 struct IdChar : pegtl::alnum {};
 
@@ -216,6 +228,18 @@ struct To : Spaced<StrTo> {};
 
 /// `Return <- StrReturn Spacing`
 struct Return : Spaced<StrReturn> {};
+
+/// `If <- StrIf Spacing`
+struct If : Spaced<StrIf> {};
+
+/// `Elseif <- StrElseif Spacing`
+struct Elseif : Spaced<StrElseIf> {};
+
+/// `Else <- StrElse Spacing`
+struct Else : Spaced<StrElse> {};
+
+/// `Endif <- StrEndif Spacing`
+struct Endif : Spaced<StrEndif> {};
 
 /// `StringLiteralBannedChar <- ["] / eolf`
 struct StringLiteralBannedChar : pegtl::sor<pegtl::one<'"'>, pegtl::eolf> {};
@@ -463,8 +487,30 @@ struct ReturnStatement : pegtl::sor<pegtl::seq<StrReturn,
                                                Expression>, Return> {
 };
 
+struct Statement;
+
+/// `ElseifStatement <- Elseif Expression Statement+`
+struct ElseifStatement : pegtl::seq<Elseif,
+                                    Expression,
+                                    pegtl::plus<Statement>> {
+};
+
+/// `ElseStatement <- Else Statement+`
+struct ElseStatement : pegtl::seq<Else, pegtl::plus<Statement>> {};
+
+/// `IfStatement <- If Expression Statement+ ElseifStatement* ElseStatement? Endif`
+struct IfStatement : pegtl::seq<If,
+                                Expression,
+                                pegtl::plus<Statement>,
+                                pegtl::star<ElseifStatement>,
+                                pegtl::opt<ElseStatement>,
+                                Endif> {
+};
+
+/// `Statement <- DeclarationStatement / SetStatement / IfStatement / ReturnStatement`
 struct Statement : pegtl::sor<DeclarationStatement,
                               SetStatement,
+                              IfStatement,
                               ReturnStatement> {
 };
 

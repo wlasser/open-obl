@@ -37,6 +37,9 @@ class AstNode {
       type_identity<grammar::DeclarationStatement>,
       type_identity<grammar::SetStatement>,
       type_identity<grammar::ReturnStatement>,
+      type_identity<grammar::IfStatement>,
+      type_identity<grammar::ElseifStatement>,
+      type_identity<grammar::ElseStatement>,
       type_identity<grammar::RawShort>,
       type_identity<grammar::RawLong>,
       type_identity<grammar::RawFloat>,
@@ -319,6 +322,9 @@ template<> struct AstSelector<grammar::FloatLiteral> : std::true_type {};
 template<> struct AstSelector<grammar::DeclarationStatement> : std::true_type {};
 template<> struct AstSelector<grammar::SetStatement> : std::true_type {};
 template<> struct AstSelector<grammar::ReturnStatement> : std::true_type {};
+template<> struct AstSelector<grammar::IfStatement> : std::true_type {};
+template<> struct AstSelector<grammar::ElseifStatement> : std::true_type {};
+template<> struct AstSelector<grammar::ElseStatement> : std::true_type {};
 template<> struct AstSelector<grammar::RawShort> : std::true_type {};
 template<> struct AstSelector<grammar::RawLong> : std::true_type {};
 template<> struct AstSelector<grammar::RawFloat> : std::true_type {};

@@ -1037,3 +1037,111 @@ end
     REQUIRE(oo::isInteger(*src->children[1], 10));
   }
 }
+
+TEST_CASE("can use if statements", "[scripting]") {
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  if 10 < 5
+    set foo to 1
+    set foo to foo + 2
+    float bar
+  endif
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{oo::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &ifStatement{blockStatement->children[1]};
+    REQUIRE(ifStatement->is<oo::grammar::IfStatement>());
+    REQUIRE(ifStatement->children.size() == 4);
+    REQUIRE(ifStatement->children[0]->is<oo::grammar::BinaryOperator>());
+    REQUIRE(ifStatement->children[1]->is<oo::grammar::SetStatement>());
+    REQUIRE(ifStatement->children[2]->is<oo::grammar::SetStatement>());
+    REQUIRE(ifStatement->children[3]->is<oo::grammar::DeclarationStatement>());
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  if 5 < 10
+    set foo to 1
+  else
+    set foo to 2
+  endif
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{oo::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &ifStatement{blockStatement->children[1]};
+    REQUIRE(ifStatement->is<oo::grammar::IfStatement>());
+    REQUIRE(ifStatement->children.size() == 3);
+    REQUIRE(ifStatement->children[0]->is<oo::grammar::BinaryOperator>());
+    REQUIRE(ifStatement->children[1]->is<oo::grammar::SetStatement>());
+
+    const auto &elseStatement{ifStatement->children[2]};
+    REQUIRE(elseStatement->is<oo::grammar::ElseStatement>());
+    REQUIRE(elseStatement->children.size() == 1);
+    REQUIRE(elseStatement->children[0]->is<oo::grammar::SetStatement>());
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+  if 5 < 10
+    set foo to 1
+  elseif 5 == 10
+    set foo to 2
+  elseif 5 > 10
+    set foo to 3
+  else
+    set foo to 4
+  endif
+end
+    )script";
+    pegtl::memory_input in(script, "");
+    const auto root{oo::parseScript(in)};
+
+    REQUIRE(root != nullptr);
+    REQUIRE(root->children.size() == 2);
+    const auto &blockStatement{root->children[1]};
+    REQUIRE(blockStatement->children.size() == 2);
+
+    const auto &ifStatement{blockStatement->children[1]};
+    REQUIRE(ifStatement->is<oo::grammar::IfStatement>());
+    REQUIRE(ifStatement->children.size() == 5);
+    REQUIRE(ifStatement->children[0]->is<oo::grammar::BinaryOperator>());
+    REQUIRE(ifStatement->children[1]->is<oo::grammar::SetStatement>());
+
+    const auto &elseIfStatement1{ifStatement->children[2]};
+    REQUIRE(elseIfStatement1->is<oo::grammar::ElseifStatement>());
+    REQUIRE(elseIfStatement1->children.size() == 2);
+    REQUIRE(elseIfStatement1->children[0]->is<oo::grammar::BinaryOperator>());
+    REQUIRE(elseIfStatement1->children[1]->is<oo::grammar::SetStatement>());
+
+    const auto &elseIfStatement2{ifStatement->children[3]};
+    REQUIRE(elseIfStatement2->is<oo::grammar::ElseifStatement>());
+    REQUIRE(elseIfStatement2->children.size() == 2);
+    REQUIRE(elseIfStatement2->children[0]->is<oo::grammar::BinaryOperator>());
+    REQUIRE(elseIfStatement2->children[1]->is<oo::grammar::SetStatement>());
+
+    const auto &elseStatement{ifStatement->children[4]};
+    REQUIRE(elseStatement->is<oo::grammar::ElseStatement>());
+    REQUIRE(elseStatement->children.size() == 1);
+    REQUIRE(elseStatement->children[0]->is<oo::grammar::SetStatement>());
+  }
+}
