@@ -35,24 +35,9 @@ class LLVMVisitor {
 
   void newModule(llvm::StringRef moduleName);
 
-  template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
-  llvm::Value *visitImpl(const AstNode &node) {
+  template<class NodeType> llvm::Value *visitImpl(const AstNode &node) {
     return nullptr;
   }
-
-  /// Helper used in visit to write the NodeType only once per type, not twice.
-  //C++20: Make this a lambda template in visit
-  template<class NodeType>
-  auto visitHelper(const AstNode &node) -> decltype(visitImpl<NodeType>(node)) {
-    return node.is<NodeType>() ? visitImpl<NodeType>(node) : nullptr;
-  }
-
-  template<class Type>
-  static constexpr inline bool
-      isAstType = std::is_same_v<Type, grammar::RawShort>
-      || std::is_same_v<Type, grammar::RawLong>
-      || std::is_same_v<Type, grammar::RawRef>
-      || std::is_same_v<Type, grammar::RawFloat>;
 
   /// Convert a type from the AST into an LLVM type.
   // TODO: Treat references correctly
@@ -63,14 +48,14 @@ class LLVMVisitor {
   /// can find them.
   /// \tparam Type The type of the variable to create an alloca instruction for.
   ///              Must be a RawShort, RawLong, RawFloat, or RawRef.
-  template<class Type, class = std::enable_if_t<isAstType<Type>>>
+  template<class Type, class = std::enable_if_t<isAstType_v<Type>>>
   llvm::AllocaInst *
   createEntryBlockAlloca(llvm::Function *fun, llvm::StringRef name);
 
   /// Create a prototype for a function returning Ret and taking Args as its
   /// arguments.
   template<class Ret, class ... Args>
-  llvm::Function *makeProto(llvm::StringRef name);
+  [[nodiscard]] llvm::Function *makeProto(llvm::StringRef name);
 
   /// Promote/convert lhs and rhs to a common type.
   /// Emits instructions to convert lhs and rhs to a common type, if necessary,
@@ -99,32 +84,10 @@ class LLVMVisitor {
     mModule->print(llvm::errs(), nullptr);
   }
 
-  int jit() {
-    std::string moduleName{mModule->getName()};
-    auto key{mJit->addModule(std::move(mModule))};
-    newModule(moduleName);
-
-    auto entrySymbol{mJit->findSymbol("TestLong")};
-    assert(entrySymbol && "Entry function not found");
-
-    using entry_t = int (*)();
-    auto entryAddrOrErr{entrySymbol.getAddress()};
-    if (auto err{entryAddrOrErr.takeError()}) {
-      llvm::errs() << err;
-      throw std::runtime_error("Jit error");
-    }
-    auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryAddrOrErr)};
-    auto entry{reinterpret_cast<entry_t>(entryAddr)};
-    const auto result{entry()};
-
-    mJit->removeModule(key);
-
-    return result;
-  }
+  int jit();
 };
 
-template<class Type>
-llvm::Type *LLVMVisitor::typeToLLVM() {
+template<class Type> llvm::Type *LLVMVisitor::typeToLLVM() {
   if constexpr (std::is_same_v<Type, grammar::RawShort>) {
     return llvm::Type::getInt16Ty(mCtx);
   } else if constexpr (std::is_same_v<Type, grammar::RawLong>) {
@@ -135,7 +98,7 @@ llvm::Type *LLVMVisitor::typeToLLVM() {
     return llvm::Type::getFloatTy(mCtx);
   } else {
     static_assert(false_v<Type>, "Type must be an AstType");
-    return nullptr; // Unreachable
+    llvm_unreachable("Type must be an AstType");
   }
 }
 
@@ -149,7 +112,7 @@ LLVMVisitor::createEntryBlockAlloca(llvm::Function *fun, llvm::StringRef name) {
 
 template<class Ret, class ... Args>
 llvm::Function *LLVMVisitor::makeProto(llvm::StringRef name) {
-  static_assert((isAstType<Ret> && ... && isAstType<Args>),
+  static_assert((isAstType_v<Ret> && ... && isAstType_v<Args>),
   "Ret and Args... must all be AstTypes");
 
   std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
@@ -184,12 +147,6 @@ LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node);
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<grammar::ElseifStatement>(const AstNode &node);
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<grammar::ElseStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node);

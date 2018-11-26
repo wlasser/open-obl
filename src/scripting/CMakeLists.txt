@@ -18,6 +18,7 @@ target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
+        ast.cpp
         grammar.cpp
         jit.cpp
         llvm.cpp)

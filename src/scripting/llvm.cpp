@@ -40,36 +40,46 @@ LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName) : mIrBuilder(mCtx) {
 }
 
 llvm::Value *LLVMVisitor::visit(const AstNode &node) {
+  auto visitor = [this, &node](auto t) -> llvm::Value * {
+    using T = decltype(t);
+    if constexpr(has_type_v<T>) {
+      return visitImpl<typename T::type>(node);
+    } else {
+      return nullptr;
+    }
+  };
+
   if (node.is_root()) {
     for (const auto &child : node.children) {
       visit(*child);
     }
     return nullptr;
   }
-  if (auto v = visitHelper<grammar::RawScriptnameStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::RawScriptname>(node)) return v;
-  if (auto v = visitHelper<grammar::RawIdentifier>(node)) return v;
-  if (auto v = visitHelper<grammar::BlockStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::StringLiteralContents>(node)) return v;
-  if (auto v = visitHelper<grammar::IntegerLiteral>(node)) return v;
-  if (auto v = visitHelper<grammar::RefLiteralContents>(node)) return v;
-  if (auto v = visitHelper<grammar::FloatLiteral>(node)) return v;
-  if (auto v = visitHelper<grammar::DeclarationStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::SetStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::ReturnStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::IfStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::ElseifStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::ElseStatement>(node)) return v;
-  if (auto v = visitHelper<grammar::RawShort>(node)) return v;
-  if (auto v = visitHelper<grammar::RawLong>(node)) return v;
-  if (auto v = visitHelper<grammar::RawFloat>(node)) return v;
-  if (auto v = visitHelper<grammar::RawRef>(node)) return v;
-  if (auto v = visitHelper<grammar::RawMemberAccess>(node)) return v;
-  if (auto v = visitHelper<grammar::RawCall>(node)) return v;
-  if (auto v = visitHelper<grammar::BinaryOperator>(node)) return v;
-  if (auto v = visitHelper<grammar::UnaryOperator>(node)) return v;
 
-  return nullptr;
+  return node.visit(visitor);
+}
+
+int LLVMVisitor::jit() {
+  std::string moduleName{mModule->getName()};
+  auto key{mJit->addModule(std::move(mModule))};
+  newModule(moduleName);
+
+  auto entrySymbol{mJit->findSymbol("TestLong")};
+  assert(entrySymbol && "Entry function not found");
+
+  using entry_t = int (*)();
+  auto entryAddrOrErr{entrySymbol.getAddress()};
+  if (auto err{entryAddrOrErr.takeError()}) {
+    llvm::errs() << err;
+    throw std::runtime_error("Jit error");
+  }
+  auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryAddrOrErr)};
+  auto entry{reinterpret_cast<entry_t>(entryAddr)};
+  const auto result{entry()};
+
+  mJit->removeModule(key);
+
+  return result;
 }
 
 [[nodiscard]] std::pair<llvm::Value *, llvm::Value *>
@@ -525,16 +535,6 @@ LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
   fun->getBasicBlockList().push_back(contBB);
   mIrBuilder.SetInsertPoint(contBB);
 
-  return nullptr;
-}
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<grammar::ElseifStatement>(const AstNode &node) {
-  return nullptr;
-}
-
-template<> llvm::Value *
-LLVMVisitor::visitImpl<grammar::ElseStatement>(const AstNode &node) {
   return nullptr;
 }
 

@@ -90,8 +90,7 @@ class AstNode {
   std::vector<std::unique_ptr<AstNode>> children{};
 
   /// Return `true` if this node represents a `T`, and `false` otherwise.
-  template<class T>
-  [[nodiscard]] constexpr bool is() const noexcept {
+  template<class T> [[nodiscard]] constexpr bool is() const noexcept {
     return std::holds_alternative<type_identity<T>>(mCurrentType);
   }
 
@@ -107,62 +106,58 @@ class AstNode {
   ///       make it easy to customise the output for each type---like not
   ///       showing the content of statements---without asking the caller to do
   ///       that. Perhaps that is more suited to another member function.
-  [[nodiscard]] std::string name() const noexcept {
-    return std::visit([](auto t) -> std::string {
-      using T = decltype(t);
-      if constexpr (has_type_v<T>) {
-        return pegtl::internal::demangle(typeid(typename T::type).name());
-      } else {
-        return "";
-      }
-    }, mCurrentType);
-  }
+  [[nodiscard]] std::string name() const noexcept;
 
   /// Starting position of the content of this node in the input.
-  [[nodiscard]] pegtl::position begin() const noexcept {
-    return pegtl::position(mBegin, mSource);
-  }
+  [[nodiscard]] pegtl::position begin() const noexcept;
 
   /// Ending position of the content of this node in the input.
-  [[nodiscard]] pegtl::position end() const noexcept {
-    return pegtl::position(mEnd, mSource);
-  }
+  [[nodiscard]] pegtl::position end() const noexcept;
 
   /// Returns `true` if this node has any content in the input, and `false`
   /// otherwise.
-  [[nodiscard]] bool has_content() const noexcept {
+  [[nodiscard]] constexpr bool has_content() const noexcept {
     return mEnd.data != nullptr;
   }
 
   /// Return the content of the input that generated this node, if any.
   /// \pre `has_content() == true`.
-  [[nodiscard]] std::string content() const noexcept
-  /*C++20: [[expects: has_content()]]*/ {
-    assert(has_content());
-    return std::string(mBegin.data, mEnd.data);
-  }
+  [[nodiscard]] std::string
+  content() const noexcept /*C++20: [[expects: has_content()]]*/;
 
   /// Delete the content held by this node.
   /// \post `has_content() == false`.
-  void remove_content() noexcept {
-    mEnd.reset();
-  }
+  void remove_content() noexcept /*C++20: [[ensures: has_content()]]*/;
 
+  /// Get the node's additional mutable information.
   [[nodiscard]] constexpr std::string_view getValue() const noexcept {
     return mValue;
   }
 
-  void setValue(const std::string &value) {
-    mValue = value;
-  }
+  /// Set the node's additional mutable information.
+  void setValue(const std::string &value);
 
-  template<class Visitor>
-  constexpr auto visit(Visitor &&visitor) {
+  /// \overload setValue(const std::string &)
+  void setValue(std::string &&value) noexcept;
+
+  /// Call the visitor with the current type.
+  /// Intended to be used to dispatch to a different function depending on the
+  /// current node type represented by this AstNode. Note that the visitor
+  /// should not take an instance of a particular node type, but rather a
+  /// type_identity wrapping the type.
+  /// \tparam Visitor A function object taking a type_identity<T> for each node
+  ///                 type T where `AstSelector<T>` has a member value `value`
+  ///                 equal to true.
+  template<class Visitor> constexpr auto visit(Visitor &&visitor) {
     return std::visit(visitor, mCurrentType);
   }
 
-  template<class T>
-  constexpr void setType() noexcept {
+  /// \overload visit(Visitor &&)
+  template<class Visitor> constexpr auto visit(Visitor &&visitor) const {
+    return std::visit(visitor, mCurrentType);
+  }
+
+  template<class T> constexpr void setType() noexcept {
     mCurrentType.emplace<type_identity<T>>();
   }
 
@@ -174,6 +169,9 @@ class AstNode {
 
   AstNode(AstNode &&) noexcept = default;
   AstNode &operator=(AstNode &&) noexcept = default;
+
+  /// \name PEGTL interface
+  ///@{
 
   /// Called by PEGTL to initialize the (non-root) node.
   template<class Rule, class Input>
@@ -198,7 +196,24 @@ class AstNode {
   void emplace_back(std::unique_ptr<AstNode> child) {
     children.emplace_back(std::move(child));
   }
+
+  ///@}
 };
+
+template<class Type> constexpr inline bool
+    isAstType_v = std::is_same_v<Type, grammar::RawShort>
+    || std::is_same_v<Type, grammar::RawLong>
+    || std::is_same_v<Type, grammar::RawRef>
+    || std::is_same_v<Type, grammar::RawFloat>;
+
+template<class Type> constexpr inline bool
+    isBinaryOperator_v = std::is_same_v<Type, grammar::BinaryOperator>
+    || std::is_same_v<Type, grammar::MultiplicativeBinaryOperator>
+    || std::is_same_v<Type, grammar::AdditiveBinaryOperator>
+    || std::is_same_v<Type, grammar::ConditionalBinaryOperator>
+    || std::is_same_v<Type, grammar::EqualityBinaryOperator>
+    || std::is_same_v<Type, grammar::ConjunctionBinaryOperator>
+    || std::is_same_v<Type, grammar::DisjunctionBinaryOperator>;
 
 /// Rearrange expression nodes into operator nodes.
 /// Explicitly, performs the transformations
@@ -206,34 +221,7 @@ class AstNode {
 /// - `(UnaryExpression (Op Arg1)) -> (Op (Arg1))`.
 /// \remark Adapted from the parse_tree.cpp example in PEGTL.
 struct ExprTransform : std::true_type {
-  static void transform(std::unique_ptr<AstNode> &node) {
-    if (node == nullptr || node->children.empty()) return;
-
-    // Only one child, so replace the parent with the child.
-    if (node->children.size() == 1) {
-      node = std::move(node->children.back());
-      return;
-    }
-
-    node->remove_content();
-    auto &children{node->children};
-
-    auto rhs{std::move(children.back())};
-    children.pop_back();
-
-    auto op{std::move(children.back())};
-    children.pop_back();
-
-    // Node had more than two children so is not a unary expression. The lhs
-    // will therefore be parsed and should be kept.
-    if (!node->children.empty()) {
-      op->children.emplace_back(std::move(node));
-    }
-
-    op->children.emplace_back(std::move(rhs));
-    node = std::move(op);
-    transform(node->children.front());
-  }
+  static void transform(std::unique_ptr<AstNode> &node);
 };
 
 /// Transform specific BinaryOperators into the generic BinaryOperator with a
@@ -242,68 +230,12 @@ struct ExprTransform : std::true_type {
 /// For example, performs the transformation
 /// `(AdditiveBinaryOperator (StrMul Arg1 Arg2)) -> (BinaryOperator:"+" (Arg1 Arg2))`
 struct OpTransform : std::true_type {
-  static void transform(std::unique_ptr<AstNode> &node) {
-    if (node == nullptr || node->children.empty()) return;
-
-    node->remove_content();
-    auto &children{node->children};
-
-    // Move the first child of the operator node (i.e. the operator itself) into
-    // the value of the operator node, and transform the operator node into a
-    // generic BinaryOperator or UnaryOperator.
-    auto op{std::move(children.front())};
-    children.erase(children.begin());
-    node->setValue(op->content());
-    node->visit([&node](auto t) {
-      using T = decltype(t);
-      if constexpr (has_type_v<T>) {
-        using Type = typename T::type;
-        if constexpr (
-            std::is_same_v<Type, grammar::MultiplicativeBinaryOperator> ||
-                std::is_same_v<Type, grammar::AdditiveBinaryOperator> ||
-                std::is_same_v<Type, grammar::ConditionalBinaryOperator> ||
-                std::is_same_v<Type, grammar::EqualityBinaryOperator> ||
-                std::is_same_v<Type, grammar::ConjunctionBinaryOperator> ||
-                std::is_same_v<Type, grammar::DisjunctionBinaryOperator>) {
-          node->setType<grammar::BinaryOperator>();
-        }
-      }
-    });
-  }
+  static void transform(std::unique_ptr<AstNode> &node);
 };
 
 /// Transforms member calls to free calls with `this` as the first argument.
 struct CallTransform : std::true_type {
-  static void transform(std::unique_ptr<AstNode> &node) {
-    if (node == nullptr || node->children.empty()) return;
-
-    auto &children{node->children};
-
-    if (children.front()->is<grammar::RawMemberAccess>()) {
-      auto rawMemberAccess{std::move(children.front())};
-      children.erase(children.begin());
-
-      // First child of rawMemberAccess becomes the first parameter, the second
-      // becomes the content of the call node.
-      if (rawMemberAccess->children.size() != 2) {
-        // TODO: Ill-formed member access, throw
-        return;
-      }
-
-      auto funName{std::move(rawMemberAccess->children[1])};
-      auto thisArg{std::move(rawMemberAccess->children[0])};
-
-      node->remove_content();
-      node->setValue(funName->content());
-      children.insert(children.begin(), std::move(thisArg));
-    } else if (children.front()->is<grammar::RawIdentifier>()) {
-      auto funName{std::move(children.front())};
-      children.erase(children.begin());
-
-      node->remove_content();
-      node->setValue(funName->content());
-    }
-  }
+  static void transform(std::unique_ptr<AstNode> &node);
 };
 
 /// Specifies which node types should be kept in the AST and which
@@ -366,8 +298,7 @@ template<> struct AstSelector<grammar::Expression> : ExprTransform {};
 
 /// Parse a script from the given input source and produce an AST for it.
 /// \tparam T a valid PEGTL input, e.g. pegtl::memory_input.
-template<class T> [[nodiscard]] std::unique_ptr<AstNode>
-parseScript(T &&in) {
+template<class T> [[nodiscard]] std::unique_ptr<AstNode> parseScript(T &&in) {
   return pegtl::parse_tree::parse<grammar::Grammar, AstNode, AstSelector>(in);
 }
 
