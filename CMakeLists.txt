@@ -68,7 +68,10 @@ find_package(OGRE 1.11 REQUIRED)
 find_package(Boost 1.67 REQUIRED)
 find_package(Bullet 2.85 REQUIRED)
 find_package(pugixml REQUIRED)
-find_package(LLVM REQUIRED)
+find_package(LLVM 7.0.0 REQUIRED CONFIG)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
 
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)

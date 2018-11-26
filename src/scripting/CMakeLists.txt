@@ -15,12 +15,23 @@ target_include_directories(OpenOblivionScripting PUBLIC
 target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/ast.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
         grammar.cpp
+        jit.cpp
         llvm.cpp)
 
-target_link_libraries(OpenOblivionScripting PUBLIC taocpp::pegtl LLVM)
+target_include_directories(OpenOblivionScripting PUBLIC ${LLVM_INCLUDE_DIRS})
+target_compile_definitions(OpenOblivionScripting PUBLIC ${LLVM_DEFINITIONS})
+# TODO: Choose this more carefully out of llvm-config --components
+llvm_map_components_to_libnames(llvm_libs all)
+
+target_link_libraries(OpenOblivionScripting PUBLIC taocpp::pegtl)
+
+set_target_properties(OpenOblivionScripting PROPERTIES
+        CXX_VISIBILITY_PRESET hidden)
+target_link_libraries(OpenOblivionScripting PRIVATE "-Wl,--export-dynamic")
 
 install(TARGETS OpenOblivionScripting EXPORT OpenOblivionScriptingTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

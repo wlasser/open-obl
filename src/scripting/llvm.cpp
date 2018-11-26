@@ -1,5 +1,6 @@
 #include "scripting/llvm.hpp"
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/TargetSelect.h>
 
 // There is a bug in CLion (https://youtrack.jetbrains.com/issue/CPP-11511 is a
 // likely candidate) which keeps resulting in a `condition is always true`
@@ -8,10 +9,28 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
 
+int Func(int x) {
+  return 9 * x;
+}
+
 namespace oo {
 
-LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName)
-    : mIrBuilder(mCtx), mModule(moduleName, mCtx) {
+void LLVMVisitor::newModule(llvm::StringRef moduleName) {
+  mModule = std::make_unique<llvm::Module>(moduleName, mCtx);
+  mModule->setDataLayout(mJit->getTargetMachine().createDataLayout());
+  mFunctions = llvm::StringMap<llvm::Function *>{
+      {"Func", makeProto<grammar::RawLong, grammar::RawLong>("Func")}
+  };
+}
+
+LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName) : mIrBuilder(mCtx) {
+  llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
+  llvm::InitializeNativeTargetAsmParser();
+
+  mJit = std::make_unique<oo::Jit>();
+  newModule(moduleName);
+
   mPassManager.addPass(llvm::InstCombinePass{});
   mPassManager.addPass(llvm::NewGVNPass{});
   mPassManager.addPass(llvm::SimplifyCFGPass{});
@@ -173,7 +192,7 @@ LLVMVisitor::visitImpl<grammar::BlockStatement>(const AstNode &node) {
   auto *fun{llvm::Function::Create(funType,
                                    llvm::Function::ExternalLinkage,
                                    blockName,
-                                   &mModule)};
+                                   mModule.get())};
   auto *bb{llvm::BasicBlock::Create(mCtx, "entry", fun)};
   mIrBuilder.SetInsertPoint(bb);
 
@@ -248,8 +267,8 @@ LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node) {
     }
 
     // Create a global variable initialized to zero
-    mModule.getOrInsertGlobal(declName, type);
-    llvm::GlobalVariable *glob{mModule.getNamedGlobal(declName)};
+    mModule->getOrInsertGlobal(declName, type);
+    llvm::GlobalVariable *glob{mModule->getNamedGlobal(declName)};
     glob->setInitializer(init);
     glob->setDSOLocal(true);
     glob->setLinkage(linkage);

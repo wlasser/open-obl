@@ -19,7 +19,8 @@ begin TestLong
     return 1
   elseif foo == 1
     if bar == 0
-      return -1
+      set bar to Func 1
+      return bar
     else
       return 10
     endif
@@ -36,4 +37,5 @@ end
   oo::LLVMVisitor visitor("MyScript");
   visitor.visit(*root);
   visitor.print();
+  llvm::errs() << "Evaluated to " << visitor.jit() << '\n';
 }

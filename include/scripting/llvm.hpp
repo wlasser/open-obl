@@ -4,6 +4,7 @@
 #include "meta.hpp"
 #include "scripting/ast.hpp"
 #include "scripting/grammar.hpp"
+#include "scripting/jit.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
@@ -16,20 +17,23 @@
 #include <optional>
 #include <type_traits>
 
+extern "C" __attribute__ ((visibility("default"))) int Func(int x);
+
 namespace oo {
 
 class LLVMVisitor {
  private:
   llvm::LLVMContext mCtx{};
   llvm::IRBuilder<> mIrBuilder;
-  llvm::Module mModule;
+  std::unique_ptr<llvm::Module> mModule{};
   llvm::FunctionPassManager mPassManager{};
   llvm::FunctionAnalysisManager mAnalysisManager{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
-  llvm::StringMap<llvm::Function *> mFunctions{
-      {"Func", makeProto<grammar::RawLong, grammar::RawLong>("Func")}
-  };
+  llvm::StringMap<llvm::Function *> mFunctions;
+  std::unique_ptr<oo::Jit> mJit{};
+
+  void newModule(llvm::StringRef moduleName);
 
   template<class NodeType, class = std::enable_if_t<AstSelector<NodeType>::value>>
   llvm::Value *visitImpl(const AstNode &node) {
@@ -92,7 +96,30 @@ class LLVMVisitor {
   llvm::Value *visit(const AstNode &node);
 
   void print() {
-    mModule.print(llvm::errs(), nullptr);
+    mModule->print(llvm::errs(), nullptr);
+  }
+
+  int jit() {
+    std::string moduleName{mModule->getName()};
+    auto key{mJit->addModule(std::move(mModule))};
+    newModule(moduleName);
+
+    auto entrySymbol{mJit->findSymbol("TestLong")};
+    assert(entrySymbol && "Entry function not found");
+
+    using entry_t = int (*)();
+    auto entryAddrOrErr{entrySymbol.getAddress()};
+    if (auto err{entryAddrOrErr.takeError()}) {
+      llvm::errs() << err;
+      throw std::runtime_error("Jit error");
+    }
+    auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryAddrOrErr)};
+    auto entry{reinterpret_cast<entry_t>(entryAddr)};
+    const auto result{entry()};
+
+    mJit->removeModule(key);
+
+    return result;
   }
 };
 
@@ -128,7 +155,7 @@ llvm::Function *LLVMVisitor::makeProto(llvm::StringRef name) {
   std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
   auto *funType{llvm::FunctionType::get(typeToLLVM<Ret>(), args, false)};
   return llvm::Function::Create(funType, llvm::Function::ExternalLinkage,
-                                name, &mModule);
+                                name, mModule.get());
 }
 
 template<> llvm::Value *
