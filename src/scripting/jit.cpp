@@ -54,11 +54,19 @@ llvm::orc::VModuleKey Jit::addModule(std::unique_ptr<llvm::Module> module) {
   return key;
 }
 
-llvm::JITSymbol Jit::findSymbol(const std::string &name) {
+llvm::JITSymbol Jit::findSymbol(llvm::StringRef name) noexcept {
   std::string mangledName{};
   llvm::raw_string_ostream mangledNameStream(mangledName);
   llvm::Mangler::getNameWithPrefix(mangledNameStream, name, mDataLayout);
   return mOptimizeLayer.findSymbol(mangledNameStream.str(), true);
+}
+
+llvm::JITSymbol
+Jit::findSymbolIn(llvm::StringRef name, llvm::orc::VModuleKey key) noexcept {
+  std::string mangledName{};
+  llvm::raw_string_ostream mangledNameStream(mangledName);
+  llvm::Mangler::getNameWithPrefix(mangledNameStream, name, mDataLayout);
+  return mOptimizeLayer.findSymbolIn(key, mangledNameStream.str(), true);
 }
 
 llvm::JITTargetAddress Jit::getSymbolAddress(const std::string &name) noexcept {

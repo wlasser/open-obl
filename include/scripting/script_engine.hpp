@@ -16,8 +16,9 @@ class ScriptEngine {
   llvm::LLVMContext mCtx{};
   std::unique_ptr<oo::Jit> mJit{};
   llvm::StringMap<llvm::FunctionType *> mExternFuns{};
+  llvm::StringMap<llvm::orc::VModuleKey> mModules{};
 
-  auto jit(std::unique_ptr<llvm::Module> module);
+  llvm::orc::VModuleKey jit(std::unique_ptr<llvm::Module> module);
 
   /// Create a prototype for a function returning Ret and taking Args as its
   /// arguments.
@@ -37,7 +38,8 @@ class ScriptEngine {
 
   void compile(std::string_view script);
 
-  template<class T> [[nodiscard]] T call(llvm::StringRef funName);
+  template<class T>
+  [[nodiscard]] T call(llvm::StringRef scriptName, llvm::StringRef funName);
 };
 
 template<class Fun> void ScriptEngine::addExternalFun(llvm::StringRef name) {
@@ -71,10 +73,16 @@ template<class Type> llvm::Type *ScriptEngine::typeToLLVM() {
   }
 }
 
-template<class T> T ScriptEngine::call(llvm::StringRef funName) {
-  auto entrySymbol{mJit->findSymbol(funName)};
+template<class T>
+T ScriptEngine::call(llvm::StringRef scriptName, llvm::StringRef funName) {
+  const auto keyIt{mModules.find(scriptName)};
+  if (keyIt == mModules.end()) {
+    // TODO: Do something more reasonable if the module doesn't exist
+    assert(false && "No such script");
+  }
+  auto entrySymbol{mJit->findSymbolIn(funName, keyIt->second)};
   // TODO: Do something more reasonable if the function doesn't exist
-  assert(entrySymbol && "Entry function not found");
+  assert(entrySymbol && "No such function");
 
   using entry_t = T (*)();
   auto entryAddrOrErr{entrySymbol.getAddress()};

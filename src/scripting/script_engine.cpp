@@ -18,7 +18,7 @@ ScriptEngine::ScriptEngine() {
   addExternalFun<decltype(Func)>("Func");
 }
 
-auto ScriptEngine::jit(std::unique_ptr<llvm::Module> module) {
+llvm::orc::VModuleKey ScriptEngine::jit(std::unique_ptr<llvm::Module> module) {
   return mJit->addModule(std::move(module));
 }
 
@@ -64,8 +64,9 @@ void ScriptEngine::compile(std::string_view script) {
     return;
   }
 
-  module->print(llvm::errs(), nullptr);
-  jit(std::move(module));
+  llvm::StringRef moduleName{module->getName()};
+
+  mModules[moduleName] = jit(std::move(module));
 }
 
 } // namespace oo

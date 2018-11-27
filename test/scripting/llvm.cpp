@@ -32,7 +32,22 @@ begin TestLong
 end
   )script";
 
+  std::string_view script2 = R"script(
+scn MyOtherScript
+
+begin TestLong
+  long foo
+  set foo to Func 7
+  return foo
+end
+  )script";
+
   oo::ScriptEngine se{};
   se.compile(script);
-  llvm::errs() << se.call<int>("TestLong") << '\n';
+  llvm::errs() << se.call<int>("MyScript", "TestLong") << '\n';
+
+  se.compile(script2);
+  llvm::errs() << se.call<int>("MyOtherScript", "TestLong") << '\n';
+
+  llvm::errs() << se.call<int>("MyScript", "TestLong") << '\n';
 }

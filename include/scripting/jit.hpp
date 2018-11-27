@@ -72,13 +72,17 @@ class Jit {
  public:
   Jit();
 
-  llvm::TargetMachine &getTargetMachine() const noexcept;
+  [[nodiscard]] llvm::TargetMachine &getTargetMachine() const noexcept;
 
   llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module);
 
-  llvm::JITSymbol findSymbol(const std::string &name);
+  [[nodiscard]] llvm::JITSymbol findSymbol(llvm::StringRef name) noexcept;
 
-  llvm::JITTargetAddress getSymbolAddress(const std::string &name) noexcept;
+  [[nodiscard]] llvm::JITSymbol
+  findSymbolIn(llvm::StringRef name, llvm::orc::VModuleKey key) noexcept;
+
+  [[nodiscard]] llvm::JITTargetAddress
+  getSymbolAddress(const std::string &name) noexcept;
 
   void removeModule(llvm::orc::VModuleKey key) noexcept;
 };
