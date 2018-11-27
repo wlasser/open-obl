@@ -8,12 +8,6 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
-#include <llvm/Passes/PassBuilder.h>
-#include <llvm/IR/PassManager.h>
-#include <llvm/Transforms/InstCombine/InstCombine.h>
-#include <llvm/Transforms/Scalar/NewGVN.h>
-#include <llvm/Transforms/Scalar/SimplifyCFG.h>
-#include <llvm/Transforms/Utils/Mem2Reg.h>
 #include <optional>
 #include <type_traits>
 
@@ -26,8 +20,6 @@ class LLVMVisitor {
   llvm::LLVMContext mCtx{};
   llvm::IRBuilder<> mIrBuilder;
   std::unique_ptr<llvm::Module> mModule{};
-  llvm::FunctionPassManager mPassManager{};
-  llvm::FunctionAnalysisManager mAnalysisManager{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
   llvm::StringMap<llvm::Function *> mFunctions;

@@ -6,6 +6,7 @@
 #include <llvm/ExecutionEngine/Orc/Core.h>
 #include <llvm/ExecutionEngine/Orc/ExecutionUtils.h>
 #include <llvm/ExecutionEngine/Orc/IRCompileLayer.h>
+#include <llvm/ExecutionEngine/Orc/IRTransformLayer.h>
 #include <llvm/ExecutionEngine/Orc/Legacy.h>
 #include <llvm/ExecutionEngine/Orc/RTDyldObjectLinkingLayer.h>
 #include <llvm/ExecutionEngine/RTDyldMemoryManager.h>
@@ -20,21 +21,39 @@ namespace oo {
 
 class Jit {
  private:
-  std::function<llvm::JITSymbol(const std::string &name)>
-      mLegacyLookup = [this](const std::string &name) -> llvm::JITSymbol {
-    // Look for symbol in JIT'd module first
-    if (auto symbol{mCompileLayer.findSymbol(name, false)}) {
-      return symbol;
-    } else if (auto error{symbol.takeError()}) {
-      return std::move(error);
-    }
+  using OptimizeFunction = std::function<std::unique_ptr<llvm::Module>(
+      std::unique_ptr<llvm::Module>)>;
 
-    // Look in the current process if the symbol wasn't found
-    if (auto addr{llvm::RTDyldMemoryManager::getSymbolAddressInProcess(name)}) {
-      return llvm::JITSymbol(addr, llvm::JITSymbolFlags::Exported);
-    }
+  std::function<llvm::JITSymbol(const std::string &name)> mLegacyLookup =
+      [this](const std::string &name) -> llvm::JITSymbol {
+        // Look for symbol in JIT'd module first
+        if (auto symbol{mCompileLayer.findSymbol(name, false)}) {
+          return symbol;
+        } else if (auto error{symbol.takeError()}) {
+          return std::move(error);
+        }
 
-    return nullptr;
+        // Look in the current process if the symbol wasn't found
+        if (auto
+            addr{llvm::RTDyldMemoryManager::getSymbolAddressInProcess(name)}) {
+          return llvm::JITSymbol(addr, llvm::JITSymbolFlags::Exported);
+        }
+
+        return nullptr;
+      };
+
+  OptimizeFunction mOptimizeHelper = [this](std::unique_ptr<llvm::Module> m) {
+    return optimizeModule(std::move(m));
+  };
+
+  /// Helper function for use in the constructor.
+  template<class Lookup>
+  static std::shared_ptr<llvm::orc::SymbolResolver>
+  makeResolver(llvm::orc::ExecutionSession &session, Lookup &&legacyLookup) {
+    return llvm::orc::createLegacyLookupResolver(
+        session, legacyLookup, [](llvm::Error error) {
+          llvm::cantFail(std::move(error), "lookupFlags failed");
+        });
   };
 
   llvm::orc::ExecutionSession mSession{};
@@ -44,49 +63,24 @@ class Jit {
   llvm::orc::RTDyldObjectLinkingLayer mObjectLayer;
   llvm::orc::IRCompileLayer<decltype(mObjectLayer), llvm::orc::SimpleCompiler>
       mCompileLayer;
+  llvm::orc::IRTransformLayer<decltype(mCompileLayer), OptimizeFunction>
+      mOptimizeLayer;
+
+  std::unique_ptr<llvm::Module>
+  optimizeModule(std::unique_ptr<llvm::Module> module);
 
  public:
-  Jit() : mResolver{llvm::orc::createLegacyLookupResolver(
-      mSession, mLegacyLookup, [](llvm::Error error) {
-        llvm::cantFail(std::move(error), "lookupFlags failed");
-      })},
-          mTarget{llvm::EngineBuilder{}.selectTarget()},
-          mDataLayout{mTarget->createDataLayout()},
-          mObjectLayer(mSession, [this](llvm::orc::VModuleKey) {
-            return llvm::orc::RTDyldObjectLinkingLayer::Resources{
-                std::make_shared<llvm::SectionMemoryManager>(),
-                mResolver};
-          }),
-          mCompileLayer(mObjectLayer, llvm::orc::SimpleCompiler(*mTarget)) {
-    // Load the containing process as a library, making all its exported symbols
-    // available for calling in JIT'd code.
-    llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
-  }
+  Jit();
 
-  llvm::TargetMachine &getTargetMachine() const noexcept {
-    return *mTarget;
-  }
+  llvm::TargetMachine &getTargetMachine() const noexcept;
 
-  llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module) {
-    const auto key{mSession.allocateVModule()};
-    llvm::cantFail(mCompileLayer.addModule(key, std::move(module)));
-    return key;
-  }
+  llvm::orc::VModuleKey addModule(std::unique_ptr<llvm::Module> module);
 
-  llvm::JITSymbol findSymbol(const std::string &name) {
-    std::string mangledName{};
-    llvm::raw_string_ostream mangledNameStream(mangledName);
-    llvm::Mangler::getNameWithPrefix(mangledNameStream, name, mDataLayout);
-    return mCompileLayer.findSymbol(mangledNameStream.str(), true);
-  }
+  llvm::JITSymbol findSymbol(const std::string &name);
 
-  llvm::JITTargetAddress getSymbolAddress(const std::string &name) noexcept {
-    return llvm::cantFail(findSymbol(name).getAddress());
-  }
+  llvm::JITTargetAddress getSymbolAddress(const std::string &name) noexcept;
 
-  void removeModule(llvm::orc::VModuleKey key) noexcept {
-    llvm::cantFail(mCompileLayer.removeModule(key));
-  }
+  void removeModule(llvm::orc::VModuleKey key) noexcept;
 };
 
 } // namespace oo

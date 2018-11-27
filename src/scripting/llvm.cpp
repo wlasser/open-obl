@@ -30,13 +30,6 @@ LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName) : mIrBuilder(mCtx) {
 
   mJit = std::make_unique<oo::Jit>();
   newModule(moduleName);
-
-  mPassManager.addPass(llvm::InstCombinePass{});
-  mPassManager.addPass(llvm::NewGVNPass{});
-  mPassManager.addPass(llvm::SimplifyCFGPass{});
-  mPassManager.addPass(llvm::PromotePass{});
-  llvm::PassBuilder passBuilder{};
-  passBuilder.registerFunctionAnalyses(mAnalysisManager);
 }
 
 llvm::Value *LLVMVisitor::visit(const AstNode &node) {
@@ -229,8 +222,6 @@ LLVMVisitor::visitImpl<grammar::BlockStatement>(const AstNode &node) {
   }
 
   llvm::verifyFunction(*fun);
-
-  mPassManager.run(*fun, mAnalysisManager);
 
   return fun;
 }
