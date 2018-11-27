@@ -18,10 +18,12 @@ target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/script_engine.hpp
         ast.cpp
         grammar.cpp
         jit.cpp
-        llvm.cpp)
+        llvm.cpp
+        script_engine.cpp)
 
 target_include_directories(OpenOblivionScripting PUBLIC ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(OpenOblivionScripting PUBLIC ${LLVM_DEFINITIONS})

@@ -11,43 +11,28 @@
 #include <optional>
 #include <type_traits>
 
-extern "C" __attribute__ ((visibility("default"))) int Func(int x);
-
 namespace oo {
 
 class LLVMVisitor {
  private:
-  llvm::LLVMContext mCtx{};
+  llvm::LLVMContext &mCtx;
   llvm::IRBuilder<> mIrBuilder;
   std::unique_ptr<llvm::Module> mModule{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
   llvm::StringMap<llvm::Function *> mFunctions;
-  std::unique_ptr<oo::Jit> mJit{};
 
-  void newModule(llvm::StringRef moduleName);
+  friend class ScriptEngine;
 
   template<class NodeType> llvm::Value *visitImpl(const AstNode &node) {
     return nullptr;
   }
 
-  /// Convert a type from the AST into an LLVM type.
-  // TODO: Treat references correctly
-  template<class Type> llvm::Type *typeToLLVM();
-
   /// Create an alloca instruction in the entry block of the function.
   /// Use this for mutable local variables so that the mem2reg optimization pass
   /// can find them.
-  /// \tparam Type The type of the variable to create an alloca instruction for.
-  ///              Must be a RawShort, RawLong, RawFloat, or RawRef.
-  template<class Type, class = std::enable_if_t<isAstType_v<Type>>>
   llvm::AllocaInst *
-  createEntryBlockAlloca(llvm::Function *fun, llvm::StringRef name);
-
-  /// Create a prototype for a function returning Ret and taking Args as its
-  /// arguments.
-  template<class Ret, class ... Args>
-  [[nodiscard]] llvm::Function *makeProto(llvm::StringRef name);
+  createAlloca(llvm::Function *fun, llvm::StringRef name, llvm::Type *type);
 
   /// Promote/convert lhs and rhs to a common type.
   /// Emits instructions to convert lhs and rhs to a common type, if necessary,
@@ -68,50 +53,14 @@ class LLVMVisitor {
   [[nodiscard]] llvm::Value *convertToBool(llvm::Value *lhs);
 
  public:
-  explicit LLVMVisitor(llvm::StringRef moduleName);
+  explicit LLVMVisitor(llvm::StringRef moduleName,
+                       llvm::LLVMContext &ctx,
+                       llvm::DataLayout layout,
+                       const llvm::StringMap<llvm::FunctionType *> &externFuns);
 
   llvm::Value *visit(const AstNode &node);
-
-  void print() {
-    mModule->print(llvm::errs(), nullptr);
-  }
-
-  int jit();
 };
 
-template<class Type> llvm::Type *LLVMVisitor::typeToLLVM() {
-  if constexpr (std::is_same_v<Type, grammar::RawShort>) {
-    return llvm::Type::getInt16Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawLong>) {
-    return llvm::Type::getInt32Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawRef>) {
-    return llvm::Type::getInt32Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawFloat>) {
-    return llvm::Type::getFloatTy(mCtx);
-  } else {
-    static_assert(false_v<Type>, "Type must be an AstType");
-    llvm_unreachable("Type must be an AstType");
-  }
-}
-
-template<class Type, class> llvm::AllocaInst *
-LLVMVisitor::createEntryBlockAlloca(llvm::Function *fun, llvm::StringRef name) {
-  llvm::BasicBlock &entryBlock{fun->getEntryBlock()};
-  llvm::IRBuilder irBuilder(&entryBlock, entryBlock.begin());
-
-  return irBuilder.CreateAlloca(typeToLLVM<Type>(), nullptr, name);
-}
-
-template<class Ret, class ... Args>
-llvm::Function *LLVMVisitor::makeProto(llvm::StringRef name) {
-  static_assert((isAstType_v<Ret> && ... && isAstType_v<Args>),
-  "Ret and Args... must all be AstTypes");
-
-  std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
-  auto *funType{llvm::FunctionType::get(typeToLLVM<Ret>(), args, false)};
-  return llvm::Function::Create(funType, llvm::Function::ExternalLinkage,
-                                name, mModule.get());
-}
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &node);

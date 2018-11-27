@@ -1,6 +1,5 @@
 #include "scripting/llvm.hpp"
 #include <llvm/IR/Verifier.h>
-#include <llvm/Support/TargetSelect.h>
 
 // There is a bug in CLion (https://youtrack.jetbrains.com/issue/CPP-11511 is a
 // likely candidate) which keeps resulting in a `condition is always true`
@@ -9,27 +8,33 @@
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
 
-int Func(int x) {
-  return 9 * x;
-}
-
 namespace oo {
 
-void LLVMVisitor::newModule(llvm::StringRef moduleName) {
-  mModule = std::make_unique<llvm::Module>(moduleName, mCtx);
-  mModule->setDataLayout(mJit->getTargetMachine().createDataLayout());
-  mFunctions = llvm::StringMap<llvm::Function *>{
-      {"Func", makeProto<grammar::RawLong, grammar::RawLong>("Func")}
-  };
+LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName,
+                         llvm::LLVMContext &ctx,
+                         llvm::DataLayout layout,
+                         const llvm::StringMap<llvm::FunctionType *> &externFuns)
+    : mCtx(ctx), mIrBuilder(mCtx) {
+
+  mModule = std::make_unique<llvm::Module>(moduleName, ctx);
+  mModule->setDataLayout(layout);
+
+  const auto linkage{llvm::Function::ExternalLinkage};
+  for (const auto &entry : externFuns) {
+    llvm::StringRef funName{entry.getKey()};
+    llvm::FunctionType *funType{entry.second};
+    mFunctions[funName] = llvm::Function::Create(funType, linkage, funName,
+                                                 mModule.get());
+  }
 }
 
-LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName) : mIrBuilder(mCtx) {
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-  llvm::InitializeNativeTargetAsmParser();
+llvm::AllocaInst *
+LLVMVisitor::createAlloca(llvm::Function *fun, llvm::StringRef name,
+                          llvm::Type *type) {
+  llvm::BasicBlock &entryBlock{fun->getEntryBlock()};
+  llvm::IRBuilder irBuilder(&entryBlock, entryBlock.begin());
 
-  mJit = std::make_unique<oo::Jit>();
-  newModule(moduleName);
+  return irBuilder.CreateAlloca(type, nullptr, name);
 }
 
 llvm::Value *LLVMVisitor::visit(const AstNode &node) {
@@ -50,29 +55,6 @@ llvm::Value *LLVMVisitor::visit(const AstNode &node) {
   }
 
   return node.visit(visitor);
-}
-
-int LLVMVisitor::jit() {
-  std::string moduleName{mModule->getName()};
-  auto key{mJit->addModule(std::move(mModule))};
-  newModule(moduleName);
-
-  auto entrySymbol{mJit->findSymbol("TestLong")};
-  assert(entrySymbol && "Entry function not found");
-
-  using entry_t = int (*)();
-  auto entryAddrOrErr{entrySymbol.getAddress()};
-  if (auto err{entryAddrOrErr.takeError()}) {
-    llvm::errs() << err;
-    throw std::runtime_error("Jit error");
-  }
-  auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryAddrOrErr)};
-  auto entry{reinterpret_cast<entry_t>(entryAddr)};
-  const auto result{entry()};
-
-  mJit->removeModule(key);
-
-  return result;
 }
 
 [[nodiscard]] std::pair<llvm::Value *, llvm::Value *>
@@ -286,17 +268,19 @@ LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node) {
 
     // TODO: Handle reference variables correctly
     if (node.children[0]->is<grammar::RawShort>()) {
-      alloca = createEntryBlockAlloca<grammar::RawShort>(fun, varName);
+      alloca = createAlloca(fun, varName, llvm::Type::getInt16Ty(mCtx));
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(16u, 0));
     } else if (node.children[0]->is<grammar::RawLong>()) {
-      alloca = createEntryBlockAlloca<grammar::RawLong>(fun, varName);
+      alloca = createAlloca(fun, varName, llvm::Type::getInt32Ty(mCtx));
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
     } else if (node.children[0]->is<grammar::RawRef>()) {
-      alloca = createEntryBlockAlloca<grammar::RawRef>(fun, varName);
+      alloca = createAlloca(fun, varName, llvm::Type::getInt32Ty(mCtx));
       init = llvm::ConstantInt::get(mCtx, llvm::APInt(32u, 0));
-    } else {
-      alloca = createEntryBlockAlloca<grammar::RawFloat>(fun, varName);
+    } else if (node.children[0]->is<grammar::RawFloat>()) {
+      alloca = createAlloca(fun, varName, llvm::Type::getFloatTy(mCtx));
       init = llvm::ConstantFP::get(llvm::Type::getFloatTy(mCtx), 0.0);
+    } else {
+      return nullptr;
     }
 
     // Keep track of it in the local function table

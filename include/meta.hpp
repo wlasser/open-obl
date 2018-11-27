@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_META_HPP
 #define OPENOBLIVION_META_HPP
 
+#include <functional>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -68,6 +69,41 @@ struct has_type<T, std::conditional_t<false, typename T::type, void>>
 
 template<class T>
 static inline constexpr bool has_type_v = has_type<T>::value;
+
+template<class T> struct function_traits {};
+
+/// Trait for getting the return type and argument types of a function.
+/// Provides the member types
+/// - `result_t` equal to the return type of the function
+/// - `args_t` equal to a std::tuple of the argument types of the function
+///
+/// Also provides the member type template `arg_t<I>` equal to the type of the
+/// `I`-th argument, and the member constant `size` equal to the number of
+/// arguments.
+///
+/// Lambdas are not supported directly, wrap them in a std::function.
+template<class Ret, class ... Args>
+struct function_traits<Ret(Args...)> {
+  using result_t = Ret;
+  using args_t = std::tuple<Args...>;
+
+  static constexpr inline std::size_t size = sizeof...(Args);
+
+  template<std::size_t I>
+  using arg_t = std::tuple_element_t<I, args_t>;
+};
+
+/// \overload function_traits<Ret(Args...)>
+template<class Ret, class ... Args>
+struct function_traits<std::function<Ret(Args...)>> {
+  using result_t = Ret;
+  using args_t = std::tuple<Args...>;
+
+  static constexpr inline std::size_t size = sizeof...(Args);
+
+  template<std::size_t I>
+  using arg_t = std::tuple_element_t<I, args_t>;
+};
 
 // If f(*lhs, *rhs) makes sense then call it and return the result wrapped in an
 // optional. Return an empty optional otherwise. The pointers are a hack to get

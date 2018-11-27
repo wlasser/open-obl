@@ -1,12 +1,14 @@
 #include "helpers.hpp"
+#include "scripting/script_engine.hpp"
 #include "scripting/llvm.hpp"
 #include "scripting/pegtl.hpp"
 #include <catch2/catch.hpp>
+#include <string_view>
 
 namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 TEST_CASE("can use llvm", "[scripting]") {
-  const auto *script = R"script(
+  std::string_view script = R"script(
 scn MyScript
 
 begin TestLong
@@ -30,12 +32,7 @@ begin TestLong
 end
   )script";
 
-  pegtl::memory_input in(script, "");
-  const auto root = oo::parseScript(in);
-  REQUIRE(root != nullptr);
-  oo::printAst(*root);
-  oo::LLVMVisitor visitor("MyScript");
-  visitor.visit(*root);
-  visitor.print();
-  llvm::errs() << "Evaluated to " << visitor.jit() << '\n';
+  oo::ScriptEngine se{};
+  se.compile(script);
+  llvm::errs() << se.call<int>("TestLong") << '\n';
 }
