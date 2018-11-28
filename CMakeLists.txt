@@ -29,6 +29,9 @@ FetchContent_Declare(Catch
 FetchContent_Declare(PEGTL
         GIT_REPOSITORY https://github.com/taocpp/PEGTL.git
         GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
+FetchContent_Declare(spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG v1.2.1)
 
 FetchContent_GetProperties(GoogleTest)
 if (NOT GoogleTest_populated)
@@ -54,6 +57,12 @@ if (NOT PEGTL_populated)
     add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR})
 endif ()
 
+FetchContent_GetProperties(spdlog)
+if (NOT spdlog_populated)
+    FetchContent_Populate(spdlog)
+    add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
+endif ()
+
 # Link-time optimization
 cmake_policy(SET CMP0069 NEW)
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
@@ -76,7 +85,6 @@ message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
 
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
-add_subdirectory(lib/spdlog)
 add_subdirectory(lib/tl)
 
 add_subdirectory(src/io)
@@ -213,7 +221,7 @@ target_link_libraries(OpenOblivion PRIVATE
         SDL2::SDL2
         SDL2::SDL2main
         OgreMain OgreGLSupport
-        spdlog
+        spdlog::spdlog
         stdc++fs
         tloptional
         GSL
