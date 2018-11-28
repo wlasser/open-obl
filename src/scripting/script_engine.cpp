@@ -10,14 +10,13 @@ ScriptEngine::ScriptEngine() : ScriptEngineBase() {
   addExternalFun<decltype(Func)>("Func");
 }
 
-[[nodiscard]] std::string ScriptEngine::getScriptname(const AstNode &node) {
+std::string ScriptEngine::getScriptname(const AstNode &node) {
   if (!node.is<grammar::RawScriptnameStatement>()) return "";
   if (node.children.size() != 2) return "";
   return node.children[1]->content();
 }
 
-[[nodiscard]] std::unique_ptr<llvm::Module>
-ScriptEngine::compileAst(const AstNode &root) {
+std::unique_ptr<llvm::Module> ScriptEngine::compileAst(const AstNode &root) {
   if (!root.is_root() || root.children.empty()) {
     // TODO: Cannot compile a partial AST, throw
     return nullptr;
