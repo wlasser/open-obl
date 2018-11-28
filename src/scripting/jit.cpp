@@ -8,6 +8,20 @@
 
 namespace oo {
 
+llvm::JITSymbol Jit::lookup(const std::string &name) {
+  if (auto symbol{mCompileLayer.findSymbol(name, false)}) {
+    return symbol;
+  } else if (auto error{symbol.takeError()}) {
+    return std::move(error);
+  }
+
+  if (auto addr{llvm::RTDyldMemoryManager::getSymbolAddressInProcess(name)}) {
+    return llvm::JITSymbol(addr, llvm::JITSymbolFlags::Exported);
+  }
+
+  return nullptr;
+}
+
 std::unique_ptr<llvm::Module>
 Jit::optimizeModule(std::unique_ptr<llvm::Module> module) {
   llvm::FunctionPassManager passMgr{};
@@ -29,14 +43,10 @@ Jit::optimizeModule(std::unique_ptr<llvm::Module> module) {
   return module;
 }
 
-Jit::Jit() : mResolver{makeResolver(mSession, mLegacyLookup)},
+Jit::Jit() : mResolver{makeResolver(mSession, mLookupHelper)},
              mTarget{llvm::EngineBuilder{}.selectTarget()},
              mDataLayout{mTarget->createDataLayout()},
-             mObjectLayer(mSession, [this](llvm::orc::VModuleKey) {
-               return llvm::orc::RTDyldObjectLinkingLayer::Resources{
-                   std::make_shared<llvm::SectionMemoryManager>(),
-                   mResolver};
-             }),
+             mObjectLayer(mSession, mResourceHelper),
              mCompileLayer(mObjectLayer, llvm::orc::SimpleCompiler(*mTarget)),
              mOptimizeLayer(mCompileLayer, mOptimizeHelper) {
   // Load the containing process as a library, making all its exported symbols
@@ -67,10 +77,6 @@ Jit::findSymbolIn(llvm::StringRef name, llvm::orc::VModuleKey key) noexcept {
   llvm::raw_string_ostream mangledNameStream(mangledName);
   llvm::Mangler::getNameWithPrefix(mangledNameStream, name, mDataLayout);
   return mOptimizeLayer.findSymbolIn(key, mangledNameStream.str(), true);
-}
-
-llvm::JITTargetAddress Jit::getSymbolAddress(const std::string &name) noexcept {
-  return llvm::cantFail(findSymbol(name).getAddress());
 }
 
 void Jit::removeModule(llvm::orc::VModuleKey key) noexcept {
