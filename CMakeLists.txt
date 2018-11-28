@@ -5,7 +5,6 @@ include(CheckIPOSupported)
 include(FetchContent)
 
 option(USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
-option(USE_IWYU "Run include-what-you-use when building" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(FETCHCONTENT_QUIET OFF)
@@ -230,20 +229,6 @@ target_link_libraries(OpenOblivion PRIVATE
         absl::container
         absl::hash
         ${BULLET_LIBRARIES})
-
-if (USE_IWYU)
-    find_program(IWYU_PATH NAMES include-what-you-use iwyu)
-    if (IWYU_PATH)
-        set_property(TARGET OpenOblivionIO PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionNif PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionRecord PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionOgre PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionOgreBullet PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionSDL PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivionEngine PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-        set_property(TARGET OpenOblivion PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${IWYU_PATH})
-    endif ()
-endif ()
 
 find_package(PkgConfig)
 if (PkgConfig_FOUND)
