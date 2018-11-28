@@ -17,6 +17,7 @@ target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/logging.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine_base.hpp
@@ -38,7 +39,7 @@ endif ()
 
 target_link_libraries(OpenOblivionScripting
         PRIVATE taocpp::pegtl
-        PUBLIC ${llvm_libs})
+        PUBLIC ${llvm_libs} spdlog::spdlog)
 
 set_target_properties(OpenOblivionScripting PROPERTIES
         CXX_VISIBILITY_PRESET hidden)

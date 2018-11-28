@@ -1,7 +1,9 @@
 #ifndef OPENOBLIVION_SCRIPT_ENGINE_HPP
 #define OPENOBLIVION_SCRIPT_ENGINE_HPP
 
+#include "scripting/logging.hpp"
 #include "scripting/script_engine_base.hpp"
+#include <optional>
 
 extern "C" __attribute__((visibility("default"))) int Func(int x);
 
@@ -30,29 +32,39 @@ class ScriptEngine : public ScriptEngineBase {
   /// given name and specified return type must exist in the script.
   /// \tparam T The return type of the function.
   // TODO: Make this take std::string_view with a conversion to llvm::StringRef
-  template<class T>
-  [[nodiscard]] T call(const std::string &scriptName,
-                       const std::string &funName);
+  template<class T> [[nodiscard]] std::optional<T>
+  call(const std::string &scriptName, const std::string &funName);
 };
 
-template<class T> T
+template<class T> std::optional<T>
 ScriptEngine::call(const std::string &scriptName, const std::string &funName) {
+  // Find the module containing the script
   const auto keyIt{getModules().find(scriptName)};
   if (keyIt == getModules().end()) {
-    // TODO: Do something more reasonable if the module doesn't exist
-    assert(false && "No such script");
+    scriptingLogger()->warn("Script '{}' does not exist", scriptName);
+    return std::nullopt;
   }
-  auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
-  // TODO: Do something more reasonable if the function doesn't exist
-  assert(entrySymbol && "No such function");
 
-  using entry_t = T (*)();
-  auto entryAddrOrErr{entrySymbol.getAddress()};
-  if (auto err{entryAddrOrErr.takeError()}) {
-    llvm::errs() << err;
-    throw std::runtime_error("Jit error");
+  // Find the function in the module
+  auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
+  if (!entrySymbol) {
+    scriptingLogger()->warn("No function '{}' in script '{}'",
+                            funName, scriptName);
+    return std::nullopt;
   }
-  auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryAddrOrErr)};
+
+  // Get the function's address
+  auto entryOrErr{entrySymbol.getAddress()};
+  if (llvm::Error err = entryOrErr.takeError()) {
+    llvm::handleAllErrors(std::move(err), [](const llvm::ErrorInfoBase &e) {
+      scriptingLogger()->warn("JIT error: {}", e.message());
+    });
+    return std::nullopt;
+  }
+
+  // Convert the address to a function pointer and call it.
+  using entry_t = T (*)();
+  auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryOrErr)};
   auto entry{reinterpret_cast<entry_t>(entryAddr)};
   const auto result{entry()};
 

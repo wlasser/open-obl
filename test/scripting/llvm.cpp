@@ -1,6 +1,7 @@
 #include "helpers.hpp"
 #include "scripting/script_engine.hpp"
 #include <catch2/catch.hpp>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string_view>
 
 TEST_CASE("can use llvm", "[scripting]") {
@@ -39,10 +40,23 @@ end
   )script";
 
   oo::ScriptEngine se{};
+
   se.compile(script);
-  REQUIRE(se.call<int>("MyScript", "TestLong") == 9);
+  {
+    const auto result{se.call<int>("MyScript", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 9);
+  }
 
   se.compile(script2);
-  REQUIRE(se.call<int>("MyOtherScript", "TestLong") == 63);
-  REQUIRE(se.call<int>("MyScript", "TestLong") == 9);
+  {
+    const auto result{se.call<int>("MyOtherScript", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 63);
+  }
+  {
+    const auto result{se.call<int>("MyScript", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 9);
+  }
 }
