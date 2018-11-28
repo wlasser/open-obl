@@ -1,86 +1,48 @@
-#ifndef OPENOBLIVION_SCRIPTING_SCRIPT_ENGINE_HPP
-#define OPENOBLIVION_SCRIPTING_SCRIPT_ENGINE_HPP
+#ifndef OPENOBLIVION_SCRIPT_ENGINE_HPP
+#define OPENOBLIVION_SCRIPT_ENGINE_HPP
 
-#include "meta.hpp"
-#include "scripting/ast.hpp"
-#include "scripting/jit.hpp"
-#include <llvm/IR/LLVMContext.h>
-#include <memory>
+#include "scripting/script_engine_base.hpp"
 
 extern "C" __attribute__((visibility("default"))) int Func(int x);
 
 namespace oo {
 
-class ScriptEngine {
+/// Compilers user scripts and makes them available for running at game time.
+class ScriptEngine : public ScriptEngineBase {
  private:
-  llvm::LLVMContext mCtx{};
-  std::unique_ptr<oo::Jit> mJit{};
-  llvm::StringMap<llvm::FunctionType *> mExternFuns{};
-  llvm::StringMap<llvm::orc::VModuleKey> mModules{};
+  /// Get the scriptname from a RawScriptnameStatement.
+  /// If `node` does not represent a RawScriptnameStatement, then an empty
+  /// string is returned.template<class T> T
+  [[nodiscard]] std::string getScriptname(const AstNode &node);
 
-  llvm::orc::VModuleKey jit(std::unique_ptr<llvm::Module> module);
-
-  /// Create a prototype for a function returning Ret and taking Args as its
-  /// arguments.
-  template<class Ret, class ... Args> [[nodiscard]] llvm::FunctionType *
-  makeProto(llvm::StringRef name, std::tuple<Args...> = {Args{}...});
-
-  /// Convert a type from the AST into an LLVM type.
-  // TODO: Treat references correctly
-  template<class Type> [[nodiscard]] llvm::Type *typeToLLVM();
-
-  template<class Fun> void addExternalFun(llvm::StringRef name);
-
+  /// Compile an entire AST into LLVM IR.
+  /// \remark The returned module must still be JIT'd before it can be called.
   [[nodiscard]] std::unique_ptr<llvm::Module> compileAst(const AstNode &root);
 
  public:
   ScriptEngine();
 
+  /// Compile a script into native object code, making it available for calling.
   void compile(std::string_view script);
 
+  /// Call the given function from the given script.
+  /// The given script must been `compile`d previously, and a function with the
+  /// given name and specified return type must exist in the script.
+  /// \tparam T The return type of the function.
+  // TODO: Make this take std::string_view with a conversion to llvm::StringRef
   template<class T>
-  [[nodiscard]] T call(llvm::StringRef scriptName, llvm::StringRef funName);
+  [[nodiscard]] T call(const std::string &scriptName,
+                       const std::string &funName);
 };
 
-template<class Fun> void ScriptEngine::addExternalFun(llvm::StringRef name) {
-  using T = function_traits<Fun>;
-  mExternFuns[name] =
-      makeProto<typename T::result_t>(name, typename T::args_t{});
-}
-
-template<class Ret, class ... Args> llvm::FunctionType *
-ScriptEngine::makeProto(llvm::StringRef name, std::tuple<Args...>) {
-  std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
-  return llvm::FunctionType::get(typeToLLVM<Ret>(), args, false);
-}
-
-template<class Type> llvm::Type *ScriptEngine::typeToLLVM() {
-  if constexpr (std::is_same_v<Type, grammar::RawShort>
-      || std::is_same_v<Type, short>) {
-    return llvm::Type::getInt16Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawLong>
-      || std::is_same_v<Type, int>) {
-    return llvm::Type::getInt32Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawRef> ||
-      std::is_same_v<Type, uint32_t>) {
-    return llvm::Type::getInt32Ty(mCtx);
-  } else if constexpr (std::is_same_v<Type, grammar::RawFloat> ||
-      std::is_same_v<Type, float>) {
-    return llvm::Type::getFloatTy(mCtx);
-  } else {
-    static_assert(false_v<Type>, "Type must be an AstType");
-    llvm_unreachable("Type must be an AstType");
-  }
-}
-
-template<class T>
-T ScriptEngine::call(llvm::StringRef scriptName, llvm::StringRef funName) {
-  const auto keyIt{mModules.find(scriptName)};
-  if (keyIt == mModules.end()) {
+template<class T> T
+ScriptEngine::call(const std::string &scriptName, const std::string &funName) {
+  const auto keyIt{getModules().find(scriptName)};
+  if (keyIt == getModules().end()) {
     // TODO: Do something more reasonable if the module doesn't exist
     assert(false && "No such script");
   }
-  auto entrySymbol{mJit->findSymbolIn(funName, keyIt->second)};
+  auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
   // TODO: Do something more reasonable if the function doesn't exist
   assert(entrySymbol && "No such function");
 
@@ -97,6 +59,6 @@ T ScriptEngine::call(llvm::StringRef scriptName, llvm::StringRef funName) {
   return result;
 }
 
-}
+} // namespace oo
 
-#endif // OPENOBLIVION_SCRIPTING_SCRIPT_ENGINE_HPP
+#endif //OPENOBLIVION_SCRIPT_ENGINE_HPP

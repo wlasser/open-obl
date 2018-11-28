@@ -10,21 +10,17 @@
 
 namespace oo {
 
-LLVMVisitor::LLVMVisitor(llvm::StringRef moduleName,
+LLVMVisitor::LLVMVisitor(llvm::Module *module,
                          llvm::LLVMContext &ctx,
-                         llvm::DataLayout layout,
                          const llvm::StringMap<llvm::FunctionType *> &externFuns)
-    : mCtx(ctx), mIrBuilder(mCtx) {
-
-  mModule = std::make_unique<llvm::Module>(moduleName, ctx);
-  mModule->setDataLayout(layout);
+    : mCtx(ctx), mIrBuilder(mCtx), mModule(module) {
 
   const auto linkage{llvm::Function::ExternalLinkage};
   for (const auto &entry : externFuns) {
     llvm::StringRef funName{entry.getKey()};
     llvm::FunctionType *funType{entry.second};
-    mFunctions[funName] = llvm::Function::Create(funType, linkage, funName,
-                                                 mModule.get());
+    mFunctions[funName] =
+        llvm::Function::Create(funType, linkage, funName, mModule);
   }
 }
 
@@ -177,7 +173,7 @@ LLVMVisitor::visitImpl<grammar::BlockStatement>(const AstNode &node) {
   auto *fun{llvm::Function::Create(funType,
                                    llvm::Function::ExternalLinkage,
                                    blockName,
-                                   mModule.get())};
+                                   mModule)};
   auto *bb{llvm::BasicBlock::Create(mCtx, "entry", fun)};
   mIrBuilder.SetInsertPoint(bb);
 

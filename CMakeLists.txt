@@ -4,6 +4,7 @@ project(OpenOblivion)
 include(CheckIPOSupported)
 include(FetchContent)
 
+option(USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
 option(USE_IWYU "Run include-what-you-use when building" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

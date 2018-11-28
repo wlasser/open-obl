@@ -19,18 +19,26 @@ target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/script_engine_base.hpp
         ast.cpp
         grammar.cpp
         jit.cpp
         llvm.cpp
-        script_engine.cpp)
+        script_engine.cpp
+        script_engine_base.cpp)
 
-target_include_directories(OpenOblivionScripting PUBLIC ${LLVM_INCLUDE_DIRS})
-target_compile_definitions(OpenOblivionScripting PUBLIC ${LLVM_DEFINITIONS})
-# TODO: Choose this more carefully out of llvm-config --components
-llvm_map_components_to_libnames(llvm_libs all)
+target_include_directories(OpenOblivionScripting PRIVATE ${LLVM_INCLUDE_DIRS})
+target_compile_definitions(OpenOblivionScripting PRIVATE ${LLVM_DEFINITIONS})
 
-target_link_libraries(OpenOblivionScripting PUBLIC taocpp::pegtl)
+if (USE_SHARED_LLVM_LIBS)
+    llvm_config(OpenOblivionScripting USE_SHARED engine)
+else ()
+    llvm_config(OpenOblivionScripting engine)
+endif ()
+
+target_link_libraries(OpenOblivionScripting
+        PRIVATE taocpp::pegtl
+        PUBLIC ${llvm_libs})
 
 set_target_properties(OpenOblivionScripting PROPERTIES
         CXX_VISIBILITY_PRESET hidden)

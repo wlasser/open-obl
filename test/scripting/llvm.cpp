@@ -1,11 +1,7 @@
 #include "helpers.hpp"
 #include "scripting/script_engine.hpp"
-#include "scripting/llvm.hpp"
-#include "scripting/pegtl.hpp"
 #include <catch2/catch.hpp>
 #include <string_view>
-
-namespace pegtl = tao::TAO_PEGTL_NAMESPACE;
 
 TEST_CASE("can use llvm", "[scripting]") {
   std::string_view script = R"script(
@@ -44,10 +40,9 @@ end
 
   oo::ScriptEngine se{};
   se.compile(script);
-  llvm::errs() << se.call<int>("MyScript", "TestLong") << '\n';
+  REQUIRE(se.call<int>("MyScript", "TestLong") == 9);
 
   se.compile(script2);
-  llvm::errs() << se.call<int>("MyOtherScript", "TestLong") << '\n';
-
-  llvm::errs() << se.call<int>("MyScript", "TestLong") << '\n';
+  REQUIRE(se.call<int>("MyOtherScript", "TestLong") == 63);
+  REQUIRE(se.call<int>("MyScript", "TestLong") == 9);
 }

@@ -26,4 +26,4 @@ target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionScripting
         Catch2::Catch2
         pugixml
-        LLVM)
+        taocpp::pegtl)

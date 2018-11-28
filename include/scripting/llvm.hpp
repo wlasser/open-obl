@@ -17,12 +17,12 @@ class LLVMVisitor {
  private:
   llvm::LLVMContext &mCtx;
   llvm::IRBuilder<> mIrBuilder;
-  std::unique_ptr<llvm::Module> mModule{};
+  llvm::Module *mModule{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
   llvm::StringMap<llvm::Function *> mFunctions;
 
-  friend class ScriptEngine;
+  friend class ScriptEngineBase;
 
   template<class NodeType> llvm::Value *visitImpl(const AstNode &node) {
     return nullptr;
@@ -53,14 +53,12 @@ class LLVMVisitor {
   [[nodiscard]] llvm::Value *convertToBool(llvm::Value *lhs);
 
  public:
-  explicit LLVMVisitor(llvm::StringRef moduleName,
+  explicit LLVMVisitor(llvm::Module *module,
                        llvm::LLVMContext &ctx,
-                       llvm::DataLayout layout,
                        const llvm::StringMap<llvm::FunctionType *> &externFuns);
 
   llvm::Value *visit(const AstNode &node);
 };
-
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &node);

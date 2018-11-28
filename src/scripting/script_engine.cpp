@@ -1,7 +1,4 @@
-#include "scripting/llvm.hpp"
-#include "scripting/pegtl.hpp"
 #include "scripting/script_engine.hpp"
-#include <llvm/Support/TargetSelect.h>
 
 int Func(int x) {
   return 9 * x;
@@ -9,44 +6,34 @@ int Func(int x) {
 
 namespace oo {
 
-ScriptEngine::ScriptEngine() {
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-  llvm::InitializeNativeTargetAsmParser();
-
-  mJit = std::make_unique<oo::Jit>();
+ScriptEngine::ScriptEngine() : ScriptEngineBase() {
   addExternalFun<decltype(Func)>("Func");
 }
 
-llvm::orc::VModuleKey ScriptEngine::jit(std::unique_ptr<llvm::Module> module) {
-  return mJit->addModule(std::move(module));
+[[nodiscard]] std::string ScriptEngine::getScriptname(const AstNode &node) {
+  if (!node.is<grammar::RawScriptnameStatement>()) return "";
+  if (node.children.size() != 2) return "";
+  return node.children[1]->content();
 }
 
 [[nodiscard]] std::unique_ptr<llvm::Module>
 ScriptEngine::compileAst(const AstNode &root) {
-  if (!root.is_root()) {
+  if (!root.is_root() || root.children.empty()) {
     // TODO: Cannot compile a partial AST, throw
     return nullptr;
   }
 
-  // If the first child of the root is a RawScriptnameStatement, then name the
-  // module according to that. Otherwise, this is an anonymous module so come up
-  // with a name.
-  std::string moduleName{"anonymous"};
-  if (!root.children.empty()) {
-    const auto &scnStatement{root.children[0]};
-    if (scnStatement->is<grammar::RawScriptnameStatement>()
-        && scnStatement->children.size() == 2) {
-      moduleName = scnStatement->children[1]->content();
-    }
+  const std::string moduleName{getScriptname(*root.children[0])};
+  if (moduleName.empty()) {
+    // TODO: Script has no name, throw
+    return nullptr;
   }
 
-  LLVMVisitor visitor(moduleName, mCtx,
-                      mJit->getTargetMachine().createDataLayout(),
-                      mExternFuns);
+  auto module{makeModule(moduleName)};
+  auto visitor{makeVisitor(module.get())};
   visitor.visit(root);
 
-  return std::move(visitor.mModule);
+  return module;
 }
 
 void ScriptEngine::compile(std::string_view script) {
@@ -64,9 +51,7 @@ void ScriptEngine::compile(std::string_view script) {
     return;
   }
 
-  llvm::StringRef moduleName{module->getName()};
-
-  mModules[moduleName] = jit(std::move(module));
+  jitModule(std::move(module));
 }
 
 } // namespace oo
