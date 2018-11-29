@@ -133,8 +133,7 @@ LLVMVisitor::visitImpl<grammar::RawIdentifier>(const AstNode &node) {
     return mIrBuilder.CreateLoad(it->second);
   }
 
-  // TODO: Variable does not exist
-  return nullptr;
+  throw std::runtime_error("Variable does not exist");
 }
 
 template<> llvm::Value *
@@ -286,8 +285,7 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::SetStatement>(const AstNode &node) {
   llvm::Value *src{visit(*node.children[1])};
   if (src == nullptr) {
-    // TODO: RHS is ill-formed
-    return nullptr;
+    throw std::runtime_error("Ill-formed RHS");
   }
 
   llvm::Value *dest = [&]() -> llvm::Value * {
@@ -302,8 +300,7 @@ LLVMVisitor::visitImpl<grammar::SetStatement>(const AstNode &node) {
   }();
 
   if (!dest) {
-    // TODO: Variable does not exist
-    return nullptr;
+    throw std::runtime_error("Variable does not exist");
   }
 
   // Storing a value into itself does nothing
@@ -365,8 +362,8 @@ LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node) {
 
   llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
   if (val->getType() != fun->getReturnType()) {
-    // TODO: Wrong return type, attempt to convert otherwise fail
-    return nullptr;
+    // TODO: Try to convert the return type here
+    throw std::runtime_error("Return type mismatch");
   }
 
   llvm::Value *ret{mIrBuilder.CreateRet(val)};
@@ -385,10 +382,9 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
   if (node.children.empty()) {
     // TODO: If statement has no condition
-    return nullptr;
+    throw std::runtime_error("If statement is missing condition");
   } else if (node.children.size() == 1) {
-    // TODO: If statement has no body
-    return nullptr;
+    throw std::runtime_error("If statement has no body");
   }
 
   llvm::Function *fun{mIrBuilder.GetInsertBlock()->getParent()};
@@ -455,8 +451,7 @@ LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
       break;
     } else {
       if (elseIfStatement->children.empty()) {
-        // TODO: Elseif statement has no condition
-        return nullptr;
+        throw std::runtime_error("Elseif statement is missing conditition");
       }
 
       // Evaluate the condition and convert to bool
@@ -513,13 +508,11 @@ LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node) {
   llvm::Function *proto{mModule->getFunction(funName)};
 
   if (proto == nullptr) {
-    // TODO: No function with that name exists
-    return nullptr;
+    throw std::runtime_error("No such function exists");
   }
 
   if (node.children.size() != proto->arg_size()) {
-    // TODO: Incorrect number of arguments
-    return nullptr;
+    throw std::runtime_error("Incorrect number of arguments");
   }
 
   llvm::SmallVector<llvm::Value *, 4> args{};
@@ -530,8 +523,7 @@ LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node) {
     args.emplace_back(visit(*child));
 
     if (args.back()->getType() != arg->getType()) {
-      // TODO: Argument mismatch, throw or convert
-      return nullptr;
+      throw std::runtime_error("Argument type mismatch");
     }
   }
 
