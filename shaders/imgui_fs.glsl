@@ -4,6 +4,8 @@ in vec4 VertexCol;
 
 uniform sampler2D diffuseMap;
 
+out vec4 FragColor;
+
 void main() {
-    gl_FragColor = texture2D(diffuseMap, TexCoord) * VertexCol;
+    FragColor = texture2D(diffuseMap, TexCoord) * VertexCol;
 }

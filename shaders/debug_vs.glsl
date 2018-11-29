@@ -1,6 +1,6 @@
 #version 330 core
-attribute vec4 vertex;
-attribute vec4 colour;
+in vec4 vertex;
+in vec4 colour;
 
 out vec3 VertexCol;
 

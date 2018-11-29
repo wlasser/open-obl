@@ -1,7 +1,7 @@
 #version 330 core
-attribute vec2 vertex;
-attribute vec4 colour;
-attribute vec4 uv0;
+in vec2 vertex;
+in vec4 colour;
+in vec4 uv0;
 
 out vec2 TexCoord;
 out vec4 VertexCol;

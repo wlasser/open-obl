@@ -1,10 +1,10 @@
 #version 330 core
-attribute vec4 vertex;
-attribute vec3 normal;
-attribute vec4 colour;
-attribute vec4 uv0;
-attribute vec3 tangent;
-attribute vec3 binormal;
+in vec4 vertex;
+in vec3 normal;
+in vec4 colour;
+in vec4 uv0;
+in vec3 tangent;
+in vec3 binormal;
 
 out mat3 TBN;
 out vec2 TexCoord;
