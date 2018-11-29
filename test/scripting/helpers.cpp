@@ -7,8 +7,8 @@
 namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
-  const std::string_view name{node.name()};
-  return name.find("Statement") != std::string_view::npos;
+  const std::string name{node.name()};
+  return name.find("Statement") != std::string::npos;
 }
 
 void printNode(const AstNode &node) {
