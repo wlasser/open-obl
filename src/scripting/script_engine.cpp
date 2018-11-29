@@ -29,6 +29,7 @@ std::unique_ptr<llvm::Module> ScriptEngine::compileAst(const AstNode &root) {
   }
 
   auto module{makeModule(moduleName)};
+  addExternalFunsToModule(module.get());
   auto visitor{makeVisitor(module.get())};
   visitor.visit(root);
 

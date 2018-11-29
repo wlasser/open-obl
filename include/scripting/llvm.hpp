@@ -20,7 +20,6 @@ class LLVMVisitor {
   llvm::Module *mModule{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
-  llvm::StringMap<llvm::Function *> mFunctions;
 
   friend class ScriptEngineBase;
 
@@ -55,7 +54,7 @@ class LLVMVisitor {
  public:
   explicit LLVMVisitor(llvm::Module *module,
                        llvm::LLVMContext &ctx,
-                       const llvm::StringMap<llvm::FunctionType *> &externFuns);
+                       std::optional<decltype(mIrBuilder)> irBuilder = std::nullopt);
 
   llvm::Value *visit(const AstNode &node);
 };
@@ -86,6 +85,9 @@ LLVMVisitor::visitImpl<grammar::ReturnStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node);
+
+template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::CallStatement>(const AstNode &node);
 
 template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node);

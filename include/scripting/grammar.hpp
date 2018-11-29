@@ -487,6 +487,12 @@ struct ReturnStatement : pegtl::sor<pegtl::seq<StrReturn,
                                                Expression>, Return> {
 };
 
+/// `CallStatement <- !(Set / Begin / End / If / Elseif / Endif) Call`
+struct CallStatement : pegtl::seq<pegtl::not_at<
+    pegtl::sor<Set, Begin, End, If, Elseif, Endif>>,
+                                  Call> {
+};
+
 struct Statement;
 
 /// `ElseifStatement <- Elseif Expression Statement+`
@@ -507,13 +513,6 @@ struct IfStatement : pegtl::seq<If,
                                 Endif> {
 };
 
-/// `Statement <- DeclarationStatement / SetStatement / IfStatement / ReturnStatement`
-struct Statement : pegtl::sor<DeclarationStatement,
-                              SetStatement,
-                              IfStatement,
-                              ReturnStatement> {
-};
-
 struct BlockBeginStatement : pegtl::seq<Begin,
                                         Identifier,
                                         pegtl::opt<IntegerLiteral>,
@@ -521,6 +520,16 @@ struct BlockBeginStatement : pegtl::seq<Begin,
 };
 
 struct BlockEndStatement : End {};
+
+/// `Statement <- DeclarationStatement / SetStatement / IfStatement
+///               / ReturnStatement
+///               / CallStatement`
+struct Statement : pegtl::sor<DeclarationStatement,
+                              SetStatement,
+                              IfStatement,
+                              ReturnStatement,
+                              CallStatement> {
+};
 
 struct BlockStatement : pegtl::seq<BlockBeginStatement,
                                    pegtl::star<Statement>,

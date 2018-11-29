@@ -1,4 +1,5 @@
 #include "helpers.hpp"
+#include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
 #include <catch2/catch.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -39,6 +40,9 @@ begin TestLong
 end
   )script";
 
+  auto logger{spdlog::stderr_color_mt("test")};
+  oo::scriptingLogger("test");
+
   oo::ScriptEngine se{};
 
   se.compile(script);
@@ -59,4 +63,15 @@ end
     REQUIRE(result);
     REQUIRE(*result == 9);
   }
+
+  std::string_view statement = "ConsoleFunc 74";
+  {
+    pegtl::memory_input in(statement, "");
+    const auto root{oo::parseStatement(in)};
+    REQUIRE(root);
+    oo::printAst(*root);
+  }
+
+  oo::ConsoleEngine ce{};
+  ce.execute(statement);
 }

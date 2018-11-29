@@ -12,17 +12,10 @@ namespace oo {
 
 LLVMVisitor::LLVMVisitor(llvm::Module *module,
                          llvm::LLVMContext &ctx,
-                         const llvm::StringMap<llvm::FunctionType *> &externFuns)
-    : mCtx(ctx), mIrBuilder(mCtx), mModule(module) {
-
-  const auto linkage{llvm::Function::ExternalLinkage};
-  for (const auto &entry : externFuns) {
-    llvm::StringRef funName{entry.getKey()};
-    llvm::FunctionType *funType{entry.second};
-    mFunctions[funName] =
-        llvm::Function::Create(funType, linkage, funName, mModule);
-  }
-}
+                         std::optional<decltype(mIrBuilder)> irBuilder)
+    : mCtx(ctx),
+      mIrBuilder(irBuilder ? *irBuilder : decltype(mIrBuilder)(mCtx)),
+      mModule(module) {}
 
 llvm::AllocaInst *
 LLVMVisitor::createAlloca(llvm::Function *fun, llvm::StringRef name,
@@ -510,13 +503,16 @@ LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
 }
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::CallStatement>(const AstNode &node) {
+  return visit(*node.children[0]);
+}
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node) {
   std::string funName{node.getValue()};
-  llvm::Function *proto{};
+  llvm::Function *proto{mModule->getFunction(funName)};
 
-  if (auto it{mFunctions.find(funName)}; it != mFunctions.end()) {
-    proto = it->second;
-  } else {
+  if (proto == nullptr) {
     // TODO: No function with that name exists
     return nullptr;
   }

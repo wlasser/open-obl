@@ -8,8 +8,6 @@
 #include <llvm/IR/LLVMContext.h>
 #include <memory>
 
-extern "C" __attribute__((visibility("default"))) int Func(int x);
-
 namespace oo {
 
 /// Common internal functionality of ScriptEngine and ConsoleEngine.
@@ -34,6 +32,13 @@ class ScriptEngineBase {
   makeProto(llvm::StringRef name, std::tuple<Args...> = {Args{}...});
 
  protected:
+  [[nodiscard]] llvm::LLVMContext &getContext() noexcept;
+
+  /// Declare all the registered external functions in the given module.
+  /// This function can be run different modules, previously registered
+  /// functions are remembered.
+  void addExternalFunsToModule(llvm::Module *module);
+
   /// Register an internal (host process) function for use in all JIT'd modules.
   /// For example, if we have a function declaration
   /// `extern "C" int Func(float x)` then we can register it by calling
@@ -55,10 +60,14 @@ class ScriptEngineBase {
   makeModule(llvm::StringRef moduleName);
 
   /// Take ownership of and JIT the given module.
-  void jitModule(std::unique_ptr<llvm::Module> module);
+  llvm::orc::VModuleKey jitModule(std::unique_ptr<llvm::Module> module);
 
   /// Create a new LLVMVisitor for the given module.
   [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module);
+
+  /// \overload makeVisitor
+  [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module,
+                                            llvm::IRBuilder<> builder);
 
   ScriptEngineBase();
 };

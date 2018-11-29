@@ -14,6 +14,7 @@ target_include_directories(OpenOblivionScripting PUBLIC
 
 target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/ast.hpp
+        ${CMAKE_SOURCE_DIR}/include/scripting/console_engine.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
@@ -22,6 +23,7 @@ target_sources(OpenOblivionScripting PRIVATE
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine_base.hpp
         ast.cpp
+        console_engine.cpp
         grammar.cpp
         jit.cpp
         llvm.cpp
@@ -38,7 +40,7 @@ else ()
 endif ()
 
 target_link_libraries(OpenOblivionScripting
-        PRIVATE taocpp::pegtl
+        PRIVATE taocpp::pegtl GSL
         PUBLIC ${llvm_libs} spdlog::spdlog)
 
 set_target_properties(OpenOblivionScripting PROPERTIES

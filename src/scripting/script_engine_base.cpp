@@ -13,6 +13,19 @@ ScriptEngineBase::ScriptEngineBase() {
   mJit = std::make_unique<oo::Jit>();
 }
 
+llvm::LLVMContext &ScriptEngineBase::getContext() noexcept {
+  return mCtx;
+}
+
+void ScriptEngineBase::addExternalFunsToModule(llvm::Module *module) {
+  const auto linkage{llvm::Function::ExternalLinkage};
+  for (const auto &entry : mExternFuns) {
+    std::string funName{entry.getKey()};
+    llvm::FunctionType *funType{entry.second};
+    llvm::Function::Create(funType, linkage, funName, module);
+  }
+}
+
 oo::Jit *ScriptEngineBase::getJit() const noexcept {
   return mJit.get();
 }
@@ -29,13 +42,19 @@ ScriptEngineBase::makeModule(llvm::StringRef moduleName) {
   return module;
 }
 
-void ScriptEngineBase::jitModule(std::unique_ptr<llvm::Module> module) {
-  llvm::StringRef moduleName{module->getName()};
-  mModules[moduleName] = jit(std::move(module));
+llvm::orc::VModuleKey
+ScriptEngineBase::jitModule(std::unique_ptr<llvm::Module> module) {
+  std::string moduleName{module->getName()};
+  return (mModules[moduleName] = jit(std::move(module)));
 }
 
 oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module) {
-  return LLVMVisitor(module, mCtx, mExternFuns);
+  return LLVMVisitor(module, mCtx);
+}
+
+oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module,
+                                              llvm::IRBuilder<> builder) {
+  return LLVMVisitor(module, mCtx, std::move(builder));
 }
 
 llvm::orc::VModuleKey
