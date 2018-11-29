@@ -12,6 +12,9 @@
 #undef InputFocus
 #undef None
 #undef Bool
+#undef DestroyAll
+#undef True
+#undef False
 
 namespace sdl {
 
