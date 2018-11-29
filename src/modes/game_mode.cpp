@@ -5,6 +5,15 @@
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
+void
+releasePlayerController(Cell *cell, oo::PlayerController *playerController) {
+  const auto *rigidBody{playerController->getRigidBody()};
+  if (rigidBody->isInWorld()) {
+    cell->physicsWorld->removeRigidBody(playerController->getRigidBody());
+  }
+  delete playerController;
+}
+
 GameMode::transition_t
 GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
@@ -128,7 +137,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
                                             ctx.getCellResolver()));
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
-  mPlayerController = makePlayerController(mCell->scnMgr);
+  mPlayerController = makePlayerController(mCell, mCell->scnMgr);
   mCell->physicsWorld->addRigidBody(mPlayerController->getRigidBody());
   oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
