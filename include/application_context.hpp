@@ -18,6 +18,7 @@
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
+#include "scripting/console_engine.hpp"
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
 #include <Ogre.h>
@@ -47,6 +48,8 @@ class ApplicationContext {
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
+
+  std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
 
   oo::MeshLoader nifLoader{};
   oo::CollisionObjectLoader nifCollisionLoader{};
@@ -108,6 +111,10 @@ class ApplicationContext {
 
   CellResolver &getCellResolver() const {
     return *cellRes;
+  }
+
+  oo::ConsoleEngine &getConsoleEngine() {
+    return *consoleEngine;
   }
 
   void setCamera(Ogre::Camera *camera) {

@@ -215,6 +215,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionOgreBullet
         OpenOblivion::OpenOblivionOgreImGui
         OpenOblivion::OpenOblivionSDL
+        OpenOblivion::OpenOblivionScripting
         Boost::boost
         ZLIB::ZLIB
         SDL2::SDL2

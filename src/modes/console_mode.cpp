@@ -22,6 +22,8 @@ std::string ConsoleMode::executeCommand(const std::string &cmd) {
   // TODO: Actually parse this, preferably with the scripting engine
   if (cmd == "QuitGame" || cmd == "qqq") {
     Ogre::Root::getSingleton().queueEndRendering();
+  } else {
+    consoleEngine.execute(cmd);
   }
   return cmd;
 }
@@ -81,7 +83,15 @@ void ConsoleMode::displayPrompt() {
                        inputCallback,
                        static_cast<void *>(this))) {
     std::string buffer(mBuffer.data());
-    mHistory.push_back(executeCommand(buffer));
+    std::string output;
+    try {
+      output = executeCommand(buffer);
+      mHistory.push_back(mPrompt + buffer);
+      mHistory.push_back(output);
+    } catch (const std::exception &e) {
+      mHistory.push_back(mPrompt + buffer);
+      mHistory.emplace_back(e.what());
+    }
     mBuffer[0] = '\0';
     refocusInput = true;
     mNeedToScrollHistoryToBottom = true;

@@ -21,6 +21,8 @@ class ConsoleMode {
   void displayHistory();
   void displayPrompt();
 
+  oo::ConsoleEngine &consoleEngine;
+
   std::string executeCommand(const std::string &cmd);
 
   std::string mPrompt{"$ "};
@@ -34,7 +36,8 @@ class ConsoleMode {
  public:
   using transition_t = ModeTransition<ConsoleMode>;
 
-  explicit ConsoleMode(ApplicationContext &ctx) {}
+  explicit ConsoleMode(ApplicationContext &ctx)
+      : consoleEngine(ctx.getConsoleEngine()) {}
 
   void enter(ApplicationContext &ctx) {
     refocus(ctx);

@@ -50,6 +50,9 @@ Application::Application(std::string windowName) : FrameListener() {
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
+  // Start the developer console backend
+  ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
+
   // Add the resource managers
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
   ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
