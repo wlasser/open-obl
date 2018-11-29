@@ -111,13 +111,13 @@ Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &a
 }
 
 Cell::~Cell() {
+  // Destruct physics world to unregister all existing rigid bodies and free
+  // their broadphase proxies, while they are still alive.
+  physicsWorld.reset();
+  // Now destruct the scene manager, which destructs all the (now worldless)
+  // rigid bodies.
   auto root{Ogre::Root::getSingletonPtr()};
   if (root) root->destroySceneManager(scnMgr);
-  // TODO: No raw loops
-  for (int i = physicsWorld->getNumCollisionObjects() - 1; i >= 0; --i) {
-    btCollisionObject *obj{physicsWorld->getCollisionObjectArray()[i]};
-    physicsWorld->removeCollisionObject(obj);
-  }
 }
 
 ReifyRecordTrait<record::CELL>::type

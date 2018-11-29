@@ -18,7 +18,37 @@ class ConsoleMode;
 class GameMode {
  private:
   std::shared_ptr<Cell> mCell{};
-  std::unique_ptr<oo::PlayerController> mPlayerController{};
+
+  /// \name Custom deleter for the PlayerController.
+  /// Unlike the rest of the collision objects in the Cell, which are owned by
+  /// the Ogre::SceneManager and hence outlive the physics world, the
+  /// PlayerController must live for strictly less time than the physics world.
+  /// This is because the PlayerController requires the Ogre::SceneManager
+  /// during its construction, and it lives externally to the Cell. Consequently
+  /// the PlayerController must remove itself from the physics world during its
+  /// destruction so that the physics world doesn't attempt to dereference a
+  /// pointer to it during the broadphase cleanup.
+  ///@{
+  using PlayerControllerPtr = std::unique_ptr<
+      oo::PlayerController, std::function<void(oo::PlayerController *)>>;
+
+  void releasePlayerController(oo::PlayerController *playerController) {
+    mCell->physicsWorld->removeRigidBody(playerController->getRigidBody());
+    delete playerController;
+  }
+
+  template<class ... Args>
+  PlayerControllerPtr makePlayerController(Args &&...args) {
+    return PlayerControllerPtr(
+        new oo::PlayerController(std::forward<Args>(args)...),
+        [this](oo::PlayerController *pc) -> void {
+          releasePlayerController(pc);
+        });
+  }
+  ///@}
+
+  PlayerControllerPtr mPlayerController{};
+
   bullet::CollisionCaller mCollisionCaller{};
 
   /// Run all registered collision callbacks with the collisions for this frame.
