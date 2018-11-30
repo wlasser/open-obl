@@ -135,6 +135,7 @@ target_sources(OpenOblivion PRIVATE
         src/nifloader/mesh_loader_state.cpp
         src/nifloader/nif_resource.cpp
         src/nifloader/nif_resource_manager.cpp
+        src/resolvers/acti_resolver.cpp
         src/resolvers/cell_resolver.cpp
         src/resolvers/door_resolver.cpp
         src/resolvers/light_resolver.cpp
@@ -194,6 +195,7 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/mesh_loader_state.hpp
         include/nifloader/nif_resource.hpp
         include/nifloader/nif_resource_manager.hpp
+        include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
         include/resolvers/door_resolver.hpp
         include/resolvers/helpers.hpp

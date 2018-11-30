@@ -3,6 +3,7 @@
 
 #include "bullet/configuration.hpp"
 #include "esp_coordinator.hpp"
+#include "resolvers/acti_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
@@ -85,10 +86,12 @@ class Resolver<record::CELL> {
 
   using RefrResolverContext = std::tuple<Resolver<record::REFR_STAT, RefId> &,
                                          Resolver<record::REFR_DOOR, RefId> &,
-                                         Resolver<record::REFR_LIGH, RefId> &>;
+                                         Resolver<record::REFR_LIGH, RefId> &,
+                                         Resolver<record::REFR_ACTI, RefId> &>;
   using BaseResolverContext = std::tuple<const Resolver<record::STAT> &,
                                          const Resolver<record::DOOR> &,
-                                         const Resolver<record::LIGH> &>;
+                                         const Resolver<record::LIGH> &,
+                                         const Resolver<record::ACTI> &>;
 
   /// Load all child references of a cell.
   void load(BaseId baseId,
@@ -161,9 +164,11 @@ struct ReifyRecordTrait<record::CELL> {
   using resolvers = std::tuple<const Resolver<record::STAT> &,
                                const Resolver<record::DOOR> &,
                                const Resolver<record::LIGH> &,
+                               const Resolver<record::ACTI> &,
                                Resolver<record::REFR_STAT, RefId> &,
                                Resolver<record::REFR_DOOR, RefId> &,
                                Resolver<record::REFR_LIGH, RefId> &,
+                               Resolver<record::REFR_ACTI, RefId> &,
                                const Resolver<record::CELL> &>;
 };
 

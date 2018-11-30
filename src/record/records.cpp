@@ -1018,8 +1018,8 @@ raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
 template<> uint32_t ACTI::size() const {
   return editorId.entireSize()
       + (name ? name->entireSize() : 0u)
-      + modelFilename.entireSize()
-      + boundRadius.entireSize()
+      + (modelFilename ? modelFilename->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u)
       + (textureHash ? textureHash->entireSize() : 0u)
       + (script ? script->entireSize() : 0u)
       + (sound ? sound->entireSize() : 0u);

@@ -123,17 +123,21 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   cellRes.load(cellId,
                std::forward_as_tuple(ctx.getRefrStaticResolver(),
                                      ctx.getRefrDoorResolver(),
-                                     ctx.getRefrLightResolver()),
+                                     ctx.getRefrLightResolver(),
+                                     ctx.getRefrActivatorResolver()),
                std::forward_as_tuple(ctx.getStaticResolver(),
                                      ctx.getDoorResolver(),
-                                     ctx.getLightResolver()));
+                                     ctx.getLightResolver(),
+                                     ctx.getActivatorResolver()));
   mCell = reifyRecord(*cellRec,
                       std::forward_as_tuple(ctx.getStaticResolver(),
                                             ctx.getDoorResolver(),
                                             ctx.getLightResolver(),
+                                            ctx.getActivatorResolver(),
                                             ctx.getRefrStaticResolver(),
                                             ctx.getRefrDoorResolver(),
                                             ctx.getRefrLightResolver(),
+                                            ctx.getRefrActivatorResolver(),
                                             ctx.getCellResolver()));
   ctx.getLogger()->info("Loaded cell {}", cellId);
 

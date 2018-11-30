@@ -88,10 +88,12 @@ Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &a
   const auto &statRes{std::get<const Resolver<record::STAT> &>(mBaseCtx)};
   const auto &doorRes{std::get<const Resolver<record::DOOR> &>(mBaseCtx)};
   const auto &lighRes{std::get<const Resolver<record::LIGH> &>(mBaseCtx)};
+  const auto &actiRes{std::get<const Resolver<record::ACTI> &>(mBaseCtx)};
 
   auto &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(mRefrCtx)};
   auto &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(mRefrCtx)};
   auto &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(mRefrCtx)};
+  auto &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(mRefrCtx)};
 
   if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
@@ -105,6 +107,9 @@ Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &a
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
     refrLighRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
+  } else if (actiRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
+    refrActiRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
   } else {
     accessor.skipRecord();
   }
@@ -147,12 +152,15 @@ reifyRecord(const record::CELL &refRec,
   const auto &statRes{std::get<const Resolver<record::STAT> &>(resolvers)};
   const auto &doorRes{std::get<const Resolver<record::DOOR> &>(resolvers)};
   const auto &lighRes{std::get<const Resolver<record::LIGH> &>(resolvers)};
+  const auto &actiRes{std::get<const Resolver<record::ACTI> &>(resolvers)};
   const auto
       &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(resolvers)};
   const auto
       &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(resolvers)};
   const auto
       &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(resolvers)};
+  const auto
+      &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(resolvers)};
 
   Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
 
@@ -164,6 +172,8 @@ reifyRecord(const record::CELL &refRec,
       cell->attach(*door, node, std::forward_as_tuple(doorRes));
     } else if (auto ligh{refrLighRes.get(refId)}; ligh) {
       cell->attach(*ligh, node, std::forward_as_tuple(lighRes));
+    } else if (auto acti{refrActiRes.get(refId)}; acti) {
+      cell->attach(*acti, node, std::forward_as_tuple(actiRes));
     }
   }
 

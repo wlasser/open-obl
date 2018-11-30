@@ -4,6 +4,7 @@
 #include "esp_coordinator.hpp"
 #include "record/io.hpp"
 #include "record/records.hpp"
+#include "resolvers/acti_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
@@ -14,31 +15,40 @@ class InitialRecordVisitor {
   DoorResolver *doorRes;
   LightResolver *lightRes;
   StaticResolver *staticRes;
+  ActivatorResolver *activatorRes;
   RefrDoorResolver *refrDoorRes;
   RefrLightResolver *refrLightRes;
   RefrStaticResolver *refrStaticRes;
+  RefrActivatorResolver *refrActivatorRes;
   CellResolver *cellRes;
 
  public:
   InitialRecordVisitor(DoorResolver *doorRes,
                        LightResolver *lightRes,
                        StaticResolver *staticRes,
+                       ActivatorResolver *activatorRes,
                        RefrDoorResolver *refrDoorRes,
                        RefrLightResolver *refrLightRes,
                        RefrStaticResolver *refrStaticRes,
+                       RefrActivatorResolver *refrActivatorRes,
                        CellResolver *cellRes) :
       doorRes(doorRes),
       lightRes(lightRes),
       staticRes(staticRes),
+      activatorRes(activatorRes),
       refrDoorRes(refrDoorRes),
       refrLightRes(refrLightRes),
       refrStaticRes(refrStaticRes),
+      refrActivatorRes(refrActivatorRes),
       cellRes(cellRes) {}
 
   template<class R>
   void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();
   }
+
+  template<>
+  void readRecord<record::ACTI>(oo::EspAccessor &accessor);
 
   template<>
   void readRecord<record::STAT>(oo::EspAccessor &accessor);

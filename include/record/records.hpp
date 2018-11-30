@@ -263,8 +263,8 @@ struct BSGN {
 struct ACTI {
   record::EDID editorId{};
   std::optional<record::FULL> name{};
-  record::MODL modelFilename{};
-  record::MODB boundRadius{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
   std::optional<record::MODT> textureHash{};
   std::optional<record::SCRI> script{};
   std::optional<record::SNAM_ACTI> sound{};

@@ -9,6 +9,12 @@
 #include <cctype>
 
 template<>
+void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::ACTI>().value};
+  activatorRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::STAT>().value};
   staticRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);

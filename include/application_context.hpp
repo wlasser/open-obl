@@ -14,6 +14,7 @@
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "ogreimgui/imgui_manager.hpp"
+#include "resolvers/acti_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
@@ -61,9 +62,11 @@ class ApplicationContext {
   std::unique_ptr<DoorResolver> doorRes{};
   std::unique_ptr<LightResolver> lightRes{};
   std::unique_ptr<StaticResolver> staticRes{};
+  std::unique_ptr<ActivatorResolver> activatorRes{};
   std::unique_ptr<RefrDoorResolver> refrDoorRes{};
   std::unique_ptr<RefrLightResolver> refrLightRes{};
   std::unique_ptr<RefrStaticResolver> refrStaticRes{};
+  std::unique_ptr<RefrActivatorResolver> refrActivatorRes{};
   std::unique_ptr<CellResolver> cellRes{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
@@ -97,6 +100,10 @@ class ApplicationContext {
     return *staticRes;
   }
 
+  ActivatorResolver &getActivatorResolver() const {
+    return *activatorRes;
+  }
+
   RefrDoorResolver &getRefrDoorResolver() const {
     return *refrDoorRes;
   }
@@ -107,6 +114,10 @@ class ApplicationContext {
 
   RefrStaticResolver &getRefrStaticResolver() const {
     return *refrStaticRes;
+  }
+
+  RefrActivatorResolver &getRefrActivatorResolver() const {
+    return *refrActivatorRes;
   }
 
   CellResolver &getCellResolver() const {
