@@ -7,17 +7,146 @@
 
 TEST_CASE("can compile empty blocks", "[scripting]") {
   auto &se{oo::getScriptEngine()};
-  auto logger{spdlog::stderr_color_mt("scripting_test")};
-  oo::scriptingLogger("scripting_test");
+
+  {
+    std::string_view script = "scn MyScript0";
+    REQUIRE_NOTHROW(se.compile(script));
+  }
 
   {
     std::string_view script = R"script(
-scn MyScript
+scn MyScript1
 begin GameMode
 end
 )script";
     REQUIRE_NOTHROW(se.compile(script));
-    REQUIRE_NOTHROW(se.call<void>("MyScript", "GameMode"));
+    REQUIRE_NOTHROW(se.call<void>("MyScript1", "GameMode"));
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript2
+begin GameMode
+end
+begin TestLong
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    REQUIRE_NOTHROW(se.call<void>("MyScript2", "GameMode"));
+    auto result{se.call<int>("MyScript2", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 0);
+  }
+}
+
+TEST_CASE("can compile single basic blocks", "[scripting]") {
+  auto &se{oo::getScriptEngine()};
+
+  {
+    std::string_view script = R"script(
+scn MyScript3
+begin TestLong
+  return 1
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<int>("MyScript3", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 1);
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript4
+begin TestLong
+  long foo
+  set foo to 100
+  return foo
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<int>("MyScript4", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 100);
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript5
+begin TestFloat
+  float foo
+  set foo to 3.5
+  return foo
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<float>("MyScript5", "TestFloat")};
+    REQUIRE(result);
+    REQUIRE_THAT(*result, Catch::WithinULP(3.5f, 1));
+  }
+}
+
+TEST_CASE("can compile branched blocks", "[scripting]") {
+  auto &se{oo::getScriptEngine()};
+
+  {
+    std::string_view script = R"script(
+scn MyScript6
+begin TestLong
+  return 1
+  return 2
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<int>("MyScript6", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 1);
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript7
+begin TestLong
+  long foo
+  set foo to 3
+  if foo < 3
+    return 1
+  elseif foo == 3
+    return 2
+  else
+    return 3
+  endif
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<int>("MyScript7", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 2);
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript8
+begin TestLong
+  long foo
+  long bar
+  set foo to 1
+  set bar to 2
+  if foo < 1
+    return 1
+  elseif foo == 1
+    if bar < 2
+      return 2
+    else
+      return 3
+    endif
+  endif
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    auto result{se.call<int>("MyScript8", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 3);
   }
 }
 

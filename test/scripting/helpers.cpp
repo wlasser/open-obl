@@ -2,6 +2,7 @@
 #include <catch2/catch.hpp>
 #include <cstdio>
 #include <iostream>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #include <string_view>
 
@@ -96,6 +97,13 @@ oo::ScriptEngine &getScriptEngine() {
     eng.registerFunction<decltype(Func)>("Func");
     return eng;
   }();
+
+  static auto doOnce = []() {
+    auto logger{spdlog::stderr_color_mt("scripting_test")};
+    oo::scriptingLogger("scripting_test");
+    return 0;
+  };
+
   return eng;
 }
 
