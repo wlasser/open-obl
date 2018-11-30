@@ -5,6 +5,22 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <string_view>
 
+TEST_CASE("can compile empty blocks", "[scripting]") {
+  auto &se{oo::getScriptEngine()};
+  auto logger{spdlog::stderr_color_mt("scripting_test")};
+  oo::scriptingLogger("scripting_test");
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin GameMode
+end
+)script";
+    REQUIRE_NOTHROW(se.compile(script));
+    REQUIRE_NOTHROW(se.call<void>("MyScript", "GameMode"));
+  }
+}
+
 TEST_CASE("can use llvm", "[scripting]") {
   std::string_view script = R"script(
 scn MyScript

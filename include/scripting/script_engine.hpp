@@ -19,6 +19,9 @@ class ScriptEngine : public ScriptEngineBase {
   /// \remark The returned module must still be JIT'd before it can be called.
   [[nodiscard]] std::unique_ptr<llvm::Module> compileAst(const AstNode &root);
 
+  [[nodiscard]] std::optional<llvm::JITTargetAddress>
+  getFunctionAddr(const std::string &scriptName, const std::string &funName);
+
  public:
   /// Compile a script into native object code, making it available for calling.
   void compile(std::string_view script);
@@ -30,45 +33,30 @@ class ScriptEngine : public ScriptEngineBase {
   /// given name and specified return type must exist in the script.
   /// \tparam T The return type of the function.
   // TODO: Make this take std::string_view with a conversion to llvm::StringRef
-  template<class T> [[nodiscard]] std::optional<T>
-  call(const std::string &scriptName, const std::string &funName);
+  template<class T> auto
+  call(const std::string &scriptName, const std::string &funName)
+  -> std::conditional_t<std::is_same_v<T, void>, void, std::optional<T>>;
 
   template<class Fun> void registerFunction(const std::string &funName);
 };
 
-template<class T> std::optional<T>
-ScriptEngine::call(const std::string &scriptName, const std::string &funName) {
-  // Find the module containing the script
-  const auto keyIt{getModules().find(scriptName)};
-  if (keyIt == getModules().end()) {
-    scriptingLogger()->warn("Script '{}' does not exist", scriptName);
-    return std::nullopt;
+template<class T> auto
+ScriptEngine::call(const std::string &scriptName, const std::string &funName)
+-> std::conditional_t<std::is_same_v<T, void>, void, std::optional<T>> {
+  auto addr{getFunctionAddr(scriptName, funName)};
+
+  if constexpr (std::is_same_v<T, void>) {
+    if (!addr) return;
+    auto addrPtr{reinterpret_cast<std::uintptr_t>(*addr)};
+    auto fun{reinterpret_cast<void (*)()>(addrPtr)};
+    fun();
+    return;
+  } else {
+    if (!addr) return std::nullopt;
+    auto addrPtr{reinterpret_cast<std::uintptr_t>(*addr)};
+    auto fun{reinterpret_cast<T (*)()>(addrPtr)};
+    return fun();
   }
-
-  // Find the function in the module
-  auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
-  if (!entrySymbol) {
-    scriptingLogger()->warn("No function '{}' in script '{}'",
-                            funName, scriptName);
-    return std::nullopt;
-  }
-
-  // Get the function's address
-  auto entryOrErr{entrySymbol.getAddress()};
-  if (llvm::Error err = entryOrErr.takeError()) {
-    llvm::handleAllErrors(std::move(err), [](const llvm::ErrorInfoBase &e) {
-      scriptingLogger()->warn("JIT error: {}", e.message());
-    });
-    return std::nullopt;
-  }
-
-  // Convert the address to a function pointer and call it.
-  using entry_t = T (*)();
-  auto entryAddr{reinterpret_cast<std::uintptr_t>(*entryOrErr)};
-  auto entry{reinterpret_cast<entry_t>(entryAddr)};
-  const auto result{entry()};
-
-  return result;
 }
 
 template<class Fun>

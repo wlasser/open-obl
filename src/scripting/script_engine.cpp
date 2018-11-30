@@ -28,6 +28,36 @@ std::unique_ptr<llvm::Module> ScriptEngine::compileAst(const AstNode &root) {
   return module;
 }
 
+std::optional<llvm::JITTargetAddress>
+ScriptEngine::getFunctionAddr(const std::string &scriptName,
+                              const std::string &funName) {
+  // Find the module containing the script
+  const auto keyIt{getModules().find(scriptName)};
+  if (keyIt == getModules().end()) {
+    scriptingLogger()->warn("Script '{}' does not exist", scriptName);
+    return std::nullopt;
+  }
+
+  // Find the function in the module
+  auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
+  if (!entrySymbol) {
+    scriptingLogger()->warn("No function '{}' in script '{}'",
+                            funName, scriptName);
+    return std::nullopt;
+  }
+
+  // Get the function's address
+  auto entryOrErr{entrySymbol.getAddress()};
+  if (llvm::Error err = entryOrErr.takeError()) {
+    llvm::handleAllErrors(std::move(err), [](const llvm::ErrorInfoBase &e) {
+      scriptingLogger()->warn("JIT error: {}", e.message());
+    });
+    return std::nullopt;
+  }
+
+  return *entryOrErr;
+}
+
 void ScriptEngine::compile(std::string_view script) {
   pegtl::memory_input in(script, "");
 
