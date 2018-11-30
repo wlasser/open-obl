@@ -30,7 +30,7 @@ class ImGuiManager : public RenderQueueListener,
  private:
   const String mFontTextureName{"__ImGuiFont"};
   const String mMaterialName{"__ImGuiMaterial"};
-  const String mResourceGroup{"OOResource"};
+  const String mResourceGroup{"OOShader"};
   ImGuiRenderable mRenderable{};
 
   void setKeyMap();

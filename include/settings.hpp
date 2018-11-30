@@ -11,6 +11,7 @@
 namespace oo {
 
 const char *const RESOURCE_GROUP{"OOResource"};
+const char *const SHADER_GROUP{"OOShader"};
 const char *const LOG{"OO"};
 const char *const OGRE_LOG{"Ogre"};
 const char *const DEFAULT_INI{"Oblivion_default.ini"};

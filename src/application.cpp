@@ -80,7 +80,7 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Shaders are not stored in the data folder (mostly for vcs reasons)
   resGrpMgr.addResourceLocation("./shaders", "FileSystem",
-                                oo::RESOURCE_GROUP);
+                                oo::SHADER_GROUP);
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
@@ -118,7 +118,8 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
-  resGrpMgr.initialiseAllResourceGroups();
+  resGrpMgr.initialiseResourceGroup(oo::RESOURCE_GROUP, false);
+  resGrpMgr.initialiseResourceGroup(oo::SHADER_GROUP, true);
 
   ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
