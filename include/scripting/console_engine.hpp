@@ -5,8 +5,6 @@
 #include "scripting/script_engine_base.hpp"
 #include <optional>
 
-extern "C" __attribute__((visibility("default"), used)) int ConsoleFunc(int x);
-
 namespace oo {
 
 /// Compiles script statements entered into the developer console and runs them.
@@ -16,10 +14,17 @@ class ConsoleEngine : public ScriptEngineBase {
   compileStatement(const AstNode &node);
 
  public:
-  ConsoleEngine();
+  ConsoleEngine() : ScriptEngineBase() {}
 
   void execute(std::string_view statement);
+
+  template<class Fun> void registerFunction(const std::string &funName);
 };
+
+template<class Fun>
+void ConsoleEngine::registerFunction(const std::string &funName) {
+  addExternalFun<Fun>(funName);
+}
 
 } // namespace oo
 

@@ -1,14 +1,6 @@
 #include "scripting/script_engine.hpp"
 
-int Func(int x) {
-  return 9 * x;
-}
-
 namespace oo {
-
-ScriptEngine::ScriptEngine() : ScriptEngineBase() {
-  addExternalFun<decltype(Func)>("Func");
-}
 
 std::string ScriptEngine::getScriptname(const AstNode &node) {
   if (!node.is<grammar::RawScriptnameStatement>()) return "";

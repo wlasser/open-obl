@@ -1,8 +1,18 @@
 #include "helpers.hpp"
 #include <catch2/catch.hpp>
+#include <cstdio>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+int Func(int x) {
+  return 9 * x;
+}
+
+int ConsoleFunc(int x) {
+  printf("%d\n", x);
+  return 0;
+}
 
 namespace oo {
 

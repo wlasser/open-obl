@@ -5,8 +5,6 @@
 #include "scripting/script_engine_base.hpp"
 #include <optional>
 
-extern "C" __attribute__((visibility("default"))) int Func(int x);
-
 namespace oo {
 
 /// Compilers user scripts and makes them available for running at game time.
@@ -22,10 +20,10 @@ class ScriptEngine : public ScriptEngineBase {
   [[nodiscard]] std::unique_ptr<llvm::Module> compileAst(const AstNode &root);
 
  public:
-  ScriptEngine();
-
   /// Compile a script into native object code, making it available for calling.
   void compile(std::string_view script);
+
+  ScriptEngine() : ScriptEngineBase() {}
 
   /// Call the given function from the given script.
   /// The given script must been `compile`d previously, and a function with the
@@ -34,6 +32,8 @@ class ScriptEngine : public ScriptEngineBase {
   // TODO: Make this take std::string_view with a conversion to llvm::StringRef
   template<class T> [[nodiscard]] std::optional<T>
   call(const std::string &scriptName, const std::string &funName);
+
+  template<class Fun> void registerFunction(const std::string &funName);
 };
 
 template<class T> std::optional<T>
@@ -69,6 +69,11 @@ ScriptEngine::call(const std::string &scriptName, const std::string &funName) {
   const auto result{entry()};
 
   return result;
+}
+
+template<class Fun>
+void ScriptEngine::registerFunction(const std::string &funName) {
+  addExternalFun<Fun>(funName);
 }
 
 } // namespace oo

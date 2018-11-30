@@ -44,6 +44,7 @@ end
   oo::scriptingLogger("test");
 
   oo::ScriptEngine se{};
+  se.registerFunction<decltype(Func)>("Func");
 
   se.compile(script);
   {
@@ -73,5 +74,6 @@ end
   }
 
   oo::ConsoleEngine ce{};
+  ce.registerFunction<decltype(ConsoleFunc)>("ConsoleFunc");
   ce.execute(statement);
 }

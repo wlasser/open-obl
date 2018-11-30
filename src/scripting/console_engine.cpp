@@ -1,18 +1,8 @@
 #include "scripting/console_engine.hpp"
 #include <gsl/gsl>
-#include <cstdio>
 #include <stdexcept>
 
-int ConsoleFunc(int x) {
-  printf("%d\n", x);
-  return 0;
-}
-
 namespace oo {
-
-ConsoleEngine::ConsoleEngine() : ScriptEngineBase() {
-  addExternalFun<decltype(ConsoleFunc)>("ConsoleFunc");
-}
 
 std::unique_ptr<llvm::Module>
 ConsoleEngine::compileStatement(const AstNode &node) {

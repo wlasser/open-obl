@@ -8,6 +8,9 @@
 #include <string>
 #include <string_view>
 
+extern "C" __attribute__((visibility("default"), used)) int Func(int x);
+extern "C" __attribute__((visibility("default"), used)) int ConsoleFunc(int x);
+
 namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node);
