@@ -6,8 +6,8 @@
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>
 
-using ActivatorResolver = Resolver<record::ACTI>;
-using RefrActivatorResolver = Resolver<record::REFR_ACTI, RefId>;
+using ActiResolver = Resolver<record::ACTI>;
+using RefrActiResolver = Resolver<record::REFR_ACTI, RefId>;
 
 template<> struct CiteRecordTrait<record::ACTI> {
   using type = record::REFR_ACTI;

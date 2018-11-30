@@ -121,23 +121,23 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   }
   const auto cellRec{cellRes.get(cellId)};
   cellRes.load(cellId,
-               std::forward_as_tuple(ctx.getRefrStaticResolver(),
+               std::forward_as_tuple(ctx.getRefrStatResolver(),
                                      ctx.getRefrDoorResolver(),
-                                     ctx.getRefrLightResolver(),
-                                     ctx.getRefrActivatorResolver()),
-               std::forward_as_tuple(ctx.getStaticResolver(),
+                                     ctx.getRefrLighResolver(),
+                                     ctx.getRefrActiResolver()),
+               std::forward_as_tuple(ctx.getStatResolver(),
                                      ctx.getDoorResolver(),
-                                     ctx.getLightResolver(),
-                                     ctx.getActivatorResolver()));
+                                     ctx.getLighResolver(),
+                                     ctx.getActiResolver()));
   mCell = reifyRecord(*cellRec,
-                      std::forward_as_tuple(ctx.getStaticResolver(),
+                      std::forward_as_tuple(ctx.getStatResolver(),
                                             ctx.getDoorResolver(),
-                                            ctx.getLightResolver(),
-                                            ctx.getActivatorResolver(),
-                                            ctx.getRefrStaticResolver(),
+                                            ctx.getLighResolver(),
+                                            ctx.getActiResolver(),
+                                            ctx.getRefrStatResolver(),
                                             ctx.getRefrDoorResolver(),
-                                            ctx.getRefrLightResolver(),
-                                            ctx.getRefrActivatorResolver(),
+                                            ctx.getRefrLighResolver(),
+                                            ctx.getRefrActiResolver(),
                                             ctx.getCellResolver()));
   ctx.getLogger()->info("Loaded cell {}", cellId);
 

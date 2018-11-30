@@ -10,8 +10,8 @@
 #include <OgreSceneManager.h>
 #include <string>
 
-using LightResolver = Resolver<record::LIGH>;
-using RefrLightResolver = Resolver<record::REFR_LIGH, RefId>;
+using LighResolver = Resolver<record::LIGH>;
+using RefrLighResolver = Resolver<record::REFR_LIGH, RefId>;
 
 template<>
 struct CiteRecordTrait<record::LIGH> {

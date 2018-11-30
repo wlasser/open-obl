@@ -64,13 +64,13 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Create the engine managers
   ctx.doorRes = std::make_unique<DoorResolver>();
-  ctx.lightRes = std::make_unique<LightResolver>();
-  ctx.staticRes = std::make_unique<StaticResolver>();
-  ctx.activatorRes = std::make_unique<ActivatorResolver>();
+  ctx.lighRes = std::make_unique<LighResolver>();
+  ctx.statRes = std::make_unique<StatResolver>();
+  ctx.actiRes = std::make_unique<ActiResolver>();
   ctx.refrDoorRes = std::make_unique<RefrDoorResolver>();
-  ctx.refrLightRes = std::make_unique<RefrLightResolver>();
-  ctx.refrStaticRes = std::make_unique<RefrStaticResolver>();
-  ctx.refrActivatorRes = std::make_unique<RefrActivatorResolver>();
+  ctx.refrLighRes = std::make_unique<RefrLighResolver>();
+  ctx.refrStatRes = std::make_unique<RefrStatResolver>();
+  ctx.refrActiRes = std::make_unique<RefrActiResolver>();
 
   ctx.cellRes = std::make_unique<CellResolver>(*ctx.bulletConf);
 
@@ -132,13 +132,9 @@ Application::Application(std::string windowName) : FrameListener() {
                                                             loadOrder.end());
   // Read the main esm
   InitialRecordVisitor initialRecordVisitor(ctx.doorRes.get(),
-                                            ctx.lightRes.get(),
-                                            ctx.staticRes.get(),
-                                            ctx.activatorRes.get(),
-                                            ctx.refrDoorRes.get(),
-                                            ctx.refrLightRes.get(),
-                                            ctx.refrStaticRes.get(),
-                                            ctx.refrActivatorRes.get(),
+                                            ctx.lighRes.get(),
+                                            ctx.statRes.get(),
+                                            ctx.actiRes.get(),
                                             ctx.cellRes.get());
   for (int i = 0; i < loadOrder.size(); ++i) {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);

@@ -60,13 +60,13 @@ class ApplicationContext {
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
 
   std::unique_ptr<DoorResolver> doorRes{};
-  std::unique_ptr<LightResolver> lightRes{};
-  std::unique_ptr<StaticResolver> staticRes{};
-  std::unique_ptr<ActivatorResolver> activatorRes{};
+  std::unique_ptr<LighResolver> lighRes{};
+  std::unique_ptr<StatResolver> statRes{};
+  std::unique_ptr<ActiResolver> actiRes{};
   std::unique_ptr<RefrDoorResolver> refrDoorRes{};
-  std::unique_ptr<RefrLightResolver> refrLightRes{};
-  std::unique_ptr<RefrStaticResolver> refrStaticRes{};
-  std::unique_ptr<RefrActivatorResolver> refrActivatorRes{};
+  std::unique_ptr<RefrLighResolver> refrLighRes{};
+  std::unique_ptr<RefrStatResolver> refrStatRes{};
+  std::unique_ptr<RefrActiResolver> refrActiRes{};
   std::unique_ptr<CellResolver> cellRes{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
@@ -92,32 +92,32 @@ class ApplicationContext {
     return *doorRes;
   }
 
-  LightResolver &getLightResolver() const {
-    return *lightRes;
+  LighResolver &getLighResolver() const {
+    return *lighRes;
   }
 
-  StaticResolver &getStaticResolver() const {
-    return *staticRes;
+  StatResolver &getStatResolver() const {
+    return *statRes;
   }
 
-  ActivatorResolver &getActivatorResolver() const {
-    return *activatorRes;
+  ActiResolver &getActiResolver() const {
+    return *actiRes;
   }
 
   RefrDoorResolver &getRefrDoorResolver() const {
     return *refrDoorRes;
   }
 
-  RefrLightResolver &getRefrLightResolver() const {
-    return *refrLightRes;
+  RefrLighResolver &getRefrLighResolver() const {
+    return *refrLighRes;
   }
 
-  RefrStaticResolver &getRefrStaticResolver() const {
-    return *refrStaticRes;
+  RefrStatResolver &getRefrStatResolver() const {
+    return *refrStatRes;
   }
 
-  RefrActivatorResolver &getRefrActivatorResolver() const {
-    return *refrActivatorRes;
+  RefrActiResolver &getRefrActiResolver() const {
+    return *refrActiRes;
   }
 
   CellResolver &getCellResolver() const {

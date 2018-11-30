@@ -11,13 +11,13 @@
 template<>
 void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::ACTI>().value};
-  activatorRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  actiRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::STAT>().value};
-  staticRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  statRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>
@@ -29,7 +29,7 @@ void InitialRecordVisitor::readRecord<record::DOOR>(oo::EspAccessor &accessor) {
 template<>
 void InitialRecordVisitor::readRecord<record::LIGH>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::LIGH>().value};
-  lightRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  lighRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
 }
 
 template<>
@@ -43,7 +43,7 @@ void InitialRecordVisitor::readRecord<record::MISC>(oo::EspAccessor &accessor) {
                        rec.mRecordFlags,
                        rec.mFormId,
                        rec.mVersionControlInfo);
-  staticRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, statRec);
+  statRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, statRec);
 }
 
 template<>

@@ -153,14 +153,12 @@ reifyRecord(const record::CELL &refRec,
   const auto &doorRes{std::get<const Resolver<record::DOOR> &>(resolvers)};
   const auto &lighRes{std::get<const Resolver<record::LIGH> &>(resolvers)};
   const auto &actiRes{std::get<const Resolver<record::ACTI> &>(resolvers)};
-  const auto
-      &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(resolvers)};
-  const auto
-      &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(resolvers)};
-  const auto
-      &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(resolvers)};
-  const auto
-      &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(resolvers)};
+  //@formatter:off
+  const auto &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(resolvers)};
+  const auto &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(resolvers)};
+  const auto &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(resolvers)};
+  const auto &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(resolvers)};
+  //@formatter:on
 
   Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
 

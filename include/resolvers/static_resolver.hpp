@@ -11,8 +11,8 @@
 #include <optional>
 #include <string>
 
-using StaticResolver = Resolver<record::STAT>;
-using RefrStaticResolver = Resolver<record::REFR_STAT, RefId>;
+using StatResolver = Resolver<record::STAT>;
+using RefrStatResolver = Resolver<record::REFR_STAT, RefId>;
 
 template<>
 struct CiteRecordTrait<record::STAT> {

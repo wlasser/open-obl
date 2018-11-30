@@ -13,33 +13,21 @@
 class InitialRecordVisitor {
  private:
   DoorResolver *doorRes;
-  LightResolver *lightRes;
-  StaticResolver *staticRes;
-  ActivatorResolver *activatorRes;
-  RefrDoorResolver *refrDoorRes;
-  RefrLightResolver *refrLightRes;
-  RefrStaticResolver *refrStaticRes;
-  RefrActivatorResolver *refrActivatorRes;
+  LighResolver *lighRes;
+  StatResolver *statRes;
+  ActiResolver *actiRes;
   CellResolver *cellRes;
 
  public:
   InitialRecordVisitor(DoorResolver *doorRes,
-                       LightResolver *lightRes,
-                       StaticResolver *staticRes,
-                       ActivatorResolver *activatorRes,
-                       RefrDoorResolver *refrDoorRes,
-                       RefrLightResolver *refrLightRes,
-                       RefrStaticResolver *refrStaticRes,
-                       RefrActivatorResolver *refrActivatorRes,
+                       LighResolver *lighRes,
+                       StatResolver *statRes,
+                       ActiResolver *actiRes,
                        CellResolver *cellRes) :
       doorRes(doorRes),
-      lightRes(lightRes),
-      staticRes(staticRes),
-      activatorRes(activatorRes),
-      refrDoorRes(refrDoorRes),
-      refrLightRes(refrLightRes),
-      refrStaticRes(refrStaticRes),
-      refrActivatorRes(refrActivatorRes),
+      lighRes(lighRes),
+      statRes(statRes),
+      actiRes(actiRes),
       cellRes(cellRes) {}
 
   template<class R>
