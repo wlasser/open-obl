@@ -13,7 +13,7 @@ namespace oo {
 /// Common internal functionality of ScriptEngine and ConsoleEngine.
 class ScriptEngineBase {
  private:
-  llvm::LLVMContext mCtx{};
+  std::unique_ptr<llvm::LLVMContext> mCtx{};
   std::unique_ptr<oo::Jit> mJit{};
   llvm::StringMap<llvm::FunctionType *> mExternFuns{};
   llvm::StringMap<llvm::orc::VModuleKey> mModules{};
@@ -70,6 +70,30 @@ class ScriptEngineBase {
                                             llvm::IRBuilder<> builder);
 
   ScriptEngineBase();
+
+ public:
+  ~ScriptEngineBase() = default;
+  ScriptEngineBase(const ScriptEngineBase &) = delete;
+  ScriptEngineBase &operator=(const ScriptEngineBase &) = delete;
+
+  ScriptEngineBase(ScriptEngineBase &&other) noexcept {
+    using std::swap;
+    swap(mCtx, other.mCtx);
+    swap(mJit, other.mJit);
+    swap(mExternFuns, other.mExternFuns);
+    swap(mModules, other.mModules);
+  }
+
+  ScriptEngineBase &operator=(ScriptEngineBase &&other) noexcept {
+    if (this != &other) {
+      using std::swap;
+      swap(mCtx, other.mCtx);
+      swap(mJit, other.mJit);
+      swap(mExternFuns, other.mExternFuns);
+      swap(mModules, other.mModules);
+    }
+    return *this;
+  }
 };
 
 template<class Fun>
@@ -88,16 +112,16 @@ ScriptEngineBase::makeProto(llvm::StringRef name, std::tuple<Args...>) {
 template<class Type> llvm::Type *ScriptEngineBase::typeToLLVM() {
   if constexpr (
       std::is_same_v<Type, grammar::RawShort> || std::is_same_v<Type, short>) {
-    return llvm::Type::getInt16Ty(mCtx);
+    return llvm::Type::getInt16Ty(*mCtx);
   } else if constexpr (
       std::is_same_v<Type, grammar::RawLong> || std::is_same_v<Type, int>) {
-    return llvm::Type::getInt32Ty(mCtx);
+    return llvm::Type::getInt32Ty(*mCtx);
   } else if constexpr (
       std::is_same_v<Type, grammar::RawRef> || std::is_same_v<Type, uint32_t>) {
-    return llvm::Type::getInt32Ty(mCtx);
+    return llvm::Type::getInt32Ty(*mCtx);
   } else if constexpr (
       std::is_same_v<Type, grammar::RawFloat> || std::is_same_v<Type, float>) {
-    return llvm::Type::getFloatTy(mCtx);
+    return llvm::Type::getFloatTy(*mCtx);
   } else {
     static_assert(false_v<Type>, "Type must be an AstType");
     llvm_unreachable("Type must be an AstType");

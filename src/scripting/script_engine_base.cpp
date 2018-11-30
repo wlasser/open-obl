@@ -5,7 +5,8 @@
 
 namespace oo {
 
-ScriptEngineBase::ScriptEngineBase() {
+ScriptEngineBase::ScriptEngineBase()
+    : mCtx(std::make_unique<llvm::LLVMContext>()) {
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
   llvm::InitializeNativeTargetAsmParser();
@@ -14,7 +15,7 @@ ScriptEngineBase::ScriptEngineBase() {
 }
 
 llvm::LLVMContext &ScriptEngineBase::getContext() noexcept {
-  return mCtx;
+  return *mCtx;
 }
 
 void ScriptEngineBase::addExternalFunsToModule(llvm::Module *module) {
@@ -37,7 +38,7 @@ ScriptEngineBase::getModules() const noexcept {
 
 std::unique_ptr<llvm::Module>
 ScriptEngineBase::makeModule(llvm::StringRef moduleName) {
-  auto module{std::make_unique<llvm::Module>(moduleName, mCtx)};
+  auto module{std::make_unique<llvm::Module>(moduleName, *mCtx)};
   module->setDataLayout(mJit->getTargetMachine().createDataLayout());
   return module;
 }
@@ -49,12 +50,12 @@ ScriptEngineBase::jitModule(std::unique_ptr<llvm::Module> module) {
 }
 
 oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module) {
-  return LLVMVisitor(module, mCtx);
+  return LLVMVisitor(module, *mCtx);
 }
 
 oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module,
                                               llvm::IRBuilder<> builder) {
-  return LLVMVisitor(module, mCtx, std::move(builder));
+  return LLVMVisitor(module, *mCtx, std::move(builder));
 }
 
 llvm::orc::VModuleKey
