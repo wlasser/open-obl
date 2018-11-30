@@ -3,6 +3,7 @@
 
 #include "record/formid.hpp"
 #include "scripting/ast.hpp"
+#include "scripting/script_engine.hpp"
 #include <tao/pegtl.hpp>
 #include <tao/pegtl/contrib/parse_tree.hpp>
 #include <string>
@@ -36,6 +37,8 @@ template<class T>
       && node.children[1]->has_content()
       && node.children[1]->content() == name;
 }
+
+[[nodiscard]] oo::ScriptEngine &getScriptEngine();
 
 } // namespace oo
 

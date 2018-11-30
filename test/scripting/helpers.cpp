@@ -90,4 +90,13 @@ void printAst(const AstNode &node) {
       && Catch::WithinULP(expected, 1).match(std::stof(node.content()));
 }
 
+oo::ScriptEngine &getScriptEngine() {
+  static oo::ScriptEngine eng = []() {
+    oo::ScriptEngine eng{};
+    eng.registerFunction<decltype(Func)>("Func");
+    return eng;
+  }();
+  return eng;
+}
+
 } // namespace oo

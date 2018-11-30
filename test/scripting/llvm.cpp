@@ -43,8 +43,7 @@ end
   auto logger{spdlog::stderr_color_mt("test")};
   oo::scriptingLogger("test");
 
-  oo::ScriptEngine se{};
-  se.registerFunction<decltype(Func)>("Func");
+  auto &se{oo::getScriptEngine()};
 
   se.compile(script);
   {
@@ -64,16 +63,4 @@ end
     REQUIRE(result);
     REQUIRE(*result == 9);
   }
-
-  std::string_view statement = "ConsoleFunc 74";
-  {
-    pegtl::memory_input in(statement, "");
-    const auto root{oo::parseStatement(in)};
-    REQUIRE(root);
-    oo::printAst(*root);
-  }
-
-  oo::ConsoleEngine ce{};
-  ce.registerFunction<decltype(ConsoleFunc)>("ConsoleFunc");
-  ce.execute(statement);
 }
