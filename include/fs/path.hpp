@@ -28,7 +28,7 @@ class Path {
   mutable std::mutex mSysPathMutex{};
 
   /// Copy the given range, without leading and trailing characters satisfying
-  /// the predicated `p`.
+  /// the predicate `p`.
   /// This is faster than boost::algorithm::trim_copy_if for our purposes.
   template<class InputIt, class OutputIt, class Predicate>
   void trim_copy(InputIt first, InputIt last, OutputIt out, Predicate &&p) {
@@ -38,6 +38,19 @@ class Path {
     while (p(*begIt)) ++begIt;
     while (p(*(endIt - 1))) --endIt;
     std::copy(begIt, endIt, out);
+  }
+
+  /// Remove the leading and trailing characters satisfying the predicate `p`.
+  /// \remark This resizes the string so cannot be used with ordinary iterators.
+  template<class Predicate>
+  void trim_inplace(std::string &s, Predicate &&p) {
+    auto begIt{s.begin()};
+    auto endIt{s.end()};
+    if (begIt == endIt) return;
+    while (p(*begIt)) ++begIt;
+    while (p(*(endIt - 1))) --endIt;
+    std::move(begIt, endIt, s.begin());
+    s.resize(endIt - begIt);
   }
 
  public:
@@ -51,6 +64,9 @@ class Path {
 
   /// Store a normalized representation of the given path
   explicit Path(const std::string &path);
+
+  /// \overload Path(const std::string&)
+  explicit Path(std::string &&path);
 
   /// Return the part of the path after the last `/`, not including the `/`.
   /// This may not return an actual file, for example if the path points to a

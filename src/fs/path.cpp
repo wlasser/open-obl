@@ -58,6 +58,17 @@ Path::Path(const std::string &path) {
   }
 }
 
+Path::Path(std::string &&path) : mPath(path) {
+  if (mPath.empty()) return;
+  trim_inplace(mPath, [](char c) { return c == '\\' || c == '/' || c == '.'; });
+  std::transform(mPath.begin(), mPath.end(), mPath.begin(),
+                 [](unsigned char c) -> unsigned char {
+                   if ('A' <= c && c <= 'Z') return c - 'A' + 'a';
+                   else if (c == '\\') return '/';
+                   else return c;
+                 });
+}
+
 std::string_view Path::filename() const {
   const std::string_view sv{mPath};
   // mPath does not end with a '/', but it might not have any at all
