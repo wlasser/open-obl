@@ -210,6 +210,12 @@ LLVMVisitor::visitImpl<grammar::FloatLiteral>(const AstNode &node) {
 }
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::RefLiteralContents>(const AstNode &node) {
+  const std::string sVal{node.content()};
+  return llvm::ConstantInt::get(mCtx, llvm::APInt(32u, sVal, 16u));
+}
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node) {
   std::string varName{node.children[1]->content()};
   llvm::BasicBlock *bb{mIrBuilder.GetInsertBlock()};

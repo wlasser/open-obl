@@ -75,6 +75,9 @@ template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::FloatLiteral>(const AstNode &node);
 
 template<> llvm::Value *
+LLVMVisitor::visitImpl<grammar::RefLiteralContents>(const AstNode &node);
+
+template<> llvm::Value *
 LLVMVisitor::visitImpl<grammar::DeclarationStatement>(const AstNode &node);
 
 template<> llvm::Value *
