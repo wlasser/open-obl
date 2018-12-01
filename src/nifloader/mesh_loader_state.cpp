@@ -350,7 +350,7 @@ void setSourceTexture(const nif::NiSourceTexture &block,
 
 void setClampMode(nif::Enum::TexClampMode mode, Ogre::TextureUnitState *tex) {
   using ClampMode = nif::Enum::TexClampMode;
-  using AddressingMode = Ogre::TextureUnitState::TextureAddressingMode;
+  using AddressingMode = Ogre::TextureAddressingMode;
 
   switch (mode) {
     case ClampMode::CLAMP_S_CLAMP_T:
