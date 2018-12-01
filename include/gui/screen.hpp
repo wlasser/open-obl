@@ -16,9 +16,11 @@ class ScreenElement {
     int height;
   };
 
-  // If screen width / screen height >= 1 then the height is normalized to 960px
-  // and the width computed by the aspect ratio. Otherwise, the width is
-  // normalized to 1280px and the height is computed with the aspect ratio.
+  /// Get the draw area dimensions.
+  /// If `screen width / screen height >= 1` then the height is normalized to
+  /// `960px` and the width computed by the aspect ratio. Otherwise, the width
+  /// is normalized to `1280px` and the height is computed with the aspect
+  /// ratio.
   Dimensions getNormalizedDimensions() const {
     const int rawW{mRawWidth.get()};
     const int rawH{mRawHeight.get()};

@@ -12,54 +12,49 @@
 
 namespace gui {
 
-// Implementation traits have well-defined types linked to their name; <x> is
-// always an int, for instance. User traits have different types depending on
-// the ui element, but these are still well-defined. This enum is used to
-// express the type of the user trait in the interface without using templates
-// directly. Unimplemented is used to denote that a particular user trait,
-// say <user5>, has no effect.
+/// Implementation traits have well-defined types linked to their name; `<x>` is
+/// always an `int`, for instance. User traits have different types depending on
+/// the ui element, but these are still well-defined. This enum is used to
+/// express the type of the user trait in the interface without using templates
+/// directly. Unimplemented is used to denote that a particular user trait,
+/// say `<user5>`, has no effect.
 enum class TraitTypeId : int {
   Unimplemented = 0, Int, Float, Bool, String
 };
 
-// Convert a trait type into a trait type id.
-template<class T>
-constexpr TraitTypeId getTraitTypeId() {
+/// Convert a trait type into a trait type id.
+template<class T> constexpr TraitTypeId getTraitTypeId() {
   return TraitTypeId::Unimplemented;
 }
 
-template<>
-constexpr inline TraitTypeId getTraitTypeId<int>() {
+template<> constexpr inline TraitTypeId getTraitTypeId<int>() {
   return TraitTypeId::Int;
 }
 
-template<>
-constexpr inline TraitTypeId getTraitTypeId<float>() {
+template<> constexpr inline TraitTypeId getTraitTypeId<float>() {
   return TraitTypeId::Float;
 }
 
-template<>
-constexpr inline TraitTypeId getTraitTypeId<bool>() {
+template<> constexpr inline TraitTypeId getTraitTypeId<bool>() {
   return TraitTypeId::Bool;
 }
 
-template<>
-constexpr inline TraitTypeId getTraitTypeId<std::string>() {
+template<> constexpr inline TraitTypeId getTraitTypeId<std::string>() {
   return TraitTypeId::String;
 }
 
-// If name is the name of a user trait, then return the index of that trait,
-// e.g. user12 returns 12.
+/// If name is the name of a user trait, then return the index of that trait.
+/// e.g. `user12` returns 12.
 std::optional<int> getUserTraitIndex(std::string_view name);
 
-// This class simplifies expressing the user trait interface of a ui element,
-// instead of writing 4 set_user functions containing disjoint switch
-// statements. Passing it a std::tuple of pointers to member variables
-// corresponding to the user traits (in order) gives the user automatically
-// generated set_user and userTraitType functions.
-// A problem is that this does not inherit from UiElement, and so does not
-// provide overrides for set_user. These must therefore be implemented (with
-// identical implementation) in every class that uses a UserTraitInterface.
+/// This class simplifies expressing the user trait interface of a ui element,
+/// instead of writing 4 set_user functions containing disjoint switch
+/// statements. Passing it a std::tuple of pointers to member variables
+/// corresponding to the user traits (in order) gives the user automatically
+/// generated set_user and userTraitType functions.
+/// A problem is that this does not inherit from UiElement, and so does not
+/// provide overrides for set_user. These must therefore be implemented (with
+/// identical implementation) in every class that uses a UserTraitInterface.
 template<class ...Ts>
 class UserTraitInterface {
  private:
@@ -109,8 +104,8 @@ class UserTraitInterface {
   }
 };
 
-// This avoids writing the boilerplate necessary because UserTraitInterface
-// does not derived from UiElement. Obviously this is not an optimal solution.
+/// This avoids writing the boilerplate necessary because UserTraitInterface
+/// does not derived from UiElement. Obviously this is not an optimal solution.
 // TODO: Replace UserTraitInterface with boost::hana reflection.
 #define BUILD_USER_TRAIT_INTERFACE(interface) \
 TraitTypeId userTraitType(int index) const override { \
@@ -129,18 +124,20 @@ void set_user(int index, std::string value) override { \
   return interface.set_user(index, value); \
 }
 
-// TraitFun represents a function used to set/compute the value of the dynamic
-// representative of a trait. It needs to keep track of the names of its
-// immediate dependencies as edges in the dependency graph cannot be drawn until
-// all traits have been constructed.
+/// TraitFun represents a function used to set/compute the value of the dynamic
+/// representative of a trait. It needs to keep track of the names of its
+/// immediate dependencies as edges in the dependency graph cannot be drawn
+/// until all traits have been constructed.
 template<class T>
 class TraitFun {
  public:
   using function_type = std::function<T(void)>;
   using result_type = T;
+
  private:
   function_type mFun{};
   std::vector<std::string> mDependencies{};
+
  public:
   TraitFun() = default;
   explicit TraitFun(const function_type &f) : mFun(f) {}
@@ -162,16 +159,14 @@ class TraitFun {
   }
 };
 
-// Forward declare UiElement
 class UiElement;
 
-// TraitSetterFun represents a function used to set the value of the concrete
-// representative of a trait.
-template<class T>
-using TraitSetterFun = std::function<void(UiElement *, T)>;
+/// TraitSetterFun represents a function used to set the value of the concrete
+/// representative of a trait.
+template<class T> using TraitSetterFun = std::function<void(UiElement *, T)>;
 
-// The Trait class encapsulates a dynamic representative of a trait, and should
-// be bound to a concrete representative via an appropriate setter.
+/// The Trait class encapsulates a dynamic representative of a trait, and should
+/// be bound to a concrete representative via an appropriate setter.
 template<class T>
 class Trait {
  private:
@@ -180,9 +175,9 @@ class Trait {
   TraitSetterFun<T> mSetter{};
   UiElement *mConcrete{};
 
-  // Attempt to set the trait fun to return the value pointed to by source, only
-  // performing the assignment if U == T. Returns true if the assignment is
-  // successful and false otherwise.
+  /// Attempt to set the trait fun to return the value pointed to by source,
+  /// only performing the assignment if `U == T`. Returns true if the assignment
+  /// is  successful and false otherwise.
   template<class U>
   bool setTraitFunFromSource(const U *source) {
     if constexpr (std::is_same_v<U, T>) {
@@ -221,17 +216,17 @@ class Trait {
   std::is_nothrow_move_assignable_v<TraitFun<T>>
       && std::is_nothrow_move_assignable_v<TraitSetterFun<T>>) = default;
 
-  // Bind this Trait as the concrete representative of a trait in the
-  // concreteElement, whose value is modifable using the setter.
+  /// Bind this Trait as the concrete representative of a trait in the
+  /// concreteElement, whose value is modifable using the setter.
   void bind(UiElement *concreteElement, TraitSetterFun<T> setter) {
     mConcrete = concreteElement;
     mSetter = setter;
   }
 
-  // If this trait is a user trait of type T for some slot I, and the given user
-  // interface has type T in slot I, then reset this trait's TraitFun to point
-  // to the value in slot I of the user interface. If any of this is not true,
-  // throw.
+  /// If this trait is a user trait of type T for some slot I, and the given
+  /// user interface has type T in slot I, then reset this trait's TraitFun to
+  /// point to the value in slot I of the user interface. If any of this is not
+  /// true, throw.
   template<class ...Ts>
   void setSource(const std::tuple<Ts...> &userInterface) {
     const int index = [this]() {
@@ -245,14 +240,14 @@ class Trait {
     }
   };
 
-  // Calculate the actual value of this trait. This does not update the concrete
-  // representative.
+  /// Calculate the actual value of this trait. This does not update the
+  /// concrete representative.
   T invoke() const {
     return std::invoke(mValue);
   }
 
-  // Calculate the actual value of this trait and update the concrete
-  // representative, if any.
+  /// Calculate the actual value of this trait and update the concrete
+  /// representative, if any.
   void update() const {
     if (mConcrete) {
       auto v = invoke();

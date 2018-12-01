@@ -5,7 +5,8 @@
 
 namespace gui {
 
-// Each menu must be one of the following types, given in the XML by its <class>
+/// Each menu must be one of the following types, given in the XML by its
+/// `<class>`
 enum class MenuType {
   AlchemyMenu,
   AudioMenu,
@@ -61,10 +62,10 @@ struct UserInterfaceWrapper {
   T value{};
 };
 
-// The idea here is that we have a shallow inheritance hierarchy parameterised
-// by the MenuType enum. Specialising this class template and overriding its
-// corresponding methods allows us to do virtual dispatch based on a runtime
-// enum value, without manually checking for each value.
+/// The idea here is that we have a shallow inheritance hierarchy parameterised
+/// by the MenuType enum. Specialising this class template and overriding its
+/// corresponding methods allows us to do virtual dispatch based on a runtime
+/// enum value, without manually checking for each value.
 template<MenuType Type>
 class Menu : public UiElement {
  public:
