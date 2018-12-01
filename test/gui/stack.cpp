@@ -9,52 +9,61 @@
 namespace gui::stack {
 
 TEST_CASE("parseValueType deduces bool", "[gui][gui/stack]") {
-  const std::string str_true{"&true;"};
-  const auto r_true{parseValueType(str_true)};
-  REQUIRE(std::holds_alternative<bool>(r_true));
-  REQUIRE(std::get<bool>(r_true));
+  {
+    const auto r{parseValueType("&true;")};
+    REQUIRE(std::holds_alternative<bool>(r));
+    REQUIRE(std::get<bool>(r));
+  }
 
-  const std::string str_false{"&false;"};
-  const auto r_false{parseValueType(str_false)};
-  REQUIRE(std::holds_alternative<bool>(r_false));
-  REQUIRE_FALSE(std::get<bool>(r_false));
+  {
+    const auto r{parseValueType("&false;")};
+    REQUIRE(std::holds_alternative<bool>(r));
+    REQUIRE_FALSE(std::get<bool>(r));
+  }
 
-  const std::string str_fake_true{"true"};
-  const auto r_fake_true{parseValueType(str_fake_true)};
-  REQUIRE_FALSE(std::holds_alternative<bool>(r_fake_true));
+  {
+    const auto r{parseValueType("true")};
+    REQUIRE_FALSE(std::holds_alternative<bool>(r));
+  }
 
-  const std::string str_int{"1"};
-  const auto r_int{parseValueType(str_int)};
-  REQUIRE_FALSE(std::holds_alternative<bool>(r_int));
+  {
+    const auto r{parseValueType("1")};
+    REQUIRE_FALSE(std::holds_alternative<bool>(r));
+  }
 }
 
 TEST_CASE("parseValueType deduces int", "[gui][gui/stack]") {
-  const std::string str_int_positive{"1"};
-  const auto r_int_positive{parseValueType(str_int_positive)};
-  REQUIRE(std::holds_alternative<int>(r_int_positive));
-  REQUIRE(std::get<int>(r_int_positive) == 1);
+  {
+    const auto r{parseValueType("1")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == 1);
+  }
 
-  const std::string str_int_negative{"-10"};
-  const auto r_int_negative{parseValueType(str_int_negative)};
-  REQUIRE(std::holds_alternative<int>(r_int_negative));
-  REQUIRE(std::get<int>(r_int_negative) == -10);
+  {
+    const auto r{parseValueType("-10")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == -10);
+  }
 
-  const std::string str_int_zero{"0"};
-  const auto r_int_zero{parseValueType(str_int_zero)};
-  REQUIRE(std::holds_alternative<int>(r_int_zero));
-  REQUIRE(std::get<int>(r_int_zero) == 0);
+  {
+    const auto r{parseValueType("0")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == 0);
+  }
 }
 
 TEST_CASE("parseValueType deduces float", "[gui][gui/stack]") {
-  const std::string str_float_positive{"3.14"};
-  const auto r_float_positive{parseValueType(str_float_positive)};
-  REQUIRE(std::holds_alternative<float>(r_float_positive));
-  REQUIRE_THAT(std::get<float>(r_float_positive), Catch::WithinULP(3.14f, 1));
+  {
+    const auto r{parseValueType("3.14")};
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE_THAT(std::get<float>(r), Catch::WithinULP(3.14f, 1));
+  }
 
-  const std::string str_float_negative{"-2.0"};
-  const auto r_float_negative{parseValueType(str_float_negative)};
-  REQUIRE(std::holds_alternative<float>(r_float_negative));
-  REQUIRE_THAT(std::get<float>(r_float_negative), Catch::WithinULP(-2.0f, 1));
+  {
+    const auto r{parseValueType("-2.0")};
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE_THAT(std::get<float>(r), Catch::WithinULP(-2.0f, 1));
+  }
 }
 
 TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
