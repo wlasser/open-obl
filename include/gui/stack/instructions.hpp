@@ -12,10 +12,9 @@
 
 namespace gui::stack {
 
-// Pop the next two values `a` and `b` off the stack and push the result of
-// `f(a, b)` onto the stack if that expression is well-defined.
-template<class F>
-void invokeBinaryOperator(Stack &stack, F f) {
+/// Pop the next two values `a` and `b` off the stack and push the result of
+/// `f(a, b)` onto the stack if that expression is well-defined.
+template<class F> void invokeBinaryOperator(Stack &stack, F f) {
   // TODO: What if stack has < 2 elements?
   const auto b{stack.back()};
   stack.pop_back();
@@ -38,9 +37,9 @@ void invokeBinaryOperator(Stack &stack, F f) {
   }, a, b);
 }
 
-// Like invokeBinaryOperator, but for binary predicates (i.e. returning bool).
-template<class F>
-void invokeBinaryPredicate(Stack &stack, F f) {
+/// Like invokeBinaryOperator, but for binary predicates.
+/// \see invokeBinaryOperator
+template<class F> void invokeBinaryPredicate(Stack &stack, F f) {
   // TODO: What if stack has < 2 elements?
   const auto b{stack.back()};
   stack.pop_back();

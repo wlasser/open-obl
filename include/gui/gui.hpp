@@ -18,8 +18,8 @@
 #include <variant>
 
 /// \file gui.hpp
-/// This file gives a high-level overview of the gui system and defines the
-/// public interface.
+/// \defgroup OpenOblivionGui Gui Library
+/// Xml-based user interface.
 ///
 /// Every element has a set of named values called traits, given as children of
 /// its root XML node. Each trait has a particular type T (defined by the
@@ -70,8 +70,10 @@
 /// since they do not correspond to ui state, they do not call any methods on
 /// a concrete node (indeed they do not even have a concrete representative).
 
+/// \ingroup OpenOblivionGui
 namespace gui {
 
+/// Lift of MenuType from value space to type space.
 /// All the Menu<MenuType> inherit from UiElement, so why not just do everything
 /// with a UiElement* ? Well we want to select the value of MenuType at runtime
 /// without doing an if-else over every value of MenuType; a variant

@@ -46,14 +46,14 @@ std::string invokeMeSelector(const pugi::xml_node &node);
 std::string invokeParentSelector(const pugi::xml_node &node);
 
 /// screen is an implementation defined element describing screen dimensions
-/// in normalized coordinates (NC). If `screen width / screen height >= 1` then
+/// in normalized coordinates (NC). If `screenWidth / screenHeight >= 1` then
 /// the height is normalized to `960px` and the width computed according to the
 /// aspect ratio. Otherwise, the width is normalized to `1280px` and the height
 /// is computed according to the aspect ratio. screen has the following traits:
-///  - <width>: the screen width in NC
-///  - <height>: the screen height in NC
-///  - <cropX>: the horizontal safe zone margin width in NC
-///  - <cropY>: the vertical safe zone margin height in NC
+///  - `<width>`: the screen width in NC
+///  - `<height>`: the screen height in NC
+///  - `<cropX>`: the horizontal safe zone margin width in NC
+///  - `<cropY>`: the vertical safe zone margin height in NC
 std::string invokeScreenSelector();
 
 /// If an argument is given then return the fully-qualified name of the sibling

@@ -15,10 +15,10 @@ template<class T> T parseXmlEntity(const std::string &entity) = delete;
 template<> bool parseXmlEntity(const std::string &entity);
 
 /// \name Xml node value getters
-/// xml_node::value() and xml_node::child_value() return const char *, which
-/// frequently have untrimmed whitespace due to the xml formatting, e.g.
-/// <x> 0 </x> or <locus> &true; </locus>. These functions trim the whitespace
-/// and convert to the requested type.
+/// `xml_node::value` and `xml_node::child_value` return `const char *`, which
+/// frequently has untrimmed whitespace due to the xml formatting, e.g.
+/// `<x> 0 </x>` or `<locus> &true; </locus>`. These functions trim the
+/// whitespace and convert to the requested type.
 ///@{
 
 template<class T> T getXmlValue(const pugi::xml_node &node) = delete;
