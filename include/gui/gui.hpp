@@ -104,22 +104,18 @@ addChildren(Traits &traits,
 // Parse an entire menu from an XML stream
 void parseMenu(std::istream &is);
 
-namespace xml {
-
 // MenuType specializations
 template<>
-MenuType getValue(const pugi::xml_node &node);
+MenuType getXmlValue(const pugi::xml_node &node);
 
 template<>
-MenuType getChildValue(const pugi::xml_node &node, const char *name);
+MenuType getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
-MenuType getChildValue(const pugi::xml_node &node);
+MenuType getXmlChildValue(const pugi::xml_node &node);
 
 template<>
-MenuType parseEntity(const std::string &entity);
-
-}
+MenuType parseXmlEntity(const std::string &entity);
 
 } // namespace gui
 

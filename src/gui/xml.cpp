@@ -4,15 +4,15 @@
 #include <cstdlib>
 #include <string>
 
-namespace gui::xml {
+namespace gui {
 
 template<>
-bool parseEntity(const std::string &entity) {
+bool parseXmlEntity(const std::string &entity) {
   return entity == "&true;";
 }
 
 template<>
-int getValue(const pugi::xml_node &node) {
+int getXmlValue(const pugi::xml_node &node) {
   // stoi discards whitespace so we don't need to trim.
   // 0 means the base is autodetected.
   // There is a string construction here but otherwise we need strtol which
@@ -21,65 +21,65 @@ int getValue(const pugi::xml_node &node) {
 }
 
 template<>
-int getChildValue(const pugi::xml_node &node, const char *name) {
+int getXmlChildValue(const pugi::xml_node &node, const char *name) {
   return std::stoi(node.child_value(name), nullptr, 0);
 }
 
 template<>
-int getChildValue(const pugi::xml_node &node) {
+int getXmlChildValue(const pugi::xml_node &node) {
   return std::stoi(node.child_value(), nullptr, 0);
 }
 
 template<>
-float getValue(const pugi::xml_node &node) {
-  // No string construction necessary, unlike with getValue<int>
+float getXmlValue(const pugi::xml_node &node) {
+  // No string construction necessary, unlike with getXmlValue<int>
   return std::strtof(node.value(), nullptr);
 }
 
 template<>
-float getChildValue(const pugi::xml_node &node, const char *name) {
+float getXmlChildValue(const pugi::xml_node &node, const char *name) {
   return std::strtof(node.child_value(name), nullptr);
 }
 
 template<>
-float getChildValue(const pugi::xml_node &node) {
+float getXmlChildValue(const pugi::xml_node &node) {
   return std::strtof(node.child_value(), nullptr);
 }
 
 template<>
-bool getValue(const pugi::xml_node &node) {
-  return parseEntity<bool>(getValue<std::string>(node));
+bool getXmlValue(const pugi::xml_node &node) {
+  return parseXmlEntity<bool>(getXmlValue<std::string>(node));
 }
 
 template<>
-bool getChildValue(const pugi::xml_node &node, const char *name) {
-  return parseEntity<bool>(getChildValue<std::string>(node, name));
+bool getXmlChildValue(const pugi::xml_node &node, const char *name) {
+  return parseXmlEntity<bool>(getXmlChildValue<std::string>(node, name));
 }
 
 template<>
-bool getChildValue(const pugi::xml_node &node) {
-  return parseEntity<bool>(getChildValue<std::string>(node));
+bool getXmlChildValue(const pugi::xml_node &node) {
+  return parseXmlEntity<bool>(getXmlChildValue<std::string>(node));
 }
 
 template<>
-std::string getValue(const pugi::xml_node &node) {
+std::string getXmlValue(const pugi::xml_node &node) {
   std::string value{node.value()};
   boost::algorithm::trim(value);
   return value;
 }
 
 template<>
-std::string getChildValue(const pugi::xml_node &node, const char *name) {
+std::string getXmlChildValue(const pugi::xml_node &node, const char *name) {
   std::string value{node.child_value(name)};
   boost::algorithm::trim(value);
   return value;
 }
 
 template<>
-std::string getChildValue(const pugi::xml_node &node) {
+std::string getXmlChildValue(const pugi::xml_node &node) {
   std::string value{node.child_value()};
   boost::algorithm::trim(value);
   return value;
 }
 
-} // namespace gui::xml
+} // namespace gui

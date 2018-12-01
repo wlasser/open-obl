@@ -229,7 +229,7 @@ DependentTraitFun<T> parseOperatorCopy(const Traits &traits,
     }
     workingFun.deps.push_back(std::move(name));
   } else {
-    const T value{xml::getChildValue<T>(node)};
+    const T value{getXmlChildValue<T>(node)};
     fun = [value]() {
       return FunctorPair<T>{nullptr, value};
     };
@@ -283,7 +283,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
 template<class T>
 TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
   if (node.text()) {
-    const auto value{xml::getChildValue<T>(node)};
+    const auto value{getXmlChildValue<T>(node)};
     return TraitFun<T>{[value]() { return value; }};
   } else {
     return parseOperators<T>(traits, node);

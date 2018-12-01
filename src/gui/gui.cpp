@@ -53,7 +53,7 @@ std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc) {
     throw std::runtime_error("<menu> must have a <class> child tag");
   }
 
-  const auto menuType = xml::getChildValue<MenuType>(classNode);
+  const auto menuType = getXmlChildValue<MenuType>(classNode);
   return {menuNode, menuType};
 }
 
@@ -129,10 +129,8 @@ void parseMenu(std::istream &is) {
   }, interfaceBuffer);
 }
 
-namespace xml {
-
 template<>
-MenuType parseEntity(const std::string &entity) {
+MenuType parseXmlEntity(const std::string &entity) {
   const static absl::flat_hash_map<std::string, MenuType> map{
       {"&AlchemyMenu;", MenuType::AlchemyMenu},
       {"&AudioMenu;", MenuType::AudioMenu},
@@ -185,20 +183,18 @@ MenuType parseEntity(const std::string &entity) {
 }
 
 template<>
-MenuType getValue(const pugi::xml_node &node) {
-  return parseEntity<MenuType>(getValue<std::string>(node));
+MenuType getXmlValue(const pugi::xml_node &node) {
+  return parseXmlEntity<MenuType>(getXmlValue<std::string>(node));
 }
 
 template<>
-MenuType getChildValue(const pugi::xml_node &node, const char *name) {
-  return parseEntity<MenuType>(getChildValue<std::string>(node, name));
+MenuType getXmlChildValue(const pugi::xml_node &node, const char *name) {
+  return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node, name));
 }
 
 template<>
-MenuType getChildValue(const pugi::xml_node &node) {
-  return parseEntity<MenuType>(getChildValue<std::string>(node));
+MenuType getXmlChildValue(const pugi::xml_node &node) {
+  return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node));
 }
-
-} // namespace xml
 
 } // namespace gui

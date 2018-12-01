@@ -4,16 +4,16 @@
 #include <pugixml.hpp>
 #include <string>
 
-namespace gui::xml {
+namespace gui {
 
 // We don't have a DTD so can't specify custom entities directly. Instead they
 // should be treated as strings by the parser and decoded using the following
 // functions.
 template<class T>
-T parseEntity(const std::string &entity) = delete;
+T parseXmlEntity(const std::string &entity) = delete;
 
 template<>
-bool parseEntity(const std::string &entity);
+bool parseXmlEntity(const std::string &entity);
 
 // xml_node::value() and xml_node::child_value() return const char *, which
 // frequently have untrimmed whitespace due to the xml formatting, e.g.
@@ -22,54 +22,54 @@ bool parseEntity(const std::string &entity);
 
 // Base templates
 template<class T>
-T getValue(const pugi::xml_node &node) = delete;
+T getXmlValue(const pugi::xml_node &node) = delete;
 
 template<class T>
-T getChildValue(const pugi::xml_node &node, const char *name) = delete;
+T getXmlChildValue(const pugi::xml_node &node, const char *name) = delete;
 
 template<class T>
-T getChildValue(const pugi::xml_node &node) = delete;
+T getXmlChildValue(const pugi::xml_node &node) = delete;
 
 // int specializations
 template<>
-int getValue(const pugi::xml_node &node);
+int getXmlValue(const pugi::xml_node &node);
 
 template<>
-int getChildValue(const pugi::xml_node &node, const char *name);
+int getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
-int getChildValue(const pugi::xml_node &node);
+int getXmlChildValue(const pugi::xml_node &node);
 
 // float specializations
 template<>
-float getValue(const pugi::xml_node &node);
+float getXmlValue(const pugi::xml_node &node);
 
 template<>
-float getChildValue(const pugi::xml_node &node, const char *name);
+float getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
-float getChildValue(const pugi::xml_node &node);
+float getXmlChildValue(const pugi::xml_node &node);
 
 // bool specialization
 template<>
-bool getValue(const pugi::xml_node &node);
+bool getXmlValue(const pugi::xml_node &node);
 
 template<>
-bool getChildValue(const pugi::xml_node &node, const char *name);
+bool getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
-bool getChildValue(const pugi::xml_node &node);
+bool getXmlChildValue(const pugi::xml_node &node);
 
 // std::string specialization
 template<>
-std::string getValue(const pugi::xml_node &node);
+std::string getXmlValue(const pugi::xml_node &node);
 
 template<>
-std::string getChildValue(const pugi::xml_node &node, const char *name);
+std::string getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<>
-std::string getChildValue(const pugi::xml_node &node);
+std::string getXmlChildValue(const pugi::xml_node &node);
 
-} // namespace gui::xml
+} // namespace gui
 
 #endif // OPENOBLIVION_ENGINE_GUI_XML_HPP
