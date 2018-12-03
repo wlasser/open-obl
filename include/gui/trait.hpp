@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_GUI_TRAIT_HPP
 #define OPENOBLIVION_GUI_TRAIT_HPP
 
+#include "meta.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <functional>
 #include <string>
@@ -22,51 +23,70 @@ enum class TraitTypeId : int {
   Unimplemented = 0, Int, Float, Bool, String
 };
 
+/// \name Trait type to TraitTypeId conversions
+///@{
+
 /// Convert a trait type into a trait type id.
-template<class T> constexpr TraitTypeId getTraitTypeId() {
+template<class T> [[nodiscard]] constexpr
+TraitTypeId getTraitTypeId() noexcept {
   return TraitTypeId::Unimplemented;
 }
 
-template<> constexpr inline TraitTypeId getTraitTypeId<int>() {
+/// \overload getTraitTypeId
+template<> [[nodiscard]] constexpr inline
+TraitTypeId getTraitTypeId<int>() noexcept {
   return TraitTypeId::Int;
 }
 
-template<> constexpr inline TraitTypeId getTraitTypeId<float>() {
+/// \overload getTraitTypeId
+template<> [[nodiscard]] constexpr inline
+TraitTypeId getTraitTypeId<float>() noexcept {
   return TraitTypeId::Float;
 }
 
-template<> constexpr inline TraitTypeId getTraitTypeId<bool>() {
+/// \overload getTraitTypeId
+template<> [[nodiscard]] constexpr inline
+TraitTypeId getTraitTypeId<bool>() noexcept {
   return TraitTypeId::Bool;
 }
 
-template<> constexpr inline TraitTypeId getTraitTypeId<std::string>() {
+/// \overload getTraitTypeId
+template<> [[nodiscard]] constexpr inline
+TraitTypeId getTraitTypeId<std::string>() noexcept {
   return TraitTypeId::String;
 }
 
-/// If name is the name of a user trait, then return the index of that trait.
-/// e.g. `user12` returns 12.
+///@}
+
+/// If `name` is the name of a user trait, then return the index of that trait.
+/// For example, `getUserTraitIndex("user12") == 12`.
 std::optional<int> getUserTraitIndex(std::string_view name);
 
-/// This class simplifies expressing the user trait interface of a ui element,
-/// instead of writing 4 set_user functions containing disjoint switch
-/// statements. Passing it a std::tuple of pointers to member variables
-/// corresponding to the user traits (in order) gives the user automatically
-/// generated set_user and userTraitType functions.
-/// A problem is that this does not inherit from UiElement, and so does not
-/// provide overrides for set_user. These must therefore be implemented (with
-/// identical implementation) in every class that uses a UserTraitInterface.
+/// Simplifies the definition of the user trait interface of a ui element.
+/// Passing the `UserTraitInterface` a `std::tuple` of pointers to member
+/// variables corresponding to the user traits (in order) gives the inheriting
+/// class automatically generated `set_user` and `userTraitType` functions.
+///
+/// This class is intended as a convenient alternative to the naive definition
+/// of a user trait interface via four `set_user` functions with disjoint switch
+/// statements. However, because this class does not inherit from `UiElement`,
+/// it does not provide overrides for `set_user`. These must be implemented
+/// (likely with identical implementation) in every class that uses
+/// `UserTraitInterface.` Consider using the `BUILD_USER_TRAIT_INTERFACE` macro
+/// to avoid doing this manually.
+/// \todo Replace `UserTraitInterface` with `boost::hana` reflection.
 template<class ...Ts>
 class UserTraitInterface {
  private:
   std::tuple<Ts *...> mPtrs;
 
+  /// Get the type of the `I`th user trait.
   template<std::size_t I>
-  using IthType = std::remove_pointer_t
-      <std::tuple_element_t<I, decltype(mPtrs)>>;
+  using get = std::remove_pointer_t<std::tuple_element_t<I, decltype(mPtrs)>>;
 
-  template<class T, std::size_t I>
-  constexpr void assign(T value) {
-    if constexpr (std::is_same_v<IthType<I>, T>) {
+  /// Set the value of the `I`th user trait.
+  template<class T, std::size_t I> constexpr void assign(T value) {
+    if constexpr (std::is_same_v<get<I>, T>) {
       *std::get<I>(mPtrs) = value;
     }
   }
@@ -76,37 +96,37 @@ class UserTraitInterface {
     ((index == Is ? assign<T, Is>(value) : (void) T{}), ...);
   }
 
-  template<std::size_t I>
-  constexpr auto getTypeFromIndex() const {
+  /// Get the integer representation of the TraitTypeId of the `I`th user trait.
+  template<std::size_t I> constexpr auto getTypeFromIndex() const {
     return static_cast<std::underlying_type_t<TraitTypeId>>(
-        getTraitTypeId<IthType<I>>());
+        getTraitTypeId<get<I>>());
   }
 
-  template<std::size_t ... Is>
-  constexpr TraitTypeId userTraitTypeImpl(int index,
-                                          std::index_sequence<Is...>) const {
+  template<std::size_t ... Is> constexpr TraitTypeId
+  userTraitTypeImpl(int index, std::index_sequence<Is...>) const {
     return TraitTypeId(((index == Is ? getTypeFromIndex<Is>() : 0) + ... + 0));
   }
 
  public:
   using interface_t = std::tuple<Ts ...>;
 
-  explicit UserTraitInterface(std::tuple<Ts *...> ptrs)
+  constexpr explicit UserTraitInterface(std::tuple<Ts *...> ptrs) noexcept
       : mPtrs(std::move(ptrs)) {}
 
-  template<class T>
-  constexpr void set_user(int index, T value) {
+  /// Set the user trait at the `index` to `value`.
+  /// \tparam T Should be *exactly* the type of the user trait at the `index`.
+  template<class T> constexpr void set_user(int index, T value) {
     set_user_impl(index, value, std::index_sequence_for<Ts...>{});
   }
 
+  /// Get the trait type of the user trait at the `index`.
   constexpr TraitTypeId userTraitType(int index) const {
     return userTraitTypeImpl(index, std::index_sequence_for<Ts...>{});
   }
 };
 
-/// This avoids writing the boilerplate necessary because UserTraitInterface
-/// does not derived from UiElement. Obviously this is not an optimal solution.
-// TODO: Replace UserTraitInterface with boost::hana reflection.
+/// This avoids writing the boilerplate necessary because `UserTraitInterface`
+/// does not derived from `UiElement`. \see `UserTraitInterface`
 #define BUILD_USER_TRAIT_INTERFACE(interface) \
 TraitTypeId userTraitType(int index) const override { \
   return interface.userTraitType(index); \
@@ -124,9 +144,9 @@ void set_user(int index, std::string value) override { \
   return interface.set_user(index, value); \
 }
 
-/// TraitFun represents a function used to set/compute the value of the dynamic
-/// representative of a trait. It needs to keep track of the names of its
-/// immediate dependencies as edges in the dependency graph cannot be drawn
+/// Represents a function used to set/compute the value of the dynamic
+/// representative of a trait. This needs to keep track of the names of its
+/// immediate dependencies, as edges in the dependency graph cannot be drawn
 /// until all traits have been constructed.
 template<class T>
 class TraitFun {
@@ -139,9 +159,9 @@ class TraitFun {
   std::vector<std::string> mDependencies{};
 
  public:
-  TraitFun() = default;
+  TraitFun() noexcept = default;
   explicit TraitFun(const function_type &f) : mFun(f) {}
-  explicit TraitFun(function_type &&f) : mFun(f) {}
+  explicit TraitFun(function_type &&f) noexcept : mFun(std::move(f)) {}
 
   void addDependency(std::string dep) {
     mDependencies.push_back(std::move(dep));
@@ -151,9 +171,13 @@ class TraitFun {
     return mDependencies;
   }
 
-  T operator()() const {
+  /// Call the stored function.
+  /// \precondition The `TraitFun` should actually contain a function.
+  T operator()() const /*C++20: [[requires: *this]]*/ {
     return mFun();
   }
+
+  /// Checks whether the this contains a callable function.
   explicit operator bool() const noexcept {
     return static_cast<bool>(mFun);
   }
@@ -161,12 +185,13 @@ class TraitFun {
 
 class UiElement;
 
-/// TraitSetterFun represents a function used to set the value of the concrete
-/// representative of a trait.
+/// Represents a function used to set the value of the concrete representative
+/// of a trait.
 template<class T> using TraitSetterFun = std::function<void(UiElement *, T)>;
 
-/// The Trait class encapsulates a dynamic representative of a trait, and should
-/// be bound to a concrete representative via an appropriate setter.
+/// The dynamic representative of a trait.
+/// Each `Trait<T>` should be bound to a concrete representative via an
+/// appropriate `TraitSetterFun<T>`.
 template<class T>
 class Trait {
  private:
@@ -175,11 +200,11 @@ class Trait {
   TraitSetterFun<T> mSetter{};
   UiElement *mConcrete{};
 
-  /// Attempt to set the trait fun to return the value pointed to by source,
-  /// only performing the assignment if `U == T`. Returns true if the assignment
-  /// is  successful and false otherwise.
-  template<class U>
-  bool setTraitFunFromSource(const U *source) {
+  /// Attempt to set the internal `TraitFun` to return the value pointed to by
+  /// `source`, only performing the assignment if `std::is_same_v<U, T>`.
+  /// \returns `true` iff the assignment is successful.
+  /// \todo Can this take `U` by reference and then be `constexpr`?
+  template<class U> bool setTrait(const U *source) {
     if constexpr (std::is_same_v<U, T>) {
       mValue = TraitFun<T>{[source]() -> T {
         return *source;
@@ -189,12 +214,9 @@ class Trait {
     return false;
   }
 
-  template<class Tuple, std::size_t ... Is>
-  bool setSourceImpl(int index,
-                     const Tuple &tuple,
-                     std::index_sequence<Is...>) {
-    return ((index == Is ? setTraitFunFromSource(&std::get<Is>(tuple)) : false)
-        || ... || false);
+  template<class Tuple, std::size_t ... Is> bool
+  setSourceImpl(int i, const Tuple &tuple, std::index_sequence<Is...>) {
+    return ((i == Is ? setTrait(&std::get<Is>(tuple)) : false) || ... || false);
   };
 
  public:
@@ -209,39 +231,34 @@ class Trait {
   Trait(const Trait<T> &) = default;
   Trait<T> &operator=(const Trait<T> &) = default;
 
-  Trait(Trait &&) noexcept(std::is_nothrow_move_constructible_v<TraitFun<T>>
-      && std::is_nothrow_move_constructible_v<TraitSetterFun<T>>) = default;
+  Trait(Trait &&) noexcept = default;
+  Trait<T> &operator=(Trait &&) noexcept = default;
 
-  Trait<T> &operator=(Trait &&) noexcept(
-  std::is_nothrow_move_assignable_v<TraitFun<T>>
-      && std::is_nothrow_move_assignable_v<TraitSetterFun<T>>) = default;
-
-  /// Bind this Trait as the concrete representative of a trait in the
-  /// concreteElement, whose value is modifable using the setter.
+  /// Make this `Trait` the concrete representative of a trait in the
+  /// `concreteElement`, whose value is modifiable by the `setter`.
   void bind(UiElement *concreteElement, TraitSetterFun<T> setter) {
     mConcrete = concreteElement;
     mSetter = setter;
   }
 
-  /// If this trait is a user trait of type T for some slot I, and the given
-  /// user interface has type T in slot I, then reset this trait's TraitFun to
-  /// point to the value in slot I of the user interface. If any of this is not
-  /// true, throw.
+  /// If this trait is a user trait of type `T` for some slot `I`, and the given
+  /// user interface has type `T` in slot `I`, then reset this trait's
+  /// `TraitFun` to point to the value in slot `I` of the user interface.
+  /// \throws std::runtime_error if any of the specified conditions are false.
   template<class ...Ts>
   void setSource(const std::tuple<Ts...> &userInterface) {
-    const int index = [this]() {
+    const int idx = [this]() {
       const auto opt{getUserTraitIndex(mName)};
       if (opt) return *opt;
       else throw std::runtime_error("Not a user trait");
     }();
-    if (!setSourceImpl(index, userInterface,
-                       std::index_sequence_for<Ts...>{})) {
+    if (!setSourceImpl(idx, userInterface, std::index_sequence_for<Ts...>{})) {
       throw std::runtime_error("Incompatible interface");
     }
   };
 
   /// Calculate the actual value of this trait. This does not update the
-  /// concrete representative.
+  /// concrete representative, use `update()` for that.
   T invoke() const {
     return std::invoke(mValue);
   }
@@ -255,11 +272,11 @@ class Trait {
     }
   }
 
-  const std::vector<std::string> &getDependencies() const {
+  [[nodiscard]] const std::vector<std::string> &getDependencies() const {
     return mValue.getDependencies();
   }
 
-  std::string getName() const {
+  [[nodiscard]] std::string getName() const {
     return mName;
   }
 };
