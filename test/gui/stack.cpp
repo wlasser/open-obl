@@ -226,8 +226,8 @@ TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
       stack::push_t{3},
       stack::push_t{5},
       stack::lt_t{},
-      stack::push_t{std::string{"world"}},
-      stack::push_t{std::string{"hello"}},
+      stack::push_t{"world"},
+      stack::push_t{"hello"},
       stack::gt_t{},
       stack::push_t{3.1f},
       stack::push_t{3.2f},
@@ -339,7 +339,7 @@ TEST_CASE("binary operators can act on stacks with one element",
   {
     stack::Program program{};
     program.instructions = std::vector<stack::Instruction>{
-        stack::push_t{std::string{"Hello"}},
+        stack::push_t{"Hello"},
         stack::add_t{}
     };
 

@@ -99,11 +99,6 @@ struct push_t {
 
   push_t(ArgumentType &&a) : arg_t{std::move(a)} {}
   push_t(const ArgumentType &a) : arg_t{a} {}
-
-//  template<class T>
-//  push_t(T &&t) : arg_t(ArgumentType(std::forward<T>(t))) {
-//    return;
-//  }
 };
 
 struct add_t {
