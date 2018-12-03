@@ -246,6 +246,36 @@ TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
   REQUIRE(std::get<bool>(ret));
 }
 
+TEST_CASE("can perform logical operations on the stack", "[gui][gui/stack]") {
+  {
+
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{true},
+        stack::push_t{false},
+        stack::or_t{},
+        stack::push_t{true},
+        stack::and_t{}
+    };
+
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<bool>(ret));
+    REQUIRE(std::get<bool>(ret));
+  }
+
+  {
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{false},
+        stack::not_t{}
+    };
+
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<bool>(ret));
+    REQUIRE(std::get<bool>(ret));
+  }
+}
+
 TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
   stack::Program program{};
   program.instructions = std::vector<stack::Instruction>{
