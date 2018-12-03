@@ -112,6 +112,9 @@ ValueType Program::operator()() {
   for (const auto &instr : instructions) {
     std::visit([&stack](auto &&op) { op(stack); }, instr);
   }
+  if (stack.empty()) {
+    throw std::runtime_error("Program stack is empty on termination");
+  }
   lastReturn = stack.back();
   return *lastReturn;
 }

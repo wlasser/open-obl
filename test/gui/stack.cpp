@@ -268,4 +268,61 @@ TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
   REQUIRE(std::get<int>(ret) == 3);
 }
 
+TEST_CASE("binary operators can act on stacks with one element",
+          "[gui][gui/stack]") {
+  {
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{1},
+        stack::add_t{}
+    };
+
+    const auto ret{program()};
+    REQUIRE(std::holds_alternative<int>(ret));
+    REQUIRE(std::get<int>(ret) == 1);
+  }
+
+  {
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{3.0f},
+        stack::add_t{}
+    };
+
+    const auto ret{program()};
+    REQUIRE(std::holds_alternative<float>(ret));
+    REQUIRE_THAT(std::get<float>(ret), Catch::WithinULP(3.0f, 1));
+  }
+
+  {
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{true},
+        stack::or_t{}
+    };
+
+    const auto ret{program()};
+    REQUIRE(std::holds_alternative<bool>(ret));
+    REQUIRE(std::get<bool>(ret));
+  }
+
+  {
+    stack::Program program{};
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{std::string{"Hello"}},
+        stack::add_t{}
+    };
+
+    const auto ret{program()};
+    REQUIRE(std::holds_alternative<std::string>(ret));
+    REQUIRE(std::get<std::string>(ret) == "Hello");
+  }
+
+}
+
+TEST_CASE("empty programs throw on execution", "[gui][gui/stack]") {
+  stack::Program program{};
+  REQUIRE_THROWS_AS(program(), std::runtime_error);
+}
+
 } // namespace gui

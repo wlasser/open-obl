@@ -31,6 +31,24 @@ ValueType parseValueType(std::string_view str);
 
 std::string appendSwitchCase(std::string name, const ValueType &val);
 
+/// Pop the next element off the stack, returning a default value if the stack
+/// is empty. Specifically, if the stack is empty and a `Hint` type equal to one
+/// of the variant types of `ValueType` is provided, then return a default
+/// constructed value of that type.
+/// \throws std::runtime_error if the stack is empty and no valid `Hint` was
+///                            provided.
+template<class Hint = void>
+[[nodiscard]] ValueType popFromStack(Stack &stack) {
+  if constexpr (std::is_void_v<Hint>) {
+    if (stack.empty()) throw std::runtime_error("Stack is empty");
+  } else {
+    if (stack.empty()) return Hint{};
+  }
+  auto v{stack.back()};
+  stack.pop_back();
+  return v;
+}
+
 } // namespace gui::stack
 
 #endif // OPENOBLIVION_GUI_STACK_TYPES_HPP

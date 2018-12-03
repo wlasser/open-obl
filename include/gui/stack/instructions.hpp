@@ -14,16 +14,15 @@ namespace gui::stack {
 
 /// Pop the next two values `a` and `b` off the stack and push the result of
 /// `f(a, b)` onto the stack if that expression is well-defined.
-template<class F> void invokeBinaryOperator(Stack &stack, F f) {
-  // TODO: What if stack has < 2 elements?
-  const auto b{stack.back()};
-  stack.pop_back();
-  const auto a{stack.back()};
-  stack.pop_back();
+template<class F> void invokeBinaryOperator(Stack &stack, F &&f) {
+  const auto b{popFromStack(stack)};
+  const auto a{std::visit([&stack](const auto &bVal) {
+    return popFromStack<std::decay_t<decltype(bVal)>>(stack);
+  }, b)};
+
   std::visit([&stack, &f](const auto &lhs, const auto &rhs) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
-      auto opt
-          {try_functor<std::decay_t<decltype(lhs) >>(f, &lhs, &rhs)};
+      auto opt{try_functor<std::decay_t<decltype(lhs)>>(f, &lhs, &rhs)};
       if (opt.has_value()) {
         stack.emplace_back(*opt);
       } else {
@@ -39,12 +38,12 @@ template<class F> void invokeBinaryOperator(Stack &stack, F f) {
 
 /// Like invokeBinaryOperator, but for binary predicates.
 /// \see invokeBinaryOperator
-template<class F> void invokeBinaryPredicate(Stack &stack, F f) {
-  // TODO: What if stack has < 2 elements?
-  const auto b{stack.back()};
-  stack.pop_back();
-  const auto a{stack.back()};
-  stack.pop_back();
+template<class F> void invokeBinaryPredicate(Stack &stack, F &&f) {
+  const auto b{popFromStack(stack)};
+  const auto a{std::visit([&stack](const auto &bVal) {
+    return popFromStack<std::decay_t<decltype(bVal)>>(stack);
+  }, b)};
+
   std::visit([&stack, &f](const auto &lhs, const auto &rhs) {
     if constexpr (std::is_same_v<decltype(lhs), decltype(rhs)>) {
       auto opt
@@ -86,6 +85,25 @@ struct push_t {
         [&stack](const std::string s) { stack.emplace_back(s); }
     }, arg_t);
   }
+
+  constexpr push_t(int i) noexcept : arg_t{i} {}
+  constexpr push_t(float f) noexcept : arg_t{f} {}
+  constexpr push_t(bool b) noexcept : arg_t{b} {}
+
+  push_t(const char *s) : arg_t{std::string{s}} {}
+  push_t(std::string &&s) noexcept : arg_t{std::move(s)} {}
+  push_t(const std::string &s) : arg_t{std::move(s)} {}
+
+  push_t(TraitName &&s) noexcept : arg_t{std::move(s)} {}
+  push_t(const TraitName &s) : arg_t{s} {}
+
+  push_t(ArgumentType &&a) : arg_t{std::move(a)} {}
+  push_t(const ArgumentType &a) : arg_t{a} {}
+
+//  template<class T>
+//  push_t(T &&t) : arg_t(ArgumentType(std::forward<T>(t))) {
+//    return;
+//  }
 };
 
 struct add_t {
