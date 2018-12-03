@@ -9,7 +9,7 @@ std::optional<int> getUserTraitIndex(std::string_view name) {
   if (lastDot != std::string_view::npos) {
     name.remove_prefix(lastDot + 1);
   }
-  // TODO: In C++20, use name.starts_with("user")
+  //C++20: if (!name.starts_with("user")) return std::nullopt;
   if (!boost::algorithm::starts_with(name, "user")) return std::nullopt;
   try {
     const int index{std::stoi(std::string{name.substr(4)})};

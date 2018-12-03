@@ -25,7 +25,7 @@ using UInt = uint32_t;
 // Little endian is assumed throughout most of the code base, so it probably
 // isn't worth trying to get it right here (using Boost/Endian). These macros
 // work on GCC and Clang, sorry MSVC.
-// TODO: In C++20, use std::endian
+//C++20: static_assert(std::endian::native == std::endian::little);
 static_assert(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
 using ULittle32 = uint32_t;
 

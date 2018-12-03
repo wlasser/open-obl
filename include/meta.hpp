@@ -19,7 +19,7 @@
 /// }, var);
 /// ```
 /// instead of messing around with `if constexpr`.
-// C++20: If p0051 has been merged then replace this with std::overload
+//C++20: If p0051 has been merged then replace this with std::overload
 template<class ...Ts>
 struct overloaded : Ts ... {
   using Ts::operator()...;
@@ -48,7 +48,7 @@ inline constexpr bool false_v = false;
 /// \remark Equivalent to std::type_identity proposed in
 ///         [P0887](https://wg21.link/p0887), which has been merged into C++20.
 ///         A major motivation there was to inhibit template argument deduction.
-//C++20: Remove and use std::type_identity
+//C++20: template<class T> using type_identity = std::type_identity<T>;
 template<class T> struct type_identity {
   using type = T;
 };
