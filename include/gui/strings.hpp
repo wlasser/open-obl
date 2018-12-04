@@ -11,6 +11,7 @@
 
 namespace gui {
 
+/// Element containing all localized strings.
 class StringsElement {
  private:
   absl::flat_hash_map<std::string, std::string> mStrings{};

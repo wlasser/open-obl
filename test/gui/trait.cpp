@@ -1,4 +1,5 @@
 #include "gui/trait.hpp"
+#include "gui/trait_selector.hpp"
 #include <catch2/catch.hpp>
 
 TEST_CASE("can convert trait type to TraitTypeId", "[gui]") {
@@ -79,5 +80,68 @@ TEST_CASE("Can construct and call trait functions") {
     gui::TraitFun<std::string> tf([]() { return "hello"; });
     REQUIRE(tf);
     REQUIRE(tf() == "hello");
+  }
+}
+
+TEST_CASE("can tokenize trait selectors", "[gui]") {
+  {
+    const auto ts{gui::tokenizeTraitSelector("child()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::child);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("last()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::last);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("me()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::me);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("parent()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::parent);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("screen()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::screen);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("sibling()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::sibling);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("strings()")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::strings);
+    REQUIRE_FALSE(ts->argument);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("foo()")};
+    REQUIRE_FALSE(ts);
+  }
+
+  {
+    const auto ts{gui::tokenizeTraitSelector("child(foo)")};
+    REQUIRE(ts);
+    REQUIRE(ts->type == gui::TraitSelector::Type::child);
+    REQUIRE(ts->argument.value() == "foo");
   }
 }

@@ -6,6 +6,16 @@
 
 namespace gui {
 
+/// `screen` is an implementation defined element describing screen dimensions
+/// in normalized coordinates (NC). If `screenWidth / screenHeight >= 1` then
+/// the height is normalized to `960px` and the width computed according to the
+/// aspect ratio. Otherwise, the width is normalized to `1280px` and the height
+/// is computed according to the aspect ratio. `screen` has the following
+/// traits:
+///  - `<width>`: the screen width in NC
+///  - `<height>`: the screen height in NC
+///  - `<cropX>`: the horizontal safe zone margin width in NC
+///  - `<cropY>`: the vertical safe zone margin height in NC
 class ScreenElement {
  private:
   GameSetting<int> mRawWidth{"Display.iSize W", 0};

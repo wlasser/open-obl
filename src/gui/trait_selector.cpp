@@ -33,10 +33,12 @@ std::optional<TraitSelector> tokenizeTraitSelector(std::string src) {
     parsedSelector.type = TraitSelector::Type::sibling;
   } else if (selector == "strings"s) {
     parsedSelector.type = TraitSelector::Type::strings;
+  } else {
+    return std::nullopt;
   }
 
   // Third match is argument, if any
-  if (selectorMatch.size() == 3) {
+  if (selectorMatch.size() == 3 && !selectorMatch[2].str().empty()) {
     parsedSelector.argument = selectorMatch[2].str();
   }
 
