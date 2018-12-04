@@ -2,9 +2,9 @@
 #define OPENOBLIVION_GUI_STRINGS_HPP
 
 #include "gui/trait.hpp"
-#include "ogre/text_resource_manager.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <pugixml.hpp>
+#include <string>
 
 namespace gui {
 
@@ -27,7 +27,7 @@ namespace gui {
 /// underscore `_` character. For example,
 /// ```xml
 /// <!-- strings.xml -->
-/// <rect name="Strings>
+/// <rect name="Strings">
 ///     <_exit>Exit</_exit>
 ///     <_howmany>How Many?</_howmany>
 /// </rect>
@@ -42,22 +42,27 @@ namespace gui {
 class StringsElement {
  private:
   absl::flat_hash_map<std::string, std::string> mStrings{};
-  Ogre::TextResourceManager &txtMgr{Ogre::TextResourceManager::getSingleton()};
 
   /// Open the `Ogre::TextResource` with the given `filename` and return a
   /// stream to it.
   /// \throws std::runtime_error if the resource does not exist.
   std::stringstream openXMLStream(const std::string &filename) const;
 
-  /// Parse a text stream `is` representing an XML document into an actual
+  /// Read a stream `is` representing an XML document, returning an actual
   /// document.
   /// \throws std::runtime_error if the document fails to parse.
-  pugi::xml_document readXMLDocument(std::stringstream &is) const;
+  pugi::xml_document readXMLDocument(std::istream &is) const;
+
+  /// Parse an XML document of localized strings and store them.
+  void parseXMLDocument(pugi::xml_document doc);
 
  public:
   /// Load an XML document of localized strings from the `Ogre::TextResource`
   /// called `filename`.
   explicit StringsElement(const std::string &filename);
+
+  /// Load an XML document of localized strings from the stream `is`.
+  explicit StringsElement(std::istream &is);
 
   /// Construct a user trait whose value is the localized string with the given
   /// identifier `name`.

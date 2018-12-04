@@ -1,6 +1,10 @@
+#include "settings.hpp"
+#include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/trait_selector.hpp"
 #include <catch2/catch.hpp>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <sstream>
 
 TEST_CASE("can convert trait type to TraitTypeId", "[gui]") {
   STATIC_REQUIRE(gui::getTraitTypeId<int>() == gui::TraitTypeId::Int);
@@ -144,4 +148,64 @@ TEST_CASE("can tokenize trait selectors", "[gui]") {
     REQUIRE(ts->type == gui::TraitSelector::Type::child);
     REQUIRE(ts->argument.value() == "foo");
   }
+}
+
+std::shared_ptr<spdlog::logger> getLogger() {
+  if (auto logger{spdlog::get(oo::LOG)}) return logger;
+  return spdlog::stderr_color_mt(oo::LOG);
+}
+
+TEST_CASE("can use StringsElement", "[gui]") {
+  [[maybe_unused]] auto logger{getLogger()};
+
+  std::istringstream is{R"xml(
+<rect name="Strings">
+  <_exit>Exit</_exit>
+  <_howmany>How Many?</_howmany>
+</rect>
+    )xml"};
+  gui::StringsElement strings(is);
+
+  auto traitExit{strings.makeTrait("__strings._exit")};
+  REQUIRE(traitExit.invoke() == "Exit");
+
+  auto traitHowMany{strings.makeTrait("__strings._howmany")};
+  REQUIRE(traitHowMany.invoke() == "How Many?");
+}
+
+TEST_CASE("StringsElement accepts documents without any strings", "[gui]") {
+  [[maybe_unused]] auto logger{getLogger()};
+
+  {
+    std::istringstream is{R"xml(
+<rect name="Strings">
+</rect>
+    )xml"};
+    gui::StringsElement strings(is);
+
+    auto traitEmpty{strings.makeTrait("__strings._empty")};
+    REQUIRE(traitEmpty.invoke().empty());
+  }
+}
+
+TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
+  [[maybe_unused]] auto logger{getLogger()};
+
+  std::istringstream is{R"xml(
+<class name="Strings">
+  <_test>First</_test>
+  <_ignored>Ignored</_ignored>
+</class>
+
+<rect name="Strings">
+  <_test>Second</_test>
+</rect>
+    )xml"};
+  gui::StringsElement strings(is);
+
+  auto traitTest{strings.makeTrait("__strings._test")};
+  REQUIRE(traitTest.invoke() == "Second");
+
+  auto traitIgnored{strings.makeTrait("__strings._ignored")};
+  REQUIRE(traitIgnored.invoke().empty());
 }
