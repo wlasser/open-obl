@@ -1,74 +1,70 @@
 #ifndef OPENOBLIVION_GUI_STRINGS_HPP
 #define OPENOBLIVION_GUI_STRINGS_HPP
 
-#include "settings.hpp"
 #include "gui/trait.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include <absl/container/flat_hash_map.h>
-#include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
-#include <spdlog/spdlog.h>
 
 namespace gui {
 
 /// Element containing all localized strings.
+///
+/// A localized string consists of an *identifier* that names the string,
+/// say `_mystring`, and a *value* that contains the localization, say
+/// "My String".
+///
+/// This element takes on construction an XML file describing the localized
+/// strings, similar to the XML used to describe a general UI element.
+/// The XML file must contain a single `<rect>` node with attribute `name` equal
+/// to `Strings`. As children, the `<rect>` node must have a sequence of
+/// `<NAME>` nodes, where each `NAME` is replaced by the identifier for
+/// the localized string, and the node's content is the string's value.
+///
+/// Each localized string determines a custom trait with name given by its
+/// `NAME` identifier and with value equal to the localized string. Since each
+/// trait is a custom trait, the identifiers should begin with a single
+/// underscore `_` character. For example,
+/// ```xml
+/// <!-- strings.xml -->
+/// <rect name="Strings>
+///     <_exit>Exit</_exit>
+///     <_howmany>How Many?</_howmany>
+/// </rect>
+/// ```
+/// defines a trait `_exit` with value `Exit` and a trait `_howmany` with value
+/// `How Many?`.
+///
+/// To avoid cluttering the dependency graph, each localized string *does not*
+/// generate a user trait automatically; `makeTrait()` must be called with the
+/// identifier of each localized string that should have an associated user
+/// trait.
 class StringsElement {
  private:
   absl::flat_hash_map<std::string, std::string> mStrings{};
   Ogre::TextResourceManager &txtMgr{Ogre::TextResourceManager::getSingleton()};
 
-  std::stringstream openXMLStream(const std::string &filename) const {
-    auto logger{spdlog::get(oo::LOG)};
-    auto &txtMgr{Ogre::TextResourceManager::getSingleton()};
-    auto stringsPtr{txtMgr.getByName(filename, oo::RESOURCE_GROUP)};
-    if (!stringsPtr) {
-      logger->error("Resource {} does not exist", filename);
-      throw std::runtime_error("Failed to open strings file");
-    }
-    stringsPtr->load(false);
-    return std::stringstream{stringsPtr->getString()};
-  }
+  /// Open the `Ogre::TextResource` with the given `filename` and return a
+  /// stream to it.
+  /// \throws std::runtime_error if the resource does not exist.
+  std::stringstream openXMLStream(const std::string &filename) const;
 
-  pugi::xml_document readXMLDocument(std::stringstream &is) const {
-    auto logger{spdlog::get(oo::LOG)};
-    pugi::xml_document doc{};
-    pugi::xml_parse_result result{doc.load(is)};
-    if (!result) {
-      logger->error("Failed to parse strings XML [{}]: {}",
-                    result.offset, result.description());
-      throw std::runtime_error("Failed to parse strings XML");
-    }
-    return doc;
-  }
+  /// Parse a text stream `is` representing an XML document into an actual
+  /// document.
+  /// \throws std::runtime_error if the document fails to parse.
+  pugi::xml_document readXMLDocument(std::stringstream &is) const;
 
  public:
-  explicit StringsElement(const std::string &filename) {
-    auto logger{spdlog::get(oo::LOG)};
-    auto menuStream{openXMLStream(filename)};
-    auto doc{readXMLDocument(menuStream)};
+  /// Load an XML document of localized strings from the `Ogre::TextResource`
+  /// called `filename`.
+  explicit StringsElement(const std::string &filename);
 
-    const auto stringsNode{doc.find_child_by_attribute("name", "Strings")};
-    if (stringsNode) {
-      for (auto node : stringsNode.children()) {
-        const auto name{std::string{"__strings."} + node.name()};
-        std::string text{node.child_value()};
-        boost::algorithm::trim(text);
-        mStrings[name] = text;
-      }
-    } else {
-      logger->error("XML does not have a node with name 'Strings'");
-    }
-  }
-
-  Trait<std::string> makeTrait(const std::string &name) const {
-    auto it{mStrings.find(name)};
-    if (it == mStrings.end()) {
-      spdlog::get(oo::LOG)->warn("{} is not a strings() trait", name);
-      return Trait<std::string>(name, "");
-    }
-    const std::string value{it->second};
-    return Trait<std::string>(name, value);
-  };
+  /// Construct a user trait whose value is the localized string with the given
+  /// identifier `name`.
+  /// \remark If there is no localized string with identifier equal to `name`,
+  ///         then this returns a `Trait` with the requested `name` whose value
+  ///         is the empty string.
+  Trait<std::string> makeTrait(const std::string &name) const;
 };
 
 } // namespace gui

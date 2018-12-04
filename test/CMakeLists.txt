@@ -17,6 +17,7 @@ target_sources(OpenOblivionTest PRIVATE
         meta.cpp
         ${CMAKE_SOURCE_DIR}/src/gui/stack/program.cpp
         ${CMAKE_SOURCE_DIR}/src/gui/stack/types.cpp
+        ${CMAKE_SOURCE_DIR}/src/gui/strings.cpp
         ${CMAKE_SOURCE_DIR}/src/gui/trait.cpp
         ${CMAKE_SOURCE_DIR}/src/gui/trait_selector.cpp
         ${CMAKE_SOURCE_DIR}/src/gui/xml.cpp)
@@ -24,7 +25,11 @@ target_sources(OpenOblivionTest PRIVATE
 target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionFS
+        OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionScripting
+        absl::container
+        absl::hash
         Catch2::Catch2
+        GSL
         pugixml
         taocpp::pegtl)

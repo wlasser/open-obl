@@ -119,6 +119,7 @@ target_sources(OpenOblivion PRIVATE
         src/gui/gui.cpp
         src/gui/stack/program.cpp
         src/gui/stack/types.cpp
+        src/gui/strings.cpp
         src/gui/trait.cpp
         src/gui/traits.cpp
         src/gui/trait_selector.cpp
