@@ -38,7 +38,13 @@ namespace gui {
 /// To avoid cluttering the dependency graph, each localized string *does not*
 /// generate a user trait automatically; `makeTrait()` must be called with the
 /// identifier of each localized string that should have an associated user
-/// trait.
+/// trait. The name of this element (and hence the dotted prefix for each trait
+/// name) is implementation-defined; call `getName()` and `getPrefix()` to get
+/// the name of the element and dotted prefix respectively.
+/// \remark `getName()` and `getPrefix()` return constants; they are the same
+///         for every instantiation of `StringsElement`. One should be careful
+///         using multiple StringsElement in the same dependency graph, and
+///         prefer using just one. See `Traits` for example usage.
 class StringsElement {
  private:
   absl::flat_hash_map<std::string, std::string> mStrings{};
@@ -56,6 +62,9 @@ class StringsElement {
   /// Parse an XML document of localized strings and store them.
   void parseXMLDocument(pugi::xml_document doc);
 
+  static constexpr inline std::string_view NAME{"__strings"};
+  static constexpr inline std::string_view PREFIX{"__strings."};
+
  public:
   /// Load an XML document of localized strings from the `Ogre::TextResource`
   /// called `filename`.
@@ -70,6 +79,16 @@ class StringsElement {
   ///         then this returns a `Trait` with the requested `name` whose value
   ///         is the empty string.
   Trait<std::string> makeTrait(const std::string &name) const;
+
+  /// Return the implementation-defined name of the `StringsElement`.
+  static constexpr std::string_view getName() {
+    return NAME;
+  }
+
+  /// Return `getName()`, followed by a dot.
+  static constexpr std::string_view getPrefix() {
+    return PREFIX;
+  }
 };
 
 } // namespace gui

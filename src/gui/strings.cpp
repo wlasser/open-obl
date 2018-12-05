@@ -50,7 +50,7 @@ void StringsElement::parseXMLDocument(pugi::xml_document doc) {
 
   if (stringsNode) {
     for (auto node : stringsNode.children()) {
-      const auto name{std::string{"__strings."} + node.name()};
+      const auto name{std::string{getPrefix()} + node.name()};
       std::string text{node.child_value()};
       boost::algorithm::trim(text);
       mStrings[name] = text;

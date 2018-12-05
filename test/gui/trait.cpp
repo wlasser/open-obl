@@ -157,6 +157,7 @@ std::shared_ptr<spdlog::logger> getLogger() {
 
 TEST_CASE("can use StringsElement", "[gui]") {
   [[maybe_unused]] auto logger{getLogger()};
+  const std::string prefix{gui::StringsElement::getPrefix()};
 
   std::istringstream is{R"xml(
 <rect name="Strings">
@@ -166,30 +167,30 @@ TEST_CASE("can use StringsElement", "[gui]") {
     )xml"};
   gui::StringsElement strings(is);
 
-  auto traitExit{strings.makeTrait("__strings._exit")};
+  auto traitExit{strings.makeTrait(prefix + "_exit")};
   REQUIRE(traitExit.invoke() == "Exit");
 
-  auto traitHowMany{strings.makeTrait("__strings._howmany")};
+  auto traitHowMany{strings.makeTrait(prefix + "_howmany")};
   REQUIRE(traitHowMany.invoke() == "How Many?");
 }
 
 TEST_CASE("StringsElement accepts documents without any strings", "[gui]") {
   [[maybe_unused]] auto logger{getLogger()};
+  const std::string prefix{gui::StringsElement::getPrefix()};
 
-  {
-    std::istringstream is{R"xml(
+  std::istringstream is{R"xml(
 <rect name="Strings">
 </rect>
     )xml"};
-    gui::StringsElement strings(is);
+  gui::StringsElement strings(is);
 
-    auto traitEmpty{strings.makeTrait("__strings._empty")};
-    REQUIRE(traitEmpty.invoke().empty());
-  }
+  auto traitEmpty{strings.makeTrait(prefix + "_empty")};
+  REQUIRE(traitEmpty.invoke().empty());
 }
 
 TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
   [[maybe_unused]] auto logger{getLogger()};
+  const std::string prefix{gui::StringsElement::getPrefix()};
 
   std::istringstream is{R"xml(
 <class name="Strings">
@@ -203,9 +204,9 @@ TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
     )xml"};
   gui::StringsElement strings(is);
 
-  auto traitTest{strings.makeTrait("__strings._test")};
+  auto traitTest{strings.makeTrait(prefix + "_test")};
   REQUIRE(traitTest.invoke() == "Second");
 
-  auto traitIgnored{strings.makeTrait("__strings._ignored")};
+  auto traitIgnored{strings.makeTrait(prefix + "_ignored")};
   REQUIRE(traitIgnored.invoke().empty());
 }

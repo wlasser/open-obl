@@ -1,4 +1,5 @@
 #include "gui/gui.hpp"
+#include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/traits.hpp"
 #include <boost/algorithm/string/predicate.hpp>
@@ -98,6 +99,7 @@ void Traits::addImplementationElementTraits() {
     const auto deps{getDependencies(vPtr)};
 
     for (const auto &dep : deps) {
+      //C++20: if (dep.starts_with("__")) {
       if (boost::algorithm::starts_with(dep, "__")) {
         if (mIndices.find(dep) != mIndices.end()) continue;
 
@@ -109,7 +111,9 @@ void Traits::addImplementationElementTraits() {
           addTrait(mScreen.makeCropXTrait());
         } else if (dep == "__screen.cropY") {
           addTrait(mScreen.makeCropYTrait());
-        } else if (boost::algorithm::starts_with(dep, "__strings.")) {
+          //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
+        } else if (boost::algorithm::starts_with(
+            dep, gui::StringsElement::getPrefix())) {
           addTrait(mStrings.makeTrait(dep));
         }
       }
@@ -142,6 +146,7 @@ void Traits::addTraitDependencies() {
           const TraitVertex &uPtr{mGraph[uIndex]};
           if (!uPtr) continue;
           const bool match = std::visit([&dep](const auto &v) {
+            //C++20: return v.getName().starts_with(dep);
             return boost::algorithm::starts_with(v.getName(), dep);
           }, *uPtr);
           if (match) {

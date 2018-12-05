@@ -1,3 +1,4 @@
+#include "gui/strings.hpp"
 #include "gui/trait_selector.hpp"
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -122,7 +123,7 @@ std::string invokeSiblingSelector(const pugi::xml_node &node,
 }
 
 std::string invokeStringsSelector() {
-  return "__strings";
+  return std::string{gui::StringsElement::getName()};
 }
 
 std::string invokeSelector(const pugi::xml_node &node,
