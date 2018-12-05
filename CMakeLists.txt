@@ -86,8 +86,9 @@ add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
 add_subdirectory(lib/tl)
 
-add_subdirectory(src/io)
 add_subdirectory(src/fs)
+add_subdirectory(src/gui)
+add_subdirectory(src/io)
 add_subdirectory(src/nif)
 add_subdirectory(src/record)
 add_subdirectory(src/ogre)
@@ -116,14 +117,6 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/esp_coordinator.cpp
-        src/gui/gui.cpp
-        src/gui/stack/program.cpp
-        src/gui/stack/types.cpp
-        src/gui/strings.cpp
-        src/gui/trait.cpp
-        src/gui/traits.cpp
-        src/gui/trait_selector.cpp
-        src/gui/xml.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
@@ -166,22 +159,6 @@ target_sources(OpenOblivion PRIVATE
         include/esp.hpp
         include/esp_coordinator.hpp
         include/game_settings.hpp
-        include/gui/elements/image.hpp
-        include/gui/elements/rect.hpp
-        include/gui/elements/text.hpp
-        include/gui/gui.hpp
-        include/gui/menu.hpp
-        include/gui/menus/loading_menu.hpp
-        include/gui/screen.hpp
-        include/gui/stack/instructions.hpp
-        include/gui/stack/program.hpp
-        include/gui/stack/types.hpp
-        include/gui/strings.hpp
-        include/gui/trait.hpp
-        include/gui/traits.hpp
-        include/gui/trait_selector.hpp
-        include/gui/ui_element.hpp
-        include/gui/xml.hpp
         include/initial_record_visitor.hpp
         include/keep_strategy.hpp
         include/meta.hpp
@@ -210,8 +187,9 @@ target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})
 
 target_link_libraries(OpenOblivion PRIVATE
-        OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionFS
+        OpenOblivion::OpenOblivionGui
+        OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
@@ -228,10 +206,8 @@ target_link_libraries(OpenOblivion PRIVATE
         stdc++fs
         tloptional
         GSL
-        pugixml
         polymorphic_value
-        absl::container
-        absl::hash
+        absl::flat_hash_map
         ${BULLET_LIBRARIES})
 
 find_package(PkgConfig)

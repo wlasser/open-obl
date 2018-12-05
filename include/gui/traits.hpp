@@ -7,12 +7,12 @@
 #include "gui/trait_selector.hpp"
 #include "gui/ui_element.hpp"
 #include "gui/xml.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <boost/graph/adjacency_list.hpp>
 #include <pugixml.hpp>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -38,7 +38,7 @@ class Traits {
   TraitGraph mGraph{};
 
   /// Map for looking up traits by name in the dependency graph.
-  absl::flat_hash_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
+  std::unordered_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
 
   /// Dependency graph vertex descriptors in (a) topological order. This is not
   /// updated every time a trait is added, and is only valid if

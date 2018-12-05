@@ -2,11 +2,11 @@
 #include "gui/trait.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "settings.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <unordered_map>
 
 namespace gui {
 

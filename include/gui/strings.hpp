@@ -2,9 +2,9 @@
 #define OPENOBLIVION_GUI_STRINGS_HPP
 
 #include "gui/trait.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <pugixml.hpp>
 #include <string>
+#include <unordered_map>
 
 namespace gui {
 
@@ -47,7 +47,7 @@ namespace gui {
 ///         prefer using just one. See `Traits` for example usage.
 class StringsElement {
  private:
-  absl::flat_hash_map<std::string, std::string> mStrings{};
+  std::unordered_map<std::string, std::string> mStrings{};
 
   /// Open the `Ogre::TextResource` with the given `filename` and return a
   /// stream to it.
