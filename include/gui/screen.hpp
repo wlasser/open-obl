@@ -5,6 +5,7 @@
 #include "settings.hpp"
 #include <OgreRoot.h>
 #include <OgreRenderTarget.h>
+#include <string_view>
 
 namespace gui {
 
@@ -41,6 +42,9 @@ class ScreenElement {
     return {width, height};
   }
 
+  static constexpr inline std::string_view NAME{"__screen"};
+  static constexpr inline std::string_view PREFIX{"__screen."};
+
  public:
 
   ScreenElement() {
@@ -54,21 +58,31 @@ class ScreenElement {
 
   Trait<int> makeWidthTrait() const {
     const auto[width, _] = getNormalizedDimensions();
-    return Trait<int>("__screen.width", width);
+    return Trait<int>(std::string{PREFIX} + "width", width);
   }
 
   Trait<int> makeHeightTrait() const {
     const auto[_, height] = getNormalizedDimensions();
-    return Trait<int>("__screen.height", height);
+    return Trait<int>(std::string{PREFIX} + "height", height);
   }
 
   // TODO: What are the actual screen crop values?
   Trait<int> makeCropXTrait() const {
-    return Trait<int>("__screen.cropX", 32);
+    return Trait<int>(std::string{PREFIX} + "cropX", 32);
   }
 
   Trait<int> makeCropYTrait() const {
-    return Trait<int>("__screen.cropY", 32);
+    return Trait<int>(std::string{PREFIX} + "cropY", 32);
+  }
+
+  /// Return the implementation-defined name of the `ScreenElement`.
+  static constexpr std::string_view getName() {
+    return NAME;
+  }
+
+  /// Return `getName()`, followed by a dot.
+  static constexpr std::string_view getPrefix() {
+    return PREFIX;
   }
 };
 

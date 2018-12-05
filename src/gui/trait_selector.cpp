@@ -1,7 +1,9 @@
 #include "gui/strings.hpp"
 #include "gui/trait_selector.hpp"
+#include "settings.hpp"
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <spdlog/spdlog.h>
 #include <regex>
 
 namespace gui {
@@ -55,13 +57,13 @@ std::string fullyQualifyName(pugi::xml_node node) {
   return boost::algorithm::join(ancestors | boost::adaptors::reversed, ".");
 }
 
-std::string invokeChildSelector(const pugi::xml_node &node,
-                                std::optional<std::string> arg) {
+std::string
+invokeChildSelector(pugi::xml_node node, std::optional<std::string> arg) {
   if (arg) {
     // Search through this node's descendants for a node whose name matches the
     // argument, but search from the last sibling to the first
-    for (const auto &child : node.children() | boost::adaptors::reversed) {
-      if (*arg == child.attribute("name").value()) {
+    for (auto child : node.children() | boost::adaptors::reversed) {
+      if (child.attribute("name") && *arg == child.attribute("name").value()) {
         return fullyQualifyName(child);
       } else {
         const auto childName{invokeChildSelector(child, arg)};
@@ -72,7 +74,7 @@ std::string invokeChildSelector(const pugi::xml_node &node,
   } else {
     // Just return this node's last child that has a name attribute; this
     // ensures that we are not returning a trait.
-    for (const auto &child : node.children() | boost::adaptors::reversed) {
+    for (auto child : node.children() | boost::adaptors::reversed) {
       if (child.attribute("name")) {
         return fullyQualifyName(child);
       }
@@ -82,16 +84,16 @@ std::string invokeChildSelector(const pugi::xml_node &node,
   }
 }
 
-std::string invokeLastSelector(const pugi::xml_node &node) {
-  // TODO: Warn that this is unimplemented
+std::string invokeLastSelector(pugi::xml_node node) {
+  spdlog::get(oo::LOG)->warn("last() is unimplemented");
   return "";
 }
 
-std::string invokeMeSelector(const pugi::xml_node &node) {
+std::string invokeMeSelector(pugi::xml_node node) {
   return fullyQualifyName(node);
 }
 
-std::string invokeParentSelector(const pugi::xml_node &node) {
+std::string invokeParentSelector(pugi::xml_node node) {
   return fullyQualifyName(node.parent());
 }
 
@@ -99,8 +101,8 @@ std::string invokeScreenSelector() {
   return "__screen";
 }
 
-std::string invokeSiblingSelector(const pugi::xml_node &node,
-                                  std::optional<std::string> arg) {
+std::string
+invokeSiblingSelector(pugi::xml_node node, std::optional<std::string> arg) {
   const auto parent{node.parent()};
   if (arg) {
     // The unique sibling with the given name is the first child of the parent
@@ -126,8 +128,7 @@ std::string invokeStringsSelector() {
   return std::string{gui::StringsElement::getName()};
 }
 
-std::string invokeSelector(const pugi::xml_node &node,
-                           const TraitSelector &selector) {
+std::string invokeSelector(pugi::xml_node node, const TraitSelector &selector) {
   switch (selector.type) {
     case TraitSelector::Type::child: {
       return invokeChildSelector(node, selector.argument);

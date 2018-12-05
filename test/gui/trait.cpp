@@ -1,7 +1,8 @@
-#include "settings.hpp"
+#include "gui/screen.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/trait_selector.hpp"
+#include "settings.hpp"
 #include <catch2/catch.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
@@ -209,4 +210,115 @@ TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
 
   auto traitIgnored{strings.makeTrait(prefix + "_ignored")};
   REQUIRE(traitIgnored.invoke().empty());
+}
+
+TEST_CASE("can use trait selectors", "[gui]") {
+  std::istringstream is{R"xml(
+<menu name="Example">
+  <rect name="foo">
+    <user1>Hello</user1>
+    <x>0</x>
+    <y>30</y>
+  </rect>
+
+  <rect name="bar">
+    <x>10</x>
+  </rect>
+
+  <rect name="baz">
+    <rect name="qux"></rect>
+  </rect>
+</menu>
+  )xml"};
+
+  pugi::xml_document doc;
+  auto result{doc.load(is)};
+  REQUIRE(result);
+
+  SECTION("can fully qualify names", "[gui]") {
+    {
+      const auto set{doc.select_nodes("/menu")};
+      REQUIRE_FALSE(set.empty());
+      const auto node{set.first().node()};
+      REQUIRE(gui::fullyQualifyName(node) == "Example");
+    }
+
+    {
+      const auto set{doc.select_nodes("/menu/rect[1]")};
+      REQUIRE_FALSE(set.empty());
+      const auto node{set.first().node()};
+      REQUIRE(gui::fullyQualifyName(node) == "Example.foo");
+    }
+
+    {
+      const auto set{doc.select_nodes("/menu/rect[2]")};
+      REQUIRE_FALSE(set.empty());
+      const auto node{set.first().node()};
+      REQUIRE(gui::fullyQualifyName(node) == "Example.bar");
+    }
+
+    {
+      const auto set{doc.select_nodes("/menu/rect[1]/x")};
+      REQUIRE_FALSE(set.empty());
+      const auto node{set.first().node()};
+      REQUIRE(gui::fullyQualifyName(node).empty());
+    }
+  }
+
+  SECTION("can use the child() selector", "[gui]") {
+    REQUIRE(gui::invokeChildSelector(doc, {}) == "Example");
+    REQUIRE(gui::invokeChildSelector(doc, "bar") == "Example.bar");
+    REQUIRE(gui::invokeChildSelector(doc, "foo") == "Example.foo");
+    REQUIRE(gui::invokeChildSelector(doc.first_child(), {}) == "Example.baz");
+  }
+
+  SECTION("can use the me() selector", "[gui]") {
+    const auto rectNode{doc.first_child()};
+    const auto set{doc.select_nodes("/menu/rect[2]")};
+    REQUIRE_FALSE(set.empty());
+    const auto barNode{set.first().node()};
+
+    REQUIRE(gui::invokeMeSelector(rectNode) == "Example");
+    REQUIRE(gui::invokeMeSelector(barNode) == "Example.bar");
+  }
+
+  SECTION("can use the parent() selector", "[gui]") {
+    const auto set{doc.select_nodes("/menu/rect[2]")};
+    REQUIRE_FALSE(set.empty());
+    const auto barNode{set.first().node()};
+
+    REQUIRE(gui::invokeParentSelector(doc).empty());
+    REQUIRE(gui::invokeParentSelector(doc.first_child()).empty());
+    REQUIRE(gui::invokeParentSelector(barNode) == "Example");
+    // Unintended use, but allowed under the documentation.
+    REQUIRE(gui::invokeParentSelector(barNode.first_child()) == "Example.bar");
+  }
+
+  SECTION("can use the screen() selector", "[gui]") {
+    REQUIRE(gui::invokeScreenSelector() == gui::ScreenElement::getName());
+  }
+
+  SECTION("can use the strings() selector", "[gui]") {
+    REQUIRE(gui::invokeStringsSelector() == gui::StringsElement::getName());
+  }
+
+  SECTION("can use the sibling() selector", "[gui]") {
+    const auto fooSet{doc.select_nodes("/menu/rect[1]")};
+    REQUIRE_FALSE(fooSet.empty());
+    const auto fooNode{fooSet.first().node()};
+
+    const auto barSet{doc.select_nodes("/menu/rect[2]")};
+    REQUIRE_FALSE(barSet.empty());
+    const auto barNode{barSet.first().node()};
+
+    const auto quxSet{doc.select_nodes("/menu/rect[3]/rect[1]")};
+    REQUIRE_FALSE(quxSet.empty());
+    const auto quxNode{quxSet.first().node()};
+
+    REQUIRE(gui::invokeSiblingSelector(barNode, {}) == "Example.foo");
+    REQUIRE(gui::invokeSiblingSelector(fooNode, {}).empty());
+    REQUIRE(gui::invokeSiblingSelector(barNode, "foo") == "Example.foo");
+    REQUIRE(gui::invokeSiblingSelector(barNode, "bar").empty());
+    REQUIRE(gui::invokeSiblingSelector(quxNode, {}).empty());
+  }
 }
