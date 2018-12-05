@@ -2,7 +2,9 @@
 #define OPENOBLIVION_GUI_SCREEN_HPP
 
 #include "gui/trait.hpp"
-#include "game_settings.hpp"
+#include "settings.hpp"
+#include <OgreRoot.h>
+#include <OgreRenderTarget.h>
 
 namespace gui {
 
@@ -18,8 +20,8 @@ namespace gui {
 ///  - `<cropY>`: the vertical safe zone margin height in NC
 class ScreenElement {
  private:
-  GameSetting<int> mRawWidth{"Display.iSize W", 0};
-  GameSetting<int> mRawHeight{"Display.iSize H", 0};
+  int mRawWidth{0};
+  int mRawHeight{0};
 
   struct Dimensions {
     int width;
@@ -32,14 +34,23 @@ class ScreenElement {
   /// is normalized to `1280px` and the height is computed with the aspect
   /// ratio.
   Dimensions getNormalizedDimensions() const {
-    const int rawW{mRawWidth.get()};
-    const int rawH{mRawHeight.get()};
+    const int rawW{mRawWidth};
+    const int rawH{mRawHeight};
     const int width{rawW >= rawH ? ((960 * rawW) / rawH) : 1280};
     const int height{rawW < rawH ? ((1280 * rawH) / rawW) : 960};
     return {width, height};
   }
 
  public:
+
+  ScreenElement() {
+    auto *root{Ogre::Root::getSingletonPtr()};
+    if (!root) return;
+    auto *target{root->getRenderTarget(oo::RENDER_TARGET)};
+    if (!target) return;
+    mRawWidth = static_cast<int>(target->getWidth());
+    mRawHeight = static_cast<int>(target->getHeight());
+  }
 
   Trait<int> makeWidthTrait() const {
     const auto[width, _] = getNormalizedDimensions();
