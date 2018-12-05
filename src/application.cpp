@@ -325,8 +325,8 @@ void Application::declareBsaResources(const oo::Path &bsaFilename) {
   const Ogre::Archive *archive{archiveMgr.load(sysPath, "BSA", true)};
   const Ogre::StringVectorPtr files{archive->list()};
 
-  for (const auto &filename : *files) {
-    declareResource(oo::Path{filename}, oo::RESOURCE_GROUP);
+  for (auto &filename : *files) {
+    declareResource(oo::Path{std::move(filename)}, oo::RESOURCE_GROUP);
   }
 }
 
