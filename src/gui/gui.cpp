@@ -113,6 +113,7 @@ void parseMenu(std::istream &is) {
 
   // Now construct the dependency graph of the dynamic representation
   Traits menuTraits{};
+  menuTraits.loadStrings("menus/strings.xml");
   auto uiElements = addChildren(menuTraits, menuNode, menuElement);
   menuTraits.addImplementationElementTraits();
   for (const auto &uiElement : uiElements) {

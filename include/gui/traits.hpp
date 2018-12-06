@@ -10,6 +10,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <pugixml.hpp>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
@@ -56,7 +57,7 @@ class Traits {
   ScreenElement mScreen{};
 
   /// Implementation-defined element storing localized strings.
-  StringsElement mStrings{"menus/strings.xml"};
+  std::optional<StringsElement> mStrings{};
 
   /// Check whether the dependency graph is still topologically sorted, or
   /// needs resorting.
@@ -135,6 +136,13 @@ class Traits {
   /// \throws boost::not_a_dag if the underlying depdency graph is not a DAG.
   // TODO: Provide a method to update only a trait and its dependents
   void update();
+
+  /// Load an XML document of localized strings.
+  /// This function should be called at most per instance of `Traits`.
+  /// In practice, calling it multiple times should work as expected, but that
+  /// may change in the future.
+  /// \see gui::StringsElement(const std::string&)
+  void loadStrings(const std::string &filename);
 };
 
 /// A stateful functor remembering the value of the previous evaluation of a

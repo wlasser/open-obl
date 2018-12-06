@@ -119,7 +119,7 @@ void Traits::addImplementationElementTraits() {
           //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
         } else if (boost::algorithm::starts_with(
             dep, gui::StringsElement::getPrefix())) {
-          addTrait(mStrings.makeTrait(dep));
+          if (mStrings) addTrait(mStrings->makeTrait(dep));
         }
       }
     }
@@ -184,6 +184,10 @@ void Traits::update() {
     }
     std::visit([](auto &&trait) { trait.update(); }, *vertex);
   }
+}
+
+void Traits::loadStrings(const std::string &filename) {
+  mStrings = gui::StringsElement(filename);
 }
 
 } // namespace gui
