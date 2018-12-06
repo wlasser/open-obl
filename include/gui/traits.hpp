@@ -72,6 +72,10 @@ class Traits {
   /// existing trait in the dependency graph with the same name.
   template<class T> void addTrait(std::optional<Trait<T>> trait);
 
+  /// Return the names of the dependencies of a given `vertex`. Returns an empty
+  /// vector if the `vertex` is null.
+  std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
+
  public:
   /// Return a reference to the dynamic trait with fully-qualified `name`.
   /// \throws std::runtime_error if no trait exists with the given `name`, or if
@@ -104,10 +108,6 @@ class Traits {
   /// If the given XML `node` corresponds to a user trait, then bind it to the
   /// given `uiElement` and return `true`, otherwise return `false`.
   bool addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement);
-
-  /// Return the names of the dependencies of a given `vertex`. Returns an empty
-  /// vector if the `vertex` is null.
-  std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
 
   /// Add the traits of any implementation-defined elements that are required as
   /// dependencies of existing traits.

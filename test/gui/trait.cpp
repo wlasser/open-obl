@@ -1,6 +1,7 @@
 #include "gui/screen.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
+#include "gui/traits.hpp"
 #include "gui/trait_selector.hpp"
 #include "settings.hpp"
 #include <catch2/catch.hpp>
@@ -321,4 +322,60 @@ TEST_CASE("can use trait selectors", "[gui]") {
     REQUIRE(gui::invokeSiblingSelector(barNode, "bar").empty());
     REQUIRE(gui::invokeSiblingSelector(quxNode, {}).empty());
   }
+}
+
+TEST_CASE("can add traits without dependencies to Traits", "[gui]") {
+  gui::Traits traits{};
+
+  {
+    auto &trait{traits.addTrait<int>("t1", 10)};
+    REQUIRE(trait.invoke() == 10);
+    REQUIRE(trait.getName() == "t1");
+  }
+
+  {
+    const auto &trait{traits.getTrait<int>("t1")};
+    REQUIRE(trait.invoke() == 10);
+    REQUIRE(trait.getName() == "t1");
+    REQUIRE_THROWS_AS(traits.getTrait<float>("t1"), std::runtime_error);
+    REQUIRE_THROWS_AS(traits.getTrait<int>("t2"), std::runtime_error);
+  }
+
+  {
+    gui::Trait<std::string> trait("t2", "Hello");
+    auto &traitRef{traits.addTrait(std::move(trait))};
+    REQUIRE(traitRef.invoke() == "Hello");
+    REQUIRE(traitRef.getName() == "t2");
+  }
+}
+
+TEST_CASE("can add traits with dependencies to Traits", "[gui]") {
+  gui::Traits traits{};
+
+  // t1() = t1Src;
+  // t2() = 3 * t1();
+  // t3() = hexadecimal string representation of t2()
+  int t1Src{10};
+  gui::TraitFun<int> t1Fun{[&t1Src]() { return t1Src; }};
+  auto &t1{traits.addTrait<int>("t1", std::move(t1Fun))};
+
+  gui::TraitFun<int> t2Fun{[&traits]() -> int {
+    return 3 * traits.getTrait<int>("t1").invoke();
+  }};
+
+  auto &t2{traits.addTrait<int>("t2", std::move(t2Fun))};
+  REQUIRE(t2.invoke() == 30);
+
+  gui::TraitFun<std::string> t3Fun{[&traits]() -> std::string {
+    std::ostringstream os;
+    os << std::hex << traits.getTrait<int>("t2").invoke();
+    return os.str();
+  }};
+
+  auto &t3{traits.addTrait<std::string>("t3", std::move(t3Fun))};
+
+  t1Src = 5;
+  REQUIRE(t1.invoke() == 5);
+  REQUIRE(t2.invoke() == 15);
+  REQUIRE(t3.invoke() == "f");
 }
