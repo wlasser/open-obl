@@ -7,6 +7,10 @@
 
 namespace gui {
 
+bool Traits::isSorted() const noexcept {
+  return mSorted;
+}
+
 void Traits::sort() {
   if (mSorted) return;
   mOrdering.clear();
@@ -20,7 +24,7 @@ void Traits::sort() {
   mSorted = true;
 }
 
-bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
+bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
                                            UiElement *uiElement) {
   using namespace std::literals;
   if (node.name() == "x"s) {
@@ -47,8 +51,7 @@ bool Traits::addAndBindImplementationTrait(const pugi::xml_node &node,
   return true;
 }
 
-bool Traits::addAndBindUserTrait(const pugi::xml_node &node,
-                                 UiElement *uiElement) {
+bool Traits::addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement) {
   const std::optional<int> indexOpt{getUserTraitIndex(node.name())};
   if (!indexOpt) return false;
   const int index{*indexOpt};
@@ -94,6 +97,8 @@ Traits::getDependencies(const TraitVertex &vertex) const {
 }
 
 void Traits::addImplementationElementTraits() {
+  const std::string screenPrefix{gui::ScreenElement::getPrefix()};
+
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
     const TraitVertex &vPtr{mGraph[vIndex]};
     const auto deps{getDependencies(vPtr)};
@@ -103,13 +108,13 @@ void Traits::addImplementationElementTraits() {
       if (boost::algorithm::starts_with(dep, "__")) {
         if (mIndices.find(dep) != mIndices.end()) continue;
 
-        if (dep == "__screen.width") {
+        if (dep == screenPrefix + "width") {
           addTrait(mScreen.makeWidthTrait());
-        } else if (dep == "__screen.height") {
+        } else if (dep == screenPrefix + "height") {
           addTrait(mScreen.makeHeightTrait());
-        } else if (dep == "__screen.cropX") {
+        } else if (dep == screenPrefix + "cropX") {
           addTrait(mScreen.makeCropXTrait());
-        } else if (dep == "__screen.cropY") {
+        } else if (dep == screenPrefix + "cropY") {
           addTrait(mScreen.makeCropYTrait());
           //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
         } else if (boost::algorithm::starts_with(

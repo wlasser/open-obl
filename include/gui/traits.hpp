@@ -22,28 +22,34 @@ namespace gui {
 /// and its children.
 class Traits {
  private:
-  /// Vertex properties are required to be default constructible and copy
-  /// constructible so we have to store a shared ownership pointer.
+  /// Type of the nodes in the dependency graph, represents a Trait of any type.
   using TraitVariant = std::variant<Trait<int>,
                                     Trait<float>,
                                     Trait<std::string>,
                                     Trait<bool>>;
+  /// Vertex properties are required to be default constructible and copy
+  /// constructible so we have to store a shared ownership pointer.
   using TraitVertex = std::shared_ptr<TraitVariant>;
+
+  /// Type of the dependency graph.
   using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                            boost::directedS, TraitVertex>;
 
-  /// Dependency graph of traits. There is an edge from u to v if the trait v
-  /// requires the value of trait u to compute its value. This should be a DAG,
-  /// and will usually have multiple connected components.
+  /// Dependency graph of traits. There is an edge from `u` to `v` if the trait
+  /// `v` requires the value of trait `u` to compute its value. That is, if `v`
+  /// *depends on* `u`. This graph should be a DAG, and will usually have
+  /// multiple connected components.
   TraitGraph mGraph{};
 
   /// Map for looking up traits by name in the dependency graph.
   std::unordered_map<std::string, TraitGraph::vertex_descriptor> mIndices{};
 
-  /// Dependency graph vertex descriptors in (a) topological order. This is not
-  /// updated every time a trait is added, and is only valid if
-  /// `mSorted == true`.
+  /// Dependency graph vertex descriptors in (a) topological order.
+  /// \warning This is not updated every time a trait is added, and is only
+  /// valid if `isSorted()`.
   std::vector<TraitGraph::vertex_descriptor> mOrdering{};
+
+  /// Whether `mOrdering` is sorted. Prefer using `isSorted()`.
   bool mSorted{false};
 
   /// Implementation-defined element storing screen settings.
@@ -52,18 +58,24 @@ class Traits {
   /// Implementation-defined element storing localized strings.
   StringsElement mStrings{"menus/strings.xml"};
 
+  /// Check whether the dependency graph is still topologically sorted, or
+  /// needs resorting.
+  bool isSorted() const noexcept;
+
   /// Topologically sort the vertices in the dependency graph, store the result
-  /// in mOrdering, and set mSorted. If the graph is already sorted, i.e. if
-  /// `mSorted == true`, then this does nothing.
+  /// in `mOrdering`, and set `mSorted`. If already `isSorted()`, do nothing.
+  /// \throws boost::not_a_dag if the underlying depdency graph is not a DAG.
   void sort();
 
-  /// If the optional is non-empty then add the contained trait, overwriting any
+  /// If the optional is nonempty then add the contained trait, overwriting any
   /// existing trait in the dependency graph with the same name.
   template<class T> void addTrait(std::optional<Trait<T>> trait);
 
  public:
-  /// Return a reference to the dynamic trait with the given fully-qualified
-  /// name.
+  /// Return a reference to the dynamic trait with fully-qualified `name`.
+  /// \throws std::runtime_error if no trait exists with the given `name`, or if
+  ///                            a trait does exist with that `name` but its
+  ///                            underlying type is not `T`.
   template<class T> const Trait<T> &getTrait(const std::string &name) const {
     const auto index{mIndices.find(name)};
     if (index == mIndices.end()) {
@@ -80,11 +92,12 @@ class Traits {
     }
   }
 
-  /// Construct a new trait with the given name by forwarding the args to the
-  /// Trait constructor, add it to the dependency graph, and return a reference
-  /// to the added trait. No edges are created.
+  /// Construct a new trait with the given name by forwarding the `args` to the
+  /// `Trait` constructor and adding it to the dependency graph.
+  /// \returns a reference to the added trait.
+  /// \remark No edges are created.
   template<class T, class ...Args>
-  Trait<T> &addTrait(std::string name, Args &&... args) {
+  Trait<T> &addTrait(const std::string &name, Args &&... args) {
     mSorted = false;
     const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
         Trait<T>{name, std::forward<Args>(args)...}), mGraph)};
@@ -92,10 +105,9 @@ class Traits {
     return std::get<Trait<T>>(*mGraph[index]);
   }
 
-  /// Add an already constructed trait to the dependency graph and return a
-  /// reference to it.
-  template<class T>
-  Trait<T> &addTrait(Trait<T> &&trait) {
+  /// Add an already constructed trait to the dependency graph.
+  /// \returns a reference to the added trait.
+  template<class T> Trait<T> &addTrait(Trait<T> &&trait) {
     mSorted = false;
     const auto index{boost::add_vertex(std::make_shared<TraitVariant>(trait),
                                        mGraph)};
@@ -103,52 +115,57 @@ class Traits {
     return std::get<Trait<T>>(*mGraph[index]);
   }
 
-  /// Given an XML node describing a trait, such as `<x>100</x>`, construct a
-  /// corresponding Trait and bind it to the uiElement with the setterFun as
-  /// in Trait::bind.
+  /// Construct a `Trait` from the `node` and bind it to the `uiElement` with
+  /// the `setterFun`, as in `Trait::bind()`.
+  /// The XML `node` should describe the trait directly, such as `<x>100</x>`.
   template<class T>
   void addAndBindTrait(UiElement *uiElement, TraitSetterFun<T> setterFun,
-                       const pugi::xml_node &node);
+                       pugi::xml_node node);
 
-  /// If the given XML node corresponds to an implementation trait, then bind it
-  /// to the given uiElement and return true, otherwise return false.
-  bool addAndBindImplementationTrait(const pugi::xml_node &node,
-                                     UiElement *uiElement);
+  /// If the given XML `node` corresponds to an implementation trait, then bind
+  /// it to the given `uiElement` and return `true`, otherwise return `false`.
+  bool addAndBindImplementationTrait(pugi::xml_node node, UiElement *uiElement);
 
-  /// If the given XML node corresponds to a user trait, then bind it to the
-  /// given uiElement and return true, otherwise return false.
-  bool addAndBindUserTrait(const pugi::xml_node &node, UiElement *uiElement);
+  /// If the given XML `node` corresponds to a user trait, then bind it to the
+  /// given `uiElement` and return `true`, otherwise return `false`.
+  bool addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement);
 
-  /// Return the names of the dependencies of a given vertex. Returns an empty
-  /// vector if the vertex is null.
+  /// Return the names of the dependencies of a given `vertex`. Returns an empty
+  /// vector if the `vertex` is null.
   std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
 
-  /// Add the traits of any implementation defined elements that are required as
+  /// Add the traits of any implementation-defined elements that are required as
   /// dependencies of existing traits.
   void addImplementationElementTraits();
 
-  /// Add the element's provided traits, overriding any existing traits with the
-  /// same name.
+  /// Add the `uiElement`'s provided traits, overriding any existing traits with
+  /// the same name.
   void addProvidedTraits(const UiElement *uiElement);
 
   /// Set all the user traits to point to the given interface buffer.
   template<class ...Ts>
   void setUserTraitSources(const std::tuple<Ts...> &userInterface);
 
-  /// For each trait v, make an edge from u to v if u is a dependency of v.
-  /// This will throw if a trait has a nonexistent dependency.
+  /// For each trait `v`, make an edge from `u` to `v` iff `u` is a dependency
+  /// of `v`.
   /// Try to delay calling this until all traits have been added, as it
   /// regenerates all dependency edges, even those that haven't changed. Since
   /// traits are allowed to be defined out of order it doesn't really make sense
-  /// to call this after every addTrait anyway.
+  /// to call this after every `addTrait()` anyway.
+  /// \throws std::runtime_error if a trait has a nonexistent dependency.
   void addTraitDependencies();
 
   /// Update every trait, notifying the concrete representation of the new
-  /// values. Throws if the underlying dependency graph is not a DAG.
+  /// values.
+  /// \throws std::runtime_error if there are any null vertices.
+  /// \throws boost::not_a_dag if the underlying depdency graph is not a DAG.
   // TODO: Provide a method to update only a trait and its dependents
   void update();
 };
 
+/// A stateful functor remembering the value of the previous evaluation of a
+/// trait function.
+///
 /// When evaluating a trait that does not begin with a `<copy>` to initialize
 /// the working value, the working value is value-initialized on the first
 /// evaluation of the trait. On subsequent evaluations, the value of the
@@ -156,7 +173,7 @@ class Traits {
 /// a function-local static variable, but cannot be achieved in the same way
 /// with lambdas; static variables in a lambda are defined in the surrounding
 /// function scope. Instead we use a stateful functor to remember the previous
-/// value, and use mutable lambdas to allow modifying its state.
+// value, and use mutable lambdas to allow modifying its state.
 template<class T>
 struct PersistentFunctor {
   T state{};
@@ -165,26 +182,38 @@ struct PersistentFunctor {
   }
 };
 
-/// PersistentFunctors needs to be updated after the entire evaluation is
+/// Type for keeping track of a `gui::PersistentFunctor` all the way up the call
+/// stack of a trait function.
+///
+/// `gui::PersistentFunctor`s need to be updated after the entire evaluation is
 /// complete, but will be the most nested function. Instead of working with a
-/// TraitFun<T> directly, we adjoin an pointer to the functor to the return type
-/// and use it to pass the functor all the way up the call stack, before
-/// updating the functor and discarding it in the final return value.
+/// `gui::TraitFun<T>` directly, we adjoin to the return type a pointer to the
+/// functor and use it to pass the functor all the way up the call stack,
+/// before updating the functor and discarding it in the final return value.
 template<class T>
 using FunctorPair = std::pair<PersistentFunctor<T> *, T>;
+
+/// Analogue of `gui::TraitFun` returning a `gui::FunctorPair<T>` instead of
+/// just a `T`.
 template<class T>
 using PersistentTraitFun = std::function<FunctorPair<T>(void)>;
-/// Using a PersistentTraitFun instead of a TraitFun prohibits requires tracking
-/// dependencies separately.
+
+/// A `gui::PersistentTraitFun` with dependency tracking.
+///
+/// While a `gui::TraitFun` provides access to its dependencies directly, we
+/// cannot pull a `gui::TraitFun` out of a `gui::PersistentTraitFun` so must
+/// keep track of the dependencies externally.
 template<class T>
 struct DependentTraitFun {
   PersistentTraitFun<T> fun{};
   std::vector<std::string> deps{};
 };
 
-/// If the copy operator has a selector that selects a trait whose name ends in
-/// a trailing '_', then the current working value is stringified and appended
-/// to to the trait name. This is used to implement a switch statement.
+/// Return a `gui::PersistentTraitFun` which evaluates to the value of the trait
+/// whose name is the concatenation of `name` and the value of `workingFun`.
+/// This is used to implement a switch statement, and is triggered when a copy
+/// operator has a selector that selects a trait whose name ends in a trailing
+/// underscore `_`.
 template<class T>
 PersistentTraitFun<T> getSwitchCaseTraitFun(const Traits &traits,
                                             const std::string &name,
@@ -238,10 +267,10 @@ DependentTraitFun<T> parseOperatorCopy(const Traits &traits,
   return {std::move(fun), std::move(workingFun.deps)};
 }
 
-/// Given a trait node whose body is given by a collection of operators, parse
-/// the sequence of operators into a TraitFun.
+/// Given a XML `node` representing a trait whose body is given by a collection
+/// of operators, parse the sequence of operators into a `gui::TraitFun`.
 template<class T>
-TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
+TraitFun<T> parseOperators(const Traits &traits, pugi::xml_node node) {
   using namespace std::literals;
 
   // Start with the <copy> if there is one, otherwise use a PersistentFunctor
@@ -269,6 +298,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
     if (ptr) ptr->state = val;
     return val;
   }};
+
   // Notify the function of its dependencies
   for (auto &dep : dependencies) {
     traitFun.addDependency(std::move(dep));
@@ -281,7 +311,7 @@ TraitFun<T> parseOperators(const Traits &traits, const pugi::xml_node &node) {
 /// the same operations. If the node does not represent a valid trait, then the
 /// returned TraitFun<T> returns a value-initialized T.
 template<class T>
-TraitFun<T> getTraitFun(const Traits &traits, const pugi::xml_node &node) {
+TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
   if (node.text()) {
     const auto value{getXmlChildValue<T>(node)};
     return TraitFun<T>{[value]() { return value; }};
@@ -303,7 +333,7 @@ void Traits::addTrait(std::optional<Trait<T>> trait) {
 template<class T>
 void Traits::addAndBindTrait(UiElement *uiElement,
                              TraitSetterFun<T> setterFun,
-                             const pugi::xml_node &node) {
+                             pugi::xml_node node) {
   auto fun{getTraitFun<T>(*this, node)};
   auto &trait{addTrait<T>(uiElement->get_name() + "." + node.name(),
                           std::move(fun))};
