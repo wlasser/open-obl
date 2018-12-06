@@ -4,6 +4,7 @@
 #include "gui/traits.hpp"
 #include "gui/trait_selector.hpp"
 #include "settings.hpp"
+#include "test_ui_element.hpp"
 #include <catch2/catch.hpp>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
@@ -378,4 +379,56 @@ TEST_CASE("can add traits with dependencies to Traits", "[gui]") {
   REQUIRE(t1.invoke() == 5);
   REQUIRE(t2.invoke() == 15);
   REQUIRE(t3.invoke() == "f");
+}
+
+TEST_CASE("can bind traits to UiElements using Traits", "[gui]") {
+  // The scenario here is somewhat artificial because a trait depends on the
+  // uiElement directly, instead of going through a user trait interface.
+  gui::TestUiElement uiElement{};
+  uiElement.set_name("test");
+
+  gui::Traits traits{};
+
+  // t1 is an 'output' depending on the visible state of uiElement. This is for
+  // dependency checking, it doesn't mirror normal usage. Note that t1 does not
+  // have any implicit dependencies, since it calls getArea() directly instead
+  // of invoking a trait.
+  gui::TraitFun<int> t1Fun([&uiElement]() -> int {
+    return uiElement.getArea();
+  });
+  t1Fun.addDependency("test.width");
+  t1Fun.addDependency("test.height");
+  t1Fun.addDependency("test.user0");
+  auto &t1{traits.addTrait<int>("t1", std::move(t1Fun))};
+
+  int width{10};
+  gui::TraitFun<int> widthFun{[&width]() -> int { return width; }};
+  auto &tWidth{traits.addTrait<int>("test.width", std::move(widthFun))};
+  tWidth.bind(&uiElement, &gui::UiElement::set_width);
+
+  auto &tHeight{traits.addTrait<int>("test.height", 10)};
+  tHeight.bind(&uiElement, &gui::UiElement::set_height);
+
+  int user0{1};
+  gui::TraitFun<int> user0Fun{[&user0]() -> int { return user0; }};
+  auto &tUser0{traits.addTrait<int>("test.user0", std::move(user0Fun))};
+  tUser0.bind(&uiElement, [](gui::UiElement *uiElement, int value) {
+    uiElement->set_user(0, value);
+  });
+
+  traits.addTraitDependencies();
+
+  traits.update();
+  REQUIRE(t1.invoke() == 100);
+
+  width = 5;
+  REQUIRE(t1.invoke() == 100);
+  traits.update();
+  REQUIRE(t1.invoke() == 50);
+
+  user0 = 10;
+  width = 2;
+  REQUIRE(t1.invoke() == 50);
+  traits.update();
+  REQUIRE(t1.invoke() == 200);
 }

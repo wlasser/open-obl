@@ -131,18 +131,10 @@ class UserTraitInterface {
 TraitTypeId userTraitType(int index) const override { \
   return interface.userTraitType(index); \
 } \
-void set_user(int index, int value) override { \
-  return interface.set_user(index, value); \
+void set_user(int index, gui::UiElement::UserValue value) override { \
+  return std::visit([this, index](auto value) { \
+    interface.set_user(index, value); }, value); \
 } \
-void set_user(int index, float value) override { \
-  return interface.set_user(index, value); \
-} \
-void set_user(int index, bool value) override { \
-  return interface.set_user(index, value); \
-} \
-void set_user(int index, std::string value) override { \
-  return interface.set_user(index, value); \
-}
 
 /// Represents a function used to set/compute the value of the dynamic
 /// representative of a trait. This needs to keep track of the names of its

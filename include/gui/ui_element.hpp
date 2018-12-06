@@ -4,6 +4,7 @@
 #include "gui/trait.hpp"
 #include <optional>
 #include <string>
+#include <variant>
 
 namespace gui {
 
@@ -40,24 +41,12 @@ class UiElement {
     return TraitTypeId::Unimplemented;
   }
 
-  /// Override these to set the user trait with the given index, doing nothing
-  /// if the particular `{index, value}` combination is not implemented or
-  /// invalid. I am not happy with this method of specifying the user trait
-  /// interface as it artificially groups traits into types, and requires that
-  /// every index be considered multiple times. If the ui element has `n` user
-  /// traits then ideally one would write `n` functions which took only the type
-  /// they wanted. Doing this with function templates prevents the functions
-  /// from being virtual and causes problems with detecting the defined
-  /// functions. Doing this with runtime polymorphism means picking some upper
-  /// bound `N` on the number of user traits and defining `4N` functions
-  /// (one for each type), then overloading only the desired ones in the base.
-  /// Moreover, translating the runtime index into a function would require a
-  /// big switch. Maybe this is a good idea, but `N` needs to be at least 26 and
-  /// writing 104 functions and a 26 case switch didn't seem worth the effort.
-  virtual void set_user(int index, int value) {}
-  virtual void set_user(int index, float value) {}
-  virtual void set_user(int index, bool value) {}
-  virtual void set_user(int index, std::string value) {}
+  using UserValue = std::variant<int, float, bool, std::string>;
+
+  /// Override this to set the user trait with the given index, doing nothing
+  /// if the particular `{index, value}` combination is unimplemented or
+  /// invalid.
+  virtual void set_user(int index, UserValue value) {}
 
   /// Every UiElement is required to have a name which identifies it uniquely in
   /// the scope of the surrounding menu, or if the UiElement is a menu, then in
