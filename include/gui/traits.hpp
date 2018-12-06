@@ -76,51 +76,25 @@ class Traits {
   /// \throws std::runtime_error if no trait exists with the given `name`, or if
   ///                            a trait does exist with that `name` but its
   ///                            underlying type is not `T`.
-  template<class T> const Trait<T> &getTrait(const std::string &name) const {
-    const auto index{mIndices.find(name)};
-    if (index == mIndices.end()) {
-      throw std::runtime_error("No such trait");
-    }
-    const auto &vertex{mGraph[index->second]};
-    if (!vertex) {
-      throw std::runtime_error("nullptr vertex");
-    }
-    if (std::holds_alternative<Trait<T>>(*vertex)) {
-      return std::get<Trait<T>>(*vertex);
-    } else {
-      throw std::runtime_error("Incorrect trait type");
-    }
-  }
+  template<class T> const Trait<T> &getTrait(const std::string &name) const;
 
   /// Construct a new trait with the given name by forwarding the `args` to the
   /// `Trait` constructor and adding it to the dependency graph.
   /// \returns a reference to the added trait.
   /// \remark No edges are created.
   template<class T, class ...Args>
-  Trait<T> &addTrait(const std::string &name, Args &&... args) {
-    mSorted = false;
-    const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
-        Trait<T>{name, std::forward<Args>(args)...}), mGraph)};
-    mIndices[name] = index;
-    return std::get<Trait<T>>(*mGraph[index]);
-  }
+  Trait<T> &addTrait(const std::string &name, Args &&... args);
 
   /// Add an already constructed trait to the dependency graph.
   /// \returns a reference to the added trait.
-  template<class T> Trait<T> &addTrait(Trait<T> &&trait) {
-    mSorted = false;
-    const auto index{boost::add_vertex(std::make_shared<TraitVariant>(trait),
-                                       mGraph)};
-    mIndices[trait.getName()] = index;
-    return std::get<Trait<T>>(*mGraph[index]);
-  }
+  template<class T> Trait<T> &addTrait(Trait<T> &&trait);
 
   /// Construct a `Trait` from the `node` and bind it to the `uiElement` with
   /// the `setterFun`, as in `Trait::bind()`.
   /// The XML `node` should describe the trait directly, such as `<x>100</x>`.
-  template<class T>
-  void addAndBindTrait(UiElement *uiElement, TraitSetterFun<T> setterFun,
-                       pugi::xml_node node);
+  template<class T> void addAndBindTrait(UiElement *uiElement,
+                                         TraitSetterFun<T> setterFun,
+                                         pugi::xml_node node);
 
   /// If the given XML `node` corresponds to an implementation trait, then bind
   /// it to the given `uiElement` and return `true`, otherwise return `false`.
@@ -320,8 +294,28 @@ TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
   }
 }
 
-template<class T>
-void Traits::addTrait(std::optional<Trait<T>> trait) {
+//===----------------------------------------------------------------------===//
+// Traits member function template implementations
+//===----------------------------------------------------------------------===//
+
+template<class T> const Trait<T> &
+Traits::getTrait(const std::string &name) const {
+  const auto index{mIndices.find(name)};
+  if (index == mIndices.end()) {
+    throw std::runtime_error("No such trait");
+  }
+  const auto &vertex{mGraph[index->second]};
+  if (!vertex) {
+    throw std::runtime_error("nullptr vertex");
+  }
+  if (std::holds_alternative<Trait<T>>(*vertex)) {
+    return std::get<Trait<T>>(*vertex);
+  } else {
+    throw std::runtime_error("Incorrect trait type");
+  }
+}
+
+template<class T> void Traits::addTrait(std::optional<Trait<T>> trait) {
   if (!trait) return;
   const auto it{mIndices.find(trait->getName())};
   if (it != mIndices.end()) {
@@ -330,10 +324,26 @@ void Traits::addTrait(std::optional<Trait<T>> trait) {
   (void) addTrait(std::move(*trait));
 }
 
-template<class T>
-void Traits::addAndBindTrait(UiElement *uiElement,
-                             TraitSetterFun<T> setterFun,
-                             pugi::xml_node node) {
+template<class T, class ...Args>
+Trait<T> &Traits::addTrait(const std::string &name, Args &&... args) {
+  mSorted = false;
+  const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
+      Trait<T>{name, std::forward<Args>(args)...}), mGraph)};
+  mIndices[name] = index;
+  return std::get<Trait<T>>(*mGraph[index]);
+}
+
+template<class T> Trait<T> &Traits::addTrait(Trait<T> &&trait) {
+  mSorted = false;
+  const auto index{boost::add_vertex(std::make_shared<TraitVariant>(trait),
+                                     mGraph)};
+  mIndices[trait.getName()] = index;
+  return std::get<Trait<T>>(*mGraph[index]);
+}
+
+template<class T> void Traits::addAndBindTrait(UiElement *uiElement,
+                                               TraitSetterFun<T> setterFun,
+                                               pugi::xml_node node) {
   auto fun{getTraitFun<T>(*this, node)};
   auto &trait{addTrait<T>(uiElement->get_name() + "." + node.name(),
                           std::move(fun))};
