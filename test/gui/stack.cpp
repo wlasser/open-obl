@@ -3,6 +3,8 @@
 #include "gui/stack/program.hpp"
 #include "gui/stack/types.hpp"
 #include <catch2/catch.hpp>
+#include <pugixml.hpp>
+#include <sstream>
 #include <string>
 #include <variant>
 
@@ -68,10 +70,23 @@ TEST_CASE("parseValueType deduces float", "[gui][gui/stack]") {
 
 TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{10},
-      stack::push_t{15}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{10},
+        stack::push_t{15}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>10</copy>
+<copy>15</copy>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<int>(ret));
@@ -80,17 +95,33 @@ TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{5},
-      stack::push_t{10},
-      stack::add_t{},
-      stack::push_t{3},
-      stack::div_t{},
-      stack::push_t{2},
-      stack::mul_t{},
-      stack::push_t{3},
-      stack::mod_t{}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{5},
+        stack::push_t{10},
+        stack::add_t{},
+        stack::push_t{3},
+        stack::div_t{},
+        stack::push_t{2},
+        stack::mul_t{},
+        stack::push_t{3},
+        stack::mod_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>5</copy>
+<add>10</add>
+<div>3</div>
+<mul>2</mul>
+<mod>3</mod>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<int>(ret));
@@ -100,15 +131,30 @@ TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
 TEST_CASE("can perform floating point arithmetic on the stack",
           "[gui][gui/stack") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{3.1f},
-      stack::push_t{6.9f},
-      stack::add_t{},
-      stack::push_t{2.5f},
-      stack::div_t{},
-      stack::push_t{0.7f},
-      stack::mul_t{}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{3.1f},
+        stack::push_t{6.9f},
+        stack::add_t{},
+        stack::push_t{2.5f},
+        stack::div_t{},
+        stack::push_t{0.7f},
+        stack::mul_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>3.1</copy>
+<add>6.9</add>
+<div>2.5</div>
+<mul>0.7</mul>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<float>(ret));
@@ -135,33 +181,68 @@ TEST_CASE("can nop and retain stack state", "[gui][gui/stack]") {
 
 TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
   stack::Program p_not_coprime{};
-  p_not_coprime.instructions = std::vector<stack::Instruction>{
-      stack::push_t{100},
-      stack::push_t{128},
-      stack::gcd_t{}
-  };
+  stack::Program p_coprime{};
+  stack::Program p_lcm{};
+
+  SECTION("hardcoded program") {
+    p_not_coprime.instructions = std::vector<stack::Instruction>{
+        stack::push_t{100},
+        stack::push_t{128},
+        stack::gcd_t{}
+    };
+
+    p_coprime.instructions = std::vector<stack::Instruction>{
+        stack::push_t{79},
+        stack::push_t{25},
+        stack::gcd_t{}
+    };
+
+    p_lcm.instructions = std::vector<stack::Instruction>{
+        stack::push_t{100},
+        stack::push_t{128},
+        stack::lcm_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    {
+      std::istringstream is{R"xml(
+<copy>100</copy>
+<gcd>128</gcd>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      p_not_coprime = stack::compile(doc);
+    }
+
+    {
+      std::istringstream is{R"xml(
+<copy>79</copy>
+<gcd>25</gcd>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      p_coprime = stack::compile(doc);
+    }
+
+    {
+      std::istringstream is{R"xml(
+<copy>100</copy>
+<lcm>128</lcm>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      p_lcm = stack::compile(doc);
+    }
+  }
 
   auto r_not_coprime{p_not_coprime()};
   REQUIRE(std::holds_alternative<int>(r_not_coprime));
   REQUIRE(std::get<int>(r_not_coprime) == 4);
 
-  stack::Program p_coprime{};
-  p_coprime.instructions = std::vector<stack::Instruction>{
-      stack::push_t{79},
-      stack::push_t{25},
-      stack::gcd_t{}
-  };
-
   auto r_coprime{p_coprime()};
   REQUIRE(std::holds_alternative<int>(r_coprime));
   REQUIRE(std::get<int>(r_coprime) == 1);
-
-  stack::Program p_lcm{};
-  p_lcm.instructions = std::vector<stack::Instruction>{
-      stack::push_t{100},
-      stack::push_t{128},
-      stack::lcm_t{}
-  };
 
   auto r_lcm{p_lcm()};
   REQUIRE(std::holds_alternative<int>(r_lcm));
@@ -170,13 +251,28 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can compute floor and ceiling on the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{7.5f},
-      stack::push_t{0.0f},
-      stack::floor_t{},
-      stack::push_t{6.7f},
-      stack::ceil_t{}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{7.5f},
+        stack::push_t{0.0f},
+        stack::floor_t{},
+        stack::push_t{6.7f},
+        stack::ceil_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>7.5</copy>
+<copy>0.0</copy>
+<floor></floor>
+<ceil>6.7</ceil>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<float>(ret));
@@ -185,22 +281,49 @@ TEST_CASE("can compute floor and ceiling on the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can compute min and max on the stack", "[gui][gui/stack]") {
   stack::Program p_min{};
-  p_min.instructions = std::vector<stack::Instruction>{
-      stack::push_t{6.5f},
-      stack::push_t{3.9f},
-      stack::min_t{}
-  };
+  stack::Program p_max{};
+
+  SECTION("hardcoded program") {
+    p_min.instructions = std::vector<stack::Instruction>{
+        stack::push_t{6.5f},
+        stack::push_t{3.9f},
+        stack::min_t{}
+    };
+
+    p_max.instructions = std::vector<stack::Instruction>{
+        stack::push_t{6.5f},
+        stack::push_t{3.9f},
+        stack::max_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    {
+      std::istringstream is{R"xml(
+<copy>6.5</copy>
+<copy>3.9</copy>
+<min></min>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      p_min = stack::compile(doc);
+    }
+
+    {
+      std::istringstream is{R"xml(
+<copy>6.5</copy>
+<copy>3.9</copy>
+<max></max>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      p_max = stack::compile(doc);
+    }
+  }
 
   auto r_min{p_min()};
   REQUIRE(std::holds_alternative<float>(r_min));
   REQUIRE(std::get<float>(r_min) == 3.9f);
-
-  stack::Program p_max{};
-  p_max.instructions = std::vector<stack::Instruction>{
-      stack::push_t{6.5f},
-      stack::push_t{3.9f},
-      stack::max_t{}
-  };
 
   auto r_max{p_max()};
   REQUIRE(std::holds_alternative<float>(r_max));
@@ -209,11 +332,24 @@ TEST_CASE("can compute min and max on the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can compute abs on the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{-7.5f},
-      stack::push_t{1.0f},
-      stack::abs_t{}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{-7.5f},
+        stack::push_t{1.0f},
+        stack::abs_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>-7.5</copy>
+<abs>1.0</abs>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<float>(ret));
@@ -222,24 +358,77 @@ TEST_CASE("can compute abs on the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{3},
-      stack::push_t{5},
-      stack::lt_t{},
-      stack::push_t{"world"},
-      stack::push_t{"hello"},
-      stack::gt_t{},
-      stack::push_t{3.1f},
-      stack::push_t{3.2f},
-      stack::eq_t{},
-      stack::not_t{},
-      stack::push_t{5},
-      stack::push_t{3},
-      stack::neq_t{},
-      stack::and_t{},
-      stack::and_t{},
-      stack::and_t{}
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{3},
+        stack::push_t{5},
+        stack::lt_t{},
+        stack::push_t{"world"},
+        stack::push_t{"hello"},
+        stack::gt_t{},
+        stack::push_t{3.1f},
+        stack::push_t{3.2f},
+        stack::eq_t{},
+        stack::not_t{},
+        stack::push_t{5},
+        stack::push_t{3},
+        stack::neq_t{},
+        stack::and_t{},
+        stack::and_t{},
+        stack::and_t{}
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<copy>3</copy>
+<lt>5</lt>
+<copy>world</copy>
+<copy>hello</copy>
+<gt></gt>
+<copy>3.1</copy>
+<eq>3.2</eq>
+<not></not>
+<copy>5</copy>
+<copy>3</copy>
+<neq/>
+<and/>
+<and/>
+<and/>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
+
+  SECTION("from nested XML") {
+    std::istringstream is{R"xml(
+<copy>3</copy>
+<lt>5</lt>
+
+<and>
+  <copy>world</copy>
+  <gt>hello</gt>
+
+  <and>
+    <not>
+      <copy>3.1</copy>
+      <eq>3.2</eq>
+    </not>
+
+    <and>
+      <copy>5</copy>
+      <neq>3</neq>
+    </and>
+  </and>
+
+</and>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<bool>(ret));
@@ -247,28 +436,54 @@ TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
 }
 
 TEST_CASE("can perform logical operations on the stack", "[gui][gui/stack]") {
-  {
-
+  SECTION("binary operators") {
     stack::Program program{};
-    program.instructions = std::vector<stack::Instruction>{
-        stack::push_t{true},
-        stack::push_t{false},
-        stack::or_t{},
-        stack::push_t{true},
-        stack::and_t{}
-    };
+
+    SECTION("hardcoded program") {
+      program.instructions = std::vector<stack::Instruction>{
+          stack::push_t{true},
+          stack::push_t{false},
+          stack::or_t{},
+          stack::push_t{true},
+          stack::and_t{}
+      };
+    }
+
+    SECTION("from XML") {
+      std::istringstream is{R"xml(
+<copy>&true;</copy>
+<copy>&false;</copy>
+<or/>
+<and>&true;</and>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      program = stack::compile(doc);
+    }
 
     auto ret{program()};
     REQUIRE(std::holds_alternative<bool>(ret));
     REQUIRE(std::get<bool>(ret));
   }
 
-  {
+  SECTION("unary operators") {
     stack::Program program{};
-    program.instructions = std::vector<stack::Instruction>{
-        stack::push_t{false},
-        stack::not_t{}
-    };
+
+    SECTION("hardcoded program") {
+      program.instructions = std::vector<stack::Instruction>{
+          stack::push_t{false},
+          stack::not_t{}
+      };
+    }
+
+    SECTION("from XML") {
+      std::istringstream is{R"xml(
+<not>&false;</not>
+      )xml"};
+      pugi::xml_document doc{};
+      REQUIRE(doc.load(is));
+      program = stack::compile(doc);
+    }
 
     auto ret{program()};
     REQUIRE(std::holds_alternative<bool>(ret));
@@ -278,20 +493,46 @@ TEST_CASE("can perform logical operations on the stack", "[gui][gui/stack]") {
 
 TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
   stack::Program program{};
-  program.instructions = std::vector<stack::Instruction>{
-      stack::push_t{0},    // Zero buffer
-      stack::push_t{0},
-      stack::push_t{3},    // Desired final value
-      stack::push_t{5},
-      stack::push_t{5},
-      stack::eq_t{},       // == true
-      stack::onlyif_t{},   // Should just be '3'
-      stack::push_t{7},    // Want this to be discarded
-      stack::push_t{5},
-      stack::push_t{5},
-      stack::eq_t{},       // == true
-      stack::onlyifnot_t{} // Should discard the 'true' and '7'
-  };
+
+  SECTION("hardcoded program") {
+    program.instructions = std::vector<stack::Instruction>{
+        stack::push_t{0},    // Zero buffer
+        stack::push_t{0},
+        stack::push_t{3},    // Desired final value
+        stack::push_t{5},
+        stack::push_t{5},
+        stack::eq_t{},       // == true
+        stack::onlyif_t{},   // Should just be '3'
+        stack::push_t{7},    // Want this to be discarded
+        stack::push_t{5},
+        stack::push_t{5},
+        stack::eq_t{},       // == true
+        stack::onlyifnot_t{} // Should discard the 'true' and '7'
+    };
+  }
+
+  SECTION("from XML") {
+    std::istringstream is{R"xml(
+<!-- Zero buffer -->
+<copy>0</copy>
+<copy>0</copy>
+
+<copy>3</copy>
+<onlyif>
+  <copy>5</copy>
+  <eq>5</eq>
+</onlyif>
+
+<copy>7</copy>
+<onlyifnot>
+  <copy>5</copy>
+  <eq>5</eq>
+</onlyifnot>
+    )xml"};
+    pugi::xml_document doc{};
+    REQUIRE(doc.load(is));
+    program = stack::compile(doc);
+  }
 
   auto ret{program()};
   REQUIRE(std::holds_alternative<int>(ret));
