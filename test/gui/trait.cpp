@@ -432,3 +432,35 @@ TEST_CASE("can bind traits to UiElements using Traits", "[gui]") {
   traits.update();
   REQUIRE(t1.invoke() == 200);
 }
+
+TEST_CASE("can create traits from XML and bind them", "[gui]") {
+  std::istringstream is{R"xml(
+<rect name="test">
+  <width>10</width>
+  <height>5</height>
+  <user0>1</user0>
+</rect>
+    )xml"};
+
+  pugi::xml_document doc;
+  REQUIRE(doc.load(is));
+  auto rectNode{doc.first_child()};
+  auto widthNode{rectNode.first_child()};
+  auto heightNode{widthNode.next_sibling()};
+  auto user0Node{heightNode.next_sibling()};
+
+  {
+    gui::TestUiElement uiElement{};
+    uiElement.set_name("test");
+
+    gui::Traits traits{};
+
+    REQUIRE_FALSE(traits.addAndBindUserTrait(widthNode, &uiElement));
+    REQUIRE(traits.addAndBindImplementationTrait(widthNode, &uiElement));
+    REQUIRE(traits.addAndBindImplementationTrait(heightNode, &uiElement));
+    REQUIRE(traits.addAndBindUserTrait(user0Node, &uiElement));
+    traits.addTraitDependencies();
+    traits.update();
+    REQUIRE(uiElement.getArea() == 50);
+  }
+}
