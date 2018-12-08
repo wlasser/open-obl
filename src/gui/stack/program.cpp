@@ -43,7 +43,7 @@ Program &Program::operator=(Program &&other) noexcept {
   return *this;
 }
 
-Program compile(pugi::xml_node node) {
+Program compile(pugi::xml_node node, gui::Traits *traits) {
   Program program{};
 
   auto addInstr = [&program](auto &&instr) {
@@ -53,11 +53,14 @@ Program compile(pugi::xml_node node) {
     program.dependencies.emplace_back(std::move(dep));
   };
 
-  stack::postOrderDFS(node, [&addInstr, &addDep](pugi::xml_node child) {
+  stack::postOrderDFS(node, [&](pugi::xml_node child) {
     // If 'src' and 'trait' attributes are given, then a push_t is performed
     // with the selected trait before the operation.
     if (const auto srcOpt{gui::resolveTrait(child)}; srcOpt) {
-      push_t instr{stack::TraitName{*srcOpt}};
+      if (!traits) {
+        throw std::runtime_error("No Traits given but XML requires trait lookup");
+      }
+      push_t instr{stack::TraitName{*srcOpt, traits}};
       addInstr(std::move(instr));
       addDep(*srcOpt);
     }
@@ -103,7 +106,7 @@ Program compile(pugi::xml_node node) {
   return program;
 }
 
-ValueType Program::operator()() {
+ValueType Program::operator()() const {
   std::unique_lock lock{lastReturnMutex};
   Stack stack{};
   if (lastReturn) stack.push_back(*lastReturn);

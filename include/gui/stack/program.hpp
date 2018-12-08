@@ -3,6 +3,7 @@
 
 #include "gui/stack/instructions.hpp"
 #include "gui/stack/types.hpp"
+#include "gui/traits.hpp"
 #include <pugixml.hpp>
 #include <cstdint>
 #include <mutex>
@@ -107,7 +108,7 @@ class Program {
   Program(Program &&other) noexcept;
   Program &operator=(Program &&other) noexcept;
 
-  ValueType operator()();
+  ValueType operator()() const;
 };
 
 inline bool operator==(const Program &lhs, const Program &rhs) {
@@ -127,9 +128,7 @@ template<class T> void postOrderDFS(pugi::xml_node node, T &&visitor) {
   visitor(node);
 }
 
-Program compile(pugi::xml_node node);
-
-template<class T> T run(const Program &program);
+Program compile(pugi::xml_node node, gui::Traits *traits = nullptr);
 
 } // namespace stack
 

@@ -22,12 +22,13 @@ namespace gui {
 /// Encapsulate the dynamic representation of all traits associated with a menu
 /// and its children.
 class Traits {
- private:
+ public:
   /// Type of the nodes in the dependency graph, represents a Trait of any type.
   using TraitVariant = std::variant<Trait<int>,
                                     Trait<float>,
                                     Trait<std::string>,
                                     Trait<bool>>;
+ private:
   /// Vertex properties are required to be default constructible and copy
   /// constructible so we have to store a shared ownership pointer.
   using TraitVertex = std::shared_ptr<TraitVariant>;
@@ -77,6 +78,12 @@ class Traits {
   std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
 
  public:
+  /// Return a reference to the dynamic trait with the fully-qualified `name`.
+  /// Use this method when the type of the trait is not known ahead of time,
+  /// prefer getTrait(const std::string &) when it is.
+  /// \throws std::runtime_error if no trait exists with the given `name`.
+  const TraitVariant &getTraitVariant(const std::string &name) const;
+
   /// Return a reference to the dynamic trait with fully-qualified `name`.
   /// \throws std::runtime_error if no trait exists with the given `name`, or if
   ///                            a trait does exist with that `name` but its
@@ -308,16 +315,9 @@ TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
 
 template<class T> const Trait<T> &
 Traits::getTrait(const std::string &name) const {
-  const auto index{mIndices.find(name)};
-  if (index == mIndices.end()) {
-    throw std::runtime_error("No such trait");
-  }
-  const auto &vertex{mGraph[index->second]};
-  if (!vertex) {
-    throw std::runtime_error("nullptr vertex");
-  }
-  if (std::holds_alternative<Trait<T>>(*vertex)) {
-    return std::get<Trait<T>>(*vertex);
+  const auto &var{getTraitVariant(name)};
+  if (std::holds_alternative<Trait<T>>(var)) {
+    return std::get<Trait<T>>(var);
   } else {
     throw std::runtime_error("Incorrect trait type");
   }

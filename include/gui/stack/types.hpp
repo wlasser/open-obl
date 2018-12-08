@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_STACK_TYPES_HPP
 
 #include "meta.hpp"
+#include "gui/traits.hpp"
 #include <string>
 #include <variant>
 #include <vector>
@@ -9,7 +10,13 @@
 namespace gui::stack {
 
 struct TraitName {
+  /// Fully-qualified name of the trait
   std::string str{};
+  /// gui::Traits context the trait is expected to be in upon execution.
+  gui::Traits *traits{};
+
+  TraitName(std::string name, gui::Traits *traits)
+      : str(name), traits(traits) {}
 };
 
 inline bool operator==(const TraitName &a, const TraitName &b) noexcept {

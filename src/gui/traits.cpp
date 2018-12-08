@@ -96,6 +96,19 @@ Traits::getDependencies(const TraitVertex &vertex) const {
   }
 }
 
+const Traits::TraitVariant &
+Traits::getTraitVariant(const std::string &name) const {
+  const auto index{mIndices.find(name)};
+  if (index == mIndices.end()) {
+    throw std::runtime_error("No such trait");
+  }
+  const auto &vertex{mGraph[index->second]};
+  if (!vertex) {
+    throw std::runtime_error("nullptr vertex");
+  }
+  return *vertex;
+}
+
 void Traits::addImplementationElementTraits() {
   const std::string screenPrefix{gui::ScreenElement::getPrefix()};
 

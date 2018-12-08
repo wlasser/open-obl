@@ -69,15 +69,17 @@ struct push_t {
   ArgumentType arg_t;
   void operator()(Stack &stack) const {
     std::visit(overloaded{
-        [&stack](const TraitName &traitName) {
-          const std::string_view name{traitName.str};
+        [&stack](const TraitName &trait) {
           // Trailing underscore implies a switch statement using the working
           // value, otherwise replace the working value.
-          if (name.back() == '_') {
+          if (trait.str.back() == '_') {
             const auto val{stack.back()};
-            const auto nameCase{appendSwitchCase(std::string{name}, val)};
+            const auto nameCase{appendSwitchCase(trait.str, val)};
           }
-          // TODO: Get T for this trait and push onto stack with getTrait<T>
+          const auto &traitVar{trait.traits->getTraitVariant(trait.str)};
+          stack.emplace_back(std::visit([](const auto &t) -> ValueType {
+            return t.invoke();
+          }, traitVar));
         },
         [&stack](int i) { stack.emplace_back(i); },
         [&stack](float f) { stack.emplace_back(f); },
