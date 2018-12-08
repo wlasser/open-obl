@@ -183,18 +183,15 @@ MenuType parseXmlEntity(const std::string &entity) {
   else throw std::runtime_error("Invalid entity");
 }
 
-template<>
-MenuType getXmlValue(const pugi::xml_node &node) {
+template<> MenuType getXmlValue(pugi::xml_node node) {
   return parseXmlEntity<MenuType>(getXmlValue<std::string>(node));
 }
 
-template<>
-MenuType getXmlChildValue(const pugi::xml_node &node, const char *name) {
+template<> MenuType getXmlChildValue(pugi::xml_node node, const char *name) {
   return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node, name));
 }
 
-template<>
-MenuType getXmlChildValue(const pugi::xml_node &node) {
+template<> MenuType getXmlChildValue(pugi::xml_node node) {
   return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node));
 }
 

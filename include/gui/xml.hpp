@@ -22,44 +22,30 @@ template<> bool parseXmlEntity(const std::string &entity);
 /// whitespace and convert to the requested type.
 ///@{
 
-template<class T> T getXmlValue(const pugi::xml_node &node) = delete;
-
+template<class T> T getXmlValue(pugi::xml_node node) = delete;
 template<class T>
-T getXmlChildValue(const pugi::xml_node &node, const char *name) = delete;
-
-template<class T> T getXmlChildValue(const pugi::xml_node &node) = delete;
+T getXmlChildValue(pugi::xml_node node, const char *name) = delete;
+template<class T> T getXmlChildValue(pugi::xml_node node) = delete;
 
 // int specializations
-template<> int getXmlValue(const pugi::xml_node &node);
-
-template<>
-int getXmlChildValue(const pugi::xml_node &node, const char *name);
-
-template<> int getXmlChildValue(const pugi::xml_node &node);
+template<> int getXmlValue(pugi::xml_node node);
+template<> int getXmlChildValue(pugi::xml_node node, const char *name);
+template<> int getXmlChildValue(pugi::xml_node node);
 
 // float specializations
-template<> float getXmlValue(const pugi::xml_node &node);
-
-template<>
-float getXmlChildValue(const pugi::xml_node &node, const char *name);
-
-template<> float getXmlChildValue(const pugi::xml_node &node);
+template<> float getXmlValue(pugi::xml_node node);
+template<> float getXmlChildValue(pugi::xml_node node, const char *name);
+template<> float getXmlChildValue(pugi::xml_node node);
 
 // bool specialization
-template<> bool getXmlValue(const pugi::xml_node &node);
-
-template<>
-bool getXmlChildValue(const pugi::xml_node &node, const char *name);
-
-template<> bool getXmlChildValue(const pugi::xml_node &node);
+template<> bool getXmlValue(pugi::xml_node node);
+template<> bool getXmlChildValue(pugi::xml_node node, const char *name);
+template<> bool getXmlChildValue(pugi::xml_node node);
 
 // std::string specialization
-template<> std::string getXmlValue(const pugi::xml_node &node);
-
-template<>
-std::string getXmlChildValue(const pugi::xml_node &node, const char *name);
-
-template<> std::string getXmlChildValue(const pugi::xml_node &node);
+template<> std::string getXmlValue(pugi::xml_node node);
+template<> std::string getXmlChildValue(pugi::xml_node node, const char *name);
+template<> std::string getXmlChildValue(pugi::xml_node node);
 ///@}
 
 /// Find the node closest to `node` that matches the predicate `p`.

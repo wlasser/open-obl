@@ -185,13 +185,9 @@ void parseMenu(std::istream &is);
 
 /// \name MenuType specializations
 ///@{
-template<> MenuType getXmlValue(const pugi::xml_node &node);
-
-template<>
-MenuType getXmlChildValue(const pugi::xml_node &node, const char *name);
-
-template<> MenuType getXmlChildValue(const pugi::xml_node &node);
-
+template<> MenuType getXmlValue(pugi::xml_node node);
+template<> MenuType getXmlChildValue(pugi::xml_node node, const char *name);
+template<> MenuType getXmlChildValue(pugi::xml_node node);
 template<> MenuType parseXmlEntity(const std::string &entity);
 ///@}
 
