@@ -220,11 +220,16 @@ TEST_CASE("can use trait selectors", "[gui]") {
   <rect name="foo">
     <user1>Hello</user1>
     <x>0</x>
-    <y>30</y>
+    <y>
+      <copy src="bar" trait="x"/>
+    </y>
   </rect>
 
   <rect name="bar">
     <x>10</x>
+    <y>
+      <copy src="me()" trait="x"/>
+    </y>
   </rect>
 
   <rect name="baz">
@@ -239,30 +244,26 @@ TEST_CASE("can use trait selectors", "[gui]") {
 
   SECTION("can fully qualify names", "[gui]") {
     {
-      const auto set{doc.select_nodes("/menu")};
-      REQUIRE_FALSE(set.empty());
-      const auto node{set.first().node()};
+      const auto node{doc.select_node("/menu").node()};
+      REQUIRE(node);
       REQUIRE(gui::fullyQualifyName(node) == "Example");
     }
 
     {
-      const auto set{doc.select_nodes("/menu/rect[1]")};
-      REQUIRE_FALSE(set.empty());
-      const auto node{set.first().node()};
+      const auto node{doc.select_node("/menu/rect[1]").node()};
+      REQUIRE(node);
       REQUIRE(gui::fullyQualifyName(node) == "Example.foo");
     }
 
     {
-      const auto set{doc.select_nodes("/menu/rect[2]")};
-      REQUIRE_FALSE(set.empty());
-      const auto node{set.first().node()};
+      const auto node{doc.select_node("/menu/rect[2]").node()};
+      REQUIRE(node);
       REQUIRE(gui::fullyQualifyName(node) == "Example.bar");
     }
 
     {
-      const auto set{doc.select_nodes("/menu/rect[1]/x")};
-      REQUIRE_FALSE(set.empty());
-      const auto node{set.first().node()};
+      const auto node{doc.select_node("/menu/rect[1]/x").node()};
+      REQUIRE(node);
       REQUIRE(gui::fullyQualifyName(node).empty());
     }
   }
@@ -276,18 +277,21 @@ TEST_CASE("can use trait selectors", "[gui]") {
 
   SECTION("can use the me() selector", "[gui]") {
     const auto rectNode{doc.first_child()};
-    const auto set{doc.select_nodes("/menu/rect[2]")};
-    REQUIRE_FALSE(set.empty());
-    const auto barNode{set.first().node()};
-
+    REQUIRE(rectNode);
     REQUIRE(gui::invokeMeSelector(rectNode) == "Example");
+
+    const auto barNode{doc.select_node("/menu/rect[2]").node()};
+    REQUIRE(barNode);
     REQUIRE(gui::invokeMeSelector(barNode) == "Example.bar");
+
+    const auto copyNode{doc.select_node("/menu/rect[2]/y/copy").node()};
+    REQUIRE(copyNode);
+    REQUIRE(gui::resolveTrait(copyNode) == "Example.bar.x");
   }
 
   SECTION("can use the parent() selector", "[gui]") {
-    const auto set{doc.select_nodes("/menu/rect[2]")};
-    REQUIRE_FALSE(set.empty());
-    const auto barNode{set.first().node()};
+    const auto barNode{doc.select_node("/menu/rect[2]").node()};
+    REQUIRE(barNode);
 
     REQUIRE(gui::invokeParentSelector(doc).empty());
     REQUIRE(gui::invokeParentSelector(doc.first_child()).empty());
@@ -305,23 +309,26 @@ TEST_CASE("can use trait selectors", "[gui]") {
   }
 
   SECTION("can use the sibling() selector", "[gui]") {
-    const auto fooSet{doc.select_nodes("/menu/rect[1]")};
-    REQUIRE_FALSE(fooSet.empty());
-    const auto fooNode{fooSet.first().node()};
+    const auto fooNode{doc.select_node("/menu/rect[1]").node()};
+    REQUIRE(fooNode);
 
-    const auto barSet{doc.select_nodes("/menu/rect[2]")};
-    REQUIRE_FALSE(barSet.empty());
-    const auto barNode{barSet.first().node()};
+    const auto barNode{doc.select_node("/menu/rect[2]").node()};
+    REQUIRE(barNode);
 
-    const auto quxSet{doc.select_nodes("/menu/rect[3]/rect[1]")};
-    REQUIRE_FALSE(quxSet.empty());
-    const auto quxNode{quxSet.first().node()};
+    const auto quxNode{doc.select_node("/menu/rect[3]/rect[1]").node()};
+    REQUIRE(quxNode);
 
     REQUIRE(gui::invokeSiblingSelector(barNode, {}) == "Example.foo");
     REQUIRE(gui::invokeSiblingSelector(fooNode, {}).empty());
     REQUIRE(gui::invokeSiblingSelector(barNode, "foo") == "Example.foo");
     REQUIRE(gui::invokeSiblingSelector(barNode, "bar").empty());
     REQUIRE(gui::invokeSiblingSelector(quxNode, {}).empty());
+  }
+
+  SECTION("can resolve src/trait pairs") {
+    const auto copyNode{doc.select_node("/menu/rect[1]/y/copy").node()};
+    REQUIRE(copyNode);
+    REQUIRE(gui::resolveTrait(copyNode) == "Example.bar.x");
   }
 }
 

@@ -1,5 +1,6 @@
 #include "gui/strings.hpp"
 #include "gui/trait_selector.hpp"
+#include "gui/xml.hpp"
 #include "settings.hpp"
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/join.hpp>
@@ -161,12 +162,24 @@ std::optional<std::string> resolveTrait(pugi::xml_node node) {
   if (!(srcAttr && traitAttr)) return std::nullopt;
 
   const std::string trait{traitAttr.value()};
-  if (const auto selector{tokenizeTraitSelector(srcAttr.value())}; selector) {
-    // node points to a trait and therefore has no non-operator children;
-    // need to go up another level to begin searching.
-    return invokeSelector(node.parent(), *selector) + "." + trait;
+  if (const auto
+        selector{gui::tokenizeTraitSelector(srcAttr.value())}; selector) {
+    // node is (most likely) an operator, but gui::invokeSelector expects to be
+    // given the containing element, so we need to go up the tree and find it.
+    for (; node && !node.attribute("name"); node = node.parent());
+    if (!node) return std::nullopt;
+    return gui::invokeSelector(node, *selector) + "." + trait;
   } else {
-    return std::string{srcAttr.value()} + "." + trait;
+    // src is unlikely to be fully-qualified, but by itself does not necessarily
+    // uniquely identify a uiElement. This happens in prefabs, which refer to
+    // uiElements within themselves and which could be included multiple times.
+    // If src is ambiguous then, the 'closest' matching uiElement to node should
+    // be chosen.
+    const std::string src{srcAttr.value()};
+    node = gui::findClosestNode(node, [&](pugi::xml_node n) {
+      return src == n.attribute("name").value();
+    });
+    return gui::fullyQualifyName(node) + "." + trait;
   }
 }
 

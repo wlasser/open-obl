@@ -88,9 +88,11 @@ std::string invokeStringsSelector();
 /// this.
 std::string invokeSelector(pugi::xml_node node, const TraitSelector &selector);
 
-/// If `node` has `src` and `trait` attributes then join them into a
-/// fully-qualified trait path, invoking `src` if it corresponds to a selector,
-/// otherwise return an empty optional.
+/// Return the fully-qualified path of the trait pointed to by the `src` and
+/// `trait` attributes of `node`, if any. If `src` corresponds to a selector,
+/// then it is invoked.
+/// \returns The fully-qualified path of the pointed to trait, or an empty
+///          optional if `node` is missing at least one of `src` and `trait`.
 std::optional<std::string> resolveTrait(pugi::xml_node node);
 
 } // namespace gui

@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_XML_HPP
 
 #include <pugixml.hpp>
+#include <set>
 #include <string>
 
 namespace gui {
@@ -60,6 +61,35 @@ std::string getXmlChildValue(const pugi::xml_node &node, const char *name);
 
 template<> std::string getXmlChildValue(const pugi::xml_node &node);
 ///@}
+
+/// Find the node closest to `node` that matches the predicate `p`.
+/// Specifically, find the node satisfying `p` that can be reached from `node`
+/// in the minimum number of edge traversals out of all nodes satisying `p`.
+/// `node` itself is included in the search space, so will be returned if it
+/// matches the predicate. This is effectively a pivot so that `node` becomes
+/// the root of the tree, followed by a breadth-first search.
+template<class Predicate>
+pugi::xml_node findClosestNode(pugi::xml_node node, Predicate &&p) {
+  // TODO: Optimize this. Can the predicate be checked during insertion instead?
+  std::set<pugi::xml_node> visited{};
+  std::set<pugi::xml_node> frontier{node};
+  for (unsigned int d{0};; ++d) {
+    std::set<pugi::xml_node> newFrontier{};
+    for (const auto &n : frontier) {
+      if (p(n)) return n;
+      if (auto parent{n.parent()}; parent) {
+        //C++20: if (!visited.contains(parent)) newFrontier.insert(parent);
+        if (visited.count(parent) == 0) newFrontier.insert(parent);
+      }
+      for (auto child : n.children()) {
+        //C++20: if (!visited.contains(child)) newFrontier.insert(child);
+        if (visited.count(child) == 0) newFrontier.insert(child);
+      }
+    }
+    frontier = std::move(newFrontier);
+    if (frontier.empty()) return pugi::xml_node{};
+  }
+}
 
 } // namespace gui
 
