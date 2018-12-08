@@ -65,9 +65,9 @@ invokeChildSelector(pugi::xml_node node, std::optional<std::string> arg) {
     // argument, but search from the last sibling to the first
     for (auto child : node.children() | boost::adaptors::reversed) {
       if (child.attribute("name") && *arg == child.attribute("name").value()) {
-        return fullyQualifyName(child);
+        return gui::fullyQualifyName(child);
       } else {
-        const auto childName{invokeChildSelector(child, arg)};
+        const auto childName{gui::invokeChildSelector(child, arg)};
         if (!childName.empty()) return childName;
       }
     }
@@ -77,7 +77,7 @@ invokeChildSelector(pugi::xml_node node, std::optional<std::string> arg) {
     // ensures that we are not returning a trait.
     for (auto child : node.children() | boost::adaptors::reversed) {
       if (child.attribute("name")) {
-        return fullyQualifyName(child);
+        return gui::fullyQualifyName(child);
       }
     }
     // No valid children, so return nothing
@@ -91,11 +91,11 @@ std::string invokeLastSelector(pugi::xml_node node) {
 }
 
 std::string invokeMeSelector(pugi::xml_node node) {
-  return fullyQualifyName(node);
+  return gui::fullyQualifyName(node);
 }
 
 std::string invokeParentSelector(pugi::xml_node node) {
-  return fullyQualifyName(node.parent());
+  return gui::fullyQualifyName(node.parent());
 }
 
 std::string invokeScreenSelector() {
@@ -111,7 +111,7 @@ invokeSiblingSelector(pugi::xml_node node, std::optional<std::string> arg) {
     if (auto child = parent.find_child_by_attribute("name", arg->c_str())) {
       // sibling(me()) == "" contractually
       if (*arg == node.attribute("name").value()) return "";
-      else return fullyQualifyName(child);
+      else return gui::fullyQualifyName(child);
     }
     return "";
   } else {
@@ -119,7 +119,7 @@ invokeSiblingSelector(pugi::xml_node node, std::optional<std::string> arg) {
     // find the first non-trait.
     for (auto sibling = node.previous_sibling(); sibling;
          sibling = sibling.previous_sibling()) {
-      if (sibling.attribute("name")) return fullyQualifyName(sibling);
+      if (sibling.attribute("name")) return gui::fullyQualifyName(sibling);
     }
   }
   return "";
@@ -132,25 +132,25 @@ std::string invokeStringsSelector() {
 std::string invokeSelector(pugi::xml_node node, const TraitSelector &selector) {
   switch (selector.type) {
     case TraitSelector::Type::child: {
-      return invokeChildSelector(node, selector.argument);
+      return gui::invokeChildSelector(node, selector.argument);
     }
     case TraitSelector::Type::last: {
-      return invokeLastSelector(node);
+      return gui::invokeLastSelector(node);
     }
     case TraitSelector::Type::me: {
-      return invokeMeSelector(node);
+      return gui::invokeMeSelector(node);
     }
     case TraitSelector::Type::parent: {
-      return invokeParentSelector(node);
+      return gui::invokeParentSelector(node);
     }
     case TraitSelector::Type::screen: {
-      return invokeScreenSelector();
+      return gui::invokeScreenSelector();
     }
     case TraitSelector::Type::sibling: {
-      return invokeSiblingSelector(node, selector.argument);
+      return gui::invokeSiblingSelector(node, selector.argument);
     }
     case TraitSelector::Type::strings: {
-      return invokeStringsSelector();
+      return gui::invokeStringsSelector();
     }
   }
 }

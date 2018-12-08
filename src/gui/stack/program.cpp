@@ -53,12 +53,11 @@ Program compile(pugi::xml_node node) {
     program.dependencies.emplace_back(std::move(dep));
   };
 
-  postOrderDFS(node, [&addInstr, &addDep](pugi::xml_node child) {
+  stack::postOrderDFS(node, [&addInstr, &addDep](pugi::xml_node child) {
     // If 'src' and 'trait' attributes are given, then a push_t is performed
     // with the selected trait before the operation.
-    const auto srcOpt{resolveTrait(child)};
-    if (srcOpt) {
-      push_t instr{TraitName{*srcOpt}};
+    if (const auto srcOpt{gui::resolveTrait(child)}; srcOpt) {
+      push_t instr{stack::TraitName{*srcOpt}};
       addInstr(std::move(instr));
       addDep(*srcOpt);
     }
@@ -67,9 +66,8 @@ Program compile(pugi::xml_node node) {
     // operation.
     if (auto pcdata{child.first_child()}; pcdata.type() == pugi::node_pcdata) {
       const std::string_view valueStr{pcdata.value()};
-      ValueType value{parseValueType(valueStr)};
-      push_t
-          instr{std::visit([](auto &v) -> ArgumentType { return v; }, value)};
+      ValueType value{stack::parseValueType(valueStr)};
+      push_t instr{std::visit([](auto &v) { return ArgumentType{v}; }, value)};
       addInstr(std::move(instr));
     }
 
