@@ -38,6 +38,9 @@ using Stack = std::vector<ValueType>;
 /// point numbers are written in standard format without the trailing `f`.
 ValueType parseValueType(std::string_view str);
 
+/// Stringify `val` and append it to `name`. This is used to implement a switch
+/// statement, hence the name, and is triggered when a copy operator has a
+/// selector that selects a trait whose name ends in a trailing underscore `_`.
 std::string appendSwitchCase(std::string name, const ValueType &val);
 
 /// Pop the next element off the stack, returning a default value if the stack
