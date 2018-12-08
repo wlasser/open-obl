@@ -353,8 +353,8 @@ template<class T> void Traits::addAndBindTrait(UiElement *uiElement,
                                                TraitSetterFun<T> setterFun,
                                                pugi::xml_node node) {
   auto fun{getTraitFun<T>(*this, node)};
-  auto &trait{addTrait<T>(uiElement->get_name() + "." + node.name(),
-                          std::move(fun))};
+  auto &trait{addTrait<T>(gui::fullyQualifyName(
+      node.parent()) + "." + node.name(), std::move(fun))};
   trait.bind(uiElement, setterFun);
 }
 
