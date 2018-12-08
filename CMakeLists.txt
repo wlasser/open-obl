@@ -24,7 +24,7 @@ FetchContent_Declare(Abseil
         GIT_TAG origin/master)
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v2.4.2)
+        GIT_TAG v2.5.0)
 FetchContent_Declare(PEGTL
         GIT_REPOSITORY https://github.com/taocpp/PEGTL.git
         GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
