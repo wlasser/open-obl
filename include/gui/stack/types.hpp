@@ -2,21 +2,23 @@
 #define OPENOBLIVION_GUI_STACK_TYPES_HPP
 
 #include "meta.hpp"
-#include "gui/traits.hpp"
 #include <string>
 #include <variant>
 #include <vector>
 
-namespace gui::stack {
+namespace gui {
+
+class Traits;
+
+namespace stack {
 
 struct TraitName {
   /// Fully-qualified name of the trait
   std::string str{};
   /// gui::Traits context the trait is expected to be in upon execution.
-  gui::Traits *traits{};
+  const gui::Traits *traits;
 
-  TraitName(std::string name, gui::Traits *traits)
-      : str(name), traits(traits) {}
+  TraitName(std::string name, const gui::Traits *traits);
 };
 
 inline bool operator==(const TraitName &a, const TraitName &b) noexcept {
@@ -56,6 +58,8 @@ template<class Hint = void>
   return v;
 }
 
-} // namespace gui::stack
+} // namespace stack
+
+} // namespace gui
 
 #endif // OPENOBLIVION_GUI_STACK_TYPES_HPP

@@ -1,5 +1,6 @@
 #include "gui/stack/program.hpp"
 #include "gui/trait_selector.hpp"
+#include "gui/traits.hpp"
 #include <mutex>
 #include <string_view>
 
@@ -43,7 +44,7 @@ Program &Program::operator=(Program &&other) noexcept {
   return *this;
 }
 
-Program compile(pugi::xml_node node, gui::Traits *traits) {
+Program compile(pugi::xml_node node, const gui::Traits *traits) {
   Program program{};
 
   auto addInstr = [&program](auto &&instr) {

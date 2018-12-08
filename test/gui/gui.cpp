@@ -31,15 +31,27 @@ TEST_CASE("can use traits in the stack machine", "[gui][gui/stack]") {
   traits.addAndBindImplementationTrait(widthNode, &uiElement);
   traits.addAndBindUserTrait(user0Node, &uiElement);
 
-  gui::stack::Program heightProg{gui::stack::compile(heightNode, &traits)};
-  gui::TraitFun<int> heightFun([heightProg]() -> int {
-    return std::get<int>(heightProg());
-  });
-  for (const auto &dep : heightProg.dependencies) {
-    heightFun.addDependency(dep);
+  SECTION("hardcoded trait function") {
+    gui::stack::Program heightProg{gui::stack::compile(heightNode, &traits)};
+    gui::TraitFun<int> heightFun([heightProg]() -> int {
+      return std::get<int>(heightProg());
+    });
+    for (const auto &dep : heightProg.dependencies) {
+      heightFun.addDependency(dep);
+    }
+    auto &heightTrait{traits.addTrait<int>("foo.height", std::move(heightFun))};
+    heightTrait.bind(&uiElement, &gui::UiElement::set_height);
   }
-  auto &heightTrait{traits.addTrait<int>("foo.height", std::move(heightFun))};
-  heightTrait.bind(&uiElement, &gui::UiElement::set_height);
+
+  SECTION("using getTraitFun", "[gui][gui/stack]") {
+    gui::TraitFun<int> heightFun(gui::getTraitFun<int>(traits, heightNode));
+    auto &heightTrait{traits.addTrait<int>("foo.height", std::move(heightFun))};
+    heightTrait.bind(&uiElement, &gui::UiElement::set_height);
+  }
+
+  SECTION("using andAndBindImplementationTrait", "[gui][gui/stack]") {
+    traits.addAndBindImplementationTrait(heightNode, &uiElement);
+  }
 
   traits.addTraitDependencies();
   traits.update();

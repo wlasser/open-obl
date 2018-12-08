@@ -3,7 +3,6 @@
 
 #include "gui/stack/instructions.hpp"
 #include "gui/stack/types.hpp"
-#include "gui/traits.hpp"
 #include <pugixml.hpp>
 #include <cstdint>
 #include <mutex>
@@ -91,6 +90,8 @@
 
 namespace gui {
 
+class Traits;
+
 /// \addtogroup OpenOblivionGuiStack
 namespace stack {
 
@@ -128,7 +129,7 @@ template<class T> void postOrderDFS(pugi::xml_node node, T &&visitor) {
   visitor(node);
 }
 
-Program compile(pugi::xml_node node, gui::Traits *traits = nullptr);
+Program compile(pugi::xml_node node, const gui::Traits *traits = nullptr);
 
 } // namespace stack
 

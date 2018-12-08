@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_TRAITS_HPP
 
 #include "gui/screen.hpp"
+#include "gui/stack/program.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/trait_selector.hpp"
@@ -302,10 +303,15 @@ TraitFun<T> parseOperators(const Traits &traits, pugi::xml_node node) {
 template<class T>
 TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
   if (node.text()) {
-    const auto value{getXmlChildValue<T>(node)};
+    const auto value{gui::getXmlChildValue<T>(node)};
     return TraitFun<T>{[value]() { return value; }};
   } else {
-    return parseOperators<T>(traits, node);
+    gui::stack::Program prog{gui::stack::compile(node, &traits)};
+    auto fun{TraitFun<T>([prog]() -> T { return std::get<T>(prog()); })};
+    for (const auto &dep : prog.dependencies) {
+      fun.addDependency(dep);
+    }
+    return fun;
   }
 }
 
