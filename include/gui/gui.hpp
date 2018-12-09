@@ -139,16 +139,17 @@
 /// \ingroup OpenOblivionGui
 namespace gui {
 
-/// Lift of MenuType from value space to type space.
-/// All the Menu<MenuType> inherit from UiElement, so why not just do everything
-/// with a UiElement* ? Well we want to select the value of MenuType at runtime
-/// without doing an if-else over every value of MenuType; a variant
-/// encapsulates a map from MenuType to Menu<MenuType> which lets us do this via
-/// enumvar::defaultConstruct.
+/// Lift of `MenuType` from value space to type space.
+/// The base `UiElement` of each `Menu` lets us do a lot with virtual dispatch,
+/// but it does not help when *constructing* a menu. By using an `enumvar` we
+/// effectively obtain a map from `MenuType` to `Menu<MenuType>` which lets us
+/// construct the correct `Menu` based off a runtime `MenuType` value, without
+/// doing a large switch statement.
 using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 
-/// Once the correct Menu has been constructed, we can drop back to runtime
-/// polymorphism by casting the stored variant value to a pointer to its base.
+/// Return a base pointer to the current menu.
+/// `MenuVariant` is useful for construction, but once the menu has been
+/// constructed it is convenient to drop back to runtime polymorphism.
 UiElement *extractUiElement(MenuVariant &menu);
 
 /// \overload extractUiElement(MenuVariant &)
@@ -161,7 +162,7 @@ auto makeInterfaceBufferImpl(const std::variant<Ts...> &var) {
   }, var);
 }
 
-/// A variant of user trait interfaces coinciding with MenuVariant.
+/// A variant of user trait interfaces coinciding with `MenuVariant`.
 /// Handwaving, `MenuVariant::UserInterface = MenuInterfaceVariant`.
 using MenuInterfaceVariant = decltype(makeInterfaceBufferImpl(
     std::declval<MenuVariant>()));
@@ -169,19 +170,31 @@ using MenuInterfaceVariant = decltype(makeInterfaceBufferImpl(
 /// Construct a user interface buffer from the menu
 MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar);
 
-pugi::xml_document loadDocument(std::istream &is);
+/// Return the first `<menu>` child of the `doc`, and the `MenuType` represented
+/// by its `<class>` child.
+/// \throws std::runtime_error if `doc` does not have a `<menu>` child.
+/// \throws std::runtime_error if the first `<menu>` does not have a `<class>`
+///                            child.
+std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc);
 
-std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc);
+/// Given XML and concrete representations of a `uiElement`, add all its child
+/// traits and bind them to the `uiElement`.
+void addTraits(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
-std::string getMenuElementName(pugi::xml_node menuNode);
+/// Owned `UiElement` and the XML node which represents it.
+using UiElementNode = std::pair<std::unique_ptr<UiElement>, pugi::xml_node>;
 
+/// Return pointers to the child `UiElement`s of the given `node`.
+std::vector<UiElementNode> getChildElements(pugi::xml_node node);
+
+/// Bind all of `node`'s traits to `uiElement`, then recurse through its child
+/// `UiElement`s and do the same.
+/// \returns All the descendant `UiElement`s of `uiElement`, **not** including
+///          `uiElement` itself.
 std::vector<std::unique_ptr<UiElement>>
-addChildren(Traits &traits,
-            pugi::xml_node parentNode,
-            UiElement *parentElement);
+addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
-/// Parse an entire menu from an XML stream
-void parseMenu(std::istream &is);
+void loadMenu(pugi::xml_node doc);
 
 /// \name MenuType specializations
 ///@{

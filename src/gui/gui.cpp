@@ -4,11 +4,9 @@
 #include "gui/elements/text.hpp"
 #include "gui/gui.hpp"
 #include "gui/xml.hpp"
-#include "settings.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <pugixml.hpp>
-#include <spdlog/spdlog.h>
 #include <unordered_map>
 
 namespace gui {
@@ -29,20 +27,7 @@ MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
   return makeInterfaceBufferImpl(menuVar);
 }
 
-pugi::xml_document loadDocument(std::istream &is) {
-  auto logger = spdlog::get(oo::LOG);
-
-  pugi::xml_document doc{};
-  pugi::xml_parse_result result = doc.load(is);
-  if (!result) {
-    logger->error("Failed to parse menu XML [offset {}]: {}",
-                  result.offset, result.description());
-    throw std::runtime_error("Failed to parse menu XML");
-  }
-  return doc;
-}
-
-std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc) {
+std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc) {
   const auto menuNode{doc.child("menu")};
   if (!menuNode) {
     throw std::runtime_error("Menu does not have a <menu> tag");
@@ -57,64 +42,69 @@ std::pair<pugi::xml_node, MenuType> getMenuNode(const pugi::xml_document &doc) {
   return {menuNode, menuType};
 }
 
-std::string getMenuElementName(pugi::xml_node menuNode) {
-  const auto attrib{menuNode.attribute("name")};
-  if (!attrib) {
-    throw std::runtime_error("Tag does not have a 'name' attribute");
+void addTraits(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
+  for (auto n : node.children()) {
+    traits.addAndBindImplementationTrait(n, uiElement);
+    traits.addAndBindUserTrait(n, uiElement);
+    // TODO: addAndBindCustomTrait
   }
-  return attrib.value();
 }
 
-std::vector<std::unique_ptr<UiElement>>
-addChildren(Traits &traits,
-            pugi::xml_node parentNode,
-            UiElement *parentElement) {
-  using namespace std::literals;
-  std::vector<std::unique_ptr<UiElement>> uiElements;
+std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
+  std::vector<UiElementNode> uiElements;
 
-  for (const auto &node : parentNode.children()) {
-    traits.addAndBindImplementationTrait(node, parentElement);
-    traits.addAndBindUserTrait(node, parentElement);
-
+  for (auto n : node.children()) {
+    using namespace std::literals;
     std::unique_ptr<UiElement> element = [&]() -> std::unique_ptr<UiElement> {
-      if (node.name() == "image"s) return std::make_unique<Image>();
-      else if (node.name() == "rect"s) return std::make_unique<Rect>();
-      else if (node.name() == "text"s) return std::make_unique<Text>();
+      if (n.name() == "image"s) return std::make_unique<Image>();
+      else if (n.name() == "rect"s) return std::make_unique<Rect>();
+      else if (n.name() == "text"s) return std::make_unique<Text>();
       else return nullptr;
     }();
 
     if (element) {
-      element->set_name(fullyQualifyName(node));
-      auto children{addChildren(traits, node, element.get())};
-      uiElements.reserve(uiElements.size() + 1u + children.size());
-      uiElements.push_back(std::move(element));
-      uiElements.insert(uiElements.end(),
-                        std::move_iterator(children.begin()),
-                        std::move_iterator(children.end()));
+      element->set_name(gui::fullyQualifyName(n));
+      uiElements.emplace_back(std::move(element), n);
     }
   }
 
   return uiElements;
 }
 
-// Parse an entire menu from an XML stream
-void parseMenu(std::istream &is) {
-  auto doc{loadDocument(is)};
-  const auto[menuNode, menuType]{getMenuNode(doc)};
+std::vector<std::unique_ptr<UiElement>>
+addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
+  gui::addTraits(traits, uiElement, node);
+  std::vector<std::unique_ptr<UiElement>> accum{};
 
-  // Construct a Menu<menuType> (menuType, not MenuType!) then extract a pointer
-  // to base so we can do virtual dispatch.
+  for (auto &child : gui::getChildElements(node)) {
+    auto descendants{addDescendants(traits, child.first.get(), child.second)};
+    accum.reserve(accum.size() + 1u + descendants.size());
+    accum.emplace_back(std::move(child.first));
+    accum.insert(accum.end(),
+                 std::make_move_iterator(descendants.begin()),
+                 std::make_move_iterator(descendants.end()));
+  }
+
+  return accum;
+}
+
+void loadMenu(pugi::xml_node doc) {
+  const auto[menuNode, menuType]{gui::getMenuNode(doc)};
+
   MenuVariant menu{};
   enumvar::defaultConstruct(menuType, menu);
-  auto *menuElement{extractUiElement(menu)};
+  auto *menuElement{gui::extractUiElement(menu)};
 
-  const std::string menuName{getMenuElementName(menuNode)};
+  const std::string menuName{menuNode.attribute("name").value()};
+  if (menuName.empty()) {
+    // TODO: Return an empty optional
+  }
   menuElement->set_name(menuName);
 
-  // Now construct the dependency graph of the dynamic representation
+  // Construct the dependency graph of the dynamic representation
   Traits menuTraits{};
   menuTraits.loadStrings("menus/strings.xml");
-  auto uiElements = addChildren(menuTraits, menuNode, menuElement);
+  auto uiElements = gui::addDescendants(menuTraits, menuElement, menuNode);
   menuTraits.addImplementationElementTraits();
   for (const auto &uiElement : uiElements) {
     menuTraits.addProvidedTraits(uiElement.get());
@@ -123,8 +113,7 @@ void parseMenu(std::istream &is) {
   menuTraits.update();
 
   // Construct a suitable user interface buffer and link it to the user traits
-  MenuInterfaceVariant interfaceBuffer{makeInterfaceBuffer(menu)};
-
+  MenuInterfaceVariant interfaceBuffer{gui::makeInterfaceBuffer(menu)};
   std::visit([&menuTraits](auto &&t) {
     menuTraits.setUserTraitSources(t.value);
   }, interfaceBuffer);

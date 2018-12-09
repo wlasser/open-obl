@@ -1,10 +1,22 @@
 #include "gui/xml.hpp"
+#include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
+#include <spdlog/spdlog.h>
 #include <cstdlib>
 #include <string>
 
 namespace gui {
+
+pugi::xml_document loadDocument(std::istream &is) {
+  pugi::xml_document doc{};
+  if (const auto result{doc.load(is)}; !result) {
+    spdlog::get(oo::LOG)->error("Failed to parse menu XML [offset {}]: {}",
+                                result.offset, result.description());
+    throw std::runtime_error("Failed to parse menu XML");
+  }
+  return doc;
+}
 
 template<> bool parseXmlEntity(const std::string &entity) {
   return entity == "&true;";

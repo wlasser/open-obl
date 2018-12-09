@@ -7,6 +7,10 @@
 
 namespace gui {
 
+/// Load an XML document from the stream, throwing if the loading fails.
+/// \throws std::runtime_error if the stream could not be parsed as an XML file.
+pugi::xml_document loadDocument(std::istream &is);
+
 /// We don't have a DTD so can't specify custom entities directly. Instead they
 /// should be treated as strings by the parser and decoded using the following
 /// functions.
