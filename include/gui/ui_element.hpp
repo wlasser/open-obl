@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_UI_ELEMENT_HPP
 
 #include "gui/trait.hpp"
+#include <OgreOverlayElement.h>
 #include <optional>
 #include <string>
 #include <variant>
@@ -33,6 +34,11 @@ class UiElement {
   virtual void set_explorefade(float explorefade) {
     set_menufade(explorefade);
   }
+  /// Filename of texture or model to display
+  virtual void set_filename(std::string filename) {}
+  /// Percentage to scale the image or text by. If `-1`, then the image or text
+  /// is (non-uniformly) scaled to the containing uiElement's width and height.
+  virtual void set_zoom(int zoom) {}
 
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
@@ -65,15 +71,44 @@ class UiElement {
   /// The UiElement is therefore allowed to supply its own implementation
   /// traits, called 'provided traits', which should have no dependencies and no
   /// setter.
-  virtual std::optional<Trait<int>> make_x() const { return {}; }
-  virtual std::optional<Trait<int>> make_y() const { return {}; }
-  virtual std::optional<Trait<int>> make_width() const { return {}; }
-  virtual std::optional<Trait<int>> make_height() const { return {}; }
-  virtual std::optional<Trait<int>> make_alpha() const { return {}; }
-  virtual std::optional<Trait<bool>> make_locus() const { return {}; }
-  virtual std::optional<Trait<bool>> make_visible() const { return {}; }
-  virtual std::optional<Trait<float>> make_menufade() const { return {}; }
-  virtual std::optional<Trait<float>> make_explorefade() const { return {}; }
+  virtual std::optional<gui::Trait<int>> make_x() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<int>> make_y() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<int>> make_width() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<int>> make_height() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<int>> make_alpha() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<bool>> make_locus() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<bool>> make_visible() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<float>> make_menufade() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<float>> make_explorefade() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<std::string>> make_filename() const {
+    return {};
+  }
+  virtual std::optional<gui::Trait<int>> make_zoom() const {
+    return {};
+  }
+
+  /// Get the renderable representation of this uiElement.
+  virtual Ogre::OverlayElement *getOverlayElement() const {
+    return nullptr;
+  }
 
   virtual ~UiElement() = 0;
 };

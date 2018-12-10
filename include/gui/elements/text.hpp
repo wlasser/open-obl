@@ -9,6 +9,10 @@ namespace gui {
 
 class Text : public UiElement {
  public:
+  Text(std::string name) {
+    set_name(std::move(name));
+  }
+
   std::optional<Trait < int>> make_width() const override {
     return Trait<int>(get_name() + ".width", 0);
   }

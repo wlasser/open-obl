@@ -45,6 +45,10 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<float>(uiElement, &UiElement::set_menufade, node);
   } else if (node.name() == "explorefade"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_explorefade, node);
+  } else if (node.name() == "filename"s) {
+    addAndBindTrait<std::string>(uiElement, &UiElement::set_filename, node);
+  } else if (node.name() == "zoom"s) {
+    addAndBindTrait<int>(uiElement, &UiElement::set_zoom, node);
   } else {
     return false;
   }
@@ -149,6 +153,8 @@ void Traits::addProvidedTraits(const UiElement *uiElement) {
   addTrait(uiElement->make_visible());
   addTrait(uiElement->make_menufade());
   addTrait(uiElement->make_explorefade());
+  addTrait(uiElement->make_filename());
+  addTrait(uiElement->make_zoom());
 }
 
 void Traits::addTraitDependencies() {

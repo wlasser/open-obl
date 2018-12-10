@@ -29,7 +29,9 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/traits.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/ui_element.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/xml.hpp
+        elements/image.cpp
         gui.cpp
+        screen.cpp
         stack/instructions.cpp
         stack/program.cpp
         stack/types.cpp
@@ -44,6 +46,7 @@ target_link_libraries(OpenOblivionGui PRIVATE
         Boost::boost
         spdlog::spdlog
         PUBLIC
+        OgreOverlay
         pugixml)
 
 install(TARGETS OpenOblivionGui EXPORT OpenOblivionGuiTargets

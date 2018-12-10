@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GUI_MENU_HPP
 
 #include "gui/ui_element.hpp"
+#include <OgreOverlay.h>
 
 namespace gui {
 
@@ -73,6 +74,10 @@ class Menu : public UiElement {
     using type = std::tuple<>;
     type value{};
   };
+
+  Ogre::Overlay *getOverlay() {
+    return nullptr;
+  }
 };
 
 } // namespace gui

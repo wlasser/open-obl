@@ -56,14 +56,17 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
   for (auto n : node.children()) {
     using namespace std::literals;
     std::unique_ptr<UiElement> element = [&]() -> std::unique_ptr<UiElement> {
-      if (n.name() == "image"s) return std::make_unique<Image>();
-      else if (n.name() == "rect"s) return std::make_unique<Rect>();
-      else if (n.name() == "text"s) return std::make_unique<Text>();
+      if (n.name() == "image"s) {
+        return std::make_unique<Image>(gui::fullyQualifyName(n));
+      } else if (n.name() == "rect"s) {
+        return std::make_unique<Rect>(gui::fullyQualifyName(n));
+      } else if (n.name() == "text"s) {
+        return std::make_unique<Text>(gui::fullyQualifyName(n));
+      }
       else return nullptr;
     }();
 
     if (element) {
-      element->set_name(gui::fullyQualifyName(n));
       uiElements.emplace_back(std::move(element), n);
     }
   }

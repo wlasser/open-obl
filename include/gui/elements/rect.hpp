@@ -5,7 +5,12 @@
 
 namespace gui {
 
-class Rect : public UiElement {};
+class Rect : public UiElement {
+ public:
+  Rect(std::string name) {
+    set_name(std::move(name));
+  }
+};
 
 } // namespace gui
 

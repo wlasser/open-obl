@@ -3,11 +3,16 @@
 
 #include "gui/trait.hpp"
 #include "settings.hpp"
-#include <OgreRoot.h>
 #include <OgreRenderTarget.h>
+#include <OgreRoot.h>
+#include <OgreVector.h>
 #include <string_view>
 
 namespace gui {
+
+/// \see gui::ScreenElement::getNormalizedDimensions()
+/// \todo Flip the dependency here.
+Ogre::Vector2 getNormalizedDimensions();
 
 /// `screen` is an implementation defined element describing screen dimensions
 /// in normalized coordinates (NC). If `screenWidth / screenHeight >= 1` then
@@ -34,27 +39,14 @@ class ScreenElement {
   /// `960px` and the width computed by the aspect ratio. Otherwise, the width
   /// is normalized to `1280px` and the height is computed with the aspect
   /// ratio.
-  Dimensions getNormalizedDimensions() const {
-    const int rawW{mRawWidth};
-    const int rawH{mRawHeight};
-    const int width{rawW >= rawH ? ((960 * rawW) / rawH) : 1280};
-    const int height{rawW < rawH ? ((1280 * rawH) / rawW) : 960};
-    return {width, height};
-  }
+  Dimensions getNormalizedDimensions() const;
 
   static constexpr inline std::string_view NAME{"__screen"};
   static constexpr inline std::string_view PREFIX{"__screen."};
 
  public:
 
-  ScreenElement() {
-    auto *root{Ogre::Root::getSingletonPtr()};
-    if (!root) return;
-    auto *target{root->getRenderTarget(oo::RENDER_TARGET)};
-    if (!target) return;
-    mRawWidth = static_cast<int>(target->getWidth());
-    mRawHeight = static_cast<int>(target->getHeight());
-  }
+  ScreenElement();
 
   Trait<int> makeWidthTrait() const {
     const auto[width, _] = getNormalizedDimensions();
