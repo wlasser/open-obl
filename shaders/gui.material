@@ -1,0 +1,26 @@
+vertex_program gui_vs_glsl glsl {
+    source gui_vs.glsl
+}
+
+fragment_program gui_fs_glsl glsl {
+    source gui_fs.glsl
+}
+
+material __GuiMaterial {
+    technique {
+        pass {
+            vertex_program_ref gui_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+            }
+
+            fragment_program_ref gui_fs_glsl {
+                param_named diffuseMap int 0
+            }
+
+            lighting off
+            ambient vertexcolour
+
+            depth_check off
+        }
+    }
+}

@@ -42,6 +42,7 @@ target_sources(OpenOblivionGui PRIVATE
         xml.cpp)
 
 target_link_libraries(OpenOblivionGui PRIVATE
+        OpenOblivion::OpenOblivionFS
         OpenOblivion::OpenOblivionOgre
         Boost::boost
         spdlog::spdlog
