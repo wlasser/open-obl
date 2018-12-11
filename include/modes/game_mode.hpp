@@ -14,6 +14,7 @@
 #include <variant>
 
 class ConsoleMode;
+class MenuMode;
 
 /// \name Custom deleter for the PlayerController.
 /// Unlike the rest of the collision objects in the Cell, which are owned by
@@ -63,7 +64,7 @@ class GameMode {
   void loadCell(ApplicationContext &ctx, BaseId cellId);
 
  public:
-  using transition_t = ModeTransition<ConsoleMode>;
+  using transition_t = ModeTransition<ConsoleMode, MenuMode>;
 
   explicit GameMode(ApplicationContext &ctx) {}
 

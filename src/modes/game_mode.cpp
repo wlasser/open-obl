@@ -2,6 +2,7 @@
 #include "meta.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
+#include "modes/menu_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
@@ -58,7 +59,10 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
           return {};
         },
         [](oo::event::TogglePov) -> transition_t { return {}; },
-        [](oo::event::MenuMode) -> transition_t { return {}; },
+        [&ctx](oo::event::MenuMode e) -> transition_t {
+          if (e.down) return {false, MenuMode(ctx)};
+          return {};
+        },
         [](oo::event::Rest) -> transition_t { return {}; },
         [](oo::event::QuickMenu) -> transition_t { return {}; },
         [](oo::event::Quick) -> transition_t { return {}; },
