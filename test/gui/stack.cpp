@@ -68,6 +68,33 @@ TEST_CASE("parseValueType deduces float", "[gui][gui/stack]") {
   }
 }
 
+TEST_CASE("parseValueType ignores trailing and leading whitespace",
+          "[gui][gui/stack]") {
+  {
+    const auto r{stack::parseValueType("  123")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == 123);
+  }
+
+  {
+    const auto r{stack::parseValueType("123    ")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == 123);
+  }
+
+  {
+    const auto r{stack::parseValueType("  123     ")};
+    REQUIRE(std::holds_alternative<int>(r));
+    REQUIRE(std::get<int>(r) == 123);
+  }
+
+  {
+    const auto r{stack::parseValueType("  hello  world ")};
+    REQUIRE(std::holds_alternative<std::string>(r));
+    REQUIRE(std::get<std::string>(r) == "hello  world");
+  }
+}
+
 TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
   stack::Program program{};
 
