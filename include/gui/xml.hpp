@@ -7,6 +7,12 @@
 
 namespace gui {
 
+/// Load an XML document from the `Ogre::TextResource` with the given name in
+/// the `oo::RESOURCE_GROUP` resource group.
+/// \throws std::runtime_error if the file could not be loaded.
+/// \throws std::runtime_error if the file could not be parsed as an XML file.
+pugi::xml_document loadDocument(const std::string &filename);
+
 /// Load an XML document from the stream, throwing if the loading fails.
 /// \throws std::runtime_error if the stream could not be parsed as an XML file.
 pugi::xml_document loadDocument(std::istream &is);

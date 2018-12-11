@@ -1,12 +1,26 @@
 #include "gui/xml.hpp"
+#include "ogre/text_resource_manager.hpp"
 #include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
 #include <spdlog/spdlog.h>
 #include <cstdlib>
+#include <sstream>
 #include <string>
 
 namespace gui {
+
+pugi::xml_document loadDocument(const std::string &filename) {
+  auto &txtResMgr{Ogre::TextResourceManager::getSingleton()};
+  auto xmlPtr{txtResMgr.getByName(filename, oo::RESOURCE_GROUP)};
+  if (!xmlPtr) {
+    spdlog::get(oo::LOG)->error("XML file '{}' does not exist", filename);
+    throw std::runtime_error("XML file does not exist");
+  }
+  xmlPtr->load();
+  std::stringstream xmlStream{xmlPtr->getString()};
+  return loadDocument(xmlStream);
+}
 
 pugi::xml_document loadDocument(std::istream &is) {
   pugi::xml_document doc{};

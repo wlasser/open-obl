@@ -196,6 +196,8 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
 void loadMenu(pugi::xml_node doc);
 
+void loadMenu(const std::string &filename);
+
 /// \name MenuType specializations
 ///@{
 template<> MenuType getXmlValue(pugi::xml_node node);

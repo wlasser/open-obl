@@ -122,6 +122,11 @@ void loadMenu(pugi::xml_node doc) {
   }, interfaceBuffer);
 }
 
+void loadMenu(const std::string &filename) {
+  auto doc{gui::loadDocument(filename)};
+  loadMenu(doc.document_element());
+}
+
 template<>
 MenuType parseXmlEntity(const std::string &entity) {
   const static std::unordered_map<std::string, MenuType> map{

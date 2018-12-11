@@ -2,6 +2,8 @@
 #define OPENOBLIVION_MENU_MODE_HPP
 
 #include "application_context.hpp"
+#include "gui/gui.hpp"
+#include "gui/menu.hpp"
 #include "modes/mode.hpp"
 #include "sdl/sdl.hpp"
 
@@ -12,8 +14,7 @@ class MenuMode {
  public:
   using transition_t = ModeTransition<MenuMode>;
 
-  explicit MenuMode(ApplicationContext &ctx) {
-  }
+  explicit MenuMode(ApplicationContext &ctx, gui::MenuType type);
 
   void enter(ApplicationContext &ctx) {
     refocus(ctx);

@@ -1,4 +1,5 @@
 #include "game_settings.hpp"
+#include "gui/menu.hpp"
 #include "meta.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
@@ -60,7 +61,9 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         },
         [](oo::event::TogglePov) -> transition_t { return {}; },
         [&ctx](oo::event::MenuMode e) -> transition_t {
-          if (e.down) return {false, MenuMode(ctx)};
+          if (e.down) {
+            return {false, MenuMode(ctx, gui::MenuType::InventoryMenu)};
+          }
           return {};
         },
         [](oo::event::Rest) -> transition_t { return {}; },
