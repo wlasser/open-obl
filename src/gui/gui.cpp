@@ -124,7 +124,7 @@ void loadMenu(pugi::xml_node doc) {
 
 void loadMenu(const std::string &filename) {
   auto doc{gui::loadDocument(filename)};
-  loadMenu(doc.document_element());
+  loadMenu(doc);
 }
 
 template<>
