@@ -14,6 +14,8 @@ class Image : public UiElement {
  public:
   Image(std::string name);
 
+  ~Image();
+
   void set_x(int x) override;
   void set_y(int y) override;
   void set_width(int width) override;

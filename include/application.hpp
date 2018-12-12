@@ -47,10 +47,12 @@ class Application : public Ogre::FrameListener {
   ///   Ogre::Root::getRenderSystemByName.
   static void setRenderSystem(Ogre::Root *root, const std::string &systemName);
 
-  /// Initialize Ogre and call setRenderSystem.
+  /// Initialize Ogre, call `setRenderSystem`, and initialize the
+  /// `Ogre::OverlaySystem`.
   /// This is a member function as it registers `this` as an
-  /// Ogre::FrameListener.
-  std::unique_ptr<Ogre::Root> createOgreRoot();
+  /// `Ogre::FrameListener`.
+  std::tuple<std::unique_ptr<Ogre::Root>, std::unique_ptr<Ogre::OverlaySystem>>
+  createOgreRoot();
 
   /// Construct an SDL window and embed an Ogre::RenderWindow inside.
   /// The window is created with width `Display.iSize W` and height

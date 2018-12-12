@@ -7,6 +7,7 @@
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "game_settings.hpp"
+#include "gui/menu.hpp"
 #include "initial_record_visitor.hpp"
 #include "meta.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
@@ -17,6 +18,7 @@
 #include "resolvers/static_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
+#include <OgreOverlaySystem.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -36,7 +38,9 @@ Application::Application(std::string windowName) : FrameListener() {
   loadIniConfiguration();
   auto &gameSettings = GameSettings::getSingleton();
 
-  ctx.ogreRoot = createOgreRoot();
+  auto &&[ogreRoot, overlaySys] = createOgreRoot();
+  ctx.ogreRoot = std::move(ogreRoot);
+  ctx.overlaySys = std::move(overlaySys);
 
   // Creating an Ogre::RenderWindow initialises the render system, which is
   // necessary to create shaders (including reading scripts), so this has to be
@@ -218,12 +222,14 @@ void Application::setRenderSystem(Ogre::Root *root,
   }
 }
 
-std::unique_ptr<Ogre::Root> Application::createOgreRoot() {
+std::tuple<std::unique_ptr<Ogre::Root>, std::unique_ptr<Ogre::OverlaySystem>>
+Application::createOgreRoot() {
   auto root{std::make_unique<Ogre::Root>("plugins.cfg", "", "")};
+  auto overlaySys{std::make_unique<Ogre::OverlaySystem>()};
   setRenderSystem(root.get(), "OpenGL 3+ Rendering Subsystem");
   root->initialise(false);
   root->addFrameListener(this);
-  return root;
+  return {std::move(root), std::move(overlaySys)};
 }
 
 std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>

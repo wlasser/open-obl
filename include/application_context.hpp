@@ -23,6 +23,7 @@
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
 #include <Ogre.h>
+#include <OgreOverlaySystem.h>
 #include <spdlog/spdlog.h>
 #include <memory>
 #include <optional>
@@ -49,6 +50,8 @@ class ApplicationContext {
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
+
+  std::unique_ptr<Ogre::OverlaySystem> overlaySys{};
 
   std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
 
@@ -126,6 +129,10 @@ class ApplicationContext {
 
   oo::ConsoleEngine &getConsoleEngine() {
     return *consoleEngine;
+  }
+
+  Ogre::OverlaySystem *getOverlaySystem() {
+    return overlaySys.get();
   }
 
   void setCamera(Ogre::Camera *camera) {

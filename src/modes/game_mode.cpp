@@ -167,6 +167,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   mPlayerController->moveTo(startPos);
 
   mCell->scnMgr->addRenderQueueListener(ctx.getImGuiManager());
+  mCell->scnMgr->addRenderQueueListener(ctx.getOverlaySystem());
 }
 
 void GameMode::update(ApplicationContext &ctx, float delta) {

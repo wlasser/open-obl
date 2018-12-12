@@ -6,6 +6,8 @@
 #include <OgreOverlayManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
+#include <OgreTextureManager.h>
+#include <spdlog/spdlog.h>
 #include <string>
 
 gui::Image::Image(std::string name) {
@@ -13,8 +15,15 @@ gui::Image::Image(std::string name) {
 
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = dynamic_cast<Ogre::PanelOverlayElement *>(
-        overlayMgr->createOverlayElementFromFactory("Panel", get_name()));
+        overlayMgr->createOverlayElement("Panel", get_name()));
     mOverlay->setMaterialName("__GuiMaterial", oo::SHADER_GROUP);
+  }
+}
+
+gui::Image::~Image() {
+  if (mOverlay) {
+    auto &overlayMgr{Ogre::OverlayManager::getSingleton()};
+    overlayMgr.destroyOverlayElement(mOverlay);
   }
 }
 
@@ -43,14 +52,20 @@ void gui::Image::set_height(int height) {
 }
 
 void gui::Image::set_filename(std::string filename) {
+  if (!mOverlay) return;
   auto *pass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
   const auto &states{pass->getTextureUnitStates()};
-  if (states.empty()) {
-    pass->createTextureUnitState(oo::Path{std::move(filename)}.c_str());
-  } else {
-    auto *state{pass->getTextureUnitStates()[0]};
-    state->setTextureName(oo::Path{std::move(filename)}.c_str());
-  }
+  const oo::Path base{"textures/"};
+  const oo::Path path{base / oo::Path{std::move(filename)}};
+
+  if (states.empty()) pass->createTextureUnitState();
+
+  // Can't use setTextureName because it assumes the resource group of the
+  // texture is the same as the resource group of the material.
+  auto *state{pass->getTextureUnitStates()[0]};
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto texPtr{texMgr.getByName(path.c_str(), oo::RESOURCE_GROUP)};
+  state->setTexture(texPtr);
 }
 
 void gui::Image::set_zoom(int zoom) {
