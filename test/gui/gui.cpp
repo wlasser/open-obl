@@ -1,3 +1,4 @@
+#include "gui/gui.hpp"
 #include "gui/stack/program.hpp"
 #include "gui/traits.hpp"
 #include "test_ui_element.hpp"
@@ -57,4 +58,32 @@ TEST_CASE("can use traits in the stack machine", "[gui][gui/stack]") {
   traits.update();
 
   REQUIRE(uiElement.getArea() == 150);
+}
+
+// This behaviour is not encouraged but is required due to some awkwardly
+// written gui files.
+TEST_CASE("can have sibling uiElements with the same name", "[gui]") {
+  std::istringstream is{R"xml(
+<rect name="test">
+  <rect name="dup">
+    <x>10</x>
+  </rect>
+
+  <rect name="dup">
+    <x>5</x>
+  </rect>
+</rect>
+  )xml"};
+
+  pugi::xml_document doc;
+  REQUIRE(doc.load(is));
+  auto testNode{doc.first_child()};
+  auto dupNode1{testNode.first_child()};
+  auto dupNode2{dupNode1.next_sibling()};
+
+  auto elems{gui::getChildElements(testNode)};
+  REQUIRE(elems.size() == 2);
+  REQUIRE(elems[0].second == dupNode1);
+  REQUIRE(elems[1].second == dupNode2);
+  REQUIRE(elems[0].first->get_name() != elems[1].first->get_name());
 }

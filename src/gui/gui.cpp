@@ -7,6 +7,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <pugixml.hpp>
+#include <algorithm>
 #include <unordered_map>
 
 namespace gui {
@@ -56,14 +57,26 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
   for (auto n : node.children()) {
     using namespace std::literals;
     std::unique_ptr<UiElement> element = [&]() -> std::unique_ptr<UiElement> {
-      if (n.name() == "image"s) {
-        return std::make_unique<Image>(gui::fullyQualifyName(n));
-      } else if (n.name() == "rect"s) {
-        return std::make_unique<Rect>(gui::fullyQualifyName(n));
-      } else if (n.name() == "text"s) {
-        return std::make_unique<Text>(gui::fullyQualifyName(n));
+      // There are cases where two siblings have the same name, whereupon
+      // fully-qualifed names are insufficient for uniqueness. Non-uniqueness
+      // could also occur on a more global scale, but unless this happens in an
+      // original game file (not mods) we do not support it.
+      auto name{gui::fullyQualifyName(n)};
+      const auto pred = [&name](UiElementNode &elemNode) {
+        return name == elemNode.first->get_name();
+      };
+      while (std::find_if(uiElements.begin(), uiElements.end(), pred)
+          != uiElements.end()) {
+        name.push_back('_');
       }
-      else return nullptr;
+
+      if (n.name() == "image"s) {
+        return std::make_unique<Image>(name);
+      } else if (n.name() == "rect"s) {
+        return std::make_unique<Rect>(name);
+      } else if (n.name() == "text"s) {
+        return std::make_unique<Text>(name);
+      } else return nullptr;
     }();
 
     if (element) {
@@ -124,6 +137,7 @@ void loadMenu(pugi::xml_node doc) {
 
 void loadMenu(const std::string &filename) {
   auto doc{gui::loadDocument(filename)};
+  doc.save_file("out.xml", "  ");
   loadMenu(doc);
 }
 
