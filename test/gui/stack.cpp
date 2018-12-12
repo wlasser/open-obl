@@ -93,6 +93,18 @@ TEST_CASE("parseValueType ignores trailing and leading whitespace",
     REQUIRE(std::holds_alternative<std::string>(r));
     REQUIRE(std::get<std::string>(r) == "hello  world");
   }
+
+  {
+    const auto r{stack::parseValueType("   ")};
+    REQUIRE(std::holds_alternative<std::string>(r));
+    REQUIRE(std::get<std::string>(r).empty());
+  }
+
+  {
+    const auto r{stack::parseValueType("")};
+    REQUIRE(std::holds_alternative<std::string>(r));
+    REQUIRE(std::get<std::string>(r).empty());
+  }
 }
 
 TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {

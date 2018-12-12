@@ -161,6 +161,11 @@ TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
   if (node.text()) {
     const auto value{gui::getXmlChildValue<T>(node)};
     return TraitFun<T>{[value]() { return value; }};
+  } else if (!node.first_child()) {
+    // This happens in particular when `node` contains an empty string, or only
+    // whitespace, such as `<foo>  </foo>`. Because `xml_text` uses an empty
+    // string for failure, such cases are not counted as strings.
+    return TraitFun<T>{[]() -> T { return {}; }};
   } else {
     gui::stack::Program prog{gui::stack::compile(node, &traits)};
     auto fun{TraitFun<T>([prog]() -> T { return std::get<T>(prog()); })};
