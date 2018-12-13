@@ -98,9 +98,11 @@ class Application : public Ogre::FrameListener {
   /// Push a mode onto the stack and call its enter method.
   /// \tparam Ts Should model the Mode concept, see GameMode and ConsoleMode.
   template<class ...Ts>
-  void pushMode(const std::variant<Ts...> &mode) {
-    // First visit copies into a new variant so need a second visit.
-    std::visit([this](auto &&state) { modeStack.emplace_back(state); }, mode);
+  void pushMode(std::variant<Ts...> mode) {
+    // First visit moves into a new variant so need a second visit.
+    std::visit([this](auto &&state) {
+      modeStack.emplace_back(std::move(state));
+    }, mode);
     std::visit([this](auto &&state) { state.enter(ctx); }, modeStack.back());
   }
 

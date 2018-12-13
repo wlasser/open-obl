@@ -385,7 +385,7 @@ void Application::pollEvents() {
       auto[pop, push]{mode.handleEvent(ctx, sdlEvent)};
       if (pop) popMode();
       if (push) {
-        pushMode(*push);
+        pushMode(std::move(*push));
       } else {
         refocusMode();
       }

@@ -194,9 +194,30 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node);
 std::vector<std::unique_ptr<UiElement>>
 addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
-void loadMenu(pugi::xml_node doc);
+class MenuContext {
+ private:
+  using UiElementPtr = std::unique_ptr<UiElement>;
 
-void loadMenu(const std::string &filename);
+  Traits mTraits;
+  std::vector<UiElementPtr> mUiElements;
+  MenuInterfaceVariant mInterfaceBuffer;
+
+ public:
+  MenuContext(Traits traits,
+              std::vector<UiElementPtr> uiElements,
+              MenuInterfaceVariant interfaceBuffer)
+      : mTraits(std::move(traits)),
+        mUiElements(std::move(uiElements)),
+        mInterfaceBuffer(std::move(interfaceBuffer)) {}
+
+  MenuContext(const MenuContext &) = delete;
+  MenuContext &operator=(const MenuContext &) = delete;
+  MenuContext(MenuContext &&) = default;
+  MenuContext &operator=(MenuContext &&) = default;
+};
+
+std::optional<MenuContext> loadMenu(pugi::xml_node doc);
+std::optional<MenuContext> loadMenu(const std::string &filename);
 
 /// \name MenuType specializations
 ///@{

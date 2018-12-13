@@ -11,6 +11,11 @@ class ConsoleMode;
 class GameMode;
 
 class MenuMode {
+ private:
+  std::optional<gui::MenuContext> mMenuCtx{};
+
+  std::optional<gui::MenuContext> loadMenu(gui::MenuType type);
+
  public:
   using transition_t = ModeTransition<MenuMode>;
 

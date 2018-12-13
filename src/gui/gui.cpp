@@ -111,7 +111,7 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   return accum;
 }
 
-void loadMenu(pugi::xml_node doc) {
+std::optional<MenuContext> loadMenu(pugi::xml_node doc) {
   const auto[menuNode, menuType]{gui::getMenuNode(doc)};
 
   MenuVariant menu{};
@@ -120,7 +120,7 @@ void loadMenu(pugi::xml_node doc) {
 
   const std::string menuName{menuNode.attribute("name").value()};
   if (menuName.empty()) {
-    // TODO: Return an empty optional
+    return std::nullopt;
   }
   menuElement->set_name(menuName);
 
@@ -140,12 +140,17 @@ void loadMenu(pugi::xml_node doc) {
   std::visit([&menuTraits](auto &&t) {
     menuTraits.setUserTraitSources(t.value);
   }, interfaceBuffer);
+
+  return std::optional<MenuContext>(std::in_place,
+                                    std::move(menuTraits),
+                                    std::move(uiElements),
+                                    std::move(interfaceBuffer));
 }
 
-void loadMenu(const std::string &filename) {
+std::optional<MenuContext> loadMenu(const std::string &filename) {
   auto doc{gui::loadDocument(filename)};
   doc.save_file("out.xml", "  ");
-  loadMenu(doc);
+  return loadMenu(doc);
 }
 
 template<>
