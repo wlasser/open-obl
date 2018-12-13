@@ -17,6 +17,7 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/elements/rect.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/text.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/gui.hpp
+        ${CMAKE_SOURCE_DIR}/include/gui/logging.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/loading_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/screen.hpp

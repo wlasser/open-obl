@@ -3,6 +3,7 @@
 #include "gui/elements/rect.hpp"
 #include "gui/elements/text.hpp"
 #include "gui/gui.hpp"
+#include "gui/logging.hpp"
 #include "gui/xml.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
@@ -31,12 +32,15 @@ MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
 std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc) {
   const auto menuNode{doc.child("menu")};
   if (!menuNode) {
+    gui::guiLogger()->error("Menu does not have a <menu> tag");
     throw std::runtime_error("Menu does not have a <menu> tag");
   }
 
   const auto classNode{menuNode.child("class")};
   if (!classNode) {
-    throw std::runtime_error("<menu> must have a <class> child tag");
+    gui::guiLogger()->error("<menu> does not have a <class> child tag "
+                            "(offset: {})", menuNode.offset_debug());
+    throw std::runtime_error("<menu> does not have a <class> child tag");
   }
 
   const auto menuType = getXmlChildValue<MenuType>(classNode);
@@ -67,6 +71,9 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
       };
       while (std::find_if(uiElements.begin(), uiElements.end(), pred)
           != uiElements.end()) {
+        gui::guiLogger()->warn("Deprecated: Multiple siblings with the same "
+                               "name (name: {}) (offset: {})",
+                               name, n.offset_debug());
         name.push_back('_');
       }
 

@@ -1,10 +1,10 @@
+#include "gui/logging.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
-#include <spdlog/spdlog.h>
 #include <string>
 #include <unordered_map>
 
@@ -12,12 +12,12 @@ namespace gui {
 
 std::stringstream
 StringsElement::openXMLStream(const std::string &filename) const {
-  auto logger{spdlog::get(oo::LOG)};
   auto &txtMgr{Ogre::TextResourceManager::getSingleton()};
 
   auto stringsPtr{txtMgr.getByName(filename, oo::RESOURCE_GROUP)};
   if (!stringsPtr) {
-    logger->error("Resource {} does not exist", filename);
+    gui::guiLogger()->error("Resource {} does not exist", filename);
+    gui::guiLogger()->error("Failed to open strings file");
     throw std::runtime_error("Failed to open strings file");
   }
 
@@ -26,13 +26,12 @@ StringsElement::openXMLStream(const std::string &filename) const {
 }
 
 pugi::xml_document StringsElement::readXMLDocument(std::istream &is) const {
-  auto logger{spdlog::get(oo::LOG)};
   pugi::xml_document doc{};
 
   pugi::xml_parse_result result{doc.load(is)};
   if (!result) {
-    logger->error("Failed to parse strings XML [{}]: {}",
-                  result.offset, result.description());
+    gui::guiLogger()->error("Failed to parse strings XML [{}]: {}",
+                            result.offset, result.description());
     throw std::runtime_error("Failed to parse strings XML");
   }
 
@@ -40,8 +39,6 @@ pugi::xml_document StringsElement::readXMLDocument(std::istream &is) const {
 }
 
 void StringsElement::parseXMLDocument(pugi::xml_document doc) {
-  auto logger{spdlog::get(oo::LOG)};
-
   const auto stringsNode{doc.find_child([](pugi::xml_node node) {
     using namespace std::literals;
     const auto attr{node.attribute("name")};
@@ -56,7 +53,8 @@ void StringsElement::parseXMLDocument(pugi::xml_document doc) {
       mStrings[name] = text;
     }
   } else {
-    logger->error("XML does not have a node with name 'Strings'");
+    gui::guiLogger()->error("Strings XML does not have a node with name "
+                            "'Strings'");
   }
 }
 
@@ -74,7 +72,7 @@ StringsElement::StringsElement(const std::string &filename) {
 Trait<std::string> StringsElement::makeTrait(const std::string &name) const {
   auto it{mStrings.find(name)};
   if (it == mStrings.end()) {
-    spdlog::get(oo::LOG)->warn("{} is not a strings() trait", name);
+    gui::guiLogger()->warn("{} is not a strings() trait", name);
     return Trait<std::string>(name, "");
   }
   const std::string value{it->second};

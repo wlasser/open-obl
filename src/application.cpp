@@ -7,6 +7,7 @@
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
 #include "game_settings.hpp"
+#include "gui/logging.hpp"
 #include "gui/menu.hpp"
 #include "initial_record_visitor.hpp"
 #include "meta.hpp"
@@ -181,6 +182,9 @@ void Application::createLoggers() {
   // user settings, if specified.
   logger->set_level(spdlog::level::warn);
   ogreLogger->set_level(spdlog::level::info);
+
+  // Set the library loggers
+  gui::guiLogger(oo::LOG);
 }
 
 void Application::loadIniConfiguration() {

@@ -1,9 +1,9 @@
+#include "gui/logging.hpp"
 #include "gui/xml.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
-#include <spdlog/spdlog.h>
 #include <cstdlib>
 #include <sstream>
 #include <string>
@@ -14,7 +14,7 @@ pugi::xml_document loadDocument(const std::string &filename) {
   auto &txtResMgr{Ogre::TextResourceManager::getSingleton()};
   auto xmlPtr{txtResMgr.getByName(filename, oo::RESOURCE_GROUP)};
   if (!xmlPtr) {
-    spdlog::get(oo::LOG)->error("XML file '{}' does not exist", filename);
+    gui::guiLogger()->error("XML file '{}' does not exist", filename);
     throw std::runtime_error("XML file does not exist");
   }
   xmlPtr->load();
@@ -25,8 +25,8 @@ pugi::xml_document loadDocument(const std::string &filename) {
 pugi::xml_document loadDocument(std::istream &is) {
   pugi::xml_document doc{};
   if (const auto result{doc.load(is)}; !result) {
-    spdlog::get(oo::LOG)->error("Failed to parse menu XML [offset {}]: {}",
-                                result.offset, result.description());
+    gui::guiLogger()->error("Failed to parse menu XML [offset {}]: {}",
+                            result.offset, result.description());
     throw std::runtime_error("Failed to parse menu XML");
   }
   return doc;

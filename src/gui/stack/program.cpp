@@ -1,3 +1,4 @@
+#include "gui/logging.hpp"
 #include "gui/stack/program.hpp"
 #include "gui/trait_selector.hpp"
 #include "gui/traits.hpp"
@@ -59,6 +60,9 @@ Program compile(pugi::xml_node node, const gui::Traits *traits) {
     // with the selected trait before the operation.
     if (const auto srcOpt{gui::resolveTrait(child)}; srcOpt) {
       if (!traits) {
+        gui::guiLogger()->error("stack::compile: No Traits given but XML "
+                                "requires trait lookup (offset: {})",
+                                child.offset_debug());
         throw std::runtime_error("No Traits given but XML requires trait lookup");
       }
       push_t instr{stack::TraitName{*srcOpt, traits}};
@@ -115,6 +119,7 @@ ValueType Program::operator()() const {
     std::visit([&stack](auto &&op) { op(stack); }, instr);
   }
   if (stack.empty()) {
+    gui::guiLogger()->error("Program stack is empty on program termination");
     throw std::runtime_error("Program stack is empty on termination");
   }
   lastReturn = stack.back();

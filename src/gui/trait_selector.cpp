@@ -1,10 +1,10 @@
+#include "gui/logging.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait_selector.hpp"
 #include "gui/xml.hpp"
 #include "settings.hpp"
 #include <boost/range/adaptors.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <spdlog/spdlog.h>
 #include <regex>
 
 namespace gui {
@@ -86,7 +86,8 @@ invokeChildSelector(pugi::xml_node node, std::optional<std::string> arg) {
 }
 
 std::string invokeLastSelector(pugi::xml_node node) {
-  spdlog::get(oo::LOG)->warn("last() is unimplemented");
+  gui::guiLogger()->warn("last() is unimplemented (offset {})",
+                         node.offset_debug());
   return "";
 }
 

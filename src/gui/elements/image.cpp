@@ -7,7 +7,6 @@
 #include <OgrePass.h>
 #include <OgreTechnique.h>
 #include <OgreTextureManager.h>
-#include <spdlog/spdlog.h>
 #include <string>
 
 gui::Image::Image(std::string name) {

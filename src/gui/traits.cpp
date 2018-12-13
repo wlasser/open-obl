@@ -1,4 +1,5 @@
 #include "gui/gui.hpp"
+#include "gui/logging.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/traits.hpp"
@@ -104,10 +105,12 @@ const Traits::TraitVariant &
 Traits::getTraitVariant(const std::string &name) const {
   const auto index{mIndices.find(name)};
   if (index == mIndices.end()) {
+    gui::guiLogger()->error("Trait {} does not exist", name);
     throw std::runtime_error("No such trait");
   }
   const auto &vertex{mGraph[index->second]};
   if (!vertex) {
+    gui::guiLogger()->error("Trait {} exists but is null", name);
     throw std::runtime_error("nullptr vertex");
   }
   return *vertex;
@@ -181,6 +184,11 @@ void Traits::addTraitDependencies() {
       } else {
         const auto uIndexIt{mIndices.find(dep)};
         if (uIndexIt == mIndices.end()) {
+          const std::string dependee{std::visit([](const auto &trait) {
+            return trait.getName();
+          }, *vPtr)};
+          gui::guiLogger()->error("Dependency {} of {} does not exist",
+                                  dep, dependee);
           throw std::runtime_error("Nonexistent dependency");
         }
         const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
@@ -199,6 +207,10 @@ void Traits::update() {
   for (const auto &desc : mOrdering) {
     auto &vertex{mGraph[desc]};
     if (!vertex) {
+      const std::string traitName{std::visit([](const auto &trait) {
+        return trait.getName();
+      }, *vertex)};
+      gui::guiLogger()->error("Trait {} exists but is null", traitName);
       throw std::runtime_error("nullptr vertex");
     }
     std::visit([](auto &&trait) { trait.update(); }, *vertex);
