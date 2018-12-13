@@ -22,8 +22,8 @@ Ogre::Vector2 getNormalizedDimensions();
 /// traits:
 ///  - `<width>`: the screen width in NC
 ///  - `<height>`: the screen height in NC
-///  - `<cropX>`: the horizontal safe zone margin width in NC
-///  - `<cropY>`: the vertical safe zone margin height in NC
+///  - `<cropx>`: the horizontal safe zone margin width in NC
+///  - `<cropy>`: the vertical safe zone margin height in NC
 class ScreenElement {
  private:
   int mRawWidth{0};
@@ -60,11 +60,11 @@ class ScreenElement {
 
   // TODO: What are the actual screen crop values?
   Trait<int> makeCropXTrait() const {
-    return Trait<int>(std::string{PREFIX} + "cropX", 32);
+    return Trait<int>(std::string{PREFIX} + "cropx", 32);
   }
 
   Trait<int> makeCropYTrait() const {
-    return Trait<int>(std::string{PREFIX} + "cropY", 32);
+    return Trait<int>(std::string{PREFIX} + "cropy", 32);
   }
 
   /// Return the implementation-defined name of the `ScreenElement`.

@@ -132,9 +132,9 @@ void Traits::addImplementationElementTraits() {
           addTrait(mScreen.makeWidthTrait());
         } else if (dep == screenPrefix + "height") {
           addTrait(mScreen.makeHeightTrait());
-        } else if (dep == screenPrefix + "cropX") {
+        } else if (dep == screenPrefix + "cropx") {
           addTrait(mScreen.makeCropXTrait());
-        } else if (dep == screenPrefix + "cropY") {
+        } else if (dep == screenPrefix + "cropy") {
           addTrait(mScreen.makeCropYTrait());
           //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
         } else if (boost::algorithm::starts_with(
