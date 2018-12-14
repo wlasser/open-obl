@@ -20,10 +20,10 @@ void Traits::sort() {
   // By our definitions, there is an edge uv iff v depends on u, and so in the
   // ordering u should come before v iff there is an edge uv.
   // boost::topological_sort says the reverse; that v comes before u iff there
-  // is an edge uv. Luckily for us, boost also gives the result in the reverse
-  // order (to them), which is the right order for us.
+  // is an edge uv.
   mOrdering.reserve(boost::num_vertices(mGraph));
   boost::topological_sort(mGraph, std::back_inserter(mOrdering));
+  std::reverse(mOrdering.begin(), mOrdering.end());
   mSorted = true;
 }
 
