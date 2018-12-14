@@ -4,7 +4,9 @@
 #include "gui/trait.hpp"
 #include "gui/traits.hpp"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/graph/graphviz.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <ostream>
 
 namespace gui {
 
@@ -219,6 +221,33 @@ void Traits::update() {
 
 void Traits::loadStrings(const std::string &filename) {
   mStrings = gui::StringsElement(filename);
+}
+
+namespace {
+
+template<class Graph>
+class VertexWriter {
+ private:
+  const Graph &mGraph;
+
+ public:
+  VertexWriter(const Graph &g) : mGraph(g) {}
+
+  template<class VertexDesc>
+  void operator()(std::ostream &os, VertexDesc desc) {
+    auto vPtr{mGraph[desc]};
+    if (!vPtr) return;
+
+    std::visit([&os, desc](const auto &trait) {
+      os << "[label=\"" << desc << ": " << trait.getName() << "\"]";
+    }, *vPtr);
+  }
+};
+
+}
+
+void Traits::printDot(std::ostream &os) {
+  boost::write_graphviz(os, mGraph, VertexWriter(mGraph));
 }
 
 } // namespace gui

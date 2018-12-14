@@ -10,6 +10,7 @@
 #include "gui/xml.hpp"
 #include <boost/graph/adjacency_list.hpp>
 #include <pugixml.hpp>
+#include <iosfwd>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -151,6 +152,9 @@ class Traits {
   /// may change in the future.
   /// \see gui::StringsElement(const std::string&)
   void loadStrings(const std::string &filename);
+
+  /// Print the dependency graph as a DOT file.
+  void printDot(std::ostream &os);
 };
 
 /// Given an XML node representing a trait, produce a TraitFun which performs
