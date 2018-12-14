@@ -198,15 +198,18 @@ class MenuContext {
  private:
   using UiElementPtr = std::unique_ptr<UiElement>;
 
-  Traits mTraits;
+  std::unique_ptr<Traits> mTraits;
+  std::unique_ptr<MenuVariant> mMenu;
   std::vector<UiElementPtr> mUiElements;
-  MenuInterfaceVariant mInterfaceBuffer;
+  std::unique_ptr<MenuInterfaceVariant> mInterfaceBuffer;
 
  public:
-  MenuContext(Traits traits,
+  MenuContext(std::unique_ptr<Traits> traits,
+              std::unique_ptr<MenuVariant> menu,
               std::vector<UiElementPtr> uiElements,
-              MenuInterfaceVariant interfaceBuffer)
+              std::unique_ptr<MenuInterfaceVariant> interfaceBuffer)
       : mTraits(std::move(traits)),
+        mMenu(std::move(menu)),
         mUiElements(std::move(uiElements)),
         mInterfaceBuffer(std::move(interfaceBuffer)) {}
 
@@ -214,6 +217,10 @@ class MenuContext {
   MenuContext &operator=(const MenuContext &) = delete;
   MenuContext(MenuContext &&) = default;
   MenuContext &operator=(MenuContext &&) = default;
+
+  void update() {
+    mTraits->update();
+  }
 };
 
 std::optional<MenuContext> loadMenu(pugi::xml_node doc);

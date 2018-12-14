@@ -139,6 +139,7 @@ std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
     case gui::MenuType::VideoMenu: {
       return gui::loadMenu("menus/options/video_mode.xml");
     }
+    default: return std::nullopt;
   }
   return std::nullopt;
 }
@@ -146,6 +147,10 @@ std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
 MenuMode::MenuMode(ApplicationContext &ctx, gui::MenuType type) {
   refocus(ctx);
   mMenuCtx = loadMenu(type);
+  if (!mMenuCtx) {
+    throw std::runtime_error("Failed to construct menu");
+  }
+  mMenuCtx->update();
 }
 
 MenuMode::transition_t

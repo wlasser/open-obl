@@ -114,9 +114,9 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
 std::optional<MenuContext> loadMenu(pugi::xml_node doc) {
   const auto[menuNode, menuType]{gui::getMenuNode(doc)};
 
-  MenuVariant menu{};
-  enumvar::defaultConstruct(menuType, menu);
-  auto *menuElement{gui::extractUiElement(menu)};
+  auto menu{std::make_unique<MenuVariant>()};
+  enumvar::defaultConstruct(menuType, *menu);
+  auto *menuElement{gui::extractUiElement(*menu)};
 
   const std::string menuName{menuNode.attribute("name").value()};
   if (menuName.empty()) {
@@ -125,24 +125,39 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc) {
   menuElement->set_name(menuName);
 
   // Construct the dependency graph of the dynamic representation
-  Traits menuTraits{};
-  menuTraits.loadStrings("menus/strings.xml");
-  auto uiElements = gui::addDescendants(menuTraits, menuElement, menuNode);
-  menuTraits.addImplementationElementTraits();
+  auto menuTraits{std::make_unique<Traits>()};
+  menuTraits->loadStrings("menus/strings.xml");
+  auto uiElements = gui::addDescendants(*menuTraits, menuElement, menuNode);
+  menuTraits->addImplementationElementTraits();
   for (const auto &uiElement : uiElements) {
-    menuTraits.addProvidedTraits(uiElement.get());
+    menuTraits->addProvidedTraits(uiElement.get());
   }
-  menuTraits.addTraitDependencies();
-  menuTraits.update();
+  menuTraits->addTraitDependencies();
+  menuTraits->update();
 
   // Construct a suitable user interface buffer and link it to the user traits
-  MenuInterfaceVariant interfaceBuffer{gui::makeInterfaceBuffer(menu)};
+  auto interfaceBuffer
+      {std::make_unique<MenuInterfaceVariant>(gui::makeInterfaceBuffer(*menu))};
   std::visit([&menuTraits](auto &&t) {
-    menuTraits.setUserTraitSources(t.value);
-  }, interfaceBuffer);
+    menuTraits->setUserTraitSources(t.value);
+  }, *interfaceBuffer);
+
+  std::visit([&uiElements](auto &m) {
+    auto *overlay{m.getOverlay()};
+    if (!overlay) return;
+
+    for (const auto &uiElem : uiElements) {
+      auto *overlayElem{uiElem->getOverlayElement()};
+      auto *container{dynamic_cast<Ogre::OverlayContainer *>(overlayElem)};
+
+      if (!container) break;
+      overlay->add2D(container);
+    }
+  }, *menu);
 
   return std::optional<MenuContext>(std::in_place,
                                     std::move(menuTraits),
+                                    std::move(menu),
                                     std::move(uiElements),
                                     std::move(interfaceBuffer));
 }
