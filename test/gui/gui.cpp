@@ -87,3 +87,30 @@ TEST_CASE("can have sibling uiElements with the same name", "[gui]") {
   REQUIRE(elems[1].second == dupNode2);
   REQUIRE(elems[0].first->get_name() != elems[1].first->get_name());
 }
+
+TEST_CASE("user traits should not be reset to 0 on second update()",
+          "[gui][regression]") {
+  std::istringstream is{R"xml(
+<menu name="LoadingMenu">
+  <class> &LoadingMenu; </class>
+  <user0> 0 </user0>
+  <user1> foo.dds </user1>
+  <user2> Missing </user2>
+  <user3> 0 </user3>
+  <user4> 100 </user4>
+  <user5 />
+
+  <image name="foo">
+    <width>
+      <copy src="LoadingMenu" trait="user3" />
+      <div src="LoadingMenu" trait="user4" />
+    </width>
+  </image>
+</menu>
+  )xml"};
+  pugi::xml_document doc{};
+  REQUIRE(doc.load(is));
+  auto ctx{gui::loadMenu(doc)};
+  REQUIRE(ctx.has_value());
+  REQUIRE_NOTHROW(ctx->update());
+}
