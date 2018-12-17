@@ -207,7 +207,8 @@ template<class T, class ...Args>
 Trait<T> &Traits::addTrait(const std::string &name, Args &&... args) {
   mSorted = false;
   const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
-      Trait<T>{name, std::forward<Args>(args)...}), mGraph)};
+      std::in_place_type<Trait<T>>, name, std::forward<Args>(args)...),
+                                     mGraph)};
   mIndices[name] = index;
   return std::get<Trait<T>>(*mGraph[index]);
 }
