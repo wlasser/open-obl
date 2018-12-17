@@ -49,29 +49,15 @@ class StringsElement {
  private:
   std::unordered_map<std::string, std::string> mStrings{};
 
-  /// Open the `Ogre::TextResource` with the given `filename` and return a
-  /// stream to it.
-  /// \throws std::runtime_error if the resource does not exist.
-  std::stringstream openXMLStream(const std::string &filename) const;
-
-  /// Read a stream `is` representing an XML document, returning an actual
-  /// document.
-  /// \throws std::runtime_error if the document fails to parse.
-  pugi::xml_document readXMLDocument(std::istream &is) const;
-
   /// Parse an XML document of localized strings and store them.
-  void parseXMLDocument(pugi::xml_document doc);
+  void parseXmlDocument(pugi::xml_node doc);
 
   static constexpr inline std::string_view NAME{"__strings"};
   static constexpr inline std::string_view PREFIX{"__strings."};
 
  public:
-  /// Load an XML document of localized strings from the `Ogre::TextResource`
-  /// called `filename`.
-  explicit StringsElement(const std::string &filename);
-
-  /// Load an XML document of localized strings from the stream `is`.
-  explicit StringsElement(std::istream &is);
+  /// Load an XML document of localized strings.
+  explicit StringsElement(pugi::xml_node doc);
 
   /// Construct a user trait whose value is the localized string with the given
   /// identifier `name`.

@@ -59,8 +59,9 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
 
   Ogre::Overlay *getOverlay() {
     if (!mOverlay) {
-      auto &overlayMgr{Ogre::OverlayManager::getSingleton()};
-      mOverlay = overlayMgr.create(this->get_name());
+      auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
+      if (!overlayMgr) return nullptr;
+      mOverlay = overlayMgr->create(this->get_name());
       // Overlays start off hidden
       if (mVisible) mOverlay->show();
     }

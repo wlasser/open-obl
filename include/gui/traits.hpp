@@ -150,8 +150,8 @@ class Traits {
   /// This function should be called at most per instance of `Traits`.
   /// In practice, calling it multiple times should work as expected, but that
   /// may change in the future.
-  /// \see gui::StringsElement(const std::string&)
-  void loadStrings(const std::string &filename);
+  /// \see gui::StringsElement(pugi::xml_node)
+  void loadStrings(pugi::xml_node doc);
 
   /// Print the dependency graph as a DOT file.
   void printDot(std::ostream &os);

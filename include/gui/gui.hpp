@@ -205,8 +205,10 @@ class MenuContext {
   }
 };
 
-std::optional<MenuContext> loadMenu(pugi::xml_node doc);
-std::optional<MenuContext> loadMenu(const std::string &filename);
+std::optional<MenuContext> loadMenu(pugi::xml_node doc,
+                                    std::optional<pugi::xml_node> stringsDoc);
+std::optional<MenuContext> loadMenu(const std::string &filename,
+                                    const std::string &stringsFilename);
 
 /// \name MenuType specializations
 ///@{

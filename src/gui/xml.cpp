@@ -10,26 +10,31 @@
 
 namespace gui {
 
-pugi::xml_document loadDocument(const std::string &filename) {
-  auto &txtResMgr{Ogre::TextResourceManager::getSingleton()};
-  auto xmlPtr{txtResMgr.getByName(filename, oo::RESOURCE_GROUP)};
+std::stringstream openXmlStream(const std::string &filename) {
+  auto &txtMgr{Ogre::TextResourceManager::getSingleton()};
+  auto xmlPtr{txtMgr.getByName(filename, oo::RESOURCE_GROUP)};
   if (!xmlPtr) {
     gui::guiLogger()->error("XML file '{}' does not exist", filename);
-    throw std::runtime_error("XML file does not exist");
+    throw std::runtime_error("Could not open stream, XML file does not exist");
   }
+
   xmlPtr->load();
-  std::stringstream xmlStream{xmlPtr->getString()};
-  return loadDocument(xmlStream);
+  return std::stringstream{xmlPtr->getString()};
 }
 
-pugi::xml_document loadDocument(std::istream &is) {
+pugi::xml_document readXmlDocument(std::istream &is) {
   pugi::xml_document doc{};
   if (const auto result{doc.load(is)}; !result) {
-    gui::guiLogger()->error("Failed to parse menu XML [offset {}]: {}",
+    gui::guiLogger()->error("Failed to parse XML [offset {}]: {}",
                             result.offset, result.description());
-    throw std::runtime_error("Failed to parse menu XML");
+    throw std::runtime_error("Failed to parse XML");
   }
   return doc;
+}
+
+pugi::xml_document readXmlDocument(const std::string &filename) {
+  auto is{gui::openXmlStream(filename)};
+  return gui::readXmlDocument(is);
 }
 
 template<> bool parseXmlEntity(const std::string &entity) {

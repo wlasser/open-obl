@@ -168,7 +168,9 @@ TEST_CASE("can use StringsElement", "[gui]") {
   <_howmany>How Many?</_howmany>
 </rect>
     )xml"};
-  gui::StringsElement strings(is);
+  pugi::xml_document doc{};
+  REQUIRE(doc.load(is));
+  gui::StringsElement strings(doc);
 
   auto traitExit{strings.makeTrait(prefix + "_exit")};
   REQUIRE(traitExit.invoke() == "Exit");
@@ -185,7 +187,9 @@ TEST_CASE("StringsElement accepts documents without any strings", "[gui]") {
 <rect name="Strings">
 </rect>
     )xml"};
-  gui::StringsElement strings(is);
+  pugi::xml_document doc{};
+  REQUIRE(doc.load(is));
+  gui::StringsElement strings(doc);
 
   auto traitEmpty{strings.makeTrait(prefix + "_empty")};
   REQUIRE(traitEmpty.invoke().empty());
@@ -205,7 +209,9 @@ TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
   <_test>Second</_test>
 </rect>
     )xml"};
-  gui::StringsElement strings(is);
+  pugi::xml_document doc{};
+  REQUIRE(doc.load(is));
+  gui::StringsElement strings(doc);
 
   auto traitTest{strings.makeTrait(prefix + "_test")};
   REQUIRE(traitTest.invoke() == "Second");

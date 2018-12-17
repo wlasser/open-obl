@@ -1,7 +1,7 @@
 #include "gui/logging.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
-#include "ogre/text_resource_manager.hpp"
+#include "gui/xml.hpp"
 #include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
@@ -10,35 +10,7 @@
 
 namespace gui {
 
-std::stringstream
-StringsElement::openXMLStream(const std::string &filename) const {
-  auto &txtMgr{Ogre::TextResourceManager::getSingleton()};
-
-  auto stringsPtr{txtMgr.getByName(filename, oo::RESOURCE_GROUP)};
-  if (!stringsPtr) {
-    gui::guiLogger()->error("Resource {} does not exist", filename);
-    gui::guiLogger()->error("Failed to open strings file");
-    throw std::runtime_error("Failed to open strings file");
-  }
-
-  stringsPtr->load(false);
-  return std::stringstream{stringsPtr->getString()};
-}
-
-pugi::xml_document StringsElement::readXMLDocument(std::istream &is) const {
-  pugi::xml_document doc{};
-
-  pugi::xml_parse_result result{doc.load(is)};
-  if (!result) {
-    gui::guiLogger()->error("Failed to parse strings XML [{}]: {}",
-                            result.offset, result.description());
-    throw std::runtime_error("Failed to parse strings XML");
-  }
-
-  return doc;
-}
-
-void StringsElement::parseXMLDocument(pugi::xml_document doc) {
+void StringsElement::parseXmlDocument(pugi::xml_node doc) {
   const auto stringsNode{doc.find_child([](pugi::xml_node node) {
     using namespace std::literals;
     const auto attr{node.attribute("name")};
@@ -58,15 +30,8 @@ void StringsElement::parseXMLDocument(pugi::xml_document doc) {
   }
 }
 
-StringsElement::StringsElement(std::istream &is) {
-  auto doc{readXMLDocument(is)};
-  parseXMLDocument(std::move(doc));
-}
-
-StringsElement::StringsElement(const std::string &filename) {
-  auto is{openXMLStream(filename)};
-  auto doc{readXMLDocument(is)};
-  parseXMLDocument(std::move(doc));
+StringsElement::StringsElement(pugi::xml_node doc) {
+  parseXmlDocument(doc);
 }
 
 Trait<std::string> StringsElement::makeTrait(const std::string &name) const {

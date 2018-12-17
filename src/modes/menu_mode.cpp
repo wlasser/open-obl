@@ -1,39 +1,43 @@
 #include "modes/menu_mode.hpp"
 
 std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
+  const auto loadWithStrings = [](const std::string &filename) {
+    return gui::loadMenu(filename, "menus/strings.xml");
+  };
+
   switch (type) {
     case gui::MenuType::AlchemyMenu: {
-      return gui::loadMenu("menus/dialog/alchemy.xml");
+      return loadWithStrings("menus/dialog/alchemy.xml");
     }
     case gui::MenuType::AudioMenu: {
-      return gui::loadMenu("menus/options/audio_menu.xml");
+      return loadWithStrings("menus/options/audio_menu.xml");
     }
     case gui::MenuType::BookMenu: {
-      return gui::loadMenu("menus/book_menu.xml");
+      return loadWithStrings("menus/book_menu.xml");
     }
     case gui::MenuType::BreathMenu: {
-      return gui::loadMenu("menus/breath_meter_menu.xml");
+      return loadWithStrings("menus/breath_meter_menu.xml");
     }
     case gui::MenuType::ClassMenu: {
-      return gui::loadMenu("menus/chargen/class_menu.xml");
+      return loadWithStrings("menus/chargen/class_menu.xml");
     }
     case gui::MenuType::ContainerMenu: {
-      return gui::loadMenu("menus/container_menu.xml");
+      return loadWithStrings("menus/container_menu.xml");
     }
     case gui::MenuType::ControlsMenu: {
-      return gui::loadMenu("menus/options/controls_menu.xml");
+      return loadWithStrings("menus/options/controls_menu.xml");
     }
     case gui::MenuType::CreditsMenu: {
-      return gui::loadMenu("menus/options/credits_menu.xml");
+      return loadWithStrings("menus/options/credits_menu.xml");
     }
     case gui::MenuType::DialogMenu: {
-      return gui::loadMenu("menus/dialog/dialog_menu.xml");
+      return loadWithStrings("menus/dialog/dialog_menu.xml");
     }
     case gui::MenuType::EffectSettingMenu: {
-      return gui::loadMenu("menus/dialog/enchantmentsetting_menu.xml");
+      return loadWithStrings("menus/dialog/enchantmentsetting_menu.xml");
     }
     case gui::MenuType::EnchantmentMenu: {
-      return gui::loadMenu("menus/dialog/enchantment.xml");
+      return loadWithStrings("menus/dialog/enchantment.xml");
     }
     case gui::MenuType::GameplayMenu: {
 // TODO: Is GameplayMenu a lack of menu, or something else?
@@ -44,100 +48,100 @@ std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
       break;
     }
     case gui::MenuType::HUDInfoMenu: {
-      return gui::loadMenu("menus/main/hud_info_menu.xml");
+      return loadWithStrings("menus/main/hud_info_menu.xml");
     }
     case gui::MenuType::HUDMainMenu: {
-      return gui::loadMenu("menus/main/hud_main_menu.xml");
+      return loadWithStrings("menus/main/hud_main_menu.xml");
     }
     case gui::MenuType::HUDSubtitleMenu: {
-      return gui::loadMenu("menus/main/hud_subtitle_menu.xml");
+      return loadWithStrings("menus/main/hud_subtitle_menu.xml");
     }
     case gui::MenuType::InventoryMenu: {
-      return gui::loadMenu("menus/main/inventory_menu.xml");
+      return loadWithStrings("menus/main/inventory_menu.xml");
     }
     case gui::MenuType::LevelUpMenu: {
-      return gui::loadMenu("menus/levelup_menu.xml");
+      return loadWithStrings("menus/levelup_menu.xml");
     }
     case gui::MenuType::LoadingMenu: {
-      return gui::loadMenu("menus/loading_menu.xml");
+      return loadWithStrings("menus/loading_menu.xml");
     }
     case gui::MenuType::LoadMenu: {
-      return gui::loadMenu("menus/options/load_menu.xml");
+      return loadWithStrings("menus/options/load_menu.xml");
     }
     case gui::MenuType::LockPickMenu: {
-      return gui::loadMenu("menus/lockpick_menu.xml");
+      return loadWithStrings("menus/lockpick_menu.xml");
     }
     case gui::MenuType::MagicMenu: {
-      return gui::loadMenu("menus/main/magic_menu.xml");
+      return loadWithStrings("menus/main/magic_menu.xml");
     }
     case gui::MenuType::MagicPopupMenu: {
-      return gui::loadMenu("menus/main/magic_popup_menu.xml");
+      return loadWithStrings("menus/main/magic_popup_menu.xml");
     }
     case gui::MenuType::MainMenu: {
-      return gui::loadMenu("menus/options/main_menu.xml");
+      return loadWithStrings("menus/options/main_menu.xml");
     }
     case gui::MenuType::MapMenu: {
-      return gui::loadMenu("menus/main/map_menu.xml");
+      return loadWithStrings("menus/main/map_menu.xml");
     }
     case gui::MenuType::MessageMenu: {
-      return gui::loadMenu("menus/message_menu.xml");
+      return loadWithStrings("menus/message_menu.xml");
     }
     case gui::MenuType::NegotiateMenu: {
-      return gui::loadMenu("menus/negotiate_menu.xml");
+      return loadWithStrings("menus/negotiate_menu.xml");
     }
     case gui::MenuType::OptionsMenu: {
-      return gui::loadMenu("menus/options/options_menu.xml");
+      return loadWithStrings("menus/options/options_menu.xml");
     }
     case gui::MenuType::PauseMenu: {
-      return gui::loadMenu("menus/options/pause_menu.xml");
+      return loadWithStrings("menus/options/pause_menu.xml");
     }
     case gui::MenuType::PersuasionMenu: {
-      return gui::loadMenu("menus/dialog/persuasion_menu.xml");
+      return loadWithStrings("menus/dialog/persuasion_menu.xml");
     }
     case gui::MenuType::QuantityMenu: {
-      return gui::loadMenu("menus/quantity_menu.xml");
+      return loadWithStrings("menus/quantity_menu.xml");
     }
     case gui::MenuType::QuickKeysMenu: {
-      return gui::loadMenu("menus/main/quickkeys_menu.xml");
+      return loadWithStrings("menus/main/quickkeys_menu.xml");
     }
     case gui::MenuType::RaceSexMenu: {
-      return gui::loadMenu("menus/chargen/race_sex_menu.xml");
+      return loadWithStrings("menus/chargen/race_sex_menu.xml");
     }
     case gui::MenuType::RechargeMenu: {
-      return gui::loadMenu("menus/recharge_menu.xml");
+      return loadWithStrings("menus/recharge_menu.xml");
     }
     case gui::MenuType::RepairMenu: {
-      return gui::loadMenu("menus/repair_menu.xml");
+      return loadWithStrings("menus/repair_menu.xml");
     }
     case gui::MenuType::SaveMenu: {
-      return gui::loadMenu("menus/options/save_menu.xml");
+      return loadWithStrings("menus/options/save_menu.xml");
     }
     case gui::MenuType::SigilStoneMenu: {
-      return gui::loadMenu("menus/dialog/sigilstone.xml");
+      return loadWithStrings("menus/dialog/sigilstone.xml");
     }
     case gui::MenuType::SkillsMenu: {
-      return gui::loadMenu("menus/chargen/skills_menu.xml");
+      return loadWithStrings("menus/chargen/skills_menu.xml");
     }
     case gui::MenuType::SleepWaitMenu: {
-      return gui::loadMenu("menus/sleep_wait_menu.xml");
+      return loadWithStrings("menus/sleep_wait_menu.xml");
     }
     case gui::MenuType::SpellMakingMenu: {
-      return gui::loadMenu("menus/dialog/spellmaking.xml");
+      return loadWithStrings("menus/dialog/spellmaking.xml");
     }
     case gui::MenuType::SpellPurchaseMenu: {
-      return gui::loadMenu("menus/dialog/spell_purchase.xml");
+      return loadWithStrings("menus/dialog/spell_purchase.xml");
     }
     case gui::MenuType::StatsMenu: {
-      return gui::loadMenu("menus/main/stats_menu.xml");
+      return loadWithStrings("menus/main/stats_menu.xml");
     }
     case gui::MenuType::TextEditMenu: {
-      return gui::loadMenu("menus/dialog/texteditmenu.xml");
+      return loadWithStrings("menus/dialog/texteditmenu.xml");
     }
     case gui::MenuType::TrainingMenu: {
-      return gui::loadMenu("menus/training_menu.xml");
+      return loadWithStrings("menus/training_menu.xml");
     }
     case gui::MenuType::VideoMenu: {
-      return gui::loadMenu("menus/options/video_mode.xml");
+      return loadWithStrings("menus/options/video_mode.xml");
     }
     default: return std::nullopt;
   }

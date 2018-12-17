@@ -219,8 +219,8 @@ void Traits::update() {
   }
 }
 
-void Traits::loadStrings(const std::string &filename) {
-  mStrings = gui::StringsElement(filename);
+void Traits::loadStrings(pugi::xml_node doc) {
+  mStrings = gui::StringsElement(doc);
 }
 
 namespace {
