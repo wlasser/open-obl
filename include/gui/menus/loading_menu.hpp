@@ -45,10 +45,11 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
   Ogre::Overlay *mOverlay{};
 
  public:
-  struct UserInterface {
-    using type = decltype(mInterface)::interface_t;
-    type value{};
-  };
+  auto getUserOutputTraitInterface() {
+    return std::make_tuple(&mStepNumber, &mLoadImage, &mLoadText,
+                           &mCurrentProgress, &mMaximumProgress, &mDebugText);
+  }
+
   BUILD_USER_TRAIT_INTERFACE(mInterface);
 
   void set_visible(bool visible) override {

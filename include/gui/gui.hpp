@@ -155,21 +155,6 @@ UiElement *extractUiElement(MenuVariant &menu);
 /// \overload extractUiElement(MenuVariant &)
 const UiElement *extractUiElement(const MenuVariant &menu);
 
-template<class ...Ts>
-auto makeInterfaceBufferImpl(const std::variant<Ts...> &var) {
-  return std::visit([](auto &&t) -> std::variant<typename Ts::UserInterface...> {
-    return (typename std::decay_t<decltype(t)>::UserInterface) {};
-  }, var);
-}
-
-/// A variant of user trait interfaces coinciding with `MenuVariant`.
-/// Handwaving, `MenuVariant::UserInterface = MenuInterfaceVariant`.
-using MenuInterfaceVariant = decltype(makeInterfaceBufferImpl(
-    std::declval<MenuVariant>()));
-
-/// Construct a user interface buffer from the menu
-MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar);
-
 /// Return the first `<menu>` child of the `doc`, and the `MenuType` represented
 /// by its `<class>` child.
 /// \throws std::runtime_error if `doc` does not have a `<menu>` child.
@@ -201,17 +186,14 @@ class MenuContext {
   std::unique_ptr<Traits> mTraits;
   std::unique_ptr<MenuVariant> mMenu;
   std::vector<UiElementPtr> mUiElements;
-  std::unique_ptr<MenuInterfaceVariant> mInterfaceBuffer;
 
  public:
   MenuContext(std::unique_ptr<Traits> traits,
               std::unique_ptr<MenuVariant> menu,
-              std::vector<UiElementPtr> uiElements,
-              std::unique_ptr<MenuInterfaceVariant> interfaceBuffer)
+              std::vector<UiElementPtr> uiElements)
       : mTraits(std::move(traits)),
         mMenu(std::move(menu)),
-        mUiElements(std::move(uiElements)),
-        mInterfaceBuffer(std::move(interfaceBuffer)) {}
+        mUiElements(std::move(uiElements)) {}
 
   MenuContext(const MenuContext &) = delete;
   MenuContext &operator=(const MenuContext &) = delete;

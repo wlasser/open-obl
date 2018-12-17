@@ -70,10 +70,13 @@ struct UserInterfaceWrapper {
 template<MenuType Type>
 class Menu : public UiElement {
  public:
-  struct UserInterface {
-    using type = std::tuple<>;
-    type value{};
-  };
+  /// Return a tuple of pointers to member variables that represent output user
+  /// traits, namely those that are set by the implementation. The position in
+  /// the tuple should correspond to the index of the user trait; user traits
+  /// that are not output traits should have their entry set to `nullptr`.
+  auto getUserOutputTraitInterface() {
+    return std::tuple<>{};
+  }
 
   Ogre::Overlay *getOverlay() {
     return nullptr;

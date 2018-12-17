@@ -126,9 +126,9 @@ class Traits {
   /// the same name.
   void addProvidedTraits(const UiElement *uiElement);
 
-  /// Set all the user traits to point to the given interface buffer.
+  /// Set all the user traits to point to the given output interface buffer.
   template<class ...Ts>
-  void setUserTraitSources(const std::tuple<Ts...> &userInterface);
+  void setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits);
 
   /// For each trait `v`, make an edge from `u` to `v` iff `u` is a dependency
   /// of `v`.
@@ -231,7 +231,7 @@ template<class T> void Traits::addAndBindTrait(UiElement *uiElement,
 }
 
 template<class ...Ts>
-void Traits::setUserTraitSources(const std::tuple<Ts...> &userInterface) {
+void Traits::setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits) {
   for (auto vIndex : mGraph.vertex_set()) {
     const TraitVertex &traitPtr{mGraph[vIndex]};
     if (!traitPtr) {
@@ -239,14 +239,12 @@ void Traits::setUserTraitSources(const std::tuple<Ts...> &userInterface) {
     }
     auto &trait = *traitPtr;
 
-    const std::optional<int> userIndex{std::visit([](auto &&v) {
+    const std::optional<int> userIndex{std::visit([](const auto &v) {
       return getUserTraitIndex(v.getName());
     }, trait)};
     if (!userIndex) continue;
 
-    std::visit([&userInterface](auto &&v) {
-      v.setSource(userInterface);
-    }, trait);
+    std::visit([&outTraits](auto &v) { v.setSource(outTraits); }, trait);
   }
 }
 

@@ -25,10 +25,6 @@ const UiElement *extractUiElement(const MenuVariant &menu) {
   }, menu);
 }
 
-MenuInterfaceVariant makeInterfaceBuffer(const MenuVariant &menuVar) {
-  return makeInterfaceBufferImpl(menuVar);
-}
-
 std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc) {
   const auto menuNode{doc.child("menu")};
   if (!menuNode) {
@@ -135,12 +131,11 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc) {
   menuTraits->addTraitDependencies();
   menuTraits->update();
 
-  // Construct a suitable user interface buffer and link it to the user traits
-  auto interfaceBuffer
-      {std::make_unique<MenuInterfaceVariant>(gui::makeInterfaceBuffer(*menu))};
-  std::visit([&menuTraits](auto &&t) {
-    menuTraits->setUserTraitSources(t.value);
-  }, *interfaceBuffer);
+  // Link the output user traits (i.e. those set by the implementation) to the
+  // menu's user interface buffer.
+  std::visit([&menuTraits](auto &m) {
+    menuTraits->setOutputUserTraitSources(m.getUserOutputTraitInterface());
+  }, *menu);
 
   std::visit([&uiElements](auto &m) {
     auto *overlay{m.getOverlay()};
@@ -158,8 +153,7 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc) {
   return std::optional<MenuContext>(std::in_place,
                                     std::move(menuTraits),
                                     std::move(menu),
-                                    std::move(uiElements),
-                                    std::move(interfaceBuffer));
+                                    std::move(uiElements));
 }
 
 std::optional<MenuContext> loadMenu(const std::string &filename) {

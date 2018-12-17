@@ -193,14 +193,14 @@ class Trait {
   UiElement *mConcrete{};
 
   /// Attempt to set the internal `TraitFun` to return the value pointed to by
-  /// `source`, only performing the assignment if `std::is_same_v<U, T>`.
-  /// \returns `true` iff the assignment is successful.
+  /// `source`, only performing the assignment if `std::is_same_v<U, T>` and if
+  /// `source` is not null.
+  /// \returns `true` iff the assignment is successful or `source` is null.
   /// \todo Can this take `U` by reference and then be `constexpr`?
   template<class U> bool setTrait(const U *source) {
+    if (!source) return true;
     if constexpr (std::is_same_v<U, T>) {
-      mValue = TraitFun<T>{[source]() -> T {
-        return *source;
-      }};
+      mValue = TraitFun<T>{[source]() -> T { return *source; }};
       return true;
     }
     return false;
@@ -208,7 +208,7 @@ class Trait {
 
   template<class Tuple, std::size_t ... Is> bool
   setSourceImpl(int i, const Tuple &tuple, std::index_sequence<Is...>) {
-    return ((i == Is ? setTrait(&std::get<Is>(tuple)) : false) || ... || false);
+    return ((i == Is ? setTrait(std::get<Is>(tuple)) : false) || ... || false);
   };
 
  public:
@@ -238,7 +238,7 @@ class Trait {
   /// `TraitFun` to point to the value in slot `I` of the user interface.
   /// \throws std::runtime_error if any of the specified conditions are false.
   template<class ...Ts>
-  void setSource(const std::tuple<Ts...> &userInterface) {
+  void setSource(const std::tuple<Ts *...> &userInterface) {
     const int idx = [this]() {
       const auto opt{getUserTraitIndex(mName)};
       if (opt) return *opt;
