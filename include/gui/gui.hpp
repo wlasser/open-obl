@@ -202,6 +202,8 @@ class MenuContext {
 
   /// Update the underlying `gui::Traits` graph.
   void update();
+
+  void set_user(int index, gui::UiElement::UserValue value);
 };
 
 std::optional<MenuContext> loadMenu(pugi::xml_node doc,

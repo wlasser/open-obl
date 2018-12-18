@@ -174,6 +174,10 @@ void MenuContext::update() {
   mTraits->update();
 }
 
+void MenuContext::set_user(int index, gui::UiElement::UserValue value) {
+  gui::extractUiElement(*mMenu)->set_user(index, std::move(value));
+}
+
 template<>
 MenuType parseXmlEntity(const std::string &entity) {
   const static std::unordered_map<std::string, MenuType> map{
