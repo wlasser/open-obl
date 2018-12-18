@@ -20,6 +20,10 @@ material __GuiMaterial {
             lighting off
             ambient vertexcolour
 
+            separate_scene_blend_op add add
+            separate_scene_blend src_alpha one_minus_src_alpha one_minus_src_alpha zero
+            scene_blend alpha_blend
+
             depth_check off
         }
     }
