@@ -22,6 +22,7 @@ class Image : public UiElement {
   void set_height(int height) override;
   void set_filename(std::string filename) override;
   void set_zoom(int zoom) override;
+  void set_visible(bool visible) override;
 
   Ogre::OverlayElement *getOverlayElement() override {
     return mOverlay;

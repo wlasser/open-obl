@@ -70,3 +70,9 @@ void gui::Image::set_filename(std::string filename) {
 void gui::Image::set_zoom(int zoom) {
   // TODO: Unimplemented
 }
+
+void gui::Image::set_visible(bool visible) {
+  if (!mOverlay) return;
+  if (visible) mOverlay->show();
+  else mOverlay->hide();
+}
