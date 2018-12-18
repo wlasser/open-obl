@@ -4,12 +4,14 @@
 #include "gui/screen.hpp"
 #include "gui/ui_element.hpp"
 #include <OgrePanelOverlayElement.h>
+#include <OgreMaterial.h>
 
 namespace gui {
 
 class Image : public UiElement {
  private:
   Ogre::PanelOverlayElement *mOverlay{};
+  Ogre::MaterialPtr mMatPtr{};
 
  public:
   Image(std::string name);

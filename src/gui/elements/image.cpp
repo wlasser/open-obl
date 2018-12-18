@@ -3,6 +3,7 @@
 #include "gui/screen.hpp"
 #include "settings.hpp"
 #include <OgreMaterial.h>
+#include <OgreMaterialManager.h>
 #include <OgreOverlayManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
@@ -15,7 +16,18 @@ gui::Image::Image(std::string name) {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = dynamic_cast<Ogre::PanelOverlayElement *>(
         overlayMgr->createOverlayElement("Panel", get_name()));
-    mOverlay->setMaterialName("__GuiMaterial", oo::SHADER_GROUP);
+
+    auto *matMgr{Ogre::MaterialManager::getSingletonPtr()};
+    std::string matName{std::string("__GuiMaterial:") + get_name()};
+
+    if (matMgr->resourceExists(matName, oo::SHADER_GROUP)) {
+      mMatPtr = matMgr->getByName(matName, oo::SHADER_GROUP);
+    } else {
+      auto baseMat{matMgr->getByName("__GuiMaterial", oo::SHADER_GROUP)};
+      mMatPtr = baseMat->clone("__GuiMaterial:" + get_name());
+    }
+
+    mOverlay->setMaterialName(mMatPtr->getName(), oo::SHADER_GROUP);
   }
 }
 
