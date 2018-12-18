@@ -31,6 +31,7 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/ui_element.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/xml.hpp
         elements/image.cpp
+        elements/rect.cpp
         gui.cpp
         screen.cpp
         stack/instructions.cpp
