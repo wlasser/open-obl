@@ -165,6 +165,25 @@ std::optional<MenuContext> loadMenu(const std::string &filename,
   return loadMenu(doc, stringsDoc);
 }
 
+MenuContext::MenuContext(std::unique_ptr<Traits> traits,
+                         std::unique_ptr<MenuVariant> menu,
+                         std::vector<MenuContext::UiElementPtr> uiElements)
+    : mTraits(std::move(traits)),
+      mMenu(std::move(menu)),
+      mUiElements(std::move(uiElements)) {}
+
+MenuContext::~MenuContext() {
+  if (!mMenu) return;
+  std::visit([](auto &m) {
+    auto *overlay{m.getOverlay()};
+    if (overlay) Ogre::OverlayManager::getSingleton().destroy(overlay);
+  }, *mMenu);
+}
+
+void MenuContext::update() {
+  mTraits->update();
+}
+
 template<>
 MenuType parseXmlEntity(const std::string &entity) {
   const static std::unordered_map<std::string, MenuType> map{
