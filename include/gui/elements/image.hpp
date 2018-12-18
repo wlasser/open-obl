@@ -23,7 +23,7 @@ class Image : public UiElement {
   void set_filename(std::string filename) override;
   void set_zoom(int zoom) override;
 
-  Ogre::OverlayElement *getOverlayElement() const override {
+  Ogre::OverlayElement *getOverlayElement() override {
     return mOverlay;
   }
 };

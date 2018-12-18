@@ -7,6 +7,7 @@
 #include "gui/xml.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/topological_sort.hpp>
+#include <OgreOverlay.h>
 #include <pugixml.hpp>
 #include <algorithm>
 #include <unordered_map>
@@ -95,8 +96,18 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   gui::addTraits(traits, uiElement, node);
   std::vector<std::unique_ptr<UiElement>> accum{};
 
+  auto *parentOverlay{uiElement->getOverlayElement()};
+  auto *parentContainer{dynamic_cast<Ogre::OverlayContainer *>(parentOverlay)};
+
   for (auto &child : gui::getChildElements(node)) {
-    auto descendants{addDescendants(traits, child.first.get(), child.second)};
+    UiElement *childPtr{child.first.get()};
+    if (parentContainer) {
+      if (auto *childOverlay{childPtr->getOverlayElement()}) {
+        parentContainer->addChild(childOverlay);
+      }
+    }
+
+    auto descendants{addDescendants(traits, childPtr, child.second)};
     accum.reserve(accum.size() + 1u + descendants.size());
     accum.emplace_back(std::move(child.first));
     accum.insert(accum.end(),
@@ -138,19 +149,6 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc,
     menuTraits->setOutputUserTraitSources(m.getUserOutputTraitInterface());
   }, *menu);
 
-  std::visit([&uiElements](auto &m) {
-    auto *overlay{m.getOverlay()};
-    if (!overlay) return;
-
-    for (const auto &uiElem : uiElements) {
-      auto *overlayElem{uiElem->getOverlayElement()};
-      auto *container{dynamic_cast<Ogre::OverlayContainer *>(overlayElem)};
-
-      if (!container) break;
-      overlay->add2D(container);
-    }
-  }, *menu);
-
   return std::optional<MenuContext>(std::in_place,
                                     std::move(menuTraits),
                                     std::move(menu),
@@ -171,14 +169,6 @@ MenuContext::MenuContext(std::unique_ptr<Traits> traits,
     : mTraits(std::move(traits)),
       mMenu(std::move(menu)),
       mUiElements(std::move(uiElements)) {}
-
-MenuContext::~MenuContext() {
-  if (!mMenu) return;
-  std::visit([](auto &m) {
-    auto *overlay{m.getOverlay()};
-    if (overlay) Ogre::OverlayManager::getSingleton().destroy(overlay);
-  }, *mMenu);
-}
 
 void MenuContext::update() {
   mTraits->update();

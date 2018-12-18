@@ -4,6 +4,7 @@
 #include "gui/menu.hpp"
 #include "gui/trait.hpp"
 #include <OgreOverlay.h>
+#include <OgrePanelOverlayElement.h>
 #include <OgreOverlayManager.h>
 #include <string>
 
@@ -44,7 +45,21 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
   /// Parent `Ogre::Overlay` of this menu.
   Ogre::Overlay *mOverlay{};
 
+  /// Toplevel container for `Ogre::OverlayElement`s.
+  Ogre::OverlayContainer *mOverlayContainer{};
+
  public:
+  ~Menu<MenuType::LoadingMenu>() override {
+    if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
+      if (mOverlayContainer) {
+        overlayMgr->destroyOverlayElement(mOverlayContainer);
+      }
+      if (mOverlay) {
+        overlayMgr->destroy(mOverlay);
+      }
+    }
+  }
+
   auto getUserOutputTraitInterface() {
     return std::make_tuple(&mStepNumber, &mLoadImage, &mLoadText,
                            &mCurrentProgress, &mMaximumProgress, &mDebugText);
@@ -66,6 +81,25 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
       if (mVisible) mOverlay->show();
     }
     return mOverlay;
+  }
+
+  Ogre::OverlayElement *getOverlayElement() override {
+    if (!mOverlayContainer) {
+      auto *overlay{getOverlay()};
+      if (!overlay) return nullptr;
+
+      auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
+      if (!overlayMgr) return nullptr;
+
+      mOverlayContainer = dynamic_cast<Ogre::PanelOverlayElement *>(
+          overlayMgr->createOverlayElement("Panel", this->get_name()));
+      overlay->add2D(mOverlayContainer);
+
+      mOverlayContainer->setDimensions(1.0f, 1.0f);
+      mOverlayContainer->setPosition(0.0f, 0.0f);
+      mOverlayContainer->show();
+    }
+    return mOverlayContainer;
   }
 };
 

@@ -194,8 +194,6 @@ class MenuContext {
               std::unique_ptr<MenuVariant> menu,
               std::vector<UiElementPtr> uiElements);
 
-  ~MenuContext();
-
   MenuContext(const MenuContext &) = delete;
   MenuContext &operator=(const MenuContext &) = delete;
 
