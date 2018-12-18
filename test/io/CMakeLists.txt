@@ -1,4 +1,4 @@
 target_sources(OpenOblivionTest PRIVATE
-        io/io.cpp
-        io/memstream.cpp
-        io/string.cpp)
+        ${CMAKE_CURRENT_SOURCE_DIR}/io.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/memstream.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/string.cpp)
