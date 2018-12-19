@@ -22,17 +22,13 @@ if (PkgConfig_FOUND)
             application.hpp
             application.cpp
             main.cpp
-            ${CMAKE_SOURCE_DIR}/include/bsa/bsa.hpp
-            ${CMAKE_SOURCE_DIR}/src/bsa/bsa.cpp
             resources/resources.c)
 
     target_include_directories(OpenOblivionBsaBrowser PRIVATE
             ${GTKMM_INCLUDE_DIRS})
     target_link_libraries(OpenOblivionBsaBrowser PRIVATE
+            OpenOblivion::OpenOblivionBsa
             OpenOblivion::OpenOblivionIO
-            ${ZLIB_LIBRARIES}
             ${GTKMM_LIBRARIES}
-            spdlog
-            GSL
-            stdc++fs)
+            GSL)
 endif ()

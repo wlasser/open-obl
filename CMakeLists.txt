@@ -88,6 +88,7 @@ add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
 add_subdirectory(lib/tl)
 
+add_subdirectory(src/bsa)
 add_subdirectory(src/fs)
 add_subdirectory(src/gui)
 add_subdirectory(src/io)
@@ -110,7 +111,6 @@ set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         src/application.cpp
-        src/bsa/bsa.cpp
         src/bsa_archive_factory.cpp
         src/character_controller/jump_state.cpp
         src/character_controller/player_controller.cpp
@@ -143,7 +143,6 @@ target_sources(OpenOblivion PRIVATE
         include/application.hpp
         include/application_context.hpp
         include/bitflag.hpp
-        include/bsa/bsa.hpp
         include/bsa_archive_factory.hpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
@@ -192,6 +191,7 @@ target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})
 
 target_link_libraries(OpenOblivion PRIVATE
+        OpenOblivion::OpenOblivionBsa
         OpenOblivion::OpenOblivionFS
         OpenOblivion::OpenOblivionGui
         OpenOblivion::OpenOblivionIO
