@@ -1,7 +1,6 @@
-#include "application.hpp"
+#include "browser_application.hpp"
 
 int main(int argc, char *argv[]) {
-
   auto application = bsa::Application::create();
 
   return application->run(argc, argv);

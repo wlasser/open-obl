@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BSA_APPLICATION_HPP
-#define OPENOBLIVION_BSA_APPLICATION_HPP
+#ifndef OPENOBLIVION_BSATOOLS_BROWSER_APPLICATION_HPP
+#define OPENOBLIVION_BSATOOLS_BROWSER_APPLICATION_HPP
 
 #include "bsa/bsa.hpp"
 #include <gsl/gsl>
@@ -17,7 +17,6 @@ namespace bsa {
 
 class BsaModel : public Gtk::TreeModelColumnRecord {
  public:
-
   BsaModel() {
     add(mColName);
     add(mColSize);
@@ -86,4 +85,4 @@ class Application : public Gtk::Application {
 
 } // namespace bsa
 
-#endif // OPENOBLIVION_BSA_APPLICATION_HPP
+#endif // OPENOBLIVION_BSATOOLS_BROWSER_APPLICATION_HPP
