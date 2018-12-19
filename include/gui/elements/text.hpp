@@ -13,12 +13,12 @@ class Text : public UiElement {
     set_name(std::move(name));
   }
 
-  std::optional<Trait < int>> make_width() const override {
-    return Trait<int>(get_name() + ".width", 0);
+  std::optional<gui::Trait<float>> make_width() const override {
+    return Trait<float>(get_name() + ".width", 0);
   }
 
-  std::optional<Trait < int>> make_height() const override {
-    return Trait<int>(get_name() + ".height", 0);
+  std::optional<gui::Trait<float>> make_height() const override {
+    return Trait<float>(get_name() + ".height", 0);
   }
 };
 

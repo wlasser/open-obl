@@ -24,9 +24,9 @@ ValueType parseValueType(std::string_view str) {
     return true;
   } else if (str == "&false;") {
     return false;
-  } else if (auto intOpt{boost::convert<int>(str, converter)};
-      intOpt.has_value()) {
-    return *intOpt;
+//  } else if (auto intOpt{boost::convert<int>(str, converter)};
+//      intOpt.has_value()) {
+//    return *intOpt;
   } else if (auto floatOpt{boost::convert<float>(str, converter)};
       floatOpt.has_value()) {
     return *floatOpt;

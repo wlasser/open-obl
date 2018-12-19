@@ -48,23 +48,23 @@ class ScreenElement {
 
   ScreenElement();
 
-  Trait<int> makeWidthTrait() const {
+  Trait<float> makeWidthTrait() const {
     const auto[width, _] = getNormalizedDimensions();
-    return Trait<int>(std::string{PREFIX} + "width", width);
+    return Trait<float>(std::string{PREFIX} + "width", width);
   }
 
-  Trait<int> makeHeightTrait() const {
+  Trait<float> makeHeightTrait() const {
     const auto[_, height] = getNormalizedDimensions();
-    return Trait<int>(std::string{PREFIX} + "height", height);
+    return Trait<float>(std::string{PREFIX} + "height", height);
   }
 
   // TODO: What are the actual screen crop values?
-  Trait<int> makeCropXTrait() const {
-    return Trait<int>(std::string{PREFIX} + "cropx", 32);
+  Trait<float> makeCropXTrait() const {
+    return Trait<float>(std::string{PREFIX} + "cropx", 32);
   }
 
-  Trait<int> makeCropYTrait() const {
-    return Trait<int>(std::string{PREFIX} + "cropy", 32);
+  Trait<float> makeCropYTrait() const {
+    return Trait<float>(std::string{PREFIX} + "cropy", 32);
   }
 
   /// Return the implementation-defined name of the `ScreenElement`.

@@ -18,12 +18,12 @@ class Image : public UiElement {
 
   ~Image();
 
-  void set_x(int x) override;
-  void set_y(int y) override;
-  void set_width(int width) override;
-  void set_height(int height) override;
+  void set_x(float x) override;
+  void set_y(float y) override;
+  void set_width(float width) override;
+  void set_height(float height) override;
   void set_filename(std::string filename) override;
-  void set_zoom(int zoom) override;
+  void set_zoom(float zoom) override;
   void set_visible(bool visible) override;
 
   Ogre::OverlayElement *getOverlayElement() override {

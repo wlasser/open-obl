@@ -18,20 +18,20 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
   ///@{
 
   /// `user0`: Position in background image slideshow.
-  int mStepNumber{};
+  float mStepNumber{};
   /// `user1`: Background image to display.
   std::string mLoadImage{};
   /// `user2`: Caption to display.
   std::string mLoadText{};
   /// `user3`: Current position of the loading progress bar.
-  int mCurrentProgress{};
+  float mCurrentProgress{};
   /// `user4`: Maximum position of the loading progress bar.
   /// That is, the value of `mCurrentProgress` when loading is complete.
-  int mMaximumProgress{};
+  float mMaximumProgress{};
   /// `user5`: Additional text to display during debug.
   std::string mDebugText{};
 
-  UserTraitInterface<int, std::string, std::string, int, int, std::string>
+  UserTraitInterface<float, std::string, std::string, float, float, std::string>
       mInterface{std::make_tuple(&mStepNumber,
                                  &mLoadImage,
                                  &mLoadText,

@@ -31,15 +31,15 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
                                            UiElement *uiElement) {
   using namespace std::literals;
   if (node.name() == "x"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_x, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_x, node);
   } else if (node.name() == "y"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_y, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_y, node);
   } else if (node.name() == "width"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_width, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_width, node);
   } else if (node.name() == "height"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_height, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_height, node);
   } else if (node.name() == "alpha"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_alpha, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_alpha, node);
   } else if (node.name() == "locus"s) {
     addAndBindTrait<bool>(uiElement, &UiElement::set_locus, node);
   } else if (node.name() == "visible"s) {
@@ -51,7 +51,7 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
   } else if (node.name() == "filename"s) {
     addAndBindTrait<std::string>(uiElement, &UiElement::set_filename, node);
   } else if (node.name() == "zoom"s) {
-    addAndBindTrait<int>(uiElement, &UiElement::set_zoom, node);
+    addAndBindTrait<float>(uiElement, &UiElement::set_zoom, node);
   } else {
     return false;
   }

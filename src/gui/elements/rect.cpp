@@ -18,28 +18,28 @@ gui::Rect::~Rect() {
   }
 }
 
-void gui::Rect::set_x(int x) {
+void gui::Rect::set_x(float x) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setLeft(static_cast<Ogre::Real>(x) / dims.x);
+  mOverlay->setLeft(x / dims.x);
 }
 
-void gui::Rect::set_y(int y) {
+void gui::Rect::set_y(float y) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setTop(static_cast<Ogre::Real>(y) / dims.y);
+  mOverlay->setTop(y / dims.y);
 }
 
-void gui::Rect::set_width(int width) {
+void gui::Rect::set_width(float width) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setWidth(static_cast<Ogre::Real>(width) / dims.x);
+  mOverlay->setWidth(width / dims.x);
 }
 
-void gui::Rect::set_height(int height) {
+void gui::Rect::set_height(float height) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setHeight(static_cast<Ogre::Real>(height) / dims.y);
+  mOverlay->setHeight(height / dims.y);
 }
 
 void gui::Rect::set_visible(bool visible) {

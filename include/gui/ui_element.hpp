@@ -15,15 +15,15 @@ class UiElement {
 
  public:
   /// Position of left edge, relative to position of locus ancestor
-  virtual void set_x(int x) {}
+  virtual void set_x(float x) {}
   /// Position of top edge, relative to position of locus ancestor
-  virtual void set_y(int y) {}
+  virtual void set_y(float y) {}
   /// Width in pixels
-  virtual void set_width(int width) {}
+  virtual void set_width(float width) {}
   /// Height in pixels
-  virtual void set_height(int height) {}
+  virtual void set_height(float height) {}
   /// Transparency. 0 is completely transparent, 255 is completely opaque
-  virtual void set_alpha(int alpha) {}
+  virtual void set_alpha(float alpha) {}
   /// If true, this element is used to anchor the position of its children
   virtual void set_locus(bool locus) {}
   /// If false, this element and all its descendants are hidden and un-clickable
@@ -38,7 +38,7 @@ class UiElement {
   virtual void set_filename(std::string filename) {}
   /// Percentage to scale the image or text by. If `-1`, then the image or text
   /// is (non-uniformly) scaled to the containing uiElement's width and height.
-  virtual void set_zoom(int zoom) {}
+  virtual void set_zoom(float zoom) {}
 
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
@@ -71,19 +71,19 @@ class UiElement {
   /// The UiElement is therefore allowed to supply its own implementation
   /// traits, called 'provided traits', which should have no dependencies and no
   /// setter.
-  virtual std::optional<gui::Trait<int>> make_x() const {
+  virtual std::optional<gui::Trait<float>> make_x() const {
     return {};
   }
-  virtual std::optional<gui::Trait<int>> make_y() const {
+  virtual std::optional<gui::Trait<float>> make_y() const {
     return {};
   }
-  virtual std::optional<gui::Trait<int>> make_width() const {
+  virtual std::optional<gui::Trait<float>> make_width() const {
     return {};
   }
-  virtual std::optional<gui::Trait<int>> make_height() const {
+  virtual std::optional<gui::Trait<float>> make_height() const {
     return {};
   }
-  virtual std::optional<gui::Trait<int>> make_alpha() const {
+  virtual std::optional<gui::Trait<float>> make_alpha() const {
     return {};
   }
   virtual std::optional<gui::Trait<bool>> make_locus() const {
@@ -101,7 +101,7 @@ class UiElement {
   virtual std::optional<gui::Trait<std::string>> make_filename() const {
     return {};
   }
-  virtual std::optional<gui::Trait<int>> make_zoom() const {
+  virtual std::optional<gui::Trait<float>> make_zoom() const {
     return {};
   }
 
