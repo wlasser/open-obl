@@ -100,6 +100,7 @@ add_subdirectory(src/sdl)
 add_subdirectory(src/scripting)
 
 add_subdirectory(test)
+add_subdirectory(bsatools)
 
 add_executable(OpenOblivion)
 target_compile_options(OpenOblivion PRIVATE -Wall)
@@ -213,38 +214,3 @@ target_link_libraries(OpenOblivion PRIVATE
         polymorphic_value
         absl::flat_hash_map
         ${BULLET_LIBRARIES})
-
-find_package(PkgConfig)
-if (PkgConfig_FOUND)
-    pkg_check_modules(GTKMM gtkmm-3.0)
-
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/bsabrowser)
-
-    add_custom_command(OUTPUT resources/bsabrowser/resources.c
-            COMMAND glib-compile-resources --target=${CMAKE_CURRENT_BINARY_DIR}/resources/bsabrowser/resources.c --generate-source bsabrowser.gresource.xml
-            DEPENDS resources/bsabrowser/bsabrowser.gresource.xml resources/bsabrowser/window.glade
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/resources/bsabrowser/)
-
-    add_executable(BSABrowser)
-    target_compile_options(BSABrowser PRIVATE -Wall)
-    target_compile_features(BSABrowser PUBLIC cxx_std_17)
-    set_property(TARGET BSABrowser PROPERTY CXX_EXTENSION OFF)
-    target_include_directories(BSABrowser PRIVATE include)
-    target_sources(BSABrowser PRIVATE
-            src/bsa/application.cpp
-            src/bsa/bsa.cpp
-            src/bsa/main.cpp
-            include/bsa/application.hpp
-            include/bsa/bsa.hpp
-            resources/bsabrowser/resources.c)
-
-    target_include_directories(BSABrowser PRIVATE
-            ${GTKMM_INCLUDE_DIRS})
-    target_link_libraries(BSABrowser PRIVATE
-            OpenOblivion::OpenOblivionIO
-            ${ZLIB_LIBRARIES}
-            ${GTKMM_LIBRARIES}
-            spdlog
-            GSL
-            stdc++fs)
-endif ()

@@ -1,5 +1,5 @@
 #define G_LOG_DOMAIN "BsaBrowser"
-#include "bsa/application.hpp"
+#include "application.hpp"
 #include <gsl/gsl>
 #include <gtkmm/application.h>
 #include <gtkmm/applicationwindow.h>
