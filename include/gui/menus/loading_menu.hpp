@@ -4,8 +4,6 @@
 #include "gui/menu.hpp"
 #include "gui/trait.hpp"
 #include <OgreOverlay.h>
-#include <OgrePanelOverlayElement.h>
-#include <OgreOverlayManager.h>
 #include <string>
 
 namespace gui {
@@ -49,16 +47,7 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
   Ogre::OverlayContainer *mOverlayContainer{};
 
  public:
-  ~Menu<MenuType::LoadingMenu>() override {
-    if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
-      if (mOverlayContainer) {
-        overlayMgr->destroyOverlayElement(mOverlayContainer);
-      }
-      if (mOverlay) {
-        overlayMgr->destroy(mOverlay);
-      }
-    }
-  }
+  ~Menu<MenuType::LoadingMenu>() override;
 
   auto getUserOutputTraitInterface() {
     return std::make_tuple(&mStepNumber, &mLoadImage, &mLoadText,
@@ -67,40 +56,10 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
 
   BUILD_USER_TRAIT_INTERFACE(mInterface);
 
-  void set_visible(bool visible) override {
-    mVisible = visible;
-    if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
-  }
+  void set_visible(bool visible) override;
 
-  Ogre::Overlay *getOverlay() {
-    if (!mOverlay) {
-      auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
-      if (!overlayMgr) return nullptr;
-      mOverlay = overlayMgr->create(this->get_name());
-      // Overlays start off hidden
-      if (mVisible) mOverlay->show();
-    }
-    return mOverlay;
-  }
-
-  Ogre::OverlayElement *getOverlayElement() override {
-    if (!mOverlayContainer) {
-      auto *overlay{getOverlay()};
-      if (!overlay) return nullptr;
-
-      auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
-      if (!overlayMgr) return nullptr;
-
-      mOverlayContainer = dynamic_cast<Ogre::PanelOverlayElement *>(
-          overlayMgr->createOverlayElement("Panel", this->get_name()));
-      overlay->add2D(mOverlayContainer);
-
-      mOverlayContainer->setDimensions(1.0f, 1.0f);
-      mOverlayContainer->setPosition(0.0f, 0.0f);
-      mOverlayContainer->show();
-    }
-    return mOverlayContainer;
-  }
+  Ogre::Overlay *getOverlay();
+  Ogre::OverlayElement *getOverlayElement() override;
 };
 
 using LoadingMenu = Menu<MenuType::LoadingMenu>;

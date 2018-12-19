@@ -33,6 +33,7 @@ target_sources(OpenOblivionGui PRIVATE
         elements/image.cpp
         elements/rect.cpp
         gui.cpp
+        menus/loading_menu.cpp
         screen.cpp
         stack/instructions.cpp
         stack/program.cpp
