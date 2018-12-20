@@ -49,7 +49,9 @@ if (PkgConfig_FOUND)
                 bsa_fuse.cpp)
 
         target_include_directories(OpenOblivionBsaFuse PRIVATE
+                ${FUSE_INCLUDE_DIRS})
+        target_link_libraries(OpenOblivionBsaFuse PRIVATE
                 OpenOblivion::OpenOblivionIO
-                ${FUSE_LIRBARY})
+                ${FUSE_LIBRARIES})
     endif ()
 endif ()
