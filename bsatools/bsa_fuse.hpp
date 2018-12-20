@@ -42,8 +42,8 @@ class FolderNode : public Node {
     return mName;
   }
 
-  FolderNode *findChildFolder(std::string name);
-  FileNode *findChildFile(std::string name);
+  FolderNode *findChildFolder(const std::string &name);
+  FileNode *findChildFile(const std::string &name);
 
   FolderNode *addChildFolder(std::string name);
   FileNode *addChildFile(const BsaReader::FileRecord &rec);

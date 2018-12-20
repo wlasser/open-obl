@@ -5,6 +5,8 @@
 #include "fs/path.hpp"
 #include <algorithm>
 #include <iostream>
+#include <string>
+#include <string_view>
 
 int main(int argc, char *argv[]) {
   fuser::Args args{argc, argv, 0};
@@ -23,39 +25,37 @@ int main(int argc, char *argv[]) {
   return fuser::main(args.argc, args.argv, bsa::fuseOps);
 }
 
-bsa::FolderNode *bsa::FolderNode::findChildFolder(std::string name) {
-  auto it{std::find_if(
-      mChildren.begin(), mChildren.end(), [&name](const auto &child) {
-        return child->isFolder() && child->getName() == name;
-      })};
-  if (it != mChildren.end()) return static_cast<bsa::FolderNode *>(it->get());
-  return nullptr;
+bsa::FolderNode *bsa::FolderNode::findChildFolder(const std::string &name) {
+  auto pred = [&name](const auto &child) {
+    return child->isFolder() && child->getName() == name;
+  };
+  auto it{std::find_if(mChildren.begin(), mChildren.end(), pred)};
+  return it != mChildren.end() ? static_cast<FolderNode *>(it->get()) : nullptr;
 }
 
-bsa::FileNode *bsa::FolderNode::findChildFile(std::string name) {
-  auto it{std::find_if(
-      mChildren.begin(), mChildren.end(), [&name](const auto &child) {
-        return !child->isFolder() && child->getName() == name;
-      })};
-  if (it != mChildren.end()) return static_cast<bsa::FileNode *>(it->get());
-  return nullptr;
+bsa::FileNode *bsa::FolderNode::findChildFile(const std::string &name) {
+  auto pred = [&name](const auto &child) {
+    return !child->isFolder() && child->getName() == name;
+  };
+  auto it{std::find_if(mChildren.begin(), mChildren.end(), pred)};
+  return it != mChildren.end() ? static_cast<FileNode *>(it->get()) : nullptr;
 }
 
 bsa::FolderNode *bsa::FolderNode::addChildFolder(std::string name) {
   if (auto *childNode{findChildFolder(name)}) return childNode;
 
-  const auto &node
-      {mChildren.emplace_back(std::make_unique<bsa::FolderNode>(name, this))};
-  return static_cast<bsa::FolderNode *>(node.get());
+  auto folderNode{std::make_unique<FolderNode>(std::move(name), this)};
+  const auto &node{mChildren.emplace_back(std::move(folderNode))};
+  return static_cast<FolderNode *>(node.get());
 }
 
 bsa::FileNode *
 bsa::FolderNode::addChildFile(const bsa::BsaReader::FileRecord &rec) {
   if (auto *childNode{findChildFile(rec.name)}) return childNode;
 
-  const auto &node
-      {mChildren.emplace_back(std::make_unique<bsa::FileNode>(rec, this))};
-  return static_cast<bsa::FileNode *>(node.get());
+  auto fileNode{std::make_unique<FileNode>(rec, this)};
+  const auto &node{mChildren.emplace_back(std::move(fileNode))};
+  return static_cast<FileNode *>(node.get());
 }
 
 bsa::BsaContext::BsaContext(std::string filename)
@@ -64,24 +64,20 @@ bsa::BsaContext::BsaContext(std::string filename)
 
   for (const auto &folderRec : mBsaReader) {
     // Precompute hash for faster lookup in files
-    const uint64_t folderHash{bsa::genHash(folderRec.name,
-                                           bsa::HashType::Folder)};
-
-    // By construction components does not begin or end with a '/'
+    const uint64_t folderHash{bsa::genHash(folderRec.name, HashType::Folder)};
     const oo::Path folderPath{folderRec.name};
-    std::string_view components{folderPath.view()};
 
     bsa::FolderNode *folderNode{getRoot()};
 
-    for (;;) {
+    for (std::string_view components{folderPath.view()};;) {
       // Get the oldest directory, i.e everything up to the first '/'
+      // By construction components does not begin or end with a '/'
       const auto pos{components.find('/')};
-      const std::string first{components.substr(0, pos)};
+      std::string first{components.substr(0, pos)};
+      folderNode = folderNode->addChildFolder(std::move(first));
 
-      folderNode = folderNode->addChildFolder(first);
-
-      // Break if we've run out of directory components, otherwise strip `first`
-      // and the trailing '/'
+      // Break if we've run out of directory components, otherwise string up to
+      // and including the first '/'
       if (pos == std::string_view::npos) break;
       components = components.substr(pos + 1);
     }
@@ -90,9 +86,6 @@ bsa::BsaContext::BsaContext(std::string filename)
     for (const auto &filename : folderRec.files) {
       const uint64_t fileHash{bsa::genHash(filename, bsa::HashType::File)};
       const auto fileRec{mBsaReader.getRecord(folderHash, fileHash)};
-      if (!fileRec) {
-        // TODO: Warn that the file could not be found
-      }
       folderNode->addChildFile(*fileRec);
     }
   }
