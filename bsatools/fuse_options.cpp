@@ -17,10 +17,11 @@ mount options:
 
 }
 
-int
-bsa::handleCmdOpts(void *data, const char *arg, int key, fuser::Args *outArgs) {
+int bsa::handleCmdOpts(void */*data*/,
+                       const char */*arg*/,
+                       int key,
+                       fuser::Args *outArgs) {
   switch (bsa::CmdOptKey{key}) {
-
     case bsa::CmdOptKey::Help: {
       std::cerr << "usage: " << outArgs->argv[0] << "mountpoint [options]\n"
                 << helpText << '\n';

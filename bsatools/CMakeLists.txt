@@ -40,7 +40,7 @@ if (PkgConfig_FOUND)
     # BsaFuse FUSE application
     if (FUSE_FOUND)
         add_executable(OpenOblivionBsaFuse)
-        target_compile_options(OpenOblivionBsaFuse PRIVATE -Wall)
+        target_compile_options(OpenOblivionBsaFuse PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_features(OpenOblivionBsaFuse PUBLIC cxx_std_17)
         set_property(TARGET OpenOblivionBsaFuse PROPERTY CXX_EXTENSION OFF)
 
