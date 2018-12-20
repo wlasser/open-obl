@@ -21,7 +21,7 @@ class memstream : public std::istream {
     }
 
     pos_type seekoff(off_type off, std::ios_base::seekdir dir,
-                     std::ios_base::openmode which) override {
+                     std::ios_base::openmode /*which*/) override {
       switch (dir) {
         case std::ios_base::beg:setg(eback(), eback() + off, egptr());
           break;
