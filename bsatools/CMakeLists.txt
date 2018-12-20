@@ -46,6 +46,7 @@ if (PkgConfig_FOUND)
 
         target_include_directories(OpenOblivionBsaFuse PRIVATE ${CMAKE_SOURCE_DIR}/include)
         target_sources(OpenOblivionBsaFuse PRIVATE
+                bsa_fuse.hpp
                 fuse.hpp
                 fuse_operations.hpp
                 fuse_options.hpp
@@ -56,7 +57,8 @@ if (PkgConfig_FOUND)
         target_include_directories(OpenOblivionBsaFuse PRIVATE
                 ${FUSE_INCLUDE_DIRS})
         target_link_libraries(OpenOblivionBsaFuse PRIVATE
-                OpenOblivion::OpenOblivionIO
+                OpenOblivion::OpenOblivionBsa
+                OpenOblivion::OpenOblivionFS
                 ${FUSE_LIBRARIES})
     endif ()
 endif ()
