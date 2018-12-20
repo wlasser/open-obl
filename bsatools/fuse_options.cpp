@@ -25,6 +25,7 @@ int bsa::handleCmdOpts(void */*data*/,
     case bsa::CmdOptKey::Help: {
       std::cerr << "usage: " << outArgs->argv[0] << "mountpoint [options]\n"
                 << helpText << '\n';
+      fuser::optAddArg(outArgs, "--help");
       fuser::main(outArgs->argc, outArgs->argv, bsa::fuseOps);
       std::exit(1);
     }

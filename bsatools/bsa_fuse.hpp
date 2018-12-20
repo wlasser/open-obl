@@ -47,6 +47,9 @@ class FolderNode : public Node {
 
   FolderNode *addChildFolder(std::string name);
   FileNode *addChildFile(const BsaReader::FileRecord &rec);
+
+  // TODO: Replace with iterators
+  std::vector<Node *> getChildren() const;
 };
 
 class FileNode : public Node {
@@ -97,6 +100,9 @@ class BsaContext {
   const BsaReader &getReader() const noexcept {
     return mBsaReader;
   }
+
+  [[nodiscard]] FolderNode *findFolder(std::string foldername) const;
+  [[nodiscard]] Node *findEntry(std::string filename) const;
 };
 
 const BsaContext &

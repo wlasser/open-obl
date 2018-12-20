@@ -58,6 +58,13 @@ bsa::FolderNode::addChildFile(const bsa::BsaReader::FileRecord &rec) {
   return static_cast<FileNode *>(node.get());
 }
 
+std::vector<bsa::Node *> bsa::FolderNode::getChildren() const {
+  std::vector<bsa::Node *> out(mChildren.size(), nullptr);
+  std::transform(mChildren.begin(), mChildren.end(), out.begin(),
+                 [](const auto &ptr) { return ptr.get(); });
+  return out;
+}
+
 bsa::BsaContext::BsaContext(std::string filename)
     : mBsaReader(std::move(filename)),
       mRoot(std::make_unique<bsa::FolderNode>("/", nullptr)) {
@@ -89,6 +96,40 @@ bsa::BsaContext::BsaContext(std::string filename)
       folderNode->addChildFile(*fileRec);
     }
   }
+}
+
+bsa::FolderNode *bsa::BsaContext::findFolder(std::string foldername) const {
+  FolderNode *folderNode{getRoot()};
+  if (foldername == folderNode->getName()) return folderNode;
+
+  oo::Path path{std::move(foldername)};
+
+  for (std::string_view components{path.view()};;) {
+    const auto pos{components.find('/')};
+    std::string first{components.substr(0, pos)};
+    folderNode = folderNode->findChildFolder(first);
+    if (!folderNode || pos == std::string_view::npos) break;
+
+    components = components.substr(pos + 1);
+  }
+
+  return folderNode;
+}
+
+bsa::Node *bsa::BsaContext::findEntry(std::string filename) const {
+  FolderNode *rootNode{getRoot()};
+  if (filename == rootNode->getName()) return rootNode;
+
+  FolderNode *folderNode{findFolder(filename)};
+  if (folderNode) return folderNode;
+
+  oo::Path path{std::move(filename)};
+  std::string base{path.folder()};
+  std::string last{path.filename()};
+
+  FolderNode *baseNode{findFolder(base)};
+  if (!baseNode) return nullptr;
+  return baseNode->findChildFile(last);
 }
 
 const bsa::BsaContext &bsa::getBsaContext(std::optional<std::string> filename) {

@@ -14,6 +14,7 @@
 namespace posix {
 
 using stat = struct ::stat;
+using off_t = ::off_t;
 
 } // namespace posix
 
@@ -22,6 +23,8 @@ namespace fuser {
 
 using Operations = struct ::fuse_operations;
 using OptProc = ::fuse_opt_proc_t;
+using FillDirFun = ::fuse_fill_dir_t;
+using FileInfo = struct ::fuse_file_info;
 
 using Args = struct ::fuse_args;
 using Opt = struct ::fuse_opt;

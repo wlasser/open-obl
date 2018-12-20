@@ -6,11 +6,14 @@
 namespace bsa {
 
 int getAttr(const char *path, posix::stat *stbuf);
+int readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
+            posix::off_t offset, fuser::FileInfo *info);
 
 /// Filesystem operations
 constexpr inline fuser::Operations fuseOps = []() {
   fuser::Operations ops{};
-  ops.getattr = &bsa::getAttr;
+  ops.getattr = bsa::getAttr;
+  ops.readdir = bsa::readDir;
   return ops;
 }();
 
