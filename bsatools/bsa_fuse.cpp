@@ -128,9 +128,7 @@ bsa::Node *bsa::BsaContext::findEntry(std::string filename) const {
   FolderNode *folderNode{findFolder(filename)};
   if (folderNode) return folderNode;
 
-  oo::Path path{std::move(filename)};
-  std::string base{path.folder()};
-  std::string last{path.filename()};
+  auto &&[base, last]{bsa::splitPath(std::move(filename))};
 
   FolderNode *baseNode{findFolder(base)};
   if (!baseNode) return nullptr;
@@ -165,6 +163,16 @@ bool bsa::BsaContext::isOpen(std::string folder, std::string file) {
 std::istream &bsa::BsaContext::getStream(std::string folder, std::string file) {
   BsaHashPair hashPair(std::move(folder), std::move(file));
   return mOpenFiles.at(hashPair);
+}
+
+std::pair<std::string, std::string> bsa::splitPath(const char *path) {
+  return bsa::splitPath(std::string(path));
+}
+
+std::pair<std::string, std::string> bsa::splitPath(std::string &&path) {
+  const oo::Path fullPath{std::move(path)};
+  return std::make_pair(std::string{fullPath.folder()},
+                        std::string{fullPath.filename()});
 }
 
 bsa::BsaContext &bsa::getBsaContext(std::optional<std::string> filename) {

@@ -51,9 +51,7 @@ int bsa::open(const char *path, fuser::FileInfo *info) {
   if (!entry || entry->isFolder()) return -ENOENT;
 
   auto *fileNode{static_cast<FileNode *>(entry)};
-  const oo::Path fullPath{path};
-  std::string folder{fullPath.folder()};
-  std::string filename{fullPath.filename()};
+  auto &&[folder, filename]{bsa::splitPath(path)};
 
   auto &bsaContext{bsa::getBsaContext()};
   return bsaContext.open(std::move(folder), std::move(filename));
@@ -62,13 +60,9 @@ int bsa::open(const char *path, fuser::FileInfo *info) {
 int bsa::read(const char *path, char *buf, std::size_t size,
               posix::off_t offset, fuser::FileInfo *info) {
   auto &bsaContext{bsa::getBsaContext()};
-
-  const oo::Path fullPath{path};
-  std::string folder{fullPath.folder()};
-  std::string filename{fullPath.filename()};
+  auto[folder, filename]{bsa::splitPath(path)};
 
   if (!bsaContext.isOpen(folder, filename)) return -EBADF;
-
   std::istream &is{bsaContext.getStream(std::move(folder),
                                         std::move(filename))};
   is.clear();
@@ -79,10 +73,7 @@ int bsa::read(const char *path, char *buf, std::size_t size,
 
 int bsa::release(const char *path, fuser::FileInfo *info) {
   auto &bsaContext{bsa::getBsaContext()};
-
-  const oo::Path fullPath{path};
-  std::string folder{fullPath.folder()};
-  std::string filename{fullPath.filename()};
+  auto &&[folder, filename]{bsa::splitPath(path)};
 
   return bsaContext.close(std::move(folder), std::move(filename));
 }

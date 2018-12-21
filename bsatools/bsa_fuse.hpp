@@ -4,6 +4,7 @@
 #include "bsa/bsa.hpp"
 #include <optional>
 #include <string>
+#include <utility>
 
 namespace bsa {
 
@@ -126,6 +127,9 @@ class BsaContext {
   bool isOpen(std::string folder, std::string file);
   std::istream &getStream(std::string folder, std::string file);
 };
+
+std::pair<std::string, std::string> splitPath(const char *path);
+std::pair<std::string, std::string> splitPath(std::string &&path);
 
 BsaContext &
 getBsaContext(std::optional<std::string> filename = std::nullopt);
