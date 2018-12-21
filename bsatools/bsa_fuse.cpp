@@ -20,7 +20,12 @@ int main(int argc, char *argv[]) {
   }
 
   // Construct the global bsa context
-  bsa::getBsaContext(conf.archivePath);
+  try {
+    bsa::getBsaContext(conf.archivePath);
+  } catch (const std::exception &e) {
+    std::cerr << e.what() << '\n';
+    std::exit(1);
+  }
 
   return fuser::main(args.argc, args.argv, bsa::fuseOps);
 }
