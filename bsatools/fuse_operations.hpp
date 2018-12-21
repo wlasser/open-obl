@@ -5,19 +5,25 @@
 
 namespace bsa {
 
+/// \ingroup OpenOblivionBsaFuse
 int getAttr(const char *path, posix::stat *stbuf);
 
+/// \ingroup OpenOblivionBsaFuse
 int readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
             posix::off_t offset, fuser::FileInfo *info);
 
+/// \ingroup OpenOblivionBsaFuse
 int open(const char *path, fuser::FileInfo *info);
 
+/// \ingroup OpenOblivionBsaFuse
 int read(const char *path, char *buf, std::size_t size, posix::off_t offset,
          fuser::FileInfo *info);
 
+/// \ingroup OpenOblivionBsaFuse
 int release(const char *path, fuser::FileInfo *info);
 
 /// Filesystem operations
+/// \ingroup OpenOblivionBsaFuse
 constexpr inline fuser::Operations fuseOps = []() {
   fuser::Operations ops{};
   ops.getattr = bsa::getAttr;

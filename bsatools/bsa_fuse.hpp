@@ -6,6 +6,16 @@
 #include <string>
 #include <utility>
 
+/// \file bsa_fuse.hpp
+/// \defgroup OpenOblivionBsaFuse BsaFuse
+/// FUSE filesystem for BSA files.
+///
+/// A very simple filesystem using FUSE that allows read-only mounting of BSA
+/// files. Mounted BSA files can be traversed and accessed as if they were a
+/// normal folder, even if the BSA is compressed; decompression occurs only
+/// when a file is read. The program uses OpenOblivionBsa internally, so only
+/// BSA files (namely those from TES4) supported by OpenOblivionBsa can be
+/// mounted.
 namespace bsa {
 
 class FolderNode;
@@ -14,6 +24,7 @@ class FileNode;
 /// Base class for entries in the filesystem tree.
 /// \see `bsa::FolderNode`
 /// \see `bsa::FileNode`
+/// \ingroup OpenOblivionBsaFuse
 class Node {
  public:
   virtual ~Node() = 0;
@@ -37,6 +48,7 @@ inline Node::~Node() = default;
 /// The special folders `.` and `..` are not considered, and are treated as any
 /// other file.
 /// \see `oo::Path`
+/// \ingroup OpenOblivionBsaFuse
 class FolderNode : public Node {
  private:
   /// The unqualified name of the folder.
@@ -95,6 +107,7 @@ class FolderNode : public Node {
 /// Represents a file entry in the filesystem tree.
 /// A file has a name, a size (in bytes), a compression flag, and a parent
 /// folder.
+/// \ingroup OpenOblivionBsaFuse
 class FileNode : public Node {
  private:
   std::string mName{};
@@ -133,6 +146,7 @@ class FileNode : public Node {
 /// Stores the hashes of a file and folder pair.
 /// Used for keeping track of open files worrying about filename normalization.
 /// \see `bsa::genHash()`.
+/// \ingroup OpenOblivionBsaFuse
 struct BsaHashPair {
   uint64_t first;
   uint64_t second;
@@ -149,6 +163,7 @@ struct BsaHashPair {
 };
 
 /// Owning context for a single bsa archive and its filesystem tree.
+/// \ingroup OpenOblivionBsaFuse
 class BsaContext {
  private:
   BsaReader mBsaReader;
@@ -201,9 +216,11 @@ class BsaContext {
 };
 
 /// Return `oo::Path::folder()` and `oo::Path::filename()` of the given `path`.
+/// \ingroup OpenOblivionBsaFuse
 std::pair<std::string, std::string> splitPath(const char *path);
 
 /// \overload `bsa::splitPath(const char*)`
+/// \ingroup OpenOblivionBsaFuse
 std::pair<std::string, std::string> splitPath(std::string &&path);
 
 /// Return a reference to the `bsa::BsaContext`.
@@ -220,6 +237,7 @@ std::pair<std::string, std::string> splitPath(std::string &&path);
 /// avoided if it's *really* desired. On the other hand, each execution of the
 /// program loads at most one Bsa file which exists for the entire duration of
 /// the program, so a singleton is hardly the worst fit.
+/// \ingroup OpenOblivionBsaFuse
 BsaContext &getBsaContext(std::optional<std::string> filename = std::nullopt);
 
 } // namespace bsa

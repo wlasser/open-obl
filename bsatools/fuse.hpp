@@ -11,6 +11,7 @@
 /// The hope is that for example, `posix::stat` is much clearer than
 /// `struct stat` when the reader has little familiarity with posix, and just as
 /// clear for someone more experienced.
+/// \ingroup OpenOblivionBsaFuse
 namespace posix {
 
 using stat = struct ::stat;
@@ -23,6 +24,7 @@ using off_t = ::off_t;
 /// using a thing wrapper here. The arguments for the `posix` namespace don't
 /// really apply because libfuse is nicely namespaced already by the `fuse_`
 /// prefix, mostly I'm just picky about aesthetics.
+/// \ingroup OpenOblivionBsaFuse
 namespace fuser {
 
 using Operations = struct ::fuse_operations;
