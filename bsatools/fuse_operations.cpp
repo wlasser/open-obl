@@ -46,11 +46,10 @@ int bsa::readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
   return 0;
 }
 
-int bsa::open(const char *path, fuser::FileInfo *info) {
+int bsa::open(const char *path, fuser::FileInfo */*info*/) {
   Node *entry{bsa::getBsaContext().findEntry(path)};
   if (!entry || entry->isFolder()) return -ENOENT;
 
-  auto *fileNode{static_cast<FileNode *>(entry)};
   auto &&[folder, filename]{bsa::splitPath(path)};
 
   auto &bsaContext{bsa::getBsaContext()};
@@ -58,7 +57,7 @@ int bsa::open(const char *path, fuser::FileInfo *info) {
 }
 
 int bsa::read(const char *path, char *buf, std::size_t size,
-              posix::off_t offset, fuser::FileInfo *info) {
+              posix::off_t offset, fuser::FileInfo */*info*/) {
   auto &bsaContext{bsa::getBsaContext()};
   auto[folder, filename]{bsa::splitPath(path)};
 
@@ -71,7 +70,7 @@ int bsa::read(const char *path, char *buf, std::size_t size,
   return is.gcount();
 }
 
-int bsa::release(const char *path, fuser::FileInfo *info) {
+int bsa::release(const char *path, fuser::FileInfo */*info*/) {
   auto &bsaContext{bsa::getBsaContext()};
   auto &&[folder, filename]{bsa::splitPath(path)};
 
