@@ -43,6 +43,7 @@ if (PkgConfig_FOUND)
         target_compile_options(OpenOblivionBsaFuse PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_features(OpenOblivionBsaFuse PUBLIC cxx_std_17)
         set_property(TARGET OpenOblivionBsaFuse PROPERTY CXX_EXTENSION OFF)
+        set_property(TARGET OpenOblivionBsaFuse PROPERTY OUTPUT_NAME bsafuse)
 
         target_include_directories(OpenOblivionBsaFuse PRIVATE ${CMAKE_SOURCE_DIR}/include)
         target_sources(OpenOblivionBsaFuse PRIVATE
