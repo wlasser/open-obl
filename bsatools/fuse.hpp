@@ -8,9 +8,9 @@
 #include <type_traits>
 
 /// Very thin wrapper around some things we need in the POSIX C library.
-/// The idea is that `posix::stat` is much clearer than `struct stat` when the
-/// reader has little familiarity with posix, and just as clear for someone
-/// more experienced.
+/// The hope is that for example, `posix::stat` is much clearer than
+/// `struct stat` when the reader has little familiarity with posix, and just as
+/// clear for someone more experienced.
 namespace posix {
 
 using stat = struct ::stat;
@@ -19,6 +19,10 @@ using off_t = ::off_t;
 } // namespace posix
 
 /// Wrappers around the C libfuse API.
+/// If a function/struct etc. is needed from libfuse, then prefer writing and
+/// using a thing wrapper here. The arguments for the `posix` namespace don't
+/// really apply because libfuse is nicely namespaced already by the `fuse_`
+/// prefix, mostly I'm just picky about aesthetics.
 namespace fuser {
 
 using Operations = struct ::fuse_operations;

@@ -8,6 +8,7 @@ namespace bsa {
 
 /// Configuration determined by command-line arguments.
 struct CmdOptConf {
+  /// Filepath of the Bsa archive to open
   char *archivePath{};
 };
 

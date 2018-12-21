@@ -6,11 +6,15 @@
 namespace bsa {
 
 int getAttr(const char *path, posix::stat *stbuf);
+
 int readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
             posix::off_t offset, fuser::FileInfo *info);
+
 int open(const char *path, fuser::FileInfo *info);
+
 int read(const char *path, char *buf, std::size_t size, posix::off_t offset,
          fuser::FileInfo *info);
+
 int release(const char *path, fuser::FileInfo *info);
 
 /// Filesystem operations
