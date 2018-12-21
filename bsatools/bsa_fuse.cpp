@@ -132,7 +132,37 @@ bsa::Node *bsa::BsaContext::findEntry(std::string filename) const {
   return baseNode->findChildFile(last);
 }
 
-const bsa::BsaContext &bsa::getBsaContext(std::optional<std::string> filename) {
+int bsa::BsaContext::open(std::string folder, std::string file) {
+  BsaHashPair hashPair(std::move(folder), std::move(file));
+  try {
+    mOpenFiles
+        .try_emplace(hashPair, getReader()[hashPair.first][hashPair.second]);
+  } catch (const std::exception &e) {
+    return -ENOENT;
+  }
+
+  return 0;
+}
+
+int bsa::BsaContext::close(std::string folder, std::string file) {
+  BsaHashPair hashPair(std::move(folder), std::move(file));
+  mOpenFiles.erase(hashPair);
+
+  return 0;
+}
+
+bool bsa::BsaContext::isOpen(std::string folder, std::string file) {
+  BsaHashPair hashPair(std::move(folder), std::move(file));
+  //C++20: return mOpenFiles.contains(hashPair);
+  return mOpenFiles.count(hashPair) > 0;
+}
+
+std::istream &bsa::BsaContext::getStream(std::string folder, std::string file) {
+  BsaHashPair hashPair(std::move(folder), std::move(file));
+  return mOpenFiles.at(hashPair);
+}
+
+bsa::BsaContext &bsa::getBsaContext(std::optional<std::string> filename) {
   static bsa::BsaContext ctx = [&]() {
     if (filename) {
       return bsa::BsaContext(std::move(*filename));

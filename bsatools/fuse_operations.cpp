@@ -42,3 +42,44 @@ int bsa::readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
 
   return 0;
 }
+
+int bsa::open(const char *path, fuser::FileInfo *info) {
+  Node *entry{bsa::getBsaContext().findEntry(path)};
+  if (!entry || entry->isFolder()) return -ENOENT;
+
+  auto *fileNode{static_cast<FileNode *>(entry)};
+  const oo::Path fullPath{path};
+  std::string folder{fullPath.folder()};
+  std::string filename{fullPath.filename()};
+
+  auto &bsaContext{bsa::getBsaContext()};
+  return bsaContext.open(std::move(folder), std::move(filename));
+}
+
+int bsa::read(const char *path, char *buf, std::size_t size,
+              posix::off_t offset, fuser::FileInfo *info) {
+  auto &bsaContext{bsa::getBsaContext()};
+
+  const oo::Path fullPath{path};
+  std::string folder{fullPath.folder()};
+  std::string filename{fullPath.filename()};
+
+  if (!bsaContext.isOpen(folder, filename)) return -EBADF;
+
+  std::istream &is{bsaContext.getStream(std::move(folder),
+                                        std::move(filename))};
+  is.clear();
+  is.seekg(offset);
+  is.read(buf, size);
+  return is.gcount();
+}
+
+int bsa::release(const char *path, fuser::FileInfo *info) {
+  auto &bsaContext{bsa::getBsaContext()};
+
+  const oo::Path fullPath{path};
+  std::string folder{fullPath.folder()};
+  std::string filename{fullPath.filename()};
+
+  return bsaContext.close(std::move(folder), std::move(filename));
+}

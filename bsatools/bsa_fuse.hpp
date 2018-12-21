@@ -85,10 +85,27 @@ class FileNode : public Node {
   }
 };
 
+struct BsaHashPair {
+  uint64_t first;
+  uint64_t second;
+
+  BsaHashPair(std::string fst, std::string sec)
+      : first(bsa::genHash(std::move(fst), bsa::HashType::Folder)),
+        second(bsa::genHash(std::move(sec), bsa::HashType::File)) {}
+
+  friend bool operator<(const BsaHashPair &lhs,
+                        const BsaHashPair &rhs) noexcept {
+    return lhs.first < rhs.first
+        || (lhs.first == rhs.first && lhs.second < rhs.second);
+  }
+};
+
 class BsaContext {
  private:
   BsaReader mBsaReader;
   std::unique_ptr<FolderNode> mRoot;
+
+  std::map<BsaHashPair, bsa::FileData> mOpenFiles{};
 
  public:
   BsaContext(std::string filename);
@@ -103,9 +120,14 @@ class BsaContext {
 
   [[nodiscard]] FolderNode *findFolder(std::string foldername) const;
   [[nodiscard]] Node *findEntry(std::string filename) const;
+
+  int open(std::string folder, std::string file);
+  int close(std::string folder, std::string file);
+  bool isOpen(std::string folder, std::string file);
+  std::istream &getStream(std::string folder, std::string file);
 };
 
-const BsaContext &
+BsaContext &
 getBsaContext(std::optional<std::string> filename = std::nullopt);
 
 } // namespace bsa
