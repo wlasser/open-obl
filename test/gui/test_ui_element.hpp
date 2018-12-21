@@ -9,16 +9,16 @@ namespace gui {
 
 class TestUiElement : public gui::UiElement {
  private:
-  int mWidth{};
-  int mHeight{};
-  int mScale{1};
+  float mWidth{};
+  float mHeight{};
+  float mScale{1};
 
  public:
-  void set_width(int w) override {
+  void set_width(float w) override {
     mWidth = w;
   }
 
-  void set_height(int h) override {
+  void set_height(float h) override {
     mHeight = h;
   }
 
@@ -27,12 +27,13 @@ class TestUiElement : public gui::UiElement {
   }
 
   gui::TraitTypeId userTraitType(int index) const override {
-    return index == 0 ? gui::TraitTypeId::Int : gui::TraitTypeId::Unimplemented;
+    return index == 0 ? gui::TraitTypeId::Float
+                      : gui::TraitTypeId::Unimplemented;
   }
 
   void set_user(int index, gui::UiElement::UserValue value) override {
-    if (index == 0 && std::holds_alternative<int>(value)) {
-      mScale = std::get<int>(value);
+    if (index == 0 && std::holds_alternative<float>(value)) {
+      mScale = std::get<float>(value);
     }
   }
 };

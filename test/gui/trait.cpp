@@ -10,7 +10,6 @@
 #include <sstream>
 
 TEST_CASE("can convert trait type to TraitTypeId", "[gui]") {
-  STATIC_REQUIRE(gui::getTraitTypeId<int>() == gui::TraitTypeId::Int);
   STATIC_REQUIRE(gui::getTraitTypeId<float>() == gui::TraitTypeId::Float);
   STATIC_REQUIRE(gui::getTraitTypeId<bool>() == gui::TraitTypeId::Bool);
   STATIC_REQUIRE(gui::getTraitTypeId<std::string>()
@@ -31,13 +30,13 @@ TEST_CASE("can get the index of user traits", "[gui]") {
 
 TEST_CASE("UserTraitInterface works", "[gui]") {
   {
-    int t1{};
+    float t1{};
     std::string t2{};
-    gui::UserTraitInterface<int, std::string> uti(std::make_tuple(&t1, &t2));
-    REQUIRE(uti.userTraitType(0) == gui::TraitTypeId::Int);
+    gui::UserTraitInterface<float, std::string> uti(std::make_tuple(&t1, &t2));
+    REQUIRE(uti.userTraitType(0) == gui::TraitTypeId::Float);
     REQUIRE(uti.userTraitType(1) == gui::TraitTypeId::String);
 
-    uti.set_user(0, 1);
+    uti.set_user(0, 1.0f);
     REQUIRE(t1 == 1);
 
     uti.set_user(1, std::string{"hello"});
@@ -53,33 +52,33 @@ TEST_CASE("UserTraitInterface works", "[gui]") {
   }
 
   {
-    int t1{};
-    int t2{};
-    float t3{};
-    gui::UserTraitInterface<int, int, float>
+    float t1{};
+    float t2{};
+    bool t3{};
+    gui::UserTraitInterface<float, float, bool>
         uti(std::make_tuple(&t1, &t2, &t3));
 
-    uti.set_user(0, 1);
-    REQUIRE(t1 == 1);
+    uti.set_user(0, 1.0f);
+    REQUIRE_THAT(t1, Catch::WithinULP(1.0f, 1));
 
-    uti.set_user(1, 2);
-    REQUIRE(t2 == 2);
-    REQUIRE(t1 == 1);
+    uti.set_user(1, 2.0f);
+    REQUIRE_THAT(t2, Catch::WithinULP(2.0f, 1));
+    REQUIRE_THAT(t1, Catch::WithinULP(1.0f, 1));
 
-    uti.set_user(2, 3.5f);
-    REQUIRE_THAT(t3, Catch::WithinULP(3.5f, 1));
+    uti.set_user(2, true);
+    REQUIRE(t3 == true);
   }
 }
 
 TEST_CASE("Can construct and call trait functions") {
   {
-    gui::TraitFun<int> tf([]() { return 10; });
+    gui::TraitFun<float> tf([]() { return 10; });
     REQUIRE(tf);
     REQUIRE(tf() == 10);
   }
 
   {
-    gui::TraitFun<int> tf;
+    gui::TraitFun<float> tf;
     REQUIRE_FALSE(tf);
   }
 
@@ -342,17 +341,17 @@ TEST_CASE("can add traits without dependencies to Traits", "[gui]") {
   gui::Traits traits{};
 
   {
-    auto &trait{traits.addTrait<int>("t1", 10)};
-    REQUIRE(trait.invoke() == 10);
+    auto &trait{traits.addTrait<float>("t1", 10.0f)};
+    REQUIRE_THAT(trait.invoke(), Catch::WithinULP(10.0f, 1));
     REQUIRE(trait.getName() == "t1");
   }
 
   {
-    const auto &trait{traits.getTrait<int>("t1")};
-    REQUIRE(trait.invoke() == 10);
+    const auto &trait{traits.getTrait<float>("t1")};
+    REQUIRE_THAT(trait.invoke(), Catch::WithinULP(10.0f, 1));
     REQUIRE(trait.getName() == "t1");
-    REQUIRE_THROWS_AS(traits.getTrait<float>("t1"), std::runtime_error);
-    REQUIRE_THROWS_AS(traits.getTrait<int>("t2"), std::runtime_error);
+    REQUIRE_THROWS_AS(traits.getTrait<bool>("t1"), std::runtime_error);
+    REQUIRE_THROWS_AS(traits.getTrait<float>("t2"), std::runtime_error);
   }
 
   {
@@ -369,28 +368,28 @@ TEST_CASE("can add traits with dependencies to Traits", "[gui]") {
   // t1() = t1Src;
   // t2() = 3 * t1();
   // t3() = hexadecimal string representation of t2()
-  int t1Src{10};
-  gui::TraitFun<int> t1Fun{[&t1Src]() { return t1Src; }};
-  auto &t1{traits.addTrait<int>("t1", std::move(t1Fun))};
+  float t1Src{10};
+  gui::TraitFun<float> t1Fun{[&t1Src]() { return t1Src; }};
+  auto &t1{traits.addTrait<float>("t1", std::move(t1Fun))};
 
-  gui::TraitFun<int> t2Fun{[&traits]() -> int {
-    return 3 * traits.getTrait<int>("t1").invoke();
+  gui::TraitFun<float> t2Fun{[&traits]() -> float {
+    return 3 * traits.getTrait<float>("t1").invoke();
   }};
 
-  auto &t2{traits.addTrait<int>("t2", std::move(t2Fun))};
+  auto &t2{traits.addTrait<float>("t2", std::move(t2Fun))};
   REQUIRE(t2.invoke() == 30);
 
   gui::TraitFun<std::string> t3Fun{[&traits]() -> std::string {
     std::ostringstream os;
-    os << std::hex << traits.getTrait<int>("t2").invoke();
+    os << std::hex << static_cast<int>(traits.getTrait<float>("t2").invoke());
     return os.str();
   }};
 
   auto &t3{traits.addTrait<std::string>("t3", std::move(t3Fun))};
 
   t1Src = 5;
-  REQUIRE(t1.invoke() == 5);
-  REQUIRE(t2.invoke() == 15);
+  REQUIRE_THAT(t1.invoke(), Catch::WithinULP(5.0f, 1));
+  REQUIRE_THAT(t2.invoke(), Catch::WithinULP(15.0f, 1));
   REQUIRE(t3.invoke() == "f");
 }
 
@@ -406,26 +405,26 @@ TEST_CASE("can bind traits to UiElements using Traits", "[gui]") {
   // dependency checking, it doesn't mirror normal usage. Note that t1 does not
   // have any implicit dependencies, since it calls getArea() directly instead
   // of invoking a trait.
-  gui::TraitFun<int> t1Fun([&uiElement]() -> int {
+  gui::TraitFun<float> t1Fun([&uiElement]() -> float {
     return uiElement.getArea();
   });
   t1Fun.addDependency("test.width");
   t1Fun.addDependency("test.height");
   t1Fun.addDependency("test.user0");
-  auto &t1{traits.addTrait<int>("t1", std::move(t1Fun))};
+  auto &t1{traits.addTrait<float>("t1", std::move(t1Fun))};
 
-  int width{10};
-  gui::TraitFun<int> widthFun{[&width]() -> int { return width; }};
-  auto &tWidth{traits.addTrait<int>("test.width", std::move(widthFun))};
+  float width{10};
+  gui::TraitFun<float> widthFun{[&width]() -> float { return width; }};
+  auto &tWidth{traits.addTrait<float>("test.width", std::move(widthFun))};
   tWidth.bind(&uiElement, &gui::UiElement::set_width);
 
-  auto &tHeight{traits.addTrait<int>("test.height", 10)};
+  auto &tHeight{traits.addTrait<float>("test.height", 10)};
   tHeight.bind(&uiElement, &gui::UiElement::set_height);
 
-  int user0{1};
-  gui::TraitFun<int> user0Fun{[&user0]() -> int { return user0; }};
-  auto &tUser0{traits.addTrait<int>("test.user0", std::move(user0Fun))};
-  tUser0.bind(&uiElement, [](gui::UiElement *uiElement, int value) {
+  float user0{1};
+  gui::TraitFun<float> user0Fun{[&user0]() -> float { return user0; }};
+  auto &tUser0{traits.addTrait<float>("test.user0", std::move(user0Fun))};
+  tUser0.bind(&uiElement, [](gui::UiElement *uiElement, float value) {
     uiElement->set_user(0, value);
   });
 

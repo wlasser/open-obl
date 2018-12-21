@@ -20,7 +20,7 @@ namespace gui {
 /// directly. Unimplemented is used to denote that a particular user trait,
 /// say `<user5>`, has no effect.
 enum class TraitTypeId : int {
-  Unimplemented = 0, Int, Float, Bool, String
+  Unimplemented = 0, Float, Bool, String
 };
 
 /// \name Trait type to TraitTypeId conversions
@@ -30,12 +30,6 @@ enum class TraitTypeId : int {
 template<class T> [[nodiscard]] constexpr
 TraitTypeId getTraitTypeId() noexcept {
   return TraitTypeId::Unimplemented;
-}
-
-/// \overload getTraitTypeId
-template<> [[nodiscard]] constexpr inline
-TraitTypeId getTraitTypeId<int>() noexcept {
-  return TraitTypeId::Int;
 }
 
 /// \overload getTraitTypeId

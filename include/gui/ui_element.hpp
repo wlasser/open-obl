@@ -56,7 +56,7 @@ class UiElement {
     return TraitTypeId::Unimplemented;
   }
 
-  using UserValue = std::variant<int, float, bool, std::string>;
+  using UserValue = std::variant<float, bool, std::string>;
 
   /// Override this to set the user trait with the given index, doing nothing
   /// if the particular `{index, value}` combination is unimplemented or

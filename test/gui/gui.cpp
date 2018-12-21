@@ -34,19 +34,21 @@ TEST_CASE("can use traits in the stack machine", "[gui][gui/stack]") {
 
   SECTION("hardcoded trait function") {
     gui::stack::Program heightProg{gui::stack::compile(heightNode, &traits)};
-    gui::TraitFun<int> heightFun([heightProg]() -> int {
-      return std::get<int>(heightProg());
+    gui::TraitFun<float> heightFun([heightProg]() -> float {
+      return std::get<float>(heightProg());
     });
     for (const auto &dep : heightProg.dependencies) {
       heightFun.addDependency(dep);
     }
-    auto &heightTrait{traits.addTrait<int>("foo.height", std::move(heightFun))};
+    auto &heightTrait
+        {traits.addTrait<float>("foo.height", std::move(heightFun))};
     heightTrait.bind(&uiElement, &gui::UiElement::set_height);
   }
 
   SECTION("using getTraitFun", "[gui][gui/stack]") {
-    gui::TraitFun<int> heightFun(gui::getTraitFun<int>(traits, heightNode));
-    auto &heightTrait{traits.addTrait<int>("foo.height", std::move(heightFun))};
+    gui::TraitFun<float> heightFun(gui::getTraitFun<float>(traits, heightNode));
+    auto &heightTrait
+        {traits.addTrait<float>("foo.height", std::move(heightFun))};
     heightTrait.bind(&uiElement, &gui::UiElement::set_height);
   }
 

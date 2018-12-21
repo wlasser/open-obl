@@ -201,7 +201,9 @@ struct gcd_t {
   constexpr int operator()(int a, int b) const noexcept {
     return std::gcd(a, b);
   }
-  constexpr float operator()(float, float) const noexcept = delete;
+  constexpr float operator()(float a, float b) const noexcept {
+    return operator()(static_cast<int>(a), static_cast<int>(b));
+  }
   constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };
@@ -210,7 +212,9 @@ struct lcm_t {
   constexpr int operator()(int a, int b) const noexcept {
     return std::lcm(a, b);
   }
-  constexpr float operator()(float, float) const noexcept = delete;
+  constexpr float operator()(float a, float b) const noexcept {
+    return operator()(static_cast<int>(a), static_cast<int>(b));
+  }
   constexpr bool operator()(bool, bool) const noexcept = delete;
   void operator()(Stack &stack) const { invokeBinaryOperator(stack, *this); }
 };

@@ -41,22 +41,6 @@ template<> bool parseXmlEntity(const std::string &entity) {
   return entity == "&true;";
 }
 
-template<> int getXmlValue(pugi::xml_node node) {
-  // stoi discards whitespace so we don't need to trim.
-  // 0 means the base is autodetected.
-  // There is a string construction here but otherwise we need strtol which
-  // complains when sizeof(long) > sizeof(int).
-  return std::stoi(node.value(), nullptr, 0);
-}
-
-template<> int getXmlChildValue(pugi::xml_node node, const char *name) {
-  return std::stoi(node.child_value(name), nullptr, 0);
-}
-
-template<> int getXmlChildValue(pugi::xml_node node) {
-  return std::stoi(node.child_value(), nullptr, 0);
-}
-
 template<> float getXmlValue(pugi::xml_node node) {
   // No string construction necessary, unlike with getXmlValue<int>
   return std::strtof(node.value(), nullptr);

@@ -68,10 +68,6 @@ bool Traits::addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement) {
   };
 
   switch (uiElement->userTraitType(index)) {
-    case TraitTypeId::Int: {
-      addAndBindTrait<int>(uiElement, std::move(setter), node);
-      break;
-    }
     case TraitTypeId::Float: {
       addAndBindTrait<float>(uiElement, std::move(setter), node);
       break;

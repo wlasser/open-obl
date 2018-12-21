@@ -4,6 +4,7 @@
 #include "gui/stack/types.hpp"
 #include <catch2/catch.hpp>
 #include <pugixml.hpp>
+#include <cmath>
 #include <sstream>
 #include <string>
 #include <variant>
@@ -34,27 +35,24 @@ TEST_CASE("parseValueType deduces bool", "[gui][gui/stack]") {
   }
 }
 
-TEST_CASE("parseValueType deduces int", "[gui][gui/stack]") {
+TEST_CASE("parseValueType deduces float", "[gui][gui/stack]") {
   {
     const auto r{stack::parseValueType("1")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == 1);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == 1);
   }
 
   {
     const auto r{stack::parseValueType("-10")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == -10);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == -10);
   }
 
   {
     const auto r{stack::parseValueType("0")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == 0);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == 0);
   }
-}
-
-TEST_CASE("parseValueType deduces float", "[gui][gui/stack]") {
   {
     const auto r{stack::parseValueType("3.14")};
     REQUIRE(std::holds_alternative<float>(r));
@@ -72,20 +70,20 @@ TEST_CASE("parseValueType ignores trailing and leading whitespace",
           "[gui][gui/stack]") {
   {
     const auto r{stack::parseValueType("  123")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == 123);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == 123);
   }
 
   {
     const auto r{stack::parseValueType("123    ")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == 123);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == 123);
   }
 
   {
     const auto r{stack::parseValueType("  123     ")};
-    REQUIRE(std::holds_alternative<int>(r));
-    REQUIRE(std::get<int>(r) == 123);
+    REQUIRE(std::holds_alternative<float>(r));
+    REQUIRE(std::get<float>(r) == 123);
   }
 
   {
@@ -112,8 +110,8 @@ TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
 
   SECTION("hardcoded program") {
     program.instructions = std::vector<stack::Instruction>{
-        stack::push_t{10},
-        stack::push_t{15}
+        stack::push_t{10.0f},
+        stack::push_t{15.0f}
     };
   }
 
@@ -128,8 +126,8 @@ TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
   }
 
   auto ret{program()};
-  REQUIRE(std::holds_alternative<int>(ret));
-  REQUIRE(std::get<int>(ret) == 15);
+  REQUIRE(std::holds_alternative<float>(ret));
+  REQUIRE(std::get<float>(ret) == 15);
 }
 
 TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
@@ -147,6 +145,10 @@ TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
         stack::push_t{3},
         stack::mod_t{}
     };
+
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<int>(ret));
+    REQUIRE(std::get<int>(ret) == ((5 + 10) / 3 * 2) % 3);
   }
 
   SECTION("from XML") {
@@ -160,11 +162,12 @@ TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
     program = stack::compile(doc);
-  }
 
-  auto ret{program()};
-  REQUIRE(std::holds_alternative<int>(ret));
-  REQUIRE(std::get<int>(ret) == ((5 + 10) / 3 * 2) % 3);
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<float>(ret));
+    REQUIRE(std::get<float>(ret)
+                == std::fmod(((5.0f + 10.0f) / 3.0f * 2.0f), 3.0f));
+  }
 }
 
 TEST_CASE("can perform floating point arithmetic on the stack",
@@ -241,6 +244,18 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
         stack::push_t{128},
         stack::lcm_t{}
     };
+
+    auto r_not_coprime{p_not_coprime()};
+    REQUIRE(std::holds_alternative<int>(r_not_coprime));
+    REQUIRE(std::get<int>(r_not_coprime) == 4);
+
+    auto r_coprime{p_coprime()};
+    REQUIRE(std::holds_alternative<int>(r_coprime));
+    REQUIRE(std::get<int>(r_coprime) == 1);
+
+    auto r_lcm{p_lcm()};
+    REQUIRE(std::holds_alternative<int>(r_lcm));
+    REQUIRE(std::get<int>(r_lcm) == 128 * 25);
   }
 
   SECTION("from XML") {
@@ -273,19 +288,19 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
       REQUIRE(doc.load(is));
       p_lcm = stack::compile(doc);
     }
+
+    auto r_not_coprime{p_not_coprime()};
+    REQUIRE(std::holds_alternative<float>(r_not_coprime));
+    REQUIRE(std::get<float>(r_not_coprime) == 4);
+
+    auto r_coprime{p_coprime()};
+    REQUIRE(std::holds_alternative<float>(r_coprime));
+    REQUIRE(std::get<float>(r_coprime) == 1);
+
+    auto r_lcm{p_lcm()};
+    REQUIRE(std::holds_alternative<float>(r_lcm));
+    REQUIRE(std::get<float>(r_lcm) == 128 * 25);
   }
-
-  auto r_not_coprime{p_not_coprime()};
-  REQUIRE(std::holds_alternative<int>(r_not_coprime));
-  REQUIRE(std::get<int>(r_not_coprime) == 4);
-
-  auto r_coprime{p_coprime()};
-  REQUIRE(std::holds_alternative<int>(r_coprime));
-  REQUIRE(std::get<int>(r_coprime) == 1);
-
-  auto r_lcm{p_lcm()};
-  REQUIRE(std::holds_alternative<int>(r_lcm));
-  REQUIRE(std::get<int>(r_lcm) == 128 * 25);
 }
 
 TEST_CASE("can compute floor and ceiling on the stack", "[gui][gui/stack]") {
@@ -548,6 +563,10 @@ TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
         stack::eq_t{},       // == true
         stack::onlyifnot_t{} // Should discard the 'true' and '7'
     };
+
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<int>(ret));
+    REQUIRE(std::get<int>(ret) == 3);
   }
 
   SECTION("from XML") {
@@ -571,11 +590,12 @@ TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
     program = stack::compile(doc);
+
+    auto ret{program()};
+    REQUIRE(std::holds_alternative<float>(ret));
+    REQUIRE(std::get<float>(ret) == 3);
   }
 
-  auto ret{program()};
-  REQUIRE(std::holds_alternative<int>(ret));
-  REQUIRE(std::get<int>(ret) == 3);
 }
 
 TEST_CASE("binary operators can act on stacks with one element",

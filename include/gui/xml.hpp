@@ -42,11 +42,6 @@ template<class T>
 T getXmlChildValue(pugi::xml_node node, const char *name) = delete;
 template<class T> T getXmlChildValue(pugi::xml_node node) = delete;
 
-// int specializations
-template<> int getXmlValue(pugi::xml_node node);
-template<> int getXmlChildValue(pugi::xml_node node, const char *name);
-template<> int getXmlChildValue(pugi::xml_node node);
-
 // float specializations
 template<> float getXmlValue(pugi::xml_node node);
 template<> float getXmlChildValue(pugi::xml_node node, const char *name);

@@ -26,8 +26,7 @@ namespace gui {
 class Traits {
  public:
   /// Type of the nodes in the dependency graph, represents a Trait of any type.
-  using TraitVariant = std::variant<Trait<int>,
-                                    Trait<float>,
+  using TraitVariant = std::variant<Trait<float>,
                                     Trait<std::string>,
                                     Trait<bool>>;
  private:
