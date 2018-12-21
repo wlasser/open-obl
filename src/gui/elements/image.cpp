@@ -10,6 +10,17 @@
 #include <OgreTextureManager.h>
 #include <string>
 
+void gui::Image::updateUVs(const Ogre::Vector2 &dims) {
+  if (mZoom > 0.0f) {
+    const float zoom{mZoom / 100.0f};
+    mOverlay->setUV(0.0f, 0.0f,
+                    zoom * mOverlay->getWidth() * dims.x / mTexWidth,
+                    zoom * mOverlay->getHeight() * dims.y / mTexHeight);
+  } else {
+    mOverlay->setUV(0.0f, 0.0f, 1.0f, 1.0f);
+  }
+}
+
 gui::Image::Image(std::string name) {
   set_name(std::move(name));
 
@@ -54,12 +65,14 @@ void gui::Image::set_width(float width) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
   mOverlay->setWidth(width / dims.x);
+  updateUVs(dims);
 }
 
 void gui::Image::set_height(float height) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
   mOverlay->setHeight(height / dims.y);
+  updateUVs(dims);
 }
 
 void gui::Image::set_filename(std::string filename) {
@@ -77,10 +90,15 @@ void gui::Image::set_filename(std::string filename) {
   auto &texMgr{Ogre::TextureManager::getSingleton()};
   auto texPtr{texMgr.getByName(path.c_str(), oo::RESOURCE_GROUP)};
   state->setTexture(texPtr);
+
+  mTexWidth = static_cast<float>(texPtr->getWidth());
+  mTexHeight = static_cast<float>(texPtr->getHeight());
+  updateUVs(gui::getNormalizedDimensions());
 }
 
 void gui::Image::set_zoom(float zoom) {
-  // TODO: Unimplemented
+  mZoom = zoom;
+  updateUVs(gui::getNormalizedDimensions());
 }
 
 void gui::Image::set_visible(bool visible) {

@@ -13,6 +13,19 @@ class Image : public UiElement {
   Ogre::PanelOverlayElement *mOverlay{};
   Ogre::MaterialPtr mMatPtr{};
 
+  /// Width of the source texture, in pixels
+  float mTexWidth{1.0f};
+  /// Height of the source texture, in pixels
+  float mTexHeight{1.0f};
+  /// Percentage zoom factor.
+  float mZoom{100.0f};
+
+  /// Update the texture UVs according to the current dimensions and zoom.
+  /// \param dims The normalized screen dimensions
+  /// \pre `mOverlay != nullptr`
+  void updateUVs(const Ogre::Vector2 &dims)
+  /*C++20: [[expects: mOverlay != nullptr]]*/;
+
  public:
   Image(std::string name);
 

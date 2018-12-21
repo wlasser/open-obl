@@ -36,8 +36,17 @@ class UiElement {
   }
   /// Filename of texture or model to display
   virtual void set_filename(std::string filename) {}
-  /// Percentage to scale the image or text by. If `-1`, then the image or text
-  /// is (non-uniformly) scaled to the containing uiElement's width and height.
+  /// Percentage to scale the image or text by.
+  /// A positive `zoom` factor applies a uniform scaling to the image, with
+  /// `zoom` interpreted as the target percentage scaling. This is the only
+  /// scaling applied, in the sense that if the width or height of the uiElement
+  /// differs from that of the source image, after applying the zoom scaling,
+  /// then the source image is clipped or tiled appropriately and not scaled
+  /// further.
+  ///
+  /// A zoom factor of `-1` (or more generally any negative number)
+  /// non-uniformly scales the source image to the width and height of the
+  /// image; no clipping is performed.
   virtual void set_zoom(float zoom) {}
 
   /// Override this to specify the user trait interface of the ui element; the
