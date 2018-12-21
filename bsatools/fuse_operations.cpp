@@ -1,24 +1,27 @@
 #include "bsa_fuse.hpp"
 #include "fuse_operations.hpp"
 #include "fs/path.hpp"
+#include <algorithm>
 #include <cerrno>
 
 int bsa::getAttr(const char *path, posix::stat *stbuf) {
   // Clear stbuf
   *stbuf = {};
 
-  if (path == std::string{"/"}) {
-    stbuf->st_mode = S_IFDIR | 0755;
-    stbuf->st_nlink = 2;
-    return 0;
-  }
-
-  Node *entry{bsa::getBsaContext().findEntry(path)};
+  Node *entry = [&]() -> Node * {
+    if (path == std::string{"/"}) return bsa::getBsaContext().getRoot();
+    else return bsa::getBsaContext().findEntry(path);
+  }();
   if (!entry) return -ENOENT;
 
   if (entry->isFolder()) {
+    auto *folderNode{static_cast<FolderNode *>(entry)};
+    auto children{folderNode->getChildren()};
     stbuf->st_mode = S_IFDIR | 0755;
-    stbuf->st_nlink = 2;
+    stbuf->st_nlink = 2 + std::count_if(children.begin(), children.end(),
+                                        [](Node *node) {
+                                          return node->isFolder();
+                                        });
   } else {
     auto *fileNode{static_cast<FileNode *>(entry)};
     stbuf->st_mode = S_IFREG | 0444;
