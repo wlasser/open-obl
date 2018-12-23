@@ -120,6 +120,7 @@ Application::Application(std::string windowName) : FrameListener() {
     declareBsaArchive(bsa);
     declareBsaResources(bsa);
   }
+  declareFilesystemResources(dataPath);
 
   // All resources have been declared by now, so we can initialise the resource
   // groups. This won't initialise the default groups.
@@ -337,6 +338,31 @@ void Application::declareBsaResources(const oo::Path &bsaFilename) {
 
   for (auto &filename : *files) {
     declareResource(oo::Path{std::move(filename)}, oo::RESOURCE_GROUP);
+  }
+}
+
+void Application::declareFilesystemResources(const oo::Path &foldername) {
+  auto &archiveMgr{Ogre::ArchiveManager::getSingleton()};
+  const auto sysPath{foldername.sysPath()};
+  const Ogre::Archive *archive{archiveMgr.load(sysPath, "FileSystem", true)};
+  const Ogre::StringVectorPtr files{archive->list()};
+
+  auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+
+  // Cannot use resourceExists since it doesn't check for declaration, just the
+  // existence of a file with the given name in some location.
+  auto resDecls{resGrpMgr.getResourceDeclarationList(oo::RESOURCE_GROUP)};
+
+  // This is like O(n^2) with the number of resources on a heavily modded game,
+  // which is kind of sad.
+  for (auto &filename : *files) {
+    oo::Path path{std::move(filename)};
+    std::string pathString{path.c_str()};
+    if (std::find_if(resDecls.begin(), resDecls.end(), [&](const auto &decl) {
+      return decl.resourceName == pathString;
+    }) == resDecls.end()) {
+      declareResource(path, oo::RESOURCE_GROUP);
+    }
   }
 }
 

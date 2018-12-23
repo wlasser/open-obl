@@ -82,6 +82,21 @@ class Application : public Ogre::FrameListener {
   /// Declare all the resources in the given bsa archive.
   void declareBsaResources(const oo::Path &bsaFilename);
 
+  /// Declare all the resources in the given folder.
+  /// This should be called *after* `declareBsaResources`, as it will not
+  /// declare a resource if has already been declared, unlike
+  /// `declareBsaResources` which doesn't bother checking.
+  ///
+  // There are two reasons for this method; the first is that because the
+  // filesystem is case-sensitive, Ogre will not have properly indexed any files
+  // whose names are not already normalized, and thus they will not be
+  // openable, unless they already exist in a Bsa file, in which the Bsa entry
+  // will be chosen over the filesystem; the second is that while Ogre will
+  // index any files whose name is already normalized, they will not have been
+  // declared so will not be openable in any non-generic situation (i.e. opening
+  // a TextResource not a Resource).
+  void declareFilesystemResources(const oo::Path &foldername);
+
   /// Return all esm files in the `masterPath` sorted by decreasing modification
   /// date, followed by all esp files in the `masterPath` sorted by decreasing
   /// modification date.
