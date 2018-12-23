@@ -1,3 +1,4 @@
+#include "fs/path.hpp"
 #include "gui/logging.hpp"
 #include "gui/xml.hpp"
 #include "ogre/text_resource_manager.hpp"
@@ -34,7 +35,45 @@ pugi::xml_document readXmlDocument(std::istream &is) {
 
 pugi::xml_document readXmlDocument(const std::string &filename) {
   auto is{gui::openXmlStream(filename)};
-  return gui::readXmlDocument(is);
+  auto doc{gui::readXmlDocument(is)};
+  gui::processIncludes(doc);
+  return doc;
+}
+
+void processIncludes(pugi::xml_document &doc) {
+  gui::preOrderDFS(doc, [](pugi::xml_node &node) -> bool {
+    if (node.name() != std::string{"include"}) return true;
+
+    // Grab filename to include
+    const auto srcAttr{node.attribute("src")};
+    if (!srcAttr) {
+      gui::guiLogger()->warn("Found <include> tag with no src, ignoring");
+      return true;
+    }
+    const std::string filename{srcAttr.value()};
+
+    // Load included document
+    pugi::xml_document doc;
+    try {
+      auto path{oo::Path{"menus/prefabs"} / oo::Path{filename}};
+      doc = gui::readXmlDocument(path.c_str());
+    } catch (const std::runtime_error &e) {
+      gui::guiLogger()->error("<include> tag with src {} failed to load",
+                              filename);
+      throw;
+    }
+
+    // Add children of node documents, since can't add xml_document directly
+    pugi::xml_node parent{node.parent()};
+    pugi::xml_node lastAdded{node};
+    for (auto childNode : doc.children()) {
+      lastAdded = parent.insert_copy_after(childNode, lastAdded);
+    }
+
+    // Shouldn't invalidate iterators...
+    parent.remove_child(node);
+    return false;
+  });
 }
 
 template<> bool parseXmlEntity(const std::string &entity) {

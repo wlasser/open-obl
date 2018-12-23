@@ -17,10 +17,16 @@ std::stringstream openXmlStream(const std::string &filename);
 pugi::xml_document readXmlDocument(std::istream &is);
 
 /// Load an XML document from the `Ogre::TextResource` with the given name in
-/// the `oo::RESOURCE_GROUP` resource group.
+/// the `oo::RESOURCE_GROUP` resource group, processing any `<include>` tags.
 /// \throws std::runtime_error if the file could not be loaded.
 /// \throws std::runtime_error if the file could not be parsed as an XML file.
 pugi::xml_document readXmlDocument(const std::string &filename);
+
+/// Recursively process any `<include>` tags in the `doc`, modifying it in
+/// place. The `src` of the `<include>` is interpreted relative to the
+/// `menus/prefabs` directory, and is passed to
+/// `gui::readXmlDocument(const std::string &)` after being qualified as such.
+void processIncludes(pugi::xml_document &doc);
 
 /// We don't have a DTD so can't specify custom entities directly. Instead they
 /// should be treated as strings by the parser and decoded using the following
@@ -84,6 +90,25 @@ pugi::xml_node findClosestNode(pugi::xml_node node, Predicate &&p) {
     }
     frontier = std::move(newFrontier);
     if (frontier.empty()) return pugi::xml_node{};
+  }
+}
+
+/// Traverse `node` and its children in depth-first pre-order, applying the
+/// `visitor` to each node. The `visitor` should accept an lvalue reference
+/// to a `pugi::xml_node` and return a boolean. If `false` is returned then the
+/// subtree rooted at the passed node shall not be traversed, otherwise the
+/// traversal continues as normal. In particular, the `visitor` is allows to
+/// delete the passed node and its subtree, provided it returns `false`.
+/// \warning Note the different meaning assigned to the `visitor`'s return value
+///          compared to `pugi::xml_node::traverse`, where a `false` return
+///          value means that the *entire* traversal should be stopped, not just
+///          the current subtree.
+/// \tparam F a function object with `bool operator()(pugi::xml_node &)`
+template<class F>
+void preOrderDFS(pugi::xml_node &node, F &&visitor) {
+  if (!visitor(node)) return;
+  for (auto &node : node.children()) {
+    gui::preOrderDFS(node, std::forward<F>(visitor));
   }
 }
 
