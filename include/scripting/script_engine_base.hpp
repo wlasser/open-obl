@@ -104,7 +104,7 @@ void ScriptEngineBase::addExternalFun(llvm::StringRef name) {
 }
 
 template<class Ret, class ... Args> llvm::FunctionType *
-ScriptEngineBase::makeProto(llvm::StringRef name, std::tuple<Args...>) {
+ScriptEngineBase::makeProto(llvm::StringRef /*name*/, std::tuple<Args...>) {
   std::array<llvm::Type *, sizeof...(Args)> args{typeToLLVM<Args>() ...};
   return llvm::FunctionType::get(typeToLLVM<Ret>(), args, false);
 }

@@ -342,7 +342,7 @@ EspAccessor::ReadResult<T> EspAccessor::readRecord() {
 }
 
 template<class T>
-T EspCoordinator::translateFormIds(T rec, int modIndex) const {
+T EspCoordinator::translateFormIds(T rec, int /*modIndex*/) const {
   return rec;
 }
 

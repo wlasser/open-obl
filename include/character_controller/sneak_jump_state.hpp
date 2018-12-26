@@ -28,7 +28,7 @@ class SneakJumpState : public FallbackState<SneakJumpState>,
                   const btManifoldPoint &contact);
 
   void enter(PlayerControllerImpl &impl);
-  void exit(PlayerControllerImpl &impl) {}
+  void exit(PlayerControllerImpl &/*impl*/) {}
 };
 
 } // namespace oo

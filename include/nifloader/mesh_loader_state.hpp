@@ -154,14 +154,14 @@ class TBGVisitor {
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
 
-  void initialize_vertex(vertex_descriptor v, const Graph &g) {}
+  void initialize_vertex(vertex_descriptor /*v*/, const Graph &/*g*/) {}
   void start_vertex(vertex_descriptor v, const Graph &g);
   void discover_vertex(vertex_descriptor v, const Graph &g);
-  void examine_edge(edge_descriptor e, const Graph &g) {}
-  void tree_edge(edge_descriptor e, const Graph &g) {}
-  void back_edge(edge_descriptor e, const Graph &g) {}
-  void forward_or_cross_edge(edge_descriptor e, const Graph &g) {}
-  void finish_edge(edge_descriptor e, const Graph &g) {}
+  void examine_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
+  void tree_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
+  void back_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
+  void forward_or_cross_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
+  void finish_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
   void finish_vertex(vertex_descriptor v, const Graph &g);
 
   explicit TBGVisitor(MeshLoaderState &state) : state(state) {}
@@ -174,7 +174,7 @@ class TBGVisitor {
 template<class T, class S>
 T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
   const auto val{static_cast<int32_t>(ref)};
-  if (val < 0 || val >= mBlocks.vertex_set().size()) {
+  if (val < 0 || static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
   }
   return dynamic_cast<T &>(*mBlocks[val]);
@@ -183,7 +183,9 @@ T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
 template<class T, class S, class>
 bool MeshLoaderState::checkRefType(nif::basic::Ref<S> ref) {
   const auto val{static_cast<int32_t>(ref)};
-  if (val < 0 || val >= mBlocks.vertex_set().size()) return false;
+  if (val < 0 || static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
+    return false;
+  }
   // This is horrific.
   return dynamic_cast<T *>(&*mBlocks[val]) != nullptr;
 }

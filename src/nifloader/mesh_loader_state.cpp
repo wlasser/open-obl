@@ -771,7 +771,7 @@ MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks)
 // This is a new connected component so we need to reset the transformation to
 // the identity. NB: This vertex will still be discovered so setting the
 // transformation to the vertex's will result in it being applied twice.
-void TBGVisitor::start_vertex(vertex_descriptor v, const Graph &g) {
+void TBGVisitor::start_vertex(vertex_descriptor /*v*/, const Graph &/*g*/) {
   transform = Ogre::Matrix4::IDENTITY;
 }
 

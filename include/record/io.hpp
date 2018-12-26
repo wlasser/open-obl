@@ -127,7 +127,9 @@ std::ostream &write(std::ostream &os,
 
 /// \overload raw::read(std::istream &, T &, std::size_t)
 template<class ...T>
-std::istream &read(std::istream &is, Tuplifiable<T...> &t, std::size_t size) {
+std::istream &read(std::istream &is,
+                   Tuplifiable<T...> &t,
+                   std::size_t /*size*/) {
   std::apply([&is](auto ...x) { (io::readBytes(is, *x), ...); }, t.asTuple());
   return is;
 }

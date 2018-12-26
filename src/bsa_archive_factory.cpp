@@ -23,7 +23,6 @@ class BsaArchive : public Ogre::Archive {
   template<class T>
   std::shared_ptr<std::vector<T>>
   find(const Ogre::String &pattern,
-       bool recursive,
        bool dirs,
        const std::function<T(oo::Path)> &f) const;
 
@@ -69,7 +68,6 @@ class BsaArchive : public Ogre::Archive {
 template<class T>
 std::shared_ptr<std::vector<T>>
 BsaArchive::find(const Ogre::String &pattern,
-                 bool recursive,
                  bool dirs,
                  const std::function<T(oo::Path)> &f) const {
   if (!reader) throw std::runtime_error("Archive is not loaded");
@@ -130,11 +128,12 @@ BsaArchive::BsaArchive(const Ogre::String &name,
                        const Ogre::String &archType) :
     Ogre::Archive(name, archType), name(name) {}
 
-[[noreturn]] Ogre::DataStreamPtr BsaArchive::create(const Ogre::String &filename) {
+[[noreturn]] Ogre::DataStreamPtr
+BsaArchive::create(const Ogre::String &/*filename*/) {
   throw std::runtime_error("Cannot modify BSA archives");
 }
 
-[[noreturn]] void BsaArchive::remove(const Ogre::String &filename) {
+[[noreturn]] void BsaArchive::remove(const Ogre::String &/*filename*/) {
   throw std::runtime_error("Cannot modify BSA archives");
 }
 
@@ -147,19 +146,18 @@ bool BsaArchive::exists(const Ogre::String &filename) const {
 }
 
 Ogre::StringVectorPtr BsaArchive::find(const Ogre::String &pattern,
-                                       bool recursive, bool dirs) const {
-  return find<std::string>(pattern, recursive, dirs, [](const oo::Path &path) {
+                                       bool /*recursive*/, bool dirs) const {
+  return find<std::string>(pattern, dirs, [](const oo::Path &path) {
     return std::string{path.c_str()};
   });
 }
 
 Ogre::FileInfoListPtr BsaArchive::findFileInfo(const Ogre::String &pattern,
-                                               bool recursive,
+                                               bool /*recursive*/,
                                                bool dirs) const {
-  return find<Ogre::FileInfo>(pattern, recursive, dirs,
-                              [this](const oo::Path &path) {
-                                return getFileInfo(path);
-                              });
+  return find<Ogre::FileInfo>(pattern, dirs, [this](const oo::Path &path) {
+    return getFileInfo(path);
+  });
 }
 
 Ogre::StringVectorPtr BsaArchive::list(bool recursive, bool dirs) const {
@@ -189,7 +187,8 @@ Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
       filename, (*reader)[std::string{folder}][std::string{file}]);
 }
 
-std::time_t BsaArchive::getModifiedTime(const Ogre::String &filename) const {
+std::time_t
+BsaArchive::getModifiedTime(const Ogre::String &/*filename*/) const {
   // BSA files don't track modification time, best we could do would be the
   // modification time of the entire archive, but bsa::BsaReader doesn't track
   // that so we'll just return the epoch.

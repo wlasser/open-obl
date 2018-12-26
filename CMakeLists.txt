@@ -104,7 +104,7 @@ add_subdirectory(test)
 add_subdirectory(bsatools)
 
 add_executable(OpenOblivion)
-target_compile_options(OpenOblivion PRIVATE -Wall)
+target_compile_options(OpenOblivion PRIVATE -Wall -Wextra)
 target_compile_features(OpenOblivion PUBLIC cxx_std_17)
 set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
 

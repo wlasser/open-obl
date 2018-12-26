@@ -32,7 +32,7 @@ void SneakJumpState::enter(PlayerControllerImpl &impl) {
 
 std::optional<SneakStandState>
 SneakJumpState::handleCollision(PlayerControllerImpl &impl,
-                                const btCollisionObject *other,
+                                const btCollisionObject */*other*/,
                                 const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};

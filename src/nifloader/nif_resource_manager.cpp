@@ -47,7 +47,7 @@ Resource *NifResourceManager::createImpl(const String &name,
                                          const String &group,
                                          bool isManual,
                                          ManualResourceLoader *loader,
-                                         const NameValuePairList *params) {
+                                         const NameValuePairList */*params*/) {
   return OGRE_NEW NifResource(this, name, handle, group, isManual, loader);
 }
 

@@ -162,8 +162,7 @@ struct REFRRagdoll : RecordTuplifiable<std::optional<record::XRGD>> {
 
 // TODO: Finish the rest of these
 
-template<class T>
-constexpr uint32_t recTypeOfComponent(T *x) {
+template<class T> constexpr uint32_t recTypeOfComponent(T */*x*/) {
   return T::value_type::RecordType;
 }
 
@@ -172,13 +171,9 @@ struct REFR : REFRBase, Components ..., REFRTransformation {
   constexpr static inline uint32_t RecordType = Base;
 
   uint32_t size() const override {
-    // @formatter:off
-    return REFRBase::size()
-        + (std::apply([](const auto *...x) {
-          return ((*x ? (*x)->entireSize() : 0u) + ... + 0);
-        }, Components::asTuple()) + ... + 0)
-        + REFRTransformation::size();
-    // @formatter:on
+    return REFRBase::size() + (std::apply([](const auto *...x) {
+      return ((*x ? (*x)->entireSize() : 0u) + ... + 0);
+    }, Components::asTuple()) + ... + 0) + REFRTransformation::size();
   }
 
   std::ostream &write(std::ostream &os) const override {
@@ -197,15 +192,12 @@ struct REFR : REFRBase, Components ..., REFRTransformation {
     auto members{std::tuple_cat(Components::asTuple()...)};
     for (;;) {
       const uint32_t recType{peekRecordType(is)};
-      // @formatter:off
       if (!std::apply([&is, recType](auto *...x) {
-          return (... || (recTypeOfComponent(x) == recType
-            ? (readRecord(is, *x), true) : false));
-        }, members)
-      ) {
+        return (... || (recTypeOfComponent(x) == recType
+                        ? (readRecord(is, *x), true) : false));
+      }, members)) {
         break;
       }
-      // @formatter:on
     }
 
     REFRTransformation::read(is);

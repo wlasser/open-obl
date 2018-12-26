@@ -14,6 +14,9 @@ class UiElement {
   std::string mName{};
 
  public:
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+
   /// Position of left edge, relative to position of locus ancestor
   virtual void set_x(float x) {}
   /// Position of top edge, relative to position of locus ancestor
@@ -62,6 +65,8 @@ class UiElement {
   /// if the particular `{index, value}` combination is unimplemented or
   /// invalid.
   virtual void set_user(int index, UserValue value) {}
+
+#pragma clang diagnostic pop
 
   /// Every UiElement is required to have a name which identifies it uniquely in
   /// the scope of the surrounding menu, or if the UiElement is a menu, then in

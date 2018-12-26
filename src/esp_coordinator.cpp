@@ -98,7 +98,8 @@ void EspCoordinator::close(int modIndex) {
 
 FormId EspCoordinator::translateFormId(FormId id, int modIndex) const {
   const int localIndex{static_cast<int>((id & 0xff'000000) >> 24u)};
-  if (localIndex >= mLoadOrder[modIndex].localLoadOrder.size()) {
+  if (static_cast<std::size_t>(localIndex)
+      >= mLoadOrder[modIndex].localLoadOrder.size()) {
     spdlog::get(oo::LOG)->critical(
         "FormId 0x{:0>8x} belongs to a non-dependent mod");
     throw std::runtime_error("FormId refers to a non-dependent mod");

@@ -66,7 +66,7 @@ class GameMode {
  public:
   using transition_t = ModeTransition<ConsoleMode, MenuMode>;
 
-  explicit GameMode(ApplicationContext &ctx) {}
+  explicit GameMode(ApplicationContext &/*ctx*/) {}
 
   void enter(ApplicationContext &ctx) {
     loadCell(ctx, BaseId{0x00'048706});

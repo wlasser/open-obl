@@ -2,19 +2,17 @@
 #include "character_controller/jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
 #include "character_controller/stand_state.hpp"
-#include "settings.hpp"
-#include <spdlog/spdlog.h>
 
 namespace oo {
 
 std::optional<JumpState>
-StandState::handleEvent(PlayerControllerImpl &impl,
+StandState::handleEvent(PlayerControllerImpl &/*impl*/,
                         const event::Jump &event) {
   return event.down ? std::make_optional<JumpState>() : std::nullopt;
 }
 
 std::optional<SneakStandState>
-StandState::handleEvent(PlayerControllerImpl &impl,
+StandState::handleEvent(PlayerControllerImpl &/*impl*/,
                         const event::Sneak &event) {
   return event.down ? std::make_optional<SneakStandState>()
                     : std::nullopt;

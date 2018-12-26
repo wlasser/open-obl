@@ -118,8 +118,9 @@ decltype((void) (f(*lhs, *rhs)), std::optional<A>{}) {
   return f(*lhs, *rhs);
 }
 
-template<class A, class F>
-constexpr auto try_functor(F &&f, const void *lhs, const void *rhs) ->
+template<class A, class F> constexpr auto try_functor(F &&/*f*/,
+                                                      const void */*lhs*/,
+                                                      const void */*rhs*/) ->
 std::optional<A> {
   return std::nullopt;
 }
@@ -131,8 +132,9 @@ decltype((void) (f(*lhs, *rhs)), std::optional<bool>{}) {
   return f(*lhs, *rhs);
 }
 
-template<class A, class F>
-constexpr auto try_predicate(F &&f, const void *lhs, const void *rhs) ->
+template<class A, class F> constexpr auto try_predicate(F &&/*f*/,
+                                                        const void */*lhs*/,
+                                                        const void */*rhs*/) ->
 std::optional<bool> {
   return std::nullopt;
 }

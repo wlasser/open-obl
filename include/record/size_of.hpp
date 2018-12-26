@@ -41,8 +41,7 @@ inline std::size_t SizeOf(const std::string &t) {
   else return static_cast<uint16_t>(t.length() + 1);
 }
 
-template<class T>
-inline std::size_t SizeOf(const std::vector<T> &t) {
+template<class T> inline std::size_t SizeOf(const std::vector<T> &t) {
   return t.empty() ? 0 : (t.size() * SizeOf(t.front()));
 }
 
@@ -52,18 +51,15 @@ inline std::size_t SizeOf(const std::array<T, N> &t) {
   else return SizeOf(t.front()) * N;
 }
 
-template<class T>
-inline std::size_t SizeOf(const std::optional<T> &t) {
+template<class T> inline std::size_t SizeOf(const std::optional<T> &t) {
   return t ? SizeOf(t.value()) : 0;
 }
 
-template<class T, class S>
-inline std::size_t SizeOf(const std::pair<T, S> &t) {
+template<class T, class S> inline std::size_t SizeOf(const std::pair<T, S> &t) {
   return SizeOf(t.first) + SizeOf(t.second);
 }
 
-template<class ...T>
-inline std::size_t SizeOf(const std::tuple<T...> &t) {
+template<class ...T> inline std::size_t SizeOf(const std::tuple<T...> &t) {
   return std::apply([](const auto &...x) { return (0 + ... +SizeOf(x)); }, t);
 }
 
@@ -72,13 +68,11 @@ inline std::size_t SizeOf(const std::tuple<const T *...> &t) {
   return std::apply([](const auto &...x) { return (0 + ... +SizeOf(*x)); }, t);
 }
 
-template<class ...T>
-inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
+template<class ...T> inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
   return SizeOf(t.asTuple());
 }
 
-template<class T>
-inline auto SizeOf(const T &data) ->
+template<class T> inline auto SizeOf(const T &/*data*/) ->
 std::enable_if_t<std::is_base_of_v<Bitflag<T::num_bits, T>, T>, std::size_t> {
   return sizeof(typename T::underlying_t);
 }

@@ -168,5 +168,4 @@ MenuMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   return {false, std::nullopt};
 }
 
-void MenuMode::update(ApplicationContext &ctx, float delta) {
-}
+void MenuMode::update(ApplicationContext &/*ctx*/, float /*delta*/) {}

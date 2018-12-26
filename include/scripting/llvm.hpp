@@ -23,7 +23,7 @@ class LLVMVisitor {
 
   friend class ScriptEngineBase;
 
-  template<class NodeType> llvm::Value *visitImpl(const AstNode &node) {
+  template<class NodeType> llvm::Value *visitImpl(const AstNode &/*node*/) {
     return nullptr;
   }
 

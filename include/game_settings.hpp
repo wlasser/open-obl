@@ -29,7 +29,7 @@ class GameSettings {
 
   // Load all the settings in an ini file, optionally overwriting any existing
   // values with new ones.
-  void load(const std::filesystem::path &filename, bool overwrite = true) {
+  void load(const std::filesystem::path &filename, bool /*overwrite = true*/) {
     // The game ini files has a duplicate key General.STestFile1 and a
     // multiline string GeneralWarnings.SMasterMismatchWarning, which are not
     // supported by the property_tree parser.

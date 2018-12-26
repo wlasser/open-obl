@@ -190,7 +190,7 @@ class AstNode {
 
   /// Called by PEGTL when parsing the Rule failed.
   template<class Rule, class Input>
-  void failure(const Input &in) noexcept {}
+  void failure(const Input &/*in*/) noexcept {}
 
   /// Called by PEGTL to append a child when parsing the node succeeded and the
   /// node was not removed by a transform.

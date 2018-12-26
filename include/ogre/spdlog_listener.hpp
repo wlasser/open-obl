@@ -17,8 +17,8 @@ class SpdlogListener : public LogListener {
 
   void messageLogged(const String &message,
                      LogMessageLevel level,
-                     bool maskDebug,
-                     const String &logName,
+                     bool /*maskDebug*/,
+                     const String &/*logName*/,
                      bool &skipThisMessage) override {
     switch (level) {
       case LogMessageLevel::LML_TRIVIAL:mLogger->trace(message);

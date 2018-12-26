@@ -62,7 +62,7 @@ template<class F> void invokeBinaryPredicate(Stack &stack, F &&f) {
 }
 
 struct nop_t {
-  void operator()(Stack &stack) const {}
+  void operator()(Stack &/*stack*/) const {}
 };
 
 struct push_t {
@@ -397,7 +397,7 @@ struct rand_t {
 
 struct ref_t {
   // TODO: What does ref_t() do?
-  void operator()(Stack &stack) const {}
+  void operator()(Stack &/*stack*/) const {}
 };
 
 // Implicitly declared copy constructor => implicitly declared equality operator

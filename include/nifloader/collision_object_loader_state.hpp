@@ -53,7 +53,8 @@ struct CollisionObjectVisitor {
   template<class U, class T>
   const U &getRef(const Graph &g, nif::basic::Ref<T> ref) {
     const auto refInt{static_cast<int32_t>(ref)};
-    if (refInt < 0 || refInt >= boost::num_vertices(g)) {
+    if (refInt < 0
+        || static_cast<std::size_t>(refInt) >= boost::num_vertices(g)) {
       OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
                   "Nonexistent reference",
                   "CollisionObjectVisitor");

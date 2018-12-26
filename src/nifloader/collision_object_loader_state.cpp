@@ -64,19 +64,19 @@ void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
   }
 }
 
-void CollisionObjectVisitor::discover_vertex(const nif::bhk::CollisionObject &collisionObject,
-                                             const Graph &g) {
+void CollisionObjectVisitor::discover_vertex(
+    const nif::bhk::CollisionObject &collisionObject, const Graph &g) {
   if (!mHasHavok) return;
   parseCollisionObject(g, collisionObject);
 }
 
 void CollisionObjectVisitor::finish_vertex(const nif::NiNode &node,
-                                           const Graph &g) {
+                                           const Graph &/*g*/) {
   mTransform = mTransform * getTransform(node).inverse();
 }
 
-void CollisionObjectVisitor::parseCollisionObject(const Graph &g,
-                                                  const nif::bhk::CollisionObject &block) {
+void CollisionObjectVisitor::parseCollisionObject(
+    const Graph &g, const nif::bhk::CollisionObject &block) {
   // TODO: COFlags
   // TODO: target
   const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
@@ -114,11 +114,11 @@ CollisionObjectVisitor::parseWorldObject(const Graph &g,
   return std::make_pair(std::move(collisionShape), std::move(info));
 }
 
-Ogre::RigidBodyInfo
-CollisionObjectVisitor::generateRigidBodyInfo(const nif::bhk::RigidBody &block) const {
+Ogre::RigidBodyInfo CollisionObjectVisitor::generateRigidBodyInfo(
+    const nif::bhk::RigidBody &block) const {
   // This does not seem to affect the translation in any way.
   // TODO: What is the Havok origin used for?
-  const Ogre::Vector3 origin{oo::fromNif(block.center).xyz()};
+  // const Ogre::Vector3 origin{oo::fromNif(block.center).xyz()};
 
   // Bullet needs a diagonalized inertia tensor given as a vector, and the
   // file stores it as a 3x4 matrix. We ignore the last (w) column and
@@ -188,7 +188,8 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 std::unique_ptr<btCollisionShape>
 CollisionObjectVisitor::parseShape(const Graph &g,
                                    const nif::bhk::MoppBvTreeShape &shape) {
-  const auto material{shape.material.material};
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
 
   // Instead of decoding the MOPP data we use the linked shape
   const auto &childShape{getRef<nif::bhk::Shape>(g, shape.shape)};
@@ -209,9 +210,8 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return collisionShape;
 }
 
-std::unique_ptr<btCollisionShape>
-CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::PackedNiTriStripsShape &shape) {
+std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseShape(
+    const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape) {
   // TODO: Subshapes?
 
   const auto &data{getRef<nif::hk::PackedNiTriStripsData>(g, shape.data)};
@@ -233,9 +233,10 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 }
 
 std::unique_ptr<btCollisionShape>
-CollisionObjectVisitor::parseShape(const Graph &g,
+CollisionObjectVisitor::parseShape(const Graph &/*g*/,
                                    const nif::bhk::ConvexVerticesShape &shape) {
-  const auto material{shape.material.material};
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
 
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   for (const auto &vertex : shape.vertices) {
@@ -248,9 +249,10 @@ CollisionObjectVisitor::parseShape(const Graph &g,
 }
 
 std::unique_ptr<btCollisionShape>
-CollisionObjectVisitor::parseShape(const Graph &g,
+CollisionObjectVisitor::parseShape(const Graph &/*g*/,
                                    const nif::bhk::BoxShape &shape) {
-  const auto material{shape.material.material};
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
 
   // Applying the nif transform may result in a non-axis-aligned box, which
   // btBoxShape does not support, so we use a btConvexHullShape instead.
@@ -268,9 +270,8 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return collisionShape;
 }
 
-std::unique_ptr<btCollisionShape>
-CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
-                                             const nif::hk::PackedNiTriStripsData &block) {
+std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseNiTriStripsData(
+    const Graph &/*g*/, const nif::hk::PackedNiTriStripsData &block) {
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
   // so they need to be kept alive for the lifetime of the collision object.
@@ -301,9 +302,10 @@ CollisionObjectVisitor::parseNiTriStripsData(const Graph &g,
   // TODO: Support dynamic concave geometry
 }
 
-unsigned char *
-CollisionObjectVisitor::fillIndexBuffer(std::vector<uint16_t> &indexBuf,
-                                        const nif::hk::PackedNiTriStripsData &block) {
+unsigned char *CollisionObjectVisitor::fillIndexBuffer(
+    std::vector<uint16_t> &indexBuf,
+    const nif::hk::PackedNiTriStripsData &block) {
+
   indexBuf.assign(block.numTriangles * 3u, 0u);
   auto it{indexBuf.begin()};
   for (const auto &triData : block.triangles) {
@@ -315,9 +317,10 @@ CollisionObjectVisitor::fillIndexBuffer(std::vector<uint16_t> &indexBuf,
   return reinterpret_cast<unsigned char *>(indexBuf.data());
 }
 
-unsigned char *
-CollisionObjectVisitor::fillVertexBuffer(std::vector<float> &vertexBuf,
-                                         const nif::hk::PackedNiTriStripsData &block) {
+unsigned char *CollisionObjectVisitor::fillVertexBuffer(
+    std::vector<float> &vertexBuf,
+    const nif::hk::PackedNiTriStripsData &block) {
+
   vertexBuf.assign(block.numVertices * 3u, 0.0f);
   auto it{vertexBuf.begin()};
   for (const auto &vertex : block.vertices) {

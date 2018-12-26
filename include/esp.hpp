@@ -101,11 +101,13 @@ void readEsp(EspCoordinator &coordinator,
         using GroupType = Group::GroupType;
         // Expect a series of InteriorCellBlock groups
         while (accessor.peekGroupType() == GroupType::InteriorCellBlock) {
-          const Group interiorCellBlock{accessor.readGroup().value};
+          [[maybe_unused]] const Group
+              interiorCellBlock{accessor.readGroup().value};
 
           // Expect a series of InteriorCellSubblock groups
           while (accessor.peekGroupType() == GroupType::InteriorCellSubblock) {
-            const Group interiorCellSubblock{accessor.readGroup().value};
+            [[maybe_unused]] const Group
+                interiorCellSubblock{accessor.readGroup().value};
 
             // Expect a series of cells
             while (accessor.peekRecordType() == "CELL"_rec) {
@@ -189,20 +191,21 @@ void readCellChildren(EspAccessor &accessor,
     return;
   }
 
-  const Group cellChildren{accessor.readGroup().value};
+  [[maybe_unused]] const Group cellChildren{accessor.readGroup().value};
 
   if (accessor.peekGroupType() == GroupType::CellPersistentChildren) {
-    const Group persistentChildren{accessor.readGroup().value};
+    [[maybe_unused]] const Group persistentChildren{accessor.readGroup().value};
     parseCellChildrenBlock(accessor, persistentVisitor);
   }
 
   if (accessor.peekGroupType() == GroupType::CellVisibleDistantChildren) {
-    const Group visibleDistantChildren{accessor.readGroup().value};
+    [[maybe_unused]] const Group
+        visibleDistantChildren{accessor.readGroup().value};
     parseCellChildrenBlock(accessor, visibleDistantVisitor);
   }
 
   if (accessor.peekGroupType() == GroupType::CellTemporaryChildren) {
-    const Group temporaryChildren{accessor.readGroup().value};
+    [[maybe_unused]] const Group temporaryChildren{accessor.readGroup().value};
 
     // Unsure if PGRD is usually optional or not, but sometimes this entire
     // group is empty e.g. ImperialSewerSystemTG11

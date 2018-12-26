@@ -76,7 +76,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
           if (e.down) return {false, ConsoleMode(ctx)};
           return {};
         },
-        [&ctx](oo::event::SystemMenu e) -> transition_t {
+        [&ctx](oo::event::SystemMenu) -> transition_t {
           ctx.getRoot().queueEndRendering();
           return {};
         }

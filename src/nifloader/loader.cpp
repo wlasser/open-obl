@@ -145,7 +145,7 @@ BlockGraph createBlockGraph(std::istream &is) {
   // The block still might have an incompatible type though.
   auto isRefValid = [numBlocks](auto &&ref) {
     const auto refInt{static_cast<int32_t>(ref)};
-    return refInt > 0 && refInt < numBlocks;
+    return refInt > 0 && static_cast<std::size_t>(refInt) < numBlocks;
   };
 
   // The rest of the file is a series of NiObjects, called blocks, whose types

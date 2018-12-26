@@ -132,7 +132,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // Load esp files
   const auto loadOrder{getLoadOrder(dataPath)};
   ctx.logger->info("Mod load order:");
-  for (int i = 0; i < loadOrder.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
     ctx.logger->info("0x{:0>2x} {}", i, loadOrder[i].view());
   }
   ctx.espCoordinator = std::make_unique<oo::EspCoordinator>(loadOrder.begin(),
@@ -143,7 +143,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                             ctx.statRes.get(),
                                             ctx.actiRes.get(),
                                             ctx.cellRes.get());
-  for (int i = 0; i < loadOrder.size(); ++i) {
+  for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }
 
@@ -447,10 +447,10 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   return true;
 }
 
-bool Application::frameRenderingQueued(const Ogre::FrameEvent &event) {
+bool Application::frameRenderingQueued(const Ogre::FrameEvent &/*event*/) {
   return true;
 }
 
-bool Application::frameEnded(const Ogre::FrameEvent &event) {
+bool Application::frameEnded(const Ogre::FrameEvent &/*event*/) {
   return true;
 }

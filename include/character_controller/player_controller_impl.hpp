@@ -109,7 +109,7 @@ struct PlayerControllerImpl {
 
   // Overall movement speed while walking, in m/s.
   float walkSpeed(float speedAttribute,
-                  float athleticsSkill,
+                  float /*athleticsSkill*/,
                   float wornWeight,
                   float height,
                   bool hasWeaponOut) const noexcept {

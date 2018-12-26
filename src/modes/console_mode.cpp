@@ -105,8 +105,7 @@ void ConsoleMode::displayPrompt() {
   if (refocusInput) ImGui::SetKeyboardFocusHere(-1);
 }
 
-void ConsoleMode::update(ApplicationContext &ctx, float) {
-
+void ConsoleMode::update(ApplicationContext &/*ctx*/, float /*elapsed*/) {
   windowPreInit();
   if (ImGui::Begin("Console")) {
     displayHistory();
@@ -126,10 +125,10 @@ ConsoleMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   return {false, std::nullopt};
 }
 
-int ConsoleMode::handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData *> data) {
+int ConsoleMode::handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData *> /*data*/) {
   return 0;
 }
 
-int ConsoleMode::handleInputHistory(gsl::not_null<ImGuiInputTextCallbackData *> data) {
+int ConsoleMode::handleInputHistory(gsl::not_null<ImGuiInputTextCallbackData *> /*data*/) {
   return 0;
 }
