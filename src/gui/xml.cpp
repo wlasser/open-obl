@@ -70,8 +70,8 @@ void processIncludes(pugi::xml_document &doc) {
       lastAdded = parent.insert_copy_after(childNode, lastAdded);
     }
 
-    // Shouldn't invalidate iterators...
-    parent.remove_child(node);
+    // Removing the node invalidates iterators, but since it will be ignored
+    // by the rest of the gui code we can just leave it.
     return false;
   });
 }

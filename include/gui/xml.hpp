@@ -103,8 +103,7 @@ pugi::xml_node findClosestNode(pugi::xml_node node, Predicate &&p) {
 /// `visitor` to each node. The `visitor` should accept an lvalue reference
 /// to a `pugi::xml_node` and return a boolean. If `false` is returned then the
 /// subtree rooted at the passed node shall not be traversed, otherwise the
-/// traversal continues as normal. In particular, the `visitor` is allows to
-/// delete the passed node and its subtree, provided it returns `false`.
+/// traversal continues as normal.
 /// \warning Note the different meaning assigned to the `visitor`'s return value
 ///          compared to `pugi::xml_node::traverse`, where a `false` return
 ///          value means that the *entire* traversal should be stopped, not just
