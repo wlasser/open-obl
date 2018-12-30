@@ -62,6 +62,46 @@ TEST_CASE("can use traits in the stack machine", "[gui][gui/stack]") {
   REQUIRE(uiElement.getArea() == 150);
 }
 
+TEST_CASE("can use custom traits", "[gui]") {
+  std::istringstream is{R"xml(
+<test name="foo">
+  <width>10</width>
+  <height>
+    <copy src="me()" trait="_foo" />
+    <add src="me()" trait="_bar" />
+  </height>
+
+  <_foo> <copy src="me()" trait="width"/> </_foo>
+  <_bar>5</_bar>
+</test>
+)xml"};
+
+  pugi::xml_document doc{};
+  REQUIRE(doc.load(is));
+
+  gui::TestUiElement uiElement{};
+  uiElement.set_name("foo");
+
+  gui::Traits traits{};
+
+  auto testNode{doc.first_child()};
+  auto widthNode{testNode.first_child()};
+  auto heightNode{widthNode.next_sibling()};
+  auto fooNode{heightNode.next_sibling()};
+  auto barNode{fooNode.next_sibling()};
+
+  REQUIRE(traits.addAndBindImplementationTrait(widthNode, &uiElement));
+  REQUIRE(traits.addAndBindImplementationTrait(heightNode, &uiElement));
+  REQUIRE(traits.queueCustomTrait(fooNode, &uiElement));
+  REQUIRE(traits.queueCustomTrait(barNode, &uiElement));
+
+  traits.addQueuedCustomTraits();
+  traits.addTraitDependencies();
+  traits.update();
+
+  REQUIRE(uiElement.getArea() == 150);
+}
+
 // This behaviour is not encouraged but is required due to some awkwardly
 // written gui files.
 TEST_CASE("can have sibling uiElements with the same name", "[gui]") {

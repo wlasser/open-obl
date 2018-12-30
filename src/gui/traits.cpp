@@ -88,6 +88,20 @@ bool Traits::addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement) {
   return true;
 }
 
+bool Traits::queueCustomTrait(pugi::xml_node node, UiElement *uiElement) {
+  const std::string name{node.name()};
+  //C++20: if (!name.begins_with('_'))
+  if (name.empty() || name[0] != '_') return false;
+
+  // We don't know the type of this trait a priori so cannot add it to the trait
+  // graph. Construct a stack program for it, which doesn't need to know the
+  // return type, and defer addition until later.
+  mDeferredTraits.emplace_back(uiElement->get_name() + "." + name,
+                               gui::stack::compile(node, this),
+                               gui::TraitTypeId::Unimplemented);
+  return true;
+}
+
 std::vector<std::string>
 Traits::getDependencies(const TraitVertex &vertex) const {
   if (vertex) {
@@ -156,6 +170,60 @@ void Traits::addProvidedTraits(const UiElement *uiElement) {
   addTrait(uiElement->make_explorefade());
   addTrait(uiElement->make_filename());
   addTrait(uiElement->make_zoom());
+}
+
+void Traits::deduceAndAddTrait(DeferredTrait trait) {
+  gui::stack::ValueType val{trait.program()};
+  if (std::holds_alternative<float>(val)) {
+    addTrait<float>(std::move(trait));
+  } else if (std::holds_alternative<bool>(val)) {
+    addTrait<bool>(std::move(trait));
+  } else if (std::holds_alternative<std::string>(val)) {
+    addTrait<std::string>(std::move(trait));
+  } else {
+    gui::guiLogger()->error("The deduced return type of {} is not one of "
+                            "float, bool, or std::string", trait.name);
+    throw std::runtime_error("Unsupported custom trait type");
+  }
+}
+
+void Traits::addQueuedCustomTraits() {
+  auto tBegin{mDeferredTraits.begin()};
+  auto tEnd{mDeferredTraits.end()};
+
+  // If none of the trait's dependencies are custom traits then its return type
+  // can be deduced immediately by evaluation.
+  auto isCustomTrait = [&](const std::string &name) {
+    return std::find_if(tBegin, tEnd, [&name](const DeferredTrait &trait) {
+      return trait.name == name;
+    }) != tEnd;
+  };
+
+  auto hasNoCustomDeps = [&](const DeferredTrait &trait) {
+    const auto &deps{trait.program.dependencies};
+    return std::none_of(deps.begin(), deps.end(), [&](const auto &dep) {
+      return isCustomTrait(dep);
+    });
+  };
+
+  for (auto &trait : mDeferredTraits) {
+    if (hasNoCustomDeps(trait)) deduceAndAddTrait(std::move(trait));
+  }
+
+  mDeferredTraits.erase(std::remove_if(tBegin, tEnd, hasNoCustomDeps), tEnd);
+  if (mDeferredTraits.empty()) return;
+
+  // Any traits that are left depend on other custom traits. Topologically sort
+  // them so they can be added in the correct order.
+  auto g{makeDeferredTraitGraph(tBegin, tEnd)};
+  std::vector<typename decltype(g)::vertex_descriptor>
+      order(boost::num_vertices(g));
+  boost::topological_sort(g, order.begin());
+  std::reverse(order.begin(), order.end());
+
+  for (auto desc : order) {
+    deduceAndAddTrait(std::move(g[desc]));
+  }
 }
 
 void Traits::addTraitDependencies() {

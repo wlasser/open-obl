@@ -46,9 +46,9 @@ std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc) {
 
 void addTraits(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   for (auto n : node.children()) {
-    traits.addAndBindImplementationTrait(n, uiElement);
-    traits.addAndBindUserTrait(n, uiElement);
-    // TODO: addAndBindCustomTrait
+    if (traits.addAndBindImplementationTrait(n, uiElement)) continue;
+    if (traits.addAndBindUserTrait(n, uiElement)) continue;
+    traits.queueCustomTrait(n, uiElement);
   }
 }
 
@@ -140,6 +140,7 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc,
   for (const auto &uiElement : uiElements) {
     menuTraits->addProvidedTraits(uiElement.get());
   }
+  menuTraits->addQueuedCustomTraits();
   menuTraits->addTraitDependencies();
   menuTraits->update();
 

@@ -38,6 +38,26 @@ class Traits {
   using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
                                            boost::directedS, TraitVertex>;
 
+  /// Storage for custom traits before they are added to the dependency graph.
+  /// This is necessary because the return type of a custom trait can only be
+  /// deduced later, once all user and implementation traits have been added.
+  struct DeferredTrait {
+    std::string name;
+    gui::stack::Program program;
+    gui::TraitTypeId returnType;
+    DeferredTrait(std::string name,
+                  gui::stack::Program program,
+                  gui::TraitTypeId returnType) : name(std::move(name)),
+                                                 program(std::move(program)),
+                                                 returnType(returnType) {}
+    DeferredTrait() = default;
+    DeferredTrait(const DeferredTrait &) = default;
+    DeferredTrait &operator=(const DeferredTrait &) = default;
+    DeferredTrait(DeferredTrait &&) noexcept = default;
+    DeferredTrait &operator=(DeferredTrait &&) noexcept = default;
+    ~DeferredTrait() = default;
+  };
+
   /// Dependency graph of traits. There is an edge from `u` to `v` if the trait
   /// `v` requires the value of trait `u` to compute its value. That is, if `v`
   /// *depends on* `u`. This graph should be a DAG, and will usually have
@@ -54,6 +74,10 @@ class Traits {
 
   /// Whether `mOrdering` is sorted. Prefer using `isSorted()`.
   bool mSorted{false};
+
+  /// Custom traits whose construction has been deferred until all user and
+  /// implementation traits have been added.
+  std::vector<DeferredTrait> mDeferredTraits{};
 
   /// Implementation-defined element storing screen settings.
   ScreenElement mScreen{};
@@ -74,9 +98,21 @@ class Traits {
   /// existing trait in the dependency graph with the same name.
   template<class T> void addTrait(std::optional<Trait<T>> trait);
 
+  /// Convert a `DeferredTrait` to an actual `Trait<T>` and add it to the
+  /// dependency graph by forwarding its name and program to `addTrait()`.
+  template<class T> void addTrait(DeferredTrait trait);
+
+  /// Deduce the type of `trait` by evaluating its stack program, and forward
+  /// `trait` to `addTrait()` with the deduced type.
+  /// \throws std::runtime_error if the deduced type is not a valid trait type.
+  void deduceAndAddTrait(DeferredTrait trait);
+
   /// Return the names of the dependencies of a given `vertex`. Returns an empty
   /// vector if the `vertex` is null.
   std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
+
+  template<class ForwardIt>
+  auto makeDeferredTraitGraph(ForwardIt first, ForwardIt last);
 
  public:
   /// Return a reference to the dynamic trait with the fully-qualified `name`.
@@ -117,6 +153,12 @@ class Traits {
   /// given `uiElement` and return `true`, otherwise return `false`.
   bool addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement);
 
+  /// If the given XML `node` corresponds to a custom trait, then queue it for
+  /// addition and return `true`, otherwise return `false`.
+  /// Custom traits are not added immediately because it is often not possible
+  /// to deduce the return type of their trait function.
+  bool queueCustomTrait(pugi::xml_node node, UiElement *uiElement);
+
   /// Add the traits of any implementation-defined elements that are required as
   /// dependencies of existing traits.
   void addImplementationElementTraits();
@@ -124,6 +166,8 @@ class Traits {
   /// Add the `uiElement`'s provided traits, overriding any existing traits with
   /// the same name.
   void addProvidedTraits(const UiElement *uiElement);
+
+  void addQueuedCustomTraits();
 
   /// Set all the user traits to point to the given output interface buffer.
   template<class ...Ts>
@@ -156,6 +200,16 @@ class Traits {
   void printDot(std::ostream &os);
 };
 
+/// Construct a TraitFun from a stack program, returning the given type `T`.
+template<class T>
+TraitFun<T> makeTraitFun(gui::stack::Program prog) {
+  auto fun{TraitFun<T>([prog]() -> T { return std::get<T>(prog()); })};
+  for (auto &dep : prog.dependencies) {
+    fun.addDependency(std::move(dep));
+  }
+  return fun;
+}
+
 /// Given an XML node representing a trait, produce a TraitFun which performs
 /// the same operations. If the node does not represent a valid trait, then the
 /// returned TraitFun<T> returns a value-initialized T.
@@ -171,11 +225,7 @@ TraitFun<T> getTraitFun(const Traits &traits, pugi::xml_node node) {
     return TraitFun<T>{[]() -> T { return {}; }};
   } else {
     gui::stack::Program prog{gui::stack::compile(node, &traits)};
-    auto fun{TraitFun<T>([prog]() -> T { return std::get<T>(prog()); })};
-    for (const auto &dep : prog.dependencies) {
-      fun.addDependency(dep);
-    }
-    return fun;
+    return makeTraitFun<T>(std::move(prog));
   }
 }
 
@@ -200,6 +250,11 @@ template<class T> void Traits::addTrait(std::optional<Trait<T>> trait) {
     boost::remove_vertex(it->second, mGraph);
   }
   (void) addTrait(std::move(*trait));
+}
+
+template<class T> void Traits::addTrait(DeferredTrait trait) {
+  addTrait<T>(std::move(trait.name),
+              gui::makeTraitFun<T>(std::move(trait.program)));
 }
 
 template<class T, class ...Args>
@@ -245,6 +300,30 @@ void Traits::setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits) {
 
     std::visit([&outTraits](auto &v) { v.setSource(outTraits); }, trait);
   }
+}
+
+template<class ForwardIt>
+auto Traits::makeDeferredTraitGraph(ForwardIt first, ForwardIt last) {
+  boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+                        DeferredTrait> g;
+  // Add deferred traits as vertices
+  for (auto &trait : boost::make_iterator_range(first, last)) {
+    boost::add_vertex(std::move(trait), g);
+  }
+
+  // Add an edge from u to v if v depends on u
+  auto[vBegin, vEnd]{boost::vertices(g)};
+  for (auto desc : boost::make_iterator_range(vBegin, vEnd)) {
+    const auto &deps{g[desc].program.dependencies};
+    for (const auto &dep : deps) {
+      auto it{std::find_if(vBegin, vEnd, [&dep, &g](auto d) {
+        return g[d].name == dep;
+      })};
+      if (it != vEnd) boost::add_edge(*it, desc, g);
+    }
+  }
+
+  return g;
 }
 
 } // namespace gui
