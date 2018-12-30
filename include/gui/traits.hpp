@@ -114,6 +114,8 @@ class Traits {
   template<class ForwardIt>
   auto makeDeferredTraitGraph(ForwardIt first, ForwardIt last);
 
+  void addImplementationElementTrait(const std::string &dep);
+
  public:
   /// Return a reference to the dynamic trait with the fully-qualified `name`.
   /// Use this method when the type of the trait is not known ahead of time,

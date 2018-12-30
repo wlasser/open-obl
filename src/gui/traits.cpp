@@ -128,33 +128,40 @@ Traits::getTraitVariant(const std::string &name) const {
   return *vertex;
 }
 
+void Traits::addImplementationElementTrait(const std::string &dep) {
+  const std::string screenPrefix{ScreenElement::getPrefix()};
+
+  if (dep == screenPrefix + "width") {
+    addTrait(mScreen.makeWidthTrait());
+  } else if (dep == screenPrefix + "height") {
+    addTrait(mScreen.makeHeightTrait());
+  } else if (dep == screenPrefix + "cropx") {
+    addTrait(mScreen.makeCropXTrait());
+  } else if (dep == screenPrefix + "cropy") {
+    addTrait(mScreen.makeCropYTrait());
+    //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
+  } else if (boost::algorithm::starts_with(dep, StringsElement::getPrefix())) {
+    if (mStrings) addTrait(mStrings->makeTrait(dep));
+  }
+}
+
 void Traits::addImplementationElementTraits() {
-  const std::string screenPrefix{gui::ScreenElement::getPrefix()};
+  auto tryAddTrait = [&](const std::string &dep) {
+    //C++20: if (dep.starts_with("__")) {
+    if (boost::algorithm::starts_with(dep, "__")) {
+      if (mIndices.find(dep) != mIndices.end()) return;
+      addImplementationElementTrait(dep);
+    }
+  };
 
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
     const TraitVertex &vPtr{mGraph[vIndex]};
     const auto deps{getDependencies(vPtr)};
+    for (const auto &dep : deps) tryAddTrait(dep);
+  }
 
-    for (const auto &dep : deps) {
-      //C++20: if (dep.starts_with("__")) {
-      if (boost::algorithm::starts_with(dep, "__")) {
-        if (mIndices.find(dep) != mIndices.end()) continue;
-
-        if (dep == screenPrefix + "width") {
-          addTrait(mScreen.makeWidthTrait());
-        } else if (dep == screenPrefix + "height") {
-          addTrait(mScreen.makeHeightTrait());
-        } else if (dep == screenPrefix + "cropx") {
-          addTrait(mScreen.makeCropXTrait());
-        } else if (dep == screenPrefix + "cropy") {
-          addTrait(mScreen.makeCropYTrait());
-          //C++20: } else if (dep.starts_with(gui::StringsElement::getPrefix())) {
-        } else if (boost::algorithm::starts_with(
-            dep, gui::StringsElement::getPrefix())) {
-          if (mStrings) addTrait(mStrings->makeTrait(dep));
-        }
-      }
-    }
+  for (const auto &trait : mDeferredTraits) {
+    for (const auto &dep : trait.program.dependencies) tryAddTrait(dep);
   }
 }
 
