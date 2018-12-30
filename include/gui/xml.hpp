@@ -81,11 +81,17 @@ pugi::xml_node findClosestNode(pugi::xml_node node, Predicate &&p) {
       if (p(n)) return n;
       if (auto parent{n.parent()}; parent) {
         //C++20: if (!visited.contains(parent)) newFrontier.insert(parent);
-        if (visited.count(parent) == 0) newFrontier.insert(parent);
+        if (visited.count(parent) == 0) {
+          newFrontier.insert(parent);
+          visited.insert(parent);
+        }
       }
       for (auto child : n.children()) {
         //C++20: if (!visited.contains(child)) newFrontier.insert(child);
-        if (visited.count(child) == 0) newFrontier.insert(child);
+        if (visited.count(child) == 0) {
+          newFrontier.insert(child);
+          visited.insert(child);
+        }
       }
     }
     frontier = std::move(newFrontier);

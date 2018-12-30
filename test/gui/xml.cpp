@@ -95,4 +95,12 @@ TEST_CASE("can find closest node", "[gui]") {
     })};
     REQUIRE((getName(node) == "F" || getName(node) == "H"));
   }
+
+  {
+    // Fail to find a nonexistsent node from H
+    const auto node{gui::findClosestNode(nodes['H'], [&](pugi::xml_node n) {
+      return getVal(n) == 6;
+    })};
+    REQUIRE(!node);
+  }
 }
