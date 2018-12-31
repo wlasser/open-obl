@@ -4,6 +4,7 @@
 #include "enum_template.hpp"
 #include "gui/menu.hpp"
 #include "gui/menus/loading_menu.hpp"
+#include "gui/menus/main_menu.hpp"
 #include "gui/trait.hpp"
 #include "gui/traits.hpp"
 #include "gui/trait_selector.hpp"
