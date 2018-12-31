@@ -62,7 +62,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         [](oo::event::TogglePov) -> transition_t { return {}; },
         [&ctx](oo::event::MenuMode e) -> transition_t {
           if (e.down) {
-            return {false, MenuMode(ctx, gui::MenuType::InventoryMenu)};
+            return {false, MenuMode(ctx, gui::MenuType::MainMenu)};
           }
           return {};
         },

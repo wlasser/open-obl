@@ -14,31 +14,45 @@ class UiElement {
   std::string mName{};
 
  public:
+  /// \name Trait Setter Functions
+  /// These are used to set observable properties of the concrete
+  /// representative, usually using values from the dynamic representative.
+  ///@{
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 
   /// Position of left edge, relative to position of locus ancestor
   virtual void set_x(float x) {}
+
   /// Position of top edge, relative to position of locus ancestor
   virtual void set_y(float y) {}
+
   /// Width in pixels
   virtual void set_width(float width) {}
+
   /// Height in pixels
   virtual void set_height(float height) {}
+
   /// Transparency. 0 is completely transparent, 255 is completely opaque
   virtual void set_alpha(float alpha) {}
+
   /// If true, this element is used to anchor the position of its children
   virtual void set_locus(bool locus) {}
+
   /// If false, this element and all its descendants are hidden and un-clickable
   virtual void set_visible(bool visible) {}
+
   /// Time in seconds for fade-in or fade-out
   virtual void set_menufade(float menufade) {}
+
   /// This is probably distinct from menuFade, but we treat it as an alias
   virtual void set_explorefade(float explorefade) {
     set_menufade(explorefade);
   }
+
   /// Filename of texture or model to display
   virtual void set_filename(std::string filename) {}
+
   /// Percentage to scale the image or text by.
   /// A positive `zoom` factor applies a uniform scaling to the image, with
   /// `zoom` interpreted as the target percentage scaling. This is the only
@@ -51,6 +65,26 @@ class UiElement {
   /// non-uniformly scales the source image to the width and height of the
   /// image; no clipping is performed.
   virtual void set_zoom(float zoom) {}
+
+  /// If true, this uiElement will receive mouse and keyboard focus.
+  virtual void set_target(bool isTarget) {}
+
+  /// Type of this element with regards to user input, analogous to the
+  /// `<class>` of a Menu.
+  /// The engine does not care about the names of uiElements, instead relevant
+  /// uiElements are given a numerical `id`. Each menu has a set of valid `id`s,
+  /// each with some menu-specific meaning, that can be given to the uiElements
+  /// making up the menu to identify them to the engine. For example, the `id`
+  /// of `3` may be given to a `"back"` button. For every valid `id` in the menu
+  /// there should be exactly one uiElement with an id trait whose value is that
+  /// `id`.
+  virtual void set_id(float id) {}
+
+  /// Sound to play when this uiElement is clicked.
+  /// Should only have an effect if this uiElement's `target` trait is true and
+  /// this uiElement has an `id` trait.
+  virtual void set_clicksound(float clicksound) {}
+  ///@}
 
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
@@ -79,12 +113,16 @@ class UiElement {
     mName = std::move(name);
   }
 
+  /// \name Provided Traits
   /// Some UiElements have traits that must be generated internally, not
   /// supplied manually by the ui designer. For instance, a designer would not
   /// know the width of a text box, even if they knew the contents of the box.
   /// The UiElement is therefore allowed to supply its own implementation
   /// traits, called 'provided traits', which should have no dependencies and no
   /// setter.
+  /// Preconditions in the documentation of these functions denote requirements
+  /// for the trait to be added to the uiElement.
+  /// @{
   virtual std::optional<gui::Trait<float>> make_x() const {
     return {};
   }
@@ -118,6 +156,14 @@ class UiElement {
   virtual std::optional<gui::Trait<float>> make_zoom() const {
     return {};
   }
+  /// Takes the value `1` when the concrete representative is clicked then
+  /// resets to `0` during the same frame.
+  /// \pre The uiElement's `target` trait must be true
+  /// \pre The uiElement must have a valid `id` trait.
+  virtual std::optional<gui::Trait<float>> make_clicked() const {
+    return {};
+  }
+  ///@}
 
   /// Get the renderable representation of this uiElement.
   virtual Ogre::OverlayElement *getOverlayElement() {
