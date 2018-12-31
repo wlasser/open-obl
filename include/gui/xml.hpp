@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_GUI_XML_HPP
 #define OPENOBLIVION_GUI_XML_HPP
 
+#include <boost/optional.hpp>
 #include <pugixml.hpp>
 #include <set>
 #include <string>
@@ -30,11 +31,15 @@ void processIncludes(pugi::xml_document &doc);
 
 /// We don't have a DTD so can't specify custom entities directly. Instead they
 /// should be treated as strings by the parser and decoded using the following
-/// functions.
-template<class T> T parseXmlEntity(const std::string &entity) = delete;
+/// converter class, designed to be used with Boost.Convert.
+struct XmlEntityConverter {
+  template<class TypeOut>
+  void operator()(std::string_view, boost::optional<TypeOut> &) const = delete;
+};
 
-/// \overload parseXmlEntity(const std::string &)
-template<> bool parseXmlEntity(const std::string &entity);
+template<>
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<bool> &out) const;
 
 /// \name Xml node value getters
 /// `xml_node::value` and `xml_node::child_value` return `const char *`, which

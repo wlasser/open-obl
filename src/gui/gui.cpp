@@ -6,11 +6,13 @@
 #include "gui/logging.hpp"
 #include "gui/xml.hpp"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/convert.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <OgreOverlay.h>
 #include <pugixml.hpp>
 #include <algorithm>
-#include <unordered_map>
+#include <functional>
+#include <map>
 
 namespace gui {
 
@@ -180,8 +182,9 @@ void MenuContext::set_user(int index, gui::UiElement::UserValue value) {
 }
 
 template<>
-MenuType parseXmlEntity(const std::string &entity) {
-  const static std::unordered_map<std::string, MenuType> map{
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<MenuType> &out) const {
+  const static std::map<std::string, MenuType, std::less<>> map{
       {"&AlchemyMenu;", MenuType::AlchemyMenu},
       {"&AudioMenu;", MenuType::AudioMenu},
       {"&BookMenu;", MenuType::BookMenu},
@@ -228,20 +231,23 @@ MenuType parseXmlEntity(const std::string &entity) {
       {"&TrainingMenu;", MenuType::TrainingMenu},
       {"&VideoMenu;", MenuType::VideoMenu},
   };
-  if (auto it = map.find(entity); it != map.end()) return it->second;
-  else throw std::runtime_error("Invalid entity");
+  if (auto it = map.find(entity); it != map.end()) out = it->second;
+  else out = boost::none;
 }
 
 template<> MenuType getXmlValue(pugi::xml_node node) {
-  return parseXmlEntity<MenuType>(getXmlValue<std::string>(node));
+  return boost::convert<MenuType>(getXmlValue<std::string>(node),
+                                  XmlEntityConverter{}).value();
 }
 
 template<> MenuType getXmlChildValue(pugi::xml_node node, const char *name) {
-  return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node, name));
+  return boost::convert<MenuType>(getXmlChildValue<std::string>(node, name),
+                                  XmlEntityConverter{}).value();
 }
 
 template<> MenuType getXmlChildValue(pugi::xml_node node) {
-  return parseXmlEntity<MenuType>(getXmlChildValue<std::string>(node));
+  return boost::convert<MenuType>(getXmlChildValue<std::string>(node),
+                                  XmlEntityConverter{}).value();
 }
 
 } // namespace gui

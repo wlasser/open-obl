@@ -4,6 +4,7 @@
 #include "ogre/text_resource_manager.hpp"
 #include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/convert.hpp>
 #include <pugixml.hpp>
 #include <cstdlib>
 #include <sstream>
@@ -76,8 +77,24 @@ void processIncludes(pugi::xml_document &doc) {
   });
 }
 
-template<> bool parseXmlEntity(const std::string &entity) {
-  return entity == "&true;";
+template<>
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<bool> &out) const {
+  if (entity == "&true;") out = true;
+  else if (entity == "&false;") out = false;
+  else if (entity == "&xbox;") out = false;
+  else if (entity == "&xbuttona;") out = false;
+  else if (entity == "&xbuttonb;") out = false;
+  else if (entity == "&xbuttonlb;") out = false;
+  else if (entity == "&xbuttonls;") out = false;
+  else if (entity == "&xbuttonlt;") out = false;
+  else if (entity == "&xbuttonrb;") out = false;
+  else if (entity == "&xbuttonrs;") out = false;
+  else if (entity == "&xbuttonrt;") out = false;
+  else if (entity == "&xbuttonx;") out = false;
+  else if (entity == "&xbuttony;") out = false;
+  else if (entity == "&xenon;") out = false;
+  else out = boost::none;
 }
 
 template<> float getXmlValue(pugi::xml_node node) {
@@ -94,15 +111,18 @@ template<> float getXmlChildValue(pugi::xml_node node) {
 }
 
 template<> bool getXmlValue(pugi::xml_node node) {
-  return parseXmlEntity<bool>(getXmlValue<std::string>(node));
+  return boost::convert<bool>(getXmlValue<std::string>(node),
+                              XmlEntityConverter{}).value();
 }
 
 template<> bool getXmlChildValue(pugi::xml_node node, const char *name) {
-  return parseXmlEntity<bool>(getXmlChildValue<std::string>(node, name));
+  return boost::convert<bool>(getXmlChildValue<std::string>(node, name),
+                              XmlEntityConverter{}).value();
 }
 
 template<> bool getXmlChildValue(pugi::xml_node node) {
-  return parseXmlEntity<bool>(getXmlChildValue<std::string>(node));
+  return boost::convert<bool>(getXmlChildValue<std::string>(node),
+                              XmlEntityConverter{}).value();
 }
 
 template<> std::string getXmlValue(pugi::xml_node node) {

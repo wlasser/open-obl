@@ -1,5 +1,6 @@
 #include "meta.hpp"
 #include "gui/stack/types.hpp"
+#include "gui/xml.hpp"
 #include <boost/convert.hpp>
 #include <boost/convert/stream.hpp>
 
@@ -20,13 +21,9 @@ ValueType parseValueType(std::string_view str) {
     str.remove_suffix(str.size() - std::min(suffixPos + 1, str.size()));
   }
 
-  if (str == "&true;") {
-    return true;
-  } else if (str == "&false;") {
-    return false;
-//  } else if (auto intOpt{boost::convert<int>(str, converter)};
-//      intOpt.has_value()) {
-//    return *intOpt;
+  if (auto boolOpt{boost::convert<bool>(str, XmlEntityConverter{})};
+      boolOpt.has_value()) {
+    return *boolOpt;
   } else if (auto floatOpt{boost::convert<float>(str, converter)};
       floatOpt.has_value()) {
     return *floatOpt;

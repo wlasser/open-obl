@@ -216,7 +216,9 @@ std::optional<MenuContext> loadMenu(const std::string &filename,
 template<> MenuType getXmlValue(pugi::xml_node node);
 template<> MenuType getXmlChildValue(pugi::xml_node node, const char *name);
 template<> MenuType getXmlChildValue(pugi::xml_node node);
-template<> MenuType parseXmlEntity(const std::string &entity);
+template<>
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<MenuType> &out) const;
 ///@}
 
 } // namespace gui
