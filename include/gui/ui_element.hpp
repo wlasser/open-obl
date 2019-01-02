@@ -156,11 +156,25 @@ class UiElement {
   virtual std::optional<gui::Trait<float>> make_zoom() const {
     return {};
   }
-  /// Takes the value `1` when the concrete representative is clicked then
+  /// Takes the value `1` when the concrete representative is clicked, then
   /// resets to `0` during the same frame.
   /// \pre The uiElement's `target` trait must be true
   /// \pre The uiElement must have a valid `id` trait.
   virtual std::optional<gui::Trait<float>> make_clicked() const {
+    return {};
+  }
+  /// Takes the value `1` when the concrete representative is clicked while
+  /// holding shift, then resets to `0` during the same frame.
+  /// \pre The uiElement's `target` trait must be true
+  /// \pre The uiElement must have a valid `id` trait.
+  virtual std::optional<gui::Trait<float>> make_shiftclicked() const {
+    return {};
+  }
+  /// Takes the value `1` when the mouse cursor is moved over the concrete
+  /// representative, and `0` otherwise.
+  /// \pre The uiElement's `target` trait must be true
+  /// \pre The uiElement must have a valid `id` trait.
+  virtual std::optional<gui::Trait<float>> make_mouseover() const {
     return {};
   }
   ///@}

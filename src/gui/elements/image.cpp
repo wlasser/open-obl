@@ -1,5 +1,6 @@
 #include "fs/path.hpp"
 #include "gui/elements/image.hpp"
+#include "gui/logging.hpp"
 #include "gui/screen.hpp"
 #include "settings.hpp"
 #include <OgreMaterial.h>
@@ -105,4 +106,34 @@ void gui::Image::set_visible(bool visible) {
   if (!mOverlay) return;
   if (visible) mOverlay->show();
   else mOverlay->hide();
+}
+
+void gui::Image::set_target(bool isTarget) {
+  mIsTarget = isTarget;
+}
+
+void gui::Image::set_id(float id) {
+  mId = static_cast<int>(id);
+}
+
+// Note: Cannot check mIsTarget && mId >= -1 on construction because these
+// values are not set until the first update(), which must occur after all the
+// traits have been added. Thus the traits must always be added, and their
+// behaviour must depend on the condition.
+std::optional<gui::Trait<float>> gui::Image::make_clicked() const {
+  // TODO: Write make_clicked traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".clicked", std::move(fun));
+}
+
+std::optional<gui::Trait<float>> gui::Image::make_shiftclicked() const {
+  // TODO: Write make_shiftclicked traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".shiftclicked", std::move(fun));
+}
+
+std::optional<gui::Trait<float>> gui::Image::make_mouseover() const {
+  // TODO: Write make_mouseover traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".mouseover", std::move(fun));
 }

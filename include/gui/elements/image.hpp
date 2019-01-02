@@ -19,6 +19,10 @@ class Image : public UiElement {
   float mTexHeight{1.0f};
   /// Percentage zoom factor.
   float mZoom{100.0f};
+  /// Whether this Image receives user input events
+  bool mIsTarget{false};
+  /// Id of this element for user input handling
+  int mId{-1};
 
   /// Update the texture UVs according to the current dimensions and zoom.
   /// \param dims The normalized screen dimensions
@@ -38,6 +42,12 @@ class Image : public UiElement {
   void set_filename(std::string filename) override;
   void set_zoom(float zoom) override;
   void set_visible(bool visible) override;
+  void set_target(bool isTarget) override;
+  void set_id(float id) override;
+
+  std::optional<gui::Trait<float>> make_clicked() const override;
+  std::optional<gui::Trait<float>> make_shiftclicked() const override;
+  std::optional<gui::Trait<float>> make_mouseover() const override;
 
   Ogre::OverlayElement *getOverlayElement() override {
     return mOverlay;

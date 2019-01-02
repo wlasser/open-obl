@@ -47,3 +47,29 @@ void gui::Rect::set_visible(bool visible) {
   if (visible) mOverlay->show();
   else mOverlay->hide();
 }
+
+void gui::Rect::set_target(bool isTarget) {
+  mIsTarget = isTarget;
+}
+
+void gui::Rect::set_id(float id) {
+  mId = static_cast<int>(id);
+}
+
+std::optional<gui::Trait<float>> gui::Rect::make_clicked() const {
+  // TODO: Write make_clicked traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".clicked", std::move(fun));
+}
+
+std::optional<gui::Trait<float>> gui::Rect::make_shiftclicked() const {
+  // TODO: Write make_shiftclicked traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".shiftclicked", std::move(fun));
+}
+
+std::optional<gui::Trait<float>> gui::Rect::make_mouseover() const {
+  // TODO: Write make_mouseover traitfun
+  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
+  return gui::Trait<float>(get_name() + ".mouseover", std::move(fun));
+}

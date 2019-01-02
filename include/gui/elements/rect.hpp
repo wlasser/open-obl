@@ -11,6 +11,11 @@ class Rect : public UiElement {
  private:
   Ogre::PanelOverlayElement *mOverlay{};
 
+  /// Whether this Rect receives user input events
+  bool mIsTarget{false};
+  /// Id of this element for user input handling
+  int mId{-1};
+
  public:
   Rect(std::string name);
 
@@ -21,6 +26,12 @@ class Rect : public UiElement {
   void set_width(float width) override;
   void set_height(float height) override;
   void set_visible(bool visible) override;
+  void set_target(bool isTarget) override;
+  void set_id(float id) override;
+
+  std::optional<gui::Trait<float>> make_clicked() const override;
+  std::optional<gui::Trait<float>> make_shiftclicked() const override;
+  std::optional<gui::Trait<float>> make_mouseover() const override;
 
   Ogre::OverlayElement *getOverlayElement() override {
     return mOverlay;

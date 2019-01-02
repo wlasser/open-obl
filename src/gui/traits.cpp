@@ -52,6 +52,12 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<std::string>(uiElement, &UiElement::set_filename, node);
   } else if (node.name() == "zoom"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_zoom, node);
+  } else if (node.name() == "target"s) {
+    addAndBindTrait<bool>(uiElement, &UiElement::set_target, node);
+  } else if (node.name() == "id"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_id, node);
+  } else if (node.name() == "clicksound"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_clicksound, node);
   } else {
     return false;
   }
@@ -177,6 +183,9 @@ void Traits::addProvidedTraits(const UiElement *uiElement) {
   addTrait(uiElement->make_explorefade());
   addTrait(uiElement->make_filename());
   addTrait(uiElement->make_zoom());
+  addTrait(uiElement->make_clicked());
+  addTrait(uiElement->make_shiftclicked());
+  addTrait(uiElement->make_mouseover());
 }
 
 void Traits::deduceAndAddTrait(DeferredTrait trait) {
