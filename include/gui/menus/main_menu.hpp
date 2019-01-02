@@ -48,7 +48,8 @@ class Menu<MenuType::MainMenu> : public UiElement {
     return std::make_tuple(&mIsMenuVisible,
                            &mAreButtonsVisible,
                            &mIsPressStartVisible,
-                           &mLogoAlpha);
+                           &mLogoAlpha,
+                           static_cast<float *>(nullptr));
   }
 
   BUILD_USER_TRAIT_INTERFACE(mInterface);
