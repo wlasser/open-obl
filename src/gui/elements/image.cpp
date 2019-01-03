@@ -76,6 +76,12 @@ void gui::Image::set_height(float height) {
   updateUVs(dims);
 }
 
+void gui::Image::set_alpha(float alpha) {
+  if (!mOverlay) return;
+  const Ogre::ColourValue col{1.0f, 1.0f, 1.0f, alpha / 255.0f};
+  mMatPtr->setDiffuse(col);
+}
+
 void gui::Image::set_filename(std::string filename) {
   if (!mOverlay) return;
   auto *pass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};

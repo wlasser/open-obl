@@ -39,6 +39,7 @@ class Image : public UiElement {
   void set_y(float y) override;
   void set_width(float width) override;
   void set_height(float height) override;
+  void set_alpha(float alpha) override;
   void set_filename(std::string filename) override;
   void set_zoom(float zoom) override;
   void set_visible(bool visible) override;

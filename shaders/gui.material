@@ -15,10 +15,12 @@ material __GuiMaterial {
 
             fragment_program_ref gui_fs_glsl {
                 param_named diffuseMap int 0
+                param_named_auto diffuseCol SURFACE_DIFFUSE_COLOUR
             }
 
             lighting off
             ambient vertexcolour
+            diffuse vertexcolour
 
             separate_scene_blend_op add add
             separate_scene_blend src_alpha one_minus_src_alpha one_minus_src_alpha zero
