@@ -8,6 +8,7 @@ gui::Rect::Rect(std::string name) {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = dynamic_cast<Ogre::PanelOverlayElement *>(
         overlayMgr->createOverlayElement("Panel", get_name()));
+    mOverlay->show();
   }
 }
 

@@ -40,6 +40,7 @@ gui::Image::Image(std::string name) {
     }
 
     mOverlay->setMaterialName(mMatPtr->getName(), oo::SHADER_GROUP);
+    mOverlay->show();
   }
 }
 
