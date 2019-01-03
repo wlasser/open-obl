@@ -1,6 +1,8 @@
 #ifndef OPENOBLIVION_GUI_IMAGE_HPP
 #define OPENOBLIVION_GUI_IMAGE_HPP
 
+#include "gui/elements/interactable_mixin.hpp"
+#include "gui/elements/panel_mixin.hpp"
 #include "gui/screen.hpp"
 #include "gui/ui_element.hpp"
 #include <OgrePanelOverlayElement.h>
@@ -8,9 +10,8 @@
 
 namespace gui {
 
-class Image : public UiElement {
+class Image : public InteractableMixin, public PanelMixin {
  private:
-  Ogre::PanelOverlayElement *mOverlay{};
   Ogre::MaterialPtr mMatPtr{};
 
   /// Width of the source texture, in pixels
@@ -19,10 +20,6 @@ class Image : public UiElement {
   float mTexHeight{1.0f};
   /// Percentage zoom factor.
   float mZoom{100.0f};
-  /// Whether this Image receives user input events
-  bool mIsTarget{false};
-  /// Id of this element for user input handling
-  int mId{-1};
 
   /// Update the texture UVs according to the current dimensions and zoom.
   /// \param dims The normalized screen dimensions
@@ -33,26 +30,11 @@ class Image : public UiElement {
  public:
   Image(std::string name);
 
-  ~Image();
-
-  void set_x(float x) override;
-  void set_y(float y) override;
   void set_width(float width) override;
   void set_height(float height) override;
   void set_alpha(float alpha) override;
   void set_filename(std::string filename) override;
   void set_zoom(float zoom) override;
-  void set_visible(bool visible) override;
-  void set_target(bool isTarget) override;
-  void set_id(float id) override;
-
-  std::optional<gui::Trait<float>> make_clicked() const override;
-  std::optional<gui::Trait<float>> make_shiftclicked() const override;
-  std::optional<gui::Trait<float>> make_mouseover() const override;
-
-  Ogre::OverlayElement *getOverlayElement() override {
-    return mOverlay;
-  }
 };
 
 } // namespace gui

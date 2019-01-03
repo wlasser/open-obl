@@ -12,23 +12,21 @@
 #include <string>
 
 void gui::Image::updateUVs(const Ogre::Vector2 &dims) {
+  auto *overlay{getPanelOverlayElement()};
   if (mZoom > 0.0f) {
     const float zoom{mZoom / 100.0f};
-    mOverlay->setUV(0.0f, 0.0f,
-                    zoom * mOverlay->getWidth() * dims.x / mTexWidth,
-                    zoom * mOverlay->getHeight() * dims.y / mTexHeight);
+    overlay->setUV(0.0f, 0.0f,
+                   zoom * overlay->getWidth() * dims.x / mTexWidth,
+                   zoom * overlay->getHeight() * dims.y / mTexHeight);
   } else {
-    mOverlay->setUV(0.0f, 0.0f, 1.0f, 1.0f);
+    overlay->setUV(0.0f, 0.0f, 1.0f, 1.0f);
   }
 }
 
-gui::Image::Image(std::string name) {
+gui::Image::Image(std::string name) : PanelMixin(name) {
   set_name(std::move(name));
 
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
-    mOverlay = dynamic_cast<Ogre::PanelOverlayElement *>(
-        overlayMgr->createOverlayElement("Panel", get_name()));
-
     auto *matMgr{Ogre::MaterialManager::getSingletonPtr()};
     std::string matName{std::string("__GuiMaterial:") + get_name()};
 
@@ -39,53 +37,30 @@ gui::Image::Image(std::string name) {
       mMatPtr = baseMat->clone("__GuiMaterial:" + get_name());
     }
 
-    mOverlay->setMaterialName(mMatPtr->getName(), oo::SHADER_GROUP);
-    mOverlay->show();
+    getOverlayElement()->setMaterialName(mMatPtr->getName(), oo::SHADER_GROUP);
   }
-}
-
-gui::Image::~Image() {
-  if (mOverlay) {
-    auto &overlayMgr{Ogre::OverlayManager::getSingleton()};
-    overlayMgr.destroyOverlayElement(mOverlay);
-  }
-}
-
-void gui::Image::set_x(float x) {
-  if (!mOverlay) return;
-  const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setLeft(x / dims.x);
-}
-
-void gui::Image::set_y(float y) {
-  if (!mOverlay) return;
-  const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setTop(y / dims.y);
 }
 
 void gui::Image::set_width(float width) {
-  if (!mOverlay) return;
-  const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setWidth(width / dims.x);
-  updateUVs(dims);
+  PanelMixin::set_width(width);
+  if (getOverlayElement()) updateUVs(gui::getNormalizedDimensions());
 }
 
 void gui::Image::set_height(float height) {
-  if (!mOverlay) return;
-  const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
-  mOverlay->setHeight(height / dims.y);
-  updateUVs(dims);
+  PanelMixin::set_height(height);
+  if (getOverlayElement()) updateUVs(gui::getNormalizedDimensions());
 }
 
 void gui::Image::set_alpha(float alpha) {
-  if (!mOverlay) return;
+  if (!getOverlayElement()) return;
   const Ogre::ColourValue col{1.0f, 1.0f, 1.0f, alpha / 255.0f};
   mMatPtr->setDiffuse(col);
 }
 
 void gui::Image::set_filename(std::string filename) {
-  if (!mOverlay) return;
-  auto *pass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
+  auto *overlay{getOverlayElement()};
+  if (!overlay) return;
+  auto *pass{overlay->getMaterial()->getTechnique(0)->getPass(0)};
   const auto &states{pass->getTextureUnitStates()};
   const oo::Path base{"textures/"};
   const oo::Path path{base / oo::Path{std::move(filename)}};
@@ -106,41 +81,5 @@ void gui::Image::set_filename(std::string filename) {
 
 void gui::Image::set_zoom(float zoom) {
   mZoom = zoom;
-  updateUVs(gui::getNormalizedDimensions());
-}
-
-void gui::Image::set_visible(bool visible) {
-  if (!mOverlay) return;
-  if (visible) mOverlay->show();
-  else mOverlay->hide();
-}
-
-void gui::Image::set_target(bool isTarget) {
-  mIsTarget = isTarget;
-}
-
-void gui::Image::set_id(float id) {
-  mId = static_cast<int>(id);
-}
-
-// Note: Cannot check mIsTarget && mId >= -1 on construction because these
-// values are not set until the first update(), which must occur after all the
-// traits have been added. Thus the traits must always be added, and their
-// behaviour must depend on the condition.
-std::optional<gui::Trait<float>> gui::Image::make_clicked() const {
-  // TODO: Write make_clicked traitfun
-  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
-  return gui::Trait<float>(get_name() + ".clicked", std::move(fun));
-}
-
-std::optional<gui::Trait<float>> gui::Image::make_shiftclicked() const {
-  // TODO: Write make_shiftclicked traitfun
-  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
-  return gui::Trait<float>(get_name() + ".shiftclicked", std::move(fun));
-}
-
-std::optional<gui::Trait<float>> gui::Image::make_mouseover() const {
-  // TODO: Write make_mouseover traitfun
-  gui::TraitFun<float> fun{[]() -> float { return 0.0f; }};
-  return gui::Trait<float>(get_name() + ".mouseover", std::move(fun));
+  if (getOverlayElement()) updateUVs(gui::getNormalizedDimensions());
 }

@@ -32,6 +32,8 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/ui_element.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/xml.hpp
         elements/image.cpp
+        elements/interactable_mixin.cpp
+        elements/panel_mixin.cpp
         elements/rect.cpp
         gui.cpp
         menus/loading_menu.cpp
