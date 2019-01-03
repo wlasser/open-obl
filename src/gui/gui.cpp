@@ -181,6 +181,10 @@ void MenuContext::set_user(int index, gui::UiElement::UserValue value) {
   gui::extractUiElement(*mMenu)->set_user(index, std::move(value));
 }
 
+gui::UiElement::UserValue MenuContext::get_user(int index) {
+  return gui::extractUiElement(*mMenu)->get_user(index);
+}
+
 template<>
 void XmlEntityConverter::operator()(std::string_view entity,
                                     boost::optional<MenuType> &out) const {

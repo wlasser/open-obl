@@ -59,7 +59,8 @@ std::optional<int> getUserTraitIndex(std::string_view name);
 /// Simplifies the definition of the user trait interface of a ui element.
 /// Passing the `UserTraitInterface` a `std::tuple` of pointers to member
 /// variables corresponding to the user traits (in order) gives the inheriting
-/// class automatically generated `set_user` and `userTraitType` functions.
+/// class automatically generated `set_user`, `get_user`, and `userTraitType`
+/// functions.
 ///
 /// This class is intended as a convenient alternative to the naive definition
 /// of a user trait interface via four `set_user` functions with disjoint switch
@@ -85,9 +86,27 @@ class UserTraitInterface {
     }
   }
 
+  /// Get the value of the `I`th user trait and store it in the variant.
+  template<class T, std::size_t I>
+  constexpr void store(std::variant<Ts...> &v) {
+    if constexpr (std::is_same_v<get<I>, T>) {
+      v.template emplace<I>(*std::get<I>(mPtrs));
+    }
+  }
+
   template<class T, std::size_t ... Is>
   constexpr void set_user_impl(int index, T value, std::index_sequence<Is...>) {
     ((index == Is ? assign<T, Is>(value) : (void) T{}), ...);
+  }
+
+  template<class T, std::size_t ... Is>
+  constexpr T get_user_impl(int index, std::index_sequence<Is...>) {
+    std::variant<Ts...> vars{};
+    ((index == Is ? store<T, Is>(vars) : (void) T{}), ...);
+    return std::visit([](auto t) -> T {
+      if constexpr (std::is_same_v<decltype(t), T>) return t;
+      else throw std::runtime_error("get_user_impl type mismatch");
+    }, vars);
   }
 
   /// Get the integer representation of the TraitTypeId of the `I`th user trait.
@@ -113,6 +132,22 @@ class UserTraitInterface {
     set_user_impl(index, value, std::index_sequence_for<Ts...>{});
   }
 
+  /// Return the user trait at the `index`.
+  template<class T> constexpr T get_user(int index) {
+    return get_user_impl<T>(index, std::index_sequence_for<Ts...>{});
+  }
+
+  /// Return the user trait at the `index`.
+  std::variant<float, bool, std::string> get_user(int index) {
+    const TraitTypeId id{userTraitType(index)};
+    switch (id) {
+      case TraitTypeId::Float: return get_user<float>(index);
+      case TraitTypeId::Bool: return get_user<bool>(index);
+      case TraitTypeId::String: return get_user<std::string>(index);
+      default: throw std::runtime_error("User trait index out of bounds");
+    }
+  }
+
   /// Get the trait type of the user trait at the `index`.
   constexpr TraitTypeId userTraitType(int index) const {
     return userTraitTypeImpl(index, std::index_sequence_for<Ts...>{});
@@ -129,6 +164,9 @@ void set_user(int index, gui::UiElement::UserValue value) override { \
   return std::visit([this, index](auto value) { \
     interface.set_user(index, value); }, value); \
 } \
+gui::UiElement::UserValue get_user(int index) override { \
+  return interface.get_user(index); \
+}
 
 /// Represents a function used to set/compute the value of the dynamic
 /// representative of a trait. This needs to keep track of the names of its

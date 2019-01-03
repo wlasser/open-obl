@@ -100,6 +100,12 @@ class UiElement {
   /// invalid.
   virtual void set_user(int index, UserValue value) {}
 
+  /// Override this to get the value of the user trait with the given index,
+  /// throwing or returning a default if the `index` trait is unimplemented.
+  virtual UserValue get_user(int index) {
+    throw std::runtime_error("No user trait interface defined");
+  }
+
 #pragma clang diagnostic pop
 
   /// Every UiElement is required to have a name which identifies it uniquely in

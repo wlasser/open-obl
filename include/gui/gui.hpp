@@ -205,6 +205,11 @@ class MenuContext {
   void update();
 
   void set_user(int index, gui::UiElement::UserValue value);
+  gui::UiElement::UserValue get_user(int index);
+
+  template<class T> T get_user(int index) {
+    return std::get<T>(get_user(index));
+  }
 };
 
 std::optional<MenuContext> loadMenu(pugi::xml_node doc,
