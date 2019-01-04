@@ -35,6 +35,7 @@ target_sources(OpenOblivionGui PRIVATE
         elements/interactable_mixin.cpp
         elements/panel_mixin.cpp
         elements/rect.cpp
+        elements/text.cpp
         gui.cpp
         menus/loading_menu.cpp
         menus/main_menu.cpp

@@ -1,0 +1,7 @@
+font libertine {
+    type truetype
+    source "libertine.ttf"
+    size 18
+    resolution 72
+    antialias_colour true
+}

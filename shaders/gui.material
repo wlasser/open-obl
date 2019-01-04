@@ -19,7 +19,6 @@ material __GuiMaterial {
             }
 
             lighting off
-            ambient vertexcolour
             diffuse vertexcolour
 
             separate_scene_blend_op add add

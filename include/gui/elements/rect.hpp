@@ -10,8 +10,15 @@
 namespace gui {
 
 class Rect : public InteractableMixin, public PanelMixin {
+ private:
+  std::string mString;
+
  public:
   Rect(std::string name);
+
+  /// A common idiom is to use the string trait as a parameter to set the text
+  /// in prefab buttons.
+  void set_string(std::string str) override;
 };
 
 } // namespace gui

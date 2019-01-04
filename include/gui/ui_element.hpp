@@ -86,6 +86,9 @@ class UiElement {
   virtual void set_clicksound(float clicksound) {}
   ///@}
 
+  /// Text to display.
+  virtual void set_string(std::string string) {}
+
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
   /// traits being given implemented types in sequential order as needed.
