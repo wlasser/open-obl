@@ -67,6 +67,10 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
   ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
+  // Add the codecs
+  ctx.texImageCodec = std::make_unique<Ogre::TexImageCodec>();
+  Ogre::Codec::registerCodec(ctx.texImageCodec.get());
+
   // Create the engine managers
   ctx.doorRes = std::make_unique<DoorResolver>();
   ctx.lighRes = std::make_unique<LighResolver>();
@@ -323,6 +327,8 @@ void Application::declareResource(const oo::Path &path,
     resGrpMgr.declareResource(path.c_str(), "Text", resourceGroup);
   } else if (ext == "ttf"sv) {
     resGrpMgr.declareResource(path.c_str(), "Font", resourceGroup);
+  } else if (ext == "tex"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   }
 }
 

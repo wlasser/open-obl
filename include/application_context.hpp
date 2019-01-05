@@ -9,6 +9,7 @@
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
+#include "ogre/tex_image_codec.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
@@ -34,6 +35,8 @@ class ApplicationContext {
 
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
+
+  std::unique_ptr<Ogre::TexImageCodec> texImageCodec{};
 
   std::shared_ptr<spdlog::logger> logger{};
 
