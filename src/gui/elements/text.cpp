@@ -57,7 +57,6 @@ gui::Text::Text(std::string name) {
     }
 
     mOverlay->setFontName("fonts/kingthings_regular.fnt", oo::RESOURCE_GROUP);
-//    mOverlay->setFontName("libertine", oo::SHADER_GROUP);
 
     auto *fontPass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
     auto *fontState{fontPass->getTextureUnitStates().front()};
@@ -72,8 +71,13 @@ gui::Text::Text(std::string name) {
     mMatPtr->setDiffuse(col);
     mOverlay->setMaterialName(matName, oo::SHADER_GROUP);
 
-    mOverlay->setCharHeight(18.0f / overlayMgr->getViewportHeight());
+    mOverlay->setCharHeight(28.0f / overlayMgr->getViewportHeight());
     mOverlay->setCaption("");
+    // OverlayElement only updates the dimensions if the size of the text is
+    // bigger than the current size, but the default is 1.0 by 1.0, so we need
+    // to force it.
+    mOverlay->setWidth(0.0f);
+    mOverlay->setHeight(0.0f);
     mOverlay->show();
   }
 }
@@ -107,11 +111,25 @@ void gui::Text::set_string(std::string str) {
 }
 
 std::optional<gui::Trait<float>> gui::Text::make_width() const {
-  return Trait<float>(get_name() + ".width", 0);
+  if (!mOverlay) return Trait<float>(get_name() + ".width", 0);
+
+  gui::TraitFun<float> fun{[overlay = mOverlay]() -> float {
+    const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
+    return overlay->getWidth() * dims.x;
+  }};
+
+  return Trait<float>(get_name() + ".width", std::move(fun));
 }
 
 std::optional<gui::Trait<float>> gui::Text::make_height() const {
-  return Trait<float>(get_name() + ".height", 0);
+  if (!mOverlay) return Trait<float>(get_name() + ".height", 0);
+
+  gui::TraitFun<float> fun{[overlay = mOverlay]() -> float {
+    const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
+    return overlay->getHeight() * dims.y;
+  }};
+
+  return Trait<float>(get_name() + ".height", std::move(fun));
 }
 
 Ogre::OverlayElement *gui::Text::getOverlayElement() {
