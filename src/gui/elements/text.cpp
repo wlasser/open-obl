@@ -88,6 +88,38 @@ gui::Text::~Text() {
   overlayMgr.destroyOverlayElement(mOverlay);
 }
 
+void gui::Text::set_alpha(float alpha) {
+  if (!mOverlay) return;
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  auto col{pass->getDiffuse()};
+  col.a = alpha / 255.0f;
+  pass->setDiffuse(col);
+}
+
+void gui::Text::set_red(float red) {
+  if (!mOverlay) return;
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  auto col{pass->getDiffuse()};
+  col.r = red / 255.0f;
+  pass->setDiffuse(col);
+}
+
+void gui::Text::set_green(float green) {
+  if (!mOverlay) return;
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  auto col{pass->getDiffuse()};
+  col.g = green / 255.0f;
+  pass->setDiffuse(col);
+}
+
+void gui::Text::set_blue(float blue) {
+  if (!mOverlay) return;
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  auto col{pass->getDiffuse()};
+  col.b = blue / 255.0f;
+  pass->setDiffuse(col);
+}
+
 void gui::Text::set_x(float x) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};

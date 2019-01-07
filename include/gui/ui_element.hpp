@@ -36,6 +36,15 @@ class UiElement {
   /// Transparency. 0 is completely transparent, 255 is completely opaque
   virtual void set_alpha(float alpha) {}
 
+  /// Red component of text, from 0 to 255
+  virtual void set_red(float red) {}
+
+  /// Green component of text, from 0 to 255
+  virtual void set_green(float green) {}
+
+  /// Blue component of text, from 0 to 255
+  virtual void set_blue(float blue) {}
+
   /// If true, this element is used to anchor the position of its children
   virtual void set_locus(bool locus) {}
 

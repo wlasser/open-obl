@@ -40,6 +40,12 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<float>(uiElement, &UiElement::set_height, node);
   } else if (node.name() == "alpha"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_alpha, node);
+  } else if (node.name() == "red"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_red, node);
+  } else if (node.name() == "green"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_green, node);
+  } else if (node.name() == "blue"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_blue, node);
   } else if (node.name() == "locus"s) {
     addAndBindTrait<bool>(uiElement, &UiElement::set_locus, node);
   } else if (node.name() == "visible"s) {

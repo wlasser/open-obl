@@ -21,6 +21,10 @@ class Text : public InteractableMixin {
 
   ~Text();
 
+  void set_alpha(float alpha) override;
+  void set_red(float red) override;
+  void set_green(float green) override;
+  void set_blue(float blue) override;
   void set_x(float x) override;
   void set_y(float y) override;
   void set_visible(bool visible) override;
