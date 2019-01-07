@@ -22,6 +22,7 @@ class PanelMixin : public virtual UiElement {
   void set_y(float y) override;
   void set_width(float width) override;
   void set_height(float height) override;
+  void set_depth(float depth) override;
   void set_visible(bool visible) override;
 
   Ogre::OverlayElement *getOverlayElement() override;

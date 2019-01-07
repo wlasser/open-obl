@@ -38,6 +38,8 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<float>(uiElement, &UiElement::set_width, node);
   } else if (node.name() == "height"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_height, node);
+  } else if (node.name() == "depth"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_depth, node);
   } else if (node.name() == "alpha"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_alpha, node);
   } else if (node.name() == "red"s) {

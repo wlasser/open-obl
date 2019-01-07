@@ -2,6 +2,7 @@
 #include "gui/logging.hpp"
 #include "gui/screen.hpp"
 #include <OgreMaterialManager.h>
+#include <OgreOverlay.h>
 #include <OgreOverlayManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
@@ -130,6 +131,14 @@ void gui::Text::set_y(float y) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
   mOverlay->setTop(y / dims.y);
+}
+
+void gui::Text::set_depth(float depth) {
+  if (!mOverlay) return;
+  if (depth < 0.0f) depth = 0.0f;
+  else if (depth > 65535.0f) depth = 65535.0f;
+  mOverlay->_setZOrderIncrement(static_cast<unsigned short>(depth));
+  mOverlay->_getOverlay()->setZOrder(mOverlay->_getOverlay()->getZOrder());
 }
 
 void gui::Text::set_visible(bool visible) {

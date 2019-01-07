@@ -1,5 +1,6 @@
 #include "gui/elements/panel_mixin.hpp"
 #include "gui/screen.hpp"
+#include <OgreOverlay.h>
 #include <OgreOverlayManager.h>
 
 gui::PanelMixin::PanelMixin(const std::string &name) {
@@ -38,6 +39,14 @@ void gui::PanelMixin::set_height(float height) {
   if (!mOverlay) return;
   const Ogre::Vector2 dims{gui::getNormalizedDimensions()};
   mOverlay->setHeight(height / dims.y);
+}
+
+void gui::PanelMixin::set_depth(float depth) {
+  if (!mOverlay) return;
+  if (depth < 0.0f) depth = 0.0f;
+  else if (depth > 65535.0f) depth = 65535.0f;
+  mOverlay->_setZOrderIncrement(static_cast<unsigned short>(depth));
+  mOverlay->_getOverlay()->setZOrder(mOverlay->_getOverlay()->getZOrder());
 }
 
 void gui::PanelMixin::set_visible(bool visible) {

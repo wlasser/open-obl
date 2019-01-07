@@ -33,6 +33,11 @@ class UiElement {
   /// Height in pixels
   virtual void set_height(float height) {}
 
+  /// Z-Order of this element relative to its parent.
+  /// Elements with higher depth will be placed on top of elements with lower
+  /// depth.
+  virtual void set_depth(float depth) {}
+
   /// Transparency. 0 is completely transparent, 255 is completely opaque
   virtual void set_alpha(float alpha) {}
 
