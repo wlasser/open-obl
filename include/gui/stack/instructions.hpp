@@ -349,9 +349,9 @@ struct onlyif_t {
       if constexpr (std::is_same_v<std::decay_t<decltype(pred)>, bool>) {
         if (pred) {
           stack.emplace_back(working);
-        } else {
-          throw std::runtime_error("Type error: expected a bool");
         }
+      } else {
+        throw std::runtime_error("Type error: expected a bool");
       }
     }, a, b);
   }
