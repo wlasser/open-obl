@@ -327,6 +327,9 @@ void Application::declareResource(const oo::Path &path,
     resGrpMgr.declareResource(path.c_str(), "Text", resourceGroup);
   } else if (ext == "ttf"sv) {
     resGrpMgr.declareResource(path.c_str(), "Font", resourceGroup);
+  } else if (ext == "fnt"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Font",
+                              resourceGroup, &ctx.fntLoader);
   } else if (ext == "tex"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   }

@@ -56,13 +56,12 @@ gui::Text::Text(std::string name) {
       mMatPtr = baseMat->clone(matName);
     }
 
-    mOverlay->setFontName("libertine", oo::SHADER_GROUP);
+    mOverlay->setFontName("fonts/kingthings_regular.fnt", oo::RESOURCE_GROUP);
+//    mOverlay->setFontName("libertine", oo::SHADER_GROUP);
 
     auto *fontPass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
     auto *fontState{fontPass->getTextureUnitStates().front()};
-    auto &texMgr{Ogre::TextureManager::getSingleton()};
-    auto texPtr{texMgr.getByName(fontState->getTextureName(),
-                                 fontPass->getResourceGroup())};
+    auto texPtr{fontState->_getTexturePtr()};
 
     auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
     const auto &states{pass->getTextureUnitStates()};

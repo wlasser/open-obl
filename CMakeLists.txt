@@ -120,6 +120,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/esp_coordinator.cpp
+        src/fnt_loader.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
@@ -161,6 +162,7 @@ target_sources(OpenOblivion PRIVATE
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
+        include/fnt_loader.hpp
         include/game_settings.hpp
         include/initial_record_visitor.hpp
         include/keep_strategy.hpp
@@ -206,7 +208,7 @@ target_link_libraries(OpenOblivion PRIVATE
         ZLIB::ZLIB
         SDL2::SDL2
         SDL2::SDL2main
-        OgreMain OgreGLSupport
+        OgreMain OgreGLSupport OgreOverlay
         spdlog::spdlog
         stdc++fs
         tloptional
