@@ -34,7 +34,7 @@ class Text : public InteractableMixin {
   std::optional<gui::Trait<float>> make_width() const override;
   std::optional<gui::Trait<float>> make_height() const override;
 
-  Ogre::OverlayElement *getOverlayElement() override;
+  Ogre::OverlayElement *getOverlayElement() const override;
 };
 
 } // namespace gui

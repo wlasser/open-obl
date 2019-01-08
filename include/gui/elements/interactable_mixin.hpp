@@ -7,10 +7,16 @@ namespace gui {
 
 class InteractableMixin : public virtual UiElement {
  private:
-  /// Whether this uiElement receives user input events
-  bool mIsTarget{false};
   /// Id of this element for user input handling
   int mId{-1};
+  /// Whether this uiElement receives user input events
+  bool mIsTarget{false};
+  /// Whether this uiElement has been clicked this frame
+  bool mIsClicked{false};
+  /// Whether this uiElement has been shift-clicked this frame
+  bool mIsShiftclicked{false};
+  /// Whether the mouse cursor is over this element during this frame
+  bool mIsMouseover{false};
 
  public:
 
@@ -25,6 +31,16 @@ class InteractableMixin : public virtual UiElement {
   std::optional<gui::Trait<float>> make_clicked() const override;
   std::optional<gui::Trait<float>> make_shiftclicked() const override;
   std::optional<gui::Trait<float>> make_mouseover() const override;
+
+  void clearEvents() override;
+
+  void notify_clicked() override;
+  void notify_shiftclicked() override;
+  void notify_mouseover() override;
+
+  bool is_clicked() const override;
+  bool is_shiftclicked() const override;
+  bool is_mouseover() const override;
 };
 
 } // namespace gui

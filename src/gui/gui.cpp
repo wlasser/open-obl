@@ -9,6 +9,7 @@
 #include <boost/convert.hpp>
 #include <boost/graph/topological_sort.hpp>
 #include <OgreOverlay.h>
+#include <OgreOverlayManager.h>
 #include <pugixml.hpp>
 #include <algorithm>
 #include <functional>
@@ -175,6 +176,23 @@ MenuContext::MenuContext(std::unique_ptr<Traits> traits,
 
 void MenuContext::update() {
   mTraits->update();
+}
+
+void MenuContext::clearEvents() {
+  for (const auto &uiElement : mUiElements) {
+    uiElement->clearEvents();
+  }
+}
+
+Ogre::Overlay *MenuContext::getOverlay() const {
+  return std::visit([](const auto &menu) { return menu.getOverlay(); }, *mMenu);
+}
+
+Ogre::Vector2 MenuContext::normalizeCoordinates(int32_t x, int32_t y) const {
+  auto &overlayMgr{Ogre::OverlayManager::getSingleton()};
+  const auto w{static_cast<float>(overlayMgr.getViewportWidth())};
+  const auto h{static_cast<float>(overlayMgr.getViewportHeight())};
+  return {static_cast<float>(x) / w, static_cast<float>(y) / h};
 }
 
 void MenuContext::set_user(int index, gui::UiElement::UserValue value) {

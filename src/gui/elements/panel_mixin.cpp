@@ -7,6 +7,7 @@ gui::PanelMixin::PanelMixin(const std::string &name) {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     auto *overlay{overlayMgr->createOverlayElement("Panel", name)};
     mOverlay = dynamic_cast<Ogre::PanelOverlayElement *>(overlay);
+    mOverlay->getUserObjectBindings().setUserAny<UiElement *>(this);
     mOverlay->show();
   }
 }
@@ -54,7 +55,7 @@ void gui::PanelMixin::set_visible(bool visible) {
   visible ? mOverlay->show() : mOverlay->hide();
 }
 
-Ogre::OverlayElement *gui::PanelMixin::getOverlayElement() {
+Ogre::OverlayElement *gui::PanelMixin::getOverlayElement() const {
   return mOverlay;
 }
 

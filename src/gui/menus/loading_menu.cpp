@@ -23,6 +23,7 @@ gui::Menu<gui::MenuType::LoadingMenu>::Menu() {
 
     mOverlayContainer = dynamic_cast<Ogre::PanelOverlayElement *>(
         overlayMgr->createOverlayElement("Panel", this->get_name()));
+    mOverlayContainer->getUserObjectBindings().setUserAny<UiElement *>(this);
     mOverlay->add2D(mOverlayContainer);
 
     mOverlayContainer->setMetricsMode(Ogre::GuiMetricsMode::GMM_PIXELS);

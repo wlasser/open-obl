@@ -204,6 +204,16 @@ class MenuContext {
   /// Update the underlying `gui::Traits` graph.
   void update();
 
+  /// Call `UiElement::clearEvents()` on every UiElement.
+  void clearEvents();
+
+  /// Return a pointer to the current menu's overlay.
+  Ogre::Overlay *getOverlay() const;
+
+  /// Convert a position in pixels on the screen to a position in normalized
+  /// coordinates within the menu.
+  Ogre::Vector2 normalizeCoordinates(int32_t x, int32_t y) const;
+
   void set_user(int index, gui::UiElement::UserValue value);
   gui::UiElement::UserValue get_user(int index);
 

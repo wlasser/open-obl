@@ -25,7 +25,7 @@ class PanelMixin : public virtual UiElement {
   void set_depth(float depth) override;
   void set_visible(bool visible) override;
 
-  Ogre::OverlayElement *getOverlayElement() override;
+  Ogre::OverlayElement *getOverlayElement() const override;
 };
 
 } // namespace gui

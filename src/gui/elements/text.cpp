@@ -46,6 +46,7 @@ gui::Text::Text(std::string name) {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     auto *overlay{overlayMgr->createOverlayElement("TextArea", get_name())};
     mOverlay = dynamic_cast<Ogre::TextAreaOverlayElement *>(overlay);
+    mOverlay->getUserObjectBindings().setUserAny<UiElement *>(this);
 
     auto &matMgr{Ogre::MaterialManager::getSingleton()};
     std::string matName{std::string("__GuiMaterial:") + get_name()};
@@ -173,6 +174,6 @@ std::optional<gui::Trait<float>> gui::Text::make_height() const {
   return Trait<float>(get_name() + ".height", std::move(fun));
 }
 
-Ogre::OverlayElement *gui::Text::getOverlayElement() {
+Ogre::OverlayElement *gui::Text::getOverlayElement() const {
   return mOverlay;
 }

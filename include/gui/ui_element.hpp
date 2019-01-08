@@ -207,7 +207,56 @@ class UiElement {
     return nullptr;
   }
 
+  /// Interaction setters
+  /// These functions are called when a user event occurs on this element. They
+  /// are effectively setters, but are not intended to be called by trait
+  /// functions and so are named differently.
+  ///@{
+
+  /// Called when this element is clicked.
+  virtual void notify_clicked() {}
+
+  /// Called when this element is shift-clicked.
+  virtual void notify_shiftclicked() {}
+
+  /// Called when the mouse cursor is over this element.
+  virtual void notify_mouseover() {}
+
+  /// Called at the end of a frame to reset this element's event state.
+  virtual void clearEvents() {}
+  ///@}
+
+  /// Interaction getters
+  /// These functions return whether this element has received a user event this
+  /// frame. These are intended to be called by this element's traits of the
+  /// corresponding name. For instance, the trait constructed by
+  /// `make_clicked()` should use `is_clicked()` to determine its value.
+  /// @{
+
+  /// Whether this element has been clicked this frame.
+  virtual bool is_clicked() const {
+    return false;
+  }
+
+  /// Whether this element has been shift-clicked this frame.
+  virtual bool is_shiftclicked() const {
+    return false;
+  }
+
+  /// Whether the mouse cursor is over this element during this frame.
+  virtual bool is_mouseover() const {
+    return false;
+  }
+
+  ///@}
+
   virtual ~UiElement() = 0;
+
+  UiElement() = default;
+  UiElement(const UiElement &) = delete;
+  UiElement &operator=(const UiElement &) = delete;
+  UiElement(UiElement &&) = delete;
+  UiElement &operator=(UiElement &&) = delete;
 };
 inline UiElement::~UiElement() = default;
 

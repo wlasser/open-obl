@@ -1,9 +1,14 @@
 #include "modes/menu_mode.hpp"
+#include "settings.hpp"
+#include <spdlog/spdlog.h>
 
 std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
   const auto loadWithStrings = [](const std::string &filename) {
     return gui::loadMenu(filename, "menus/strings.xml");
   };
+
+  mMenuType = type;
+  mClock = 0.0f;
 
   switch (type) {
     case gui::MenuType::AlchemyMenu: {
@@ -164,8 +169,45 @@ MenuMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
     if (auto *ev{std::get_if<oo::event::MenuMode>(&*keyEvent)}; ev) {
       return {ev->down, std::nullopt};
     }
+  } else if (sdl::typeOf(event) == sdl::EventType::MouseMotion) {
+    if (!mMenuCtx) return {false, std::nullopt};
+    mCursorPos = mMenuCtx->normalizeCoordinates(event.motion.x, event.motion.y);
+  } else if (sdl::typeOf(event) == sdl::EventType::MouseButtonDown) {
+    if (sdl::mouseButtonOf(event.button) != sdl::MouseButton::Left) {
+      return {false, std::nullopt};
+    }
+    if (!mMenuCtx) return {false, std::nullopt};
+    notifyElementAtCursor([](gui::UiElement *elem) { elem->notify_clicked(); });
   }
+
   return {false, std::nullopt};
 }
 
-void MenuMode::update(ApplicationContext &/*ctx*/, float /*delta*/) {}
+void MenuMode::update(ApplicationContext &/*ctx*/, float delta) {
+  // Mouseover events are triggered every frame, not just on mouse move.
+  notifyElementAtCursor([](gui::UiElement *elem) { elem->notify_mouseover(); });
+
+  switch (mMenuType) {
+    case gui::MenuType::LoadingMenu: {
+      mClock += delta;
+      const float maximumProgress{mMenuCtx->get_user<float>(4)};
+      const float currentProgress{(mClock / 10.0f) * maximumProgress};
+      mMenuCtx->set_user(3, std::min(currentProgress, maximumProgress));
+      break;
+    }
+    case gui::MenuType::MainMenu: {
+      mClock += delta;
+
+      const float transitionLength{mMenuCtx->get_user<float>(4)};
+      mMenuCtx->set_user(0, true);
+      mMenuCtx->set_user(1, mClock > transitionLength);
+      mMenuCtx->set_user(2, mClock <= transitionLength);
+      const float alpha{255.0f * (1.0f - mClock / transitionLength)};
+      mMenuCtx->set_user(3, std::max(0.0f, alpha));
+      break;
+    }
+    default: break;
+  }
+  mMenuCtx->update();
+  mMenuCtx->clearEvents();
+}
