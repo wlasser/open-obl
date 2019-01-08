@@ -177,7 +177,13 @@ MenuMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
       return {false, std::nullopt};
     }
     if (!mMenuCtx) return {false, std::nullopt};
-    notifyElementAtCursor([](gui::UiElement *elem) { elem->notify_clicked(); });
+    notifyElementAtCursor([](gui::UiElement *elem) {
+      if (!!(sdl::getModState() & sdl::ModifierKey::Shift)) {
+        elem->notify_shiftclicked();
+      } else {
+        elem->notify_clicked();
+      }
+    });
   }
 
   return {false, std::nullopt};
