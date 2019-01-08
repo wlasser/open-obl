@@ -30,9 +30,19 @@ class Traits {
                                     Trait<std::string>,
                                     Trait<bool>>;
  private:
+  struct TraitVertexBase {
+    TraitVariant var;
+    /// The last value is cached so avoid updating every concrete representative
+    /// every time update() is called.
+    std::optional<std::variant<float, std::string, bool>> cache{};
+    /*explicit*/ TraitVertexBase(TraitVariant v) : var(v) {}
+    template<class ...Args>
+    TraitVertexBase(Args &&... args) : var(std::forward<Args>(args)...) {}
+  };
+
   /// Vertex properties are required to be default constructible and copy
   /// constructible so we have to store a shared ownership pointer.
-  using TraitVertex = std::shared_ptr<TraitVariant>;
+  using TraitVertex = std::shared_ptr<TraitVertexBase>;
 
   /// Type of the dependency graph.
   using TraitGraph = boost::adjacency_list<boost::vecS, boost::vecS,
@@ -262,19 +272,19 @@ template<class T> void Traits::addTrait(DeferredTrait trait) {
 template<class T, class ...Args>
 Trait<T> &Traits::addTrait(const std::string &name, Args &&... args) {
   mSorted = false;
-  const auto index{boost::add_vertex(std::make_shared<TraitVariant>(
+  const auto index{boost::add_vertex(std::make_shared<TraitVertexBase>(
       std::in_place_type<Trait<T>>, name, std::forward<Args>(args)...),
                                      mGraph)};
   mIndices[name] = index;
-  return std::get<Trait<T>>(*mGraph[index]);
+  return std::get<Trait<T>>(mGraph[index]->var);
 }
 
 template<class T> Trait<T> &Traits::addTrait(Trait<T> &&trait) {
   mSorted = false;
-  const auto index{boost::add_vertex(std::make_shared<TraitVariant>(trait),
+  const auto index{boost::add_vertex(std::make_shared<TraitVertexBase>(trait),
                                      mGraph)};
   mIndices[trait.getName()] = index;
-  return std::get<Trait<T>>(*mGraph[index]);
+  return std::get<Trait<T>>(mGraph[index]->var);
 }
 
 template<class T> void Traits::addAndBindTrait(UiElement *uiElement,
@@ -293,7 +303,7 @@ void Traits::setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits) {
     if (!traitPtr) {
       throw std::runtime_error("nullptr vertex");
     }
-    auto &trait = *traitPtr;
+    auto &trait = traitPtr->var;
 
     const std::optional<int> userIndex{std::visit([](const auto &v) {
       return getUserTraitIndex(v.getName());

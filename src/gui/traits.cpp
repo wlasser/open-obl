@@ -123,7 +123,7 @@ Traits::getDependencies(const TraitVertex &vertex) const {
   if (vertex) {
     return std::visit([](const auto &v) {
       return v.getDependencies();
-    }, *vertex);
+    }, vertex->var);
   } else {
     return {};
   }
@@ -141,7 +141,7 @@ Traits::getTraitVariant(const std::string &name) const {
     gui::guiLogger()->error("Trait {} exists but is null", name);
     throw std::runtime_error("nullptr vertex");
   }
-  return *vertex;
+  return vertex->var;
 }
 
 void Traits::addImplementationElementTrait(const std::string &dep) {
@@ -267,7 +267,7 @@ void Traits::addTraitDependencies() {
           const bool match = std::visit([&dep](const auto &v) {
             //C++20: return v.getName().starts_with(dep);
             return boost::algorithm::starts_with(v.getName(), dep);
-          }, *uPtr);
+          }, uPtr->var);
           if (match) {
             boost::remove_edge(uIndex, vIndex, mGraph);
             boost::add_edge(uIndex, vIndex, mGraph);
@@ -278,7 +278,7 @@ void Traits::addTraitDependencies() {
         if (uIndexIt == mIndices.end()) {
           const std::string dependee{std::visit([](const auto &trait) {
             return trait.getName();
-          }, *vPtr)};
+          }, vPtr->var)};
           gui::guiLogger()->error("Dependency {} of {} does not exist",
                                   dep, dependee);
           throw std::runtime_error("Nonexistent dependency");
@@ -301,11 +301,28 @@ void Traits::update() {
     if (!vertex) {
       const std::string traitName{std::visit([](const auto &trait) {
         return trait.getName();
-      }, *vertex)};
+      }, vertex->var)};
       gui::guiLogger()->error("Trait {} exists but is null", traitName);
       throw std::runtime_error("nullptr vertex");
     }
-    std::visit([](auto &&trait) { trait.update(); }, *vertex);
+    auto &cache{vertex->cache};
+    if (cache) {
+      std::visit([](auto &trait, auto &c) {
+        if constexpr (std::is_same_v<decltype(trait.invoke()),
+                                     std::decay_t<decltype(c)>>) {
+          auto v{trait.invoke()};
+          if (c != v) {
+            c = v;
+            trait.update();
+          }
+        }
+      }, vertex->var, *cache);
+    } else {
+      std::visit([&cache](auto &&trait) {
+        cache.emplace(trait.invoke());
+        trait.update();
+      }, vertex->var);
+    }
   }
 }
 
@@ -330,7 +347,7 @@ class VertexWriter {
 
     std::visit([&os, desc](const auto &trait) {
       os << "[label=\"" << desc << ": " << trait.getName() << "\"]";
-    }, *vPtr);
+    }, vPtr->var);
   }
 };
 
