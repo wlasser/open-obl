@@ -73,6 +73,7 @@ void gui::Image::set_filename(std::string filename) {
   auto &texMgr{Ogre::TextureManager::getSingleton()};
   auto texPtr{texMgr.getByName(path.c_str(), oo::RESOURCE_GROUP)};
   state->setTexture(texPtr);
+  texPtr->load();
 
   mTexWidth = static_cast<float>(texPtr->getWidth());
   mTexHeight = static_cast<float>(texPtr->getHeight());
