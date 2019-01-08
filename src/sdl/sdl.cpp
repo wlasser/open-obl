@@ -57,4 +57,8 @@ MouseButton mouseButtonOf(const MouseButtonEvent &event) {
   return MouseButton(event.button);
 }
 
+ModifierKey getModState() {
+  return static_cast<ModifierKey>(SDL_GetModState());
+}
+
 } // namespace sdl

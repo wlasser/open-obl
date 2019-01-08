@@ -365,6 +365,44 @@ enum class KeyCode : uint32_t {
   Audiofastforward = SDLK_AUDIOFASTFORWARD,
 };
 
+enum class ModifierKey : uint32_t {
+  None = KMOD_NONE,
+  Lshift = KMOD_LSHIFT,
+  Rshift = KMOD_RSHIFT,
+  Lctrl = KMOD_LCTRL,
+  Rctrl = KMOD_RCTRL,
+  Lalt = KMOD_LALT,
+  Ralt = KMOD_RALT,
+  Lgui = KMOD_LGUI,
+  Rgui = KMOD_RGUI,
+  Numlock = KMOD_NUM,
+  Capslock = KMOD_CAPS,
+  Mode = KMOD_MODE,
+
+  Ctrl = KMOD_CTRL,
+  Shift = KMOD_SHIFT,
+  Alt = KMOD_ALT,
+  Gui = KMOD_GUI,
+};
+// TODO: Use Bitflags
+inline constexpr ModifierKey operator|(ModifierKey a, ModifierKey b) {
+  return ModifierKey{static_cast<uint32_t>(a) | static_cast<uint32_t>(b)};
+}
+inline constexpr ModifierKey operator&(ModifierKey a, ModifierKey b) {
+  return ModifierKey{static_cast<uint32_t>(a) & static_cast<uint32_t>(b)};
+}
+inline constexpr bool operator!(ModifierKey a) {
+  return static_cast<uint32_t>(a) == 0;
+}
+inline constexpr ModifierKey &operator|=(ModifierKey &a, ModifierKey b) {
+  a = a | b;
+  return a;
+}
+inline constexpr ModifierKey &operator&=(ModifierKey &a, ModifierKey b) {
+  a = a & b;
+  return a;
+}
+
 enum class MouseButton : uint8_t {
   Left = SDL_BUTTON_LEFT,
   Middle = SDL_BUTTON_MIDDLE,
@@ -418,6 +456,7 @@ EventType typeOf(const Event &event);
 WindowEventType typeOf(const WindowEvent &event);
 KeyCode keyCodeOf(const KeyboardEvent &event);
 MouseButton mouseButtonOf(const MouseButtonEvent &event);
+ModifierKey getModState();
 
 } // namespace sdl
 
