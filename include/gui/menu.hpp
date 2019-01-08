@@ -78,7 +78,7 @@ class Menu : public UiElement {
     return std::tuple<>{};
   }
 
-  Ogre::Overlay *getOverlay() {
+  Ogre::Overlay *getOverlay() const {
     return nullptr;
   }
 };

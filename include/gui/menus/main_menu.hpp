@@ -42,6 +42,7 @@ class Menu<MenuType::MainMenu> : public UiElement {
   Ogre::OverlayContainer *mOverlayContainer{};
 
  public:
+  Menu<MenuType::MainMenu>();
   ~Menu<MenuType::MainMenu>() override;
 
   auto getUserOutputTraitInterface() {
@@ -56,8 +57,8 @@ class Menu<MenuType::MainMenu> : public UiElement {
 
   void set_visible(bool visible) override;
 
-  Ogre::Overlay *getOverlay();
-  Ogre::OverlayElement *getOverlayElement() override;
+  Ogre::Overlay *getOverlay() const;
+  Ogre::OverlayElement *getOverlayElement() const override;
 };
 
 using MainMenu = Menu<MenuType::MainMenu>;

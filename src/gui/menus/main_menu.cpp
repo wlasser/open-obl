@@ -16,33 +16,14 @@ gui::Menu<gui::MenuType::MainMenu>::~Menu<gui::MenuType::MainMenu>() {
   }
 }
 
-void gui::MainMenu::set_visible(bool visible) {
-  mVisible = visible;
-  if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
-}
-
-Ogre::Overlay *gui::MainMenu::getOverlay() {
-  if (!mOverlay) {
-    auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
-    if (!overlayMgr) return nullptr;
+gui::Menu<gui::MenuType::MainMenu>::Menu() {
+  if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = overlayMgr->create(this->get_name());
-    // Overlays start off hidden
-    if (mVisible) mOverlay->show();
-  }
-  return mOverlay;
-}
-
-Ogre::OverlayElement *gui::MainMenu::getOverlayElement() {
-  if (!mOverlayContainer) {
-    auto *overlay{getOverlay()};
-    if (!overlay) return nullptr;
-
-    auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()};
-    if (!overlayMgr) return nullptr;
+    mOverlay->show();
 
     mOverlayContainer = dynamic_cast<Ogre::PanelOverlayElement *>(
         overlayMgr->createOverlayElement("Panel", this->get_name()));
-    overlay->add2D(mOverlayContainer);
+    mOverlay->add2D(mOverlayContainer);
 
     mOverlayContainer->setMetricsMode(Ogre::GuiMetricsMode::GMM_PIXELS);
     Ogre::Vector2 dims{gui::getNormalizedDimensions()};
@@ -52,5 +33,17 @@ Ogre::OverlayElement *gui::MainMenu::getOverlayElement() {
     mOverlayContainer->setPosition(0.0f, 0.0f);
     mOverlayContainer->show();
   }
+}
+
+void gui::MainMenu::set_visible(bool visible) {
+  mVisible = visible;
+  if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
+}
+
+Ogre::Overlay *gui::MainMenu::getOverlay() const {
+  return mOverlay;
+}
+
+Ogre::OverlayElement *gui::MainMenu::getOverlayElement() const {
   return mOverlayContainer;
 }

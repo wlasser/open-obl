@@ -203,7 +203,7 @@ class UiElement {
   ///@}
 
   /// Get the renderable representation of this uiElement.
-  virtual Ogre::OverlayElement *getOverlayElement() {
+  virtual Ogre::OverlayElement *getOverlayElement() const {
     return nullptr;
   }
 
