@@ -27,7 +27,6 @@ SDL_SysWMinfo getSysWMInfo(SDL_Window *window) {
 }
 
 std::string getWindowParent(const SDL_SysWMinfo &windowInfo) {
-  // TODO: Support other window managers
   return std::to_string(windowInfo.info.x11.window);
 }
 

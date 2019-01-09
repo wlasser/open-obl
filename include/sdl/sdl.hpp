@@ -16,9 +16,12 @@
 #undef True
 #undef False
 
+/// Wrappers around the SDL2 C API.
+/// \ingroup OpenOblivionSdl
 namespace sdl {
 
-// TODO: Use boost::exception to store the error code and propagate it up
+/// Convert an SDL error into an exception.
+/// \todo Use boost::exception to store the error code and propagate it up.
 class SDLException : public std::runtime_error {
  public:
   explicit SDLException(const std::string &functionName)
@@ -26,8 +29,8 @@ class SDLException : public std::runtime_error {
       boost::format("%s failed: %s") % functionName % SDL_GetError())) {}
 };
 
-// RAII wrapper for SDL, calls SDL_Init on construction and SDL_Quit on
-// destruction for automatic cleanup.
+/// RAII wrapper for SDL, calls `SDL_Init()` on construction and `SDL_Quit()` on
+/// destruction for automatic cleanup.
 class Init {
  public:
   Init() {
@@ -40,6 +43,9 @@ class Init {
     SDL_Quit();
   }
 };
+
+/// \name Strongly-typed enums
+///@{
 
 enum class WindowFlags : std::underlying_type_t<SDL_WindowFlags> {
   Fullscreen = SDL_WINDOW_FULLSCREEN,
@@ -431,7 +437,11 @@ enum class WindowEventType : std::underlying_type_t<SDL_WindowEventID> {
   HitTest = SDL_WINDOWEVENT_HIT_TEST,
 };
 
-// Type aliases to move into the namespace
+///@}
+
+/// \name Type aliases
+/// @{
+
 using Window = SDL_Window;
 using Event = SDL_Event;
 using WindowEvent = SDL_WindowEvent;
@@ -440,22 +450,47 @@ using MouseMotionEvent = SDL_MouseMotionEvent;
 using MouseButtonEvent = SDL_MouseButtonEvent;
 using MouseWheelEvent = SDL_MouseWheelEvent;
 using TextInputEvent = SDL_TextInputEvent;
-using SysWMInfo = SDL_SysWMinfo; // Note the capitalization change
+/// \remark Note the capitalization change
+using SysWMInfo = SDL_SysWMinfo;
+
+/// @}
 
 // Resources are wrapped in unique_ptrs with custom deleters for automatic
 // cleanup.
 using WindowPtr = std::unique_ptr<Window, decltype(&SDL_DestroyWindow)>;
 
+/// Wrapper around `SDL_CreateWindow()`.
+/// \throws sdl::SDLException if `SDL_CreateWindow()` returns an error.
 WindowPtr makeWindow(const std::string &windowName, int width, int height,
                      WindowFlags flags);
+
+/// Wrapper around `SDL_GetWindowWMInfo()`.
+/// \throws sdl::SDLException if `SDL_GetWindowWMInfo()` returns an error.
 SysWMInfo getSysWMInfo(Window *window);
+
+/// Return a stringified system handle to the system window containing this one.
+/// \todo Only X11 is supported currently.
 std::string getWindowParent(const SysWMInfo &windowInfo);
+
+/// Wrapper around `SDL_SetRelativeMouseMode()`.
+/// \throws sdl::SDLException if `SDL_SetRelativeMouseMode()` returns an error.
 void setRelativeMouseMode(bool on);
+
+/// Poll for events and store the next event in `event`, returning true if there
+/// more events to process.
 bool pollEvent(Event &event);
+
+/// \name Event property getters
+/// @{
+
 EventType typeOf(const Event &event);
 WindowEventType typeOf(const WindowEvent &event);
 KeyCode keyCodeOf(const KeyboardEvent &event);
 MouseButton mouseButtonOf(const MouseButtonEvent &event);
+
+///@}
+
+/// Wrapper around `SDL_GetModState()`.
 ModifierKey getModState();
 
 /// Return true iff `e` is an sdl::EventType::KeyUp, sdl::EventType::KeyDown,
