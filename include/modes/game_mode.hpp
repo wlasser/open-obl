@@ -13,6 +13,8 @@
 #include <tuple>
 #include <variant>
 
+namespace oo {
+
 class ConsoleMode;
 class MenuMode;
 
@@ -85,5 +87,7 @@ class GameMode {
   /// This is called during Application::frameStarted after pollEvents.
   void update(ApplicationContext &ctx, float delta);
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_GAME_MODE_HPP

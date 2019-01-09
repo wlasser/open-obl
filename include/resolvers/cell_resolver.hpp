@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+namespace oo {
+
 using CellResolver = Resolver<record::CELL>;
 
 template<>
@@ -42,7 +44,7 @@ class Resolver<record::CELL> {
   using WrappedRecordEntry = std::pair<RecordEntry, Metadata>;
 
   /// Record storage.
-  absl::flat_hash_map<BaseId, WrappedRecordEntry> mRecords{};
+  absl::flat_hash_map<oo::BaseId, WrappedRecordEntry> mRecords{};
 
   /// Bullet configuration, for constructing physics worlds.
   const bullet::Configuration &mBulletConf;
@@ -52,7 +54,7 @@ class Resolver<record::CELL> {
   /// Insert a new record with the given accessor if one exists, otherwise
   /// replace the existing record and append the accessor to the accessor list.
   std::pair<RecordIterator, bool>
-  insertOrAppend(BaseId baseId,
+  insertOrAppend(oo::BaseId baseId,
                  const record::CELL &rec,
                  oo::EspAccessor accessor);
 
@@ -69,32 +71,35 @@ class Resolver<record::CELL> {
   const bullet::Configuration &getBulletConfiguration() const;
 
   /// Return a reference to the cell.
-  tl::optional<const record::CELL &> get(BaseId baseId) const;
+  tl::optional<const record::CELL &> get(oo::BaseId baseId) const;
 
-  /// \overload get(BaseId)
-  tl::optional<record::CELL &> get(BaseId baseId);
+  /// \overload get(oo::BaseId)
+  tl::optional<record::CELL &> get(oo::BaseId baseId);
 
   /// Reset the detach time for a cell to the given time, in in-game hours, from
   /// the epoch.
-  void setDetachTime(BaseId baseId, int detachTime);
+  void setDetachTime(oo::BaseId baseId, int detachTime);
 
   /// Return the detach time for the given cell in in-game hours from the epoch.
-  int getDetachTime(BaseId baseId) const;
+  int getDetachTime(oo::BaseId baseId) const;
 
   /// Checks if there is a cell with the baseId
-  bool contains(BaseId baseId) const;
+  bool contains(oo::BaseId baseId) const;
 
-  using RefrResolverContext = std::tuple<Resolver<record::REFR_STAT, RefId> &,
-                                         Resolver<record::REFR_DOOR, RefId> &,
-                                         Resolver<record::REFR_LIGH, RefId> &,
-                                         Resolver<record::REFR_ACTI, RefId> &>;
-  using BaseResolverContext = std::tuple<const Resolver<record::STAT> &,
-                                         const Resolver<record::DOOR> &,
-                                         const Resolver<record::LIGH> &,
-                                         const Resolver<record::ACTI> &>;
+  using RefrResolverContext = std::tuple<
+      oo::Resolver<record::REFR_STAT, oo::RefId> &,
+      oo::Resolver<record::REFR_DOOR, oo::RefId> &,
+      oo::Resolver<record::REFR_LIGH, oo::RefId> &,
+      oo::Resolver<record::REFR_ACTI, oo::RefId> &>;
+
+  using BaseResolverContext = std::tuple<
+      const oo::Resolver<record::STAT> &,
+      const oo::Resolver<record::DOOR> &,
+      const oo::Resolver<record::LIGH> &,
+      const oo::Resolver<record::ACTI> &>;
 
   /// Load all child references of a cell.
-  void load(BaseId baseId,
+  void load(oo::BaseId baseId,
             RefrResolverContext refrCtx,
             BaseResolverContext baseCtx);
 
@@ -102,7 +107,7 @@ class Resolver<record::CELL> {
   /// \warning This will return an empty std::vector if the cell has not been
   ///          loaded first with a call to load.
   tl::optional<const absl::flat_hash_set<RefId> &>
-  getReferences(BaseId baseId) const;
+  getReferences(oo::BaseId baseId) const;
 };
 
 class Resolver<record::CELL>::CellVisitor {
@@ -134,11 +139,11 @@ class Cell {
  public:
   using PhysicsWorld = btDiscreteDynamicsWorld;
   std::string name{};
-  BaseId baseId{};
+  oo::BaseId baseId{};
   gsl::not_null<gsl::owner<Ogre::SceneManager *>> scnMgr;
   std::unique_ptr<PhysicsWorld> physicsWorld{};
 
-  explicit Cell(BaseId baseId, std::unique_ptr<PhysicsWorld> physicsWorld)
+  explicit Cell(oo::BaseId baseId, std::unique_ptr<PhysicsWorld> physicsWorld)
       : baseId(baseId),
         scnMgr(Ogre::Root::getSingleton().createSceneManager()),
         physicsWorld(std::move(physicsWorld)) {}
@@ -161,15 +166,15 @@ class Cell {
 template<>
 struct ReifyRecordTrait<record::CELL> {
   using type = std::shared_ptr<Cell>;
-  using resolvers = std::tuple<const Resolver<record::STAT> &,
-                               const Resolver<record::DOOR> &,
-                               const Resolver<record::LIGH> &,
-                               const Resolver<record::ACTI> &,
-                               Resolver<record::REFR_STAT, RefId> &,
-                               Resolver<record::REFR_DOOR, RefId> &,
-                               Resolver<record::REFR_LIGH, RefId> &,
-                               Resolver<record::REFR_ACTI, RefId> &,
-                               const Resolver<record::CELL> &>;
+  using resolvers = std::tuple<const oo::Resolver<record::STAT> &,
+                               const oo::Resolver<record::DOOR> &,
+                               const oo::Resolver<record::LIGH> &,
+                               const oo::Resolver<record::ACTI> &,
+                               oo::Resolver<record::REFR_STAT, oo::RefId> &,
+                               oo::Resolver<record::REFR_DOOR, oo::RefId> &,
+                               oo::Resolver<record::REFR_LIGH, oo::RefId> &,
+                               oo::Resolver<record::REFR_ACTI, oo::RefId> &,
+                               const oo::Resolver<record::CELL> &>;
 };
 
 /// Not a specialization because passing a Ogre::SceneManager doesn't make sense.
@@ -182,10 +187,12 @@ void Cell::attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
                   std::tuple<const Res &...> resolvers) {
   auto entity{reifyRecord(ref, scnMgr, std::move(resolvers))};
   setNodeTransform(node, ref);
-  attachAll(node,
-            RefId{ref.mFormId},
-            gsl::make_not_null(physicsWorld.get()),
-            entity);
+  oo::attachAll(node,
+                oo::RefId{ref.mFormId},
+                gsl::make_not_null(physicsWorld.get()),
+                entity);
 }
+
+} // namespace oo
 
 #endif // OPENOBLIVION_CELL_RESOLVER_HPP

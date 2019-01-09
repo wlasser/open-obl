@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace oo {
+
 enum class Attribute : uint32_t {
   Strength = 0u,
   Intelligence = 1u,
@@ -13,5 +15,7 @@ enum class Attribute : uint32_t {
   Personality = 6u,
   Luck = 7u
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_ATTRIBUTES_HPP

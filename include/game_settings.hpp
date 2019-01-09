@@ -8,6 +8,8 @@
 #include <fstream>
 #include <mutex>
 
+namespace oo {
+
 class GameSettings {
  private:
   boost::property_tree::ptree tree{};
@@ -144,5 +146,7 @@ class GameSetting {
     return get();
   }
 };
+
+} // namespace oo
 
 #endif //OPENOBLIVION_GAME_SETTINGS_HPP

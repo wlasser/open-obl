@@ -3,25 +3,26 @@
 #include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
 
-template<>
-CiteRecordTrait<record::LIGH>::type
+namespace oo {
+
+template<> oo::CiteRecordTrait<record::LIGH>::type
 citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId) {
   record::REFR_LIGH::Raw rawRefRec{};
-  rawRefRec.baseId = record::NAME(BaseId{baseRec.mFormId});
+  rawRefRec.baseId = record::NAME(oo::BaseId{baseRec.mFormId});
   const record::REFR_LIGH refRec(rawRefRec,
                                  record::RecordFlag::None,
       // TODO: Get a new RefId properly
-                                 static_cast<FormId>(refId ? *refId : RefId{}),
+                                 static_cast<oo::FormId>(refId ? *refId
+                                                               : oo::RefId{}),
                                  0);
   return refRec;
 }
 
-template<>
-ReifyRecordTrait<record::REFR_LIGH>::type
+template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
-            ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
-  const auto &lighRes{std::get<const Resolver<record::LIGH> &>(resolvers)};
+            oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
+  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(resolvers)};
   auto baseRec{lighRes.get(refRec.baseId.data)};
   if (!baseRec) {
     return {ecs::Light{nullptr}, ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
@@ -59,12 +60,14 @@ reifyRecord(const record::REFR_LIGH &refRec,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  Ogre::Entity *mesh{loadMesh(*baseRec, scnMgr)};
-  Ogre::RigidBody *rigidBody{loadRigidBody(mesh, scnMgr)};
+  Ogre::Entity *mesh{oo::loadMesh(*baseRec, scnMgr)};
+  Ogre::RigidBody *rigidBody{oo::loadRigidBody(mesh, scnMgr)};
 
   if (rigidBody) {
-    setRefId(gsl::make_not_null(rigidBody), RefId{refRec.mFormId});
+    setRefId(gsl::make_not_null(rigidBody), oo::RefId{refRec.mFormId});
   }
 
   return {ecs::Light{light}, ecs::RigidBody{rigidBody}, ecs::Mesh{mesh}};
 }
+
+} // namespace oo

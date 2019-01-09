@@ -7,6 +7,8 @@
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
+namespace oo {
+
 void
 releasePlayerController(Cell *cell, oo::PlayerController *playerController) {
   const auto *rigidBody{playerController->getRigidBody()};
@@ -182,3 +184,5 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
     ctx.getLogger()->info("Looking at {}", refUnderCrosshair);
   }
 }
+
+} // namespace oo

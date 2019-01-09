@@ -30,6 +30,8 @@
 #include <memory>
 #include <optional>
 
+namespace oo {
+
 class ApplicationContext {
  private:
   friend class Application;
@@ -67,15 +69,15 @@ class ApplicationContext {
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
 
-  std::unique_ptr<DoorResolver> doorRes{};
-  std::unique_ptr<LighResolver> lighRes{};
-  std::unique_ptr<StatResolver> statRes{};
-  std::unique_ptr<ActiResolver> actiRes{};
-  std::unique_ptr<RefrDoorResolver> refrDoorRes{};
-  std::unique_ptr<RefrLighResolver> refrLighRes{};
-  std::unique_ptr<RefrStatResolver> refrStatRes{};
-  std::unique_ptr<RefrActiResolver> refrActiRes{};
-  std::unique_ptr<CellResolver> cellRes{};
+  std::unique_ptr<oo::DoorResolver> doorRes{};
+  std::unique_ptr<oo::LighResolver> lighRes{};
+  std::unique_ptr<oo::StatResolver> statRes{};
+  std::unique_ptr<oo::ActiResolver> actiRes{};
+  std::unique_ptr<oo::RefrDoorResolver> refrDoorRes{};
+  std::unique_ptr<oo::RefrLighResolver> refrLighRes{};
+  std::unique_ptr<oo::RefrStatResolver> refrStatRes{};
+  std::unique_ptr<oo::RefrActiResolver> refrActiRes{};
+  std::unique_ptr<oo::CellResolver> cellRes{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
 
@@ -96,39 +98,39 @@ class ApplicationContext {
     return imguiMgr.get();
   }
 
-  DoorResolver &getDoorResolver() const {
+  oo::DoorResolver &getDoorResolver() const {
     return *doorRes;
   }
 
-  LighResolver &getLighResolver() const {
+  oo::LighResolver &getLighResolver() const {
     return *lighRes;
   }
 
-  StatResolver &getStatResolver() const {
+  oo::StatResolver &getStatResolver() const {
     return *statRes;
   }
 
-  ActiResolver &getActiResolver() const {
+  oo::ActiResolver &getActiResolver() const {
     return *actiRes;
   }
 
-  RefrDoorResolver &getRefrDoorResolver() const {
+  oo::RefrDoorResolver &getRefrDoorResolver() const {
     return *refrDoorRes;
   }
 
-  RefrLighResolver &getRefrLighResolver() const {
+  oo::RefrLighResolver &getRefrLighResolver() const {
     return *refrLighRes;
   }
 
-  RefrStatResolver &getRefrStatResolver() const {
+  oo::RefrStatResolver &getRefrStatResolver() const {
     return *refrStatRes;
   }
 
-  RefrActiResolver &getRefrActiResolver() const {
+  oo::RefrActiResolver &getRefrActiResolver() const {
     return *refrActiRes;
   }
 
-  CellResolver &getCellResolver() const {
+  oo::CellResolver &getCellResolver() const {
     return *cellRes;
   }
 
@@ -145,5 +147,7 @@ class ApplicationContext {
     ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
   }
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_APPLICATION_CONTEXT_HPP

@@ -1101,7 +1101,7 @@ raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
   return t.read(is);
 }
 
-BaseId peekBaseOfReference(std::istream &is) {
+oo::BaseId peekBaseOfReference(std::istream &is) {
   const auto start{is.tellg()};
   raw::REFRBase refr{};
   readRecordHeader(is);

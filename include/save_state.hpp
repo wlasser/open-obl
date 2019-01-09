@@ -27,7 +27,7 @@ static_assert(sizeof(SystemTime) == 16u);
 class SaveState {
  private:
   struct PCLocation {
-    FormId cell{};
+    oo::FormId cell{};
     // Position in cell in world units
     float x{};
     float y{};
@@ -36,15 +36,15 @@ class SaveState {
   static_assert(sizeof(PCLocation) == 16u);
 
   struct Global : io::byte_direct_ioable_tag {
-    IRef iref{};
+    oo::IRef iref{};
     /// This is broken in the same way as record::GLOB.
     float value{};
   };
   static_assert(sizeof(Global) == 8u);
 
   struct DeathCount {
-    /// IRef to base form
-    IRef mActor{};
+    /// oo::IRef to base form
+    oo::IRef mActor{};
     /// Number of times an instance of this actor has died
     uint16_t mCount{};
     // uint16_t padding;
@@ -125,12 +125,12 @@ class SaveState {
   uint32_t mNumChangeRecords{};
 
   /// Number of next dynamic FormId `0xffxxxxxx`
-  FormId mNextFormId{};
+  oo::FormId mNextFormId{};
 
-  /// FormId of last world space the player was in before saving.
+  /// oo::FormId of last world space the player was in before saving.
   /// If the player is in an interior cell then this is not necessarily the
   /// worldspace the player is currently in.
-  FormId mWorldspaceId{};
+  oo::FormId mWorldspaceId{};
 
   /// Exterior cell grid position of the exterior cell the player is in.
   /// Specifically, the $(x,y)$ components of the record::XCLC of the current
@@ -138,8 +138,8 @@ class SaveState {
   /// not in an exterior cell.
   std::tuple<uint32_t, uint32_t> mWorldPos{};
 
-  /// FormId of the record::CELL the player is currently in.
-  FormId mPCCellId{};
+  /// oo::FormId of the record::CELL the player is currently in.
+  oo::FormId mPCCellId{};
 
   /// $(x,y,z)$ coordinates, in world units, of the player in the current
   /// record::CELL.

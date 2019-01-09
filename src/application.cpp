@@ -32,12 +32,14 @@
 #include <string>
 #include <vector>
 
+namespace oo {
+
 Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
   ctx.logger = spdlog::get(oo::LOG);
 
   loadIniConfiguration();
-  auto &gameSettings = GameSettings::getSingleton();
+  auto &gameSettings = oo::GameSettings::getSingleton();
 
   auto &&[ogreRoot, overlaySys] = createOgreRoot();
   ctx.ogreRoot = std::move(ogreRoot);
@@ -72,16 +74,16 @@ Application::Application(std::string windowName) : FrameListener() {
   Ogre::Codec::registerCodec(ctx.texImageCodec.get());
 
   // Create the engine managers
-  ctx.doorRes = std::make_unique<DoorResolver>();
-  ctx.lighRes = std::make_unique<LighResolver>();
-  ctx.statRes = std::make_unique<StatResolver>();
-  ctx.actiRes = std::make_unique<ActiResolver>();
-  ctx.refrDoorRes = std::make_unique<RefrDoorResolver>();
-  ctx.refrLighRes = std::make_unique<RefrLighResolver>();
-  ctx.refrStatRes = std::make_unique<RefrStatResolver>();
-  ctx.refrActiRes = std::make_unique<RefrActiResolver>();
+  ctx.doorRes = std::make_unique<oo::DoorResolver>();
+  ctx.lighRes = std::make_unique<oo::LighResolver>();
+  ctx.statRes = std::make_unique<oo::StatResolver>();
+  ctx.actiRes = std::make_unique<oo::ActiResolver>();
+  ctx.refrDoorRes = std::make_unique<oo::RefrDoorResolver>();
+  ctx.refrLighRes = std::make_unique<oo::RefrLighResolver>();
+  ctx.refrStatRes = std::make_unique<oo::RefrStatResolver>();
+  ctx.refrActiRes = std::make_unique<oo::RefrActiResolver>();
 
-  ctx.cellRes = std::make_unique<CellResolver>(*ctx.bulletConf);
+  ctx.cellRes = std::make_unique<oo::CellResolver>(*ctx.bulletConf);
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
@@ -151,7 +153,7 @@ Application::Application(std::string windowName) : FrameListener() {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }
 
-  modeStack.emplace_back(std::in_place_type<GameMode>, ctx);
+  modeStack.emplace_back(std::in_place_type<oo::GameMode>, ctx);
   std::visit([this](auto &&state) {
     state.enter(ctx);
   }, modeStack.back());
@@ -243,7 +245,7 @@ Application::createOgreRoot() {
 
 std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
 Application::createWindow(const std::string &windowName) {
-  const auto &gameSettings{GameSettings::getSingleton()};
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
   auto logger{spdlog::get(oo::LOG)};
 
   // Grab the window dimensions
@@ -465,3 +467,5 @@ bool Application::frameRenderingQueued(const Ogre::FrameEvent &/*event*/) {
 bool Application::frameEnded(const Ogre::FrameEvent &/*event*/) {
   return true;
 }
+
+} // namespace oo

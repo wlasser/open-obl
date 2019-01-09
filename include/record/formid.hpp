@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <string>
 
+namespace oo {
+
 // Every record in the game belongs to either the set of all *base records*, or
 // the set of all *reference records*. A base record represents the abstract
 // concept of a particular thing, and acts as a prototype for the construction
@@ -43,21 +45,25 @@ FormId decodeFormId(void *ptr) noexcept;
 class BaseId;
 class RefId;
 
+} // namespace oo
+
 namespace io {
 
 template<>
-struct BinaryIo<BaseId> {
-  static void writeBytes(std::ostream &os, const BaseId &data);
-  static void readBytes(std::istream &is, BaseId &data);
+struct BinaryIo<oo::BaseId> {
+  static void writeBytes(std::ostream &os, const oo::BaseId &data);
+  static void readBytes(std::istream &is, oo::BaseId &data);
 };
 
 template<>
-struct BinaryIo<RefId> {
-  static void writeBytes(std::ostream &os, const RefId &data);
-  static void readBytes(std::istream &is, RefId &data);
+struct BinaryIo<oo::RefId> {
+  static void writeBytes(std::ostream &os, const oo::RefId &data);
+  static void readBytes(std::istream &is, oo::RefId &data);
 };
 
-}
+} // namespace io
+
+namespace oo {
 
 class BaseId {
  public:
@@ -125,19 +131,21 @@ inline bool operator!=(const RefId &lhs, const RefId &rhs) {
   return !(lhs == rhs);
 }
 
+} // namespace oo
+
 namespace std {
 
 template<>
-struct hash<BaseId> {
-  size_t operator()(const BaseId &id) const {
-    return hash<FormId>{}(static_cast<FormId>(id));
+struct hash<oo::BaseId> {
+  size_t operator()(const oo::BaseId &id) const {
+    return hash<oo::FormId>{}(static_cast<oo::FormId>(id));
   }
 };
 
 template<>
-struct hash<RefId> {
-  size_t operator()(const RefId &id) const {
-    return hash<FormId>{}(static_cast<FormId>(id));
+struct hash<oo::RefId> {
+  size_t operator()(const oo::RefId &id) const {
+    return hash<oo::FormId>{}(static_cast<oo::FormId>(id));
   }
 };
 

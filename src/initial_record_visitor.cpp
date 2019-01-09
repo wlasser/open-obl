@@ -8,28 +8,30 @@
 #include "record/records.hpp"
 #include <cctype>
 
+namespace oo {
+
 template<>
 void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::ACTI>().value};
-  actiRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  actiRes->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::STAT>().value};
-  statRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  statRes->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::DOOR>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::DOOR>().value};
-  doorRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  doorRes->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::LIGH>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::LIGH>().value};
-  lighRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, rec);
+  lighRes->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>
@@ -43,13 +45,13 @@ void InitialRecordVisitor::readRecord<record::MISC>(oo::EspAccessor &accessor) {
                        rec.mRecordFlags,
                        rec.mFormId,
                        rec.mVersionControlInfo);
-  statRes->insertOrAssignEspRecord(BaseId{rec.mFormId}, statRec);
+  statRes->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, statRec);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::CELL>().value};
-  const BaseId baseId{rec.mFormId};
+  const oo::BaseId baseId{rec.mFormId};
   cellRes->insertOrAppend(baseId, rec, accessor);
   // Children will be loaded later, so if this cell has any then skip over them
   if (accessor.peekGroupType() == record::Group::GroupType::CellChildren) {
@@ -62,3 +64,5 @@ void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::GMST>().value};
   GameSettings::getSingleton().load(rec, true);
 }
+
+} // namespace oo

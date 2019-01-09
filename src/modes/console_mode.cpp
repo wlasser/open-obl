@@ -3,6 +3,8 @@
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 
+namespace oo {
+
 int ConsoleMode::textEditCallback(gsl::not_null<ImGuiInputTextCallbackData *> data) {
   switch (data->EventFlag) {
     case ImGuiInputTextFlags_CallbackCompletion: {
@@ -132,3 +134,5 @@ int ConsoleMode::handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData 
 int ConsoleMode::handleInputHistory(gsl::not_null<ImGuiInputTextCallbackData *> /*data*/) {
   return 0;
 }
+
+} // namespace oo

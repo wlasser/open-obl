@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+namespace oo {
+
 // Numbers specified for easy referencing
 enum class ActorValue : uint32_t {
   Strength = 0,
@@ -111,5 +113,7 @@ enum class SkillIndex : int8_t {
   Sneak = 19,
   Speechcraft = 20
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_ACTOR_VALUE_HPP

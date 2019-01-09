@@ -1,8 +1,10 @@
 #include "resolvers/helpers.hpp"
 #include <OgreMesh.h>
 
-Ogre::RigidBody *
-loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr) {
+namespace oo {
+
+Ogre::RigidBody *loadRigidBody(Ogre::Entity *entity,
+                               gsl::not_null<Ogre::SceneManager *> mgr) {
   if (!entity) return nullptr;
   const auto &mesh{entity->getMesh()};
   if (!mesh) return nullptr;
@@ -56,7 +58,9 @@ attachLight(gsl::not_null<Ogre::SceneNode *> node,
   return final ? node : gsl::make_not_null(node->createChildSceneNode());
 }
 
-void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId) {
-  auto formId{static_cast<FormId>(refId)};
-  rigidBody->getRigidBody()->setUserPointer(encodeFormId(formId));
+void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, oo::RefId refId) {
+  auto formId{static_cast<oo::FormId>(refId)};
+  rigidBody->getRigidBody()->setUserPointer(oo::encodeFormId(formId));
 }
+
+} // namespace oo

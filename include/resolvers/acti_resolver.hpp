@@ -6,6 +6,8 @@
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>
 
+namespace oo {
+
 using ActiResolver = Resolver<record::ACTI>;
 using RefrActiResolver = Resolver<record::REFR_ACTI, RefId>;
 
@@ -25,5 +27,7 @@ template<> ReifyRecordTrait<record::REFR_ACTI>::type
 reifyRecord(const record::REFR_ACTI &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers);
+
+} // namespace oo
 
 #endif // OPENOBLIVION_ACTI_RESOLVER_HPP

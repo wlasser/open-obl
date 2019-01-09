@@ -253,7 +253,7 @@ using REFR_STAT = Record<raw::REFR_STAT, "REFR"_rec>;
 /// TODO: Explain this.
 using REFR = Record<std::tuple<>, "REFR"_rec>;
 
-BaseId peekBaseOfReference(std::istream &is);
+oo::BaseId peekBaseOfReference(std::istream &is);
 
 } // namespace record
 

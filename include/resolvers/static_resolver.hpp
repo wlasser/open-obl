@@ -11,6 +11,8 @@
 #include <optional>
 #include <string>
 
+namespace oo {
+
 using StatResolver = Resolver<record::STAT>;
 using RefrStatResolver = Resolver<record::REFR_STAT, RefId>;
 
@@ -34,5 +36,7 @@ ReifyRecordTrait<record::REFR_STAT>::type
 reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers);
+
+} // namespace oo
 
 #endif // OPENOBLIVION_STATIC_RESOLVER_HPP

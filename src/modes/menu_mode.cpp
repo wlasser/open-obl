@@ -2,6 +2,8 @@
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
+namespace oo {
+
 std::optional<gui::MenuContext> MenuMode::loadMenu(gui::MenuType type) {
   const auto loadWithStrings = [](const std::string &filename) {
     return gui::loadMenu(filename, "menus/strings.xml");
@@ -221,3 +223,5 @@ void MenuMode::update(ApplicationContext &/*ctx*/, float delta) {
 
   mMenuCtx->clearEvents();
 }
+
+} // namespace oo

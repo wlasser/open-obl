@@ -3,10 +3,12 @@
 #include "resolvers/cell_resolver.hpp"
 #include <Ogre.h>
 
-std::pair<Resolver<record::CELL>::RecordIterator, bool>
-Resolver<record::CELL>::insertOrAppend(BaseId baseId,
-                                       const record::CELL &rec,
-                                       oo::EspAccessor accessor) {
+namespace oo {
+
+std::pair<oo::Resolver<record::CELL>::RecordIterator, bool>
+oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
+                                           const record::CELL &rec,
+                                           oo::EspAccessor accessor) {
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
   Metadata meta{0, {accessor}, {}};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
@@ -20,12 +22,12 @@ Resolver<record::CELL>::insertOrAppend(BaseId baseId,
 }
 
 const bullet::Configuration &
-Resolver<record::CELL>::getBulletConfiguration() const {
+oo::Resolver<record::CELL>::getBulletConfiguration() const {
   return mBulletConf;
 }
 
 tl::optional<const record::CELL &>
-Resolver<record::CELL>::get(BaseId baseId) const {
+oo::Resolver<record::CELL>::get(oo::BaseId baseId) const {
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const auto &entry{it->second.first};
@@ -34,7 +36,7 @@ Resolver<record::CELL>::get(BaseId baseId) const {
 }
 
 tl::optional<record::CELL &>
-Resolver<record::CELL>::get(BaseId baseId) {
+oo::Resolver<record::CELL>::get(oo::BaseId baseId) {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   auto &entry{it->second.first};
@@ -43,25 +45,26 @@ Resolver<record::CELL>::get(BaseId baseId) {
   return *entry.second;
 }
 
-void Resolver<record::CELL>::setDetachTime(BaseId baseId, int detachTime) {
+void
+oo::Resolver<record::CELL>::setDetachTime(oo::BaseId baseId, int detachTime) {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   it->second.second.mDetachTime = detachTime;
 }
 
-int Resolver<record::CELL>::getDetachTime(BaseId baseId) const {
+int oo::Resolver<record::CELL>::getDetachTime(oo::BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return 0;
   return it->second.second.mDetachTime;
 }
 
-bool Resolver<record::CELL>::contains(BaseId baseId) const {
+bool oo::Resolver<record::CELL>::contains(oo::BaseId baseId) const {
   return mRecords.find(baseId) != mRecords.end();
 }
 
-void Resolver<record::CELL>::load(BaseId baseId,
-                                  RefrResolverContext refrCtx,
-                                  BaseResolverContext baseCtx) {
+void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
+                                      RefrResolverContext refrCtx,
+                                      BaseResolverContext baseCtx) {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   auto &meta{it->second.second};
@@ -75,41 +78,43 @@ void Resolver<record::CELL>::load(BaseId baseId,
 }
 
 tl::optional<const absl::flat_hash_set<RefId> &>
-Resolver<record::CELL>::getReferences(BaseId baseId) const {
+oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mReferences;
 }
 
 template<> void
-Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
+oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
-  const auto &statRes{std::get<const Resolver<record::STAT> &>(mBaseCtx)};
-  const auto &doorRes{std::get<const Resolver<record::DOOR> &>(mBaseCtx)};
-  const auto &lighRes{std::get<const Resolver<record::LIGH> &>(mBaseCtx)};
-  const auto &actiRes{std::get<const Resolver<record::ACTI> &>(mBaseCtx)};
+  const auto &statRes{std::get<const oo::Resolver<record::STAT> &>(mBaseCtx)};
+  const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(mBaseCtx)};
+  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(mBaseCtx)};
+  const auto &actiRes{std::get<const oo::Resolver<record::ACTI> &>(mBaseCtx)};
 
-  auto &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(mRefrCtx)};
-  auto &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(mRefrCtx)};
-  auto &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(mRefrCtx)};
-  auto &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(mRefrCtx)};
+  //@formatter:off
+  auto &refrStatRes{std::get<oo::Resolver<record::REFR_STAT, oo::RefId> &>(mRefrCtx)};
+  auto &refrDoorRes{std::get<oo::Resolver<record::REFR_DOOR, oo::RefId> &>(mRefrCtx)};
+  auto &refrLighRes{std::get<oo::Resolver<record::REFR_LIGH, oo::RefId> &>(mRefrCtx)};
+  auto &refrActiRes{std::get<oo::Resolver<record::REFR_ACTI, oo::RefId> &>(mRefrCtx)};
+  //@formatter:on
 
   if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
-    refrStatRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
+    refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
-    refrDoorRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
+    refrDoorRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else if (lighRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
-    refrLighRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
+    refrLighRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else if (actiRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
-    refrActiRes.insertOrAssignEspRecord(RefId{ref.mFormId}, ref);
+    refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
   } else {
     accessor.skipRecord();
   }
@@ -125,14 +130,14 @@ Cell::~Cell() {
   if (root) root->destroySceneManager(scnMgr);
 }
 
-ReifyRecordTrait<record::CELL>::type
+oo::ReifyRecordTrait<record::CELL>::type
 reifyRecord(const record::CELL &refRec,
-            ReifyRecordTrait<record::CELL>::resolvers resolvers) {
-  const auto &cellRes{std::get<const Resolver<record::CELL> &>(resolvers)};
+            oo::ReifyRecordTrait<record::CELL>::resolvers resolvers) {
+  const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
 
-  auto cell{std::make_shared<Cell>(BaseId{refRec.mFormId},
-                                   bulletConf.makeDynamicsWorld())};
+  auto cell{std::make_shared<oo::Cell>(oo::BaseId{refRec.mFormId},
+                                       bulletConf.makeDynamicsWorld())};
 
   cell->name = (refRec.name ? refRec.name->data : "");
 
@@ -149,15 +154,15 @@ reifyRecord(const record::CELL &refRec,
   const auto refs{cellRes.getReferences(BaseId{refRec.mFormId})};
   if (!refs) return cell;
 
-  const auto &statRes{std::get<const Resolver<record::STAT> &>(resolvers)};
-  const auto &doorRes{std::get<const Resolver<record::DOOR> &>(resolvers)};
-  const auto &lighRes{std::get<const Resolver<record::LIGH> &>(resolvers)};
-  const auto &actiRes{std::get<const Resolver<record::ACTI> &>(resolvers)};
+  const auto &statRes{std::get<const oo::Resolver<record::STAT> &>(resolvers)};
+  const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(resolvers)};
+  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(resolvers)};
+  const auto &actiRes{std::get<const oo::Resolver<record::ACTI> &>(resolvers)};
   //@formatter:off
-  const auto &refrStatRes{std::get<Resolver<record::REFR_STAT, RefId> &>(resolvers)};
-  const auto &refrDoorRes{std::get<Resolver<record::REFR_DOOR, RefId> &>(resolvers)};
-  const auto &refrLighRes{std::get<Resolver<record::REFR_LIGH, RefId> &>(resolvers)};
-  const auto &refrActiRes{std::get<Resolver<record::REFR_ACTI, RefId> &>(resolvers)};
+  const auto &refrStatRes{std::get<oo::Resolver<record::REFR_STAT, oo::RefId> &>(resolvers)};
+  const auto &refrDoorRes{std::get<oo::Resolver<record::REFR_DOOR, oo::RefId> &>(resolvers)};
+  const auto &refrLighRes{std::get<oo::Resolver<record::REFR_LIGH, oo::RefId> &>(resolvers)};
+  const auto &refrActiRes{std::get<oo::Resolver<record::REFR_ACTI, oo::RefId> &>(resolvers)};
   //@formatter:on
 
   Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
@@ -202,3 +207,5 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 }
+
+} // namespace oo

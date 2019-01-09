@@ -9,6 +9,8 @@
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
 
+namespace oo {
+
 /// Stores all base records of a given type and grants access via their BaseId.
 /// \tparam R A record::Record. Specifically, the expression
 ///           `std::is_same_v<R, record::Record<R::Raw, R::RecordType>` must
@@ -223,5 +225,7 @@ template<class R, class IdType>
 bool Resolver<R, IdType>::insert(IdType baseId, const R &rec) {
   return mRecords.try_emplace(baseId, std::in_place_index<1>, rec).second;
 }
+
+} // namespace oo
 
 #endif // OPENOBLIVION_RESOLVERS_HPP

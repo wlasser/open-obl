@@ -12,7 +12,9 @@
 #include <string>
 #include <vector>
 
-using ModeVariant = std::variant<GameMode, ConsoleMode, MenuMode>;
+namespace oo {
+
+using ModeVariant = std::variant<oo::GameMode, oo::ConsoleMode, oo::MenuMode>;
 
 class Application : public Ogre::FrameListener {
  private:
@@ -20,7 +22,7 @@ class Application : public Ogre::FrameListener {
   std::unique_ptr<Ogre::LogListener> ogreLogListener{};
 
   ApplicationContext ctx{};
-  std::vector<ModeVariant> modeStack{};
+  std::vector<oo::ModeVariant> modeStack{};
 
   /// Set up the logger.
   /// Ogre's logging facilities are pretty good but fall down when it comes to
@@ -147,5 +149,7 @@ class Application : public Ogre::FrameListener {
   bool frameRenderingQueued(const Ogre::FrameEvent &event) override;
   bool frameEnded(const Ogre::FrameEvent &event) override;
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_APPLICATION_HPP

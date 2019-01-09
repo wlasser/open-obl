@@ -14,11 +14,11 @@
 
 namespace record {
 
-inline std::size_t SizeOf(const BaseId &t) {
+inline std::size_t SizeOf(const oo::BaseId &t) {
   return sizeof(t);
 }
 
-inline std::size_t SizeOf(const RefId &t) {
+inline std::size_t SizeOf(const oo::RefId &t) {
   return sizeof(t);
 }
 

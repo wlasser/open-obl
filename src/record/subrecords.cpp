@@ -82,7 +82,7 @@ std::istream &raw::read(std::istream &is, raw::XRGD &t, std::size_t size) {
 // XLOC specicalization
 template<>
 uint16_t XLOC::size() const {
-  return 4u + sizeof(FormId) + 4u;
+  return 4u + sizeof(oo::FormId) + 4u;
 }
 
 template<>
@@ -107,7 +107,7 @@ std::istream &raw::read(std::istream &is, raw::XLOC &t, std::size_t size) {
 // XESP specialization
 template<>
 uint16_t XESP::size() const {
-  return sizeof(FormId) + sizeof(raw::XESP::Flag);
+  return sizeof(oo::FormId) + sizeof(raw::XESP::Flag);
 }
 
 template<>
@@ -128,7 +128,7 @@ std::istream &raw::read(std::istream &is, raw::XESP &t, std::size_t /*size*/) {
 // XCLR specialization
 template<>
 uint16_t XCLR::size() const {
-  return sizeof(FormId) * data.regions.size();
+  return sizeof(oo::FormId) * data.regions.size();
 }
 
 template<>
@@ -142,7 +142,7 @@ raw::write(std::ostream &os, const raw::XCLR &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::XCLR &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormId);
+  const std::size_t length = size / sizeof(oo::FormId);
   io::readBytes(is, t.regions, length);
   return is;
 }
@@ -174,7 +174,7 @@ raw::read(std::istream &is, raw::HNAM_LTEX &t, std::size_t /*size*/) {
 // HNAM specialization
 template<>
 uint16_t HNAM::size() const {
-  return data.hair.size() * sizeof(FormId);
+  return data.hair.size() * sizeof(oo::FormId);
 }
 
 template<>
@@ -188,7 +188,7 @@ raw::write(std::ostream &os, const raw::HNAM &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::HNAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormId);
+  const std::size_t length = size / sizeof(oo::FormId);
   io::readBytes(is, t.hair, length);
   return is;
 }
@@ -196,7 +196,7 @@ std::istream &raw::read(std::istream &is, raw::HNAM &t, std::size_t size) {
 // ENAM specialization
 template<>
 uint16_t ENAM::size() const {
-  return data.eyes.size() * sizeof(FormId);
+  return data.eyes.size() * sizeof(oo::FormId);
 }
 
 template<>
@@ -210,7 +210,7 @@ raw::write(std::ostream &os, const raw::ENAM &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ENAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(FormId);
+  const std::size_t length = size / sizeof(oo::FormId);
   io::readBytes(is, t.eyes, length);
   return is;
 }
@@ -218,7 +218,7 @@ std::istream &raw::read(std::istream &is, raw::ENAM &t, std::size_t size) {
 // ESCE specialization
 template<>
 uint16_t ESCE::size() const {
-  return data.effects.size() * sizeof(EffectId);
+  return data.effects.size() * sizeof(oo::EffectId);
 }
 
 template<>
@@ -232,7 +232,7 @@ raw::write(std::ostream &os, const raw::ESCE &t, std::size_t /*size*/) {
 
 template<>
 std::istream &raw::read(std::istream &is, raw::ESCE &t, std::size_t size) {
-  const std::size_t length = size / sizeof(EffectId);
+  const std::size_t length = size / sizeof(oo::EffectId);
   io::readBytes(is, t.effects, length);
   return is;
 }
@@ -303,9 +303,9 @@ std::istream &raw::read(std::istream &is, raw::SNDX &t, std::size_t size) {
 // DATA_MGEF specialization
 template<>
 uint16_t DATA_MGEF::size() const {
-  return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(MagicSchool)
-      + sizeof(ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
-      + 7u * sizeof(FormId);
+  return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(oo::MagicSchool)
+      + sizeof(oo::ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
+      + 7u * sizeof(oo::FormId);
 }
 
 template<>
@@ -363,7 +363,7 @@ raw::read(std::istream &is, raw::DATA_MGEF &t, std::size_t size) {
 // DATA_RACE specialization
 template<>
 uint16_t DATA_RACE::size() const {
-  return sizeof(ActorValue) * 1u * data.skillModifiers.size() + 2u * 1u
+  return sizeof(oo::ActorValue) * 1u * data.skillModifiers.size() + 2u * 1u
       + 4u * 4u + 4u;
 }
 
@@ -371,7 +371,7 @@ template<>
 std::ostream &
 raw::write(std::ostream &os, const raw::DATA_RACE &t, std::size_t /*size*/) {
   for (const auto &pair : t.skillModifiers) {
-    // Despite being an ActorValue, only the first byte is used
+    // Despite being an oo::ActorValue, only the first byte is used
     auto av = static_cast<uint8_t>(pair.first);
     io::writeBytes(os, av);
     io::writeBytes(os, pair.second);
@@ -404,7 +404,8 @@ std::istream &raw::read(std::istream &is, raw::DATA_RACE &t, std::size_t size) {
   for (auto i = 0u; i < numModifiers; ++i) {
     std::pair<uint8_t, int8_t> p{};
     io::readBytes(is, p);
-    t.skillModifiers.emplace_back(static_cast<ActorValue>(p.first), p.second);
+    t.skillModifiers.emplace_back(static_cast<oo::ActorValue>(p.first),
+                                  p.second);
   }
   io::readBytes(is, t.unused);
   io::readBytes(is, t.heightMale);
@@ -668,7 +669,7 @@ raw::read(std::istream &is, raw::ENIT_ENCH &t, std::size_t /*size*/) {
 // EFIT specialization
 template<>
 uint16_t EFIT::size() const {
-  return 5u * 4u + sizeof(ActorValue);
+  return 5u * 4u + sizeof(oo::ActorValue);
 }
 
 template<>
@@ -699,7 +700,7 @@ std::istream &raw::read(std::istream &is, raw::EFIT &t, std::size_t /*size*/) {
 // SCIT specialization
 template<>
 uint16_t SCIT::size() const {
-  return sizeof(FormId) + sizeof(MagicSchool) + 8u;
+  return sizeof(oo::FormId) + sizeof(oo::MagicSchool) + 8u;
 }
 
 template<>

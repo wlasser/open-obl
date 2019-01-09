@@ -37,11 +37,11 @@ union Color {
 };
 
 // Sound to play for a door closing
-using ANAM_DOOR = BaseId;
+using ANAM_DOOR = oo::BaseId;
 // Apprentice skill text
 using ANAM_SKIL = std::string;
 // Loop sound for a door
-using BNAM_DOOR = BaseId;
+using BNAM_DOOR = oo::BaseId;
 // Crime gold multiplier for a faction
 using CNAM_FACT = float;
 // Default hair colour
@@ -58,7 +58,7 @@ using DESC = std::string;
 // Editor Id
 using EDID = std::string;
 // Magic effect Id
-using EFID = EffectId;
+using EFID = oo::EffectId;
 // Expert skill text
 using ENAM_SKIL = std::string;
 // Facegen geometry (symmetric)
@@ -86,13 +86,13 @@ using FNAM_SOUN = std::string;
 // Name
 using FULL = std::string;
 // Possible grass on a landscape texture
-using GNAM = BaseId;
+using GNAM = oo::BaseId;
 // Icon filename
 using ICON = std::string;
 // Faction rank insignia icon filename. Why not use ICON?
 using INAM = std::string;
-// Skill index for SKIL. Uses ActorValue not SkillIndex, for some reason.
-using INDX_SKIL = ActorValue;
+// Skill index for SKIL. Uses oo::ActorValue not oo::SkillIndex, for some reason.
+using INDX_SKIL = oo::ActorValue;
 // Journeyman skill text
 using JNAM_SKIL = std::string;
 // ESM files used by the ESP, in load order
@@ -111,7 +111,7 @@ using MODL = std::string;
 using NAM0 = std::tuple<>;
 using NAM1 = std::tuple<>;
 // Base object formid
-using NAME = BaseId;
+using NAME = oo::BaseId;
 // Open by default. Its presence implies true.
 using ONAM = std::tuple<>;
 // Facegen main clamp
@@ -119,28 +119,28 @@ using PNAM = float;
 // Rank index in a faction
 using RNAM = uint32_t;
 // Item script
-using SCRI = BaseId;
+using SCRI = oo::BaseId;
 // ESM/ESP description. Also max 512 bytes
 using SNAM = std::string;
 // Sound to play for an activator
-using SNAM_ACTI = BaseId;
+using SNAM_ACTI = oo::BaseId;
 // Sound to play for a door opening
-using SNAM_DOOR = BaseId;
+using SNAM_DOOR = oo::BaseId;
 // Sound to play for a light
-using SNAM_LIGH = BaseId;
+using SNAM_LIGH = oo::BaseId;
 // Landscape texture specular
 using SNAM_LTEX = uint8_t;
 // Body data, unused?
 using SNAM_RACE = std::array<uint8_t, 2>;
 // Door random teleport location. Either a CELL or WRLD.
-using TNAM_DOOR = BaseId;
+using TNAM_DOOR = oo::BaseId;
 // Greater/lesser powers and racial abilities
-using SPLO = BaseId;
+using SPLO = oo::BaseId;
 // Facegen face clamp
 using UNAM = float;
 // The climate of a cell, if it is exterior or an interior cell with the
 // BehaveLikeExterior flag set.
-using XCCM = BaseId;
+using XCCM = oo::BaseId;
 // Enchanted weapon charge
 using XCHG = float;
 // The water height in a cell
@@ -148,9 +148,9 @@ using XCLW = float;
 // Number of copies of an item
 using XCNT = int32_t;
 // The water in a cell
-using XCWT = BaseId;
+using XCWT = oo::BaseId;
 // If a cell is owned, disable ownership while this global variable is true.
-using XGLB = BaseId;
+using XGLB = oo::BaseId;
 // Placed armor or weapon health. This is displayed and editable as a float
 // in the construction set, but is only saved as an integer.
 using XHLT = int32_t;
@@ -161,18 +161,18 @@ using XLOD = std::array<float, 3>;
 // Denotes the reference as a marker?
 using XMRK = std::tuple<>;
 // Cell owner
-using XOWN = BaseId;
+using XOWN = oo::BaseId;
 // Cell formid, only used in testing cells, associated to XMarkers.
-using XPCI = BaseId;
+using XPCI = oo::BaseId;
 // If a cell is owned, and the owner is a faction, the rank in that faction.
 using XRNK = uint32_t;
 // Reference to a door with a random teleport target which can use this door as
 // an output.
-using XRTM = RefId;
+using XRTM = oo::RefId;
 // Uniform scaling factor for placed references
 using XSCL = float;
 // Target reference
-using XTRG = RefId;
+using XTRG = oo::RefId;
 
 // Cell flags
 struct DATA_CELL : Bitflag<8, DATA_CELL> {
@@ -319,14 +319,14 @@ struct DATA_CLAS {
     static constexpr enum_t Recharge{1u << 16u};
     static constexpr enum_t Repair{1u << 17u};
   };
-  std::array<ActorValue, 2> primaryAttributes{};
-  Specialization specialization{};
-  std::array<ActorValue, 7> majorSkills{};
+  std::array<oo::ActorValue, 2> primaryAttributes{};
+  oo::Specialization specialization{};
+  std::array<oo::ActorValue, 7> majorSkills{};
   Flag playableFlag{Flag::make(Flag::None)};
   BarterFlag barterFlag{BarterFlag::make(BarterFlag::None)};
   // If false the next three variables are not present
   bool hasTrainingInfo = false;
-  SkillIndex skillTrained = SkillIndex::None;
+  oo::SkillIndex skillTrained = oo::SkillIndex::None;
   uint8_t maxTrainingLevel = 0u;
   std::array<uint8_t, 2> unused{};
 };
@@ -402,35 +402,35 @@ struct DATA_MGEF {
     static constexpr enum_t FogProjectile{1u << 22u};
     static constexpr enum_t NoHitEffect{1u << 23u};
   };
-  // For summon spells, the BaseId of the summoned weapon, armor, or creature.
-  // Otherwise, the ActorValue affected by the spell.
+  // For summon spells, the oo::BaseId of the summoned weapon, armor, or
+  // creature. Otherwise, the oo::ActorValue affected by the spell.
   // TODO: std::variant
-  using AssociatedObject = std::variant<BaseId /*summonedBaseId*/,
-                                        ActorValue /*affectedActorValue*/>;
+  using AssociatedObject = std::variant<oo::BaseId /*summonedBaseId*/,
+                                        oo::ActorValue /*affectedActorValue*/>;
   Flag flags{Flag::make(Flag::None)};
   float baseCost = 0.0f;
   AssociatedObject associatedObject{};
-  MagicSchool school{};
+  oo::MagicSchool school{};
   // Resist magic always applies to Flag::Touch and Flag::Target, after this.
   // Seems to be 0xFFFFFFFF if no resist.
-  ActorValue resist{};
+  oo::ActorValue resist{};
   // The number of strings in the ESCE subrecord of the parent MGEF record
   uint16_t esceLength = 0;
   // Unknown. Probably unused, there is a lot of 0xCDCD which is used for
   // uninitialized heap memory on Windows, and often it is just 0.
   uint16_t unused = 0;
   // No light is saved as 0
-  BaseId light{};
+  oo::BaseId light{};
   float projectileSpeed = 0.0f;
-  BaseId effectShader{};
+  oo::BaseId effectShader{};
   // The remaining values are present for every effect except Darkness, which
   // omits them all. Instead of making them optional, resort to the default
   // values if they are not present.
-  BaseId enchantEffect{};
-  BaseId castingSound{};
-  BaseId boltSound{};
-  BaseId hitSound{};
-  BaseId areaSound{};
+  oo::BaseId enchantEffect{};
+  oo::BaseId castingSound{};
+  oo::BaseId boltSound{};
+  oo::BaseId hitSound{};
+  oo::BaseId areaSound{};
   // Multiplies the magnitude of an enchantment
   float constantEffectEnchantmentFactor = 1.0f;
   // Multiplies the cost of an enchanted item
@@ -442,10 +442,10 @@ struct DATA_RACE {
     static constexpr enum_t None{0u};
     static constexpr enum_t Playable{1u};
   };
-  // The ActorValue is saved as a uint8_t, not a uint32_t like it usually is.
+  // The oo::ActorValue is saved as a uint8_t, not a uint32_t like usual.
   // The CS enforces that there are seven skill modifiers, but allows any number
   // of them to be `NONE`. Such entries are not written to the record.
-  std::vector<std::pair<ActorValue, int8_t>> skillModifiers{};
+  std::vector<std::pair<oo::ActorValue, int8_t>> skillModifiers{};
   // Padding?
   std::array<uint8_t, 2> unused{};
   float heightMale = 0.0f;
@@ -466,15 +466,15 @@ struct DATA_REFR : Tuplifiable<float, float, float, float, float, float> {
   MAKE_AS_TUPLE(&x, &y, &z, &aX, &aY, &aZ);
 };
 
-struct DATA_SKIL : Tuplifiable<ActorValue,
-                               Attribute,
-                               Specialization,
+struct DATA_SKIL : Tuplifiable<oo::ActorValue,
+                               oo::Attribute,
+                               oo::Specialization,
                                std::pair<float, float>> {
   // Which skill trains this skill. Should agree with the index of the parent
-  // SKIL record. Not a SkillIndex, for reasons.
-  ActorValue index{};
-  Attribute attribute{};
-  Specialization specialization{};
+  // SKIL record. Not a oo::SkillIndex, for reasons.
+  oo::ActorValue index{};
+  oo::Attribute attribute{};
+  oo::Specialization specialization{};
   // Each skill has one or two actions associated to it, which when performed
   // grant experience points for that skill. Sometimes, if only one action is
   // possible then the first value is zero and the second is nonzero. Sometimes,
@@ -489,9 +489,9 @@ struct DELE {
 };
 
 // Default hair
-struct DNAM : Tuplifiable<BaseId, BaseId> {
-  BaseId m{};
-  BaseId f{};
+struct DNAM : Tuplifiable<oo::BaseId, oo::BaseId> {
+  oo::BaseId m{};
+  oo::BaseId f{};
   MAKE_AS_TUPLE(&m, &f)
 };
 
@@ -502,18 +502,18 @@ struct EFIT {
     Touch = 1u,
     Target = 2u
   };
-  EffectId efid{};
+  oo::EffectId efid{};
   uint32_t magnitude = 0;
   uint32_t area = 0;
   uint32_t duration = 0;
   Type type = Type::Self;
   // Actor value index for attribute or skill effect
-  ActorValue avIndex{};
+  oo::ActorValue avIndex{};
 };
 
 // Eyes
 struct ENAM {
-  std::vector<BaseId> eyes;
+  std::vector<oo::BaseId> eyes;
 };
 
 // Potion and ingredient value
@@ -548,7 +548,7 @@ struct ENIT_ENCH {
 
 // Counter effects for magic effects
 struct ESCE {
-  std::vector<EffectId> effects;
+  std::vector<oo::EffectId> effects;
 };
 
 // ESM/ESP header
@@ -563,7 +563,7 @@ struct HEDR : Tuplifiable<float, int32_t, uint32_t> {
 
 // Hair
 struct HNAM {
-  std::vector<BaseId> hair;
+  std::vector<oo::BaseId> hair;
 };
 
 // Havok data for land materials
@@ -627,9 +627,9 @@ struct SCIT {
     static constexpr enum_t None{0u};
     static constexpr enum_t Hostile{1u};
   };
-  BaseId id{};
-  MagicSchool school{};
-  EffectId visualEffect{};
+  oo::BaseId id{};
+  oo::MagicSchool school{};
+  oo::EffectId visualEffect{};
   Flag flags{Flag::make(Flag::None)};
   // Unused
   std::array<uint8_t, 3> unused{};
@@ -705,9 +705,9 @@ struct SPIT {
 };
 
 // Race determining voice
-struct VNAM : Tuplifiable<BaseId, BaseId> {
-  BaseId m{};
-  BaseId f{};
+struct VNAM : Tuplifiable<oo::BaseId, oo::BaseId> {
+  oo::BaseId m{};
+  oo::BaseId f{};
   MAKE_AS_TUPLE(&m, &f)
 };
 
@@ -736,7 +736,7 @@ struct XCLL : Tuplifiable<Color, Color, Color, float, float, uint32_t, uint32_t,
 
 // The regions containing the cell
 struct XCLR {
-  std::vector<BaseId> regions;
+  std::vector<oo::BaseId> regions;
 };
 
 struct XESP {
@@ -744,7 +744,7 @@ struct XESP {
     static constexpr enum_t None{0};
     static constexpr enum_t SetEnableStateToOppositeOfParent{1u};
   };
-  RefId parent{};
+  oo::RefId parent{};
   Flag flags{Flag::make(Flag::None)};
 };
 
@@ -757,7 +757,7 @@ struct XLOC {
   // 0-100, 100 = needs a key
   uint32_t lockLevel{};
   // 0 if no key
-  BaseId key{};
+  oo::BaseId key{};
   // Unknown four bytes sometimes present
   uint32_t unused{};
   Flag flags{Flag::make(Flag::None)};
@@ -765,8 +765,8 @@ struct XLOC {
 
 // Disposition modifier between members of different factions
 // Also used for racial relations
-struct XNAM : Tuplifiable<BaseId, int32_t> {
-  BaseId factionId{};
+struct XNAM : Tuplifiable<oo::BaseId, int32_t> {
+  oo::BaseId factionId{};
   int32_t relationModifier = 0;
   MAKE_AS_TUPLE(&factionId, &relationModifier)
 };
@@ -782,8 +782,8 @@ struct XSED {
 };
 
 // Teleport information for a door
-struct XTEL : Tuplifiable<RefId, float, float, float, float, float, float> {
-  RefId destinationId{};
+struct XTEL : Tuplifiable<oo::RefId, float, float, float, float, float, float> {
+  oo::RefId destinationId{};
   // Destination position
   float x{};
   float y{};

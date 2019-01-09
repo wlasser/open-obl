@@ -9,6 +9,8 @@
 #include <OgreOverlayElement.h>
 #include <OgreOverlayContainer.h>
 
+namespace oo {
+
 class ConsoleMode;
 class GameMode;
 
@@ -56,5 +58,7 @@ template<class F> void MenuMode::notifyElementAtCursor(F &&f) {
     overlayElement = overlayElement->getParent();
   }
 }
+
+} // namespace oo
 
 #endif // OPENOBLIVION_MENU_MODE_HPP

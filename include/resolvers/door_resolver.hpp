@@ -7,6 +7,8 @@
 #include <OgreEntity.h>
 #include <string>
 
+namespace oo {
+
 using DoorResolver = Resolver<record::DOOR>;
 using RefrDoorResolver = Resolver<record::REFR_DOOR, RefId>;
 
@@ -30,5 +32,7 @@ ReifyRecordTrait<record::REFR_DOOR>::type
 reifyRecord(const record::REFR_DOOR &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_DOOR>::resolvers resolvers);
+
+} // namespace oo
 
 #endif // OPENOBLIVION_DOOR_RESOLVER_HPP

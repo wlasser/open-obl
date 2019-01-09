@@ -10,6 +10,8 @@
 #include <string_view>
 #include <vector>
 
+namespace oo {
+
 class ConsoleMode {
  private:
   int handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData *> data);
@@ -55,5 +57,7 @@ class ConsoleMode {
   /// Display and update the developer console.
   void update(ApplicationContext &ctx, float);
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_CONSOLE_MODE_HPP

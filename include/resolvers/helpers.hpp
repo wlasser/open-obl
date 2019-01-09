@@ -43,6 +43,8 @@ using Light = Component<Ogre::Light *>;
 
 } // namespace ecs
 
+namespace oo {
+
 template<class T>
 Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
   oo::Path rawPath;
@@ -100,25 +102,27 @@ attachAll(gsl::not_null<Ogre::SceneNode *> node,
   if constexpr (ecs::contains<ecs::RigidBody, Components...>()) {
     auto rigidBody{std::get<ecs::RigidBody>(entity).value};
     if (rigidBody) {
-      setRefId(gsl::make_not_null(rigidBody), refId);
+      oo::setRefId(gsl::make_not_null(rigidBody), refId);
     }
     const bool last{++count == sizeof...(Components)};
-    node = attachRigidBody(node, rigidBody, world, last);
+    node = oo::attachRigidBody(node, rigidBody, world, last);
   }
 
   if constexpr (ecs::contains<ecs::Mesh, Components...>()) {
     auto mesh{std::get<ecs::Mesh>(entity).value};
     const bool last{++count == sizeof...(Components)};
-    node = attachMesh(node, mesh, last);
+    node = oo::attachMesh(node, mesh, last);
   }
 
   if constexpr (ecs::contains<ecs::Light, Components...>()) {
     auto light{std::get<ecs::Light>(entity).value};
     const bool last{++count == sizeof...(Components)};
-    node = attachLight(node, light, last);
+    node = oo::attachLight(node, light, last);
   }
 
   return node;
 }
+
+} // namespace oo
 
 #endif // OPENOBLIVION_RESOLVERS_HELPERS_HPP

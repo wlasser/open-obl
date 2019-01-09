@@ -10,6 +10,8 @@
 #include <OgreSceneManager.h>
 #include <string>
 
+namespace oo {
+
 using LighResolver = Resolver<record::LIGH>;
 using RefrLighResolver = Resolver<record::REFR_LIGH, RefId>;
 
@@ -33,5 +35,7 @@ ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers);
+
+} // namespace oo
 
 #endif // OPENOBLIVION_LIGHT_RESOLVER_HPP

@@ -10,20 +10,22 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 
+namespace oo {
+
 class InitialRecordVisitor {
  private:
-  DoorResolver *doorRes;
-  LighResolver *lighRes;
-  StatResolver *statRes;
-  ActiResolver *actiRes;
-  CellResolver *cellRes;
+  oo::DoorResolver *doorRes;
+  oo::LighResolver *lighRes;
+  oo::StatResolver *statRes;
+  oo::ActiResolver *actiRes;
+  oo::CellResolver *cellRes;
 
  public:
-  InitialRecordVisitor(DoorResolver *doorRes,
-                       LighResolver *lighRes,
-                       StatResolver *statRes,
-                       ActiResolver *actiRes,
-                       CellResolver *cellRes) :
+  InitialRecordVisitor(oo::DoorResolver *doorRes,
+                       oo::LighResolver *lighRes,
+                       oo::StatResolver *statRes,
+                       oo::ActiResolver *actiRes,
+                       oo::CellResolver *cellRes) :
       doorRes(doorRes),
       lighRes(lighRes),
       statRes(statRes),
@@ -56,5 +58,7 @@ class InitialRecordVisitor {
   template<>
   void readRecord<record::GMST>(oo::EspAccessor &accessor);
 };
+
+} // namespace oo
 
 #endif // OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP

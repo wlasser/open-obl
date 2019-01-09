@@ -33,7 +33,7 @@ class Record : public T {
   RecordFlag mRecordFlags{RecordFlag::None};
 
   /// BaseId or RefId of this record.
-  FormId mFormId{0};
+  oo::FormId mFormId{0};
 
   /// Version control info.
   /// This is bugged in Oblivion, with December coming before January of the
@@ -48,7 +48,10 @@ class Record : public T {
     return static_cast<uint32_t>(T::size());
   }
 
-  Record(const T &t, RecordFlag flags, FormId id, uint32_t versionControlInfo) :
+  Record(const T &t,
+         RecordFlag flags,
+         oo::FormId id,
+         uint32_t versionControlInfo) :
       T(t),
       mRecordFlags(flags),
       mFormId(id),
