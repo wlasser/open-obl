@@ -20,6 +20,7 @@ class LLVMVisitor {
   llvm::Module *mModule{};
   llvm::StringMap<llvm::AllocaInst *> mNamedValues{};
   llvm::StringMap<llvm::GlobalVariable *> mGlobals{};
+  std::optional<uint32_t> mCalleeRef{};
 
   friend class ScriptEngineBase;
 
@@ -54,7 +55,8 @@ class LLVMVisitor {
  public:
   explicit LLVMVisitor(llvm::Module *module,
                        llvm::LLVMContext &ctx,
-                       std::optional<decltype(mIrBuilder)> irBuilder = std::nullopt);
+                       std::optional<decltype(mIrBuilder)> irBuilder = std::nullopt,
+                       std::optional<uint32_t> calleeRef = std::nullopt);
 
   llvm::Value *visit(const AstNode &node);
 };

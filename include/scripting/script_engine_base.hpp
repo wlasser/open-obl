@@ -65,9 +65,24 @@ class ScriptEngineBase {
   /// Create a new LLVMVisitor for the given module.
   [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module);
 
-  /// \overload makeVisitor
+  /// \overload makeVisitor(llvm::Module *)
   [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module,
                                             llvm::IRBuilder<> builder);
+
+  /// Create a new LLVMVisitor for the given module, called in the context of
+  /// a reference `calleeRef`. If a function call is encountered but there is
+  /// no known function with the same prototype as the call, then a `uint32_t`
+  /// parameter will be prepended to the list of arguments and the lookup tried
+  /// again. If a function is found, then the new function will be called in
+  /// place of the original with the first argument set to `calleeRef` and all
+  /// subsequent arguments set to the arguments of the original call, in order.
+  [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module,
+                                            uint32_t calleeRef);
+
+  /// \overload makeVisitor(llvm::Module *, uint32_t)
+  [[nodiscard]] oo::LLVMVisitor makeVisitor(llvm::Module *module,
+                                            llvm::IRBuilder<> builder,
+                                            uint32_t calleeRef);
 
   ScriptEngineBase();
 

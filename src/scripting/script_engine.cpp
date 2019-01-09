@@ -8,7 +8,9 @@ std::string ScriptEngine::getScriptname(const AstNode &node) {
   return node.children[1]->content();
 }
 
-std::unique_ptr<llvm::Module> ScriptEngine::compileAst(const AstNode &root) {
+std::unique_ptr<llvm::Module>
+ScriptEngine::compileAst(const AstNode &root,
+                         std::optional<uint32_t> calleeRef) {
   if (!root.is_root() || root.children.empty()) {
     // TODO: Cannot compile a partial AST, throw
     return nullptr;
@@ -22,7 +24,8 @@ std::unique_ptr<llvm::Module> ScriptEngine::compileAst(const AstNode &root) {
 
   auto module{makeModule(moduleName)};
   addExternalFunsToModule(module.get());
-  auto visitor{makeVisitor(module.get())};
+  auto visitor{calleeRef ? makeVisitor(module.get(), *calleeRef)
+                         : makeVisitor(module.get())};
   visitor.visit(root);
 
   return module;
@@ -58,7 +61,8 @@ ScriptEngine::getFunctionAddr(const std::string &scriptName,
   return *entryOrErr;
 }
 
-void ScriptEngine::compile(std::string_view script) {
+void ScriptEngine::compile(std::string_view script,
+                           std::optional<uint32_t> calleeRef) {
   pegtl::memory_input in(script, "");
 
   const auto root{oo::parseScript(in)};
@@ -67,7 +71,7 @@ void ScriptEngine::compile(std::string_view script) {
     return;
   }
 
-  auto module{compileAst(*root)};
+  auto module{compileAst(*root, calleeRef)};
   if (!module) {
     // TODO: Failed to compile module, throw
     return;

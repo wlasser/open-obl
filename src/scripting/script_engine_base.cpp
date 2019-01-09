@@ -58,6 +58,17 @@ oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module,
   return LLVMVisitor(module, *mCtx, std::move(builder));
 }
 
+oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module,
+                                              uint32_t calleeRef) {
+  return LLVMVisitor(module, *mCtx, {}, calleeRef);
+}
+
+oo::LLVMVisitor ScriptEngineBase::makeVisitor(llvm::Module *module,
+                                              llvm::IRBuilder<> builder,
+                                              uint32_t calleeRef) {
+  return LLVMVisitor(module, *mCtx, std::move(builder), calleeRef);
+}
+
 llvm::orc::VModuleKey
 ScriptEngineBase::jit(std::unique_ptr<llvm::Module> module) {
   return mJit->addModule(std::move(module));

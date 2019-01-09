@@ -15,6 +15,10 @@ int ConsoleFunc(int x) {
   return 0;
 }
 
+int MemberFunc(uint32_t mem, int x) {
+  return mem * x;
+}
+
 namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
@@ -95,6 +99,7 @@ oo::ScriptEngine &getScriptEngine() {
   static oo::ScriptEngine eng = []() {
     oo::ScriptEngine eng{};
     eng.registerFunction<decltype(Func)>("Func");
+    eng.registerFunction<decltype(MemberFunc)>("MemberFunc");
     return eng;
   }();
 

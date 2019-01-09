@@ -12,10 +12,12 @@ namespace oo {
 
 LLVMVisitor::LLVMVisitor(llvm::Module *module,
                          llvm::LLVMContext &ctx,
-                         std::optional<decltype(mIrBuilder)> irBuilder)
+                         std::optional<decltype(mIrBuilder)> irBuilder,
+                         std::optional<uint32_t> calleeRef)
     : mCtx(ctx),
       mIrBuilder(irBuilder ? *irBuilder : decltype(mIrBuilder)(mCtx)),
-      mModule(module) {}
+      mModule(module),
+      mCalleeRef(calleeRef) {}
 
 llvm::AllocaInst *
 LLVMVisitor::createAlloca(llvm::Function *fun, llvm::StringRef name,
@@ -517,18 +519,28 @@ LLVMVisitor::visitImpl<grammar::RawCall>(const AstNode &node) {
     throw std::runtime_error("No such function exists");
   }
 
+  llvm::SmallVector<llvm::Value *, 4> args{};
+  auto argIt{proto->arg_begin()};
+
   if (node.children.size() != proto->arg_size()) {
-    throw std::runtime_error("Incorrect number of arguments");
+    if (!mCalleeRef || node.children.size() + 1 != proto->arg_size()) {
+      throw std::runtime_error("Incorrect number of arguments");
+    }
+
+    // We have a callee ref and one argument missing so add in the callee ref
+    // as the first argument and try again.
+    args.push_back(llvm::ConstantInt::get(mCtx, llvm::APInt(32u, *mCalleeRef)));
+    if (args.back()->getType() != argIt->getType()) {
+      throw std::runtime_error("Argument type mismatch");
+    }
+    ++argIt;
   }
 
-  llvm::SmallVector<llvm::Value *, 4> args{};
-  for (std::size_t i = 0; i < node.children.size(); ++i) {
+  for (std::size_t i = 0; i < node.children.size(); ++i, ++argIt) {
     const auto &child{node.children[i]};
-    const auto &arg{proto->arg_begin() + i};
-
     args.emplace_back(visit(*child));
 
-    if (args.back()->getType() != arg->getType()) {
+    if (args.back()->getType() != argIt->getType()) {
       throw std::runtime_error("Argument type mismatch");
     }
   }

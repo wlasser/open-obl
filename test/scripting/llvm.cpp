@@ -150,6 +150,21 @@ end
   }
 }
 
+TEST_CASE("can compile scripts with implicit callee", "[scripting]") {
+  std::string_view script = R"script(
+scn MyScript
+begin TestLong
+  return MemberFunc 3
+end
+)script";
+
+  auto &se{oo::getScriptEngine()};
+  se.compile(script, 10u);
+  const auto result{se.call<int>("MyScript", "TestLong")};
+  REQUIRE(result);
+  REQUIRE(*result == 30);
+}
+
 TEST_CASE("can use llvm", "[scripting]") {
   std::string_view script = R"script(
 scn MyScript

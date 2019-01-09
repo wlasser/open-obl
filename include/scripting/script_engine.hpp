@@ -17,14 +17,18 @@ class ScriptEngine : public ScriptEngineBase {
 
   /// Compile an entire AST into LLVM IR.
   /// \remark The returned module must still be JIT'd before it can be called.
-  [[nodiscard]] std::unique_ptr<llvm::Module> compileAst(const AstNode &root);
+  [[nodiscard]] std::unique_ptr<llvm::Module>
+  compileAst(const AstNode &root, std::optional<uint32_t> calleeRef = {});
 
   [[nodiscard]] std::optional<llvm::JITTargetAddress>
   getFunctionAddr(const std::string &scriptName, const std::string &funName);
 
  public:
   /// Compile a script into native object code, making it available for calling.
-  void compile(std::string_view script);
+  /// If `calleeRef` is given then free function calls that do not resolve to
+  /// known functions implicitly take `calleeRef` as their first argument, if
+  /// the function would then resolve.
+  void compile(std::string_view script, std::optional<uint32_t> calleeRef = {});
 
   ScriptEngine() : ScriptEngineBase() {}
 
