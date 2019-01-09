@@ -458,6 +458,15 @@ KeyCode keyCodeOf(const KeyboardEvent &event);
 MouseButton mouseButtonOf(const MouseButtonEvent &event);
 ModifierKey getModState();
 
+/// Return true iff `e` is an sdl::EventType::KeyUp, sdl::EventType::KeyDown,
+/// sdl::EventType::TextInput, or sdl::EventType::TextEditing event.
+bool isKeyboardEvent(const sdl::Event &e) noexcept;
+
+/// Return true iff `e` is an sdl::EventType::MouseMotion,
+/// sdl::EventType::MouseWheel, sdl::EventType::MouseButtonUp, or
+/// sdl::EventType::MouseButtonDown event.
+bool isMouseEvent(const sdl::Event &e) noexcept;
+
 } // namespace sdl
 
 #endif // OPENOBLIVION_SDL_SDL_HPP

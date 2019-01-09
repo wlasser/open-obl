@@ -61,4 +61,20 @@ ModifierKey getModState() {
   return static_cast<ModifierKey>(SDL_GetModState());
 }
 
+bool isKeyboardEvent(const sdl::Event &e) noexcept {
+  const auto type{sdl::typeOf(e)};
+  return type == sdl::EventType::KeyUp
+      || type == sdl::EventType::KeyDown
+      || type == sdl::EventType::TextInput
+      || type == sdl::EventType::TextEditing;
+}
+
+bool isMouseEvent(const sdl::Event &e) noexcept {
+  const auto type{sdl::typeOf(e)};
+  return type == sdl::EventType::MouseMotion
+      || type == sdl::EventType::MouseButtonDown
+      || type == sdl::EventType::MouseButtonUp
+      || type == sdl::EventType::MouseWheel;
+}
+
 } // namespace sdl

@@ -417,8 +417,8 @@ void Application::pollEvents() {
     // Pass event to ImGui and let ImGui consume it if it wants
     ctx.imguiMgr->handleEvent(sdlEvent);
     auto imguiIo{ImGui::GetIO()};
-    if (imguiIo.WantCaptureKeyboard && isKeyboardEvent(sdlEvent)) continue;
-    else if (imguiIo.WantCaptureMouse && isMouseEvent(sdlEvent)) continue;
+    if (imguiIo.WantCaptureKeyboard && sdl::isKeyboardEvent(sdlEvent)) continue;
+    else if (imguiIo.WantCaptureMouse && sdl::isMouseEvent(sdlEvent)) continue;
 
     std::visit([this, sdlEvent](auto &mode) {
       auto[pop, push]{mode.handleEvent(ctx, sdlEvent)};
@@ -430,22 +430,6 @@ void Application::pollEvents() {
       }
     }, modeStack.back());
   }
-}
-
-bool Application::isKeyboardEvent(const sdl::Event &e) noexcept {
-  const auto type{sdl::typeOf(e)};
-  return type == sdl::EventType::KeyUp
-      || type == sdl::EventType::KeyDown
-      || type == sdl::EventType::TextInput
-      || type == sdl::EventType::TextEditing;
-}
-
-bool Application::isMouseEvent(const sdl::Event &e) noexcept {
-  const auto type{sdl::typeOf(e)};
-  return type == sdl::EventType::MouseMotion
-      || type == sdl::EventType::MouseButtonDown
-      || type == sdl::EventType::MouseButtonUp
-      || type == sdl::EventType::MouseWheel;
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {

@@ -129,15 +129,6 @@ class Application : public Ogre::FrameListener {
     std::visit([this](auto &&state) { state.refocus(ctx); }, modeStack.back());
   }
 
-  /// Return true iff `e` is an sdl::EventType::KeyUp, sdl::EventType::KeyDown,
-  /// sdl::EventType::TextInput, or sdl::EventType::TextEditing event.
-  static bool isKeyboardEvent(const sdl::Event &e) noexcept;
-
-  /// Return true iff `e` is an sdl::EventType::MouseMotion,
-  /// sdl::EventType::MouseWheel, sdl::EventType::MouseButtonUp, or
-  /// sdl::EventType::MouseButtonDown event.
-  static bool isMouseEvent(const sdl::Event &e) noexcept;
-
  public:
   explicit Application(std::string windowName);
 
