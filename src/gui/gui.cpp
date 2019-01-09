@@ -203,6 +203,15 @@ gui::UiElement::UserValue MenuContext::get_user(int index) {
   return gui::extractUiElement(*mMenu)->get_user(index);
 }
 
+const gui::UiElement *MenuContext::getElementWithId(int id) {
+  if (id < 0) return nullptr;
+  auto it{std::find_if(mUiElements.begin(), mUiElements.end(),
+                       [id](const UiElementPtr &ptr) {
+                         return ptr->get_id() == id;
+                       })};
+  return it == mUiElements.end() ? nullptr : it->get();
+}
+
 template<>
 void XmlEntityConverter::operator()(std::string_view entity,
                                     boost::optional<MenuType> &out) const {

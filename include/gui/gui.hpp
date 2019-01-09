@@ -220,6 +220,11 @@ class MenuContext {
   template<class T> T get_user(int index) {
     return std::get<T>(get_user(index));
   }
+
+  /// Return a pointer to the element with the given id, or nullptr if no such
+  /// element exists.
+  /// This is only guaranteed to be `O(n)` or better.
+  const gui::UiElement *getElementWithId(int id);
 };
 
 std::optional<MenuContext> loadMenu(pugi::xml_node doc,

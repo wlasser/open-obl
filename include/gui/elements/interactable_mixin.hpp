@@ -23,6 +23,8 @@ class InteractableMixin : public virtual UiElement {
   void set_target(bool isTarget) override;
   void set_id(float id) override;
 
+  int get_id() const override;
+
   // Note: Cannot check mIsTarget && mId >= -1 on construction because these
   // values are not set until the first update(), which must occur after all the
   // traits have been added. Thus the traits must always be added, and their

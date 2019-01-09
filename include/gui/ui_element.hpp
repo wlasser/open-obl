@@ -248,6 +248,11 @@ class UiElement {
     return false;
   }
 
+  /// \see set_id(float)
+  virtual int get_id() const {
+    return -2;
+  }
+
   ///@}
 
   virtual ~UiElement() = 0;

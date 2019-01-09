@@ -214,6 +214,10 @@ void MenuMode::update(ApplicationContext &/*ctx*/, float delta) {
     }
     default: break;
   }
+
   mMenuCtx->update();
+
+  // Use getElementWithId to check for ui state here
+
   mMenuCtx->clearEvents();
 }

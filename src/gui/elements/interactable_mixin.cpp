@@ -8,6 +8,10 @@ void gui::InteractableMixin::set_id(float id) {
   mId = static_cast<int>(id);
 }
 
+int gui::InteractableMixin::get_id() const {
+  return mId;
+}
+
 std::optional<gui::Trait<float>>
 gui::InteractableMixin::make_clicked() const {
   if (!getOverlayElement()) {
