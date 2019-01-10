@@ -136,10 +136,17 @@ class Application : public Ogre::FrameListener {
     return ctx.ogreRoot.get();
   }
 
+  void quit();
+
   bool frameStarted(const Ogre::FrameEvent &event) override;
   bool frameRenderingQueued(const Ogre::FrameEvent &event) override;
   bool frameEnded(const Ogre::FrameEvent &event) override;
 };
+
+inline Application *getApplication(std::optional<Application *> ptr = {}) {
+  static Application *mPtr{*ptr};
+  return mPtr;
+}
 
 } // namespace oo
 

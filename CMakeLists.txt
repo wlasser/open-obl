@@ -119,6 +119,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/sneak_stand_state.cpp
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
+        src/console_functions.cpp
         src/esp_coordinator.cpp
         src/fnt_loader.cpp
         src/initial_record_visitor.cpp
@@ -157,6 +158,7 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/sneak_stand_state.hpp
         include/character_controller/stand_state.hpp
         include/character_controller/walk_state.hpp
+        include/console_functions.hpp
         include/controls.hpp
         include/conversions.hpp
         include/enum_template.hpp

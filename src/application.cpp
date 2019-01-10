@@ -1,6 +1,7 @@
 #include "application.hpp"
 #include "bullet/collision.hpp"
 #include "conversions.hpp"
+#include "console_functions.hpp"
 #include "keep_strategy.hpp"
 #include "settings.hpp"
 #include "esp.hpp"
@@ -59,6 +60,8 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Start the developer console backend
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
+  ctx.consoleEngine->registerFunction<decltype(console::QuitGame)>("QuitGame");
+  ctx.consoleEngine->registerFunction<decltype(console::qqq)>("qqq");
 
   // Add the resource managers
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
@@ -410,7 +413,7 @@ void Application::pollEvents() {
   sdl::Event sdlEvent;
   while (sdl::pollEvent(sdlEvent)) {
     if (sdl::typeOf(sdlEvent) == sdl::EventType::Quit) {
-      ctx.ogreRoot->queueEndRendering();
+      quit();
       return;
     }
 
@@ -430,6 +433,10 @@ void Application::pollEvents() {
       }
     }, modeStack.back());
   }
+}
+
+void Application::quit() {
+  ctx.ogreRoot->queueEndRendering();
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
