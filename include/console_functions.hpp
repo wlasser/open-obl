@@ -26,6 +26,8 @@ extern "C" int ToggleCollisionGeometry();
 /// \see console::ToggleCollisionGeometry()
 extern "C" int tcg();
 
+extern "C" int ShowMainMenu();
+
 } // namespace console
 ///@}
 

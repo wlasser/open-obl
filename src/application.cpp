@@ -65,6 +65,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.consoleEngine->registerFunction<decltype(console::qqq)>("qqq");
   ctx.consoleEngine->registerFunction<decltype(console::ToggleCollisionGeometry)>("ToggleCollisionGeometry");
   ctx.consoleEngine->registerFunction<decltype(console::tcg)>("tcg");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowMainMenu)>("ShowMainMenu");
   //@formatter:on
 
   // Add the resource managers
@@ -453,6 +454,11 @@ bool Application::isMenuMode() const {
   return std::holds_alternative<oo::MenuMode>(modeStack.back());
 }
 
+bool Application::isConsoleMode() const {
+  if (modeStack.empty()) return false;
+  return std::holds_alternative<oo::ConsoleMode>(modeStack.back());
+}
+
 oo::MenuMode &Application::getMenuMode() {
   return std::get<oo::MenuMode>(modeStack.back());
 }
@@ -474,6 +480,10 @@ oo::GameMode &Application::getGameModeInStack() {
   return std::get<oo::GameMode>(*it);
 }
 
+void Application::openMenu(gui::MenuType menuType) {
+  deferredMode.emplace(std::in_place_type<oo::MenuMode>, ctx, menuType);
+}
+
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
 
@@ -482,6 +492,12 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   std::visit([this, &event](auto &mode) {
     mode.update(ctx, event.timeSinceLastFrame);
   }, modeStack.back());
+
+  if (deferredMode) {
+    if (isConsoleMode()) popMode();
+    pushMode(std::move(*deferredMode));
+    deferredMode.reset();
+  }
 
   return true;
 }

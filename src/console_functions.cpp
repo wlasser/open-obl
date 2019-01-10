@@ -21,3 +21,8 @@ int console::ToggleCollisionGeometry() {
 int console::tcg() {
   return console::ToggleCollisionGeometry();
 }
+
+int console::ShowMainMenu() {
+  oo::getApplication()->openMenu(gui::MenuType::MainMenu);
+  return 0;
+}

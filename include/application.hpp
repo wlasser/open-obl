@@ -9,6 +9,7 @@
 #include "modes/menu_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <Ogre.h>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -129,6 +130,14 @@ class Application : public Ogre::FrameListener {
     std::visit([this](auto &&state) { state.refocus(ctx); }, modeStack.back());
   }
 
+  /// Store the new mode to be inserted here, if a mode transition is required
+  /// outside of the usual points (such as in a console command).
+  /// The mode stack should not be modified during the execution of a function
+  /// belonging to a mode, as immediately after the modification `this` is
+  /// invalidated. This should be assumed to happen even if a new mode is
+  /// pushed onto the stack, since the stack might grow and reallocate.
+  std::optional<ModeVariant> deferredMode{};
+
  public:
   explicit Application(std::string windowName);
 
@@ -148,6 +157,9 @@ class Application : public Ogre::FrameListener {
   /// Whether the game is currently running in MenuMode.
   bool isMenuMode() const;
 
+  /// Whether the game is currently running in ConsoleMode.
+  bool isConsoleMode() const;
+
   /// Return a reference to the current MenuMode state.
   /// \pre `isMenuMode() == true`
   oo::MenuMode &getMenuMode() /*C++20:[[expects: isMenuMode()]]*/;
@@ -163,6 +175,11 @@ class Application : public Ogre::FrameListener {
   /// stack.
   /// \pre `isGameModeInStack() == true`
   oo::GameMode &getGameModeInStack() /*C++20:[[expects: isGameModeInStack()]]*/;
+
+  /// Open a new menu at the next available opportunity, adding it to the top of
+  /// the mode stack. If the currently running state is a ConsoleMode, then pop
+  /// that state first.
+  void openMenu(gui::MenuType menuType);
 };
 
 inline Application *getApplication(std::optional<Application *> ptr = {}) {
