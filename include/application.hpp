@@ -138,6 +138,9 @@ class Application : public Ogre::FrameListener {
   /// pushed onto the stack, since the stack might grow and reallocate.
   std::optional<ModeVariant> deferredMode{};
 
+  /// Register all the console commands with the console engine.
+  void registerConsoleFunctions();
+
  public:
   explicit Application(std::string windowName);
 

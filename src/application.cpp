@@ -59,19 +59,8 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
   // Start the developer console backend
-  //@formatter:off
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
-  ctx.consoleEngine->registerFunction<decltype(console::QuitGame)>("QuitGame");
-  ctx.consoleEngine->registerFunction<decltype(console::qqq)>("qqq");
-  ctx.consoleEngine->registerFunction<decltype(console::ToggleCollisionGeometry)>("ToggleCollisionGeometry");
-  ctx.consoleEngine->registerFunction<decltype(console::tcg)>("tcg");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowMainMenu)>("ShowMainMenu");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowClassMenu)>("ShowClassMenu");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowEnchantmentMenu)>("ShowEnchantmentMenu");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowMap)>("ShowMap");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowRaceMenu)>("ShowRaceMenu");
-  ctx.consoleEngine->registerFunction<decltype(console::ShowSpellmaking)>("ShowSpellmaking");
-  //@formatter:on
+  registerConsoleFunctions();
 
   // Add the resource managers
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
@@ -417,6 +406,24 @@ std::vector<oo::Path> Application::getLoadOrder(const oo::Path &masterPath) {
   });
 
   return out;
+}
+
+void Application::registerConsoleFunctions() {
+  auto rcf = [this](const std::string &name, auto F) {
+    using F_t = std::remove_pointer_t<decltype(F)>;
+    ctx.consoleEngine->registerFunction<F_t>(name);
+  };
+
+  rcf("QuitGame", &console::QuitGame);
+  rcf("qqq", &console::qqq);
+  rcf("ToggleCollisionGeometry", &console::ToggleCollisionGeometry);
+  rcf("tcg", &console::tcg);
+  rcf("ShowMainMenu", &console::ShowMainMenu);
+  rcf("ShowClassMenu", &console::ShowClassMenu);
+  rcf("ShowEnchantmentMenu", &console::ShowEnchantmentMenu);
+  rcf("ShowMap", &console::ShowMap);
+  rcf("ShowRaceMenu", &console::ShowRaceMenu);
+  rcf("ShowSpellmaking", &console::ShowSpellmaking);
 }
 
 void Application::pollEvents() {
