@@ -26,7 +26,23 @@ extern "C" int ToggleCollisionGeometry();
 /// \see console::ToggleCollisionGeometry()
 extern "C" int tcg();
 
+/// Open the MainMenu, closing the current console window.
 extern "C" int ShowMainMenu();
+
+/// Open the ClassMenu, closing the current console window.
+extern "C" int ShowClassMenu();
+
+/// Open the EnchantmentMenu, closing the current console window.
+extern "C" int ShowEnchantmentMenu();
+
+/// Open the MapMenu, closing the current console window.
+extern "C" int ShowMap();
+
+/// Open the RaceSexMenu, closing the current console window.
+extern "C" int ShowRaceMenu();
+
+/// Open the SpellMakingMenu, closing the current console window.
+extern "C" int ShowSpellmaking();
 
 } // namespace console
 ///@}

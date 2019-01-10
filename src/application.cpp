@@ -66,6 +66,11 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.consoleEngine->registerFunction<decltype(console::ToggleCollisionGeometry)>("ToggleCollisionGeometry");
   ctx.consoleEngine->registerFunction<decltype(console::tcg)>("tcg");
   ctx.consoleEngine->registerFunction<decltype(console::ShowMainMenu)>("ShowMainMenu");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowClassMenu)>("ShowClassMenu");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowEnchantmentMenu)>("ShowEnchantmentMenu");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowMap)>("ShowMap");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowRaceMenu)>("ShowRaceMenu");
+  ctx.consoleEngine->registerFunction<decltype(console::ShowSpellmaking)>("ShowSpellmaking");
   //@formatter:on
 
   // Add the resource managers
