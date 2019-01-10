@@ -165,6 +165,21 @@ end
   REQUIRE(*result == 30);
 }
 
+TEST_CASE("can call functions that do not have arguments", "[scripting]") {
+  std::string_view script = R"script(
+scn MyScript
+begin TestLong
+  return NoArgFunc
+end
+)script";
+
+  auto &se{oo::getScriptEngine()};
+  se.compile(script);
+  const auto result{se.call<int>("MyScript", "TestLong")};
+  REQUIRE(result);
+  REQUIRE(*result == 10);
+}
+
 TEST_CASE("can use llvm", "[scripting]") {
   std::string_view script = R"script(
 scn MyScript

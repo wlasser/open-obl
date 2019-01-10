@@ -135,7 +135,24 @@ LLVMVisitor::visitImpl<grammar::RawIdentifier>(const AstNode &node) {
     return mIrBuilder.CreateLoad(it->second);
   }
 
-  throw std::runtime_error("Variable does not exist");
+  std::string funName{node.content()};
+  llvm::Function *proto{mModule->getFunction(funName)};
+  if (!proto) {
+    throw std::runtime_error("Variable does not exist");
+  }
+
+  if (proto->arg_size() == 0) {
+    return mIrBuilder.CreateCall(proto, {});
+  } else if (proto->arg_size() == 1 && mCalleeRef) {
+    llvm::SmallVector<llvm::Value *, 1> args{};
+    args.push_back(llvm::ConstantInt::get(mCtx, llvm::APInt(32u, *mCalleeRef)));
+    if (args.back()->getType() != proto->arg_begin()->getType()) {
+      throw std::runtime_error("Argument type mismatch");
+    }
+    return mIrBuilder.CreateCall(proto, args);
+  }
+
+  throw std::runtime_error("Incorrect number of arguments");
 }
 
 template<> llvm::Value *

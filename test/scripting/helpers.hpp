@@ -13,6 +13,7 @@ extern "C" __attribute__((visibility("default"), used)) int Func(int x);
 extern "C" __attribute__((visibility("default"), used)) int ConsoleFunc(int x);
 extern "C" __attribute__((visibility("default"), used)) int MemberFunc(uint32_t mem,
                                                                        int x);
+extern "C" __attribute__((visibility("default"), used)) int NoArgFunc();
 
 namespace oo {
 

@@ -19,6 +19,10 @@ int MemberFunc(uint32_t mem, int x) {
   return mem * x;
 }
 
+int NoArgFunc() {
+  return 10;
+}
+
 namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
@@ -100,6 +104,7 @@ oo::ScriptEngine &getScriptEngine() {
     oo::ScriptEngine eng{};
     eng.registerFunction<decltype(Func)>("Func");
     eng.registerFunction<decltype(MemberFunc)>("MemberFunc");
+    eng.registerFunction<decltype(NoArgFunc)>("NoArgFunc");
     return eng;
   }();
 
