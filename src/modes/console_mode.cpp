@@ -21,7 +21,7 @@ int ConsoleMode::textEditCallback(gsl::not_null<ImGuiInputTextCallbackData *> da
 
 std::string ConsoleMode::executeCommand(const std::string &cmd) {
   spdlog::get(oo::LOG)->info("Console: {}", cmd);
-  consoleEngine.execute(cmd);
+  consoleEngine->execute(cmd);
   return cmd;
 }
 

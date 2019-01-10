@@ -23,7 +23,7 @@ class ConsoleMode {
   void displayHistory();
   void displayPrompt();
 
-  oo::ConsoleEngine &consoleEngine;
+  oo::ConsoleEngine *consoleEngine;
 
   std::string executeCommand(const std::string &cmd);
 
@@ -39,7 +39,7 @@ class ConsoleMode {
   using transition_t = ModeTransition<ConsoleMode>;
 
   explicit ConsoleMode(ApplicationContext &ctx)
-      : consoleEngine(ctx.getConsoleEngine()) {}
+      : consoleEngine(&ctx.getConsoleEngine()) {}
 
   void enter(ApplicationContext &ctx) {
     refocus(ctx);
