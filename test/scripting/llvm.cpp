@@ -166,18 +166,38 @@ end
 }
 
 TEST_CASE("can call functions that do not have arguments", "[scripting]") {
-  std::string_view script = R"script(
+  auto &se{oo::getScriptEngine()};
+
+  {
+    std::string_view script = R"script(
 scn MyScript
 begin TestLong
   return NoArgFunc
 end
 )script";
 
-  auto &se{oo::getScriptEngine()};
-  se.compile(script);
-  const auto result{se.call<int>("MyScript", "TestLong")};
-  REQUIRE(result);
-  REQUIRE(*result == 10);
+    se.compile(script);
+    const auto result{se.call<int>("MyScript", "TestLong")};
+    REQUIRE(result);
+    REQUIRE(*result == 10);
+  }
+
+  {
+    std::string_view script = R"script(
+scn MyScript
+begin TestLong
+  MemoryFunc
+  return 0
+end
+)script";
+
+    se.compile(script);
+    auto start = ::MemoryFunc();
+    const auto result{se.call<int>("MyScript", "TestLong")};
+    REQUIRE(result);
+    // Called twice after start; once in the script, and once to check the value
+    REQUIRE(::MemoryFunc() == start + 2);
+  }
 }
 
 TEST_CASE("can use llvm", "[scripting]") {

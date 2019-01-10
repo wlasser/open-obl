@@ -14,6 +14,11 @@ extern "C" __attribute__((visibility("default"), used)) int ConsoleFunc(int x);
 extern "C" __attribute__((visibility("default"), used)) int MemberFunc(uint32_t mem,
                                                                        int x);
 extern "C" __attribute__((visibility("default"), used)) int NoArgFunc();
+/// This will break if used simultaneously on two threads, so please don't do
+/// that. In fact, this function is only really useful when checking that
+/// standalone functions are being called, so it shouldn't need to be used in
+/// two different tests anyway.
+extern "C" __attribute__((visibility("default"), used)) int MemoryFunc();
 
 namespace oo {
 

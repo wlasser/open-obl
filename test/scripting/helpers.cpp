@@ -23,6 +23,11 @@ int NoArgFunc() {
   return 10;
 }
 
+int MemoryFunc() {
+  static int numCalled{0};
+  return ++numCalled;
+}
+
 namespace oo {
 
 [[nodiscard]] bool isStatement(const AstNode &node) {
@@ -105,6 +110,7 @@ oo::ScriptEngine &getScriptEngine() {
     eng.registerFunction<decltype(Func)>("Func");
     eng.registerFunction<decltype(MemberFunc)>("MemberFunc");
     eng.registerFunction<decltype(NoArgFunc)>("NoArgFunc");
+    eng.registerFunction<decltype(MemoryFunc)>("MemoryFunc");
     return eng;
   }();
 

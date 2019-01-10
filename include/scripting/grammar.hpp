@@ -489,8 +489,16 @@ struct ReturnStatement : pegtl::sor<pegtl::seq<StrReturn,
 
 /// `CallStatement <- !(Set / Begin / End / If / Elseif / Endif) Call`
 struct CallStatement : pegtl::seq<pegtl::not_at<
-    pegtl::sor<Set, Begin, End, If, Elseif, Endif>>,
+    pegtl::sor<Set, Begin, End, If, Else, Elseif, Endif>>,
                                   Call> {
+};
+
+/// `VariableStatement <- !(Set / Begin / End / If / Elseif / Endif) Variable`
+/// This is used to support standalone calls to functions that do not have
+/// arguments, such as `foo.isRed`, or `quitGame`.
+struct VariableStatement : pegtl::seq<pegtl::not_at<
+    pegtl::sor<Set, Begin, End, If, Else, Elseif, Endif>>,
+                                      Variable> {
 };
 
 struct Statement;
@@ -523,12 +531,14 @@ struct BlockEndStatement : End {};
 
 /// `Statement <- DeclarationStatement / SetStatement / IfStatement
 ///               / ReturnStatement
-///               / CallStatement`
+///               / CallStatement
+///               / VariableStatement`
 struct Statement : pegtl::sor<DeclarationStatement,
                               SetStatement,
                               IfStatement,
                               ReturnStatement,
-                              CallStatement> {
+                              CallStatement,
+                              VariableStatement> {
 };
 
 struct BlockStatement : pegtl::seq<BlockBeginStatement,
