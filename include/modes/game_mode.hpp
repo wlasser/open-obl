@@ -4,8 +4,9 @@
 #include "application_context.hpp"
 #include "bullet/collision.hpp"
 #include "character_controller/player_controller.hpp"
-#include "record/formid.hpp"
 #include "modes/mode.hpp"
+#include "ogrebullet/debug_drawer.hpp"
+#include "record/formid.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <memory>
@@ -53,6 +54,8 @@ class GameMode {
 
   bullet::CollisionCaller mCollisionCaller{};
 
+  std::unique_ptr<Ogre::DebugDrawer> mDebugDrawer{};
+
   /// Run all registered collision callbacks with the collisions for this frame.
   void dispatchCollisions();
 
@@ -86,6 +89,9 @@ class GameMode {
   /// Step the game world forward `delta` seconds.
   /// This is called during Application::frameStarted after pollEvents.
   void update(ApplicationContext &ctx, float delta);
+
+  /// Toggle a wireframe display of all collision objects in the scene.
+  void toggleCollisionGeometry();
 };
 
 } // namespace oo

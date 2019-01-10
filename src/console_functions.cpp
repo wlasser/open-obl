@@ -9,3 +9,15 @@ int console::QuitGame() {
 int console::qqq() {
   return console::QuitGame();
 }
+
+int console::ToggleCollisionGeometry() {
+  if (oo::getApplication()->isGameModeInStack()) {
+    oo::getApplication()->getGameModeInStack().toggleCollisionGeometry();
+  }
+
+  return 0;
+}
+
+int console::tcg() {
+  return console::ToggleCollisionGeometry();
+}

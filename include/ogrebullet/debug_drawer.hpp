@@ -14,15 +14,16 @@ class DebugDrawer : public btIDebugDraw {
                 const btVector3 &to,
                 const btVector3 &colour) override;
 
-  void drawContactPoint(const btVector3 &pointOnB,
-                        const btVector3 &normalOnB,
-                        btScalar distance,
-                        int lifetime,
-                        const btVector3 &color) override {}
+  void drawContactPoint(const btVector3 &/*pointOnB*/,
+                        const btVector3 &/*normalOnB*/,
+                        btScalar /*distance*/,
+                        int /*lifetime*/,
+                        const btVector3 &/*color*/) override {}
 
-  void reportErrorWarning(const char *warningString) override {}
+  void reportErrorWarning(const char */*warningString*/) override {}
 
-  void draw3dText(const btVector3 &location, const char *textString) override {}
+  void draw3dText(const btVector3 &/*location*/,
+                  const char */*textString*/) override {}
 
   void setDebugMode(int debugMode) override {
     mDebugMode = debugMode;

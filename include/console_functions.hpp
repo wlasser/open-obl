@@ -18,6 +18,14 @@ extern "C" int QuitGame();
 /// \see console::QuitGame()
 extern "C" int qqq();
 
+/// Toggle the display of a wireframe collision box for all the collision
+/// objects in the scene.
+extern "C" int ToggleCollisionGeometry();
+
+/// Shorthand for ToggleCollisionGeometry()
+/// \see console::ToggleCollisionGeometry()
+extern "C" int tcg();
+
 } // namespace console
 ///@}
 

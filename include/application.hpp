@@ -141,6 +141,28 @@ class Application : public Ogre::FrameListener {
   bool frameStarted(const Ogre::FrameEvent &event) override;
   bool frameRenderingQueued(const Ogre::FrameEvent &event) override;
   bool frameEnded(const Ogre::FrameEvent &event) override;
+
+  /// Whether the game is currently running in GameMode.
+  bool isGameMode() const;
+
+  /// Whether the game is currently running in MenuMode.
+  bool isMenuMode() const;
+
+  /// Return a reference to the current MenuMode state.
+  /// \pre `isMenuMode() == true`
+  oo::MenuMode &getMenuMode() /*C++20:[[expects: isMenuMode()]]*/;
+
+  /// Return a reference to the current GameMode state.
+  /// \pre `isMenuMode() == true`
+  oo::GameMode &getGameMode() /*C++20:[[expects: isGameMode()]]*/;
+
+  /// Whether a GameMode state is present somewhere in the mode stack.
+  bool isGameModeInStack() const;
+
+  /// Return a reference to the GameMode state closest to the top of the mode
+  /// stack.
+  /// \pre `isGameModeInStack() == true`
+  oo::GameMode &getGameModeInStack() /*C++20:[[expects: isGameModeInStack()]]*/;
 };
 
 inline Application *getApplication(std::optional<Application *> ptr = {}) {

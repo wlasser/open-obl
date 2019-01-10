@@ -4,6 +4,7 @@
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
 #include "modes/menu_mode.hpp"
+#include "settings.hpp"
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
@@ -177,11 +178,33 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   mCell->physicsWorld->stepSimulation(delta);
   dispatchCollisions();
 
+  if (mDebugDrawer) {
+    mDebugDrawer->clearLines();
+    mCell->physicsWorld->debugDrawWorld();
+    mDebugDrawer->build();
+  }
+
   static RefId refUnderCrosshair{0};
   RefId newRefUnderCrosshair = getCrosshairRef();
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
     ctx.getLogger()->info("Looking at {}", refUnderCrosshair);
+  }
+}
+
+void GameMode::toggleCollisionGeometry() {
+  if (!mCell) return;
+  if (mDebugDrawer) {
+    mCell->scnMgr->destroySceneNode("__DebugDrawerNode");
+    mCell->physicsWorld->setDebugDrawer(nullptr);
+    mDebugDrawer.reset();
+  } else {
+    mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(mCell->scnMgr,
+                                                       oo::SHADER_GROUP);
+    auto *root{mCell->scnMgr->getRootSceneNode()};
+    auto *node{root->createChildSceneNode("__DebugDrawerNode")};
+    node->attachObject(mDebugDrawer->getObject());
+    mCell->physicsWorld->setDebugDrawer(mDebugDrawer.get());
   }
 }
 

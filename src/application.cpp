@@ -59,9 +59,13 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
   // Start the developer console backend
+  //@formatter:off
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
   ctx.consoleEngine->registerFunction<decltype(console::QuitGame)>("QuitGame");
   ctx.consoleEngine->registerFunction<decltype(console::qqq)>("qqq");
+  ctx.consoleEngine->registerFunction<decltype(console::ToggleCollisionGeometry)>("ToggleCollisionGeometry");
+  ctx.consoleEngine->registerFunction<decltype(console::tcg)>("tcg");
+  //@formatter:on
 
   // Add the resource managers
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
@@ -437,6 +441,37 @@ void Application::pollEvents() {
 
 void Application::quit() {
   ctx.ogreRoot->queueEndRendering();
+}
+
+bool Application::isGameMode() const {
+  if (modeStack.empty()) return false;
+  return std::holds_alternative<oo::GameMode>(modeStack.back());
+}
+
+bool Application::isMenuMode() const {
+  if (modeStack.empty()) return false;
+  return std::holds_alternative<oo::MenuMode>(modeStack.back());
+}
+
+oo::MenuMode &Application::getMenuMode() {
+  return std::get<oo::MenuMode>(modeStack.back());
+}
+
+oo::GameMode &Application::getGameMode() {
+  return std::get<oo::GameMode>(modeStack.back());
+}
+
+bool Application::isGameModeInStack() const {
+  return std::any_of(modeStack.rbegin(), modeStack.rend(), [](const auto &m) {
+    return std::holds_alternative<oo::GameMode>(m);
+  });
+}
+
+oo::GameMode &Application::getGameModeInStack() {
+  auto it{std::find_if(modeStack.rbegin(), modeStack.rend(), [](const auto &m) {
+    return std::holds_alternative<oo::GameMode>(m);
+  })};
+  return std::get<oo::GameMode>(*it);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
