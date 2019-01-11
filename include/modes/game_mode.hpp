@@ -5,6 +5,7 @@
 #include "bullet/collision.hpp"
 #include "character_controller/player_controller.hpp"
 #include "modes/mode.hpp"
+#include "modes/menu_mode.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "record/formid.hpp"
 #include "resolvers/cell_resolver.hpp"
@@ -17,7 +18,6 @@
 namespace oo {
 
 class ConsoleMode;
-class MenuMode;
 
 /// \name Custom deleter for the PlayerController.
 /// Unlike the rest of the collision objects in the Cell, which are owned by
@@ -69,7 +69,8 @@ class GameMode {
   void loadCell(ApplicationContext &ctx, BaseId cellId);
 
  public:
-  using transition_t = ModeTransition<ConsoleMode, MenuMode>;
+  using transition_t = ModeTransition<ConsoleMode,
+                                      MenuMode<gui::MenuType::MainMenu>>;
 
   explicit GameMode(ApplicationContext &/*ctx*/) {}
 

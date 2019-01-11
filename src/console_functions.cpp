@@ -23,31 +23,31 @@ int console::tcg() {
 }
 
 int console::ShowMainMenu() {
-  oo::getApplication()->openMenu(gui::MenuType::MainMenu);
+  oo::getApplication()->openMenu<gui::MenuType::MainMenu>();
   return 0;
 }
 
 int console::ShowClassMenu() {
-  oo::getApplication()->openMenu(gui::MenuType::ClassMenu);
+//  oo::getApplication()->openMenu<gui::MenuType::ClassMenu>();
   return 0;
 }
 
 int console::ShowEnchantmentMenu() {
-  oo::getApplication()->openMenu(gui::MenuType::EnchantmentMenu);
+//  oo::getApplication()->openMenu<gui::MenuType::EnchantmentMenu>();
   return 0;
 }
 
 int console::ShowMap() {
-  oo::getApplication()->openMenu(gui::MenuType::MapMenu);
+//  oo::getApplication()->openMenu<gui::MenuType::MapMenu>();
   return 0;
 }
 
 int console::ShowRaceMenu() {
-  oo::getApplication()->openMenu(gui::MenuType::RaceSexMenu);
+//  oo::getApplication()->openMenu<gui::MenuType::RaceSexMenu>();
   return 0;
 }
 
 int console::ShowSpellmaking() {
-  oo::getApplication()->openMenu(gui::MenuType::SpellMakingMenu);
+//  oo::getApplication()->openMenu<gui::MenuType::SpellMakingMenu>();
   return 0;
 }

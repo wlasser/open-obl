@@ -461,18 +461,9 @@ bool Application::isGameMode() const {
   return std::holds_alternative<oo::GameMode>(modeStack.back());
 }
 
-bool Application::isMenuMode() const {
-  if (modeStack.empty()) return false;
-  return std::holds_alternative<oo::MenuMode>(modeStack.back());
-}
-
 bool Application::isConsoleMode() const {
   if (modeStack.empty()) return false;
   return std::holds_alternative<oo::ConsoleMode>(modeStack.back());
-}
-
-oo::MenuMode &Application::getMenuMode() {
-  return std::get<oo::MenuMode>(modeStack.back());
 }
 
 oo::GameMode &Application::getGameMode() {
@@ -490,10 +481,6 @@ oo::GameMode &Application::getGameModeInStack() {
     return std::holds_alternative<oo::GameMode>(m);
   })};
   return std::get<oo::GameMode>(*it);
-}
-
-void Application::openMenu(gui::MenuType menuType) {
-  deferredMode.emplace(std::in_place_type<oo::MenuMode>, ctx, menuType);
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {

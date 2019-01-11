@@ -1,63 +1,33 @@
 #ifndef OPENOBLIVION_MENU_MODE_HPP
 #define OPENOBLIVION_MENU_MODE_HPP
 
-#include "application_context.hpp"
-#include "gui/gui.hpp"
-#include "gui/menu.hpp"
-#include "modes/mode.hpp"
-#include "sdl/sdl.hpp"
-#include <OgreOverlayElement.h>
-#include <OgreOverlayContainer.h>
+#include "modes/menu_mode_base.hpp"
 
 namespace oo {
 
-class ConsoleMode;
-class GameMode;
-
-class MenuMode {
- private:
-  std::optional<gui::MenuContext> mMenuCtx{};
-  gui::MenuType mMenuType{gui::MenuType::N};
-
-  float mClock{0.0f};
-  Ogre::Vector2 mCursorPos{};
-
-  std::optional<gui::MenuContext> loadMenu(gui::MenuType type);
-
-  /// Find the `gui::UiElement` under the cursor and call `f` on it and its
-  /// ancestors in decreasing order of generation.
-  template<class F> void notifyElementAtCursor(F &&f);
-
- public:
-  using transition_t = ModeTransition<MenuMode>;
-
-  explicit MenuMode(ApplicationContext &ctx, gui::MenuType type);
-
-  void enter(ApplicationContext &ctx) {
-    refocus(ctx);
-  }
-
-  void refocus(ApplicationContext &) {
-    sdl::setRelativeMouseMode(false);
-  }
-
-  transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
-
-  void update(ApplicationContext &ctx, float delta);
+template<gui::MenuType Type> struct MenuModeTransition<MenuMode<Type>> {
+  using type = ModeTransition<MenuMode<Type>>;
 };
 
-template<class F> void MenuMode::notifyElementAtCursor(F &&f) {
-  auto *overlay{mMenuCtx->getOverlay()};
-  if (!overlay) return;
+template<gui::MenuType Type>
+class MenuMode : public MenuModeBase<MenuMode<Type>> {
+ public:
+  using transition_t = MenuModeTransition_t<MenuMode<Type>>;
 
-  auto *overlayElement{overlay->findElementAt(mCursorPos.x, mCursorPos.y)};
-  while (overlayElement) {
-    const auto &any{overlayElement->getUserObjectBindings().getUserAny()};
-    auto *uiElement{Ogre::any_cast<gui::UiElement *>(any)};
-    f(uiElement);
-    overlayElement = overlayElement->getParent();
+  explicit MenuMode(ApplicationContext &ctx)
+      : MenuModeBase<MenuMode<Type>>(ctx) {}
+
+  std::string getFilenameImpl() const {
+    return "";
   }
-}
+
+  transition_t handleEventImpl(ApplicationContext &/*ctx*/,
+                               const sdl::Event &/*event*/) {
+    return {false, std::nullopt};
+  }
+
+  void updateImpl(ApplicationContext &/*ctx*/, float /*delta*/) {}
+};
 
 } // namespace oo
 

@@ -6,7 +6,8 @@
 #include "fs/path.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
-#include "modes/menu_mode.hpp"
+#include "modes/loading_menu_mode.hpp"
+#include "modes/main_menu_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <Ogre.h>
 #include <optional>
@@ -15,7 +16,8 @@
 
 namespace oo {
 
-using ModeVariant = std::variant<oo::GameMode, oo::ConsoleMode, oo::MenuMode>;
+using ModeVariant = std::variant<oo::GameMode, oo::ConsoleMode,
+                                 oo::LoadingMenuMode, oo::MainMenuMode>;
 
 class Application : public Ogre::FrameListener {
  private:
@@ -157,15 +159,8 @@ class Application : public Ogre::FrameListener {
   /// Whether the game is currently running in GameMode.
   bool isGameMode() const;
 
-  /// Whether the game is currently running in MenuMode.
-  bool isMenuMode() const;
-
   /// Whether the game is currently running in ConsoleMode.
   bool isConsoleMode() const;
-
-  /// Return a reference to the current MenuMode state.
-  /// \pre `isMenuMode() == true`
-  oo::MenuMode &getMenuMode() /*C++20:[[expects: isMenuMode()]]*/;
 
   /// Return a reference to the current GameMode state.
   /// \pre `isMenuMode() == true`
@@ -182,7 +177,7 @@ class Application : public Ogre::FrameListener {
   /// Open a new menu at the next available opportunity, adding it to the top of
   /// the mode stack. If the currently running state is a ConsoleMode, then pop
   /// that state first.
-  void openMenu(gui::MenuType menuType);
+  template<gui::MenuType Type> void openMenu();
 };
 
 inline Application *getApplication(std::optional<Application *> ptr = {}) {
@@ -190,6 +185,9 @@ inline Application *getApplication(std::optional<Application *> ptr = {}) {
   return mPtr;
 }
 
+template<gui::MenuType Type> void Application::openMenu() {
+  deferredMode.emplace(std::in_place_type<oo::MenuMode<Type>>, ctx);
+}
 } // namespace oo
 
 #endif // OPENOBLIVION_APPLICATION_HPP
