@@ -12,6 +12,8 @@
 
 namespace oo {
 
+/// Mode active while the player is using the developer console.
+/// \ingroup OpenOblivionMode
 class ConsoleMode {
  private:
   int handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData *> data);
@@ -41,10 +43,12 @@ class ConsoleMode {
   explicit ConsoleMode(ApplicationContext &ctx)
       : consoleEngine(&ctx.getConsoleEngine()) {}
 
+  /// \see Mode::enter()
   void enter(ApplicationContext &ctx) {
     refocus(ctx);
   }
 
+  /// \see Mode:refocus()
   void refocus(ApplicationContext &) {
     sdl::setRelativeMouseMode(false);
   }
@@ -52,9 +56,11 @@ class ConsoleMode {
   /// Pops this state if event::Console is pressed.
   /// All other events are already forwarded to ImGui by Application so do not
   /// need to be handled again.
+  /// \see Mode::handleEvent()
   transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
 
   /// Display and update the developer console.
+  /// \see Mode::update()
   void update(ApplicationContext &ctx, float);
 };
 

@@ -5,15 +5,19 @@
 
 namespace oo {
 
+/// \ingroup OpenOblivionModes
 template<gui::MenuType Type> struct MenuModeTransition<MenuMode<Type>> {
   using type = ModeTransition<MenuMode<Type>>;
 };
 
+/// Class template representing a generic menu `Mode`, should be specialized
+/// for each value of `gui::MenuType`.
+/// Simply provides empty implementations of the methods required by
+/// `oo::MenuModeBase`.
+/// \ingroup OpenOblivionModes
 template<gui::MenuType Type>
 class MenuMode : public MenuModeBase<MenuMode<Type>> {
  public:
-  using transition_t = MenuModeTransition_t<MenuMode<Type>>;
-
   explicit MenuMode(ApplicationContext &ctx)
       : MenuModeBase<MenuMode<Type>>(ctx) {}
 
@@ -21,8 +25,8 @@ class MenuMode : public MenuModeBase<MenuMode<Type>> {
     return "";
   }
 
-  transition_t handleEventImpl(ApplicationContext &/*ctx*/,
-                               const sdl::Event &/*event*/) {
+  typename MenuMode::transition_t
+  handleEventImpl(ApplicationContext &/*ctx*/, const sdl::Event &/*event*/) {
     return {false, std::nullopt};
   }
 

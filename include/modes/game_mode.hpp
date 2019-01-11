@@ -28,29 +28,32 @@ class ConsoleMode;
 /// the PlayerController must remove itself from the physics world during its
 /// destruction so that the physics world doesn't attempt to dereference a
 /// pointer to it during the broadphase cleanup.
+/// \addtogroup OpenOblivionModes
 ///@{
-using PlayerControllerPtr = std::unique_ptr<
-    oo::PlayerController, std::function<void(oo::PlayerController *)>>;
+using PlayerControllerDeleter = std::function<void(oo::PlayerController *)>;
+using PlayerControllerPtr = std::unique_ptr<oo::PlayerController,
+                                            oo::PlayerControllerDeleter>;
 
 void
-releasePlayerController(Cell *cell, oo::PlayerController *playerController);
+releasePlayerController(oo::Cell *cell, oo::PlayerController *playerController);
 
-template<class ... Args>
-PlayerControllerPtr makePlayerController(const std::shared_ptr<Cell> &cell,
-                                         Args &&...args) {
-  return PlayerControllerPtr(
+template<class ... Args> oo::PlayerControllerPtr
+makePlayerController(const std::shared_ptr<oo::Cell> &cell, Args &&...args) {
+  return oo::PlayerControllerPtr(
       new oo::PlayerController(std::forward<Args>(args)...),
       [cell](oo::PlayerController *pc) -> void {
-        releasePlayerController(cell.get(), pc);
+        oo::releasePlayerController(cell.get(), pc);
       });
 }
 ///@}
 
+/// Mode active while the player is exploring the game world.
+/// \ingroup OpenOblivionModes
 class GameMode {
  private:
   std::shared_ptr<Cell> mCell{};
 
-  PlayerControllerPtr mPlayerController{};
+  oo::PlayerControllerPtr mPlayerController{};
 
   bullet::CollisionCaller mCollisionCaller{};
 
@@ -64,31 +67,32 @@ class GameMode {
   /// cell within `iActivatePickLength` units. If no object is found, return the
   /// null reference `0`.
   /// TODO: Move this to scripting
-  RefId getCrosshairRef();
+  oo::RefId getCrosshairRef();
 
-  void loadCell(ApplicationContext &ctx, BaseId cellId);
+  void loadCell(ApplicationContext &ctx, oo::BaseId cellId);
 
  public:
-  using transition_t = ModeTransition<ConsoleMode,
-                                      MenuMode<gui::MenuType::MainMenu>>;
+  using transition_t = oo::ModeTransition<oo::ConsoleMode,
+                                          oo::MenuMode<gui::MenuType::MainMenu>>;
 
+  /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/) {}
 
+  /// \see Mode::enter()
   void enter(ApplicationContext &ctx) {
     loadCell(ctx, BaseId{0x00'048706});
     refocus(ctx);
   }
 
+  /// \see Mode::refocus()
   void refocus(ApplicationContext &) {
     sdl::setRelativeMouseMode(true);
   }
 
-  /// Poll for SDL events and process all that have occurred.
-  /// This is called at the start of Application::frameStarted.
+  /// \see Mode::handleEvent()
   transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
 
-  /// Step the game world forward `delta` seconds.
-  /// This is called during Application::frameStarted after pollEvents.
+  /// \see Mode::update()
   void update(ApplicationContext &ctx, float delta);
 
   /// Toggle a wireframe display of all collision objects in the scene.

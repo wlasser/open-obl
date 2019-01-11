@@ -6,18 +6,19 @@
 
 namespace oo {
 
+/// \ingroup OpenOblivionModes
 using LoadingMenuMode = MenuMode<gui::MenuType::LoadingMenu>;
 
+/// \ingroup OpenOblivionModes
 template<> struct MenuModeTransition<LoadingMenuMode> {
   using type = ModeTransition<LoadingMenuMode>;
 };
 
-template<>
-class MenuMode<gui::MenuType::LoadingMenu>
+/// Specialization of `oo::MenuMode` for the Loading Menu.
+/// \ingroup OpenOblivionModes
+template<> class MenuMode<gui::MenuType::LoadingMenu>
     : public MenuModeBase<LoadingMenuMode> {
  public:
-  using transition_t = MenuModeTransition_t<LoadingMenuMode>;
-
   explicit MenuMode<gui::MenuType::LoadingMenu>(ApplicationContext &ctx)
       : MenuModeBase<LoadingMenuMode>(ctx) {}
 
@@ -25,8 +26,9 @@ class MenuMode<gui::MenuType::LoadingMenu>
     return "menus/loading_menu.xml";
   }
 
-  transition_t handleEventImpl(ApplicationContext &ctx,
-                               const sdl::Event &event);
+  LoadingMenuMode::transition_t
+  handleEventImpl(ApplicationContext &ctx, const sdl::Event &event);
+
   void updateImpl(ApplicationContext &ctx, float delta);
 };
 

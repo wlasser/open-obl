@@ -13,13 +13,33 @@ namespace oo {
 
 template<gui::MenuType Type> class MenuMode;
 
+/// Trait providing the `transition_t` type of the MenuMode specialization `T`.
+/// This is necessary because `MenuModeBase` needs to know `Self::transition_t`
+/// during instantiation, but during that time the derived class `Self` is an
+/// incomplete type.
+/// This should be specialized for each specialization `T` of `MenuMode`,
+/// providing a member typedef `type` equal to `T::transition_t`.
+/// \ingroup OpenOblivionModes
 template<class T> struct MenuModeTransition;
 
+/// Helper type for `oo::MenuModeTransition`.
+/// \ingroup OpenOblivionModes
 template<class T>
 using MenuModeTransition_t = typename MenuModeTransition<T>::type;
 
-template<class Self>
-class MenuModeBase {
+/// Base class for menu `Mode`s.
+/// This class provides the common functionality for all `Mode`s which represent
+/// menu states and itself models the `Mode` concept. It is intended to be
+/// derived from by each specialization of `oo::MenuMode` in the manner of CRTP.
+/// Then, each specialization automatically models the `Mode` concept and is
+/// free to extend the functionality of the menu by providing (public)
+/// implementation functions `handleEventImpl()` and `updateImpl()` with the
+/// same signature as their non-impl base-class counterparts. Each derived class
+/// should also implement a `getFilenameImpl()` method that returns the filepath
+/// of the XML file describing the menu. The named file is opened and processed
+/// automatically during the construction of the base class.
+/// \ingroup OpenOblivionModes
+template<class Self> class MenuModeBase {
  private:
   std::optional<gui::MenuContext> mMenuCtx{};
   float mClock{0.0f};
@@ -38,7 +58,21 @@ class MenuModeBase {
   /// ancestors in decreasing order of generation.
   template<class F> void notifyElementAtCursor(F &&f);
 
+  /// Get a pointer to the \ref OpenOblivionGui layer underlying the menu.
+  gui::MenuContext *getMenuCtx() {
+    // mMenuCtx.has_value() is guaranteed since the constructor would have
+    // thrown an exception otherwise.
+    return &*mMenuCtx;
+  }
+
+  /// The number of seconds elapsed since the menu was constructed.
+  float getClock() const {
+    return mClock;
+  }
+
  public:
+  using transition_t = MenuModeTransition_t<Self>;
+
   explicit MenuModeBase(ApplicationContext &ctx);
 
   void enter(ApplicationContext &ctx) {
@@ -49,22 +83,22 @@ class MenuModeBase {
     sdl::setRelativeMouseMode(false);
   }
 
-  MenuModeTransition_t<Self>
-  handleEvent(ApplicationContext &ctx, const sdl::Event &event);
+  /// Handle transfer of user input to the underlying \ref OpenOblivionGui layer
+  /// and calls `Self::handleEventImpl()`.
+  /// \see Mode::handleEvent()
+  transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
 
+  /// Update the underlying \ref OpenOblivionGui layer and call
+  /// `Self::updateImpl()`.
+  /// \see Mode::update()
   void update(ApplicationContext &ctx, float delta);
 
+  /// Get the filename of the XML file that defines this menu.
+  /// Calls `Self::getFilenameImpl()`.
   std::string getFilename() const {
     return self().getFilenameImpl();
   }
 
-  gui::MenuContext *getMenuCtx() {
-    return &*mMenuCtx;
-  }
-
-  float getClock() {
-    return mClock;
-  }
 };
 
 template<class Self> template<class F> void

@@ -16,6 +16,8 @@
 
 namespace oo {
 
+/// All possible `Mode`s that the oo::Application can be in.
+/// \ingroup OpenOblivionModess
 using ModeVariant = std::variant<oo::GameMode, oo::ConsoleMode,
                                  oo::LoadingMenuMode, oo::MainMenuMode>;
 
