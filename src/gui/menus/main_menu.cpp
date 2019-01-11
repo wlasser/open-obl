@@ -18,11 +18,11 @@ gui::Menu<gui::MenuType::MainMenu>::~Menu<gui::MenuType::MainMenu>() {
 
 gui::Menu<gui::MenuType::MainMenu>::Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
-    mOverlay = overlayMgr->create(this->get_name());
+    mOverlay = overlayMgr->create("__MainMenuOverlay");
     mOverlay->show();
 
     mOverlayContainer = dynamic_cast<Ogre::PanelOverlayElement *>(
-        overlayMgr->createOverlayElement("Panel", this->get_name()));
+        overlayMgr->createOverlayElement("Panel", "__MainMenuContainer"));
     mOverlayContainer->getUserObjectBindings().setUserAny<UiElement *>(this);
     mOverlay->add2D(mOverlayContainer);
 
