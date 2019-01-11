@@ -188,6 +188,20 @@ MenuMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
     });
   }
 
+  switch (mMenuType) {
+    case gui::MenuType::MainMenu: {
+      const auto *continueButton{mMenuCtx->getElementWithId(2)};
+      const auto *exitButton{mMenuCtx->getElementWithId(7)};
+      if (continueButton && continueButton->is_clicked()) {
+        return {true, oo::MenuMode(ctx, gui::MenuType::LoadingMenu)};
+      } else if (exitButton && exitButton->is_clicked()) {
+        return {true, std::nullopt};
+      }
+      break;
+    }
+    default: break;
+  }
+
   return {false, std::nullopt};
 }
 
