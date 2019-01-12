@@ -13,6 +13,7 @@ template<gui::MenuType Type> struct MenuModeTransition<MenuMode<Type>> {
 /// \name Menu mode short names
 /// \addtogroup OpenOblivionModes
 /// @{
+using LoadMenuMode = MenuMode<gui::MenuType::LoadMenu>;
 using LoadingMenuMode = MenuMode<gui::MenuType::LoadingMenu>;
 using MainMenuMode = MenuMode<gui::MenuType::MainMenu>;
 /// @}

@@ -6,6 +6,7 @@
 #include "fs/path.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
+#include "modes/load_menu_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/main_menu_mode.hpp"
 #include "sdl/sdl.hpp"
@@ -18,8 +19,11 @@ namespace oo {
 
 /// All possible `Mode`s that the oo::Application can be in.
 /// \ingroup OpenOblivionModess
-using ModeVariant = std::variant<oo::GameMode, oo::ConsoleMode,
-                                 oo::LoadingMenuMode, oo::MainMenuMode>;
+using ModeVariant = std::variant<oo::GameMode,
+                                 oo::ConsoleMode,
+                                 oo::LoadMenuMode,
+                                 oo::LoadingMenuMode,
+                                 oo::MainMenuMode>;
 
 class Application : public Ogre::FrameListener {
  private:

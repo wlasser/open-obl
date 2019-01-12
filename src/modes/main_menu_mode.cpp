@@ -1,4 +1,5 @@
 #include "modes/game_mode.hpp"
+#include "modes/load_menu_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/main_menu_mode.hpp"
 
@@ -8,9 +9,12 @@ MainMenuMode::transition_t
 MainMenuMode::handleEventImpl(ApplicationContext &ctx,
                               const sdl::Event &/*event*/) {
   if (btnContinue && btnContinue->is_clicked()) {
-    return {true, oo::MenuMode<gui::MenuType::LoadingMenu>(ctx)};
+    return {true, oo::LoadingMenuMode(ctx)};
   }
 
+  if (btnLoad && btnLoad->is_clicked()) {
+    return {true, oo::LoadMenuMode(ctx)};
+  }
   if (btnExit && btnExit->is_clicked()) {
     return {true, std::nullopt};
   }
