@@ -7,9 +7,6 @@
 namespace oo {
 
 /// \ingroup OpenOblivionModes
-using LoadingMenuMode = MenuMode<gui::MenuType::LoadingMenu>;
-
-/// \ingroup OpenOblivionModes
 template<> struct MenuModeTransition<LoadingMenuMode> {
   using type = ModeTransition<LoadingMenuMode>;
 };

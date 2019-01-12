@@ -7,12 +7,8 @@
 namespace oo {
 
 /// \ingroup OpenOblivionModes
-using MainMenuMode = MenuMode<gui::MenuType::MainMenu>;
-
-/// \ingroup OpenOblivionModes
 template<> struct MenuModeTransition<MainMenuMode> {
-  using type = ModeTransition<MenuMode<gui::MenuType::MainMenu>,
-  MenuMode<gui::MenuType::LoadingMenu>>;
+  using type = ModeTransition<MainMenuMode, LoadingMenuMode>;
 };
 
 /// Specialization of `oo::MenuMode` for the Main Menu.
