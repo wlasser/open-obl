@@ -3,6 +3,7 @@
 #include "meta.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
+#include "modes/main_menu_mode.hpp"
 #include "modes/menu_mode.hpp"
 #include "settings.hpp"
 #include "sdl/sdl.hpp"
@@ -65,7 +66,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         [](oo::event::TogglePov) -> transition_t { return {}; },
         [&ctx](oo::event::MenuMode e) -> transition_t {
           if (e.down) {
-            return {false, MenuMode<gui::MenuType::MainMenu>(ctx)};
+            return {false, oo::MainMenuMode(ctx)};
           }
           return {};
         },
