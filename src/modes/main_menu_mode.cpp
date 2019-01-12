@@ -1,3 +1,4 @@
+#include "modes/game_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/main_menu_mode.hpp"
 
@@ -6,13 +7,11 @@ namespace oo {
 MainMenuMode::transition_t
 MainMenuMode::handleEventImpl(ApplicationContext &ctx,
                               const sdl::Event &/*event*/) {
-  if (const auto *btn{getMenuCtx()->getElementWithId(2)};
-      btn && btn->is_clicked()) {
+  if (btnContinue && btnContinue->is_clicked()) {
     return {true, oo::MenuMode<gui::MenuType::LoadingMenu>(ctx)};
   }
 
-  if (const auto *btn{getMenuCtx()->getElementWithId(7)};
-      btn && btn->is_clicked()) {
+  if (btnExit && btnExit->is_clicked()) {
     return {true, std::nullopt};
   }
 

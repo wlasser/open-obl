@@ -19,9 +19,34 @@ template<> struct MenuModeTransition<MainMenuMode> {
 /// \ingroup OpenOblivionModes
 template<> class MenuMode<gui::MenuType::MainMenu>
     : public MenuModeBase<MainMenuMode> {
+ private:
+  /// `<id> 2 </id>`
+  const gui::UiElement *btnContinue{};
+
+  /// `<id> 3 </id>`
+  const gui::UiElement *btnNew{};
+
+  /// `<id> 4 </id>`
+  const gui::UiElement *btnLoad{};
+
+  /// `<id> 5 </id>`
+  const gui::UiElement *btnOptions{};
+
+  /// `<id> 6 </id>`
+  const gui::UiElement *btnCredits{};
+
+  /// `<id> 7 </id>`
+  const gui::UiElement *btnExit{};
+
  public:
   explicit MenuMode<gui::MenuType::MainMenu>(ApplicationContext &ctx)
-      : MenuModeBase<MainMenuMode>(ctx) {}
+      : MenuModeBase<MainMenuMode>(ctx),
+        btnContinue{getMenuCtx()->getElementWithId(2)},
+        btnNew{getMenuCtx()->getElementWithId(3)},
+        btnLoad{getMenuCtx()->getElementWithId(4)},
+        btnOptions{getMenuCtx()->getElementWithId(5)},
+        btnCredits{getMenuCtx()->getElementWithId(6)},
+        btnExit{getMenuCtx()->getElementWithId(7)} {}
 
   std::string getFilenameImpl() const {
     return "menus/options/main_menu.xml";
