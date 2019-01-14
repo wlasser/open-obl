@@ -196,6 +196,8 @@ void Traits::addProvidedTraits(const UiElement *uiElement) {
   addTrait(uiElement->make_clicked());
   addTrait(uiElement->make_shiftclicked());
   addTrait(uiElement->make_mouseover());
+  addTrait(uiElement->make_childcount());
+  addTrait(uiElement->make_child_count());
 }
 
 void Traits::deduceAndAddTrait(DeferredTrait trait) {

@@ -10,10 +10,18 @@
 namespace gui {
 
 class UiElement {
+ private:
+  int mChildCount{};
+
  protected:
   std::string mName{};
 
  public:
+  /// Notify this element about the number of child uiElements it has.
+  void setChildCount(int childCount) {
+    mChildCount = childCount;
+  }
+
   /// \name Trait Setter Functions
   /// These are used to set observable properties of the concrete
   /// representative, usually using values from the dynamic representative.
@@ -199,6 +207,14 @@ class UiElement {
   /// \pre The uiElement must have a valid `id` trait.
   virtual std::optional<gui::Trait<float>> make_mouseover() const {
     return {};
+  }
+  /// The number of child uiElements that this element has.
+  virtual std::optional<gui::Trait<float>> make_childcount() const {
+    return gui::Trait<float>(get_name() + ".childcount", mChildCount);
+  }
+  /// Alternative spelling of childcount.
+  virtual std::optional<gui::Trait<float>> make_child_count() const {
+    return gui::Trait<float>(get_name() + ".child_count", mChildCount);
   }
   ///@}
 

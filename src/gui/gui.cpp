@@ -132,7 +132,10 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   auto *parentOverlay{uiElement->getOverlayElement()};
   auto *parentContainer{dynamic_cast<Ogre::OverlayContainer *>(parentOverlay)};
 
-  for (auto &child : gui::getChildElements(node)) {
+  auto children{gui::getChildElements(node)};
+  uiElement->setChildCount(children.size());
+
+  for (auto &child : children) {
     UiElement *childPtr{child.first.get()};
     if (parentContainer) {
       if (auto *childOverlay{childPtr->getOverlayElement()}) {
