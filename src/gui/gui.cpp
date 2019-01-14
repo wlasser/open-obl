@@ -3,6 +3,7 @@
 #include "gui/elements/image.hpp"
 #include "gui/elements/rect.hpp"
 #include "gui/elements/text.hpp"
+#include "gui/elements/vertical_scroll.hpp"
 #include "gui/gui.hpp"
 #include "gui/logging.hpp"
 #include "gui/xml.hpp"
@@ -81,6 +82,29 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
       std::string shortName{n.attribute("name").value()};
       if (shortName == "load_background"s) {
         return std::make_unique<GenericBackground>(name);
+      } else if (shortName == "rep_scroll_bar"s
+          || shortName == "cont_scroll_bar"s
+          || shortName == "class_list_scroll_bar"s
+          || shortName == "item_listing_scroll_bar"s
+          || shortName == "magic_scroll_bar"s
+          || shortName == "inv_scroll_bar"s
+          || shortName == "map_log_scroll_bar"s
+          || shortName == "stat_p3_scroll_bar"s
+          || shortName == "stat_p4_scroll_bar"s
+          || shortName == "stat_p5_scroll_bar"s
+          || shortName == "load_scroll_bar"s
+          || shortName == "save_scroll_bar"s
+          || shortName == "skills_list_scroll_bar"s
+          || shortName == "race_scroll_bar"s
+          || shortName == "sigil_known_effect_list_scroll_bar"s
+          || shortName == "sigil_added_effect_list_scroll_bar"s
+          || shortName == "effect_list_scroll_bar"s
+          || shortName == "spell_buy_list_scroll_bar"s
+          || shortName == "spell_known_effects_scroll_bar"s
+          || shortName == "spell_added_effets_scroll_bar"s
+          || shortName == "ench_known_effects_scroll_bar"s
+          || shortName == "ench_added_effects_scroll_bar"s) {
+        return std::make_unique<VerticalScroll>(name);
       }
 
       if (n.name() == "image"s) {
