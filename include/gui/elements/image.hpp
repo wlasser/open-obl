@@ -35,6 +35,9 @@ class Image : public InteractableMixin, public PanelMixin {
   void set_alpha(float alpha) override;
   void set_filename(std::string filename) override;
   void set_zoom(float zoom) override;
+
+  std::optional<gui::Trait<float>> make_filewidth() const override;
+  std::optional<gui::Trait<float>> make_fileheight() const override;
 };
 
 } // namespace gui

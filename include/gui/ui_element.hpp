@@ -166,6 +166,14 @@ class UiElement {
   virtual std::optional<gui::Trait<float>> make_height() const {
     return {};
   }
+  /// Width of an image file, in pixels.
+  virtual std::optional<gui::Trait<float>> make_filewidth() const {
+    return {};
+  }
+  /// Height of an image file, in pixels.
+  virtual std::optional<gui::Trait<float>> make_fileheight() const {
+    return {};
+  }
   virtual std::optional<gui::Trait<float>> make_alpha() const {
     return {};
   }

@@ -84,3 +84,35 @@ void gui::Image::set_zoom(float zoom) {
   mZoom = zoom;
   if (getOverlayElement()) updateUVs(gui::getNormalizedDimensions());
 }
+
+std::optional<gui::Trait<float>> gui::Image::make_filewidth() const {
+  if (!getOverlayElement()) {
+    return gui::Trait<float>(get_name() + ".filewidth", 0.0f);
+  }
+
+  // The texture size might change if the filename does, but the material is
+  // consistent so grab the size through that.
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  gui::TraitFun<float> fun{[pass]() -> float {
+    const auto &states{pass->getTextureUnitStates()};
+    if (states.empty()) return 0.0f;
+    return states[0]->getTextureDimensions().first;
+  }};
+
+  return gui::Trait<float>(get_name() + ".filewidth", std::move(fun));
+}
+
+std::optional<gui::Trait<float>> gui::Image::make_fileheight() const {
+  if (!getOverlayElement()) {
+    return gui::Trait<float>(get_name() + ".fileheight", 0.0f);
+  }
+
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  gui::TraitFun<float> fun{[pass]() -> float {
+    const auto &states{pass->getTextureUnitStates()};
+    if (states.empty()) return 0.0f;
+    return states[0]->getTextureDimensions().second;
+  }};
+
+  return gui::Trait<float>(get_name() + ".fileheight", std::move(fun));
+}

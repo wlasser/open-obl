@@ -186,6 +186,8 @@ void Traits::addProvidedTraits(const UiElement *uiElement) {
   addTrait(uiElement->make_y());
   addTrait(uiElement->make_width());
   addTrait(uiElement->make_height());
+  addTrait(uiElement->make_filewidth());
+  addTrait(uiElement->make_fileheight());
   addTrait(uiElement->make_alpha());
   addTrait(uiElement->make_locus());
   addTrait(uiElement->make_visible());
