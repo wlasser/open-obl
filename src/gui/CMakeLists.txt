@@ -13,6 +13,7 @@ target_include_directories(OpenOblivionGui PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 target_sources(OpenOblivionGui PRIVATE
+        ${CMAKE_SOURCE_DIR}/include/gui/elements/generic_background.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/image.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/rect.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/text.hpp

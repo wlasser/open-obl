@@ -1,4 +1,5 @@
 #include "enum_template.hpp"
+#include "gui/elements/generic_background.hpp"
 #include "gui/elements/image.hpp"
 #include "gui/elements/rect.hpp"
 #include "gui/elements/text.hpp"
@@ -75,6 +76,11 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
                                "name (name: {}) (offset: {})",
                                name, n.offset_debug());
         name.push_back('_');
+      }
+
+      std::string shortName{n.attribute("name").value()};
+      if (shortName == "load_background"s) {
+        return std::make_unique<GenericBackground>(name);
       }
 
       if (n.name() == "image"s) {
