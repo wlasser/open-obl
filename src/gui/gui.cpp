@@ -1,4 +1,5 @@
 #include "enum_template.hpp"
+#include "gui/elements/button.hpp"
 #include "gui/elements/generic_background.hpp"
 #include "gui/elements/image.hpp"
 #include "gui/elements/rect.hpp"
@@ -107,6 +108,10 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
         return std::make_unique<VerticalScroll>(name);
       } else if (shortName == "vertical_scroll_marker"s) {
         return std::make_unique<VerticalScrollMarker>(name);
+      } else if (shortName == "load_return_button"s) {
+        return std::make_unique<Button>(name);
+      } else if (shortName == "save_FocusBox"s) {
+        return nullptr;
       }
 
       if (n.name() == "image"s) {
@@ -175,6 +180,7 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc,
   if (stringsDoc) menuTraits->loadStrings(*stringsDoc);
   auto uiElements = gui::addDescendants(*menuTraits, menuElement, menuNode);
   menuTraits->addImplementationElementTraits();
+  menuTraits->addProvidedTraits(menuElement);
   for (const auto &uiElement : uiElements) {
     menuTraits->addProvidedTraits(uiElement.get());
   }

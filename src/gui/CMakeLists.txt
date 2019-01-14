@@ -13,6 +13,7 @@ target_include_directories(OpenOblivionGui PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 target_sources(OpenOblivionGui PRIVATE
+        ${CMAKE_SOURCE_DIR}/include/gui/elements/button.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/generic_background.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/image.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/rect.hpp
@@ -21,6 +22,7 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/gui.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/logging.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menu.hpp
+        ${CMAKE_SOURCE_DIR}/include/gui/menus/load_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/loading_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/main_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/screen.hpp
@@ -39,6 +41,7 @@ target_sources(OpenOblivionGui PRIVATE
         elements/rect.cpp
         elements/text.cpp
         gui.cpp
+        menus/load_menu.cpp
         menus/loading_menu.cpp
         menus/main_menu.cpp
         screen.cpp
