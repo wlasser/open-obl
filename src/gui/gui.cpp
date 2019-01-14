@@ -105,6 +105,8 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
           || shortName == "ench_known_effects_scroll_bar"s
           || shortName == "ench_added_effects_scroll_bar"s) {
         return std::make_unique<VerticalScroll>(name);
+      } else if (shortName == "vertical_scroll_marker"s) {
+        return std::make_unique<VerticalScrollMarker>(name);
       }
 
       if (n.name() == "image"s) {

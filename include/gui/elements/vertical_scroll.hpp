@@ -3,6 +3,7 @@
 
 #include "gui/elements/image.hpp"
 #include "gui/trait.hpp"
+#include <array>
 
 namespace gui {
 
@@ -48,6 +49,37 @@ class VerticalScroll : public Image {
     float *const fnull{nullptr};
     return std::make_tuple(&mUser0, fnull, fnull, fnull, fnull, fnull, fnull,
                            &mScrollCurrentValue, fnull, fnull, &mUser10);
+  }
+
+  BUILD_USER_TRAIT_INTERFACE(mInterface);
+};
+
+class VerticalScrollMarker : public Image {
+ private:
+  /// `user0`--`user7` are all unused.
+  std::array<float, 8> mUnused{};
+  /// `user8`: Interval to change value by when scrolling.
+  float mScrollInterval{};
+  /// `user9`: Unknown
+  float mUser9{};
+  /// `user10`: Unknown
+  float mUser10{};
+
+  UserTraitInterface<float, float, float, float, float,
+                     float, float, float, float, float,
+                     float> mInterface{std::make_tuple(
+      &mUnused[0], &mUnused[1], &mUnused[2], &mUnused[3], &mUnused[4],
+      &mUnused[5], &mUnused[6], &mUnused[7], &mScrollInterval, &mUser9,
+      &mUser10)};
+
+ public:
+  VerticalScrollMarker(std::string name) : Image(std::move(name)) {}
+
+  auto getUserOutputTraitInterface() {
+    float *const fnull{nullptr};
+    return std::make_tuple(&mUnused[0], &mUnused[1], &mUnused[2], &mUnused[3],
+                           &mUnused[4], &mUnused[5], &mUnused[6], &mUnused[7],
+                           fnull, &mUser9, fnull);
   }
 
   BUILD_USER_TRAIT_INTERFACE(mInterface);
