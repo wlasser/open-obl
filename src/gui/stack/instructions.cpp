@@ -11,11 +11,14 @@ void push_t::operator()(Stack &stack) const {
       [&stack](const TraitName &trait) {
         // Trailing underscore implies a switch statement using the working
         // value, otherwise replace the working value.
-        if (trait.str.back() == '_') {
-          const auto val{stack.back()};
-          const auto nameCase{appendSwitchCase(trait.str, val)};
-        }
-        const auto &traitVar{trait.traits->getTraitVariant(trait.str)};
+        std::string fullName = [&]() {
+          if (trait.str.back() == '_') {
+            const auto val{stack.back()};
+            return stack::appendSwitchCase(trait.str, val);
+          }
+          return trait.str;
+        }();
+        const auto &traitVar{trait.traits->getTraitVariant(fullName)};
         stack.emplace_back(std::visit([](const auto &t) -> ValueType {
           return t.invoke();
         }, traitVar));

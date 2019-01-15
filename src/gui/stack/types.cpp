@@ -36,7 +36,7 @@ std::string appendSwitchCase(std::string name, const ValueType &val) {
         return name.append(std::to_string(i));
       },
       [&name](float f) {
-        return name.append(std::to_string(f));
+        return name.append(std::to_string(static_cast<int>(f)));
       },
       [&name](bool b) {
         return name.append(b ? "true" : "false");
