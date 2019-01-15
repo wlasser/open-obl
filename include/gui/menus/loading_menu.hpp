@@ -50,7 +50,7 @@ class Menu<MenuType::LoadingMenu> : public UiElement {
   Menu<MenuType::LoadingMenu>();
   ~Menu<MenuType::LoadingMenu>() override;
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     return std::make_tuple(&mStepNumber, &mLoadImage, &mLoadText,
                            &mCurrentProgress, &mMaximumProgress, &mDebugText);
   }

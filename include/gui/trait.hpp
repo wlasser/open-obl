@@ -166,6 +166,14 @@ void set_user(int index, gui::UiElement::UserValue value) override { \
 } \
 gui::UiElement::UserValue get_user(int index) override { \
   return interface.get_user(index); \
+} \
+void setOutputUserTraitSources(std::vector<TraitVariant *> traits) const override { \
+  for (auto *p : traits) { \
+    if (!p) continue; \
+    std::visit([&](auto &t) { \
+      t.setSource(getUserOutputTraitInterface()); \
+    }, *p); \
+  } \
 }
 
 /// Represents a function used to set/compute the value of the dynamic

@@ -185,6 +185,15 @@ class Traits {
   template<class ...Ts>
   void setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits);
 
+  /// Find all the user traits and bin them based on their parent uiElement.
+  /// \returns a map from fully-qualified uiElement names to a vector of
+  ///          all defined user traits belonging to that uiElement. The position
+  ///          of a trait in the vector equals the index of the trait, so
+  ///          `user3` will be the fourth element in the vector, and so on.
+  ///          Any gaps are filled with `nullptr`.
+  std::unordered_map<std::string, std::vector<TraitVariant *>>
+  binUserTraits() const;
+
   /// For each trait `v`, make an edge from `u` to `v` iff `u` is a dependency
   /// of `v`.
   /// Try to delay calling this until all traits have been added, as it

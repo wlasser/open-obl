@@ -256,6 +256,34 @@ void Traits::addQueuedCustomTraits() {
   }
 }
 
+std::unordered_map<std::string, std::vector<Traits::TraitVariant *>>
+Traits::binUserTraits() const {
+  std::unordered_map<std::string, std::vector<TraitVariant *>> map{};
+
+  for (auto vIndex : mGraph.vertex_set()) {
+    const TraitVertex &vPtr{mGraph[vIndex]};
+    if (!vPtr) throw std::runtime_error("nullptr vertex");
+    auto *trait = &vPtr->var;
+
+    const std::string name{std::visit([&](const auto &v) {
+      return v.getName();
+    }, *trait)};
+
+    const std::optional<int> userIndex{gui::getUserTraitIndex(name)};
+    if (!userIndex) continue;
+
+    const std::string uiElementName{name.substr(0, name.rfind("."))};
+
+    auto &vec{map[uiElementName]};
+    if (vec.size() <= *userIndex) {
+      vec.insert(vec.end(), *userIndex - vec.size() + 1, nullptr);
+    }
+    vec[*userIndex] = trait;
+  }
+
+  return map;
+}
+
 void Traits::addTraitDependencies() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
     const TraitVertex &vPtr{mGraph[vIndex]};

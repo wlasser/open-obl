@@ -189,10 +189,12 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc,
   menuTraits->update();
 
   // Link the output user traits (i.e. those set by the implementation) to the
-  // menu's user interface buffer.
-  std::visit([&menuTraits](auto &m) {
-    menuTraits->setOutputUserTraitSources(m.getUserOutputTraitInterface());
-  }, *menu);
+  // parent element's user interface buffer.
+  auto binnedTraits{menuTraits->binUserTraits()};
+  menuElement->setOutputUserTraitSources(binnedTraits[menuElement->get_name()]);
+  for (const auto &uiElement : uiElements) {
+    uiElement->setOutputUserTraitSources(binnedTraits[uiElement->get_name()]);
+  }
 
   return std::optional<MenuContext>(std::in_place,
                                     std::move(menuTraits),

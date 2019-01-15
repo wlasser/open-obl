@@ -45,7 +45,7 @@ class VerticalScroll : public Image {
  public:
   VerticalScroll(std::string name) : Image(std::move(name)) {}
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     float *const fnull{nullptr};
     return std::make_tuple(&mUser0, fnull, fnull, fnull, fnull, fnull, fnull,
                            &mScrollCurrentValue, fnull, fnull, &mUser10);
@@ -75,7 +75,7 @@ class VerticalScrollMarker : public Image {
  public:
   VerticalScrollMarker(std::string name) : Image(std::move(name)) {}
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     float *const fnull{nullptr};
     return std::make_tuple(&mUnused[0], &mUnused[1], &mUnused[2], &mUnused[3],
                            &mUnused[4], &mUnused[5], &mUnused[6], &mUnused[7],

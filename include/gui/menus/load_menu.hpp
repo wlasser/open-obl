@@ -28,7 +28,7 @@ class Menu<MenuType::LoadMenu> : public UiElement {
   Menu<MenuType::LoadMenu>();
   ~Menu<MenuType::LoadMenu>() override;
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     return std::make_tuple<float *>(nullptr);
   }
 

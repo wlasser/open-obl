@@ -45,7 +45,7 @@ class Menu<MenuType::MainMenu> : public UiElement {
   Menu<MenuType::MainMenu>();
   ~Menu<MenuType::MainMenu>() override;
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     return std::make_tuple(&mIsMenuVisible,
                            &mAreButtonsVisible,
                            &mIsPressStartVisible,

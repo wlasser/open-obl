@@ -42,7 +42,7 @@ class Button : public Image {
 
   Button(std::string name) : Image(std::move(name)) {}
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     return std::make_tuple(
         &mButtonText, &mButtonEnabled, &mButtonFont, &mButtonVisible,
         &mUnused[0], &mUnused[1], &mUnused[2], &mUnused[3], &mUnused[4],

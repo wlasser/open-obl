@@ -19,7 +19,7 @@ class GenericBackground : public Rect {
  public:
   GenericBackground(std::string name) : Rect(std::move(name)) {}
 
-  auto getUserOutputTraitInterface() {
+  auto getUserOutputTraitInterface() const {
     return std::tuple<float *, float *>{nullptr, nullptr};
   }
 

@@ -131,6 +131,13 @@ class UiElement {
     throw std::runtime_error("No user trait interface defined");
   }
 
+  using TraitVariant = std::variant<gui::Trait<float>,
+                                    gui::Trait<std::string>,
+                                    gui::Trait<bool>>;
+
+  virtual void
+  setOutputUserTraitSources(std::vector<TraitVariant *> traits) const {}
+
 #pragma clang diagnostic pop
 
   /// Every UiElement is required to have a name which identifies it uniquely in
