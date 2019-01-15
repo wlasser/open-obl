@@ -83,30 +83,47 @@ void XmlEntityConverter::operator()(std::string_view entity,
   if (entity == "&true;") out = true;
   else if (entity == "&false;") out = false;
   else if (entity == "&xbox;") out = false;
-  else if (entity == "&xbuttona;") out = false;
-  else if (entity == "&xbuttonb;") out = false;
-  else if (entity == "&xbuttonlb;") out = false;
-  else if (entity == "&xbuttonls;") out = false;
-  else if (entity == "&xbuttonlt;") out = false;
-  else if (entity == "&xbuttonrb;") out = false;
-  else if (entity == "&xbuttonrs;") out = false;
-  else if (entity == "&xbuttonrt;") out = false;
-  else if (entity == "&xbuttonx;") out = false;
-  else if (entity == "&xbuttony;") out = false;
   else if (entity == "&xenon;") out = false;
   else out = boost::none;
 }
 
+template<>
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<float> &out) const {
+  if (entity == "&xbuttona;") out = 1;
+  else if (entity == "&xbuttonb;") out = 1;
+  else if (entity == "&xbuttonlb;") out = 1;
+  else if (entity == "&xbuttonls;") out = 1;
+  else if (entity == "&xbuttonlt;") out = 1;
+  else if (entity == "&xbuttonrb;") out = 1;
+  else if (entity == "&xbuttonrs;") out = 1;
+  else if (entity == "&xbuttonrt;") out = 1;
+  else if (entity == "&xbuttonx;") out = 1;
+  else if (entity == "&xbuttony;") out = 1;
+  else out = boost::none;
+}
+
 template<> float getXmlValue(pugi::xml_node node) {
-  // No string construction necessary, unlike with getXmlValue<int>
+  if (auto opt{boost::convert<float>(getXmlValue<std::string>(node),
+                                     XmlEntityConverter{})}) {
+    return opt.value();
+  }
   return std::strtof(node.value(), nullptr);
 }
 
 template<> float getXmlChildValue(pugi::xml_node node, const char *name) {
+  if (auto opt{boost::convert<float>(getXmlChildValue<std::string>(node, name),
+                                     XmlEntityConverter{})}) {
+    return opt.value();
+  }
   return std::strtof(node.child_value(name), nullptr);
 }
 
 template<> float getXmlChildValue(pugi::xml_node node) {
+  if (auto opt{boost::convert<float>(getXmlChildValue<std::string>(node),
+                                     XmlEntityConverter{})}) {
+    return opt.value();
+  }
   return std::strtof(node.child_value(), nullptr);
 }
 

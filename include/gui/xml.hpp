@@ -41,6 +41,10 @@ template<>
 void XmlEntityConverter::operator()(std::string_view entity,
                                     boost::optional<bool> &out) const;
 
+template<>
+void XmlEntityConverter::operator()(std::string_view entity,
+                                    boost::optional<bool> &out) const;
+
 /// \name Xml node value getters
 /// `xml_node::value` and `xml_node::child_value` return `const char *`, which
 /// frequently has untrimmed whitespace due to the xml formatting, e.g.
