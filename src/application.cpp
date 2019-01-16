@@ -21,6 +21,8 @@
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
+#include <OgreOverlayManager.h>
+#include <OgreRenderQueue.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -155,7 +157,10 @@ Application::Application(std::string windowName) : FrameListener() {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }
 
-  modeStack.emplace_back(std::in_place_type<oo::GameMode>, ctx);
+  createDummySceneManager();
+  createDummyRenderQueue();
+
+  modeStack.emplace_back(std::in_place_type<oo::MainMenuMode>, ctx);
   std::visit([this](auto &&state) {
     state.enter(ctx);
   }, modeStack.back());
@@ -452,6 +457,21 @@ void Application::pollEvents() {
   }
 }
 
+void Application::createDummySceneManager() {
+  dummyScnMgr = ctx.getRoot().createSceneManager("DefaultSceneManager",
+                                                 "__DummySceneManager");
+  dummyCamera = dummyScnMgr->createCamera("__DummyCamera");
+  dummyScnMgr->addRenderQueueListener(ctx.getImGuiManager());
+  dummyScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
+  ctx.setCamera(gsl::make_not_null(dummyCamera));
+}
+
+void Application::createDummyRenderQueue() {
+  Ogre::RenderQueue dummyQueue{};
+  Ogre::OverlayManager::getSingleton()._queueOverlaysForRendering(
+      dummyCamera, &dummyQueue, dummyCamera->getViewport());
+}
+
 void Application::quit() {
   ctx.ogreRoot->queueEndRendering();
 }
@@ -485,6 +505,10 @@ oo::GameMode &Application::getGameModeInStack() {
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
   pollEvents();
+  if (modeStack.empty()) {
+    quit();
+    return false;
+  }
 
   ctx.imguiMgr->newFrame(event.timeSinceLastFrame);
 

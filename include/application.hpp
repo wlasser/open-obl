@@ -33,6 +33,37 @@ class Application : public Ogre::FrameListener {
   ApplicationContext ctx{};
   std::vector<oo::ModeVariant> modeStack{};
 
+  /// \name Dummy Scene Manager
+  /// This machinery is necessary to display text on the opening menu screen,
+  /// for reasons discussed below.
+  ///
+  /// In order to render text correctly, each Ogre::TextAreaOverlayElement asks
+  /// the Ogre::OverlayManager for the dimensions of the viewport currently
+  /// being rendered to. Until a viewport is created *and rendered to using the
+  /// Ogre::OverlaySystem*, the returned dimensions are `(0, 0)`. This means
+  /// that text created before the first frame of the application will have zero
+  /// width and not be rendered.
+  ///
+  /// This is especially awkward when the first mode is a MenuMode, since then
+  /// the Ogre::Overlay is created before the MenuMode's own Ogre::SceneManager.
+  /// Since we can't create a camera and add a viewport without a scene manager,
+  /// the Ogre::OverlayManager must be primed with the correct screen dimensions
+  /// before we ever start rendering a mode.
+  ///
+  /// To achieve this, `createDummySceneManager()` creates an Ogre::SceneManager
+  /// whose only purpose is to contain an Ogre::Camera used to set the viewport
+  /// size. `createDummyRenderQueue()` then forces the Ogre::OverlayManager to
+  /// update its cached viewport dimensions to the correct ones by pretending to
+  /// render all the overlays---of which there aren't any, yet---but doing so
+  /// outside of Ogre's render loop.
+  /// @{
+  void createDummySceneManager();
+  void createDummyRenderQueue();
+
+  Ogre::SceneManager *dummyScnMgr{};
+  Ogre::Camera *dummyCamera{};
+  ///@}
+
   /// Set up the logger.
   /// Ogre's logging facilities are pretty good but fall down when it comes to
   /// formatting. Using boost::format gets pretty tedious so we use spdlog,

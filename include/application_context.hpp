@@ -6,6 +6,7 @@
 #include "bsa_archive_factory.hpp"
 #include "controls.hpp"
 #include "esp_coordinator.hpp"
+#include "game_settings.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
@@ -81,6 +82,30 @@ class ApplicationContext {
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
 
+ private:
+  void setCameraAspectRatio(gsl::not_null<Ogre::Camera *> camera) const {
+    const auto &settings{GameSettings::getSingleton()};
+    const auto screenWidth
+        {gsl::narrow_cast<float>(settings.iGet("Display.iSize W"))};
+    const auto screenHeight
+        {gsl::narrow_cast<float>(settings.iGet("Display.iSize H"))};
+
+    const float aspectRatio{screenWidth / screenHeight};
+    camera->setAspectRatio(aspectRatio);
+    camera->setNearClipDistance(0.1f);
+
+    // We are given the horizontal fov, but can only set the vertical fov.
+    // Internally Ogre probably undoes this operation so this is inefficient and
+    // possibly inaccurate.
+    {
+      Ogre::Degree xFov{settings.get<float>("Display.fDefaultFOV", 75.0f)};
+      xFov = Ogre::Math::Clamp(xFov.valueDegrees(), 1.0f, 179.0f);
+      const auto tanXFov2{Ogre::Math::Tan(xFov / 2.0f)};
+      Ogre::Degree yFov{2.0f * Ogre::Math::ATan(1.0f / aspectRatio * tanXFov2)};
+      camera->setFOVy(yFov);
+    }
+  }
+
  public:
   std::shared_ptr<spdlog::logger> getLogger() {
     return logger;
@@ -142,7 +167,12 @@ class ApplicationContext {
     return overlaySys.get();
   }
 
-  void setCamera(Ogre::Camera *camera) {
+  void setCamera(gsl::not_null<Ogre::Camera *> camera) {
+    setCameraAspectRatio(camera);
+    auto &windowPtr{std::get<Ogre::RenderWindowPtr>(windows)};
+    if (windowPtr->hasViewportWithZOrder(0)) {
+      windowPtr->removeViewport(0);
+    }
     std::get<Ogre::RenderWindowPtr>(windows)->addViewport(camera);
     ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
   }

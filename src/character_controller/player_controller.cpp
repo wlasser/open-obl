@@ -12,7 +12,6 @@ namespace oo {
 PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   impl.camera = scnMgr->createCamera("PlayerCamera");
   auto camera{gsl::make_not_null(impl.camera)};
-  setAspectRatio(camera);
 
   impl.bodyNode = scnMgr->getRootSceneNode()->createChildSceneNode();
   auto bodyNode{gsl::make_not_null(impl.bodyNode)};
@@ -110,29 +109,6 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   btTransform trans{};
   impl.motionState->getWorldTransform(trans);
   impl.rigidBody->setWorldTransform(trans);
-}
-
-void PlayerController::setAspectRatio(gsl::not_null<Ogre::Camera *> camera) const {
-  const auto &settings{GameSettings::getSingleton()};
-  const auto screenWidth
-      {gsl::narrow_cast<float>(settings.iGet("Display.iSize W"))};
-  const auto screenHeight
-      {gsl::narrow_cast<float>(settings.iGet("Display.iSize H"))};
-
-  const float aspectRatio{screenWidth / screenHeight};
-  camera->setAspectRatio(aspectRatio);
-  camera->setNearClipDistance(0.1f);
-
-  // We are given the horizontal fov, but can only set the vertical fov.
-  // Internally Ogre probably undoes this operation so this is inefficient and
-  // possibly inaccurate.
-  {
-    using namespace Ogre;
-    Degree xFov{settings.get<float>("Display.fDefaultFOV", 75.0f)};
-    xFov = Math::Clamp(xFov.valueDegrees(), 1.0f, 179.0f);
-    Degree yFov{2.0f * Math::ATan(1.0f / aspectRatio * Math::Tan(xFov / 2.0f))};
-    camera->setFOVy(yFov);
-  }
 }
 
 void PlayerController::attachCamera(gsl::not_null<Ogre::Camera *> camera,

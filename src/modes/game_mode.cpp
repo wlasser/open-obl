@@ -3,7 +3,7 @@
 #include "meta.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/game_mode.hpp"
-#include "modes/main_menu_mode.hpp"
+#include "modes/loading_menu_mode.hpp"
 #include "modes/menu_mode.hpp"
 #include "settings.hpp"
 #include "sdl/sdl.hpp"
@@ -66,7 +66,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         [](oo::event::TogglePov) -> transition_t { return {}; },
         [&ctx](oo::event::MenuMode e) -> transition_t {
           if (e.down) {
-            return {false, oo::MainMenuMode(ctx)};
+            return {false, oo::LoadingMenuMode(ctx)};
           }
           return {};
         },
@@ -161,7 +161,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
         controller->handleCollision(other, contact);
       });
 
-  ctx.setCamera(mPlayerController->getCamera());
+  ctx.setCamera(gsl::make_not_null(mPlayerController->getCamera()));
 
   const auto startPos = []() {
     auto pos{oo::fromBSCoordinates({0, 0, 0})};

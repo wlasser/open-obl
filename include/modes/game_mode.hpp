@@ -72,8 +72,7 @@ class GameMode {
   void loadCell(ApplicationContext &ctx, oo::BaseId cellId);
 
  public:
-  using transition_t = oo::ModeTransition<oo::ConsoleMode,
-                                          oo::MenuMode<gui::MenuType::MainMenu>>;
+  using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
 
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/) {}
