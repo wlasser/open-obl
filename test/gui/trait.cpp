@@ -6,6 +6,7 @@
 #include "settings.hpp"
 #include "test_ui_element.hpp"
 #include <catch2/catch.hpp>
+#include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <sstream>
 

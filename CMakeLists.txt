@@ -32,7 +32,7 @@ FetchContent_Declare(PEGTL
         GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.2.1)
+        GIT_TAG v1.3.0)
 
 FetchContent_GetProperties(GoogleTest)
 if (NOT GoogleTest_populated)
