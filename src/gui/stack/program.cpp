@@ -103,8 +103,9 @@ Program compile(pugi::xml_node node, const gui::Traits *traits) {
     else if (name == "or") addInstr(or_t{});
     else if (name == "not") addInstr(not_t{});
     else if (name == "onlyif") addInstr(onlyif_t{});
-    else if (name == "onlyifnot") addInstr(onlyifnot_t{});
-    else if (name == "rand") addInstr(rand_t{});
+    else if (name == "onlyifnot" || name == "onlynotif") {
+      addInstr(onlyifnot_t{});
+    } else if (name == "rand") addInstr(rand_t{});
     else if (name == "ref") addInstr(ref_t{});
   });
 
