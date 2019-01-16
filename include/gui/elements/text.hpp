@@ -35,6 +35,7 @@ class Text : public InteractableMixin {
   void set_visible(bool visible) override;
   void set_string(std::string str) override;
   void set_font(float font) override;
+  void set_justify(float justify) override;
 
   std::optional<gui::Trait<float>> make_width() const override;
   std::optional<gui::Trait<float>> make_height() const override;

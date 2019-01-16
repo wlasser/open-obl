@@ -114,6 +114,9 @@ class UiElement {
   /// Font of the text to display.
   virtual void set_font(float font) {}
 
+  /// Whether the text is left, right, or centre justified.
+  virtual void set_justify(float justify) {}
+
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
   /// traits being given implemented types in sequential order as needed.

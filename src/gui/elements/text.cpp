@@ -179,6 +179,25 @@ void gui::Text::set_font(float font) {
   updateFont(fontName.c_str());
 }
 
+void gui::Text::set_justify(float justify) {
+  if (!mOverlay) return;
+  switch (static_cast<int>(justify)) {
+    default:
+    case 1: {
+      mOverlay->setAlignment(Ogre::TextAreaOverlayElement::Alignment::Left);
+      break;
+    }
+    case 2: {
+      mOverlay->setAlignment(Ogre::TextAreaOverlayElement::Alignment::Right);
+      break;
+    }
+    case 4: {
+      mOverlay->setAlignment(Ogre::TextAreaOverlayElement::Alignment::Center);
+      break;
+    }
+  }
+}
+
 std::optional<gui::Trait<float>> gui::Text::make_width() const {
   if (!mOverlay) return Trait<float>(get_name() + ".width", 0);
 

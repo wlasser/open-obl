@@ -100,6 +100,9 @@ void XmlEntityConverter::operator()(std::string_view entity,
   else if (entity == "&xbuttonrt;") out = 1;
   else if (entity == "&xbuttonx;") out = 1;
   else if (entity == "&xbuttony;") out = 1;
+  else if (entity == "&left;") out = 1;
+  else if (entity == "&right;") out = 2;
+  else if (entity == "&center;") out = 4;
   else out = boost::none;
 }
 

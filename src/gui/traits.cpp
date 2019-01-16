@@ -70,6 +70,8 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<std::string>(uiElement, &UiElement::set_string, node);
   } else if (node.name() == "font"s) {
     addAndBindTrait<float>(uiElement, &UiElement::set_font, node);
+  } else if (node.name() == "justify"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_justify, node);
   } else {
     return false;
   }
