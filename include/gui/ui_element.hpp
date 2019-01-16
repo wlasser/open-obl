@@ -111,6 +111,9 @@ class UiElement {
   /// Text to display.
   virtual void set_string(std::string string) {}
 
+  /// Font of the text to display.
+  virtual void set_font(float font) {}
+
   /// Override this to specify the user trait interface of the ui element; the
   /// default should be that every user trait index is Unimplemented, with user
   /// traits being given implemented types in sequential order as needed.

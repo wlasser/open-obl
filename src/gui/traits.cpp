@@ -68,6 +68,8 @@ bool Traits::addAndBindImplementationTrait(pugi::xml_node node,
     addAndBindTrait<float>(uiElement, &UiElement::set_clicksound, node);
   } else if (node.name() == "string"s) {
     addAndBindTrait<std::string>(uiElement, &UiElement::set_string, node);
+  } else if (node.name() == "font"s) {
+    addAndBindTrait<float>(uiElement, &UiElement::set_font, node);
   } else {
     return false;
   }

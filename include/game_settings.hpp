@@ -1,12 +1,14 @@
 #ifndef OPENOBLIVION_GAME_SETTINGS_HPP
 #define OPENOBLIVION_GAME_SETTINGS_HPP
 
+#include "fs/path.hpp"
 #include "record/records.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <string>
 
 namespace oo {
 
@@ -100,6 +102,16 @@ class GameSettings {
 
   unsigned int uGet(const std::string &path) const {
     return get<unsigned int>(path).value();
+  }
+
+  oo::Path getFont(int index) const {
+    auto fnt{get<std::string>("Fonts.SFontFile_" + std::to_string(index))};
+    if (fnt.has_value()) return oo::Path{fnt.value()};
+
+    fnt = get<std::string>("Fonts.SFontFile_1");
+    if (fnt.has_value()) return oo::Path{fnt.value()};
+
+    return oo::Path{"libertine"};
   }
 };
 

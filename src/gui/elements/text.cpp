@@ -1,3 +1,5 @@
+#include "fs/path.hpp"
+#include "game_settings.hpp"
 #include "gui/elements/text.hpp"
 #include "gui/logging.hpp"
 #include "gui/screen.hpp"
@@ -48,30 +50,11 @@ gui::Text::Text(std::string name) {
     mOverlay = dynamic_cast<Ogre::TextAreaOverlayElement *>(overlay);
     mOverlay->getUserObjectBindings().setUserAny<UiElement *>(this);
 
-    auto &matMgr{Ogre::MaterialManager::getSingleton()};
-    std::string matName{std::string("__GuiMaterial:") + get_name()};
-
-    if (matMgr.resourceExists(matName, oo::SHADER_GROUP)) {
-      mMatPtr = matMgr.getByName(matName, oo::SHADER_GROUP);
-    } else {
-      auto baseMat{matMgr.getByName("__GuiMaterial", oo::SHADER_GROUP)};
-      mMatPtr = baseMat->clone(matName);
-    }
-
-    mOverlay->setFontName("fonts/kingthings_regular.fnt", oo::RESOURCE_GROUP);
-
-    auto *fontPass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
-    auto *fontState{fontPass->getTextureUnitStates().front()};
-    auto texPtr{fontState->_getTexturePtr()};
-
-    auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
-    const auto &states{pass->getTextureUnitStates()};
-    if (states.empty()) pass->createTextureUnitState();
-    states.front()->setTexture(texPtr);
+    mMatPtr = createOrRetrieveMaterial();
+    updateFont(oo::GameSettings::getSingleton().getFont(1).c_str());
 
     const Ogre::ColourValue col{1.0f, 1.0f, 1.0f, 1.0f};
     mMatPtr->setDiffuse(col);
-    mOverlay->setMaterialName(matName, oo::SHADER_GROUP);
 
     mOverlay->setCharHeight(28.0f / overlayMgr->getViewportHeight());
     mOverlay->setCaption("");
@@ -82,6 +65,43 @@ gui::Text::Text(std::string name) {
     mOverlay->setHeight(0.0f);
     mOverlay->show();
   }
+}
+
+Ogre::MaterialPtr gui::Text::createOrRetrieveMaterial() const {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  std::string matName{std::string("__GuiMaterial:") + get_name()};
+
+  if (matMgr.resourceExists(matName, oo::SHADER_GROUP)) {
+    return matMgr.getByName(matName, oo::SHADER_GROUP);
+  } else {
+    auto baseMat{matMgr.getByName("__GuiMaterial", oo::SHADER_GROUP)};
+    return baseMat->clone(matName);
+  }
+}
+
+void gui::Text::updateFont(std::string fontName) {
+  // Update the overlay font, forcing an update of its material
+  // Fonts without file extensions are named fonts defined in fontdef files,
+  // such as the fallback font.
+  if (fontName.find('.') == std::string::npos) {
+    mOverlay->setFontName(fontName, oo::SHADER_GROUP);
+  } else {
+    mOverlay->setFontName(fontName, oo::RESOURCE_GROUP);
+  }
+
+  // Grab texture from overlay material, which is the same as the font material
+  auto *fontPass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
+  auto *fontState{fontPass->getTextureUnitStates().front()};
+  auto texPtr{fontState->_getTexturePtr()};
+
+  // Set current material's texture to the font texture
+  auto *pass{mMatPtr->getTechnique(0)->getPass(0)};
+  const auto &states{pass->getTextureUnitStates()};
+  if (states.empty()) pass->createTextureUnitState();
+  states.front()->setTexture(texPtr);
+
+  // We're done with the overlay material, replace it with the new one
+  mOverlay->setMaterialName(mMatPtr->getName(), oo::SHADER_GROUP);
 }
 
 gui::Text::~Text() {
@@ -150,6 +170,13 @@ void gui::Text::set_visible(bool visible) {
 void gui::Text::set_string(std::string str) {
   if (!mOverlay) return;
   mOverlay->setCaption(str);
+}
+
+void gui::Text::set_font(float font) {
+  if (!mOverlay) return;
+  const auto index{static_cast<int>(font)};
+  oo::Path fontName{oo::GameSettings::getSingleton().getFont(index)};
+  updateFont(fontName.c_str());
 }
 
 std::optional<gui::Trait<float>> gui::Text::make_width() const {
