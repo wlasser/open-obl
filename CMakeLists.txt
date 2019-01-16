@@ -87,6 +87,7 @@ message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
 add_subdirectory(lib/tl)
+add_subdirectory(lib/soloud)
 
 add_subdirectory(src/bsa)
 add_subdirectory(src/fs)
@@ -217,6 +218,7 @@ target_link_libraries(OpenOblivion PRIVATE
         ZLIB::ZLIB
         SDL2::SDL2
         SDL2::SDL2main
+        SoLoud::SoLoud
         OgreMain OgreGLSupport OgreOverlay
         spdlog::spdlog
         stdc++fs
