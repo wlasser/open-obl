@@ -43,7 +43,7 @@ void XmlEntityConverter::operator()(std::string_view entity,
 
 template<>
 void XmlEntityConverter::operator()(std::string_view entity,
-                                    boost::optional<bool> &out) const;
+                                    boost::optional<float> &out) const;
 
 /// \name Xml node value getters
 /// `xml_node::value` and `xml_node::child_value` return `const char *`, which

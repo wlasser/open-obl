@@ -10,9 +10,11 @@ TraitName::TraitName(std::string name, const gui::Traits *traits)
     : str(name), traits(traits) {}
 
 ValueType parseValueType(std::string_view str) {
-  boost::cnv::cstream converter{};
-  // Can use `converter(std::skipws)` to strip leading whitespace but not
-  // trailing, and `boost::algorithm::trim` doesn't work with `string_view`.
+  gui::XmlEntityConverter conv{};
+  boost::cnv::cstream fConv{};
+  // Manually strip whitespace as `boost::algorithm::trim` doesn't work with
+  // `std::string_view` and `boost::convert` can only skip leading whitespace
+  // even if we did use the default converter.
   str.remove_prefix(std::min(str.find_first_not_of(" \t"), str.size()));
   if (const auto suffixPos{str.find_last_not_of(" \t")};
       suffixPos == std::string_view::npos) {
@@ -21,12 +23,12 @@ ValueType parseValueType(std::string_view str) {
     str.remove_suffix(str.size() - std::min(suffixPos + 1, str.size()));
   }
 
-  if (auto boolOpt{boost::convert<bool>(str, XmlEntityConverter{})};
-      boolOpt.has_value()) {
-    return *boolOpt;
-  } else if (auto floatOpt{boost::convert<float>(str, converter)};
-      floatOpt.has_value()) {
-    return *floatOpt;
+  if (auto bOpt{boost::convert<bool>(str, conv)}; bOpt.has_value()) {
+    return *bOpt;
+  } else if (auto fOpt{boost::convert<float>(str, conv)}; fOpt.has_value()) {
+    return *fOpt;
+  } else if (fOpt = boost::convert<float>(str, fConv); fOpt.has_value()) {
+    return *fOpt;
   } else return std::string{str};
 }
 
