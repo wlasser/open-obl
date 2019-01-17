@@ -17,6 +17,8 @@
 #include "ogrebullet/collision_object_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "ogreimgui/imgui_manager.hpp"
+#include "ogresoloud/sound_manager.hpp"
+#include "ogresoloud/wav_resource_manager.hpp"
 #include "resolvers/acti_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
@@ -58,6 +60,8 @@ class ApplicationContext {
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
+  std::unique_ptr<Ogre::SoundManager> soundMgr{};
+
   std::unique_ptr<Ogre::OverlaySystem> overlaySys{};
 
   std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
@@ -69,6 +73,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
+  std::unique_ptr<Ogre::WavResourceManager> wavResourceMgr{};
 
   std::unique_ptr<oo::DoorResolver> doorRes{};
   std::unique_ptr<oo::LighResolver> lighRes{};

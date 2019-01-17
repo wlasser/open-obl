@@ -67,6 +67,8 @@ template<> class MenuMode<gui::MenuType::MainMenu>
     mScnMgr->addRenderQueueListener(ctx.getImGuiManager());
     mScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
     ctx.setCamera(gsl::make_not_null(mCamera));
+    Ogre::SoundManager::getSingleton().playMusic("music/special/tes4title.mp3",
+                                                 oo::RESOURCE_GROUP);
   }
 
   ~MenuMode<gui::MenuType::MainMenu>() {

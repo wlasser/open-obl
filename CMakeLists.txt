@@ -98,6 +98,7 @@ add_subdirectory(src/record)
 add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
 add_subdirectory(src/ogreimgui)
+add_subdirectory(src/ogresoloud)
 add_subdirectory(src/sdl)
 add_subdirectory(src/scripting)
 
@@ -212,6 +213,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
         OpenOblivion::OpenOblivionOgreImGui
+        OpenOblivion::OpenOblivionOgreSoLoud
         OpenOblivion::OpenOblivionSDL
         OpenOblivion::OpenOblivionScripting
         Boost::boost

@@ -60,6 +60,9 @@ Application::Application(std::string windowName) : FrameListener() {
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
 
+  // Start the sound engine
+  ctx.soundMgr = std::make_unique<Ogre::SoundManager>();
+
   // Start the developer console backend
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
   registerConsoleFunctions();
@@ -68,6 +71,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
   ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
   ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
+  ctx.wavResourceMgr = std::make_unique<Ogre::WavResourceManager>();
 
   // Add the factories
   ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
@@ -341,6 +345,8 @@ void Application::declareResource(const oo::Path &path,
                               resourceGroup, &ctx.fntLoader);
   } else if (ext == "tex"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
+  } else if (ext == "wav"sv || ext == "mp3") {
+    resGrpMgr.declareResource(path.c_str(), "Wav", resourceGroup);
   }
 }
 
