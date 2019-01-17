@@ -90,11 +90,6 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
   // Jump to the data
   owner.is.seekg(file.offset);
 
-  // Skip over full path if given
-  if (!!(owner.archiveFlags & ArchiveFlag::RetainFileNames)) {
-    io::readBString(owner.is);
-  }
-
   // Get size of uncompressed data if compressed, otherwise they're the same.
   uint32_t uncompressedSize{compressedSize};
   if (file.compressed) {
