@@ -35,6 +35,8 @@ template<> class MenuMode<gui::MenuType::MainMenu>
   /// Name of the `Ogre::Camera` to use for this mode.
   constexpr static const char *CAMERA_NAME{"__MainMenuCamera"};
 
+  std::optional<Ogre::SoundHandle> mBackgroundMusic{};
+
   /// `<id> 2 </id>`
   const gui::UiElement *btnContinue{};
 
@@ -54,52 +56,14 @@ template<> class MenuMode<gui::MenuType::MainMenu>
   const gui::UiElement *btnExit{};
 
  public:
-  explicit MenuMode<gui::MenuType::MainMenu>(ApplicationContext &ctx)
-      : MenuModeBase<MainMenuMode>(ctx),
-        mScnMgr{ctx.getRoot().createSceneManager(SCN_MGR_TYPE, SCN_MGR_NAME)},
-        mCamera{mScnMgr->createCamera(CAMERA_NAME)},
-        btnContinue{getMenuCtx()->getElementWithId(2)},
-        btnNew{getMenuCtx()->getElementWithId(3)},
-        btnLoad{getMenuCtx()->getElementWithId(4)},
-        btnOptions{getMenuCtx()->getElementWithId(5)},
-        btnCredits{getMenuCtx()->getElementWithId(6)},
-        btnExit{getMenuCtx()->getElementWithId(7)} {
-    mScnMgr->addRenderQueueListener(ctx.getImGuiManager());
-    mScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
-    ctx.setCamera(gsl::make_not_null(mCamera));
-    Ogre::SoundManager::getSingleton().playMusic("music/special/tes4title.mp3",
-                                                 oo::RESOURCE_GROUP);
-  }
+  explicit MenuMode<gui::MenuType::MainMenu>(ApplicationContext &ctx);
+  ~MenuMode<gui::MenuType::MainMenu>();
 
-  ~MenuMode<gui::MenuType::MainMenu>() {
-    auto *root{Ogre::Root::getSingletonPtr()};
-    if (root && mScnMgr) root->destroySceneManager(mScnMgr);
-  }
+  MenuMode<gui::MenuType::MainMenu>(const MenuMode &) = delete;
+  MenuMode<gui::MenuType::MainMenu> &operator=(const MenuMode &) = delete;
 
-  MenuMode(const MenuMode &) = delete;
-  MenuMode &operator=(const MenuMode &) = delete;
-
-  MenuMode(MenuMode &&other) noexcept
-      : MenuModeBase<MainMenuMode>(std::move(other)),
-        mScnMgr(other.mScnMgr),
-        mCamera(other.mCamera),
-        btnContinue(other.btnContinue),
-        btnNew(other.btnNew),
-        btnLoad(other.btnLoad),
-        btnOptions(other.btnOptions),
-        btnCredits(other.btnCredits),
-        btnExit(other.btnExit) {
-    other.mScnMgr = nullptr;
-    other.mCamera = nullptr;
-  }
-
-  MenuMode &operator=(MenuMode &&other) noexcept {
-    if (this != &other) {
-      auto tmp{std::move(other)};
-      std::swap(*this, tmp);
-    }
-    return *this;
-  }
+  MenuMode<gui::MenuType::MainMenu>(MenuMode &&other) noexcept;
+  MenuMode<gui::MenuType::MainMenu> &operator=(MenuMode &&other) noexcept;
 
   std::string getFilenameImpl() const {
     return "menus/options/main_menu.xml";

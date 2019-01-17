@@ -40,6 +40,8 @@ class SoundManager : public Singleton<SoundManager> {
   float _getVolume(const SoundHandle &sound) const;
   /// Internal method to set the volume setting of a sound.
   void _setVolume(SoundHandle &sound, float volume) const;
+  /// Internal method to stop a playing sound.
+  void _stop(SoundHandle &sound) const;
 };
 
 class SoundHandle {
@@ -60,6 +62,9 @@ class SoundHandle {
   /// \param volume a value between `0.0f` and `1.0f`, with `1.0f` being the
   ///               volume of the source sound and `0.0f` being silent.
   void setVolume(float volume);
+
+  /// Stop playing this sound.
+  void stop();
 };
 
 } // namespace Ogre

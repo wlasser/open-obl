@@ -78,6 +78,10 @@ void SoundManager::_setVolume(SoundHandle &sound, float volume) const {
   mSoloud->setVolume(sound.mHandle, volume);
 }
 
+void SoundManager::_stop(SoundHandle &sound) const {
+  mSoloud->stop(sound.mHandle);
+}
+
 SoundManager &SoundHandle::mgr() const {
   return SoundManager::getSingleton();
 }
@@ -88,6 +92,10 @@ float SoundHandle::getVolume() const {
 
 void SoundHandle::setVolume(float volume) {
   mgr()._setVolume(*this, volume);
+}
+
+void SoundHandle::stop() {
+  mgr()._stop(*this);
 }
 
 } // namespace Ogre
