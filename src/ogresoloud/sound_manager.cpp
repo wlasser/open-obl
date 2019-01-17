@@ -14,7 +14,7 @@ SoundManager *SoundManager::getSingletonPtr() {
   return msSingleton;
 }
 
-String SoundManager::errorToString(SoLoud::SOLOUD_ERRORS error) {
+String SoundManager::_errorToString(SoLoud::SOLOUD_ERRORS error) {
   switch (error) {
     case SoLoud::SO_NO_ERROR: return "NO_ERROR";
     case SoLoud::INVALID_PARAMETER: return "INVALID_PARAMETER";
@@ -29,7 +29,7 @@ String SoundManager::errorToString(SoLoud::SOLOUD_ERRORS error) {
 }
 
 Exception::ExceptionCodes
-SoundManager::errorToExceptionCode(SoLoud::SOLOUD_ERRORS error) noexcept {
+SoundManager::_errorToExceptionCode(SoLoud::SOLOUD_ERRORS error) noexcept {
   switch (error) {
     case SoLoud::SO_NO_ERROR: return Exception::ERR_INTERNAL_ERROR;
     case SoLoud::INVALID_PARAMETER: return Exception::ERR_INVALIDPARAMS;
@@ -46,8 +46,8 @@ SoundManager::errorToExceptionCode(SoLoud::SOLOUD_ERRORS error) noexcept {
 SoundManager::SoundManager() {
   mSoloud = std::make_unique<SoLoud::Soloud>();
   if (auto err{static_cast<SoLoud::SOLOUD_ERRORS>(mSoloud->init())}; err) {
-    OGRE_EXCEPT(errorToExceptionCode(err),
-                String{"Failed to initialise SoLoud: "} + errorToString(err),
+    OGRE_EXCEPT(_errorToExceptionCode(err),
+                String{"Failed to initialise SoLoud: "} + _errorToString(err),
                 "SoundManager::SoundManager()");
   }
 
@@ -80,6 +80,31 @@ SoundHandle SoundManager::playMusic(const String &name,
   mSoloud->setPanAbsolute(handle.mHandle, 1.0f, 1.0f);
 
   return handle;
+}
+
+SoundHandle SoundManager::playSound(const String &name, const String &group,
+                                    const String &busName, float volume) {
+  auto it{mMixingBuses.find(busName)};
+  if (it == mMixingBuses.end()) {
+    OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+                "Cannot find a MixingBus named " + busName + ".",
+                "SoundManager::playSound");
+  }
+  auto &bus{it->second};
+
+  auto &waveResMgr{WavResourceManager::getSingleton()};
+
+  auto wavResPtr{waveResMgr.getByName(name, group)};
+  if (!wavResPtr) {
+    OGRE_EXCEPT(Exception::ERR_FILE_NOT_FOUND,
+                "Cannot locate resource " + name + " in resource group " + group
+                    + ".",
+                "SoundManager::playSound");
+  }
+  wavResPtr->load();
+  auto &src{wavResPtr->_getAudioSource()};
+
+  return SoundHandle{bus.first.play(src, volume)};
 }
 
 SoundHandle SoundManager::createMixingBus(const String &name) {

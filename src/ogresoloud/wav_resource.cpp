@@ -1,3 +1,4 @@
+#include "ogresoloud/sound_manager.hpp"
 #include "ogresoloud/wav_resource.hpp"
 #include <Ogre.h>
 
@@ -46,9 +47,16 @@ void WavResource::loadImpl() {
                 "Wav file is larger than the size supported by SoLoud",
                 "WavResource::loadImpl()");
   }
+  const auto wavSize{static_cast<unsigned int>(mWavData.size())};
 
-  mWav.loadMem(mWavData.data(), static_cast<unsigned int>(mWavData.size()),
-               false, false);
+  if (auto err{static_cast<SoLoud::SOLOUD_ERRORS>(
+                   mWav.loadMem(mWavData.data(), wavSize, false, false))};
+      err) {
+    OGRE_EXCEPT(SoundManager::_errorToExceptionCode(err),
+                String{"Failed to load Wav resource: "}
+                    + SoundManager::_errorToString(err),
+                "WavResource::loadImpl()");
+  }
 }
 
 void WavResource::unloadImpl() {}

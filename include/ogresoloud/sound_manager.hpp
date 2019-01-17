@@ -24,16 +24,8 @@ class SoundManager : public Singleton<SoundManager> {
   /// Child mixing buses of the master mixing bus.
   MixingBusMap mMixingBuses{};
 
-  /// Convert a SoLoud error into a string representation.
-  /// This is needed in addition to errorToExceptionCode as there is not a
-  /// one-to-one mapping of SoLoud error into Ogre exception codes.
-  static String errorToString(SoLoud::SOLOUD_ERRORS error);
-
-  /// Convert a SoLoud error into an Ogre::Exception code.
-  static Exception::ExceptionCodes
-  errorToExceptionCode(SoLoud::SOLOUD_ERRORS error) noexcept;
-
  public:
+
   explicit SoundManager();
   ~SoundManager() = default;
 
@@ -45,6 +37,11 @@ class SoundManager : public Singleton<SoundManager> {
   SoundHandle playMusic(const String &name,
                         const String &group,
                         float volume = -1.0f);
+
+  /// Play an Ogre::WavResource through the given mixing bus. Throws an
+  /// exception if no such mixing bus exists.
+  SoundHandle playSound(const String &name, const String &group,
+                        const String &busName, float volume = -1.0f);
 
   /// Create a new named mixing bus.
   SoundHandle createMixingBus(const String &name);
@@ -65,6 +62,15 @@ class SoundManager : public Singleton<SoundManager> {
   void _setVolume(SoundHandle &sound, float volume) const;
   /// Internal method to stop a playing sound.
   void _stop(SoundHandle &sound) const;
+
+  /// Convert a SoLoud error into a string representation.
+  /// This is needed in addition to errorToExceptionCode as there is not a
+  /// one-to-one mapping of SoLoud error into Ogre exception codes.
+  static String _errorToString(SoLoud::SOLOUD_ERRORS error);
+
+  /// Convert a SoLoud error into an Ogre::Exception code.
+  static Exception::ExceptionCodes
+  _errorToExceptionCode(SoLoud::SOLOUD_ERRORS error) noexcept;
 };
 
 class SoundHandle {
