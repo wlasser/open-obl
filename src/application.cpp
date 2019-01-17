@@ -62,6 +62,7 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Start the sound engine
   ctx.soundMgr = std::make_unique<Ogre::SoundManager>();
+  setSoundSettings();
 
   // Start the developer console backend
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
@@ -295,6 +296,25 @@ Application::createWindow(const std::string &windowName) {
       &params)};
 
   return {std::move(sdlWindow), std::move(ogreWindow)};
+}
+
+void Application::setSoundSettings() {
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+
+  auto masterBus{ctx.soundMgr->getMasterBus()};
+  masterBus.setVolume(gameSettings.get("Audio.fDefaultMasterVolume", 1.0f));
+
+  auto musicBus{ctx.soundMgr->getMusicBus()};
+  musicBus.setVolume(gameSettings.get("Audio.fDefaultMusicVolume", 1.0f));
+
+  auto effectBus{ctx.soundMgr->createMixingBus("effect")};
+  effectBus.setVolume(gameSettings.get("Audio.fDefaultEffectsVolume", 1.0f));
+
+  auto footBus{ctx.soundMgr->createMixingBus("foot")};
+  footBus.setVolume(gameSettings.get("Audio.fDefaultFootVolume", 1.0f));
+
+  auto voiceBus{ctx.soundMgr->createMixingBus("voice")};
+  voiceBus.setVolume(gameSettings.get("Audio.fDefaultVoiceVolume", 1.0f));
 }
 
 std::vector<oo::Path>

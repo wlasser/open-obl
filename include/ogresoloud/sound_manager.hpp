@@ -14,6 +14,16 @@ class SoundManager : public Singleton<SoundManager> {
  private:
   std::unique_ptr<SoLoud::Soloud> mSoloud{};
 
+  using MixingBus = std::pair<SoLoud::Bus, std::optional<SoundHandle>>;
+  using MixingBusMap = std::map<String, MixingBus>;
+
+  /// Master mixing bus.
+  std::unique_ptr<MixingBus> mMasterBus{};
+  /// Music mixing bus. This is a child of the master mixing bus.
+  std::unique_ptr<MixingBus> mMusicBus{};
+  /// Child mixing buses of the master mixing bus.
+  MixingBusMap mMixingBuses{};
+
   /// Convert a SoLoud error into a string representation.
   /// This is needed in addition to errorToExceptionCode as there is not a
   /// one-to-one mapping of SoLoud error into Ogre exception codes.
@@ -30,11 +40,24 @@ class SoundManager : public Singleton<SoundManager> {
   static SoundManager &getSingleton();
   static SoundManager *getSingletonPtr();
 
-  /// Play an Ogre::WavResource as background music.
-  /// The music is played at full volume by default.
+  /// Play an Ogre::WavResource as background music through the music mixing
+  /// bus. The music is played at full volume by default.
   SoundHandle playMusic(const String &name,
                         const String &group,
-                        float volume = -1.0f) const;
+                        float volume = -1.0f);
+
+  /// Create a new named mixing bus.
+  SoundHandle createMixingBus(const String &name);
+
+  /// Return a handle to the named mixing bus. Throws an exception if no such
+  /// mixing bus exists.
+  SoundHandle getMixingBus(const String &name) const;
+
+  /// Return a handle to the music mixing bus.
+  SoundHandle getMusicBus() const;
+
+  /// Return a handle to the master mixing bus.
+  SoundHandle getMasterBus() const;
 
   /// Internal method to get the volume setting of a sound.
   float _getVolume(const SoundHandle &sound) const;

@@ -104,6 +104,9 @@ class Application : public Ogre::FrameListener {
   std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
   static createWindow(const std::string &windowName);
 
+  /// Set the audio settings from the ini configuration.
+  void setSoundSettings();
+
   /// Prepend the `masterPath` to each filename in the comma-separated `list`,
   /// returning those that exist.
   /// \param masterPath The path the bsa files are in relative to the root,

@@ -50,11 +50,20 @@ SoundManager::SoundManager() {
                 String{"Failed to initialise SoLoud: "} + errorToString(err),
                 "SoundManager::SoundManager()");
   }
+
+  mMasterBus = std::make_unique<MixingBus>();
+  mMasterBus->second = SoundHandle{mSoloud->play(mMasterBus->first)};
+
+  mMusicBus = std::make_unique<MixingBus>();
+  mMusicBus->second = SoundHandle{mMasterBus->first.play(mMusicBus->first)};
+
+  mSoloud->setVolume(mMasterBus->second->mHandle, 1.0f);
+  mSoloud->setVolume(mMusicBus->second->mHandle, 1.0f);
 }
 
 SoundHandle SoundManager::playMusic(const String &name,
                                     const String &group,
-                                    float volume) const {
+                                    float volume) {
   auto &wavResMgr{WavResourceManager::getSingleton()};
 
   auto wavResPtr{wavResMgr.getByName(name, group)};
@@ -67,7 +76,40 @@ SoundHandle SoundManager::playMusic(const String &name,
   wavResPtr->load();
   auto &src{wavResPtr->_getAudioSource()};
 
-  return SoundHandle{mSoloud->playBackground(src, volume)};
+  SoundHandle handle{mMusicBus->first.play(src, volume)};
+  mSoloud->setPanAbsolute(handle.mHandle, 1.0f, 1.0f);
+
+  return handle;
+}
+
+SoundHandle SoundManager::createMixingBus(const String &name) {
+  auto[it, emplaced]{mMixingBuses.try_emplace(name)};
+  if (!emplaced) {
+    OGRE_EXCEPT(Exception::ERR_DUPLICATE_ITEM,
+                "MixingBus with the name " + name + " already exists.",
+                "SoundManager::createMixingBus");
+  }
+  auto &bus{it->second};
+  bus.second = SoundHandle{mMasterBus->first.play(bus.first)};
+  return *bus.second;
+}
+
+SoundHandle SoundManager::getMixingBus(const String &name) const {
+  auto it{mMixingBuses.find(name)};
+  if (it == mMixingBuses.end()) {
+    OGRE_EXCEPT(Exception::ERR_ITEM_NOT_FOUND,
+                "Cannot find a MixingBus named " + name + ".",
+                "SoundManager::getMixingBus");
+  }
+  return *it->second.second;
+}
+
+SoundHandle SoundManager::getMusicBus() const {
+  return *mMusicBus->second;
+}
+
+SoundHandle SoundManager::getMasterBus() const {
+  return *mMasterBus->second;
 }
 
 float SoundManager::_getVolume(const SoundHandle &sound) const {
