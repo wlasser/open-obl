@@ -14,8 +14,10 @@ set_property(TARGET SoLoud PROPERTY CXX_EXTENSION OFF)
 
 add_library(SoLoud::SoLoud ALIAS SoLoud)
 
-target_include_directories(SoLoud PUBLIC
+target_include_directories(SoLoud PRIVATE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/soloud>
+        PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
         $<INSTALL_INTERFACE:include>)
 
