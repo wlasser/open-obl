@@ -22,12 +22,16 @@ MenuMode<gui::MenuType::MainMenu>::MenuMode(ApplicationContext &ctx) :
 
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   auto &sndMgr{Ogre::SoundManager::getSingleton()};
+
   oo::Path musicBasePath{"music"};
   oo::Path musicFilename{gameSettings.get("General.SMainMenuMusic",
                                           "special/tes4title.mp3")};
   oo::Path musicPath{musicBasePath / musicFilename};
+
   mBackgroundMusic.emplace(sndMgr.playMusic(musicPath.c_str(),
                                             oo::RESOURCE_GROUP));
+  float musicVolume{gameSettings.get("Audio.fMainMenuMusicVolume", 1.0f)};
+  mBackgroundMusic->setVolume(musicVolume);
 }
 
 MenuMode<gui::MenuType::MainMenu>::~MenuMode() {
