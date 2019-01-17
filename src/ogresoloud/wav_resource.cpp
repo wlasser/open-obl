@@ -38,9 +38,27 @@ void WavResource::loadImpl() {
 
   // Read the file into a buffer and pass it to SoLoud without transferring
   // ownership.
-  auto dataStreamPtr{resGrpMgr.openResource(mName, mGroup)};
-  mWavData.resize(dataStreamPtr->size());
-  dataStreamPtr->read(mWavData.data(), mWavData.size());
+  auto dataStreamPtr{resGrpMgr.openResource(mName, mGroup, this)};
+
+  if (dataStreamPtr->size() == 0) {
+    // Returning a zero size does not necessarily mean that the stream is empty;
+    // it could just mean that the stream does not know its size before it is
+    // read.
+    std::size_t bytesRead{0};
+    constexpr std::size_t CHUNK_SIZE{1024u * 64u};
+
+    do {
+      auto oldSize{mWavData.size()};
+      mWavData.resize(oldSize + CHUNK_SIZE);
+      auto *ptr{mWavData.data() + oldSize};
+      bytesRead = dataStreamPtr->read(ptr, CHUNK_SIZE);
+    } while (bytesRead == CHUNK_SIZE);
+
+    mWavData.resize(mWavData.size() - CHUNK_SIZE + bytesRead);
+  } else {
+    mWavData.resize(dataStreamPtr->size());
+    dataStreamPtr->read(mWavData.data(), mWavData.size());
+  }
 
   if (mWavData.size() > std::numeric_limits<unsigned int>::max()) {
     OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
