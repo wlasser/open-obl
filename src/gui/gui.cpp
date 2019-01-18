@@ -246,7 +246,7 @@ gui::UiElement::UserValue MenuContext::get_user(int index) {
   return gui::extractUiElement(*mMenu)->get_user(index);
 }
 
-const gui::UiElement *MenuContext::getElementWithId(int id) {
+const gui::UiElement *MenuContext::getElementWithId(int id) const {
   if (id < 0) return nullptr;
   auto it{std::find_if(mUiElements.begin(), mUiElements.end(),
                        [id](const UiElementPtr &ptr) {

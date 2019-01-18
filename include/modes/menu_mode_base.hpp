@@ -54,6 +54,21 @@ template<class Self> class MenuModeBase {
     return static_cast<const Self &>(*this);
   }
 
+  static void notifyClicked(gui::UiElement *elem) {
+    if (!!(sdl::getModState() & sdl::ModifierKey::Shift)) {
+      elem->notify_shiftclicked();
+    } else {
+      elem->notify_clicked();
+    }
+    std::string soundName{gui::getClicksound(elem->get_clicksound())};
+    if (!soundName.empty()) {
+      oo::Path soundPath{std::move(soundName)};
+      Ogre::SoundManager::getSingleton().playSound(soundPath.c_str(),
+                                                   oo::RESOURCE_GROUP,
+                                                   "effect");
+    }
+  }
+
  protected:
   /// Find the `gui::UiElement` under the cursor and call `f` on it and its
   /// ancestors in decreasing order of generation.
@@ -69,6 +84,14 @@ template<class Self> class MenuModeBase {
   /// The number of seconds elapsed since the menu was constructed.
   float getClock() const {
     return mClock;
+  }
+
+  /// Return a pointer to the element with the given id, or nullptr if no such
+  /// element exists.
+  /// This is only guaranteed to be `O(n)` or better.
+  /// \see gui::MenuContext::getElementWithId()
+  const gui::UiElement *getElementWithId(int id) const {
+    return mMenuCtx->getElementWithId(id);
   }
 
  public:
@@ -137,24 +160,10 @@ MenuModeBase<Self>::handleEvent(ApplicationContext &ctx,
     if (!mMenuCtx) return {false, std::nullopt};
     mCursorPos = mMenuCtx->normalizeCoordinates(event.motion.x, event.motion.y);
   } else if (sdl::typeOf(event) == sdl::EventType::MouseButtonDown) {
-    if (sdl::mouseButtonOf(event.button) != sdl::MouseButton::Left) {
-      return {false, std::nullopt};
-    }
     if (!mMenuCtx) return {false, std::nullopt};
-    notifyElementAtCursor([](gui::UiElement *elem) {
-      if (!!(sdl::getModState() & sdl::ModifierKey::Shift)) {
-        elem->notify_shiftclicked();
-      } else {
-        elem->notify_clicked();
-      }
-      std::string soundName{gui::getClicksound(elem->get_clicksound())};
-      if (!soundName.empty()) {
-        oo::Path soundPath{std::move(soundName)};
-        Ogre::SoundManager::getSingleton().playSound(soundPath.c_str(),
-                                                     oo::RESOURCE_GROUP,
-                                                     "effect");
-      }
-    });
+    if (sdl::mouseButtonOf(event.button) == sdl::MouseButton::Left) {
+      notifyElementAtCursor(MenuModeBase<Self>::notifyClicked);
+    }
   }
 
   return self().handleEventImpl(ctx, event);

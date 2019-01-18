@@ -9,12 +9,12 @@ MenuMode<gui::MenuType::MainMenu>::MenuMode(ApplicationContext &ctx) :
     MenuModeBase<MainMenuMode>(ctx),
     mScnMgr{ctx.getRoot().createSceneManager(SCN_MGR_TYPE, SCN_MGR_NAME)},
     mCamera{mScnMgr->createCamera(CAMERA_NAME)},
-    btnContinue{getMenuCtx()->getElementWithId(2)},
-    btnNew{getMenuCtx()->getElementWithId(3)},
-    btnLoad{getMenuCtx()->getElementWithId(4)},
-    btnOptions{getMenuCtx()->getElementWithId(5)},
-    btnCredits{getMenuCtx()->getElementWithId(6)},
-    btnExit{getMenuCtx()->getElementWithId(7)} {
+    btnContinue{getElementWithId(2)},
+    btnNew{getElementWithId(3)},
+    btnLoad{getElementWithId(4)},
+    btnOptions{getElementWithId(5)},
+    btnCredits{getElementWithId(6)},
+    btnExit{getElementWithId(7)} {
   mScnMgr->addRenderQueueListener(ctx.getImGuiManager());
   mScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
 

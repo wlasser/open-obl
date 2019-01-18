@@ -225,7 +225,7 @@ class MenuContext {
   /// Return a pointer to the element with the given id, or nullptr if no such
   /// element exists.
   /// This is only guaranteed to be `O(n)` or better.
-  const gui::UiElement *getElementWithId(int id);
+  const gui::UiElement *getElementWithId(int id) const;
 };
 
 std::optional<MenuContext> loadMenu(pugi::xml_node doc,
