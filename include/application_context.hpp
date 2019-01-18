@@ -10,6 +10,7 @@
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
+#include "nifloader/skeleton_loader.hpp"
 #include "fnt_loader.hpp"
 #include "ogre/tex_image_codec.hpp"
 #include "ogre/text_resource_manager.hpp"
@@ -69,6 +70,7 @@ class ApplicationContext {
   oo::MeshLoader nifLoader{};
   oo::CollisionObjectLoader nifCollisionLoader{};
   oo::FntLoader fntLoader{};
+  oo::SkeletonLoader skeletonLoader{};
 
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};

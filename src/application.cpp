@@ -354,6 +354,9 @@ void Application::declareResource(const oo::Path &path,
                               resourceGroup, &ctx.nifLoader);
     resGrpMgr.declareResource(path.c_str(), "CollisionObject",
                               resourceGroup, &ctx.nifCollisionLoader);
+    // TODO: Do all skeletons end with "skeleton.nif"?
+    resGrpMgr.declareResource(path.c_str(), "Skeleton",
+                              resourceGroup, &ctx.skeletonLoader);
   } else if (ext == "dds"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   } else if (ext == "xml"sv || ext == "txt"sv) {
