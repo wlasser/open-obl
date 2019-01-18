@@ -26,6 +26,7 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/menus/loading_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/main_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/screen.hpp
+        ${CMAKE_SOURCE_DIR}/include/gui/sound.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/stack/instructions.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/stack/program.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/stack/types.hpp
@@ -45,6 +46,7 @@ target_sources(OpenOblivionGui PRIVATE
         menus/loading_menu.cpp
         menus/main_menu.cpp
         screen.cpp
+        sound.cpp
         stack/instructions.cpp
         stack/program.cpp
         stack/types.cpp

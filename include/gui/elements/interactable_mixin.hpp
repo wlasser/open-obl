@@ -17,13 +17,17 @@ class InteractableMixin : public virtual UiElement {
   bool mIsShiftclicked{false};
   /// Whether the mouse cursor is over this element during this frame
   bool mIsMouseover{false};
+  /// The index of the sound to play when this element is clicked.
+  int mClicksound{0};
 
  public:
 
   void set_target(bool isTarget) override;
   void set_id(float id) override;
+  void set_clicksound(float clicksound) override;
 
   int get_id() const override;
+  int get_clicksound() const override;
 
   // Note: Cannot check mIsTarget && mId >= -1 on construction because these
   // values are not set until the first update(), which must occur after all the

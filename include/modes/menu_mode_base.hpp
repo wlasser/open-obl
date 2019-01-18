@@ -4,6 +4,7 @@
 #include "application_context.hpp"
 #include "gui/gui.hpp"
 #include "gui/menu.hpp"
+#include "gui/sound.hpp"
 #include "modes/mode.hpp"
 #include "sdl/sdl.hpp"
 #include <OgreOverlayElement.h>
@@ -145,6 +146,13 @@ MenuModeBase<Self>::handleEvent(ApplicationContext &ctx,
         elem->notify_shiftclicked();
       } else {
         elem->notify_clicked();
+      }
+      std::string soundName{gui::getClicksound(elem->get_clicksound())};
+      if (!soundName.empty()) {
+        oo::Path soundPath{std::move(soundName)};
+        Ogre::SoundManager::getSingleton().playSound(soundPath.c_str(),
+                                                     oo::RESOURCE_GROUP,
+                                                     "effect");
       }
     });
   }

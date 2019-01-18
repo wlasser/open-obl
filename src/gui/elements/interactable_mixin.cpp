@@ -8,8 +8,16 @@ void gui::InteractableMixin::set_id(float id) {
   mId = static_cast<int>(id);
 }
 
+void gui::InteractableMixin::set_clicksound(float clicksound) {
+  mClicksound = static_cast<int>(clicksound);
+}
+
 int gui::InteractableMixin::get_id() const {
   return mId;
+}
+
+int gui::InteractableMixin::get_clicksound() const {
+  return mClicksound;
 }
 
 std::optional<gui::Trait<float>>

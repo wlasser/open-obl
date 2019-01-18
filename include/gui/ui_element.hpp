@@ -290,6 +290,10 @@ class UiElement {
     return -2;
   }
 
+  /// \see set_clicksound(float)
+  virtual int get_clicksound() const {
+    return 0;
+  }
   ///@}
 
   virtual ~UiElement() = 0;
