@@ -1,14 +1,14 @@
 #ifndef OPENOBLIVION_IO_MEMSTREAM_HPP
 #define OPENOBLIVION_IO_MEMSTREAM_HPP
 
-#include <istream>
+#include <iostream>
 
 namespace io {
 
-/// Non-owning std::istream wrapper for binary data.
-/// Provides a standard std::istream interface to an existing container of
+/// Non-owning std::iostream wrapper for binary data.
+/// Provides a standard std::iostream interface to an existing container of
 /// bytes.
-class memstream : public std::istream {
+class memstream : public std::iostream {
  private:
   class membuf : public std::basic_streambuf<char> {
    public:
@@ -39,7 +39,7 @@ class memstream : public std::istream {
 
  public:
   memstream(const uint8_t *p, std::size_t l)
-      : std::istream(&buffer), buffer(p, l) {
+      : std::iostream(&buffer), buffer(p, l) {
     rdbuf(&buffer);
   }
 };
