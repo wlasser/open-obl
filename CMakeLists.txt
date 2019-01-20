@@ -124,6 +124,7 @@ target_sources(OpenOblivion PRIVATE
         src/console_functions.cpp
         src/esp_coordinator.cpp
         src/fnt_loader.cpp
+        src/game_settings.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp

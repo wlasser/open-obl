@@ -2,13 +2,20 @@
 #define OPENOBLIVION_GAME_SETTINGS_HPP
 
 #include "fs/path.hpp"
-#include "record/records.hpp"
+#include "record/record.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <filesystem>
-#include <fstream>
 #include <mutex>
 #include <string>
+
+namespace record {
+
+// Forward declarations to avoid pulling in all of records.hpp just to get GMST.
+namespace raw { struct GMST; }
+
+using GMST = Record<raw::GMST, "GMST"_rec>;
+
+} // namespace record
 
 namespace oo {
 
@@ -24,51 +31,15 @@ class GameSettings {
   GameSettings(GameSettings &&other) = delete;
   GameSettings &operator=(GameSettings &&other) = delete;
 
-  static GameSettings &getSingleton() {
-    // Cannot std::make_unique on a private constructor
-    // TODO: Abseil TOTW #134
-    static std::unique_ptr<GameSettings> instance{new GameSettings()};
-    return *instance;
-  }
+  static GameSettings &getSingleton();
 
   // Load all the settings in an ini file, optionally overwriting any existing
   // values with new ones.
-  void load(const std::filesystem::path &filename, bool /*overwrite = true*/) {
-    // The game ini files has a duplicate key General.STestFile1 and a
-    // multiline string GeneralWarnings.SMasterMismatchWarning, which are not
-    // supported by the property_tree parser.
-    // TODO: Replace ini parser with a custom parser (boost::spirit?)
-    boost::property_tree::ini_parser::read_ini(filename, tree);
-  }
+  void load(const char *filename, bool overwrite = true);
 
   // Load the setting from a GMST record, optionally overwriting any existing
   // value with the new one.
-  void load(const record::GMST &gmst, bool overwrite = true) {
-    std::string key = gmst.editorId.data;
-    if (key.empty()) return;
-    // put overwrites without question, so we have to query existence first if
-    // overwrite is not set.
-    switch (key[0]) {
-      case 'f':
-        if (overwrite || !tree.get_optional<float>(key)) {
-          tree.put<float>(key, gmst.value.data.f);
-        }
-        break;
-      case 'i':
-        if (overwrite || !tree.get_optional<int>(key)) {
-          tree.put<int>(key, gmst.value.data.i);
-        }
-        break;
-      case 's':
-        if (overwrite || !tree.get_optional<std::string>(key)) {
-          const auto &arr = gmst.value.data.s;
-          std::string s(arr.begin(), arr.end());
-          tree.put<std::string>(key, s);
-        }
-        break;
-      default: break;
-    }
-  }
+  void load(const record::GMST &gmst, bool overwrite = true);
 
   template<class T>
   boost::optional<T> get(const std::string &path) const {
@@ -104,15 +75,7 @@ class GameSettings {
     return get<unsigned int>(path).value();
   }
 
-  oo::Path getFont(int index) const {
-    auto fnt{get<std::string>("Fonts.SFontFile_" + std::to_string(index))};
-    if (fnt.has_value()) return oo::Path{fnt.value()};
-
-    fnt = get<std::string>("Fonts.SFontFile_1");
-    if (fnt.has_value()) return oo::Path{fnt.value()};
-
-    return oo::Path{"libertine"};
-  }
+  oo::Path getFont(int index) const;
 };
 
 template<class T>
