@@ -726,4 +726,35 @@ std::istream &raw::read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
   return is;
 }
 
+// ACBS specialization
+template<> uint16_t ACBS::size() const {
+  return 16u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::ACBS &t, std::size_t /*size*/) {
+  raw:
+  write(os, t.flags, 0);
+  io::writeBytes(os, t.baseSpellPoints);
+  io::writeBytes(os, t.baseFatigue);
+  io::writeBytes(os, t.barterGold);
+  io::writeBytes(os, t.level);
+  io::writeBytes(os, t.calcMin);
+  io::writeBytes(os, t.calcMax);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::ACBS &t, std::size_t /*size*/) {
+  raw::read(is, t.flags, 0);
+  io::readBytes(is, t.baseSpellPoints);
+  io::readBytes(is, t.baseFatigue);
+  io::readBytes(is, t.barterGold);
+  io::readBytes(is, t.level);
+  io::readBytes(is, t.calcMin);
+  io::readBytes(is, t.calcMax);
+
+  return is;
+}
 } // namespace record;

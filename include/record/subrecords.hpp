@@ -91,6 +91,8 @@ using GNAM = oo::BaseId;
 using ICON = std::string;
 // Faction rank insignia icon filename. Why not use ICON?
 using INAM = std::string;
+// FormId of item to drop on death.
+using INAM_NPC_ = oo::BaseId;
 // Skill index for SKIL. Uses oo::ActorValue not oo::SkillIndex, for some reason.
 using INDX_SKIL = oo::ActorValue;
 // Journeyman skill text
@@ -118,6 +120,8 @@ using ONAM = std::tuple<>;
 using PNAM = float;
 // Rank index in a faction
 using RNAM = uint32_t;
+// NPC race
+using RNAM_NPC_ = oo::BaseId;
 // Item script
 using SCRI = oo::BaseId;
 // ESM/ESP description. Also max 512 bytes
@@ -134,7 +138,7 @@ using SNAM_LTEX = uint8_t;
 using SNAM_RACE = std::array<uint8_t, 2>;
 // Door random teleport location. Either a CELL or WRLD.
 using TNAM_DOOR = oo::BaseId;
-// Greater/lesser powers and racial abilities
+// Greater/lesser powers, racial abilities, and spells.
 using SPLO = oo::BaseId;
 // Facegen face clamp
 using UNAM = float;
@@ -285,6 +289,36 @@ enum class XSOL : uint8_t {
   Common = 3u,
   Greater = 4u,
   Grand = 5u
+};
+
+// NPC base settings
+struct ACBS {
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0};
+    static constexpr enum_t Female{1u << 0u};
+    static constexpr enum_t Essential{1u << 1u};
+    static constexpr enum_t Respawn{1u << 3u};
+    // Implied by PCLevelOffset, even though the enum is not set up that way.
+    static constexpr enum_t AutoCalculate{1u << 4u};
+    // If true calcMin and calcMax give the minimum and maximum level that the
+    // NPC can be after applying the level offset.
+    static constexpr enum_t PCLevelOffset{1u << 7u};
+    static constexpr enum_t NoLowLevelProcessing{1u << 9u};
+    static constexpr enum_t NoRumors{1u << 13u};
+    static constexpr enum_t Summonable{1u << 14u};
+    static constexpr enum_t NoPersuasion{1u << 15u};
+    static constexpr enum_t CanCorpseCheck{1u << 20u};
+  };
+  Flag flags{Flag::make(Flag::None)};
+  uint16_t baseSpellPoints{};
+  uint16_t baseFatigue{};
+  uint16_t barterGold{};
+  // Offset to the player's level, when PCLevelOffset is set.
+  int16_t level{};
+  // Minimum value to clamp generated level to when AutoCalculate is set.
+  uint16_t calcMin{};
+  // Maximum value to clamp generated level to when AutoCalculate is set.
+  uint16_t calcMax{};
 };
 
 // Starting attributes for a particular race
@@ -635,6 +669,14 @@ struct SCIT {
   std::array<uint8_t, 3> unused{};
 };
 
+// NPC faction membership information
+struct SNAM_NPC_ : Tuplifiable<oo::BaseId, uint8_t, std::array<uint8_t, 3>> {
+  oo::BaseId factionId{};
+  uint8_t rank{};
+  std::array<uint8_t, 3> unused{};
+  MAKE_AS_TUPLE(&factionId, &rank, &unused);
+};
+
 struct SNDD {
   struct Flag : Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
@@ -798,6 +840,7 @@ struct XTEL : Tuplifiable<oo::RefId, float, float, float, float, float, float> {
 } // namespace raw
 
 // Wrapped subrecords
+using ACBS = Subrecord<raw::ACBS, "ACBS"_rec>;
 using ATTR = Subrecord<raw::ATTR, "ATTR"_rec>;
 using DELE = Subrecord<raw::DELE, "DELE"_rec>;
 using DESC = Subrecord<raw::DESC, "DESC"_rec>;
@@ -899,19 +942,23 @@ using FNAM_RACE = Subrecord<raw::FNAM_RACE, "FNAM"_rec>;
 using FNAM_REFR = Subrecord<raw::FNAM_REFR, "FNAM"_rec>;
 using FNAM_SOUN = Subrecord<raw::FNAM_SOUN, "FNAM"_rec>;
 using HNAM_LTEX = Subrecord<raw::HNAM_LTEX, "HNAM"_rec>;
+using INAM_NPC_ = Subrecord<raw::INAM_NPC_, "INAM"_rec>;
 using INDX_BODY = Subrecord<raw::INDX_BODY, "INDX"_rec>;
 using INDX_FACE = Subrecord<raw::INDX_FACE, "INDX"_rec>;
 using INDX_SKIL = Subrecord<raw::INDX_SKIL, "INDX"_rec>;
 using JNAM_SKIL = Subrecord<raw::JNAM_SKIL, "JNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
+using RNAM_NPC_ = Subrecord<raw::RNAM_NPC_, "RNAM"_rec>;
 using SNAM_ACTI = Subrecord<raw::SNAM_ACTI, "SNAM"_rec>;
 using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
 using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
+using SNAM_NPC_ = Subrecord<raw::SNAM_NPC_, "SNAM"_rec>;
 using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
 using TNAM_DOOR = Subrecord<raw::TNAM_DOOR, "TNAM"_rec>;
 
+DECLARE_SPECIALIZED_SUBRECORD(ACBS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_CLAS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GMST);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_LIGH);

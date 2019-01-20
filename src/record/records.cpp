@@ -1056,7 +1056,18 @@ template<> uint32_t NPC_::size() const {
   return editorId.entireSize()
       + (name ? name->entireSize() : 0u)
       + (skeletonFilename ? skeletonFilename->entireSize() : 0u)
-      + (boundRadius ? boundRadius->entireSize() : 0u);
+      + (boundRadius ? boundRadius->entireSize() : 0u)
+      + baseConfig.entireSize()
+      + std::accumulate(factions.begin(), factions.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.entireSize();
+                        });
+  +(deathItem ? deathItem->entireSize() : 0u)
+      + race.entireSize()
+      + std::accumulate(spells.begin(), spells.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.entireSize();
+                        });
 }
 
 template<> std::ostream &
@@ -1065,6 +1076,11 @@ raw::write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
   writeRecord(os, t.name);
   writeRecord(os, t.skeletonFilename);
   writeRecord(os, t.boundRadius);
+  writeRecord(os, t.baseConfig);
+  for (const auto &faction : t.factions) writeRecord(os, faction);
+  writeRecord(os, t.deathItem);
+  writeRecord(os, t.race);
+  for (const auto &spell : t.spells) writeRecord(os, spell);
 
   return os;
 }
@@ -1072,10 +1088,34 @@ raw::write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
 template<> std::istream &
 raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
   readRecord(is, t.editorId);
-  readRecord(is, t.name);
-  readRecord(is, t.skeletonFilename);
-  readRecord(is, t.boundRadius);
+  std::set<uint32_t> possibleSubrecords = {
+      "FULL"_rec, "MODL"_rec, "MODB"_rec, "ACBS"_rec, "SNAM"_rec, "INAM"_rec,
+      "RNAM"_rec, "SPLO"_rec,
+  };
+  uint32_t rec{};
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    switch (rec) {
+      case "FULL"_rec: readRecord(is, t.name);
+        break;
+      case "MODL"_rec: readRecord(is, t.skeletonFilename);
+        break;
+      case "MODB"_rec: readRecord(is, t.boundRadius);
+        break;
+      case "ACBS"_rec: readRecord(is, t.baseConfig);
+        break;
+      case "SNAM"_rec: readRecord(is, t.factions.emplace_back());
+        break;
+      case "INAM"_rec: readRecord(is, t.deathItem);
+        break;
+      case "RNAM"_rec: readRecord(is, t.race);
+        break;
+      case "SPLO"_rec: readRecord(is, t.spells.emplace_back());
+        break;
+      default: break;
+    }
+  }
 
+  (void) 0;
   return is;
 }
 

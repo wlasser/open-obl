@@ -320,6 +320,11 @@ struct NPC_ {
   std::optional<record::FULL> name{};
   std::optional<record::MODL> skeletonFilename{};
   std::optional<record::MODB> boundRadius{};
+  record::ACBS baseConfig{};
+  std::vector<record::SNAM_NPC_> factions{};
+  std::optional<record::INAM_NPC_> deathItem{};
+  record::RNAM race{};
+  std::vector<record::SPLO> spells{};
 };
 
 // Potion
