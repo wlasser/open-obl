@@ -1,8 +1,7 @@
+#include "record/exceptions.hpp"
 #include "record/io.hpp"
 #include "record/group.hpp"
 #include <gsl/gsl>
-#include <array>
-#include <istream>
 
 std::ostream &record::operator<<(std::ostream &os, const Group &grp) {
   io::writeBytes(os, Group::type);

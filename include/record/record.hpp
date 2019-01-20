@@ -1,20 +1,16 @@
 #ifndef OPENOBLIVION_RECORD_RECORD_HPP
 #define OPENOBLIVION_RECORD_RECORD_HPP
 
-#include "io/io.hpp"
 #include "io/memstream.hpp"
 #include "record/exceptions.hpp"
-#include "record/formid.hpp"
 #include "record/io.hpp"
 #include "record/record_header.hpp"
 #include "record/rec_of.hpp"
 #include "record/size_of.hpp"
 #include <zlib.h>
-#include <cstdint>
-#include <string>
+#include <string_view>
 #include <istream>
 #include <ostream>
-#include <stdexcept>
 
 namespace record {
 

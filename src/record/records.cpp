@@ -1,10 +1,9 @@
 #include "io/io.hpp"
-#include "record/record.hpp"
+#include "record/io.hpp"
 #include "record/records.hpp"
-#include "record/subrecords.hpp"
-#include <iostream>
-#include <memory>
+#include <istream>
 #include <numeric>
+#include <ostream>
 #include <set>
 
 namespace record {
@@ -1061,8 +1060,8 @@ template<> uint32_t NPC_::size() const {
       + std::accumulate(factions.begin(), factions.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
-                        });
-  +(deathItem ? deathItem->entireSize() : 0u)
+                        })
+      + (deathItem ? deathItem->entireSize() : 0u)
       + race.entireSize()
       + std::accumulate(spells.begin(), spells.end(), 0u,
                         [](auto a, const auto &b) {

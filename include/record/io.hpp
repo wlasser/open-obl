@@ -2,16 +2,9 @@
 #define OPENOBLIVION_RECORD_IO_HPP
 
 #include "io/io.hpp"
-#include "record/exceptions.hpp"
 #include "record/tuplifiable.hpp"
 #include "record/rec_of.hpp"
 #include "record/record_header.hpp"
-#include <cstddef>
-#include <istream>
-#include <optional>
-#include <ostream>
-#include <string>
-#include <tuple>
 #include <type_traits>
 
 namespace record {

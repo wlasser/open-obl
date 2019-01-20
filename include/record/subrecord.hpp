@@ -5,11 +5,11 @@
 #include "record/io.hpp"
 #include "record/size_of.hpp"
 #include "record/rec_of.hpp"
+#include <array>
 #include <cstdint>
 #include <istream>
 #include <ostream>
-#include <string>
-#include <utility>
+#include <string_view>
 
 namespace record {
 

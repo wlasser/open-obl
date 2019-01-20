@@ -1,7 +1,5 @@
 #include "record/io.hpp"
 #include <gsl/gsl>
-#include <array>
-#include <string>
 
 uint32_t record::peekRecordType(std::istream &is) noexcept {
   // Ensure that the stream is always returned to its original position.

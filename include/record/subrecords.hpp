@@ -6,14 +6,11 @@
 #include "record/attribute.hpp"
 #include "record/definition_helpers.hpp"
 #include "record/formid.hpp"
-#include "record/io.hpp"
 #include "record/magic_effects.hpp"
-#include "record/record.hpp"
 #include "record/subrecord.hpp"
 #include "record/tuplifiable.hpp"
 #include <array>
-#include <istream>
-#include <ostream>
+#include <iosfwd>
 #include <optional>
 #include <string>
 #include <tuple>

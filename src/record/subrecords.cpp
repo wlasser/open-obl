@@ -1,6 +1,5 @@
 #include "io/io.hpp"
-#include "record/formid.hpp"
-#include "record/record.hpp"
+#include "record/io.hpp"
 #include "record/subrecords.hpp"
 #include <istream>
 #include <ostream>
