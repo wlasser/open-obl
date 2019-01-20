@@ -1,7 +1,9 @@
 #include "io/io.hpp"
+#include "io/memstream.hpp"
 #include "record/record.hpp"
 #include "record/records.hpp"
 #include "record/subrecords.hpp"
+#include <zlib.h>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -1047,6 +1049,63 @@ raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
   readRecord(is, t.textureHash);
   readRecord(is, t.script);
   readRecord(is, t.sound);
+
+  return is;
+}
+
+// NPC_ specialization
+template<> uint32_t NPC_::size() const {
+  // TODO: This causes incorrect record size output, as the record should start
+  //       with the compressed size, but raw::write needs the uncompressed size
+  //       to correctly allocate a buffer. How best to fix this?
+  return editorId.entireSize()
+      + (name ? name->entireSize() : 0u)
+      + (skeletonFilename ? skeletonFilename->entireSize() : 0u)
+      + (boundRadius ? boundRadius->entireSize() : 0u);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
+  auto uncompressedSize{static_cast<uint32_t>(size)};
+  std::size_t compressedSize{compressBound(uncompressedSize)};
+  io::writeBytes(os, uncompressedSize);
+
+  std::vector<uint8_t> uncompressedData(uncompressedSize);
+  io::memstream mos(uncompressedData.data(), uncompressedSize);
+
+  writeRecord(mos, t.editorId);
+  writeRecord(mos, t.name);
+  writeRecord(mos, t.skeletonFilename);
+  writeRecord(mos, t.boundRadius);
+
+  std::vector<uint8_t> compressedData(compressedSize);
+  compress(compressedData.data(), &compressedSize,
+           uncompressedData.data(), uncompressedSize);
+  os.write(reinterpret_cast<const char *>(compressedData.data()),
+           compressedSize);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
+  std::size_t compressedSize{size};
+  uint32_t uncompressedSize{};
+  io::readBytes(is, uncompressedSize);
+
+  std::vector<uint8_t> compressedData{};
+  io::readBytes(is, compressedData, compressedSize - 4u);
+  std::size_t zlibSize{uncompressedSize};
+
+  std::vector<uint8_t> uncompressedData(uncompressedSize);
+  uncompress(uncompressedData.data(), &zlibSize,
+             compressedData.data(), compressedSize);
+  io::memstream mis(uncompressedData.data(), zlibSize);
+
+  readRecord(mis, t.editorId);
+  readRecord(mis, t.name);
+  readRecord(mis, t.skeletonFilename);
+  readRecord(mis, t.boundRadius);
 
   return is;
 }

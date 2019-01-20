@@ -315,6 +315,13 @@ struct STAT {
   std::optional<record::MODT> textureHash{};
 };
 
+struct NPC_ {
+  record::EDID editorId{};
+  std::optional<record::FULL> name{};
+  std::optional<record::MODL> skeletonFilename{};
+  std::optional<record::MODB> boundRadius{};
+};
+
 // Potion
 struct ALCH {
   // Not present in save games for player-made potions and poisons
@@ -373,6 +380,7 @@ using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
+using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 
@@ -396,6 +404,7 @@ DECLARE_SPECIALIZED_RECORD(DOOR);
 DECLARE_SPECIALIZED_RECORD(LIGH);
 DECLARE_SPECIALIZED_RECORD(MISC);
 DECLARE_SPECIALIZED_RECORD(STAT);
+DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 

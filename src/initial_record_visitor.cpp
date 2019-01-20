@@ -60,6 +60,11 @@ void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::NPC_>().value};
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::GMST>().value};
   GameSettings::getSingleton().load(rec, true);

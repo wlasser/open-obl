@@ -164,6 +164,8 @@ void readEsp(EspCoordinator &coordinator,
               break;
             case "STAT"_rec:visitor.template readRecord<record::STAT>(accessor);
               break;
+            case "NPC_"_rec:visitor.template readRecord<record::NPC_>(accessor);
+              break;
             case "ALCH"_rec:visitor.template readRecord<record::ALCH>(accessor);
               break;
             default: accessor.skipRecord();

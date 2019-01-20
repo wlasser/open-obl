@@ -38,6 +38,7 @@ target_sources(OpenOblivionRecord PRIVATE
 target_link_libraries(OpenOblivionRecord PRIVATE
         Boost::boost
         OpenOblivion::OpenOblivionIO
+        ZLIB::ZLIB
         PUBLIC GSL)
 
 install(TARGETS OpenOblivionRecord EXPORT OpenOblivionRecordTargets

@@ -56,6 +56,9 @@ class InitialRecordVisitor {
   void readRecord<record::CELL>(oo::EspAccessor &accessor);
 
   template<>
+  void readRecord<record::NPC_>(oo::EspAccessor &accessor);
+
+  template<>
   void readRecord<record::GMST>(oo::EspAccessor &accessor);
 };
 
