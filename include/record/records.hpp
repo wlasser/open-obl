@@ -380,7 +380,7 @@ using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
-using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
+using NPC_ = Record<raw::NPC_, "NPC_"_rec, true>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 
