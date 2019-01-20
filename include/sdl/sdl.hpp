@@ -15,6 +15,7 @@
 #undef DestroyAll
 #undef True
 #undef False
+#undef Status
 
 /// Wrappers around the SDL2 C API.
 /// \ingroup OpenOblivionSdl

@@ -12,12 +12,17 @@
 #include "gui/menu.hpp"
 #include "initial_record_visitor.hpp"
 #include "meta.hpp"
+#include "nifloader/mesh_loader.hpp"
+#include "nifloader/nif_resource_manager.hpp"
+#include "nifloader/collision_object_loader.hpp"
+#include "nifloader/skeleton_loader.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogreimgui/imgui_manager.hpp"
 #include "resolvers/static_resolver.hpp"
+#include "scripting/console_engine.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
@@ -351,12 +356,12 @@ void Application::declareResource(const oo::Path &path,
   if (ext == "nif"sv) {
     resGrpMgr.declareResource(path.c_str(), "Nif", resourceGroup);
     resGrpMgr.declareResource(path.c_str(), "Mesh",
-                              resourceGroup, &ctx.nifLoader);
+                              resourceGroup, ctx.nifLoader.get());
     resGrpMgr.declareResource(path.c_str(), "CollisionObject",
-                              resourceGroup, &ctx.nifCollisionLoader);
+                              resourceGroup, ctx.nifCollisionLoader.get());
     // TODO: Do all skeletons end with "skeleton.nif"?
     resGrpMgr.declareResource(path.c_str(), "Skeleton",
-                              resourceGroup, &ctx.skeletonLoader);
+                              resourceGroup, ctx.skeletonLoader.get());
   } else if (ext == "dds"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   } else if (ext == "xml"sv || ext == "txt"sv) {

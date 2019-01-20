@@ -113,6 +113,7 @@ set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         src/application.cpp
+        src/application_context.cpp
         src/bsa_archive_factory.cpp
         src/character_controller/jump_state.cpp
         src/character_controller/player_controller.cpp

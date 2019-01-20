@@ -2,11 +2,11 @@
 #define OPENOBLIVION_MENU_MODE_BASE_HPP
 
 #include "application_context.hpp"
+#include "controls.hpp"
 #include "gui/gui.hpp"
 #include "gui/menu.hpp"
 #include "gui/sound.hpp"
 #include "modes/mode.hpp"
-#include "sdl/sdl.hpp"
 #include <OgreOverlayElement.h>
 #include <OgreOverlayContainer.h>
 

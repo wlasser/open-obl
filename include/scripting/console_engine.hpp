@@ -15,6 +15,7 @@ class ConsoleEngine : public ScriptEngineBase {
 
  public:
   ConsoleEngine() : ScriptEngineBase() {}
+  ~ConsoleEngine() = default;
 
   void execute(std::string_view statement);
 

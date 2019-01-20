@@ -1,4 +1,6 @@
+#include "controls.hpp"
 #include "modes/console_mode.hpp"
+#include "scripting/console_engine.hpp"
 #include "settings.hpp"
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
