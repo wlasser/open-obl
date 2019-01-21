@@ -1212,6 +1212,16 @@ raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
   return t.read(is);
 }
 
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_NPC_ &t, std::size_t) {
+  return t.write(os);
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_NPC_ &t, std::size_t) {
+  return t.read(is);
+}
+
 oo::BaseId peekBaseOfReference(std::istream &is) {
   const auto start{is.tellg()};
   raw::REFRBase refr{};

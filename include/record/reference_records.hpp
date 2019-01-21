@@ -26,9 +26,7 @@ struct REFRBase {
   std::optional<record::XESP> parent{};
 
   virtual uint32_t size() const {
-    return baseId.entireSize()
-        + (editorId ? editorId->entireSize() : 0u)
-        + (parent ? parent->entireSize() : 0u);
+    return SizeOf(baseId) + SizeOf(editorId) + SizeOf(parent);
   }
 
   virtual std::ostream &write(std::ostream &os) const {
@@ -53,8 +51,7 @@ struct REFRTransformation {
   record::DATA_REFR positionRotation{};
 
   virtual uint32_t size() const {
-    return (scale ? scale->entireSize() : 0u)
-        + positionRotation.entireSize();
+    return SizeOf(scale) + SizeOf(positionRotation);
   }
 
   virtual std::ostream &write(std::ostream &os) const {
@@ -160,7 +157,18 @@ struct REFRRagdoll : RecordTuplifiable<std::optional<record::XRGD>> {
   RECORD_MAKE_AS_TUPLE(&ragdollData);
 };
 
+struct REFRMerchant : RecordTuplifiable<std::optional<record::XMRC>> {
+  std::optional<record::XMRC> merchantContainer{};
+  RECORD_MAKE_AS_TUPLE(&merchantContainer);
+};
+
+struct REFRRider : RecordTuplifiable<std::optional<record::XHRS>> {
+  std::optional<record::XHRS> mount{};
+  RECORD_MAKE_AS_TUPLE(&mount);
+};
+
 // TODO: Finish the rest of these
+#undef RECORD_MAKE_AS_TUPLE
 
 template<class T> constexpr uint32_t recTypeOfComponent(T */*x*/) {
   return T::value_type::RecordType;
@@ -210,6 +218,7 @@ using REFR_DOOR = raw::REFR<"DOOR"_rec, REFRDoor, REFRLockable, REFROwnable>;
 using REFR_LIGH = raw::REFR<"LIGH"_rec>;
 using REFR_MISC = raw::REFR<"MISC"_rec, REFRItem, REFROwnable>;
 using REFR_STAT = raw::REFR<"STAT"_rec, REFRTargetable>;
+using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRRagdoll, REFRRider, REFRMerchant>;
 
 } // namespace raw
 
@@ -243,11 +252,18 @@ raw::write(std::ostream &os, const raw::REFR_STAT &t, std::size_t);
 template<> std::istream &
 raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t);
 
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_NPC_ &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_NPC_ &t, std::size_t);
+
 using REFR_ACTI = Record<raw::REFR_ACTI, "REFR"_rec>;
 using REFR_DOOR = Record<raw::REFR_DOOR, "REFR"_rec>;
 using REFR_LIGH = Record<raw::REFR_LIGH, "REFR"_rec>;
 using REFR_MISC = Record<raw::REFR_MISC, "REFR"_rec>;
 using REFR_STAT = Record<raw::REFR_STAT, "REFR"_rec>;
+using REFR_NPC_ = Record<raw::REFR_NPC_, "ACHR"_rec>;
 
 /// This is a placeholder.
 /// TODO: Explain this.

@@ -169,10 +169,14 @@ using XGLB = oo::BaseId;
 // Placed armor or weapon health. This is displayed and editable as a float
 // in the construction set, but is only saved as an integer.
 using XHLT = int32_t;
+// Horse belonging to an NPC
+using XHRS = oo::RefId;
 // Placed leveled creature level modifier
 using XLCM = int32_t;
 // Distant lod data
 using XLOD = std::array<float, 3>;
+// Merchant container belonging to an NPC
+using XMRC = oo::RefId;
 // Denotes the reference as a marker?
 using XMRK = std::tuple<>;
 // Cell owner
@@ -962,9 +966,11 @@ using XCWT = Subrecord<raw::XCWT, "XCWT"_rec>;
 using XESP = Subrecord<raw::XESP, "XESP"_rec>;
 using XGLB = Subrecord<raw::XGLB, "XGLB"_rec>;
 using XHLT = Subrecord<raw::XHLT, "XHLT"_rec>;
+using XHRS = Subrecord<raw::XHRS, "XHRS"_rec>;
 using XLCM = Subrecord<raw::XLCM, "XLCM"_rec>;
 using XLOC = Subrecord<raw::XLOC, "XLOC"_rec>;
 using XLOD = Subrecord<raw::XLOD, "XLOD"_rec>;
+using XMRC = Subrecord<raw::XMRC, "XMRC"_rec>;
 using XMRK = Subrecord<raw::XMRK, "XMRK"_rec>;
 using XNAM = Subrecord<raw::XNAM, "XNAM"_rec>;
 using XPCI = Subrecord<raw::XPCI, "XPCI"_rec>;
