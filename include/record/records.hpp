@@ -317,6 +317,9 @@ struct NPC_ {
   std::optional<record::INAM_NPC_> deathItem{};
   record::RNAM race{};
   std::vector<record::SPLO> spells{};
+  std::vector<record::CNTO> items{};
+  record::AIDT aiData{};
+  std::vector<record::PKID> aiPackages{};
 };
 
 // Potion
@@ -405,6 +408,6 @@ DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 
-} // namespace record
+} // namespace Record
 
 #endif // OPENOBLIVION_RECORDS_HPP

@@ -732,8 +732,7 @@ template<> uint16_t ACBS::size() const {
 
 template<> std::ostream &
 raw::write(std::ostream &os, const raw::ACBS &t, std::size_t /*size*/) {
-  raw:
-  write(os, t.flags, 0);
+  raw::write(os, t.flags, 0);
   io::writeBytes(os, t.baseSpellPoints);
   io::writeBytes(os, t.baseFatigue);
   io::writeBytes(os, t.barterGold);
@@ -756,4 +755,38 @@ raw::read(std::istream &is, raw::ACBS &t, std::size_t /*size*/) {
 
   return is;
 }
+
+// AIDT specialization
+template<> uint16_t AIDT::size() const {
+    return 12u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::AIDT &t, std::size_t /*size*/) {
+    io::writeBytes(os, t.aggression);
+    io::writeBytes(os, t.confidence);
+    io::writeBytes(os, t.energyLevel);
+    io::writeBytes(os, t.responsibility);
+    raw::write(os, t.flags, 0);
+    io::writeBytes(os, t.trainingSkill);
+    io::writeBytes(os, t.trainingLevel);
+    io::writeBytes(os, t.unknown);
+
+    return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::AIDT &t, std::size_t /*size*/) {
+    io::readBytes(is, t.aggression);
+    io::readBytes(is, t.confidence);
+    io::readBytes(is, t.energyLevel);
+    io::readBytes(is, t.responsibility);
+    raw::read(is, t.flags, 0);
+    io::readBytes(is, t.trainingSkill);
+    io::readBytes(is, t.trainingLevel);
+    io::readBytes(is, t.unknown);
+
+    return is;
+}
+
 } // namespace record;

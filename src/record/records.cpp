@@ -1066,6 +1066,15 @@ template<> uint32_t NPC_::size() const {
       + std::accumulate(spells.begin(), spells.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
+                        })
+      + std::accumulate(items.begin(), items.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.entireSize();
+                        })
+      + aiData.entireSize()
+      + std::accumulate(aiPackages.begin(), aiPackages.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.entireSize();
                         });
 }
 
@@ -1080,6 +1089,9 @@ raw::write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
   writeRecord(os, t.deathItem);
   writeRecord(os, t.race);
   for (const auto &spell : t.spells) writeRecord(os, spell);
+  for (const auto &item : t.items) writeRecord(os, item);
+  writeRecord(os, t.aiData);
+  for (const auto &package : t.aiPackages) writeRecord(os, package);
 
   return os;
 }
@@ -1089,8 +1101,9 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "MODL"_rec, "MODB"_rec, "ACBS"_rec, "SNAM"_rec, "INAM"_rec,
-      "RNAM"_rec, "SPLO"_rec,
+      "RNAM"_rec, "SPLO"_rec, "CNTO"_rec, "AIDT"_rec, "PKID_"rec,
   };
+
   uint32_t rec{};
   while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
     switch (rec) {
@@ -1109,6 +1122,12 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
       case "RNAM"_rec: readRecord(is, t.race);
         break;
       case "SPLO"_rec: readRecord(is, t.spells.emplace_back());
+        break;
+      case "CNTO"_rec: readRecord(is, t.items.emplace_back());
+        break;
+      case "AIDT"_rec: readRecord(is, t.aiData);
+        break;
+      case "PKID"_rec: readRecord(is, t.aiPackages.emplace_back());
         break;
       default: break;
     }

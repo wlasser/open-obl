@@ -113,6 +113,8 @@ using NAM1 = std::tuple<>;
 using NAME = oo::BaseId;
 // Open by default. Its presence implies true.
 using ONAM = std::tuple<>;
+// AI package formid
+using PKID = oo::BaseId;
 // Facegen main clamp
 using PNAM = float;
 // Rank index in a faction
@@ -318,11 +320,48 @@ struct ACBS {
   uint16_t calcMax{};
 };
 
+// NPC AI data
+struct AIDT {
+    struct Flag : Bitflag<32, Flag> {
+        static constexpr enum_t None{0};
+        static constexpr enum_t Weapons{1u << 0u};
+        static constexpr enum_t Armor{1u << 1u};
+        static constexpr enum_t Clothing{1u << 2u};
+        static constexpr enum_t Books{1u << 3u};
+        static constexpr enum_t Ingredients{1u << 4u};
+        static constexpr enum_t Lights{1u << 7u};
+        static constexpr enum_t Apparatus{1u << 8u};
+        static constexpr enum_t Miscellaneous{1u << 10u};
+        static constexpr enum_t Spells{1u << 11u};
+        static constexpr enum_t MagicItems{1u << 12u};
+        static constexpr enum_t Potions{1u << 13u};
+        static constexpr enum_t Training{1u << 14u};
+        static constexpr enum_t Recharge{1u << 16u};
+        static constexpr enum_t Repair{1u << 17u};
+    };
+
+    uint8_t aggression{};
+    uint8_t confidence{};
+    uint8_t energyLevel{};
+    uint8_t responsibility{};
+    Flag flags{Flag::make(Flag::None)};
+    oo::SkillIndex trainingSkill{};
+    uint8_t trainingLevel{};
+    uint16_t unknown{};
+};
+
 // Starting attributes for a particular race
 struct ATTR : Tuplifiable<std::array<uint8_t, 8>, std::array<uint8_t, 8>> {
   std::array<uint8_t, 8> male{};
   std::array<uint8_t, 8> female{};
   MAKE_AS_TUPLE(&male, &female)
+};
+
+// Item in a container
+struct CNTO : Tuplifiable<oo::BaseId, uint32_t> {
+    oo::BaseId id{};
+    uint32_t count{};
+    MAKE_AS_TUPLE(&id, &count);
 };
 
 // Class data. Skill the NPC trains (if applicable) is given as an actual
@@ -838,7 +877,9 @@ struct XTEL : Tuplifiable<oo::RefId, float, float, float, float, float, float> {
 
 // Wrapped subrecords
 using ACBS = Subrecord<raw::ACBS, "ACBS"_rec>;
+using AIDT = Subrecord<raw::AIDT, "AIDT"_rec>;
 using ATTR = Subrecord<raw::ATTR, "ATTR"_rec>;
+using CNTO = Subrecord<raw::CNTO, "CNTO"_rec>;
 using DELE = Subrecord<raw::DELE, "DELE"_rec>;
 using DESC = Subrecord<raw::DESC, "DESC"_rec>;
 using DNAM = Subrecord<raw::DNAM, "DNAM"_rec>;
@@ -868,6 +909,7 @@ using NAM1 = Subrecord<raw::NAM1, "NAM1"_rec>;
 using NAME = Subrecord<raw::NAME, "NAME"_rec>;
 using OFST = Subrecord<raw::OFST, "OFST"_rec>;
 using ONAM = Subrecord<raw::ONAM, "ONAM"_rec>;
+using PKID = Subrecord<raw::PKID, "PKID"_rec>;
 using PNAM = Subrecord<raw::PNAM, "PNAM"_rec>;
 using RNAM = Subrecord<raw::RNAM, "RNAM"_rec>;
 using SCIT = Subrecord<raw::SCIT, "SCIT"_rec>;
@@ -956,6 +998,7 @@ using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
 using TNAM_DOOR = Subrecord<raw::TNAM_DOOR, "TNAM"_rec>;
 
 DECLARE_SPECIALIZED_SUBRECORD(ACBS);
+DECLARE_SPECIALIZED_SUBRECORD(AIDT);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_CLAS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GMST);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_LIGH);
