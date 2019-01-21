@@ -317,9 +317,21 @@ struct NPC_ {
   std::optional<record::INAM_NPC_> deathItem{};
   record::RNAM race{};
   std::vector<record::SPLO> spells{};
+  std::optional<record::SCRI> script{};
   std::vector<record::CNTO> items{};
   record::AIDT aiData{};
   std::vector<record::PKID> aiPackages{};
+  record::CNAM_NPC_ clas{};
+  record::DATA_NPC_ stats{};
+  std::optional<record::HNAM_NPC_> hair{};
+  std::optional<record::LNAM> hairLength{};
+  std::optional<record::ENAM_NPC_> eyes{};
+  std::optional<record::HCLR> hairColor{};
+  std::optional<record::ZNAM> combatStyle{};
+  std::optional<record::FGGS> fggs{};
+  std::optional<record::FGGA> fgga{};
+  std::optional<record::FGTS> fgts{};
+  std::optional<record::FNAM_NPC_> fnam{};
 };
 
 // Potion

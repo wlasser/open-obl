@@ -41,6 +41,8 @@ using ANAM_SKIL = std::string;
 using BNAM_DOOR = oo::BaseId;
 // Crime gold multiplier for a faction
 using CNAM_FACT = float;
+// NPC class
+using CNAM_NPC_ = oo::BaseId;
 // Default hair colour
 using CNAM_RACE = uint8_t;
 // ESM/ESP author. Max 512 bytes, for some reason
@@ -56,6 +58,8 @@ using DESC = std::string;
 using EDID = std::string;
 // Magic effect Id
 using EFID = oo::EffectId;
+// NPC eyes
+using ENAM_NPC_ = oo::BaseId;
 // Expert skill text
 using ENAM_SKIL = std::string;
 // Facegen geometry (symmetric)
@@ -76,6 +80,8 @@ using FNAM_FACT = std::string;
 using FNAM_GLOB = char;
 // Light fade value
 using FNAM_LIGH = float;
+// Unknown face data
+using FNAM_NPC_ = uint16_t;
 // Body data marker
 using FNAM_RACE = std::tuple<>;
 // Sound filename
@@ -84,6 +90,10 @@ using FNAM_SOUN = std::string;
 using FULL = std::string;
 // Possible grass on a landscape texture
 using GNAM = oo::BaseId;
+// NPC hair colour
+using HCLR = Color;
+// NPC hair
+using HNAM_NPC_ = oo::BaseId;
 // Icon filename
 using ICON = std::string;
 // Faction rank insignia icon filename. Why not use ICON?
@@ -94,6 +104,8 @@ using INAM_NPC_ = oo::BaseId;
 using INDX_SKIL = oo::ActorValue;
 // Journeyman skill text
 using JNAM_SKIL = std::string;
+// NPC hair length
+using LNAM = float;
 // ESM files used by the ESP, in load order
 using MAST = std::string;
 // Male faction rank name
@@ -176,6 +188,8 @@ using XRTM = oo::RefId;
 using XSCL = float;
 // Target reference
 using XTRG = oo::RefId;
+// NPC combat style
+using ZNAM = oo::BaseId;
 
 // Cell flags
 struct DATA_CELL : Bitflag<8, DATA_CELL> {
@@ -322,32 +336,32 @@ struct ACBS {
 
 // NPC AI data
 struct AIDT {
-    struct Flag : Bitflag<32, Flag> {
-        static constexpr enum_t None{0};
-        static constexpr enum_t Weapons{1u << 0u};
-        static constexpr enum_t Armor{1u << 1u};
-        static constexpr enum_t Clothing{1u << 2u};
-        static constexpr enum_t Books{1u << 3u};
-        static constexpr enum_t Ingredients{1u << 4u};
-        static constexpr enum_t Lights{1u << 7u};
-        static constexpr enum_t Apparatus{1u << 8u};
-        static constexpr enum_t Miscellaneous{1u << 10u};
-        static constexpr enum_t Spells{1u << 11u};
-        static constexpr enum_t MagicItems{1u << 12u};
-        static constexpr enum_t Potions{1u << 13u};
-        static constexpr enum_t Training{1u << 14u};
-        static constexpr enum_t Recharge{1u << 16u};
-        static constexpr enum_t Repair{1u << 17u};
-    };
+  struct Flag : Bitflag<32, Flag> {
+    static constexpr enum_t None{0};
+    static constexpr enum_t Weapons{1u << 0u};
+    static constexpr enum_t Armor{1u << 1u};
+    static constexpr enum_t Clothing{1u << 2u};
+    static constexpr enum_t Books{1u << 3u};
+    static constexpr enum_t Ingredients{1u << 4u};
+    static constexpr enum_t Lights{1u << 7u};
+    static constexpr enum_t Apparatus{1u << 8u};
+    static constexpr enum_t Miscellaneous{1u << 10u};
+    static constexpr enum_t Spells{1u << 11u};
+    static constexpr enum_t MagicItems{1u << 12u};
+    static constexpr enum_t Potions{1u << 13u};
+    static constexpr enum_t Training{1u << 14u};
+    static constexpr enum_t Recharge{1u << 16u};
+    static constexpr enum_t Repair{1u << 17u};
+  };
 
-    uint8_t aggression{};
-    uint8_t confidence{};
-    uint8_t energyLevel{};
-    uint8_t responsibility{};
-    Flag flags{Flag::make(Flag::None)};
-    oo::SkillIndex trainingSkill{};
-    uint8_t trainingLevel{};
-    uint16_t unknown{};
+  uint8_t aggression{};
+  uint8_t confidence{};
+  uint8_t energyLevel{};
+  uint8_t responsibility{};
+  Flag flags{Flag::make(Flag::None)};
+  oo::SkillIndex trainingSkill{};
+  uint8_t trainingLevel{};
+  uint16_t unknown{};
 };
 
 // Starting attributes for a particular race
@@ -359,9 +373,9 @@ struct ATTR : Tuplifiable<std::array<uint8_t, 8>, std::array<uint8_t, 8>> {
 
 // Item in a container
 struct CNTO : Tuplifiable<oo::BaseId, uint32_t> {
-    oo::BaseId id{};
-    uint32_t count{};
-    MAKE_AS_TUPLE(&id, &count);
+  oo::BaseId id{};
+  uint32_t count{};
+  MAKE_AS_TUPLE(&id, &count);
 };
 
 // Class data. Skill the NPC trains (if applicable) is given as an actual
@@ -505,6 +519,17 @@ struct DATA_MGEF {
   float constantEffectEnchantmentFactor = 1.0f;
   // Multiplies the cost of an enchanted item
   float constantEffectBarterFactor = 1.0f;
+};
+
+struct DATA_NPC_ : Tuplifiable<std::array<uint8_t, 21>,
+                               uint32_t,
+                               std::array<uint8_t, 8>> {
+  // Indexed by oo::SkillIndex
+  std::array<uint8_t, 21> skills{};
+  uint32_t health{};
+  // Indexed by oo::Attribute
+  std::array<uint8_t, 8> attributes{};
+  MAKE_AS_TUPLE(&skills, &health, &attributes);
 };
 
 struct DATA_RACE {
@@ -895,10 +920,12 @@ using FGTS = Subrecord<raw::FGTS, "FGTS"_rec>;
 using FLTV = Subrecord<raw::FLTV, "FLTV"_rec>;
 using FULL = Subrecord<raw::FULL, "FULL"_rec>;
 using GNAM = Subrecord<raw::GNAM, "GNAM"_rec>;
+using HCLR = Subrecord<raw::HCLR, "HCLR"_rec>;
 using HEDR = Subrecord<raw::HEDR, "HEDR"_rec>;
 using HNAM = Subrecord<raw::HNAM, "HNAM"_rec>;
 using ICON = Subrecord<raw::ICON, "ICON"_rec>;
 using INAM = Subrecord<raw::INAM, "INAM"_rec>;
+using LNAM = Subrecord<raw::LNAM, "LNAM"_rec>;
 using MAST = Subrecord<raw::MAST, "MAST"_rec>;
 using MNAM = Subrecord<raw::MNAM, "MNAM"_rec>;
 using MODB = Subrecord<raw::MODB, "MODB"_rec>;
@@ -950,11 +977,13 @@ using XSED = Subrecord<raw::XSED, "XSED"_rec>;
 using XSOL = Subrecord<raw::XSOL, "XSOL"_rec>;
 using XTEL = Subrecord<raw::XTEL, "XTEL"_rec>;
 using XTRG = Subrecord<raw::XTRG, "XTRG"_rec>;
+using ZNAM = Subrecord<raw::ZNAM, "ZNAM"_rec>;
 
 using ANAM_DOOR = Subrecord<raw::ANAM_DOOR, "ANAM"_rec>;
 using ANAM_SKIL = Subrecord<raw::ANAM_SKIL, "ANAM"_rec>;
 using BNAM_DOOR = Subrecord<raw::BNAM_DOOR, "BNAM"_rec>;
 using CNAM_FACT = Subrecord<raw::CNAM_FACT, "CNAM"_rec>;
+using CNAM_NPC_ = Subrecord<raw::CNAM_NPC_, "CNAM"_rec>;
 using CNAM_RACE = Subrecord<raw::CNAM_RACE, "CNAM"_rec>;
 using CNAM_TES4 = Subrecord<raw::CNAM_TES4, "CNAM"_rec>;
 using DATA_ALCH = Subrecord<raw::DATA_ALCH, "DATA"_rec>;
@@ -967,20 +996,24 @@ using DATA_HAIR = Subrecord<raw::DATA_HAIR, "DATA"_rec>;
 using DATA_LIGH = Subrecord<raw::DATA_LIGH, "DATA"_rec>;
 using DATA_MISC = Subrecord<raw::DATA_MISC, "DATA"_rec>;
 using DATA_MGEF = Subrecord<raw::DATA_MGEF, "DATA"_rec>;
+using DATA_NPC_ = Subrecord<raw::DATA_NPC_, "DATA"_rec>;
 using DATA_RACE = Subrecord<raw::DATA_RACE, "DATA"_rec>;
 using DATA_REFR = Subrecord<raw::DATA_REFR, "DATA"_rec>;
 using DATA_SKIL = Subrecord<raw::DATA_SKIL, "DATA"_rec>;
 using DATA_TES4 = Subrecord<raw::DATA_TES4, "DATA"_rec>;
+using ENAM_NPC_ = Subrecord<raw::ENAM_NPC_, "ENAM"_rec>;
 using ENAM_SKIL = Subrecord<raw::ENAM_SKIL, "ENAM"_rec>;
 using ENIT_ENCH = Subrecord<raw::ENIT_ENCH, "ENIT"_rec>;
 using FNAM_DOOR = Subrecord<raw::FNAM_DOOR, "FNAM"_rec>;
 using FNAM_FACT = Subrecord<raw::FNAM_FACT, "FNAM"_rec>;
 using FNAM_GLOB = Subrecord<raw::FNAM_GLOB, "FNAM"_rec>;
 using FNAM_LIGH = Subrecord<raw::FNAM_LIGH, "FNAM"_rec>;
+using FNAM_NPC_ = Subrecord<raw::FNAM_NPC_, "FNAM"_rec>;
 using FNAM_RACE = Subrecord<raw::FNAM_RACE, "FNAM"_rec>;
 using FNAM_REFR = Subrecord<raw::FNAM_REFR, "FNAM"_rec>;
 using FNAM_SOUN = Subrecord<raw::FNAM_SOUN, "FNAM"_rec>;
 using HNAM_LTEX = Subrecord<raw::HNAM_LTEX, "HNAM"_rec>;
+using HNAM_NPC_ = Subrecord<raw::HNAM_NPC_, "HNAM"_rec>;
 using INAM_NPC_ = Subrecord<raw::INAM_NPC_, "INAM"_rec>;
 using INDX_BODY = Subrecord<raw::INDX_BODY, "INDX"_rec>;
 using INDX_FACE = Subrecord<raw::INDX_FACE, "INDX"_rec>;

@@ -1067,6 +1067,7 @@ template<> uint32_t NPC_::size() const {
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
                         })
+      + (script ? script->entireSize() : 0u)
       + std::accumulate(items.begin(), items.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
@@ -1075,7 +1076,18 @@ template<> uint32_t NPC_::size() const {
       + std::accumulate(aiPackages.begin(), aiPackages.end(), 0u,
                         [](auto a, const auto &b) {
                           return a + b.entireSize();
-                        });
+                        })
+      + clas.entireSize()
+      + stats.entireSize()
+      + (hair ? hair->entireSize() : 0u)
+      + (hairLength ? hairLength->entireSize() : 0u)
+      + (eyes ? eyes->entireSize() : 0u)
+      + (hairColor ? hairColor->entireSize() : 0u)
+      + (combatStyle ? combatStyle->entireSize() : 0u)
+      + (fggs ? fggs->entireSize() : 0u)
+      + (fgga ? fgga->entireSize() : 0u)
+      + (fgts ? fgts->entireSize() : 0u)
+      + (fnam ? fnam->entireSize() : 0u);
 }
 
 template<> std::ostream &
@@ -1089,9 +1101,21 @@ raw::write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
   writeRecord(os, t.deathItem);
   writeRecord(os, t.race);
   for (const auto &spell : t.spells) writeRecord(os, spell);
+  writeRecord(os, t.script);
   for (const auto &item : t.items) writeRecord(os, item);
   writeRecord(os, t.aiData);
   for (const auto &package : t.aiPackages) writeRecord(os, package);
+  writeRecord(os, t.clas);
+  writeRecord(os, t.stats);
+  writeRecord(os, t.hair);
+  writeRecord(os, t.hairLength);
+  writeRecord(os, t.eyes);
+  writeRecord(os, t.hairColor);
+  writeRecord(os, t.combatStyle);
+  writeRecord(os, t.fggs);
+  writeRecord(os, t.fgga);
+  writeRecord(os, t.fgts);
+  writeRecord(os, t.fnam);
 
   return os;
 }
@@ -1101,7 +1125,9 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "MODL"_rec, "MODB"_rec, "ACBS"_rec, "SNAM"_rec, "INAM"_rec,
-      "RNAM"_rec, "SPLO"_rec, "CNTO"_rec, "AIDT"_rec, "PKID_"rec,
+      "RNAM"_rec, "SPLO"_rec, "SCRI"_rec, "CNTO"_rec, "AIDT"_rec, "PKID"_rec,
+      "CNAM"_rec, "DATA"_rec, "HNAM"_rec, "LNAM"_rec, "ENAM"_rec, "HCLR"_rec,
+      "ZNAM"_rec, "FGGS"_rec, "FGGA"_rec, "FGTS"_rec, "FNAM"_rec,
   };
 
   uint32_t rec{};
@@ -1123,11 +1149,35 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
         break;
       case "SPLO"_rec: readRecord(is, t.spells.emplace_back());
         break;
+      case "SCRI"_rec: readRecord(is, t.script);
+        break;
       case "CNTO"_rec: readRecord(is, t.items.emplace_back());
         break;
       case "AIDT"_rec: readRecord(is, t.aiData);
         break;
       case "PKID"_rec: readRecord(is, t.aiPackages.emplace_back());
+        break;
+      case "CNAM"_rec: readRecord(is, t.clas);
+        break;
+      case "DATA"_rec: readRecord(is, t.stats);
+        break;
+      case "HNAM"_rec: readRecord(is, t.hair);
+        break;
+      case "LNAM"_rec: readRecord(is, t.hairLength);
+        break;
+      case "ENAM"_rec: readRecord(is, t.eyes);
+        break;
+      case "HCLR"_rec: readRecord(is, t.hairColor);
+        break;
+      case "ZNAM"_rec: readRecord(is, t.combatStyle);
+        break;
+      case "FGGS"_rec: readRecord(is, t.fggs);
+        break;
+      case "FGGA"_rec: readRecord(is, t.fgga);
+        break;
+      case "FGTS"_rec: readRecord(is, t.fgts);
+        break;
+      case "FNAM"_rec: readRecord(is, t.fnam);
         break;
       default: break;
     }
