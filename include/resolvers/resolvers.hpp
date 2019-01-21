@@ -2,7 +2,6 @@
 #define OPENOBLIVION_RESOLVERS_HPP
 
 #include "record/formid.hpp"
-#include "resolvers/helpers.hpp"
 #include "meta.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <gsl/gsl>

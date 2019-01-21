@@ -22,8 +22,9 @@ target_sources(OpenOblivionRecord PRIVATE
         ${CMAKE_SOURCE_DIR}/include/record/magic_effects.hpp
         ${CMAKE_SOURCE_DIR}/include/record/rec_of.hpp
         ${CMAKE_SOURCE_DIR}/include/record/record.hpp
-        ${CMAKE_SOURCE_DIR}/include/record/records.hpp
         ${CMAKE_SOURCE_DIR}/include/record/record_header.hpp
+        ${CMAKE_SOURCE_DIR}/include/record/records.hpp
+        ${CMAKE_SOURCE_DIR}/include/record/records_fwd.hpp
         ${CMAKE_SOURCE_DIR}/include/record/reference_records.hpp
         ${CMAKE_SOURCE_DIR}/include/record/size_of.hpp
         ${CMAKE_SOURCE_DIR}/include/record/subrecord.hpp

@@ -4,7 +4,9 @@
 #include "fs/path.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
-#include "record/records.hpp"
+#include "record/records_fwd.hpp"
+#include "record/reference_records.hpp"
+#include "record/subrecords.hpp"
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 #include <array>

@@ -2,7 +2,9 @@
 #define OPENOBLIVION_STATIC_RESOLVER_HPP
 
 #include "record/formid.hpp"
-#include "record/records.hpp"
+#include "record/records_fwd.hpp"
+#include "record/reference_records.hpp"
+#include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>

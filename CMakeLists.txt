@@ -68,7 +68,7 @@ endif ()
 cmake_policy(SET CMP0069 NEW)
 check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
 if (IPO_SUPPORTED)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
 else ()
     message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
 endif ()
@@ -199,6 +199,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
         include/resolvers/door_resolver.hpp
+        include/resolvers/ecs.hpp
         include/resolvers/helpers.hpp
         include/resolvers/light_resolver.hpp
         include/resolvers/resolvers.hpp

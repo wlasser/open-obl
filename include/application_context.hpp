@@ -13,7 +13,8 @@
 #include "ogreimgui/imgui_manager.hpp"
 #include "ogresoloud/sound_manager.hpp"
 #include "ogresoloud/wav_resource_manager.hpp"
-#include "record/records.hpp"
+#include "record/records_fwd.hpp"
+#include "record/reference_records.hpp"
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
 #include <OgreRoot.h>

@@ -1,5 +1,7 @@
 #include "conversions.hpp"
 #include "fs/path.hpp"
+#include "record/records.hpp"
+#include "resolvers/helpers.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
 
