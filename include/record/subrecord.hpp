@@ -80,6 +80,11 @@ std::istream &operator>>(std::istream &is, Subrecord<T, c> &subrecord) {
   return is;
 }
 
+template<class T, uint32_t c>
+std::size_t SizeOf(const Subrecord<T, c> &t) {
+  return t.entireSize();
+}
+
 } // namespace record
 
 #endif //OPENOBLIVION_RECORD_SUBRECORD_HPP

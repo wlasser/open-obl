@@ -161,6 +161,7 @@ operator>>(std::istream &is, Record<T, c, Compressed> &record) {
     io::readBytes(is, record.mFormId);
     io::readBytes(is, record.mVersionControlInfo);
     raw::read(is, static_cast<T &>(record), size);
+    assert(size <= record.size());
   }
 
   return is;

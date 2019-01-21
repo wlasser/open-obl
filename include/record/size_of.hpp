@@ -4,6 +4,7 @@
 #include "bitflag.hpp"
 #include "record/tuplifiable.hpp"
 #include "record/formid.hpp"
+#include <numeric>
 #include <array>
 #include <optional>
 #include <string>
@@ -42,7 +43,9 @@ inline std::size_t SizeOf(const std::string &t) {
 }
 
 template<class T> inline std::size_t SizeOf(const std::vector<T> &t) {
-  return t.empty() ? 0 : (t.size() * SizeOf(t.front()));
+  return std::accumulate(t.begin(), t.end(), 0u, [](std::size_t a, const T &b) {
+    return a + SizeOf(b);
+  });
 }
 
 template<class T, std::size_t N>
@@ -60,12 +63,12 @@ template<class T, class S> inline std::size_t SizeOf(const std::pair<T, S> &t) {
 }
 
 template<class ...T> inline std::size_t SizeOf(const std::tuple<T...> &t) {
-  return std::apply([](const auto &...x) { return (0 + ... +SizeOf(x)); }, t);
+  return std::apply([](const auto &...x) { return (0 + ... + SizeOf(x)); }, t);
 }
 
 template<class ...T>
 inline std::size_t SizeOf(const std::tuple<const T *...> &t) {
-  return std::apply([](const auto &...x) { return (0 + ... +SizeOf(*x)); }, t);
+  return std::apply([](const auto &...x) { return (0 + ... + SizeOf(*x)); }, t);
 }
 
 template<class ...T> inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
