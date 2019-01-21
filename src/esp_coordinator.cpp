@@ -231,6 +231,20 @@ FormId EspCoordinator::translateFormIds(FormId rec, int modIndex) const {
   return translateFormId(rec, modIndex);
 }
 
+template<> record::raw::Effect
+EspCoordinator::translateFormIds(record::raw::Effect rec, int modIndex) const {
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
+  }
+  return rec;
+}
+
+template<> record::raw::CNTO
+EspCoordinator::translateFormIds(record::raw::CNTO rec, int modIndex) const {
+  rec.id = translateFormIds(rec.id, modIndex);
+  return rec;
+}
+
 template<>
 record::raw::DATA_MGEF
 EspCoordinator::translateFormIds(record::raw::DATA_MGEF rec,
@@ -278,6 +292,13 @@ EspCoordinator::translateFormIds(record::raw::SCIT rec, int modIndex) const {
   return rec;
 }
 
+template<> record::raw::SNAM_NPC_
+EspCoordinator::translateFormIds(record::raw::SNAM_NPC_ rec,
+                                 int modIndex) const {
+  rec.factionId = translateFormIds(rec.factionId, modIndex);
+  return rec;
+}
+
 template<>
 record::raw::VNAM
 EspCoordinator::translateFormIds(record::raw::VNAM rec, int modIndex) const {
@@ -304,6 +325,12 @@ template<>
 record::raw::XNAM
 EspCoordinator::translateFormIds(record::raw::XNAM rec, int modIndex) const {
   rec.factionId = translateFormIds(rec.factionId, modIndex);
+  return rec;
+}
+
+template<> record::raw::XTEL
+EspCoordinator::translateFormIds(record::raw::XTEL rec, int modIndex) const {
+  rec.destinationId = translateFormIds(rec.destinationId, modIndex);
   return rec;
 }
 
@@ -340,6 +367,22 @@ record::raw::LTEX
 EspCoordinator::translateFormIds(record::raw::LTEX rec, int modIndex) const {
   for (auto &grass : rec.potentialGrasses) {
     grass.data = translateFormIds(grass.data, modIndex);
+  }
+  return rec;
+}
+
+template<> record::raw::ENCH
+EspCoordinator::translateFormIds(record::raw::ENCH rec, int modIndex) const {
+  for (auto &effect : rec.effects) {
+    effect.data = translateFormIds(effect.data, modIndex);
+  }
+  return rec;
+}
+
+template<> record::raw::SPEL
+EspCoordinator::translateFormIds(record::raw::SPEL rec, int modIndex) const {
+  for (auto &effect : rec.effects) {
+    effect.data = translateFormIds(effect.data, modIndex);
   }
   return rec;
 }
@@ -403,6 +446,40 @@ record::raw::MISC
 EspCoordinator::translateFormIds(record::raw::MISC rec, int modIndex) const {
   if (rec.itemScript) {
     rec.itemScript->data = translateFormIds(rec.itemScript->data, modIndex);
+  }
+  return rec;
+}
+
+template<> record::raw::NPC_
+EspCoordinator::translateFormIds(record::raw::NPC_ rec, int modIndex) const {
+  for (auto &faction : rec.factions) {
+    faction.data = translateFormIds(faction.data, modIndex);
+  }
+  if (rec.deathItem) {
+    rec.deathItem->data = translateFormIds(rec.deathItem->data, modIndex);
+  }
+  rec.race.data = translateFormIds(rec.race.data, modIndex);
+  for (auto &spell : rec.spells) {
+    spell.data = translateFormIds(spell.data, modIndex);
+  }
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
+  }
+  for (auto &item : rec.items) {
+    item.data = translateFormIds(item.data, modIndex);
+  }
+  for (auto &pkg : rec.aiPackages) {
+    pkg.data = translateFormIds(pkg.data, modIndex);
+  }
+  rec.clas.data = translateFormIds(rec.clas.data, modIndex);
+  if (rec.hair) {
+    rec.hair->data = translateFormIds(rec.hair->data, modIndex);
+  }
+  if (rec.eyes) {
+    rec.eyes->data = translateFormIds(rec.eyes->data, modIndex);
+  }
+  if (rec.combatStyle) {
+    rec.combatStyle->data = translateFormIds(rec.combatStyle->data, modIndex);
   }
   return rec;
 }
@@ -522,6 +599,24 @@ EspCoordinator::translateFormIds(record::raw::REFR_STAT rec,
                                  int modIndex) const {
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
+
+  return rec;
+}
+
+template<> record::raw::REFR_NPC_
+EspCoordinator::translateFormIds(record::raw::REFR_NPC_ rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  if (rec.merchantContainer) {
+    rec.merchantContainer->data =
+        translateFormIds(rec.merchantContainer->data, modIndex);
+  }
+  if (rec.mount) {
+    rec.mount->data = translateFormIds(rec.mount->data, modIndex);
   }
   rec.baseId = translateFormIds(rec.baseId, modIndex);
 

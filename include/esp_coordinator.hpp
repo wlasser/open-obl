@@ -162,92 +162,79 @@ class EspCoordinator {
   peekGroupType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
-  template<class T>
-  T translateFormIds(T rec, int modIndex) const;
+  template<class T> T translateFormIds(T rec, int modIndex) const;
 
-  template<>
-  BaseId translateFormIds(BaseId rec, int modIndex) const;
+  template<> BaseId translateFormIds(BaseId rec, int modIndex) const;
+  template<> RefId translateFormIds(RefId rec, int modIndex) const;
+  template<> FormId translateFormIds(FormId rec, int modIndex) const;
 
-  template<>
-  RefId translateFormIds(RefId rec, int modIndex) const;
+  template<> record::raw::Effect
+  translateFormIds(record::raw::Effect rec, int modIndex) const;
 
-  template<>
-  FormId translateFormIds(FormId rec, int modIndex) const;
-
-  template<>
-  record::raw::DATA_MGEF
+  template<> record::raw::CNTO
+  translateFormIds(record::raw::CNTO rec, int modIndex) const;
+  template<> record::raw::DATA_MGEF
   translateFormIds(record::raw::DATA_MGEF rec, int modIndex) const;
+  template<> record::raw::DNAM
+  translateFormIds(record::raw::DNAM rec, int modIndex) const;
+  template<> record::raw::ENAM
+  translateFormIds(record::raw::ENAM rec, int modIndex) const;
+  template<> record::raw::HNAM
+  translateFormIds(record::raw::HNAM rec, int modIndex) const;
+  template<> record::raw::SCIT
+  translateFormIds(record::raw::SCIT rec, int modIndex) const;
+  template<> record::raw::SNAM_NPC_
+  translateFormIds(record::raw::SNAM_NPC_ rec, int modIndex) const;
+  template<> record::raw::VNAM
+  translateFormIds(record::raw::VNAM rec, int modIndex) const;
+  template<> record::raw::XESP
+  translateFormIds(record::raw::XESP rec, int modIndex) const;
+  template<> record::raw::XLOC
+  translateFormIds(record::raw::XLOC rec, int modIndex) const;
+  template<> record::raw::XNAM
+  translateFormIds(record::raw::XNAM rec, int modIndex) const;
+  template<> record::raw::XTEL
+  translateFormIds(record::raw::XTEL rec, int modIndex) const;
 
-  template<>
-  record::raw::DNAM translateFormIds(record::raw::DNAM rec, int modIndex) const;
+  template<> record::raw::RACE
+  translateFormIds(record::raw::RACE rec, int modIndex) const;
+  template<> record::raw::MGEF
+  translateFormIds(record::raw::MGEF rec, int modIndex) const;
+  template<> record::raw::LTEX
+  translateFormIds(record::raw::LTEX rec, int modIndex) const;
+  template<> record::raw::ENCH
+  translateFormIds(record::raw::ENCH rec, int modIndex) const;
+  template<> record::raw::SPEL
+  translateFormIds(record::raw::SPEL rec, int modIndex) const;
+  template<> record::raw::BSGN
+  translateFormIds(record::raw::BSGN rec, int modIndex) const;
+  template<> record::raw::ACTI
+  translateFormIds(record::raw::ACTI rec, int modIndex) const;
+  template<> record::raw::DOOR
+  translateFormIds(record::raw::DOOR rec, int modIndex) const;
+  template<> record::raw::LIGH
+  translateFormIds(record::raw::LIGH rec, int modIndex) const;
+  template<> record::raw::MISC
+  translateFormIds(record::raw::MISC rec, int modIndex) const;
+  template<> record::raw::NPC_
+  translateFormIds(record::raw::NPC_ rec, int modIndex) const;
+  template<> record::raw::ALCH
+  translateFormIds(record::raw::ALCH rec, int modIndex) const;
+  template<> record::raw::CELL
+  translateFormIds(record::raw::CELL rec, int modIndex) const;
 
-  template<>
-  record::raw::ENAM translateFormIds(record::raw::ENAM rec, int modIndex) const;
-
-  template<>
-  record::raw::HNAM translateFormIds(record::raw::HNAM rec, int modIndex) const;
-
-  template<>
-  record::raw::SCIT translateFormIds(record::raw::SCIT rec, int modIndex) const;
-
-  template<>
-  record::raw::VNAM translateFormIds(record::raw::VNAM rec, int modIndex) const;
-
-  template<>
-  record::raw::XESP translateFormIds(record::raw::XESP rec, int modIndex) const;
-
-  template<>
-  record::raw::XLOC translateFormIds(record::raw::XLOC rec, int modIndex) const;
-
-  template<>
-  record::raw::XNAM translateFormIds(record::raw::XNAM rec, int modIndex) const;
-
-  template<>
-  record::raw::RACE translateFormIds(record::raw::RACE rec, int modIndex) const;
-
-  template<>
-  record::raw::MGEF translateFormIds(record::raw::MGEF rec, int modIndex) const;
-
-  template<>
-  record::raw::LTEX translateFormIds(record::raw::LTEX rec, int modIndex) const;
-
-  template<>
-  record::raw::BSGN translateFormIds(record::raw::BSGN rec, int modIndex) const;
-
-  template<>
-  record::raw::ACTI translateFormIds(record::raw::ACTI rec, int modIndex) const;
-
-  template<>
-  record::raw::DOOR translateFormIds(record::raw::DOOR rec, int modIndex) const;
-
-  template<>
-  record::raw::LIGH translateFormIds(record::raw::LIGH rec, int modIndex) const;
-
-  template<>
-  record::raw::MISC translateFormIds(record::raw::MISC rec, int modIndex) const;
-
-  template<>
-  record::raw::CELL translateFormIds(record::raw::CELL rec, int modIndex) const;
-
-  template<>
-  record::raw::REFR_ACTI
+  template<> record::raw::REFR_ACTI
   translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;
-
-  template<>
-  record::raw::REFR_DOOR
+  template<> record::raw::REFR_DOOR
   translateFormIds(record::raw::REFR_DOOR rec, int modIndex) const;
-
-  template<>
-  record::raw::REFR_LIGH
+  template<> record::raw::REFR_LIGH
   translateFormIds(record::raw::REFR_LIGH rec, int modIndex) const;
-
-  template<>
-  record::raw::REFR_MISC
+  template<> record::raw::REFR_MISC
   translateFormIds(record::raw::REFR_MISC rec, int modIndex) const;
-
-  template<>
-  record::raw::REFR_STAT
+  template<> record::raw::REFR_STAT
   translateFormIds(record::raw::REFR_STAT rec, int modIndex) const;
+  template<> record::raw::REFR_NPC_
+  translateFormIds(record::raw::REFR_NPC_ rec, int modIndex) const;
 
   template<class T, uint32_t c>
   record::Record<T, c>

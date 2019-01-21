@@ -315,7 +315,7 @@ struct NPC_ {
   record::ACBS baseConfig{};
   std::vector<record::SNAM_NPC_> factions{};
   std::optional<record::INAM_NPC_> deathItem{};
-  record::RNAM race{};
+  record::RNAM_NPC_ race{};
   std::vector<record::SPLO> spells{};
   std::optional<record::SCRI> script{};
   std::vector<record::CNTO> items{};
