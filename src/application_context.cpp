@@ -10,6 +10,7 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
+#include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "scripting/console_engine.hpp"
 
@@ -77,6 +78,10 @@ oo::ActiResolver &ApplicationContext::getActiResolver() const {
   return *actiRes;
 }
 
+oo::Npc_Resolver &ApplicationContext::getNpc_Resolver() const {
+  return *npc_Res;
+}
+
 oo::RefrDoorResolver &ApplicationContext::getRefrDoorResolver() const {
   return *refrDoorRes;
 }
@@ -91,6 +96,10 @@ oo::RefrStatResolver &ApplicationContext::getRefrStatResolver() const {
 
 oo::RefrActiResolver &ApplicationContext::getRefrActiResolver() const {
   return *refrActiRes;
+}
+
+oo::RefrNpc_Resolver &ApplicationContext::getRefrNpc_Resolver() const {
+  return *refrNpc_Res;
 }
 
 oo::CellResolver &ApplicationContext::getCellResolver() const {

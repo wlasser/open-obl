@@ -8,6 +8,7 @@
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
+#include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 
 namespace oo {
@@ -18,6 +19,7 @@ class InitialRecordVisitor {
   oo::LighResolver *lighRes;
   oo::StatResolver *statRes;
   oo::ActiResolver *actiRes;
+  oo::Npc_Resolver *npc_Res;
   oo::CellResolver *cellRes;
 
  public:
@@ -25,11 +27,13 @@ class InitialRecordVisitor {
                        oo::LighResolver *lighRes,
                        oo::StatResolver *statRes,
                        oo::ActiResolver *actiRes,
+                       oo::Npc_Resolver *npc_Res,
                        oo::CellResolver *cellRes) :
       doorRes(doorRes),
       lighRes(lighRes),
       statRes(statRes),
       actiRes(actiRes),
+      npc_Res(npc_Res),
       cellRes(cellRes) {}
 
   template<class R>

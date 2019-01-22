@@ -62,6 +62,7 @@ void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
 template<>
 void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::NPC_>().value};
+  npc_Res->insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>

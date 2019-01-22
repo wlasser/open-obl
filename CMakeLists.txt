@@ -148,6 +148,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/cell_resolver.cpp
         src/resolvers/door_resolver.cpp
         src/resolvers/light_resolver.cpp
+        src/resolvers/npc_resolver.cpp
         src/resolvers/helpers.cpp
         src/resolvers/static_resolver.cpp
         src/save_state.cpp
@@ -202,6 +203,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/ecs.hpp
         include/resolvers/helpers.hpp
         include/resolvers/light_resolver.hpp
+        include/resolvers/npc_resolver.hpp
         include/resolvers/resolvers.hpp
         include/resolvers/static_resolver.hpp
         include/save_state.hpp

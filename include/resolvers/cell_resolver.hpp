@@ -7,6 +7,7 @@
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
+#include "resolvers/npc_resolver.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
 #include <absl/container/flat_hash_map.h>
@@ -90,13 +91,15 @@ class Resolver<record::CELL> {
       oo::Resolver<record::REFR_STAT, oo::RefId> &,
       oo::Resolver<record::REFR_DOOR, oo::RefId> &,
       oo::Resolver<record::REFR_LIGH, oo::RefId> &,
-      oo::Resolver<record::REFR_ACTI, oo::RefId> &>;
+      oo::Resolver<record::REFR_ACTI, oo::RefId> &,
+      oo::Resolver<record::REFR_NPC_, oo::RefId> &>;
 
   using BaseResolverContext = std::tuple<
       const oo::Resolver<record::STAT> &,
       const oo::Resolver<record::DOOR> &,
       const oo::Resolver<record::LIGH> &,
-      const oo::Resolver<record::ACTI> &>;
+      const oo::Resolver<record::ACTI> &,
+      const oo::Resolver<record::NPC_> &>;
 
   /// Load all child references of a cell.
   void load(oo::BaseId baseId,
@@ -131,8 +134,8 @@ class Resolver<record::CELL>::CellVisitor {
     accessor.skipRecord();
   }
 
-  template<>
-  void readRecord<record::REFR>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::REFR>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::ACHR>(oo::EspAccessor &accessor);
 };
 
 class Cell {
@@ -170,10 +173,12 @@ struct ReifyRecordTrait<record::CELL> {
                                const oo::Resolver<record::DOOR> &,
                                const oo::Resolver<record::LIGH> &,
                                const oo::Resolver<record::ACTI> &,
+                               const oo::Resolver<record::NPC_> &,
                                oo::Resolver<record::REFR_STAT, oo::RefId> &,
                                oo::Resolver<record::REFR_DOOR, oo::RefId> &,
                                oo::Resolver<record::REFR_LIGH, oo::RefId> &,
                                oo::Resolver<record::REFR_ACTI, oo::RefId> &,
+                               oo::Resolver<record::REFR_NPC_, oo::RefId> &,
                                const oo::Resolver<record::CELL> &>;
 };
 

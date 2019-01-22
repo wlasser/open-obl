@@ -120,6 +120,24 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccesso
   }
 }
 
+template<> void
+oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
+  const BaseId baseId{accessor.peekBaseId()};
+
+  const auto &npc_Res{std::get<const oo::Resolver<record::NPC_> &>(mBaseCtx)};
+  //@formatter:off
+  auto &refrNpc_Res{std::get<oo::Resolver<record::REFR_NPC_, oo::RefId> &>(mRefrCtx)};
+  //@formatter:on
+
+  if (npc_Res.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_NPC_>().value};
+    refrNpc_Res.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
+  } else {
+    accessor.skipRecord();
+  }
+}
+
 Cell::~Cell() {
   // Destruct physics world to unregister all existing rigid bodies and free
   // their broadphase proxies, while they are still alive.
@@ -158,11 +176,13 @@ reifyRecord(const record::CELL &refRec,
   const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(resolvers)};
   const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(resolvers)};
   const auto &actiRes{std::get<const oo::Resolver<record::ACTI> &>(resolvers)};
+  const auto &npc_Res{std::get<const oo::Resolver<record::NPC_> &>(resolvers)};
   //@formatter:off
   const auto &refrStatRes{std::get<oo::Resolver<record::REFR_STAT, oo::RefId> &>(resolvers)};
   const auto &refrDoorRes{std::get<oo::Resolver<record::REFR_DOOR, oo::RefId> &>(resolvers)};
   const auto &refrLighRes{std::get<oo::Resolver<record::REFR_LIGH, oo::RefId> &>(resolvers)};
   const auto &refrActiRes{std::get<oo::Resolver<record::REFR_ACTI, oo::RefId> &>(resolvers)};
+  const auto &refrNpc_Res{std::get<oo::Resolver<record::REFR_NPC_, oo::RefId> &>(resolvers)};
   //@formatter:on
 
   Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
@@ -177,6 +197,8 @@ reifyRecord(const record::CELL &refRec,
       cell->attach(*ligh, node, std::forward_as_tuple(lighRes));
     } else if (auto acti{refrActiRes.get(refId)}; acti) {
       cell->attach(*acti, node, std::forward_as_tuple(actiRes));
+    } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
+      cell->attach(*npc, node, std::forward_as_tuple(npc_Res));
     }
   }
 

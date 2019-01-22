@@ -42,10 +42,12 @@ using DoorResolver = Resolver<::record::DOOR, BaseId>;
 using LighResolver = Resolver<::record::LIGH, BaseId>;
 using StatResolver = Resolver<::record::STAT, BaseId>;
 using ActiResolver = Resolver<::record::ACTI, BaseId>;
+using Npc_Resolver = Resolver<::record::NPC_, BaseId>;
 using RefrDoorResolver = Resolver<::record::REFR_DOOR, RefId>;
 using RefrLighResolver = Resolver<::record::REFR_LIGH, RefId>;
 using RefrStatResolver = Resolver<::record::REFR_STAT, RefId>;
 using RefrActiResolver = Resolver<::record::REFR_ACTI, RefId>;
+using RefrNpc_Resolver = Resolver<::record::REFR_NPC_, RefId>;
 using CellResolver = Resolver<::record::CELL, BaseId>;
 
 namespace event {
@@ -100,10 +102,12 @@ class ApplicationContext {
   std::unique_ptr<oo::LighResolver> lighRes{};
   std::unique_ptr<oo::StatResolver> statRes{};
   std::unique_ptr<oo::ActiResolver> actiRes{};
+  std::unique_ptr<oo::Npc_Resolver> npc_Res{};
   std::unique_ptr<oo::RefrDoorResolver> refrDoorRes{};
   std::unique_ptr<oo::RefrLighResolver> refrLighRes{};
   std::unique_ptr<oo::RefrStatResolver> refrStatRes{};
   std::unique_ptr<oo::RefrActiResolver> refrActiRes{};
+  std::unique_ptr<oo::RefrNpc_Resolver> refrNpc_Res{};
   std::unique_ptr<oo::CellResolver> cellRes{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
@@ -130,11 +134,13 @@ class ApplicationContext {
   oo::LighResolver &getLighResolver() const;
   oo::StatResolver &getStatResolver() const;
   oo::ActiResolver &getActiResolver() const;
+  oo::Npc_Resolver &getNpc_Resolver() const;
 
   oo::RefrDoorResolver &getRefrDoorResolver() const;
   oo::RefrLighResolver &getRefrLighResolver() const;
   oo::RefrStatResolver &getRefrStatResolver() const;
   oo::RefrActiResolver &getRefrActiResolver() const;
+  oo::RefrNpc_Resolver &getRefrNpc_Resolver() const;
 
   oo::CellResolver &getCellResolver() const;
 

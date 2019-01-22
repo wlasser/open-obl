@@ -92,10 +92,12 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.lighRes = std::make_unique<oo::LighResolver>();
   ctx.statRes = std::make_unique<oo::StatResolver>();
   ctx.actiRes = std::make_unique<oo::ActiResolver>();
+  ctx.npc_Res = std::make_unique<oo::Npc_Resolver>();
   ctx.refrDoorRes = std::make_unique<oo::RefrDoorResolver>();
   ctx.refrLighRes = std::make_unique<oo::RefrLighResolver>();
   ctx.refrStatRes = std::make_unique<oo::RefrStatResolver>();
   ctx.refrActiRes = std::make_unique<oo::RefrActiResolver>();
+  ctx.refrNpc_Res = std::make_unique<oo::RefrNpc_Resolver>();
 
   ctx.cellRes = std::make_unique<oo::CellResolver>(*ctx.bulletConf);
 
@@ -162,6 +164,7 @@ Application::Application(std::string windowName) : FrameListener() {
                                             ctx.lighRes.get(),
                                             ctx.statRes.get(),
                                             ctx.actiRes.get(),
+                                            ctx.npc_Res.get(),
                                             ctx.cellRes.get());
   for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);

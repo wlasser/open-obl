@@ -228,7 +228,7 @@ void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
     if (type == "REFR"_rec) {
       visitor.template readRecord<record::REFR>(accessor);
     } else if (type == "ACHR"_rec) {
-      accessor.skipRecord();
+      visitor.template readRecord<record::ACHR>(accessor);
     } else if (type == "ACRE"_rec) {
       accessor.skipRecord();
     } else {

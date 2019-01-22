@@ -73,7 +73,9 @@ class Resolver {
   /// The underlying raw record type.
   using RawType = typename R::Raw;
 
-  static_assert(std::is_same_v<R, record::Record<RawType, RecordType>>,
+  static_assert(std::is_same_v<R, record::Record<RawType, RecordType, false>>
+                    || std::is_same_v<R, record::Record<RawType, RecordType,
+                                                        true>>,
                 "Template parameter must be a Record");
 
   /// Return the base record, performing disk io if necessary.

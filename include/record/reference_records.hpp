@@ -268,6 +268,7 @@ using REFR_NPC_ = Record<raw::REFR_NPC_, "ACHR"_rec>;
 /// This is a placeholder.
 /// TODO: Explain this.
 using REFR = Record<std::tuple<>, "REFR"_rec>;
+using ACHR = REFR_NPC_;
 
 oo::BaseId peekBaseOfReference(std::istream &is);
 
