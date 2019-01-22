@@ -1109,8 +1109,8 @@ struct BoxShape : bhk::ConvexShape {
 };
 
 struct ConvexVerticesShape : bhk::ConvexShape {
-  compound::hkWorldObjCinfoProperty verticesProperty{};
-  compound::hkWorldObjCinfoProperty normalsProperty{};
+  compound::hk::WorldObjCinfoProperty verticesProperty{};
+  compound::hk::WorldObjCinfoProperty normalsProperty{};
 
   basic::UInt numVertices{};
   std::vector<compound::Vector4> vertices{};
@@ -1179,8 +1179,8 @@ struct ListShape : bhk::ShapeCollection, Versionable {
   basic::UInt numSubShapes{};
   std::vector<basic::Ref<bhk::Shape>> subShapes{};
   compound::HavokMaterial material{version};
-  compound::hkWorldObjCinfoProperty childShapeProperty{};
-  compound::hkWorldObjCinfoProperty childFilterProperty{};
+  compound::hk::WorldObjCinfoProperty childShapeProperty{};
+  compound::hk::WorldObjCinfoProperty childFilterProperty{};
   basic::UInt numUnknownInts{};
   std::vector<basic::UInt> unknownInts{};
 
@@ -1213,7 +1213,7 @@ struct WorldObject : bhk::Serializable, Versionable {
   std::array<basic::Byte, 4> unused1{};
   Enum::BroadPhaseType broadPhaseType{Enum::BroadPhaseType::BROAD_PHASE_ENTITY};
   std::array<basic::Byte, 3> unused2{};
-  compound::hkWorldObjCinfoProperty cinfoProperty{};
+  compound::hk::WorldObjCinfoProperty cinfoProperty{};
 
   void read(std::istream &is) override;
   explicit WorldObject(Version version) : Versionable(version) {}
@@ -1302,10 +1302,10 @@ struct RigidBody : bhk::Entity {
   basic::UInt unknownInt2{};
 
   compound::Vector4 translation{};
-  compound::hkQuaternion rotation{};
+  compound::hk::Quaternion rotation{};
   compound::Vector4 linearVelocity{};
   compound::Vector4 angularVelocity{};
-  compound::hkMatrix3 inertiaTensor{};
+  compound::hk::Matrix3 inertiaTensor{};
   compound::Vector4 center{};
   // Zero is immovable (kg)
   basic::Float mass{1.0f};

@@ -129,13 +129,6 @@ struct Quaternion {
   basic::Float z = 0.0f;
 };
 
-struct hkQuaternion {
-  basic::Float x = 0.0f;
-  basic::Float y = 0.0f;
-  basic::Float z = 0.0f;
-  basic::Float w = 1.0f;
-};
-
 // Column major
 struct Matrix22 : io::byte_direct_ioable_tag {
   basic::Float m11 = 1.0f;
@@ -191,21 +184,6 @@ struct Matrix44 : io::byte_direct_ioable_tag {
   basic::Float m24 = 0.0f;
   basic::Float m34 = 0.0f;
   basic::Float m44 = 1.0f;
-};
-
-struct hkMatrix3 : io::byte_direct_ioable_tag {
-  basic::Float m11 = 1.0f;
-  basic::Float m12 = 0.0f;
-  basic::Float m13 = 0.0f;
-  basic::Float m14{}; // Unused
-  basic::Float m21 = 1.0f;
-  basic::Float m22 = 0.0f;
-  basic::Float m23 = 0.0f;
-  basic::Float m24{}; // Unused
-  basic::Float m31 = 1.0f;
-  basic::Float m32 = 0.0f;
-  basic::Float m33 = 0.0f;
-  basic::Float m34{}; // Unused
 };
 
 struct MipMap {
@@ -476,12 +454,6 @@ struct HavokMaterial : Versionable {
   explicit HavokMaterial(Version version) : Versionable(version) {}
 };
 
-struct hkWorldObjCinfoProperty {
-  basic::UInt data{};
-  basic::UInt size{};
-  basic::UInt capacityAndFlags{0x80000000};
-};
-
 // OpenGL texture coordinates. Origin is in the bottom left corner.
 struct TexCoord {
   basic::Float u = 0.0f;
@@ -728,6 +700,39 @@ struct RagdollDescriptor {
   float maxFriction{};
 };
 
+namespace hk {
+
+struct Quaternion {
+  basic::Float x = 0.0f;
+  basic::Float y = 0.0f;
+  basic::Float z = 0.0f;
+  basic::Float w = 1.0f;
+};
+
+struct Matrix3 : io::byte_direct_ioable_tag {
+  basic::Float m11 = 1.0f;
+  basic::Float m12 = 0.0f;
+  basic::Float m13 = 0.0f;
+  basic::Float m14{}; // Unused
+  basic::Float m21 = 1.0f;
+  basic::Float m22 = 0.0f;
+  basic::Float m23 = 0.0f;
+  basic::Float m24{}; // Unused
+  basic::Float m31 = 1.0f;
+  basic::Float m32 = 0.0f;
+  basic::Float m33 = 0.0f;
+  basic::Float m34{}; // Unused
+};
+
+struct WorldObjCinfoProperty {
+  basic::UInt data{};
+  basic::UInt size{};
+  basic::UInt capacityAndFlags{0x80000000};
+};
+
+} // namespace hk
+
+
 std::istream &operator>>(std::istream &is, SizedString &t);
 std::istream &operator>>(std::istream &is, StringPalette &t);
 std::istream &operator>>(std::istream &is, ByteArray &t);
@@ -768,12 +773,10 @@ std::istream &operator>>(std::istream &is, Vector4T<T> &t) {
   return is;
 }
 std::istream &operator>>(std::istream &is, Quaternion &t);
-std::istream &operator>>(std::istream &is, hkQuaternion &t);
 std::istream &operator>>(std::istream &is, Matrix22 &t);
 std::istream &operator>>(std::istream &is, Matrix33 &t);
 std::istream &operator>>(std::istream &is, Matrix34 &t);
 std::istream &operator>>(std::istream &is, Matrix44 &t);
-std::istream &operator>>(std::istream &is, hkMatrix3 &t);
 std::istream &operator>>(std::istream &is, MipMap &t);
 template<class NiNode>
 std::istream &operator>>(std::istream &is, NodeSet<NiNode> &t) {
@@ -804,7 +807,6 @@ std::istream &operator>>(std::istream &is, NiTransform &t);
 std::istream &operator>>(std::istream &is, NiQuatTransform &t);
 std::istream &operator>>(std::istream &is, HavokFilter &t);
 std::istream &operator>>(std::istream &is, HavokMaterial &t);
-std::istream &operator>>(std::istream &is, hkWorldObjCinfoProperty &t);
 std::istream &operator>>(std::istream &is, TexCoord &t);
 std::istream &operator>>(std::istream &is, TexDesc &t);
 std::istream &operator>>(std::istream &is, ShaderTexDesc &t);
@@ -878,6 +880,14 @@ std::istream &operator>>(std::istream &is, AVObject &t);
 std::istream &operator>>(std::istream &is, InterpBlendItem &t);
 std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t);
 std::istream &operator>>(std::istream &is, RagdollDescriptor &t);
+
+namespace hk {
+
+std::istream &operator>>(std::istream &is, Quaternion &t);
+std::istream &operator>>(std::istream &is, Matrix3 &t);
+std::istream &operator>>(std::istream &is, WorldObjCinfoProperty &t);
+
+} // namespace hk
 
 } // namespace compound
 } // namespace nif

@@ -67,14 +67,6 @@ std::istream &operator>>(std::istream &is, Quaternion &t) {
   return is;
 }
 
-std::istream &operator>>(std::istream &is, hkQuaternion &t) {
-  io::readBytes(is, t.x);
-  io::readBytes(is, t.y);
-  io::readBytes(is, t.z);
-  io::readBytes(is, t.w);
-  return is;
-}
-
 std::istream &operator>>(std::istream &is, Matrix22 &t) {
   io::readBytes(is, t);
   return is;
@@ -91,11 +83,6 @@ std::istream &operator>>(std::istream &is, Matrix34 &t) {
 }
 
 std::istream &operator>>(std::istream &is, Matrix44 &t) {
-  io::readBytes(is, t);
-  return is;
-}
-
-std::istream &operator>>(std::istream &is, hkMatrix3 &t) {
   io::readBytes(is, t);
   return is;
 }
@@ -365,14 +352,6 @@ std::istream &operator>>(std::istream &is, HavokMaterial &t) {
   return is;
 }
 
-std::istream &operator>>(std::istream &is, hkWorldObjCinfoProperty &t) {
-  io::readBytes(is, t.data);
-  io::readBytes(is, t.size);
-  io::readBytes(is, t.capacityAndFlags);
-
-  return is;
-}
-
 std::istream &operator>>(std::istream &is, TexCoord &t) {
   io::readBytes(is, t.u);
   io::readBytes(is, t.v);
@@ -557,4 +536,30 @@ std::istream &operator>>(std::istream &is, RagdollDescriptor &t) {
 
   return is;
 }
+
+namespace hk {
+
+std::istream &operator>>(std::istream &is, Quaternion &t) {
+  io::readBytes(is, t.x);
+  io::readBytes(is, t.y);
+  io::readBytes(is, t.z);
+  io::readBytes(is, t.w);
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, Matrix3 &t) {
+  io::readBytes(is, t);
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, WorldObjCinfoProperty &t) {
+  io::readBytes(is, t.data);
+  io::readBytes(is, t.size);
+  io::readBytes(is, t.capacityAndFlags);
+
+  return is;
+}
+
+} // namespace hk
+
 } // namespace nif::compound
