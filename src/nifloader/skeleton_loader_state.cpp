@@ -73,7 +73,7 @@ void SkeletonVisitor::finish_vertex(const nif::NiNode &node,
                                     const SkeletonVisitor::Graph &) {
   mTransform = mTransform * oo::getTransform(node).inverse();
 
-  if (mIsSkeleton) {
+  if (mIsSkeleton && mParentBone) {
     mParentBone = dynamic_cast<Ogre::Bone *>(mParentBone->getParent());
   }
 }
