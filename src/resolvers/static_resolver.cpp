@@ -23,7 +23,7 @@ template<> oo::ReifyRecordTrait<record::REFR_STAT>::type
 reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             oo::ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers) {
-  const auto &statRes{std::get<const oo::Resolver<record::STAT> &>(resolvers)};
+  const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
   auto baseRec{statRes.get(refRec.baseId.data)};
   if (!baseRec) return {ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
 

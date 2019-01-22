@@ -1,17 +1,10 @@
 #ifndef OPENOBLIVION_STATIC_RESOLVER_HPP
 #define OPENOBLIVION_STATIC_RESOLVER_HPP
 
-#include "record/formid.hpp"
 #include "record/records_fwd.hpp"
 #include "record/reference_records.hpp"
 #include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
-#include "ogrebullet/rigid_body.hpp"
-#include <gsl/gsl>
-#include <OgreEntity.h>
-#include <OgreSceneManager.h>
-#include <optional>
-#include <string>
 
 namespace oo {
 
@@ -26,7 +19,7 @@ struct CiteRecordTrait<record::STAT> {
 template<>
 struct ReifyRecordTrait<record::REFR_STAT> {
   using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using resolvers = std::tuple<const Resolver<record::STAT> &>;
+  using resolvers = ResolverTuple<record::STAT>;
 };
 
 template<>

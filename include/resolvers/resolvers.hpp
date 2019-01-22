@@ -10,10 +10,19 @@
 
 namespace oo {
 
+/// Provides the member constant `value` equal to `true` if `R` is a
+/// specialization of `record::Record`, and `false` otherwise.
+template<class R>
+struct is_record : std::false_type {};
+
+template<class T, uint32_t c, bool Compress>
+struct is_record<record::Record<T, c, Compress>> : std::true_type {};
+
+template<class R> inline constexpr bool is_record_v = is_record<R>::value;
+
 /// Stores all base records of a given type and grants access via their BaseId.
-/// \tparam R A record::Record. Specifically, the expression
-///           `std::is_same_v<R, record::Record<R::Raw, R::RecordType>` must
-///           evaluate to true.
+/// \tparam R A record::Record. Specifically, the expression `is_record_v<R>`
+///           must evaluate to true.
 ///
 /// At runtime it is necessary to convert BaseIds into the base records that
 /// they identify, usually to query information about the record or to create a
@@ -73,10 +82,7 @@ class Resolver {
   /// The underlying raw record type.
   using RawType = typename R::Raw;
 
-  static_assert(std::is_same_v<R, record::Record<RawType, RecordType, false>>
-                    || std::is_same_v<R, record::Record<RawType, RecordType,
-                                                        true>>,
-                "Template parameter must be a Record");
+  static_assert(is_record_v<R>, "Template parameter must be a Record");
 
   /// Return the base record, performing disk io if necessary.
   tl::optional<const R &> get(IdType baseId) const;
@@ -150,6 +156,28 @@ template<class R>
 typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
             typename ReifyRecordTrait<R>::resolvers resolvers);
+
+/// Convenience alias for a collection of reference record resolvers.
+template<class ... Records>
+using RefrResolverTuple = std::tuple<oo::Resolver<Records, oo::RefId> &...>;
+
+/// Convenience alias for a collection of base record resolvers.
+template<class ... Records>
+using ResolverTuple = std::tuple<const oo::Resolver<Records> &...>;
+
+/// Convenience wrapper for std::get over a RefrResolverTuple.
+template<class Record, class Tuple>
+auto getRefrResolver(const Tuple &resolvers) ->
+std::enable_if_t<is_record_v<Record>, oo::Resolver<Record, oo::RefId> &> {
+  return std::get<oo::Resolver<Record, oo::RefId> &>(resolvers);
+}
+
+/// Convenience wrapper for std::get over a ResolverTuple.
+template<class Record, class Tuple>
+auto getResolver(const Tuple &resolvers) ->
+std::enable_if_t<is_record_v<Record>, const oo::Resolver<Record> &> {
+  return std::get<const oo::Resolver<Record> &>(resolvers);
+}
 
 template<class R, class IdType>
 std::pair<typename Resolver<R, IdType>::RecordIterator, bool>

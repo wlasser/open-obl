@@ -87,19 +87,12 @@ class Resolver<record::CELL> {
   /// Checks if there is a cell with the baseId
   bool contains(oo::BaseId baseId) const;
 
-  using RefrResolverContext = std::tuple<
-      oo::Resolver<record::REFR_STAT, oo::RefId> &,
-      oo::Resolver<record::REFR_DOOR, oo::RefId> &,
-      oo::Resolver<record::REFR_LIGH, oo::RefId> &,
-      oo::Resolver<record::REFR_ACTI, oo::RefId> &,
-      oo::Resolver<record::REFR_NPC_, oo::RefId> &>;
+  using RefrResolverContext = RefrResolverTuple<
+      record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
+      record::REFR_ACTI, record::REFR_NPC_>;
 
-  using BaseResolverContext = std::tuple<
-      const oo::Resolver<record::STAT> &,
-      const oo::Resolver<record::DOOR> &,
-      const oo::Resolver<record::LIGH> &,
-      const oo::Resolver<record::ACTI> &,
-      const oo::Resolver<record::NPC_> &>;
+  using BaseResolverContext = ResolverTuple<
+      record::STAT, record::DOOR, record::LIGH, record::ACTI, record::NPC_>;
 
   /// Load all child references of a cell.
   void load(oo::BaseId baseId,
@@ -169,17 +162,10 @@ class Cell {
 template<>
 struct ReifyRecordTrait<record::CELL> {
   using type = std::shared_ptr<Cell>;
-  using resolvers = std::tuple<const oo::Resolver<record::STAT> &,
-                               const oo::Resolver<record::DOOR> &,
-                               const oo::Resolver<record::LIGH> &,
-                               const oo::Resolver<record::ACTI> &,
-                               const oo::Resolver<record::NPC_> &,
-                               oo::Resolver<record::REFR_STAT, oo::RefId> &,
-                               oo::Resolver<record::REFR_DOOR, oo::RefId> &,
-                               oo::Resolver<record::REFR_LIGH, oo::RefId> &,
-                               oo::Resolver<record::REFR_ACTI, oo::RefId> &,
-                               oo::Resolver<record::REFR_NPC_, oo::RefId> &,
-                               const oo::Resolver<record::CELL> &>;
+  using resolvers = decltype(std::tuple_cat(
+      std::declval<Resolver<record::CELL>::BaseResolverContext>(),
+      std::declval<Resolver<record::CELL>::RefrResolverContext>(),
+      std::declval<std::tuple<const oo::Resolver<record::CELL> &>>()));
 };
 
 /// Not a specialization because passing a Ogre::SceneManager doesn't make sense.

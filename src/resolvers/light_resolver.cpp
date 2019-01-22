@@ -24,7 +24,7 @@ template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
-  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(resolvers)};
+  const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
   auto baseRec{lighRes.get(refRec.baseId.data)};
   if (!baseRec) {
     return {ecs::Light{nullptr}, ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};

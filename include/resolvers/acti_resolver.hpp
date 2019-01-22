@@ -19,7 +19,7 @@ template<> struct CiteRecordTrait<record::ACTI> {
 
 template<> struct ReifyRecordTrait<record::REFR_ACTI> {
   using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using resolvers = std::tuple<const Resolver<record::ACTI> &>;
+  using resolvers = ResolverTuple<record::ACTI>;
 };
 
 template<> CiteRecordTrait<record::ACTI>::type

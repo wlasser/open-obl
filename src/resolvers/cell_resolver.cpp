@@ -88,17 +88,15 @@ template<> void
 oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
-  const auto &statRes{std::get<const oo::Resolver<record::STAT> &>(mBaseCtx)};
-  const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(mBaseCtx)};
-  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(mBaseCtx)};
-  const auto &actiRes{std::get<const oo::Resolver<record::ACTI> &>(mBaseCtx)};
+  const auto &statRes{oo::getResolver<record::STAT>(mBaseCtx)};
+  const auto &doorRes{oo::getResolver<record::DOOR>(mBaseCtx)};
+  const auto &lighRes{oo::getResolver<record::LIGH>(mBaseCtx)};
+  const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
 
-  //@formatter:off
-  auto &refrStatRes{std::get<oo::Resolver<record::REFR_STAT, oo::RefId> &>(mRefrCtx)};
-  auto &refrDoorRes{std::get<oo::Resolver<record::REFR_DOOR, oo::RefId> &>(mRefrCtx)};
-  auto &refrLighRes{std::get<oo::Resolver<record::REFR_LIGH, oo::RefId> &>(mRefrCtx)};
-  auto &refrActiRes{std::get<oo::Resolver<record::REFR_ACTI, oo::RefId> &>(mRefrCtx)};
-  //@formatter:on
+  auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(mRefrCtx)};
+  auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(mRefrCtx)};
+  auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(mRefrCtx)};
+  auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(mRefrCtx)};
 
   if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
@@ -124,10 +122,9 @@ template<> void
 oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
-  const auto &npc_Res{std::get<const oo::Resolver<record::NPC_> &>(mBaseCtx)};
-  //@formatter:off
-  auto &refrNpc_Res{std::get<oo::Resolver<record::REFR_NPC_, oo::RefId> &>(mRefrCtx)};
-  //@formatter:on
+  const auto &npc_Res{oo::getResolver<record::NPC_>(mBaseCtx)};
+
+  auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(mRefrCtx)};
 
   if (npc_Res.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_NPC_>().value};
@@ -172,18 +169,17 @@ reifyRecord(const record::CELL &refRec,
   const auto refs{cellRes.getReferences(BaseId{refRec.mFormId})};
   if (!refs) return cell;
 
-  const auto &statRes{std::get<const oo::Resolver<record::STAT> &>(resolvers)};
-  const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(resolvers)};
-  const auto &lighRes{std::get<const oo::Resolver<record::LIGH> &>(resolvers)};
-  const auto &actiRes{std::get<const oo::Resolver<record::ACTI> &>(resolvers)};
-  const auto &npc_Res{std::get<const oo::Resolver<record::NPC_> &>(resolvers)};
-  //@formatter:off
-  const auto &refrStatRes{std::get<oo::Resolver<record::REFR_STAT, oo::RefId> &>(resolvers)};
-  const auto &refrDoorRes{std::get<oo::Resolver<record::REFR_DOOR, oo::RefId> &>(resolvers)};
-  const auto &refrLighRes{std::get<oo::Resolver<record::REFR_LIGH, oo::RefId> &>(resolvers)};
-  const auto &refrActiRes{std::get<oo::Resolver<record::REFR_ACTI, oo::RefId> &>(resolvers)};
-  const auto &refrNpc_Res{std::get<oo::Resolver<record::REFR_NPC_, oo::RefId> &>(resolvers)};
-  //@formatter:on
+  const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
+  const auto &doorRes{oo::getResolver<record::DOOR>(resolvers)};
+  const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
+  const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
+  const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
+
+  const auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(resolvers)};
+  const auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(resolvers)};
+  const auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(resolvers)};
+  const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
+  const auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(resolvers)};
 
   Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
 

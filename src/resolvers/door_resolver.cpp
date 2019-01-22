@@ -23,7 +23,7 @@ template<> oo::ReifyRecordTrait<record::REFR_DOOR>::type
 reifyRecord(const record::REFR_DOOR &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             oo::ReifyRecordTrait<record::REFR_DOOR>::resolvers resolvers) {
-  const auto &doorRes{std::get<const oo::Resolver<record::DOOR> &>(resolvers)};
+  const auto &doorRes{oo::getResolver<record::DOOR>(resolvers)};
   auto baseRec{doorRes.get(refRec.baseId.data)};
   if (!baseRec) return {ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
 

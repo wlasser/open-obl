@@ -23,7 +23,7 @@ template<> ReifyRecordTrait<record::REFR_NPC_>::type
 reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers) {
-  const auto &npcRes{std::get<const oo::Resolver<record::NPC_> &>(resolvers)};
+  const auto &npcRes{oo::getResolver<record::NPC_>(resolvers)};
   auto baseRec{npcRes.get(refRec.baseId.data)};
   if (!baseRec || !baseRec->skeletonFilename) {
     return {ecs::Mesh{nullptr}, ecs::Skeleton{nullptr}};

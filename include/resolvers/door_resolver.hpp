@@ -22,7 +22,7 @@ struct CiteRecordTrait<record::DOOR> {
 template<>
 struct ReifyRecordTrait<record::REFR_DOOR> {
   using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
-  using resolvers = std::tuple<const Resolver<record::DOOR> &>;
+  using resolvers = ResolverTuple<record::DOOR>;
 };
 
 template<>
