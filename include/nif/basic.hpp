@@ -1,13 +1,10 @@
 #ifndef OPENOBLIVION_NIF_BASIC_HPP
 #define OPENOBLIVION_NIF_BASIC_HPP
 
-#include "nif/versionable.hpp"
 #include "io/io.hpp"
+#include "nif/versionable.hpp"
 #include <cstdint>
-#include <limits>
-#include <stdexcept>
 #include <string>
-#include <sstream>
 
 namespace nif {
 namespace basic {

@@ -1,8 +1,6 @@
 #ifndef OPENOBLIVION_NIF_ENUM_HPP
 #define OPENOBLIVION_NIF_ENUM_HPP
 
-#include "nif/basic.hpp"
-
 namespace nif {
 namespace Enum {
 

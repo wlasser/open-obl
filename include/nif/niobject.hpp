@@ -1,10 +1,7 @@
 #ifndef OPENOBLIVION_NIF_NIOBJECT_HPP
 #define OPENOBLIVION_NIF_NIOBJECT_HPP
 
-#include "nif/basic.hpp"
 #include "nif/compound.hpp"
-#include "nif/versionable.hpp"
-#include <istream>
 #include <limits>
 #include <tuple>
 #include <vector>

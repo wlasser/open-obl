@@ -6,9 +6,6 @@
 #include "nif/enum.hpp"
 #include "nif/versionable.hpp"
 #include <array>
-#include <cstdint>
-#include <string>
-#include <variant>
 #include <vector>
 
 namespace nif {
