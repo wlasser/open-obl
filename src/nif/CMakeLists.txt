@@ -13,13 +13,11 @@ target_include_directories(OpenOblivionNif PUBLIC
 
 target_sources(OpenOblivionNif PRIVATE
         ${CMAKE_SOURCE_DIR}/include/nif/basic.hpp
-        ${CMAKE_SOURCE_DIR}/include/nif/bhk.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/compound.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/enum.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/niobject.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/versionable.hpp
         basic.cpp
-        bhk.cpp
         compound.cpp
         niobject.cpp)
 

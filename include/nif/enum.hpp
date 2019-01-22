@@ -308,6 +308,96 @@ enum class MaterialColor : uint16_t {
   TC_SELF_ILLUM = 3
 };
 
+namespace hk {
+
+enum class ConstraintType : uint32_t {
+  BallAndSocket = 0,
+  Hinge = 1,
+  LimitedHinge = 2,
+  Prismatic = 6,
+  Ragdoll = 7,
+  StiffSpring = 8,
+  Malleable = 13
+};
+
+enum class DeactivatorType : uint8_t {
+  DEACTIVATOR_INVALID = 0,
+  DEACTIVATOR_NEVER = 1,
+  DEACTIVATOR_SPATIAL = 2
+};
+
+enum class MotionType : uint8_t {
+  MO_SYS_INVALID = 0,
+  MO_SYS_DYNAMIC = 1,
+  MO_SYS_SPHERE_INERTIA = 2,
+  MO_SYS_SPHERE_STABILIZED = 3,
+  MO_SYS_BOX_INERTIA = 4,
+  MO_SYS_BOX_STABILIZED = 5,
+  // Infinite mass when viewed by the rest of the system
+      MO_SYS_KEYFRAMED = 6,
+  MO_SYS_FIXED = 7,
+  MO_SYS_THIN_BOX = 8,
+  MO_SYS_CHARACTER = 9
+};
+
+// MO_QUAL_FIXED and MO_QUAL_KEYFRAMED cannot interact
+// MO_QUAL_DEBRIS can interpenetrate but responds to bullets
+// MO_QUAL_CRITICAL cannot interpenetrate
+// MO_QUAL_MOVING can interpenetrate with MO_QUAL_MOVING and MO_QUAL_DEBRIS
+enum class QualityType : uint8_t {
+  MO_QUAL_INVALID = 0,
+  MO_QUAL_FIXED = 1,
+  MO_QUAL_KEYFRAMED = 2,
+  MO_QUAL_DEBRIS = 3,
+  MO_QUAL_MOVING = 4,
+  MO_QUAL_CRITICAL = 5,
+  MO_QUAL_BULLET = 6,
+  MO_QUAL_USER = 7,
+  MO_QUAL_CHARACTER = 8,
+  MO_QUAL_KEYFRAMED_REPORT = 9
+};
+
+enum class ResponseType : uint8_t {
+  RESPONSE_INVALID = 0,
+  RESPONSE_SIMPLE_CONTACT = 1,
+  RESPONSE_REPORTING = 2,
+  RESPONSE_NONE = 3
+};
+
+enum class SolverDeactivation : uint8_t {
+  SOLVER_DEACTIVATION_INVALID = 0,
+  SOLVER_DEACTIVATION_OFF = 1,
+  SOLVER_DEACTIVATION_LOW = 2,
+  SOLVER_DEACTIVATION_MEDIUM = 3,
+  SOLVER_DEACTIVATION_HIGH = 4,
+  SOLVER_DEACTIVATION_MAX = 5
+};
+
+} // namespace hk
+
+namespace bhk {
+
+enum class COFlags : uint16_t {
+  NONE = 0,
+  BHKCO_ACTIVE = 1u << 1u,
+  BHKCO_NOTIFY = 1u << 2u,
+  BHKCO_SET_LOCAL = 1u << 3u,
+  BHKCO_DEBUG_DISPLAY = 1u << 4u,
+  BHKCO_USE_VEL = 1u << 5u,
+  BHKCO_RESET = 1u << 6u,
+  BHKCO_SYNC_ON_UPDATE = 1u << 7u,
+  BHKCO_ANIM_TARGETED = 1u << 10u,
+  BHKCO_DISMEMBERED_LIMB = 1u << 11u
+};
+inline constexpr COFlags operator|(COFlags a, COFlags b) {
+  return COFlags(static_cast<uint16_t>(a) | static_cast<uint16_t>(b));
+}
+inline constexpr COFlags operator&(COFlags a, COFlags b) {
+  return COFlags(static_cast<uint16_t>(a) & static_cast<uint16_t>(b));
+}
+
+} // namespace bhk
+
 } // namespace Enum
 } // namespace nif
 

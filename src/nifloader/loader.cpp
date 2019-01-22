@@ -1,7 +1,6 @@
 #include "nifloader/loader.hpp"
 #include "settings.hpp"
 #include "nif/basic.hpp"
-#include "nif/bhk.hpp"
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 #include <boost/format.hpp>

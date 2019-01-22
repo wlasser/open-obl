@@ -1029,6 +1029,369 @@ struct NiBSBoneLODController : NiBoneLODController {
       : NiBoneLODController(version) {}
 };
 
+namespace hk {
+
+struct PackedNiTriStripsData;
+
+} // namespace hk
+
+namespace bhk {
+
+struct RefObject : nif::NiObject {
+  void read(std::istream &is) override;
+  ~RefObject() override = 0;
+};
+inline RefObject::~RefObject() = default;
+
+struct Serializable : bhk::RefObject {
+  void read(std::istream &is) override;
+  ~Serializable() override = 0;
+};
+inline Serializable::~Serializable() = default;
+
+struct Shape : bhk::Serializable {
+  void read(std::istream &is) override;
+  ~Shape() override = 0;
+};
+inline Shape::~Shape() = default;
+
+struct TransformShape : bhk::Shape, Versionable {
+  basic::Ref<bhk::Shape> shape{};
+  compound::HavokMaterial material{version};
+  basic::Float radius{};
+  std::array<basic::Byte, 8> unused{};
+  compound::Matrix44 transform{};
+
+  void read(std::istream &is) override;
+  explicit TransformShape(Version version) : Versionable(version) {}
+};
+
+struct SphereRepShape : bhk::Shape, Versionable {
+  compound::HavokMaterial material{version};
+  basic::Float radius{};
+
+  void read(std::istream &is) override;
+  explicit SphereRepShape(Version version) : Versionable(version) {}
+  ~SphereRepShape() override = 0;
+};
+inline SphereRepShape::~SphereRepShape() = default;
+
+struct ConvexShape : bhk::SphereRepShape {
+  void read(std::istream &is) override;
+  explicit ConvexShape(Version version) : bhk::SphereRepShape(version) {}
+  ~ConvexShape() override = 0;
+};
+inline ConvexShape::~ConvexShape() = default;
+
+struct SphereShape : bhk::ConvexShape {
+  void read(std::istream &is) override;
+  explicit SphereShape(Version version) : ConvexShape(version) {}
+};
+
+struct CapsuleShape : bhk::ConvexShape {
+  std::array<basic::Byte, 8> unused{};
+  compound::Vector3 firstPoint{};
+  basic::Float firstRadius{};
+  compound::Vector3 secondPoint{};
+  basic::Float secondRadius{};
+
+  void read(std::istream &is) override;
+  explicit CapsuleShape(Version version) : bhk::ConvexShape(version) {}
+};
+
+struct BoxShape : bhk::ConvexShape {
+  std::array<basic::Byte, 8> unused{};
+  // Stored in half-extents, so unit cube is {0.5f,0.5f,0.5f}
+  compound::Vector4 dimensions{};
+
+  void read(std::istream &is) override;
+  explicit BoxShape(Version version) : bhk::ConvexShape(version) {}
+};
+
+struct ConvexVerticesShape : bhk::ConvexShape {
+  compound::hkWorldObjCinfoProperty verticesProperty{};
+  compound::hkWorldObjCinfoProperty normalsProperty{};
+
+  basic::UInt numVertices{};
+  std::vector<compound::Vector4> vertices{};
+
+  // Each normal determines a half-space, with the first three components
+  // pointing towards the exterior and the fourth component the signed distance
+  // from the separating plane to the origin, i.e. -v.n with v on the plane.
+  basic::UInt numNormals{};
+  std::vector<compound::Vector4> normals{};
+
+  void read(std::istream &is) override;
+  explicit ConvexVerticesShape(Version version) : bhk::ConvexShape(version) {}
+};
+
+struct ConvexTransformShape : bhk::TransformShape {
+  void read(std::istream &is) override;
+  explicit ConvexTransformShape(Version version)
+      : bhk::TransformShape(version) {}
+};
+
+struct ConvexSweepShape : bhk::Shape, Versionable {
+  basic::Ref<bhk::Shape> shape{};
+  compound::HavokMaterial material{version};
+  basic::Float radius{};
+  compound::Vector3 unknown{};
+
+  void read(std::istream &is) override;
+  explicit ConvexSweepShape(Version version) : Versionable(version) {}
+};
+
+struct BvTreeShape : bhk::Shape {
+  void read(std::istream &is) override;
+  ~BvTreeShape() override = 0;
+};
+inline BvTreeShape::~BvTreeShape() = default;
+
+// MOPP = Memory Optimized Partial Polytope
+struct MoppBvTreeShape : bhk::BvTreeShape, Versionable {
+  basic::Ref<bhk::Shape> shape{};
+  compound::HavokMaterial material{version};
+  std::array<basic::UInt, 2> unused{};
+  basic::Float shapeScale{1.0f};
+  // Calculated
+  basic::UInt moppDataSize{};
+
+  // Minimum of all vertices in the packed shape along each axis, minus 0.1
+  VersionOptional<compound::Vector3, "10.1.0.0"_ver, Unbounded> origin{version};
+
+  // Quantization factor is 2^16 / scale. Should be 2^16 * 254 / (size + 0.2),
+  // with size the largest dimension of the bbox of the packed shape.
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded> scale{version};
+
+  std::vector<basic::Byte> moppData{};
+
+  void read(std::istream &is) override;
+  explicit MoppBvTreeShape(Version version) : Versionable(version) {}
+};
+
+struct ShapeCollection : bhk::Shape {
+  void read(std::istream &is) override;
+  ~ShapeCollection() override = 0;
+};
+inline ShapeCollection::~ShapeCollection() = default;
+
+struct ListShape : bhk::ShapeCollection, Versionable {
+  basic::UInt numSubShapes{};
+  std::vector<basic::Ref<bhk::Shape>> subShapes{};
+  compound::HavokMaterial material{version};
+  compound::hkWorldObjCinfoProperty childShapeProperty{};
+  compound::hkWorldObjCinfoProperty childFilterProperty{};
+  basic::UInt numUnknownInts{};
+  std::vector<basic::UInt> unknownInts{};
+
+  void read(std::istream &is) override;
+  explicit ListShape(Version version) : Versionable(version) {}
+};
+
+struct PackedNiTriStripsShape : bhk::ShapeCollection, Versionable {
+  basic::UShort numSubShapes{};
+  std::vector<compound::OblivionSubShape> subShapes{};
+
+  basic::UInt userData{};
+  basic::UInt unused1{};
+  basic::Float radius{0.1f};
+  basic::UInt unused2{};
+  compound::Vector4 scale{1.0f, 1.0f, 1.0f, 0.0f};
+  basic::Float radiusCopy{radius};
+  compound::Vector4 scaleCopy{scale};
+
+  basic::Ref<nif::hk::PackedNiTriStripsData> data{};
+
+  void read(std::istream &is) override;
+  explicit PackedNiTriStripsShape(Version version) : Versionable(version) {}
+};
+
+struct WorldObject : bhk::Serializable, Versionable {
+  basic::Ref<bhk::Shape> shape{};
+  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknownInt{version};
+  compound::HavokFilter havokFilter{};
+  std::array<basic::Byte, 4> unused1{};
+  Enum::BroadPhaseType broadPhaseType{Enum::BroadPhaseType::BROAD_PHASE_ENTITY};
+  std::array<basic::Byte, 3> unused2{};
+  compound::hkWorldObjCinfoProperty cinfoProperty{};
+
+  void read(std::istream &is) override;
+  explicit WorldObject(Version version) : Versionable(version) {}
+  ~WorldObject() override = 0;
+};
+inline WorldObject::~WorldObject() = default;
+
+struct Phantom : bhk::WorldObject {
+  void read(std::istream &is) override;
+  explicit Phantom(Version version) : bhk::WorldObject(version) {}
+  ~Phantom() override = 0;
+};
+inline Phantom::~Phantom() = default;
+
+struct ShapePhantom : bhk::Phantom {
+  void read(std::istream &is) override;
+  explicit ShapePhantom(Version version) : bhk::Phantom(version) {}
+  ~ShapePhantom() override = 0;
+};
+inline ShapePhantom::~ShapePhantom() = default;
+
+struct SimpleShapePhantom : bhk::ShapePhantom {
+  std::array<basic::Byte, 8> unused3{};
+  compound::Matrix44 transform{};
+
+  void read(std::istream &is) override;
+  explicit SimpleShapePhantom(Version version) : bhk::ShapePhantom(version) {}
+};
+
+struct Entity : bhk::WorldObject {
+  void read(std::istream &is) override;
+  explicit Entity(Version version) : bhk::WorldObject(version) {}
+  ~Entity() override = 0;
+};
+inline Entity::~Entity() = default;
+
+struct Constraint : bhk::Serializable {
+  basic::UInt numEntities{};
+  std::vector<basic::Ptr<bhk::Entity>> entities{};
+  basic::UInt priority{};
+
+  void read(std::istream &is) override;
+  ~Constraint() override = 0;
+};
+inline Constraint::~Constraint() = default;
+
+struct LimitedHingeConstraint : bhk::Constraint {
+  compound::LimitedHingeDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+struct RagdollConstraint : bhk::Constraint {
+  compound::RagdollDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+// Ignores rotation and translation
+struct RigidBody : bhk::Entity {
+  Enum::hk::ResponseType
+      collisionResponse{Enum::hk::ResponseType::RESPONSE_SIMPLE_CONTACT};
+  basic::Byte unusedByte1{};
+
+  // Callback is raised every processContactCallbackDelay frames
+  basic::UShort processContactCallbackDelay{0xffff};
+
+  VersionOptional<basic::UInt, "10.1.0.0"_ver, Unbounded> unknownInt1{version};
+
+  VersionOptional<compound::HavokFilter, "10.1.0.0"_ver, Unbounded>
+      havokFilterCopy{version};
+
+  VersionOptional<std::array<basic::Byte, 4>, "10.1.0.0"_ver, Unbounded>
+      unused2{version};
+
+  VersionOptional<Enum::hk::ResponseType, "10.1.0.0"_ver, Unbounded>
+      collisionResponse2
+      {version, Enum::hk::ResponseType::RESPONSE_SIMPLE_CONTACT};
+
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> unusedByte2{version};
+
+  VersionOptional<basic::UShort, "10.1.0.0"_ver, Unbounded>
+      processContactCallbackDelay2{version, 0xffff};
+
+  // userVer2 <= 34
+  basic::UInt unknownInt2{};
+
+  compound::Vector4 translation{};
+  compound::hkQuaternion rotation{};
+  compound::Vector4 linearVelocity{};
+  compound::Vector4 angularVelocity{};
+  compound::hkMatrix3 inertiaTensor{};
+  compound::Vector4 center{};
+  // Zero is immovable (kg)
+  basic::Float mass{1.0f};
+  // 0.1f = remove 10% of linear velocity per second
+  basic::Float linearDamping{0.1f};
+  // 0.05f = remove 5% of angular velocity per second
+  basic::Float angularDamping{0.05f};
+  basic::Float friction{0.5f};
+  basic::Float restitution{0.4f};
+
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      maxLinearVelocity{version, 104.4f};
+
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      maxAngularVelocity{version, 31.57f};
+
+  // userVer2 != 130
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
+      penetrationDepth{version, 0.15f};
+
+  Enum::hk::MotionType motionSystem{Enum::hk::MotionType::MO_SYS_DYNAMIC};
+  // userVer2 <= 34
+  Enum::hk::DeactivatorType
+      deactivatorType{Enum::hk::DeactivatorType::DEACTIVATOR_NEVER};
+  Enum::hk::SolverDeactivation
+      solverDeactivation{Enum::hk::SolverDeactivation::SOLVER_DEACTIVATION_OFF};
+  Enum::hk::QualityType qualityType{Enum::hk::QualityType::MO_QUAL_FIXED};
+
+  std::array<basic::Byte, 12> unknownBytes1{};
+
+  basic::UInt numConstraints{};
+  std::vector<basic::Ref<bhk::Serializable>> constraints{};
+
+  // 1 = respond to wind
+  basic::UInt bodyFlags{};
+
+  void read(std::istream &is) override;
+  explicit RigidBody(Version version) : Entity(version) {}
+};
+
+// Doesn't ignore rotation and translation
+struct RigidBodyT : bhk::RigidBody {
+  void read(std::istream &is) override;
+  explicit RigidBodyT(Version version) : bhk::RigidBody(version) {}
+};
+
+struct NiCollisionObject : nif::NiCollisionObject {
+  Enum::bhk::COFlags flags{}; // = 1
+  basic::Ref<bhk::WorldObject> body{};
+
+  void read(std::istream &is) override;
+  ~NiCollisionObject() override = 0;
+};
+inline NiCollisionObject::~NiCollisionObject() = default;
+
+struct CollisionObject : bhk::NiCollisionObject {
+  void read(std::istream &is) override;
+};
+
+struct BlendController : nif::NiTimeController {
+  basic::UInt keys{};
+  void read(std::istream &is) override;
+};
+
+struct BlendCollisionObject : bhk::NiCollisionObject {
+  basic::Float heirGain{};
+  basic::Float velGain{};
+  void read(std::istream &is) override;
+};
+
+} // namespace bhk
+
+namespace hk {
+
+struct PackedNiTriStripsData : bhk::ShapeCollection {
+  basic::UInt numTriangles{};
+  std::vector<compound::TriangleData> triangles{};
+
+  basic::UInt numVertices{};
+  std::vector<compound::Vector3> vertices{};
+
+  void read(std::istream &is) override;
+};
+
+} // namespace hk
+
 } // namespace nif
 
 #endif // OPENOBLIVION_NIF_NIOBJECT_HPP

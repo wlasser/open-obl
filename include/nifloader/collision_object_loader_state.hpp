@@ -3,7 +3,6 @@
 
 #include "nifloader/loader.hpp"
 #include "nifloader/loader_state.hpp"
-#include "nif/bhk.hpp"
 #include "ogrebullet/collision_object.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "settings.hpp"
