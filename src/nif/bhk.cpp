@@ -241,6 +241,17 @@ void CollisionObject::read(std::istream &is) {
   NiCollisionObject::read(is);
 }
 
+void BlendController::read(std::istream &is) {
+  nif::NiTimeController::read(is);
+  io::readBytes(is, keys);
+}
+
+void BlendCollisionObject::read(std::istream &is) {
+  NiCollisionObject::read(is);
+  io::readBytes(is, heirGain);
+  io::readBytes(is, velGain);
+}
+
 } // namespace nif::bhk
 
 namespace nif::hk {

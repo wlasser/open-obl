@@ -133,6 +133,14 @@ struct NiTextKeyExtraData : NiExtraData {
   explicit NiTextKeyExtraData(Version version) : NiExtraData(version) {}
 };
 
+struct BSBound : NiExtraData {
+  compound::Vector3 center{};
+  compound::Vector3 dimensions{};
+
+  void read(std::istream &is) override;
+  explicit BSBound(Version version) : NiExtraData(version) {}
+};
+
 struct NiInterpolator : NiObject {
   void read(std::istream &is) override;
   ~NiInterpolator() override = 0;
@@ -481,6 +489,21 @@ struct NiMaterialColorController : NiPoint3InterpController {
   void read(std::istream &is) override;
   explicit NiMaterialColorController(Version version)
       : NiPoint3InterpController(version) {}
+};
+
+struct NiKeyframeController : NiSingleInterpController {
+  VersionOptional<basic::Ref<NiKeyframeData>, Unbounded, "10.1.0.103"_ver>
+      keyframeData{version};
+
+  void read(std::istream &is) override;
+  explicit NiKeyframeController(Version version)
+      : NiSingleInterpController(version) {}
+};
+
+struct NiTransformController : NiKeyframeController {
+  void read(std::istream &is) override;
+  explicit NiTransformController(Version version)
+      : NiKeyframeController(version) {}
 };
 
 struct NiControllerManager : NiTimeController {
@@ -988,6 +1011,24 @@ struct NiSourceTexture : NiTexture {
   void read(std::istream &is) override;
   explicit NiSourceTexture(Version version) : NiTexture(version) {}
 };
+
+struct NiBoneLODController : NiTimeController, Versionable {
+  basic::UInt lod{};
+  basic::UInt numLods{};
+  basic::UInt numNodeGroups{};
+  // arr1 = numNodeGroups
+  std::vector<compound::NodeSet<NiNode>> nodeGroups{};
+
+  void read(std::istream &is) override;
+  explicit NiBoneLODController(Version version) : Versionable(version) {}
+};
+
+struct NiBSBoneLODController : NiBoneLODController {
+  void read(std::istream &is) override;
+  explicit NiBSBoneLODController(Version version)
+      : NiBoneLODController(version) {}
+};
+
 } // namespace nif
 
 #endif // OPENOBLIVION_NIF_NIOBJECT_HPP

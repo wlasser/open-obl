@@ -83,6 +83,12 @@ void NiTextKeyExtraData::read(std::istream &is) {
   for (auto i = 0; i < numTextKeys; ++i) is >> textKeys.emplace_back();
 }
 
+void BSBound::read(std::istream &is) {
+  NiExtraData::read(is);
+  is >> center;
+  is >> dimensions;
+}
+
 void NiInterpolator::read(std::istream &is) {
   NiObject::read(is);
 }
@@ -252,6 +258,28 @@ void NiMaterialColorController::read(std::istream &is) {
   NiPoint3InterpController::read(is);
   io::readBytes(is, targetColor);
   is >> data;
+}
+
+void NiKeyframeController::read(std::istream &is) {
+  NiSingleInterpController::read(is);
+  is >> keyframeData;
+}
+
+void NiTransformController::read(std::istream &is) {
+  NiKeyframeController::read(is);
+}
+
+void NiBoneLODController::read(std::istream &is) {
+  NiTimeController::read(is);
+  io::readBytes(is, lod);
+  io::readBytes(is, numLods);
+  io::readBytes(is, numNodeGroups);
+  nodeGroups.assign(numNodeGroups, {});
+  for (auto &group : nodeGroups) is >> group;
+}
+
+void NiBSBoneLODController::read(std::istream &is) {
+  NiBoneLODController::read(is);
 }
 
 void NiControllerManager::read(std::istream &is) {

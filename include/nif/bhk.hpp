@@ -432,6 +432,17 @@ struct CollisionObject : NiCollisionObject {
   void read(std::istream &is) override;
 };
 
+struct BlendController : nif::NiTimeController {
+  basic::UInt keys{};
+  void read(std::istream &is) override;
+};
+
+struct BlendCollisionObject : NiCollisionObject {
+  basic::Float heirGain{};
+  basic::Float velGain{};
+  void read(std::istream &is) override;
+};
+
 } // namespace nif::bhk
 
 namespace nif::hk {
