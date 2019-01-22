@@ -1257,14 +1257,52 @@ struct Constraint : bhk::Serializable {
 };
 inline Constraint::~Constraint() = default;
 
+struct BallAndSocketConstraint : bhk::Constraint {
+  compound::BallAndSocketDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+struct BreakableConstraint : bhk::Constraint {
+  compound::ConstraintData constraintData{};
+  basic::Float threshold{};
+  basic::Bool removeWhenBroken{};
+
+  void read(std::istream &is) override;
+};
+
+struct HingeConstraint : bhk::Constraint {
+  compound::HingeDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
 struct LimitedHingeConstraint : bhk::Constraint {
   compound::LimitedHingeDescriptor descriptor{};
 
   void read(std::istream &is) override;
 };
 
+struct MalleableConstraint : bhk::Constraint {
+  compound::MalleableDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+struct PrismaticConstraint : bhk::Constraint {
+  compound::PrismaticDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
 struct RagdollConstraint : bhk::Constraint {
   compound::RagdollDescriptor descriptor{};
+
+  void read(std::istream &is) override;
+};
+
+struct StiffSpringConstraint : bhk::Constraint {
+  compound::StiffSpringDescriptor descriptor{};
 
   void read(std::istream &is) override;
 };

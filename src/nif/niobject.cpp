@@ -870,12 +870,44 @@ void Constraint::read(std::istream &is) {
   io::readBytes(is, priority);
 }
 
+void BallAndSocketConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> descriptor;
+}
+
+void BreakableConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> constraintData;
+  io::readBytes(is, threshold);
+  io::readBytes(is, removeWhenBroken);
+}
+
+void HingeConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> descriptor;
+}
+
 void LimitedHingeConstraint::read(std::istream &is) {
   bhk::Constraint::read(is);
   is >> descriptor;
 }
 
+void MalleableConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> descriptor;
+}
+
+void PrismaticConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> descriptor;
+}
+
 void RagdollConstraint::read(std::istream &is) {
+  bhk::Constraint::read(is);
+  is >> descriptor;
+}
+
+void StiffSpringConstraint::read(std::istream &is) {
   bhk::Constraint::read(is);
   is >> descriptor;
 }

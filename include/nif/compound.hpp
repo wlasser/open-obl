@@ -17,6 +17,12 @@ struct NiBlendInterpolator;
 struct NiStringPalette;
 struct NiAVObject;
 
+namespace bhk {
+
+struct Entity;
+
+} // namespace bhk
+
 namespace compound {
 
 using namespace nif::literals;
@@ -665,6 +671,19 @@ struct InterpBlendItem : Versionable {
   explicit InterpBlendItem(Version version) : Versionable(version) {}
 };
 
+struct BallAndSocketDescriptor {
+  Vector4 pivotA{};
+  Vector4 pivotB{};
+};
+
+struct HingeDescriptor {
+  Vector4 pivotA{};
+  Vector4 perpAxisInA1{};
+  Vector4 perpAxisInA2{};
+  Vector4 pivotB{};
+  Vector4 axisB{};
+};
+
 struct LimitedHingeDescriptor {
   Vector4 pivotA{};
   Vector4 axisA{};
@@ -678,6 +697,22 @@ struct LimitedHingeDescriptor {
   float minAngle{};
   float maxAngle{};
   float maxFriction{};
+};
+
+struct PrismaticDescriptor {
+  Vector4 pivotA{};
+  Vector4 rotationA{};
+  Vector4 planeA{};
+  Vector4 slidingA{};
+
+  Vector4 slidingB{};
+  Vector4 pivotB{};
+  Vector4 rotationB{};
+  Vector4 planeB{};
+
+  basic::Float minDistance{};
+  basic::Float maxDistance{};
+  basic::Float friction{};
 };
 
 struct RagdollDescriptor {
@@ -695,6 +730,52 @@ struct RagdollDescriptor {
   float twistMinAngle{};
   float twistMaxAngle{};
   float maxFriction{};
+};
+
+struct StiffSpringDescriptor {
+  Vector4 pivotA{};
+  Vector4 pivotB{};
+  basic::Float length{};
+};
+
+struct MalleableDescriptor {
+  Enum::hk::ConstraintType constraintType{};
+  basic::UInt numEntities{2u};
+
+  basic::Ptr<bhk::Entity> entityA{};
+  basic::Ptr<bhk::Entity> entityB{};
+
+  basic::UInt priority{1u};
+
+  // Depends on constraintType
+  std::variant<BallAndSocketDescriptor,
+               HingeDescriptor,
+               LimitedHingeDescriptor,
+               PrismaticDescriptor,
+               RagdollDescriptor,
+               StiffSpringDescriptor> descriptor{};
+
+  basic::Float tau{};
+  basic::Float damping{};
+};
+
+struct ConstraintData {
+  Enum::hk::ConstraintType constraintType{};
+  basic::UInt numEntities{2u};
+
+  basic::Ptr<bhk::Entity> entityA{};
+  basic::Ptr<bhk::Entity> entityB{};
+
+  basic::UInt priority{1u};
+
+  // Depends on constraintType
+  std::variant<BallAndSocketDescriptor,
+               HingeDescriptor,
+               LimitedHingeDescriptor,
+               PrismaticDescriptor,
+               RagdollDescriptor,
+               StiffSpringDescriptor,
+               MalleableDescriptor> descriptor{};
 };
 
 namespace hk {
@@ -875,8 +956,14 @@ std::istream &operator>>(std::istream &is, KeyGroup<T> &t) {
 std::istream &operator>>(std::istream &is, ControlledBlock &t);
 std::istream &operator>>(std::istream &is, AVObject &t);
 std::istream &operator>>(std::istream &is, InterpBlendItem &t);
+std::istream &operator>>(std::istream &is, BallAndSocketDescriptor &t);
+std::istream &operator>>(std::istream &is, HingeDescriptor &t);
 std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t);
+std::istream &operator>>(std::istream &is, PrismaticDescriptor &t);
 std::istream &operator>>(std::istream &is, RagdollDescriptor &t);
+std::istream &operator>>(std::istream &is, StiffSpringDescriptor &t);
+std::istream &operator>>(std::istream &is, MalleableDescriptor &t);
+std::istream &operator>>(std::istream &is, ConstraintData &t);
 
 namespace hk {
 

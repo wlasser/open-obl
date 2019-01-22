@@ -501,6 +501,23 @@ std::istream &operator>>(std::istream &is, InterpBlendItem &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, BallAndSocketDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.pivotB;
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, HingeDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.perpAxisInA1;
+  is >> t.perpAxisInA2;
+  is >> t.pivotB;
+  is >> t.axisB;
+
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t) {
   is >> t.pivotA;
   is >> t.axisA;
@@ -515,6 +532,23 @@ std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t) {
   io::readBytes(is, t.maxAngle);
   io::readBytes(is, t.maxFriction);
 
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, PrismaticDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.rotationA;
+  is >> t.planeA;
+  is >> t.slidingA;
+
+  is >> t.slidingB;
+  is >> t.pivotB;
+  is >> t.rotationB;
+  is >> t.planeB;
+
+  io::readBytes(is, t.minDistance);
+  io::readBytes(is, t.maxDistance);
+  io::readBytes(is, t.friction);
   return is;
 }
 
@@ -533,6 +567,79 @@ std::istream &operator>>(std::istream &is, RagdollDescriptor &t) {
   io::readBytes(is, t.twistMinAngle);
   io::readBytes(is, t.twistMaxAngle);
   io::readBytes(is, t.maxFriction);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, StiffSpringDescriptor &t) {
+  is >> t.pivotA;
+  is >> t.pivotB;
+  io::readBytes(is, t.length);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, MalleableDescriptor &t) {
+  io::readBytes(is, t.constraintType);
+  io::readBytes(is, t.numEntities);
+
+  is >> t.entityA;
+  is >> t.entityB;
+
+  io::readBytes(is, t.priority);
+
+  using CT = Enum::hk::ConstraintType;
+
+  switch (t.constraintType) {
+    default: [[fallthrough]];
+    case CT::BallAndSocket:is >> t.descriptor.emplace<0>();
+      break;
+    case CT::Hinge:is >> t.descriptor.emplace<1>();
+      break;
+    case CT::LimitedHinge:is >> t.descriptor.emplace<2>();
+      break;
+    case CT::Prismatic: is >> t.descriptor.emplace<3>();
+      break;
+    case CT::Ragdoll: is >> t.descriptor.emplace<4>();
+      break;
+    case CT::StiffSpring: is >> t.descriptor.emplace<5>();
+      break;
+  }
+
+  io::readBytes(is, t.tau);
+  io::readBytes(is, t.damping);
+
+  return is;
+}
+
+std::istream &operator>>(std::istream &is, ConstraintData &t) {
+  io::readBytes(is, t.constraintType);
+  io::readBytes(is, t.numEntities);
+
+  is >> t.entityA;
+  is >> t.entityB;
+
+  io::readBytes(is, t.priority);
+
+  using CT = Enum::hk::ConstraintType;
+
+  switch (t.constraintType) {
+    default: [[fallthrough]];
+    case CT::BallAndSocket:is >> t.descriptor.emplace<0>();
+      break;
+    case CT::Hinge:is >> t.descriptor.emplace<1>();
+      break;
+    case CT::LimitedHinge:is >> t.descriptor.emplace<2>();
+      break;
+    case CT::Prismatic: is >> t.descriptor.emplace<3>();
+      break;
+    case CT::Ragdoll: is >> t.descriptor.emplace<4>();
+      break;
+    case CT::StiffSpring: is >> t.descriptor.emplace<5>();
+      break;
+    case CT::Malleable: is >> t.descriptor.emplace<6>();
+      break;
+  }
 
   return is;
 }
