@@ -2,6 +2,8 @@
 #include "record/records.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/helpers.hpp"
+#include "settings.hpp"
+#include <OgreSkeletonManager.h>
 
 namespace oo {
 
@@ -23,16 +25,17 @@ reifyRecord(const record::REFR_NPC_ &refRec,
             ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers) {
   const auto &npcRes{std::get<const oo::Resolver<record::NPC_> &>(resolvers)};
   auto baseRec{npcRes.get(refRec.baseId.data)};
-  if (!baseRec) return {ecs::Mesh{nullptr}};
+  if (!baseRec || !baseRec->skeletonFilename) {
+    return {ecs::Mesh{nullptr}, ecs::Skeleton{nullptr}};
+  }
 
-  if (!baseRec->skeletonFilename) return {ecs::Mesh{nullptr}};
+  oo::Path rawSkelPath{baseRec->skeletonFilename->data};
+  std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
+  auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
+  Ogre::SkeletonPtr skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
+  skelPtr->load();
 
-  // TODO: Load the NPC properly instead of just making a mesh
-  oo::Path rawPath{baseRec->skeletonFilename->data};
-  std::string meshName{(oo::Path{"meshes"} / rawPath).c_str()};
-  Ogre::Entity *mesh{scnMgr->createEntity(meshName)};
-
-  return {ecs::Mesh{mesh}};
+  return {ecs::Mesh{nullptr}, ecs::Skeleton{skelPtr.get()}};
 }
 
 } // namespace oo

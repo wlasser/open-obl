@@ -4,6 +4,7 @@
 #include "ogrebullet/rigid_body.hpp"
 #include <OgreEntity.h>
 #include <OgreLight.h>
+#include <OgreSkeleton.h>
 #include <tuple>
 #include <type_traits>
 
@@ -35,6 +36,7 @@ constexpr bool contains() {
 using RigidBody = Component<Ogre::RigidBody *>;
 using Mesh = Component<Ogre::Entity *>;
 using Light = Component<Ogre::Light *>;
+using Skeleton = Component<Ogre::Skeleton *>;
 
 } // namespace ecs
 
