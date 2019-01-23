@@ -84,4 +84,11 @@ void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
   GameSettings::getSingleton().load(rec, true);
 }
 
+template<>
+void InitialRecordVisitor::readRecord<record::RACE>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::RACE>().value};
+  oo::getResolver<record::RACE>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
 } // namespace oo

@@ -89,14 +89,20 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Create the engine managers
   ctx.baseResolvers = std::make_unique<oo::BaseResolvers>(
-      std::make_tuple(oo::DoorResolver{}, oo::LighResolver{},
-                      oo::StatResolver{}, oo::ActiResolver{},
-                      oo::Npc_Resolver{}, oo::CellResolver{*ctx.bulletConf}));
+      std::make_tuple(oo::add_resolver_t<record::DOOR>{},
+                      oo::add_resolver_t<record::LIGH>{},
+                      oo::add_resolver_t<record::STAT>{},
+                      oo::add_resolver_t<record::ACTI>{},
+                      oo::add_resolver_t<record::NPC_>{},
+                      oo::add_resolver_t<record::CELL>{*ctx.bulletConf},
+                      oo::add_resolver_t<record::RACE>{}));
 
   ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
-      std::make_tuple(oo::RefrDoorResolver{}, oo::RefrLighResolver{},
-                      oo::RefrStatResolver{}, oo::RefrActiResolver{},
-                      oo::RefrNpc_Resolver{}));
+      std::make_tuple(oo::add_refr_resolver_t<record::REFR_DOOR>{},
+                      oo::add_refr_resolver_t<record::REFR_LIGH>{},
+                      oo::add_refr_resolver_t<record::REFR_STAT>{},
+                      oo::add_refr_resolver_t<record::REFR_ACTI>{},
+                      oo::add_refr_resolver_t<record::REFR_NPC_>{}));
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();

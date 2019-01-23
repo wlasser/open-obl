@@ -43,6 +43,9 @@ class InitialRecordVisitor {
 
   template<>
   void readRecord<record::GMST>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::RACE>(oo::EspAccessor &accessor);
 };
 
 } // namespace oo

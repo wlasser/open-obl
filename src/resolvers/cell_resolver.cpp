@@ -174,6 +174,7 @@ reifyRecord(const record::CELL &refRec,
   const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
   const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
+  const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
   const auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(resolvers)};
   const auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(resolvers)};
@@ -194,7 +195,7 @@ reifyRecord(const record::CELL &refRec,
     } else if (auto acti{refrActiRes.get(refId)}; acti) {
       cell->attach(*acti, node, std::forward_as_tuple(actiRes));
     } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
-      cell->attach(*npc, node, std::forward_as_tuple(npc_Res));
+      cell->attach(*npc, node, std::forward_as_tuple(npc_Res, raceRes));
     }
   }
 

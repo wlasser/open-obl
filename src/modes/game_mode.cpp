@@ -134,7 +134,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 
   auto baseResolvers{oo::getResolvers<
       record::STAT, record::DOOR, record::LIGH, record::ACTI,
-      record::NPC_>(ctx.getBaseResolvers())};
+      record::NPC_, record::RACE>(ctx.getBaseResolvers())};
   auto refrResolvers{oo::getRefrResolvers<
       record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
       record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers())};

@@ -92,7 +92,8 @@ class Resolver<record::CELL> {
       record::REFR_ACTI, record::REFR_NPC_>;
 
   using BaseResolverContext = ResolverTuple<
-      record::STAT, record::DOOR, record::LIGH, record::ACTI, record::NPC_>;
+      record::STAT, record::DOOR, record::LIGH, record::ACTI, record::NPC_,
+      record::RACE>;
 
   /// Load all child references of a cell.
   void load(oo::BaseId baseId,

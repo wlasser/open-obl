@@ -15,7 +15,7 @@ template<> struct CiteRecordTrait<record::NPC_> {
 
 template<> struct ReifyRecordTrait<record::REFR_NPC_> {
   using type = ecs::Entity<ecs::Mesh, ecs::Skeleton>;
-  using resolvers = ResolverTuple<record::NPC_>;
+  using resolvers = ResolverTuple<record::NPC_, record::RACE>;
 };
 
 template<> CiteRecordTrait<record::NPC_>::type
