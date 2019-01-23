@@ -4,37 +4,16 @@
 #include "esp_coordinator.hpp"
 #include "record/io.hpp"
 #include "record/records.hpp"
-#include "resolvers/acti_resolver.hpp"
-#include "resolvers/door_resolver.hpp"
-#include "resolvers/cell_resolver.hpp"
-#include "resolvers/light_resolver.hpp"
-#include "resolvers/npc_resolver.hpp"
-#include "resolvers/static_resolver.hpp"
+#include "resolvers/resolvers.hpp"
 
 namespace oo {
 
 class InitialRecordVisitor {
  private:
-  oo::DoorResolver *doorRes;
-  oo::LighResolver *lighRes;
-  oo::StatResolver *statRes;
-  oo::ActiResolver *actiRes;
-  oo::Npc_Resolver *npc_Res;
-  oo::CellResolver *cellRes;
+  oo::BaseResolversRef resolvers;
 
  public:
-  InitialRecordVisitor(oo::DoorResolver *doorRes,
-                       oo::LighResolver *lighRes,
-                       oo::StatResolver *statRes,
-                       oo::ActiResolver *actiRes,
-                       oo::Npc_Resolver *npc_Res,
-                       oo::CellResolver *cellRes) :
-      doorRes(doorRes),
-      lighRes(lighRes),
-      statRes(statRes),
-      actiRes(actiRes),
-      npc_Res(npc_Res),
-      cellRes(cellRes) {}
+  explicit InitialRecordVisitor(oo::BaseResolversRef resolvers);
 
   template<class R>
   void readRecord(oo::EspAccessor &accessor) {

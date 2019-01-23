@@ -1,7 +1,6 @@
 #include "fs/path.hpp"
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
-#include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
 
 namespace oo {

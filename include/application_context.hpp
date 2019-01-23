@@ -13,8 +13,7 @@
 #include "ogreimgui/imgui_manager.hpp"
 #include "ogresoloud/sound_manager.hpp"
 #include "ogresoloud/wav_resource_manager.hpp"
-#include "record/records_fwd.hpp"
-#include "record/reference_records.hpp"
+#include "resolvers/resolvers.hpp"
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
 #include <OgreRoot.h>
@@ -35,20 +34,6 @@ class ConsoleEngine;
 class MeshLoader;
 class CollisionObjectLoader;
 class SkeletonLoader;
-
-template<class R, class Id> class Resolver;
-
-using DoorResolver = Resolver<::record::DOOR, BaseId>;
-using LighResolver = Resolver<::record::LIGH, BaseId>;
-using StatResolver = Resolver<::record::STAT, BaseId>;
-using ActiResolver = Resolver<::record::ACTI, BaseId>;
-using Npc_Resolver = Resolver<::record::NPC_, BaseId>;
-using RefrDoorResolver = Resolver<::record::REFR_DOOR, RefId>;
-using RefrLighResolver = Resolver<::record::REFR_LIGH, RefId>;
-using RefrStatResolver = Resolver<::record::REFR_STAT, RefId>;
-using RefrActiResolver = Resolver<::record::REFR_ACTI, RefId>;
-using RefrNpc_Resolver = Resolver<::record::REFR_NPC_, RefId>;
-using CellResolver = Resolver<::record::CELL, BaseId>;
 
 namespace event {
 
@@ -98,16 +83,8 @@ class ApplicationContext {
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
   std::unique_ptr<Ogre::WavResourceManager> wavResourceMgr{};
 
-  using BaseResolvers = std::tuple<oo::DoorResolver, oo::LighResolver,
-                                   oo::StatResolver, oo::ActiResolver,
-                                   oo::Npc_Resolver, oo::CellResolver>;
-
-  using RefrResolvers = std::tuple<oo::RefrDoorResolver, oo::RefrLighResolver,
-                                   oo::RefrStatResolver, oo::RefrActiResolver,
-                                   oo::RefrNpc_Resolver>;
-
-  std::unique_ptr<BaseResolvers> baseResolvers{};
-  std::unique_ptr<RefrResolvers> refrResolvers{};
+  std::unique_ptr<oo::BaseResolvers> baseResolvers{};
+  std::unique_ptr<oo::RefrResolvers> refrResolvers{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
 
@@ -129,19 +106,8 @@ class ApplicationContext {
 
   Ogre::ImGuiManager *getImGuiManager() const;
 
-  oo::DoorResolver &getDoorResolver() const;
-  oo::LighResolver &getLighResolver() const;
-  oo::StatResolver &getStatResolver() const;
-  oo::ActiResolver &getActiResolver() const;
-  oo::Npc_Resolver &getNpc_Resolver() const;
-
-  oo::RefrDoorResolver &getRefrDoorResolver() const;
-  oo::RefrLighResolver &getRefrLighResolver() const;
-  oo::RefrStatResolver &getRefrStatResolver() const;
-  oo::RefrActiResolver &getRefrActiResolver() const;
-  oo::RefrNpc_Resolver &getRefrNpc_Resolver() const;
-
-  oo::CellResolver &getCellResolver() const;
+  oo::BaseResolversRef getBaseResolvers() const;
+  oo::RefrResolversRef getRefrResolvers() const;
 
   oo::ConsoleEngine &getConsoleEngine();
 

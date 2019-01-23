@@ -2,8 +2,11 @@
 #define OPENOBLIVION_RESOLVERS_HPP
 
 #include "record/formid.hpp"
+#include "record/records_fwd.hpp"
+#include "record/reference_records.hpp"
 #include "meta.hpp"
 #include <absl/container/flat_hash_map.h>
+#include <boost/mp11.hpp>
 #include <gsl/gsl>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
@@ -157,6 +160,46 @@ typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
             typename ReifyRecordTrait<R>::resolvers resolvers);
 
+/// Metafunction mapping `Record` to `oo::Resolver<Record>`.
+/// An optional `Id` can be specified to change the backing id from `oo::BaseId`
+/// to `oo::RefId`, or other.
+template<class Record, class Id = oo::BaseId> struct add_resolver {
+  static_assert(is_record_v<Record>);
+  using type = oo::Resolver<Record, Id>;
+};
+template<class Record, class Id = oo::BaseId>
+using add_resolver_t = typename add_resolver<Record, Id>::type;
+
+/// Metafunction mapping `Record` to `oo::Resolver<Record, oo::RefId>`.
+template<class Record> struct add_refr_resolver {
+  static_assert(is_record_v<Record>);
+  using type = oo::Resolver<Record, oo::RefId>;
+};
+template<class Record>
+using add_refr_resolver_t = typename add_refr_resolver<Record>::type;
+
+/// Given a tuple of references to resolvers, return a tuple containing a subset
+/// of those references.
+template<class ... Records, class Tuple>
+constexpr auto getResolvers(Tuple &&resolvers) {
+  using Types = boost::mp11::mp_transform<std::decay_t,
+                                          std::remove_reference_t<Tuple>>;
+  return std::tie(std::get<
+      boost::mp11::mp_find<Types, add_resolver_t<Records>>::value>(
+      std::forward<Tuple>(resolvers))...);
+}
+
+/// Given a tuple of references to reference resolvers, return a tuple
+/// containing a subset of those references.
+template<class ... Records, class Tuple>
+constexpr auto getRefrResolvers(Tuple &&resolvers) {
+  using Types = boost::mp11::mp_transform<std::decay_t,
+                                          std::remove_reference_t<Tuple>>;
+  return std::tie(std::get<
+      boost::mp11::mp_find<Types, add_resolver_t<Records, oo::RefId>>::value>(
+      std::forward<Tuple>(resolvers))...);
+}
+
 /// Convenience alias for a collection of reference record resolvers.
 template<class ... Records>
 using RefrResolverTuple = std::tuple<oo::Resolver<Records, oo::RefId> &...>;
@@ -167,17 +210,49 @@ using ResolverTuple = std::tuple<const oo::Resolver<Records> &...>;
 
 /// Convenience wrapper for std::get over a RefrResolverTuple.
 template<class Record, class Tuple>
-auto getRefrResolver(const Tuple &resolvers) ->
-std::enable_if_t<is_record_v<Record>, oo::Resolver<Record, oo::RefId> &> {
-  return std::get<oo::Resolver<Record, oo::RefId> &>(resolvers);
+constexpr auto &&getRefrResolver(Tuple &&resolvers) {
+  using Types = boost::mp11::mp_transform<std::decay_t,
+                                          std::remove_reference_t<Tuple>>;
+  return std::get<boost::mp11::mp_find<Types,
+                                       add_refr_resolver_t<Record>>::value>(
+      std::forward<Tuple>(resolvers));
 }
 
 /// Convenience wrapper for std::get over a ResolverTuple.
 template<class Record, class Tuple>
-auto getResolver(const Tuple &resolvers) ->
-std::enable_if_t<is_record_v<Record>, const oo::Resolver<Record> &> {
-  return std::get<const oo::Resolver<Record> &>(resolvers);
+constexpr auto &&getResolver(Tuple &&resolvers) {
+  using Types = boost::mp11::mp_transform<std::decay_t,
+                                          std::remove_reference_t<Tuple>>;
+  return std::get<boost::mp11::mp_find<Types,
+                                       add_resolver_t<Record>>::value>(
+      std::forward<Tuple>(resolvers));
 }
+
+/// A tuple of all the base records which have resolvers.
+using BaseRecords = std::tuple<record::DOOR, record::LIGH, record::STAT,
+                               record::ACTI, record::NPC_, record::CELL>;
+/// A tuple of all the reference records which have resolvers.
+using RefrRecords = std::tuple<record::REFR_DOOR, record::REFR_LIGH,
+                               record::REFR_STAT, record::REFR_ACTI,
+                               record::REFR_NPC_>;
+
+/// A tuple of all the base resolvers.
+using BaseResolvers = boost::mp11::mp_transform<oo::add_resolver_t,
+                                                BaseRecords>;
+/// A tuple of all the reference resolvers.
+using RefrResolvers = boost::mp11::mp_transform<oo::add_refr_resolver_t,
+                                                RefrRecords>;
+
+/// A tuple of lvalue references to all the base resolvers.
+using BaseResolversRef = boost::mp11::mp_transform<std::add_lvalue_reference_t,
+                                                   BaseResolvers>;
+/// A tuple of lvalue references to all the reference resolvers.
+using RefrResolversRef = boost::mp11::mp_transform<std::add_lvalue_reference_t,
+                                                   RefrResolvers>;
+
+//===----------------------------------------------------------------------===//
+// Resolver member function implementations
+//===----------------------------------------------------------------------===//
 
 template<class R, class IdType>
 std::pair<typename Resolver<R, IdType>::RecordIterator, bool>

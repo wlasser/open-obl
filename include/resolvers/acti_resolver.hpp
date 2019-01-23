@@ -1,12 +1,9 @@
 #ifndef OPENOBLIVION_ACTI_RESOLVER_HPP
 #define OPENOBLIVION_ACTI_RESOLVER_HPP
 
-#include "record/records_fwd.hpp"
-#include "record/reference_records.hpp"
 #include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
-#include <OgreEntity.h>
 
 namespace oo {
 

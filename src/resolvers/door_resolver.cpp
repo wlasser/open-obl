@@ -2,7 +2,6 @@
 #include "record/records.hpp"
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/helpers.hpp"
-#include "resolvers/resolvers.hpp"
 
 namespace oo {
 

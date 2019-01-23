@@ -88,12 +88,12 @@ Application::Application(std::string windowName) : FrameListener() {
   Ogre::Codec::registerCodec(ctx.texImageCodec.get());
 
   // Create the engine managers
-  ctx.baseResolvers = std::make_unique<ApplicationContext::BaseResolvers>(
+  ctx.baseResolvers = std::make_unique<oo::BaseResolvers>(
       std::make_tuple(oo::DoorResolver{}, oo::LighResolver{},
                       oo::StatResolver{}, oo::ActiResolver{},
                       oo::Npc_Resolver{}, oo::CellResolver{*ctx.bulletConf}));
 
-  ctx.refrResolvers = std::make_unique<ApplicationContext::RefrResolvers>(
+  ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
       std::make_tuple(oo::RefrDoorResolver{}, oo::RefrLighResolver{},
                       oo::RefrStatResolver{}, oo::RefrActiResolver{},
                       oo::RefrNpc_Resolver{}));
@@ -157,12 +157,7 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.espCoordinator = std::make_unique<oo::EspCoordinator>(loadOrder.begin(),
                                                             loadOrder.end());
   // Read the main esm
-  InitialRecordVisitor initialRecordVisitor(&ctx.getDoorResolver(),
-                                            &ctx.getLighResolver(),
-                                            &ctx.getStatResolver(),
-                                            &ctx.getActiResolver(),
-                                            &ctx.getNpc_Resolver(),
-                                            &ctx.getCellResolver());
+  InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers());
   for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }

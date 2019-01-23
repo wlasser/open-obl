@@ -2,8 +2,9 @@
 #include "fs/path.hpp"
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
-#include "resolvers/resolvers.hpp"
 #include "resolvers/light_resolver.hpp"
+#include <OgreColourValue.h>
+#include <OgreLight.h>
 
 namespace oo {
 

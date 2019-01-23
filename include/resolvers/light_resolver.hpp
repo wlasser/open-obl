@@ -1,16 +1,9 @@
 #ifndef OPENOBLIVION_LIGHT_RESOLVER_HPP
 #define OPENOBLIVION_LIGHT_RESOLVER_HPP
 
-#include "record/formid.hpp"
-#include "record/records_fwd.hpp"
-#include "record/reference_records.hpp"
 #include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
-#include <OgreColourValue.h>
-#include <OgreLight.h>
-#include <OgreSceneManager.h>
-#include <string>
 
 namespace oo {
 

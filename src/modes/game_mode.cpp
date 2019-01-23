@@ -126,34 +126,24 @@ RefId GameMode::getCrosshairRef() {
 }
 
 void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
-  auto &cellRes = ctx.getCellResolver();
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
   if (!cellRes.contains(cellId)) {
     throw std::runtime_error("Cell does not exist");
   }
   const auto cellRec{cellRes.get(cellId)};
-  cellRes.load(cellId,
-               std::forward_as_tuple(ctx.getRefrStatResolver(),
-                                     ctx.getRefrDoorResolver(),
-                                     ctx.getRefrLighResolver(),
-                                     ctx.getRefrActiResolver(),
-                                     ctx.getRefrNpc_Resolver()),
-               std::forward_as_tuple(ctx.getStatResolver(),
-                                     ctx.getDoorResolver(),
-                                     ctx.getLighResolver(),
-                                     ctx.getActiResolver(),
-                                     ctx.getNpc_Resolver()));
-  mCell = reifyRecord(*cellRec,
-                      std::forward_as_tuple(ctx.getStatResolver(),
-                                            ctx.getDoorResolver(),
-                                            ctx.getLighResolver(),
-                                            ctx.getActiResolver(),
-                                            ctx.getNpc_Resolver(),
-                                            ctx.getRefrStatResolver(),
-                                            ctx.getRefrDoorResolver(),
-                                            ctx.getRefrLighResolver(),
-                                            ctx.getRefrActiResolver(),
-                                            ctx.getRefrNpc_Resolver(),
-                                            ctx.getCellResolver()));
+
+  auto baseResolvers{oo::getResolvers<
+      record::STAT, record::DOOR, record::LIGH, record::ACTI,
+      record::NPC_>(ctx.getBaseResolvers())};
+  auto refrResolvers{oo::getRefrResolvers<
+      record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
+      record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers())};
+
+  cellRes.load(cellId, refrResolvers, baseResolvers);
+  mCell = reifyRecord(*cellRec, std::tuple_cat(
+      baseResolvers, refrResolvers,
+      oo::getResolvers<record::CELL>(ctx.getBaseResolvers())));
+
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
   mPlayerController = makePlayerController(mCell, mCell->scnMgr);
