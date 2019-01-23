@@ -98,17 +98,16 @@ class ApplicationContext {
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
   std::unique_ptr<Ogre::WavResourceManager> wavResourceMgr{};
 
-  std::unique_ptr<oo::DoorResolver> doorRes{};
-  std::unique_ptr<oo::LighResolver> lighRes{};
-  std::unique_ptr<oo::StatResolver> statRes{};
-  std::unique_ptr<oo::ActiResolver> actiRes{};
-  std::unique_ptr<oo::Npc_Resolver> npc_Res{};
-  std::unique_ptr<oo::RefrDoorResolver> refrDoorRes{};
-  std::unique_ptr<oo::RefrLighResolver> refrLighRes{};
-  std::unique_ptr<oo::RefrStatResolver> refrStatRes{};
-  std::unique_ptr<oo::RefrActiResolver> refrActiRes{};
-  std::unique_ptr<oo::RefrNpc_Resolver> refrNpc_Res{};
-  std::unique_ptr<oo::CellResolver> cellRes{};
+  using BaseResolvers = std::tuple<oo::DoorResolver, oo::LighResolver,
+                                   oo::StatResolver, oo::ActiResolver,
+                                   oo::Npc_Resolver, oo::CellResolver>;
+
+  using RefrResolvers = std::tuple<oo::RefrDoorResolver, oo::RefrLighResolver,
+                                   oo::RefrStatResolver, oo::RefrActiResolver,
+                                   oo::RefrNpc_Resolver>;
+
+  std::unique_ptr<BaseResolvers> baseResolvers{};
+  std::unique_ptr<RefrResolvers> refrResolvers{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
 

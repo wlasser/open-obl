@@ -88,18 +88,15 @@ Application::Application(std::string windowName) : FrameListener() {
   Ogre::Codec::registerCodec(ctx.texImageCodec.get());
 
   // Create the engine managers
-  ctx.doorRes = std::make_unique<oo::DoorResolver>();
-  ctx.lighRes = std::make_unique<oo::LighResolver>();
-  ctx.statRes = std::make_unique<oo::StatResolver>();
-  ctx.actiRes = std::make_unique<oo::ActiResolver>();
-  ctx.npc_Res = std::make_unique<oo::Npc_Resolver>();
-  ctx.refrDoorRes = std::make_unique<oo::RefrDoorResolver>();
-  ctx.refrLighRes = std::make_unique<oo::RefrLighResolver>();
-  ctx.refrStatRes = std::make_unique<oo::RefrStatResolver>();
-  ctx.refrActiRes = std::make_unique<oo::RefrActiResolver>();
-  ctx.refrNpc_Res = std::make_unique<oo::RefrNpc_Resolver>();
+  ctx.baseResolvers = std::make_unique<ApplicationContext::BaseResolvers>(
+      std::make_tuple(oo::DoorResolver{}, oo::LighResolver{},
+                      oo::StatResolver{}, oo::ActiResolver{},
+                      oo::Npc_Resolver{}, oo::CellResolver{*ctx.bulletConf}));
 
-  ctx.cellRes = std::make_unique<oo::CellResolver>(*ctx.bulletConf);
+  ctx.refrResolvers = std::make_unique<ApplicationContext::RefrResolvers>(
+      std::make_tuple(oo::RefrDoorResolver{}, oo::RefrLighResolver{},
+                      oo::RefrStatResolver{}, oo::RefrActiResolver{},
+                      oo::RefrNpc_Resolver{}));
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
@@ -160,12 +157,12 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.espCoordinator = std::make_unique<oo::EspCoordinator>(loadOrder.begin(),
                                                             loadOrder.end());
   // Read the main esm
-  InitialRecordVisitor initialRecordVisitor(ctx.doorRes.get(),
-                                            ctx.lighRes.get(),
-                                            ctx.statRes.get(),
-                                            ctx.actiRes.get(),
-                                            ctx.npc_Res.get(),
-                                            ctx.cellRes.get());
+  InitialRecordVisitor initialRecordVisitor(&ctx.getDoorResolver(),
+                                            &ctx.getLighResolver(),
+                                            &ctx.getStatResolver(),
+                                            &ctx.getActiResolver(),
+                                            &ctx.getNpc_Resolver(),
+                                            &ctx.getCellResolver());
   for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
     oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
   }

@@ -63,47 +63,47 @@ Ogre::ImGuiManager *ApplicationContext::getImGuiManager() const {
 }
 
 oo::DoorResolver &ApplicationContext::getDoorResolver() const {
-  return *doorRes;
+  return std::get<oo::DoorResolver>(*baseResolvers);
 }
 
 oo::LighResolver &ApplicationContext::getLighResolver() const {
-  return *lighRes;
+  return std::get<oo::LighResolver>(*baseResolvers);
 }
 
 oo::StatResolver &ApplicationContext::getStatResolver() const {
-  return *statRes;
+  return std::get<oo::StatResolver>(*baseResolvers);
 }
 
 oo::ActiResolver &ApplicationContext::getActiResolver() const {
-  return *actiRes;
+  return std::get<oo::ActiResolver>(*baseResolvers);
 }
 
 oo::Npc_Resolver &ApplicationContext::getNpc_Resolver() const {
-  return *npc_Res;
+  return std::get<oo::Npc_Resolver>(*baseResolvers);
 }
 
 oo::RefrDoorResolver &ApplicationContext::getRefrDoorResolver() const {
-  return *refrDoorRes;
+  return std::get<oo::RefrDoorResolver>(*refrResolvers);
 }
 
 oo::RefrLighResolver &ApplicationContext::getRefrLighResolver() const {
-  return *refrLighRes;
+  return std::get<oo::RefrLighResolver>(*refrResolvers);
 }
 
 oo::RefrStatResolver &ApplicationContext::getRefrStatResolver() const {
-  return *refrStatRes;
+  return std::get<oo::RefrStatResolver>(*refrResolvers);
 }
 
 oo::RefrActiResolver &ApplicationContext::getRefrActiResolver() const {
-  return *refrActiRes;
+  return std::get<oo::RefrActiResolver>(*refrResolvers);
 }
 
 oo::RefrNpc_Resolver &ApplicationContext::getRefrNpc_Resolver() const {
-  return *refrNpc_Res;
+  return std::get<oo::RefrNpc_Resolver>(*refrResolvers);
 }
 
 oo::CellResolver &ApplicationContext::getCellResolver() const {
-  return *cellRes;
+  return std::get<oo::CellResolver>(*baseResolvers);
 }
 
 oo::ConsoleEngine &ApplicationContext::getConsoleEngine() {
