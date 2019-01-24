@@ -2,20 +2,11 @@
 #define OPENOBLIVION_GAME_SETTINGS_HPP
 
 #include "fs/path.hpp"
-#include "record/record.hpp"
+#include "record/records_fwd.hpp"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <mutex>
 #include <string>
-
-namespace record {
-
-// Forward declarations to avoid pulling in all of records.hpp just to get GMST.
-namespace raw { struct GMST; }
-
-using GMST = Record<raw::GMST, "GMST"_rec>;
-
-} // namespace record
 
 namespace oo {
 
