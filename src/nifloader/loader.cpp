@@ -189,11 +189,6 @@ BlockGraph createBlockGraph(std::istream &is) {
       }();
       blocks[i] = jbcoe::polymorphic_value<NiObject>(block);
 
-      // Make an edge to each child
-      for (auto child : block->children) {
-        if (isRefValid(child)) addEdge(blocks, i, child);
-      }
-
       // Make an edge to each NiExtraData
       // TODO: Support extra data linked list
       if (block->extraDataArray) {
@@ -217,6 +212,11 @@ BlockGraph createBlockGraph(std::istream &is) {
       if (block->collisionObject) {
         const auto col{*(block->collisionObject)};
         if (isRefValid(col)) addEdge(blocks, i, col);
+      }
+
+      // Make an edge to each child
+      for (auto child : block->children) {
+        if (isRefValid(child)) addEdge(blocks, i, child);
       }
 
       logger->trace("Read block {} (NiNode)", i);
