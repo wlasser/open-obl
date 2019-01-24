@@ -32,6 +32,10 @@ Ogre::Entity *loadMesh(const T &rec, gsl::not_null<Ogre::SceneManager *> mgr) {
 Ogre::RigidBody *
 loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr);
 
+Ogre::RigidBody *
+loadRigidBody(const std::string &name, const std::string &group,
+              gsl::not_null<Ogre::SceneManager *> mgr);
+
 // If `mesh` is non-null, attach it to the `node` and return a new child node,
 // otherwise return `node`. If `final` is true, never create a child node.
 gsl::not_null<Ogre::SceneNode *>

@@ -3,14 +3,17 @@
 
 namespace oo {
 
-Ogre::RigidBody *loadRigidBody(Ogre::Entity *entity,
-                               gsl::not_null<Ogre::SceneManager *> mgr) {
+Ogre::RigidBody *
+loadRigidBody(Ogre::Entity *entity, gsl::not_null<Ogre::SceneManager *> mgr) {
   if (!entity) return nullptr;
-  const auto &mesh{entity->getMesh()};
-  if (!mesh) return nullptr;
+  const auto &meshPtr{entity->getMesh()};
+  if (!meshPtr) return nullptr;
+  return loadRigidBody(meshPtr->getName(), meshPtr->getGroup(), mgr);
+}
 
-  const auto &name{mesh->getName()};
-  const auto &group{mesh->getGroup()};
+Ogre::RigidBody *
+loadRigidBody(const std::string &name, const std::string &group,
+              gsl::not_null<Ogre::SceneManager *> mgr) {
   const std::map<std::string, std::string> params{
       {"collisionObject", name},
       {"resourceGroup", group}

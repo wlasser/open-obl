@@ -21,7 +21,8 @@ citeRecord(const record::NPC_ &baseRec, tl::optional<RefId> refId) {
 }
 
 struct BodyData {
-  Ogre::MeshPtr mesh{};
+  Ogre::Entity *entity{};
+  Ogre::RigidBody *rigidBody{};
   Ogre::TexturePtr texture{};
 };
 
@@ -37,6 +38,8 @@ reifyRecord(const record::REFR_NPC_ &refRec,
       ecs::RigidBody<0>{nullptr},
       ecs::RigidBody<1>{nullptr}, ecs::Mesh<1>{nullptr},
       ecs::RigidBody<2>{nullptr}, ecs::Mesh<2>{nullptr},
+      ecs::RigidBody<3>{nullptr}, ecs::Mesh<3>{nullptr},
+      ecs::RigidBody<4>{nullptr}, ecs::Mesh<4>{nullptr},
   };
 
   auto baseRec{npc_Res.get(refRec.baseId.data)};
@@ -51,6 +54,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
 
   auto &texMgr{Ogre::TextureManager::getSingleton()};
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
+  auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
 
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
@@ -78,30 +82,34 @@ reifyRecord(const record::REFR_NPC_ &refRec,
         default: return oo::Path{""};
       }
     }();
-    bodyParts[type] = BodyData{
-        meshMgr.load(meshPath.c_str(), oo::RESOURCE_GROUP),
-        texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP)
-    };
+    auto &part{bodyParts[type]};
+    part.entity = scnMgr->createEntity(meshPath.c_str());
+    part.rigidBody =
+        oo::loadRigidBody(meshPath.c_str(), oo::RESOURCE_GROUP, scnMgr);
+    part.texture = texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP);
   }
 
   if (!baseRec->skeletonFilename) return empty;
 
-  oo::Path rawSkelPath{baseRec->skeletonFilename->data};
-  std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
-  auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
-  Ogre::SkeletonPtr skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
+  const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
+  const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
+  auto skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
+  auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
   skelPtr->load();
 
 //  bodyParts[BodyParts::UpperBody].mesh->setSkeletonName(skelPtr->getName());
-  Ogre::Entity *upperBodyEntity
-      {scnMgr->createEntity(bodyParts[BodyParts::UpperBody].mesh)};
-  Ogre::Entity *lowerBodyEntity
-      {scnMgr->createEntity(bodyParts[BodyParts::LowerBody].mesh)};
 //  entity->setDisplaySkeleton(true);
 
-  return {ecs::RigidBody<0>{nullptr},
-          ecs::RigidBody<1>{nullptr}, ecs::Mesh<1>{upperBodyEntity},
-          ecs::RigidBody<2>{nullptr}, ecs::Mesh<2>{lowerBodyEntity}};
+  return {ecs::RigidBody<0>{skelBox},
+          ecs::RigidBody<1>{bodyParts[BodyParts::UpperBody].rigidBody},
+          ecs::Mesh<1>{bodyParts[BodyParts::UpperBody].entity},
+          ecs::RigidBody<2>{bodyParts[BodyParts::LowerBody].rigidBody},
+          ecs::Mesh<2>{bodyParts[BodyParts::LowerBody].entity},
+          ecs::RigidBody<3>{bodyParts[BodyParts::Hand].rigidBody},
+          ecs::Mesh<3>{bodyParts[BodyParts::Hand].entity},
+          ecs::RigidBody<4>{bodyParts[BodyParts::Foot].rigidBody},
+          ecs::Mesh<4>{bodyParts[BodyParts::Foot].entity},
+  };
 }
 
 } // namespace oo
