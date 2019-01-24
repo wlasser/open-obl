@@ -16,7 +16,7 @@ struct CiteRecordTrait<record::STAT> {
 
 template<>
 struct ReifyRecordTrait<record::REFR_STAT> {
-  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
+  using type = ecs::Entity<ecs::RigidBody<>, ecs::Mesh<>>;
   using resolvers = ResolverTuple<record::STAT>;
 };
 

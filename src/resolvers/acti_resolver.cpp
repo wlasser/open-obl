@@ -24,7 +24,7 @@ reifyRecord(const record::REFR_ACTI &refRec,
             oo::ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers) {
   const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
   auto baseRec{actiRes.get(refRec.baseId.data)};
-  if (!baseRec) return {ecs::RigidBody{nullptr}, ecs::Mesh{nullptr}};
+  if (!baseRec) return {ecs::RigidBody<>{nullptr}, ecs::Mesh<>{nullptr}};
 
   Ogre::Entity *mesh{oo::loadMesh(*baseRec, scnMgr)};
   Ogre::RigidBody *rigidBody{oo::loadRigidBody(mesh, scnMgr)};
@@ -33,7 +33,7 @@ reifyRecord(const record::REFR_ACTI &refRec,
     setRefId(gsl::make_not_null(rigidBody), oo::RefId{refRec.mFormId});
   }
 
-  return {ecs::RigidBody{rigidBody}, ecs::Mesh{mesh}};
+  return {ecs::RigidBody<>{rigidBody}, ecs::Mesh<>{mesh}};
 }
 
 } // namespace oo

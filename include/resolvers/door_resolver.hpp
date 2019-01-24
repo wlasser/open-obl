@@ -17,7 +17,7 @@ struct CiteRecordTrait<record::DOOR> {
 
 template<>
 struct ReifyRecordTrait<record::REFR_DOOR> {
-  using type = ecs::Entity<ecs::RigidBody, ecs::Mesh>;
+  using type = ecs::Entity<ecs::RigidBody<>, ecs::Mesh<>>;
   using resolvers = ResolverTuple<record::DOOR>;
 };
 

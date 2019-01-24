@@ -17,7 +17,7 @@ struct CiteRecordTrait<record::LIGH> {
 
 template<>
 struct ReifyRecordTrait<record::REFR_LIGH> {
-  using type = ecs::Entity<ecs::Light, ecs::RigidBody, ecs::Mesh>;
+  using type = ecs::Entity<ecs::Light<>, ecs::RigidBody<>, ecs::Mesh<>>;
   using resolvers = ResolverTuple<record::LIGH>;
 };
 

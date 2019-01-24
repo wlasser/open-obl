@@ -32,15 +32,18 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
   const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
+  // Object to return if loading fails
+  const ReifyRecordTrait<record::REFR_NPC_>::type empty{
+      ecs::RigidBody<0>{nullptr},
+      ecs::RigidBody<1>{nullptr}, ecs::Mesh<1>{nullptr},
+      ecs::RigidBody<2>{nullptr}, ecs::Mesh<2>{nullptr},
+  };
+
   auto baseRec{npc_Res.get(refRec.baseId.data)};
-  if (!baseRec) {
-    return {ecs::Mesh{nullptr}, ecs::Skeleton{nullptr}};
-  }
+  if (!baseRec) return empty;
 
   auto raceRec{raceRes.get(baseRec->race.data)};
-  if (!raceRec) {
-    return {ecs::Mesh{nullptr}, ecs::Skeleton{nullptr}};
-  }
+  if (!raceRec) return empty;
 
   const auto &acbs{baseRec->baseConfig.data};
   using ACBSFlags = record::raw::ACBS::Flag;
@@ -50,10 +53,10 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
 
   using BodyParts = record::raw::INDX_BODY;
-  std::map<BodyParts, BodyData> bodyTextures{};
+  std::map<BodyParts, BodyData> bodyParts{};
 
-  const auto
-      &bodyData{female ? raceRec->femaleBodyData : raceRec->maleBodyData};
+  const auto &bodyData{female ? raceRec->femaleBodyData
+                              : raceRec->maleBodyData};
   for (const auto &[typeRec, textureRec] : bodyData) {
     if (!textureRec) continue;
     const auto type{typeRec.data};
@@ -75,15 +78,13 @@ reifyRecord(const record::REFR_NPC_ &refRec,
         default: return oo::Path{""};
       }
     }();
-    bodyTextures[type] = BodyData{
+    bodyParts[type] = BodyData{
         meshMgr.load(meshPath.c_str(), oo::RESOURCE_GROUP),
         texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP)
     };
   }
 
-  if (!baseRec->skeletonFilename) {
-    return {ecs::Mesh{nullptr}, ecs::Skeleton{nullptr}};
-  }
+  if (!baseRec->skeletonFilename) return empty;
 
   oo::Path rawSkelPath{baseRec->skeletonFilename->data};
   std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
@@ -91,7 +92,16 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   Ogre::SkeletonPtr skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
   skelPtr->load();
 
-  return {ecs::Mesh{nullptr}, ecs::Skeleton{skelPtr.get()}};
+//  bodyParts[BodyParts::UpperBody].mesh->setSkeletonName(skelPtr->getName());
+  Ogre::Entity *upperBodyEntity
+      {scnMgr->createEntity(bodyParts[BodyParts::UpperBody].mesh)};
+  Ogre::Entity *lowerBodyEntity
+      {scnMgr->createEntity(bodyParts[BodyParts::LowerBody].mesh)};
+//  entity->setDisplaySkeleton(true);
+
+  return {ecs::RigidBody<0>{nullptr},
+          ecs::RigidBody<1>{nullptr}, ecs::Mesh<1>{upperBodyEntity},
+          ecs::RigidBody<2>{nullptr}, ecs::Mesh<2>{lowerBodyEntity}};
 }
 
 } // namespace oo
