@@ -36,8 +36,8 @@ struct TextureFamily {
 
 // Compute the minimum bounding box of the vertices in the block, subject to the
 // given Ogre-coordinate transformation
-Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
-                                    Ogre::Matrix4 transformation);
+Ogre::AxisAlignedBox
+getBoundingBox(const nif::NiGeometryData &block, Ogre::Matrix4 transformation);
 
 // Returns true if the triangle has a counterclockwise winding order, and
 // false otherwise
@@ -69,6 +69,13 @@ generateIndexData(const nif::NiTriShapeData &block);
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiTriStripsData &block);
 
+// Reads triangle strip data from NiGeometryData by dispatching to the
+// appropriate overload of generateIndexData() for the most derived type of
+// `block`. Also notifies `subMesh` of the index operation type required to
+// render the generated index data.
+std::unique_ptr<Ogre::IndexData>
+generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh);
+
 // Set the properties of tex provided by the block. In particular, set the
 // texture name of tex to the source texture in block, or textureOverride if it
 // is provided. Also set the mipmap format.
@@ -81,8 +88,8 @@ void setFilterMode(nif::Enum::TexFilterMode mode, Ogre::TextureUnitState *tex);
 void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
                   Ogre::TextureUnitState *tex);
 
-void setMaterialProperties(const nif::NiMaterialProperty &block,
-                           Ogre::Pass *pass);
+void
+setMaterialProperties(const nif::NiMaterialProperty &block, Ogre::Pass *pass);
 
 void addGenericVertexShader(Ogre::Pass *pass);
 void addGenericFragmentShader(Ogre::Pass *pass);
@@ -98,8 +105,7 @@ class MeshLoaderState {
  private:
   friend class TBGVisitor;
 
-  template<class T, class S>
-  T &getBlock(nif::basic::Ref<S> ref);
+  template<class T, class S> T &getBlock(nif::basic::Ref<S> ref);
 
   // TODO: This is awful, stop doing dynamic_cast checks!
   template<class T, class S,
@@ -108,8 +114,7 @@ class MeshLoaderState {
 
   // Returns an iterator into BlockGraph vertex_set.
   // TODO: Get rid of this, it's hideous.
-  template<class T>
-  auto getBlockIndex(const T &block);
+  template<class T> auto getBlockIndex(const T &block);
 
   // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
   // material and texture, and so translate to Ogre::SubMesh objects.

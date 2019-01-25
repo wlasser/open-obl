@@ -8,9 +8,8 @@
 
 namespace oo {
 
-Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
-                                    Ogre::Matrix4 transformation) {
-  using namespace oo;
+Ogre::AxisAlignedBox
+getBoundingBox(const nif::NiGeometryData &block, Ogre::Matrix4 transformation) {
   const auto fltMin = std::numeric_limits<float>::lowest();
   const auto fltMax = std::numeric_limits<float>::max();
   Ogre::Vector3 bboxMin{fltMax, fltMax, fltMax};
@@ -19,8 +18,8 @@ Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
   if (!block.hasVertices || block.vertices.empty()) return {};
 
   for (const auto &vertex : block.vertices) {
-    Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
-    auto v = transformation * ogreV;
+    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex))};
+    const auto v = transformation * ogreV;
     // NB: Cannot use else if, both branches apply if the mesh is flat
     if (v.x < bboxMin.x) bboxMin.x = v.x;
     if (v.x > bboxMax.x) bboxMax.x = v.x;
@@ -35,8 +34,8 @@ Ogre::AxisAlignedBox getBoundingBox(const nif::NiGeometryData &block,
 bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
                        Ogre::Vector3 v2, Ogre::Vector3 n2,
                        Ogre::Vector3 v3, Ogre::Vector3 n3) {
-  auto expected = (v2 - v1).crossProduct(v3 - v1);
-  auto actual = (n1 + n2 + n3) / 3.0f;
+  const auto expected = (v2 - v1).crossProduct(v3 - v1);
+  const auto actual = (n1 + n2 + n3) / 3.0f;
   // Coordinate system is right-handed so this is positive for an
   // anticlockwise winding order and negative for a clockwise order.
   return expected.dotProduct(actual) > 0.0f;
@@ -44,17 +43,16 @@ bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
 
 long numCCWTriangles(const nif::NiTriShapeData &block) {
   assert(block.hasNormals);
-  using oo::fromNif;
-  return std::count_if(block.triangles.begin(), block.triangles.end(),
-                       [&](const auto &tri) {
-                         return isWindingOrderCCW(
-                             fromNif(block.vertices[tri.v1]),
-                             fromNif(block.normals[tri.v1]),
-                             fromNif(block.vertices[tri.v2]),
-                             fromNif(block.normals[tri.v2]),
-                             fromNif(block.vertices[tri.v3]),
-                             fromNif(block.normals[tri.v3]));
-                       });
+  const auto &tris{block.triangles};
+  return std::count_if(tris.begin(), tris.end(), [&](const auto &tri) {
+    return oo::isWindingOrderCCW(
+        oo::fromNif(block.vertices[tri.v1]),
+        oo::fromNif(block.normals[tri.v1]),
+        oo::fromNif(block.vertices[tri.v2]),
+        oo::fromNif(block.normals[tri.v2]),
+        oo::fromNif(block.vertices[tri.v3]),
+        oo::fromNif(block.normals[tri.v3]));
+  });
 }
 
 std::filesystem::path toNormalMap(std::filesystem::path texFile) {
@@ -81,53 +79,50 @@ generateVertexData(const nif::NiGeometryData &block,
   // Specify the order of data in the vertex buffer. This is per vertex,
   // so the vertices, normals etc will have to be interleaved in the buffer.
   std::size_t offset{0};
-  std::size_t bytesPerVertex{0};
+  std::size_t vertSize{0};
   const unsigned short source{0};
 
   // Vertices
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                       Ogre::VES_POSITION);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
   // TODO: Blend weights
 
   // Normals
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                       Ogre::VES_NORMAL);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
   // Vertex colours
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                       Ogre::VES_DIFFUSE);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_DIFFUSE);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
   // UVs
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT2,
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT2,
                        Ogre::VES_TEXTURE_COORDINATES, 0);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT2);
   offset += 2;
 
   // Bitangents
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                       Ogre::VES_BINORMAL);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_BINORMAL);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
   // Tangents
-  vertDecl->addElement(source, bytesPerVertex, Ogre::VET_FLOAT3,
-                       Ogre::VES_TANGENT);
-  bytesPerVertex += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+  vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_TANGENT);
+  vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
   // Normal vectors are not translated and transform with the inverse
   // transpose of the transformation matrix. We will also need this for tangents
   // and bitangents so we compute it now.
-  auto normalTransformation{transformation};
-  normalTransformation.setTrans(Ogre::Vector3::ZERO);
-  normalTransformation = normalTransformation.inverse().transpose();
+  const Ogre::Matrix4 normalTransformation = [&]() {
+    auto trans{transformation};
+    trans.setTrans(Ogre::Vector3::ZERO);
+    return trans.inverse().transpose();
+  }();
 
   // The final vertex buffer is the transpose of the block matrix
   // v1  v3  v3 ...
@@ -145,8 +140,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : block.vertices) {
-      using namespace oo;
-      const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+      const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex))};
       const auto v{transformation * ogreV};
       *it = v.x;
       *(it + 1) = v.y;
@@ -164,8 +158,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block.normals) {
-      using namespace oo;
-      const Ogre::Vector4 ogreN{fromBSCoordinates(fromNif(normal))};
+      const Ogre::Vector4 ogreN{oo::fromBSCoordinates(oo::fromNif(normal))};
       const auto n{normalTransformation * ogreN};
       *it = n.x;
       *(it + 1) = n.y;
@@ -213,8 +206,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (bitangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
-      using namespace oo;
-      const Ogre::Vector4 ogreBt{fromBSCoordinates(fromNif(bitangent))};
+      const Ogre::Vector4 ogreBt{oo::fromBSCoordinates(oo::fromNif(bitangent))};
       const auto bt{normalTransformation * ogreBt};
       *it = bt.x;
       *(it + 1) = bt.y;
@@ -230,8 +222,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (tangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
-      using namespace oo;
-      const Ogre::Vector4 ogreT{fromBSCoordinates(fromNif(tangent))};
+      const Ogre::Vector4 ogreT{oo::fromBSCoordinates(oo::fromNif(tangent))};
       const auto t{normalTransformation * ogreT};
       *it = t.x;
       *(it + 1) = t.y;
@@ -246,7 +237,7 @@ generateVertexData(const nif::NiGeometryData &block,
   // Copy the vertex buffer into a hardware buffer, and link the buffer to
   // the vertex declaration.
   const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
-  const auto bpv{bytesPerVertex};
+  const auto bpv{vertSize};
 
   auto hwBuf{hwBufMgr->createVertexBuffer(bpv, block.numVertices, usage)};
   hwBuf->writeData(0, hwBuf->getSizeInBytes(), vertexBuffer.data(), true);
@@ -258,7 +249,7 @@ generateVertexData(const nif::NiGeometryData &block,
 
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiTriShapeData &block) {
-  auto *hwBufMgr{Ogre::HardwareBufferManager::getSingletonPtr()};
+  auto &hwBufMgr{Ogre::HardwareBufferManager::getSingleton()};
 
   // We can assume that compound::Triangle has no padding and std::vector
   // is sequential, so can avoid copying the faces.
@@ -269,7 +260,7 @@ generateIndexData(const nif::NiTriShapeData &block) {
   const std::size_t numIndices{3u * block.numTriangles};
 
   // Copy the triangle (index) buffer into a hardware buffer.
-  auto hwBuf{hwBufMgr->createIndexBuffer(itype, numIndices, usage)};
+  auto hwBuf{hwBufMgr.createIndexBuffer(itype, numIndices, usage)};
   hwBuf->writeData(0, hwBuf->getSizeInBytes(), indexBuffer, true);
 
   auto indexData{std::make_unique<Ogre::IndexData>()};
@@ -281,7 +272,7 @@ generateIndexData(const nif::NiTriShapeData &block) {
 
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiTriStripsData &block) {
-  auto *hwBufMgr = Ogre::HardwareBufferManager::getSingletonPtr();
+  auto &hwBufMgr = Ogre::HardwareBufferManager::getSingleton();
 
   const auto usage{Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY};
   const auto itype{Ogre::HardwareIndexBuffer::IT_16BIT};
@@ -294,7 +285,7 @@ generateIndexData(const nif::NiTriStripsData &block) {
     buf.insert(buf.end(), strip.begin(), strip.end());
   }
 
-  auto hwBuf{hwBufMgr->createIndexBuffer(itype, numIndices, usage)};
+  auto hwBuf{hwBufMgr.createIndexBuffer(itype, numIndices, usage)};
   hwBuf->writeData(0, hwBuf->getSizeInBytes(), buf.data(), true);
 
   auto indexData{std::make_unique<Ogre::IndexData>()};
@@ -302,6 +293,20 @@ generateIndexData(const nif::NiTriStripsData &block) {
   indexData->indexCount = numIndices;
   indexData->indexStart = 0;
   return indexData;
+}
+
+std::unique_ptr<Ogre::IndexData>
+generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh) {
+  if (dynamic_cast<const nif::NiTriShapeData *>(&block)) {
+    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+    const auto &triShape{dynamic_cast<const nif::NiTriShapeData &>(block)};
+    return oo::generateIndexData(triShape);
+  } else if (dynamic_cast<const nif::NiTriStripsData *>(&block)) {
+    submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+    const auto &triStrips{dynamic_cast<const nif::NiTriStripsData &>(block)};
+    return oo::generateIndexData(triStrips);
+  }
+  return std::unique_ptr<Ogre::IndexData>{};
 }
 
 void setSourceTexture(const nif::NiSourceTexture &block,
@@ -314,8 +319,7 @@ void setSourceTexture(const nif::NiSourceTexture &block,
       using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
       auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
       // TODO: Use fs not std::fs
-      tex->setTextureName(oo::normalizePath(
-          texFile.filename.string.str()));
+      tex->setTextureName(oo::normalizePath(texFile.filename.string.str()));
     }
   } else {
     // We do not support internal textures, see InternalTextureFile comments
@@ -467,8 +471,8 @@ void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
   }
 }
 
-void setMaterialProperties(const nif::NiMaterialProperty &block,
-                           Ogre::Pass *pass) {
+void
+setMaterialProperties(const nif::NiMaterialProperty &block, Ogre::Pass *pass) {
   pass->setAmbient(oo::fromNif(block.ambientColor));
 
   auto diffuse{oo::fromNif(block.diffuseColor)};
@@ -525,20 +529,18 @@ void addGenericFragmentShader(Ogre::Pass *pass) {
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
   TangentData out{};
-  if (extraData.name) {
-    if (extraData.name->str().find("Tangent space") == 0) {
-      // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
-      const std::size_t bytesPerList{extraData.data.dataSize / 2};
-      const std::size_t bytesPerVert{3u * sizeof(float)};
-      const std::size_t vertsPerList{bytesPerList / bytesPerVert};
-      out.bitangents.resize(vertsPerList);
-      out.tangents.resize(vertsPerList);
+  if (extraData.name && extraData.name->str().find("Tangent space") == 0) {
+    // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
+    const std::size_t bytesPerList{extraData.data.dataSize / 2};
+    const std::size_t bytesPerVert{3u * sizeof(float)};
+    const std::size_t vertsPerList{bytesPerList / bytesPerVert};
+    out.bitangents.resize(vertsPerList);
+    out.tangents.resize(vertsPerList);
 
-      // Poor naming choices, maybe?
-      const nif::basic::Byte *bytes{extraData.data.data.data()};
-      std::memcpy(out.tangents.data(), bytes, bytesPerList);
-      std::memcpy(out.bitangents.data(), bytes + bytesPerList, bytesPerList);
-    }
+    // Poor naming choices, maybe?
+    const nif::basic::Byte *bytes{extraData.data.data.data()};
+    std::memcpy(out.tangents.data(), bytes, bytesPerList);
+    std::memcpy(out.bitangents.data(), bytes + bytesPerList, bytesPerList);
   }
   return out;
 }
@@ -556,7 +558,7 @@ MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
     // Normal mapping is automatically turned on if a normal map exists. If one
     // doesn't exist, then we use a flat normal map.
     auto &texMgr{Ogre::TextureManager::getSingleton()};
-    if (auto normalMap = toNormalMap(family.base->getTextureName());
+    if (auto normalMap = oo::toNormalMap(family.base->getTextureName());
         texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
       family.normal = parseTexDesc(&block.baseTexture, pass, normalMap);
     } else {
@@ -564,30 +566,34 @@ MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
                                    "textures/flat_n.dds");
     }
   }
+
   if (block.hasDarkTexture) {
     family.dark = parseTexDesc(&block.darkTexture, pass);
   }
+
   if (block.hasDetailTexture) {
     family.detail = parseTexDesc(&block.detailTexture, pass);
   }
+
   if (block.hasGlossTexture) {
     family.gloss = parseTexDesc(&block.glossTexture, pass);
   }
+
   if (block.hasGlowTexture) {
     family.glow = parseTexDesc(&block.glowTexture, pass);
   }
-  if (block.hasDecal0Texture) {
-    family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
-    if (block.hasDecal1Texture) {
-      family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
-      if (block.hasDecal2Texture) {
-        family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
-        if (block.hasDecal3Texture) {
-          family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
-        }
-      }
-    }
-  }
+
+  if (!block.hasDecal0Texture) return family;
+  family.decals.emplace_back(parseTexDesc(&block.decal0Texture, pass));
+
+  if (!block.hasDecal1Texture) return family;
+  family.decals.emplace_back(parseTexDesc(&block.decal1Texture, pass));
+
+  if (!block.hasDecal2Texture) return family;
+  family.decals.emplace_back(parseTexDesc(&block.decal2Texture, pass));
+
+  if (!block.hasDecal3Texture) return family;
+  family.decals.emplace_back(parseTexDesc(&block.decal3Texture, pass));
 
   return family;
 }
@@ -600,7 +606,7 @@ MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
   };
   auto it{std::find_if(extraDataArray.begin(), extraDataArray.end(), pred)};
   if (it != extraDataArray.end() && checkRefType<nif::NiBinaryExtraData>(*it)) {
-    return getTangentData(getBlock<nif::NiBinaryExtraData>(*it));
+    return oo::getTangentData(getBlock<nif::NiBinaryExtraData>(*it));
   }
   return TangentData{};
 }
@@ -616,12 +622,13 @@ MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
   const auto &texBlock{getBlock<nif::NiTexturingProperty>(*it)};
 
   auto family{parseNiTexturingProperty(texBlock, pass)};
-  if (family.base) {
-    pass->addTextureUnitState(family.base.release());
-    if (family.normal) {
-      pass->addTextureUnitState(family.normal.release());
-    }
-  }
+
+  if (!family.base) return true;
+  pass->addTextureUnitState(family.base.release());
+
+  if (!family.normal) return true;
+  pass->addTextureUnitState(family.normal.release());
+
   // TODO: Support more than base textures
   return true;
 }
@@ -667,19 +674,6 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
 
   const auto &geomData{getBlock<nif::NiGeometryData>(block.data)};
 
-  std::unique_ptr<Ogre::IndexData> indexData{[submesh, &geomData = geomData]() {
-    using namespace nif;
-    if (dynamic_cast<const NiTriShapeData *>(&geomData)) {
-      submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
-      return generateIndexData(dynamic_cast<const NiTriShapeData &>(geomData));
-    } else if (dynamic_cast<const NiTriStripsData *>(&geomData)) {
-      submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
-      return generateIndexData(dynamic_cast<const NiTriStripsData &>(geomData));
-    } else {
-      return std::unique_ptr<Ogre::IndexData>{};
-    }
-  }()};
-
   // For normal mapping we need tangent and bitangent information given inside
   // an NiBinaryExtraData block. For low versions, the extra data is arranged
   // like a linked list, and for high versions it's an array.
@@ -696,8 +690,9 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
   // reserved for Ogre::SceneNodes), so we will apply it to all the vertex
   // information manually.
   const auto totalTrans{transform * getTransform(block)};
-  auto vertexData{generateVertexData(geomData, totalTrans,
-                                     &bitangents, &tangents)};
+  auto vertexData{oo::generateVertexData(geomData, totalTrans,
+                                         &bitangents, &tangents)};
+  auto indexData{oo::generateIndexData(geomData, submesh)};
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
   // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
@@ -730,9 +725,9 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block) {
   auto material{matMgr.create(materialName, mMesh->getGroup())};
   auto pass{material->getTechnique(0)->getPass(0)};
 
-  setMaterialProperties(block, pass);
-  addGenericVertexShader(pass);
-  addGenericFragmentShader(pass);
+  oo::setMaterialProperties(block, pass);
+  oo::addGenericVertexShader(pass);
+  oo::addGenericFragmentShader(pass);
 
   return std::move(material);
 }
@@ -743,25 +738,24 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
                               const std::optional<std::string> &textureOverride) {
   auto textureUnit{std::make_unique<Ogre::TextureUnitState>(parent)};
 
-  setClampMode(tex->clampMode, textureUnit.get());
-  setFilterMode(tex->filterMode, textureUnit.get());
+  oo::setClampMode(tex->clampMode, textureUnit.get());
+  oo::setFilterMode(tex->filterMode, textureUnit.get());
 
   textureUnit->setTextureCoordSet(tex->uvSet);
 
   if (tex->hasTextureTransform && *tex->hasTextureTransform) {
-    setTransform(*tex->textureTransform, textureUnit.get());
+    oo::setTransform(*tex->textureTransform, textureUnit.get());
   }
 
   const auto &source{getBlock<nif::NiSourceTexture &>(tex->source)};
-  setSourceTexture(source, textureUnit.get(), textureOverride);
+  oo::setSourceTexture(source, textureUnit.get(), textureOverride);
 
   return textureUnit;
 }
 
 MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks)
     : mBlocks(blocks), mMesh(mesh) {
-  std::vector<boost::default_color_type>
-      colorMap(boost::num_vertices(mBlocks));
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   auto propertyMap = boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks));
 
