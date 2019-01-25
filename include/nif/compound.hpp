@@ -945,10 +945,11 @@ std::istream &operator>>(std::istream &is, KeyGroup<T> &t) {
         break;
       case 5: t.template readKeys<5>(is);
         break;
-      default:
-        throw std::runtime_error(boost::str(
-            boost::format("Expected a KeyType, found %d") %
-                static_cast<uint32_t>(t.interpolation)));
+      default: {
+        throw std::runtime_error(
+            "Expected a KeyType "
+                + std::to_string(static_cast<uint32_t>(t.interpolation)));
+      }
     }
   }
   return is;

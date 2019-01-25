@@ -3,6 +3,7 @@
 
 #include "io/io.hpp"
 #include <array>
+#include <functional>
 #include <optional>
 #include <stdexcept>
 #include <string_view>

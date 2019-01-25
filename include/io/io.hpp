@@ -2,7 +2,6 @@
 #define OPENOBLIVION_IO_IO_HPP
 
 #include "bitflag.hpp"
-#include <boost/format.hpp>
 #include <array>
 #include <cstddef>
 #include <istream>
@@ -62,9 +61,8 @@ std::string decodeIosState(std::ios_base::iostate state);
 struct IOReadError : virtual std::runtime_error {
   explicit IOReadError(const std::string &what) : std::runtime_error(what) {}
   explicit IOReadError(std::istream::iostate state) :
-      std::runtime_error(boost::str(
-          boost::format("Failed to read, stream state is %s")
-              % decodeIosState(state))) {}
+      std::runtime_error("Failed to read, stream state is "
+                             + decodeIosState(state)) {}
 };
 
 /// \name ByteDirectIoable

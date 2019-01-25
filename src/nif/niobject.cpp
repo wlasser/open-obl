@@ -29,10 +29,11 @@ void NiKeyframeData::read(std::istream &is) {
         }
         break;
       }
-      default:
-        throw std::runtime_error(boost::str(
-            boost::format("Expected a KeyType, found %d") %
-                static_cast<uint32_t>(rotationType)));
+      default: {
+        throw std::runtime_error(
+            "Expected a KeyType, found "
+                + std::to_string(static_cast<uint32_t>(rotationType)));
+      }
     }
   }
   is >> translations;
