@@ -52,13 +52,25 @@ long numCCWTriangles(const nif::NiTriShapeData &block);
 // Append '_n' to the filename, preserving the extension
 std::filesystem::path toNormalMap(std::filesystem::path texFile);
 
+struct BoneBinding {
+  std::array<unsigned short, 4> indices{};
+  std::array<float, 4> weights{};
+};
+
+// Get the bone indices and weights of each vertex governed by the
+// NiSkinPartition, presumably those owned by some NiGeometry block.
+// The indices are relative to the bone list of the NiSkinInstance that owns the
+// NiSkinPartition.
+std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin);
+
 // Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
 // for rendering.
 std::unique_ptr<Ogre::VertexData>
 generateVertexData(const nif::NiGeometryData &block,
                    Ogre::Matrix4 transformation,
                    std::vector<nif::compound::Vector3> *bitangents,
-                   std::vector<nif::compound::Vector3> *tangents);
+                   std::vector<nif::compound::Vector3> *tangents,
+                   std::vector<BoneBinding> *boneBindings);
 
 // Reads triangle data from NiTriShapeData and prepares it for rendering.
 std::unique_ptr<Ogre::IndexData>
@@ -92,6 +104,7 @@ void
 setMaterialProperties(const nif::NiMaterialProperty &block, Ogre::Pass *pass);
 
 void addGenericVertexShader(Ogre::Pass *pass);
+void addGenericSkinnedVertexShader(Ogre::Pass *pass);
 void addGenericFragmentShader(Ogre::Pass *pass);
 
 struct TangentData {
@@ -106,6 +119,7 @@ class MeshLoaderState {
   friend class TBGVisitor;
 
   template<class T, class S> T &getBlock(nif::basic::Ref<S> ref);
+  template<class T, class S> T &getBlock(nif::basic::Ptr<S> ptr);
 
   // TODO: This is awful, stop doing dynamic_cast checks!
   template<class T, class S,
@@ -144,7 +158,11 @@ class MeshLoaderState {
                              Ogre::Pass *pass);
 
   bool attachMaterialProperty(const nif::NiPropertyArray &properties,
-                              Ogre::SubMesh *submesh);
+                              Ogre::SubMesh *submesh, bool hasSkinning = false);
+
+  // Dispatch to oo::getBoneBindings(const nif::NiSkinPartition &) if `skin` has
+  // a NiSkinPartition.
+  std::vector<BoneBinding> getBoneBindings(const nif::NiTriBasedGeom &block);
 
   BlockGraph mBlocks;
   Ogre::Mesh *mMesh;
@@ -181,6 +199,15 @@ T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
   const auto val{static_cast<int32_t>(ref)};
   if (val < 0 || static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
     throw std::out_of_range("Nonexistent reference");
+  }
+  return dynamic_cast<T &>(*mBlocks[val]);
+}
+
+template<class T, class S>
+T &MeshLoaderState::getBlock(nif::basic::Ptr<S> ptr) {
+  const auto val{static_cast<int32_t>(ptr)};
+  if (static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
+    throw std::out_of_range("Nonexistent pointer");
   }
   return dynamic_cast<T &>(*mBlocks[val]);
 }

@@ -50,9 +50,13 @@ template<class T>
 class Ptr {
  private:
   int32_t val{};
+ public:
   friend std::istream &operator>>(std::istream &is, Ptr<T> &t) {
     io::readBytes(is, t.val);
     return is;
+  }
+  explicit operator int32_t() const {
+    return val;
   }
 };
 
@@ -70,6 +74,9 @@ class Ref {
   }
   explicit operator int32_t() const {
     return val;
+  }
+  explicit operator bool() const {
+    return val != Null;
   }
 };
 enum class StringOffset : uint32_t;

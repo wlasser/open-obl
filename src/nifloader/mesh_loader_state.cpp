@@ -1,8 +1,10 @@
 #include "conversions.hpp"
+#include "fs/path.hpp"
 #include "nifloader/loader_state.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <OgreSkeletonManager.h>
 #include <algorithm>
 #include <numeric>
 
@@ -67,7 +69,8 @@ std::unique_ptr<Ogre::VertexData>
 generateVertexData(const nif::NiGeometryData &block,
                    Ogre::Matrix4 transformation,
                    std::vector<nif::compound::Vector3> *bitangents,
-                   std::vector<nif::compound::Vector3> *tangents) {
+                   std::vector<nif::compound::Vector3> *tangents,
+                   std::vector<BoneBinding> *boneBindings) {
   // Ogre expects a heap allocated raw pointer, but to improve exception safety
   // we construct an unique_ptr then relinquish control of it to Ogre.
   auto vertexData{std::make_unique<Ogre::VertexData>()};
@@ -87,7 +90,19 @@ generateVertexData(const nif::NiGeometryData &block,
   vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
   offset += 3;
 
-  // TODO: Blend weights
+  if (boneBindings) {
+    // Blend indices
+    vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT4,
+                         Ogre::VES_BLEND_INDICES);
+    vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT4);
+    offset += 4;
+
+    // Blend weights
+    vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT4,
+                         Ogre::VES_BLEND_WEIGHTS);
+    vertSize += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT4);
+    offset += 4;
+  }
 
   // Normals
   vertDecl->addElement(source, vertSize, Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
@@ -152,7 +167,33 @@ generateVertexData(const nif::NiGeometryData &block,
     throw std::runtime_error("NiGeometryData has no vertices");
   }
 
-  // TODO: Blend weights
+  if (boneBindings) {
+    // Blend indices
+    {
+      auto it = vertexBuffer.begin() + localOffset;
+      for (const auto &binding : *boneBindings) {
+        *it = static_cast<float>(binding.indices[0]);
+        *(it + 1) = static_cast<float>(binding.indices[1]);
+        *(it + 2) = static_cast<float>(binding.indices[2]);
+        *(it + 3) = static_cast<float>(binding.indices[3]);
+        it += offset;
+      }
+      localOffset += 4;
+    }
+
+    // Blend weights
+    {
+      auto it = vertexBuffer.begin() + localOffset;
+      for (const auto &binding : *boneBindings) {
+        *it = binding.weights[0];
+        *(it + 1) = binding.weights[1];
+        *(it + 2) = binding.weights[2];
+        *(it + 3) = binding.weights[3];
+        it += offset;
+      }
+      localOffset += 4;
+    }
+  }
 
   // Normals
   if (block.hasNormals) {
@@ -307,6 +348,42 @@ generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh) {
     return oo::generateIndexData(triStrips);
   }
   return std::unique_ptr<Ogre::IndexData>{};
+}
+
+std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
+  // TODO: Support more than one skin partition block
+  const auto &partition{skin.skinPartitionBlocks.front()};
+
+  if (partition.numWeightsPerVertex > 4) {
+    // TODO: Warn about having too many weights per vertex
+  }
+  if (partition.hasVertexMap.has_value() && !*partition.hasVertexMap) {
+    throw std::runtime_error("NiSkinPartition has no vertex map");
+  }
+  if (partition.hasVertexWeights.has_value() && !*partition.hasVertexWeights) {
+    throw std::runtime_error("NiSkinPartition has no vertex weights");
+  }
+  if (!partition.hasBoneIndices) {
+    throw std::runtime_error("NiSkinPartition has no bone indices");
+  }
+
+  std::vector<BoneBinding> bindings(partition.numVertices);
+  for (std::size_t i{0}; i < bindings.size(); ++i) {
+    auto len{std::min<std::size_t>(partition.numWeightsPerVertex, 4u)};
+    {
+      auto begin{partition.boneIndices[i].begin()};
+      std::transform(begin, begin + len, bindings[i].indices.begin(),
+                     [&partition](auto idx) {
+                       return partition.bones[static_cast<std::size_t>(idx)];
+                     });
+    }
+    {
+      auto begin{partition.vertexWeights[i].begin()};
+      std::copy(begin, begin + len, bindings[i].weights.begin());
+    }
+  }
+
+  return bindings;
 }
 
 void setSourceTexture(const nif::NiSourceTexture &block,
@@ -503,6 +580,22 @@ void addGenericVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_CAMERA_POSITION);
 }
 
+void addGenericSkinnedVertexShader(Ogre::Pass *pass) {
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
+  pass->setVertexProgram("genericSkinnedMaterial_vs_glsl", true);
+  auto vsParams{pass->getVertexProgramParameters()};
+  vsParams->setNamedAutoConstant("world",
+                                 AutoConst::ACT_WORLD_MATRIX);
+  vsParams->setNamedAutoConstant("worldInverseTranspose",
+                                 AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
+  vsParams->setNamedAutoConstant("worldViewProj",
+                                 AutoConst::ACT_WORLDVIEWPROJ_MATRIX);
+  vsParams->setNamedAutoConstant("viewPos",
+                                 AutoConst::ACT_CAMERA_POSITION);
+  vsParams->setNamedAutoConstant("worldMatrixArray",
+                                 AutoConst::ACT_WORLD_MATRIX_ARRAY_3x4);
+}
+
 void addGenericFragmentShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
@@ -635,7 +728,8 @@ MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
 
 bool
 MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
-                                        Ogre::SubMesh *submesh) {
+                                        Ogre::SubMesh *submesh,
+                                        bool hasSkinning) {
   auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
     return checkRefType<nif::NiMaterialProperty>(ref);
   })};
@@ -646,9 +740,18 @@ MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
   const auto material{parseNiMaterialProperty(matBlock)};
   submesh->setMaterialName(material->getName(), material->getGroup());
   auto *pass{material->getTechnique(0)->getPass(0)};
+
+  if (hasSkinning) {
+    oo::addGenericSkinnedVertexShader(pass);
+  } else {
+    oo::addGenericVertexShader(pass);
+  }
+  oo::addGenericFragmentShader(pass);
+
   if (pass->getNumTextureUnitStates() == 0) {
     attachTextureProperty(properties, material->getTechnique(0)->getPass(0));
   }
+
   return true;
 }
 
@@ -670,7 +773,9 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
   auto submesh{mMesh->createSubMesh(block.name.str())};
   submesh->useSharedVertices = false;
 
-  attachMaterialProperty(block.properties, submesh);
+  auto boneBindings{getBoneBindings(block)};
+
+  attachMaterialProperty(block.properties, submesh, !boneBindings.empty());
 
   const auto &geomData{getBlock<nif::NiGeometryData>(block.data)};
 
@@ -691,7 +796,9 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
   // information manually.
   const auto totalTrans{transform * getTransform(block)};
   auto vertexData{oo::generateVertexData(geomData, totalTrans,
-                                         &bitangents, &tangents)};
+                                         &bitangents, &tangents,
+                                         boneBindings.empty() ? nullptr
+                                                              : &boneBindings)};
   auto indexData{oo::generateIndexData(geomData, submesh)};
 
   // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
@@ -726,8 +833,6 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block) {
   auto pass{material->getTechnique(0)->getPass(0)};
 
   oo::setMaterialProperties(block, pass);
-  oo::addGenericVertexShader(pass);
-  oo::addGenericFragmentShader(pass);
 
   return std::move(material);
 }
@@ -751,6 +856,38 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
   oo::setSourceTexture(source, textureUnit.get(), textureOverride);
 
   return textureUnit;
+}
+
+std::vector<BoneBinding>
+MeshLoaderState::getBoneBindings(const nif::NiTriBasedGeom &block) {
+  if (auto instRef{block.skinInstance}; instRef && *instRef) {
+    const auto &instance{getBlock<nif::NiSkinInstance>(*instRef)};
+    const auto &bones{instance.bones};
+    if (auto partRef{instance.skinPartition}; partRef && *partRef) {
+      const auto &partition{getBlock<nif::NiSkinPartition>(*partRef)};
+      auto bindings{oo::getBoneBindings(partition)};
+
+      oo::Path meshName{mMesh->getName()};
+      oo::Path folderName{std::string{meshName.folder()}};
+      oo::Path skelName{folderName / oo::Path{"skeleton.nif"}};
+
+      auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
+      // skelName is assume to already have been normalized.
+      auto skelPtr{skelMgr.getByName(skelName.c_str(), mMesh->getGroup())};
+      skelPtr->load();
+      // Map the indices in the bindings into the actual bones in the skeleton
+      for (auto &binding : bindings) {
+        std::transform(binding.indices.begin(), binding.indices.end(),
+                       binding.indices.begin(), [&](auto idx) {
+              const auto &node{getBlock<nif::NiNode>(bones[idx])};
+              Ogre::Bone *bone{skelPtr->getBone(node.name.str())};
+              return bone->getHandle();
+            });
+      }
+      return bindings;
+    }
+  }
+  return {};
 }
 
 MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks)

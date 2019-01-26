@@ -83,9 +83,9 @@ reifyRecord(const record::REFR_NPC_ &refRec,
       }
     }();
     auto &part{bodyParts[type]};
-    part.entity = scnMgr->createEntity(meshPath.c_str());
-    part.rigidBody =
-        oo::loadRigidBody(meshPath.c_str(), oo::RESOURCE_GROUP, scnMgr);
+    const std::string meshName{meshPath.c_str()};
+    part.entity = scnMgr->createEntity(meshName);
+    part.rigidBody = oo::loadRigidBody(meshName, oo::RESOURCE_GROUP, scnMgr);
     part.texture = texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP);
   }
 
