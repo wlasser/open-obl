@@ -612,6 +612,8 @@ void addGenericFragmentShader(Ogre::Pass *pass) {
   fsParams->setNamedAutoConstant("lightAttenuationArray",
                                  AutoConst::ACT_LIGHT_ATTENUATION_ARRAY,
                                  numLights);
+  fsParams->setNamedAutoConstant("ambientLightColor",
+                                 AutoConst::ACT_AMBIENT_LIGHT_COLOUR);
   fsParams->setNamedAutoConstant("matShininess",
                                  AutoConst::ACT_SURFACE_SHININESS);
   fsParams->setNamedAutoConstant("matDiffuse",

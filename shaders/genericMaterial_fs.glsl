@@ -12,6 +12,7 @@ uniform sampler2D normalMap;
 uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 uniform vec4 lightAttenuationArray[MAX_LIGHTS];
+uniform vec4 ambientLightColor;
 
 uniform float matShininess;
 uniform vec3 matDiffuse;
@@ -36,7 +37,7 @@ void main() {
     vec3 lighting = vec3(0.0f, 0.0f, 0.0f);
     vec3 viewDir = normalize(ViewPos - FragPos);
 
-    vec3 ambient = diffuseColor * vec3(1.0f, 1.0f, 1.0f) * 25.0f / 255.0f;
+    vec3 ambient = diffuseColor * ambientLightColor.rgb;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
