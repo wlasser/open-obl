@@ -1,5 +1,6 @@
 #include "conversions.hpp"
 #include "fs/path.hpp"
+#include "game_settings.hpp"
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
@@ -43,12 +44,22 @@ reifyRecord(const record::REFR_LIGH &refRec,
   light->setDiffuseColour(lightColor);
   light->setSpecularColour(lightColor);
 
-  // TODO: These could do with more tuning
-  const auto radius{std::max(gsl::narrow_cast<float>(data.radius)
-                                 * oo::metersPerUnit<float>, 0.01f)};
-  light->setAttenuation(radius, 1.0f, 3.0f / radius, 5.0f / (radius * radius));
+  {
+    const auto &gs{oo::GameSettings::getSingleton()};
+    const float s{oo::unitsPerMeter<float>};
+    const float s1{gs.get("bLightAttenuation.fLinearRadiusMult", 1.0f)};
+    const float s2{gs.get("bLightAttenuation.fQuadraticRadiusMult", 1.0f)};
+    const float c0{gs.get("bLightAttenuation.fConstantValue", 1.0f)};
+    const float c1{gs.get("bLightAttenuation.fLinearValue", 3.0f)};
+    const float c2{gs.get("bLightAttenuation.fQuadraticValue", 16.0f)};
 
-  light->setPowerScale(baseRec->fadeValue ? baseRec->fadeValue->data : 1.0f);
+    const auto r{std::max(gsl::narrow_cast<float>(data.radius), 0.01f)};
+
+    light->setAttenuation(r, c0,
+                          s * c1 / (s1 * r),
+                          s * s * c2 / (s2 * r * s2 * r));
+    light->setPowerScale(baseRec->fadeValue ? baseRec->fadeValue->data : 1.0f);
+  }
 
   using Flag = record::raw::DATA_LIGH::Flag;
   const auto spotlightFlag{Flag::SpotLight | Flag::SpotShadow};

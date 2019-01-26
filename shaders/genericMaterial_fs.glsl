@@ -42,7 +42,7 @@ void main() {
         vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
         vec3 reflectDir = reflect(-lightDir, normal);
         float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-        float attenuation = 1.0f / (1.0f
+        float attenuation = 1.0f / (lightAttenuationArray[i].y
             + lightAttenuationArray[i].z * lightDistance
             + lightAttenuationArray[i].w * lightDistance * lightDistance);
 
