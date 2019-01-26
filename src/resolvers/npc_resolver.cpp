@@ -56,6 +56,14 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
   auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
 
+  if (!baseRec->skeletonFilename) return empty;
+
+  const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
+  const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
+  auto skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
+  auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
+  skelPtr->load();
+
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
 
@@ -85,20 +93,11 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     auto &part{bodyParts[type]};
     const std::string meshName{meshPath.c_str()};
     part.entity = scnMgr->createEntity(meshName);
+    part.entity->getMesh()->setSkeletonName(skelPtr->getName());
+    part.entity->_initialise(true);
     part.rigidBody = oo::loadRigidBody(meshName, oo::RESOURCE_GROUP, scnMgr);
     part.texture = texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP);
   }
-
-  if (!baseRec->skeletonFilename) return empty;
-
-  const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
-  const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
-  auto skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
-  auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
-  skelPtr->load();
-
-//  bodyParts[BodyParts::UpperBody].mesh->setSkeletonName(skelPtr->getName());
-//  entity->setDisplaySkeleton(true);
 
   return {ecs::RigidBody<0>{skelBox},
           ecs::RigidBody<1>{bodyParts[BodyParts::UpperBody].rigidBody},
