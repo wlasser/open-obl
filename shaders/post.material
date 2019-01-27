@@ -1,0 +1,30 @@
+vertex_program post_vs_glsl glsl {
+    source gui_vs.glsl
+}
+
+fragment_program post_fs_glsl glsl {
+    source post_fs.glsl
+}
+
+material PostMaterial {
+    technique {
+        pass {
+			cull_hardware none
+			cull_software none
+			depth_func always_pass
+            polygon_mode_overrideable false
+
+			vertex_program_ref post_vs_glsl {
+			    param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+			}
+
+			fragment_program_ref post_fs_glsl { }
+
+			texture_unit RT {
+                tex_coord_set 0
+				tex_address_mode clamp
+				filtering trilinear
+			}
+		}
+    }
+}

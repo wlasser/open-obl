@@ -86,6 +86,9 @@ void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {
   }
   std::get<Ogre::RenderWindowPtr>(windows)->addViewport(camera);
   ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
+  auto &compMgr{Ogre::CompositorManager::getSingleton()};
+  auto *compInstance{compMgr.addCompositor(camera->getViewport(), "Post")};
+  compInstance->setEnabled(true);
 }
 
 } // namespace oo
