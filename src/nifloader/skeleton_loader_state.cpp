@@ -64,7 +64,8 @@ void SkeletonVisitor::discover_vertex(const nif::NiNode &node,
 
   bone->setPosition(oo::fromBSCoordinates(oo::fromNif(node.translation)));
   bone->setScale(node.scale, node.scale, node.scale);
-  bone->setOrientation(oo::fromBSCoordinates(fromNif(node.rotation)));
+  bone->setOrientation(oo::fromBSCoordinates(oo::fromNif(node.rotation))
+                           .transpose());
 
   bone->setBindingPose();
 }

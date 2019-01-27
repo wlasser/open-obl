@@ -588,8 +588,8 @@ void addGenericSkinnedVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("worldInverseTranspose",
                                  AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
-  vsParams->setNamedAutoConstant("worldViewProj",
-                                 AutoConst::ACT_WORLDVIEWPROJ_MATRIX);
+  vsParams->setNamedAutoConstant("viewProj",
+                                 AutoConst::ACT_VIEWPROJ_MATRIX);
   vsParams->setNamedAutoConstant("viewPos",
                                  AutoConst::ACT_CAMERA_POSITION);
   vsParams->setNamedAutoConstant("worldMatrixArray",
