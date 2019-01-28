@@ -573,6 +573,7 @@ struct Key<T, Enum::KeyType::QUADRATIC_KEY> {
 template<class T>
 struct Key<T, Enum::KeyType::TBC_KEY> {
   basic::Float time{};
+  T value{};
   TBC tbc{};
 };
 
@@ -604,7 +605,7 @@ struct KeyGroup {
 
   template<std::size_t I>
   void readKeys(std::istream &is) {
-    auto v = keys.template emplace<I>(numKeys);
+    auto &v = keys.template emplace<I>(numKeys);
     for (auto &key : v) is >> key;
   }
 };
@@ -922,6 +923,7 @@ std::istream &operator>>(std::istream &is,
 template<class T>
 std::istream &operator>>(std::istream &is, Key<T, Enum::KeyType::TBC_KEY> &t) {
   io::readBytes(is, t.time);
+  io::readBytes(is, t.value);
   is >> t.tbc;
   return is;
 }
