@@ -1,20 +1,23 @@
 #include "conversions.hpp"
 #include "nifloader/loader_state.hpp"
-#include <stdexcept>
 
 namespace oo {
 
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
-  using namespace oo;
-  Ogre::Vector3 translation{fromBSCoordinates(fromNif(block.translation))};
+  const Ogre::Vector3 translation{
+      oo::fromBSCoordinates(oo::fromNif(block.translation))
+  };
 
-  Ogre::Matrix3 rotationMatrix{fromBSCoordinates(fromNif(block.rotation))};
-  Ogre::Quaternion rotation{rotationMatrix.transpose()};
+  const Ogre::Quaternion rotation = [&block]() {
+    const auto m{oo::fromBSCoordinates(oo::fromNif(block.rotation))};
+    return Ogre::Quaternion{m.transpose()};
+  }();
 
-  Ogre::Vector3 scale{block.scale, block.scale, block.scale};
+  const Ogre::Vector3 scale{block.scale, block.scale, block.scale};
 
-  Ogre::Matrix4 trans{};
+  Ogre::Matrix4 trans;
   trans.makeTransform(translation, scale, rotation);
+
   return trans;
 }
 

@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 #define OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 
+#include "nifloader/loader.hpp"
 #include "nifloader/loader_state.hpp"
 #include <Ogre.h>
 #include <filesystem>

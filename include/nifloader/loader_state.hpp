@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_NIF_LOADER_STATE_HPP
 #define OPENOBLIVION_NIF_LOADER_STATE_HPP
 
-#include "nifloader/loader.hpp"
-#include <boost/graph/adjacency_list.hpp>
+#include "nif/niobject.hpp"
+#include <OgreMatrix4.h>
 
 namespace oo {
 
