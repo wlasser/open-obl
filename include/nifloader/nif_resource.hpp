@@ -7,6 +7,9 @@
 
 namespace Ogre {
 
+/// \addtogroup OpenOblivionNifloader
+/// @{
+
 class NifResource : public Ogre::Resource {
  public:
   NifResource(ResourceManager *creator,
@@ -33,6 +36,8 @@ class NifResource : public Ogre::Resource {
 };
 
 using NifResourcePtr = std::shared_ptr<NifResource>;
+
+/// @}
 
 } // namespace Ogre
 

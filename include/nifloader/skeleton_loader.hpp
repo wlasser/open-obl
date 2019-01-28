@@ -7,6 +7,8 @@
 
 namespace oo {
 
+/// Loader for `Ogre::Skeleton`s defined in NIF files.
+/// \ingroup OpenOblivionNifloader
 class SkeletonLoader : public Ogre::ManualResourceLoader {
  private:
   friend class SkeletonLoaderState;

@@ -11,6 +11,9 @@
 
 namespace oo {
 
+/// \addtogroup OpenOblivionNifloader
+/// @{
+
 class CollisionObjectLoaderState {
  public:
   CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
@@ -102,6 +105,8 @@ struct CollisionObjectVisitor {
 };
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
+
+///@}
 
 } // namespace oo
 

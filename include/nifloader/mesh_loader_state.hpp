@@ -12,16 +12,20 @@
 
 namespace oo {
 
-// Ogre::SubMeshes do not store bounding box information, only Ogre::Meshes do,
-// but we need it to compute the overall bounding box.
+/// \addtogroup OpenOblivionNifloader
+/// @{
+
+/// `Ogre::SubMesh`es do not store bounding box information, only `Ogre::Mesh`es
+/// do, but we need it to compute the overall bounding box.
 struct BoundedSubmesh {
   Ogre::SubMesh *submesh{};
   Ogre::AxisAlignedBox bbox{};
 };
 
-// We need an Ogre::Material to apply a texture to, but in nif files the two are
-// completely separate. We use this structure as a temporary owner for the
-// textures before passing control to Ogre when a material is available.
+/// Acts as a temporary owner for textures before passing control to Ogre when
+/// a material is available. This is necessary because we need an
+/// `Ogre::Material` to apply a texture to, but in nif files the two are
+/// completely separate.
 struct TextureFamily {
   using TexturePtr = std::unique_ptr<Ogre::TextureUnitState>;
   TexturePtr base{};
@@ -35,22 +39,22 @@ struct TextureFamily {
   std::vector<TexturePtr> decals{};
 };
 
-// Compute the minimum bounding box of the vertices in the block, subject to the
-// given Ogre-coordinate transformation
+/// Compute the minimum bounding box of the vertices in the block, subject to
+/// the given Ogre coordinate-transformation.
 Ogre::AxisAlignedBox
 getBoundingBox(const nif::NiGeometryData &block, Ogre::Matrix4 transformation);
 
-// Returns true if the triangle has a counterclockwise winding order, and
-// false otherwise
+/// Returns true if the triangle has a counterclockwise winding order, and
+/// false otherwise.
 bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
                        Ogre::Vector3 v2, Ogre::Vector3 n2,
                        Ogre::Vector3 v3, Ogre::Vector3 n3);
 
-// Return the number of triangles with a counterclockwise winding order.
-// The mesh should have normals.
+/// Return the number of triangles with a counterclockwise winding order.
+/// The mesh should have normals.
 long numCCWTriangles(const nif::NiTriShapeData &block);
 
-// Append '_n' to the filename, preserving the extension
+/// Append '_n' to the filename, preserving the extension.
 std::filesystem::path toNormalMap(std::filesystem::path texFile);
 
 struct BoneBinding {
@@ -58,14 +62,14 @@ struct BoneBinding {
   std::array<float, 4> weights{};
 };
 
-// Get the bone indices and weights of each vertex governed by the
-// NiSkinPartition, presumably those owned by some NiGeometry block.
-// The indices are relative to the bone list of the NiSkinInstance that owns the
-// NiSkinPartition.
+/// Get the bone indices and weights of each vertex governed by the
+/// `nif::NiSkinPartition`, presumably those owned by some `nif::NiGeometry`
+/// block. The indices are relative to the bone list of the
+/// `nif::NiSkinInstance` that owns the `nif::NiSkinPartition`.
 std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin);
 
-// Reads vertex, normal, and texcoord data from NiGeometryData and prepares it
-// for rendering.
+/// Read vertex, normal, and texcoord data from `nif::NiGeometryData` and
+/// prepare it for rendering.
 std::unique_ptr<Ogre::VertexData>
 generateVertexData(const nif::NiGeometryData &block,
                    Ogre::Matrix4 transformation,
@@ -73,25 +77,25 @@ generateVertexData(const nif::NiGeometryData &block,
                    std::vector<nif::compound::Vector3> *tangents,
                    std::vector<BoneBinding> *boneBindings);
 
-// Reads triangle data from NiTriShapeData and prepares it for rendering.
+/// Read triangle data from `nif::NiTriShapeData` and prepare it for rendering.
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiTriShapeData &block);
 
-// Reads triangle strip data from NiTriStripsData and prepares it for
-// rendering.
+/// Read triangle strip data from `nif::NiTriStripsData` and prepare it for
+/// rendering.
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiTriStripsData &block);
 
-// Reads triangle strip data from NiGeometryData by dispatching to the
-// appropriate overload of generateIndexData() for the most derived type of
-// `block`. Also notifies `subMesh` of the index operation type required to
-// render the generated index data.
+/// Read triangle strip data from `nif::NiGeometryData` by dispatching to the
+/// appropriate overload of `oo::generateIndexData()` for the most derived type
+/// of `block`. Also notify `subMesh` of the index operation type required to
+/// render the generated index data.
 std::unique_ptr<Ogre::IndexData>
 generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh);
 
-// Set the properties of tex provided by the block. In particular, set the
-// texture name of tex to the source texture in block, or textureOverride if it
-// is provided. Also set the mipmap format.
+/// Set the properties of tex provided by the block. In particular, set the
+/// texture name of `tex` to the source texture in `block`, or `textureOverride`
+/// if it is provided. Also set the mipmap format.
 void setSourceTexture(const nif::NiSourceTexture &block,
                       Ogre::TextureUnitState *tex,
                       const std::optional<std::string> &textureOverride = {});
@@ -127,29 +131,30 @@ class MeshLoaderState {
       class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
   bool checkRefType(nif::basic::Ref<S> ref);
 
-  // Returns an iterator into BlockGraph vertex_set.
+  /// Returns an iterator into the BlockGraph vertex_set.
   // TODO: Get rid of this, it's hideous.
   template<class T> auto getBlockIndex(const T &block);
 
-  // NiTriBasedGeom blocks determine discrete pieces of geometry with a single
-  // material and texture, and so translate to Ogre::SubMesh objects.
+  /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
+  ///         with a single material and texture, and so translate to
+  ///         `Ogre::SubMesh` objects.
   BoundedSubmesh parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
                                      const Ogre::Matrix4 &transform);
 
   std::shared_ptr<Ogre::Material>
   parseNiMaterialProperty(const nif::NiMaterialProperty &block);
 
-  // When setting the texture name of a texture unit, Ogre looks up and loads
-  // the texture using the resource group of its parent. Thus contrary to what
-  // addTextureUnitState seems to suggest, one should not create a
-  // Ogre::TextureUnitState with a nullptr parent, and we have to supply the
-  // parent pass here.
+  /// \remark When setting the texture name of a texture unit, Ogre looks up and
+  ///         loads the texture using the resource group of its parent. Thus
+  ///         contrary to what addTextureUnitState seems to suggest, one should
+  ///         not create a `Ogre::TextureUnitState` with a nullptr parent, and
+  ///         we have to supply the parent pass here.
   std::unique_ptr<Ogre::TextureUnitState>
   parseTexDesc(const nif::compound::TexDesc *tex,
                Ogre::Pass *parent,
                const std::optional<std::string> &textureOverride = {});
 
-  // See parseTexDesc for why the pass is necessary.
+  /// \remark See `parseTexDesc()` for why the pass is necessary.
   TextureFamily parseNiTexturingProperty(const nif::NiTexturingProperty &block,
                                          Ogre::Pass *pass);
 
@@ -161,8 +166,8 @@ class MeshLoaderState {
   bool attachMaterialProperty(const nif::NiPropertyArray &properties,
                               Ogre::SubMesh *submesh, bool hasSkinning = false);
 
-  // Dispatch to oo::getBoneBindings(const nif::NiSkinPartition &) if `skin` has
-  // a NiSkinPartition.
+  /// Dispatch to `oo::getBoneBindings(const nif::NiSkinPartition &)` if `skin`
+  /// has a `nif::NiSkinPartition`.
   std::vector<BoneBinding> getBoneBindings(const nif::NiTriBasedGeom &block);
 
   BlockGraph mBlocks;
@@ -232,6 +237,8 @@ auto MeshLoaderState::getBlockIndex(const T &block) {
   return std::find_if(mBlocks.vertex_set().begin(), mBlocks.vertex_set().end(),
                       comp);
 }
+
+/// @}
 
 } // namespace oo
 

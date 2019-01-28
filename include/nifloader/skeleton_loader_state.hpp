@@ -8,6 +8,8 @@
 
 namespace oo {
 
+/// \addtogroup OpenOblivionNifloader
+
 class SkeletonLoaderState {
  public:
   explicit SkeletonLoaderState(Ogre::Skeleton *skeleton, oo::BlockGraph blocks);
@@ -44,6 +46,8 @@ struct SkeletonVisitor {
 
   void finish_vertex(const nif::NiNode &node, const Graph &g);
 };
+
+/// @}
 
 } // namespace oo
 

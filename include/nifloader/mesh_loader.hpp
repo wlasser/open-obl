@@ -7,10 +7,8 @@
 
 namespace oo {
 
-// Handles custom loading of Nif files for Ogre. Each instance of this class is
-// expected to load more than one nif file, so it cannot really be stateful.
-// This class therefore handles the IO portion of loading, then constructs a
-// MeshLoaderState object to actually load the mesh.
+/// Loader for `Ogre::Mesh`es defined in NIF files.
+/// \ingroup OpenOblivionNifloader
 class MeshLoader : public Ogre::ManualResourceLoader {
  private:
   friend class MeshLoaderState;
@@ -19,7 +17,6 @@ class MeshLoader : public Ogre::ManualResourceLoader {
 
  public:
   void loadResource(Ogre::Resource *resource) override;
-  //void prepareResource(Ogre::Resource *resource) override;
 };
 
 } // namespace oo

@@ -6,8 +6,9 @@
 
 namespace oo {
 
-// Convert the translation, rotation, and scale parameters into Ogre coordinates
-// and return a combined transformation matrix.
+/// Convert the translation, rotation, and scale parameters into Ogre
+/// coordinates and return a combined transformation matrix.
+/// \ingroup OpenOblivionNifloader
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block);
 
 } // namespace oo

@@ -6,6 +6,9 @@
 
 namespace Ogre {
 
+/// \addtogroup OpenOblivionNifloader
+/// @{
+
 class NifResourceManager : public ResourceManager,
                            public Singleton<NifResourceManager> {
  public:
@@ -33,6 +36,8 @@ class NifResourceManager : public ResourceManager,
                        const NameValuePairList *params) override;
 
 };
+
+/// @}
 
 } // namespace Ogre
 
