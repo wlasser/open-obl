@@ -134,6 +134,7 @@ target_sources(OpenOblivion PRIVATE
         src/modes/loading_menu_mode.cpp
         src/modes/main_menu_mode.cpp
         src/modes/menu_mode_base.cpp
+        src/nifloader/animation.cpp
         src/nifloader/loader.cpp
         src/nifloader/loader_state.cpp
         src/nifloader/collision_object_loader.cpp
@@ -187,6 +188,7 @@ target_sources(OpenOblivion PRIVATE
         include/modes/menu_mode.hpp
         include/modes/menu_mode_base.hpp
         include/modes/mode.hpp
+        include/nifloader/animation.hpp
         include/nifloader/loader.hpp
         include/nifloader/loader_state.hpp
         include/nifloader/collision_object_loader.hpp

@@ -363,6 +363,8 @@ void Application::declareResource(const oo::Path &path,
     // TODO: Do all skeletons end with "skeleton.nif"?
     resGrpMgr.declareResource(path.c_str(), "Skeleton",
                               resourceGroup, ctx.skeletonLoader.get());
+  } else if (ext == "kf"sv) {
+    resGrpMgr.declareResource(path.c_str(), "Nif", resourceGroup);
   } else if (ext == "dds"sv) {
     resGrpMgr.declareResource(path.c_str(), "Texture", resourceGroup);
   } else if (ext == "xml"sv || ext == "txt"sv) {

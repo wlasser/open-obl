@@ -1,4 +1,5 @@
 #include "fs/path.hpp"
+#include "nifloader/animation.hpp"
 #include "record/records.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/helpers.hpp"
@@ -64,23 +65,9 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
   skelPtr->load();
 
-  Ogre::Animation *anim{skelPtr->createAnimation("idle", 100.0f)};
-  for (Ogre::Bone *bone : skelPtr->getBones()) {
-    Ogre::NodeAnimationTrack *track{anim->createNodeTrack(bone->getHandle(),
-                                                          bone)};
-    Ogre::TransformKeyFrame *k0{track->createNodeKeyFrame(0.0f)};
-    k0->setTranslate(Ogre::Vector3::ZERO);
-    k0->setRotation(Ogre::Quaternion::IDENTITY);
-    k0->setScale(Ogre::Vector3::UNIT_SCALE);
-
-    Ogre::TransformKeyFrame *k1{track->createNodeKeyFrame(99.0f)};
-    k1->setTranslate(Ogre::Vector3::ZERO);
-    k1->setRotation(Ogre::Quaternion::IDENTITY);
-    k1->setScale(Ogre::Vector3::UNIT_SCALE);
-  }
-  const auto bipHandle{skelPtr->getBone("Bip01")->getHandle()};
-  anim->getNodeTrack(bipHandle)->getNodeKeyFrame(0)
-      ->setScale(Ogre::Vector3::UNIT_SCALE * 2.0f);
+  auto *anim{oo::createAnimation(skelPtr.get(),
+                                 "meshes/characters/_male/idle.kf",
+                                 oo::RESOURCE_GROUP)};
 
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
@@ -114,7 +101,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     part.entity->getMesh()->setSkeletonName(skelPtr->getName());
     part.entity->_initialise(true);
 
-    Ogre::AnimationState *animState{part.entity->getAnimationState("idle")};
+    auto *animState{part.entity->getAnimationState(anim->getName())};
     animState->setEnabled(true);
     animState->setTimePosition(0.0f);
 

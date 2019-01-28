@@ -25,6 +25,10 @@ inline Ogre::Vector4 fromNif(const nif::compound::Vector4 &v) {
   return Ogre::Vector4{v.x, v.y, v.z, v.w};
 }
 
+inline Ogre::Quaternion fromNif(const nif::compound::Quaternion &q) {
+  return Ogre::Quaternion{q.w, q.x, q.y, q.z};
+}
+
 inline Ogre::Quaternion fromNif(const nif::compound::hk::Quaternion &q) {
   return Ogre::Quaternion{q.w, q.x, q.y, q.z};
 }
