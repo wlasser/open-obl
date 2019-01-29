@@ -109,6 +109,8 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
 
     if (!interpolator) return nullptr;
 
+    // This is the transformation of the bone from the origin to its binding
+    // pose.
     const auto &trans{interpolator->transform};
 
     const Ogre::Vector3 translation = [&]() {
@@ -135,7 +137,6 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
     if (!skeleton->hasBone(nodeName)) continue;
 
     auto *bone{skeleton->getBone(nodeName)};
-    auto *track{anim->createNodeTrack(bone->getHandle(), bone)};
 
     const nif::NiTransformData *transformData{};
     if (interpolator->data) {
@@ -150,98 +151,69 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
     }
 
     if (transformData) {
-      // TODO: Add support to OGRE for specifying the interpolation type of a
-      //       single track instead of just the entire animation.
+      // Keyframes are split up by rotation, translation, and scale. They should
+      // be ordered by increasing time, but this is not necessary and most
+      // (all?) of our data is already ordered so we don't bother with a sort.
 
-      // Keyframes are split up by rotation, translation, and scale.
-      // They need to be grouped together by time, ideally in order, though that
-      // is not guaranteed. There is almost certainly a much more efficient way
-      // of doing this, but right now I just want it working.
+      // Scale
+      if (transformData->scales.numKeys > 0) {
+        auto *track{anim->createNodeScalingTrack(bone->getHandle(), bone)};
+        std::visit([&](const auto &keys) {
+          for (const auto &key : keys) {
+            const float time{key.time};
+            auto *kf{track->createScalingKeyFrame(time)};
+            const Ogre::Vector3 s{key.value, key.value, key.value};
+            kf->setScale(s);
+          }
+        }, transformData->scales.keys);
+      }
 
-      // This will contain all the key frame times, in order.
-      // Not only is the ordering natural here, it's actually *useful*!
-      // Thanks std::set :)
-      std::set<float> times{};
+      // Translation
+      if (transformData->translations.numKeys > 0) {
+        auto *track{anim->createNodeTranslationTrack(bone->getHandle(), bone)};
+        std::visit([&](const auto &keys) {
+          for (const auto &key : keys) {
+            const float time{key.time};
+            auto *kf{track->createTranslationKeyFrame(time)};
+            const auto t{oo::fromBSCoordinates(oo::fromNif(key.value))};
+            kf->setTranslate(t);
+          }
+        }, transformData->translations.keys);
+      }
 
-      auto accumulateTimes = [&times](const auto &keyGroup) {
-        std::visit([&times](const auto &keys) {
-          for (const auto &key : keys) times.insert(key.time);
-        }, keyGroup);
-      };
-
-      accumulateTimes(transformData->scales.keys);
-      accumulateTimes(transformData->translations.keys);
-
+      // Rotation
       using KeyType = nif::Enum::KeyType;
 
       if (transformData->rotationType == KeyType::XYZ_ROTATION_KEY) {
-        for (const auto &ax : transformData->xyzRotations) {
-          accumulateTimes(ax.keys);
-        }
+        OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
+                    "XYZ rotation keys are not supported",
+                    "oo::createAnimation()");
       } else {
-        accumulateTimes(transformData->quaternionKeys);
-      }
-
-      auto getKey = [](const auto &keys, float t) {
-        return std::find_if(keys.begin(), keys.end(), [t](const auto &k) {
-          return k.time == t;
-        });
-      };
-
-      for (auto t : times) {
-        auto *key{track->createNodeKeyFrame(t)};
-        key->setTranslate(Ogre::Vector3::ZERO);
-        key->setScale(Ogre::Vector3::UNIT_SCALE);
-        key->setRotation(Ogre::Quaternion::IDENTITY);
-
-        std::visit([&](const auto &keys) {
-          auto it{getKey(keys, t)};
-          if (it == keys.end()) return;
-          key->setScale({it->value, it->value, it->value});
-        }, transformData->scales.keys);
-
-        std::visit([&](const auto &keys) {
-          auto it{getKey(keys, t)};
-          if (it == keys.end()) return;
-          key->setTranslate(oo::fromBSCoordinates(oo::fromNif(it->value)));
-        }, transformData->translations.keys);
-
-        if (transformData->rotationType == KeyType::XYZ_ROTATION_KEY) {
-          Ogre::Vector3 rotVec{Ogre::Vector3::ZERO};
-          for (std::size_t i = 0; i < 3; ++i) {
-            std::visit([&](const auto &keys) {
-              auto it{getKey(keys, t)};
-              if (it == keys.end()) return;
-              rotVec[i] = it->value;
-            }, transformData->xyzRotations[i].keys);
-          }
-
-          // TODO: Is this the right thing for xyzRotation? Does anybody
-          //       actually *use* xyzRotation so can we even check?
-          Ogre::Matrix3 rotMat{};
-          rotMat.FromEulerAnglesXYZ(Ogre::Radian{rotVec.x},
-                                    Ogre::Radian{rotVec.y},
-                                    Ogre::Radian{rotVec.z});
-
-          Ogre::Quaternion quat(oo::fromBSCoordinates(rotMat));
-          key->setRotation(quat);
-        } else {
+        if (transformData->numRotationKeys > 0) {
+          auto *track{anim->createNodeRotationTrack(bone->getHandle(), bone)};
           std::visit([&](const auto &keys) {
-            auto it{getKey(keys, t)};
-            key->setRotation(oo::fromBSCoordinates(oo::fromNif(it->value)));
+            for (const auto &key : keys) {
+              const float time{key.time};
+              auto *kf{track->createRotationKeyFrame(time)};
+              const auto r{oo::fromBSCoordinates(oo::fromNif(key.value))};
+              kf->setRotation(r);
+            }
           }, transformData->quaternionKeys);
         }
       }
+      // End transformData
     } else {
+      auto *track{anim->createNodeTrack(bone->getHandle(), bone)};
+
       auto *k0{track->createNodeKeyFrame(startTime)};
-      k0->setTranslate(translation);
-      k0->setRotation(rotation);
-      k0->setScale(scale);
+      k0->setTranslate(Ogre::Vector3::ZERO);
+      k0->setScale(Ogre::Vector3::UNIT_SCALE);
+      k0->setRotation(Ogre::Quaternion::IDENTITY);
 
       auto *k1{track->createNodeKeyFrame(stopTime)};
-      k1->setTranslate(translation);
-      k1->setRotation(rotation);
-      k1->setScale(scale);
+      k1->setTranslate(Ogre::Vector3::ZERO);
+      k1->setScale(Ogre::Vector3::UNIT_SCALE);
+      k1->setRotation(Ogre::Quaternion::IDENTITY);
     }
   }
 
