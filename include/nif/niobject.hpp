@@ -46,7 +46,7 @@ struct NiKeyframeData : NiObject, Versionable {
 
   template<std::size_t I>
   void readKeys(std::istream &is) {
-    auto v = quaternionKeys.template emplace<I>(numRotationKeys);
+    auto &v = quaternionKeys.template emplace<I>(numRotationKeys);
     for (auto &key : v) is >> key;
   }
 
