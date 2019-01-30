@@ -369,17 +369,23 @@ std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
 
   std::vector<BoneBinding> bindings(partition.numVertices);
   for (std::size_t i{0}; i < bindings.size(); ++i) {
+    // Get the actual index of this vertex in the mesh
+    std::size_t j = partition.vertexMap[i];
     auto len{std::min<std::size_t>(partition.numWeightsPerVertex, 4u)};
+
+    // Copy the bone indices
     {
       auto begin{partition.boneIndices[i].begin()};
-      std::transform(begin, begin + len, bindings[i].indices.begin(),
+      std::transform(begin, begin + len, bindings[j].indices.begin(),
                      [&partition](auto idx) {
                        return partition.bones[static_cast<std::size_t>(idx)];
                      });
     }
+
+    // Copy the weights
     {
       auto begin{partition.vertexWeights[i].begin()};
-      std::copy(begin, begin + len, bindings[i].weights.begin());
+      std::copy(begin, begin + len, bindings[j].weights.begin());
     }
   }
 
