@@ -168,6 +168,18 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   mCell->scnMgr->addRenderQueueListener(ctx.getOverlaySystem());
 }
 
+void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
+  if (!mDebugDrawer) return;
+
+  const auto nodePos{Ogre::toBullet(t * node->_getDerivedPosition())};
+  for (auto *child : node->getChildren()) {
+    mDebugDrawer->drawLine(nodePos,
+                           Ogre::toBullet(t * child->_getDerivedPosition()),
+                           {1.0f, 0.0f, 0.0f});
+    drawNodeChildren(child, t);
+  }
+}
+
 void GameMode::update(ApplicationContext &ctx, float delta) {
   mPlayerController->update(delta);
   mCell->physicsWorld->stepSimulation(delta);
@@ -176,6 +188,18 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   if (mDebugDrawer) {
     mDebugDrawer->clearLines();
     mCell->physicsWorld->debugDrawWorld();
+
+    auto it{mCell->scnMgr->getMovableObjectIterator("Entity")};
+    while (it.hasMoreElements()) {
+      auto *entity{static_cast<Ogre::Entity *>(it.getNext())};
+      if (!entity->hasSkeleton()) continue;
+      auto *node{entity->getParentSceneNode()};
+      auto *skel{entity->getSkeleton()};
+      for (auto *root : skel->getRootBones()) {
+        drawNodeChildren(root, node->_getFullTransform());
+      }
+    }
+
     mDebugDrawer->build();
   }
 

@@ -71,6 +71,12 @@ class GameMode {
 
   void loadCell(ApplicationContext &ctx, oo::BaseId cellId);
 
+  /// Use the debug drawer to draw a line from the given `node` to each of its
+  /// children, then from each each child to their children, and so on.
+  /// Does nothing if the debug drawer is inactive.
+  void drawNodeChildren(Ogre::Node *node,
+                        const Ogre::Affine3 &t = Ogre::Affine3::IDENTITY);
+
  public:
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
 
