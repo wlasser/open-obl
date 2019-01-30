@@ -182,6 +182,20 @@ void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
 
 void GameMode::update(ApplicationContext &ctx, float delta) {
   mPlayerController->update(delta);
+
+  {
+    auto it{mCell->scnMgr->getMovableObjectIterator("Entity")};
+    while (it.hasMoreElements()) {
+      auto *entity{static_cast<Ogre::Entity *>(it.getNext())};
+      auto *anims{entity->getAllAnimationStates()};
+      if (!anims) continue;
+      auto &animStates{anims->getEnabledAnimationStates()};
+      for (auto state : animStates) {
+        state->addTime(delta);
+      }
+    }
+  }
+
   mCell->physicsWorld->stepSimulation(delta);
   dispatchCollisions();
 
