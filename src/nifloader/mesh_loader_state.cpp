@@ -351,41 +351,48 @@ generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh) {
 }
 
 std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
-  // TODO: Support more than one skin partition block
-  const auto &partition{skin.skinPartitionBlocks.front()};
+  const auto &blocks{skin.skinPartitionBlocks};
+  const std::size_t numVertices{std::accumulate(
+      blocks.begin(), blocks.end(), 0u, [](std::size_t a, const auto &block) {
+        return a + block.numVertices;
+      })};
 
-  if (partition.numWeightsPerVertex > 4) {
-    // TODO: Warn about having too many weights per vertex
-  }
-  if (partition.hasVertexMap.has_value() && !*partition.hasVertexMap) {
-    throw std::runtime_error("NiSkinPartition has no vertex map");
-  }
-  if (partition.hasVertexWeights.has_value() && !*partition.hasVertexWeights) {
-    throw std::runtime_error("NiSkinPartition has no vertex weights");
-  }
-  if (!partition.hasBoneIndices) {
-    throw std::runtime_error("NiSkinPartition has no bone indices");
-  }
+  std::vector<BoneBinding> bindings(numVertices);
 
-  std::vector<BoneBinding> bindings(partition.numVertices);
-  for (std::size_t i{0}; i < bindings.size(); ++i) {
-    // Get the actual index of this vertex in the mesh
-    std::size_t j = partition.vertexMap[i];
-    auto len{std::min<std::size_t>(partition.numWeightsPerVertex, 4u)};
-
-    // Copy the bone indices
-    {
-      auto begin{partition.boneIndices[i].begin()};
-      std::transform(begin, begin + len, bindings[j].indices.begin(),
-                     [&partition](auto idx) {
-                       return partition.bones[static_cast<std::size_t>(idx)];
-                     });
+  for (const auto &partition : blocks) {
+    if (partition.numWeightsPerVertex > 4) {
+      // TODO: Warn about having too many weights per vertex
+    }
+    if (partition.hasVertexMap.has_value() && !*partition.hasVertexMap) {
+      throw std::runtime_error("NiSkinPartition has no vertex map");
+    }
+    if (partition.hasVertexWeights.has_value()
+        && !*partition.hasVertexWeights) {
+      throw std::runtime_error("NiSkinPartition has no vertex weights");
+    }
+    if (!partition.hasBoneIndices) {
+      throw std::runtime_error("NiSkinPartition has no bone indices");
     }
 
-    // Copy the weights
-    {
-      auto begin{partition.vertexWeights[i].begin()};
-      std::copy(begin, begin + len, bindings[j].weights.begin());
+    for (std::size_t i{0}; i < partition.numVertices; ++i) {
+      // Get the actual index of this vertex in the mesh
+      std::size_t j = partition.vertexMap[i];
+      auto len{std::min<std::size_t>(partition.numWeightsPerVertex, 4u)};
+
+      // Copy the bone indices
+      {
+        auto begin{partition.boneIndices[i].begin()};
+        std::transform(begin, begin + len, bindings[j].indices.begin(),
+                       [&partition](auto idx) {
+                         return partition.bones[static_cast<std::size_t>(idx)];
+                       });
+      }
+
+      // Copy the weights
+      {
+        auto begin{partition.vertexWeights[i].begin()};
+        std::copy(begin, begin + len, bindings[j].weights.begin());
+      }
     }
   }
 
