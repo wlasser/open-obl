@@ -8,60 +8,113 @@
 
 namespace oo {
 
+namespace {
+
+// The root element should be an NiControllerSequence, and will be the first
+// element in the block graph.
+const nif::NiControllerSequence &getRoot(const BlockGraph &graph) {
+  if (boost::num_vertices(graph) == 0) {
+    OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
+                "Block graph is empty so has no root",
+                "oo::createAnimation");
+  }
+
+  const auto &root{*graph[0]};
+  if (const auto *ptr{dynamic_cast<const nif::NiControllerSequence *>(&root)}) {
+    return dynamic_cast<const nif::NiControllerSequence &>(root);
+  }
+
+  OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
+              "Root node is not an NiControllerSequence",
+              "oo::createAnimation()");
+}
+
+// Text keys are used to store start and stop time in older formats. Their
+// location changes depending on the version.
+auto getTextKeys(const nif::NiControllerSequence &controller) {
+  if (controller.textKeys) return *controller.textKeys;
+  else return *static_cast<const nif::NiSequence &>(controller).textKeys;
+}
+
+std::pair<float, float>
+getStartStopTime(const BlockGraph &graph,
+                 const nif::NiControllerSequence &controller) {
+  if (controller.startTime && controller.stopTime) {
+    return {*controller.startTime, *controller.stopTime};
+  }
+
+  // Controller does not store the times directly, we need to look in the text
+  // keys for a 'start' key and a 'stop' key.
+  auto textKeysRef{oo::getTextKeys(controller)};
+
+  const auto iVal{static_cast<int32_t>(textKeysRef)};
+  if (iVal < 0) return {0.0f, 0.0f};
+
+  const auto val{static_cast<std::size_t>(iVal)};
+  if (val >= boost::num_vertices(graph)) return {0.0f, 0.0f};
+
+  const auto &data{dynamic_cast<const nif::NiTextKeyExtraData &>(*graph[val])};
+  const auto &keys{data.textKeys};
+
+  auto startIt{std::find_if(keys.begin(), keys.end(), [](const auto &key) {
+    return key.value.str() == "start";
+  })};
+  auto stopIt{std::find_if(keys.begin(), keys.end(), [](const auto &key) {
+    return key.value.str() == "stop";
+  })};
+
+  return {startIt != keys.end() ? startIt->time : 0.0f,
+          stopIt != keys.end() ? stopIt->time : 0.0f};
+}
+
+std::string getBoneName(const BlockGraph &graph,
+                        const nif::compound::ControlledBlock::Palette &palette) {
+  // ver >= 10.2.0.0
+  const auto iVal{static_cast<int32_t>(palette.stringPalette)};
+  if (iVal < 0) return nullptr;
+
+  const auto val{static_cast<std::size_t>(iVal)};
+  if (val >= boost::num_vertices(graph)) return nullptr;
+
+  const auto &block{*graph[val]};
+  const auto &p{dynamic_cast<const nif::NiStringPalette &>(block).palette};
+
+  // Offset refers to a character at the start of a null-terminated string.
+  auto nodeNameOffset{static_cast<uint32_t>(palette.nodeNameOffset)};
+  return std::string(p.palette.value.data() + nodeNameOffset);
+}
+
+// TODO: Support older interpolator versions
+const nif::NiTransformInterpolator &
+getInterpolator(const BlockGraph &graph,
+                const nif::compound::ControlledBlock &block) {
+  // Interesting(?) aside: this has identical codegen on Clang and GCC to its
+  // `goto` equivalent (though then `auto` has to be replaced).
+  if (block.interpolator) {
+    const auto iVal{static_cast<int32_t>(*block.interpolator)};
+    if (iVal > 0) {
+      const auto val{static_cast<std::size_t>(iVal)};
+      if (val < boost::num_vertices(graph)) {
+        return dynamic_cast<const nif::NiTransformInterpolator &>(*graph[val]);
+      }
+    }
+  }
+
+  OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
+              "ControlledBlock does not have an interpolator",
+              "oo::createAnimation");
+}
+
+} // namespace
+
 Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
                                  Ogre::NifResource *nif) {
   auto blockGraph{nif->getBlockGraph()};
-
-  if (boost::num_vertices(blockGraph) == 0) return nullptr;
-
-  // The root element should be an NiControllerSequence, and will be the first
-  // element in the block graph.
-  const auto &root{*blockGraph[0]};
-  const auto &controller = [&]() {
-    if (const auto *ptr{dynamic_cast<const nif::NiControllerSequence *>(&root)};
-        ptr) {
-      return dynamic_cast<const nif::NiControllerSequence &>(root);
-    }
-    OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
-                "Root node is not an NiControllerSequence",
-                "oo::createAnimation()");
-  }();
-
-  // Text keys are used to store start and stop time in older formats. Their
-  // location changes depending on the version.
-  auto textKeysRef = [&]() {
-    if (controller.textKeys) return *controller.textKeys;
-    else return *static_cast<const nif::NiSequence &>(controller).textKeys;
-  }();
+  const auto &controller{oo::getRoot(blockGraph)};
 
   const std::string animationName{controller.name.str()};
 
-  const auto[startTime, stopTime] = [&]() -> std::pair<float, float> {
-    if (controller.startTime && controller.stopTime) {
-      return {*controller.startTime, *controller.stopTime};
-    }
-
-    const auto iVal{static_cast<int32_t>(textKeysRef)};
-    if (iVal < 0) return {0.0f, 0.0f};
-
-    const auto val{static_cast<std::size_t>(iVal)};
-    if (val >= boost::num_vertices(blockGraph)) return {0.0f, 0.0f};
-
-    const auto &keys
-        {dynamic_cast<const nif::NiTextKeyExtraData &>(*blockGraph[val])
-             .textKeys};
-
-    auto startIt{std::find_if(keys.begin(), keys.end(), [](const auto &key) {
-      return key.value.str() == "start";
-    })};
-    auto stopIt{std::find_if(keys.begin(), keys.end(), [](const auto &key) {
-      return key.value.str() == "stop";
-    })};
-
-    return {startIt != keys.end() ? startIt->time : 0.0f,
-            stopIt != keys.end() ? stopIt->time : 0.0f};
-  }();
-
+  const auto[startTime, stopTime] = getStartStopTime(blockGraph, controller);
   const float length{stopTime - startTime};
 
   auto *anim{skeleton->createAnimation(animationName, length)};
@@ -69,52 +122,26 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
   // TODO: Support animation priority and weight
 
   for (const auto &block : controller.controlledBlocks) {
-    std::string nodeName{};
+    std::string boneName{};
 
     if (block.palette) {
-      // ver >= 10.2.0.0
-      const auto iVal{static_cast<int32_t>(block.palette->stringPalette)};
-      if (iVal < 0) return nullptr;
-
-      const auto val{static_cast<std::size_t>(iVal)};
-      if (val >= boost::num_vertices(blockGraph)) return nullptr;
-
-      const auto &palette
-          {dynamic_cast<const nif::NiStringPalette &>(*blockGraph[val])
-               .palette};
-
-      auto nodeNameOffset{static_cast<uint32_t>(block.palette->nodeNameOffset)};
-      nodeName = std::string(palette.palette.value.data() + nodeNameOffset);
-
+      boneName = oo::getBoneName(blockGraph, *block.palette);
       // TODO: Support properties, controllers, etc.
     } else if (block.idTag) {
       // TODO: Support 10.1.0.104 <= ver <= 10.1.0.113
     } else {
       // TODO: Support ver < 10.1.0.104
-      nodeName = block.targetName->str();
+      boneName = block.targetName->str();
     }
 
-    // TODO: Support older interpolator versions
-    const nif::NiTransformInterpolator *interpolator{};
-    if (block.interpolator) {
-      const auto iVal{static_cast<int32_t>(*block.interpolator)};
-      if (iVal < 0) return nullptr;
-
-      const auto val{static_cast<std::size_t>(iVal)};
-      if (val >= boost::num_vertices(blockGraph)) return nullptr;
-
-      interpolator = dynamic_cast<const nif::NiTransformInterpolator *>(
-          &*blockGraph[val]);
-    }
-
-    if (!interpolator) return nullptr;
+    const auto &interpolator{oo::getInterpolator(blockGraph, block)};
 
     // This is the transformation of the bone from the origin to its binding
     // pose. The actual keyframes are *not* given relative to this, rather they
     // already incorporate the binding pose. Since we need the keyframe
     // transformations to be relative, we will apply the inverse of these to
     // each keyframe.
-    const auto &trans{interpolator->transform};
+    const auto &trans{interpolator.transform};
 
     const Ogre::Vector3 translation = [&]() {
       if (!trans.trsValid || trans.trsValid->at(0)) {
@@ -137,13 +164,13 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
       return Ogre::Vector3::UNIT_SCALE;
     }();
 
-    if (!skeleton->hasBone(nodeName)) continue;
+    if (!skeleton->hasBone(boneName)) continue;
 
-    auto *bone{skeleton->getBone(nodeName)};
+    auto *bone{skeleton->getBone(boneName)};
 
     const nif::NiTransformData *transformData{};
-    if (interpolator->data) {
-      const auto iVal{static_cast<int32_t>(interpolator->data)};
+    if (interpolator.data) {
+      const auto iVal{static_cast<int32_t>(interpolator.data)};
       if (iVal < 0) return nullptr;
 
       const auto val{static_cast<std::size_t>(iVal)};
