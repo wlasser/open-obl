@@ -25,16 +25,18 @@ void main() {
     vec3 blendTangent = vec3(0.0f);
     vec3 blendBinormal = vec3(0.0f);
 
+    mat4x3 blendedWorld = mat4x3(0.0f);
     for (int i = 0; i < 4; ++i) {
         int index = int(blendIndices[i]);
         float weight = blendWeights[i];
-        blendVertex += weight * worldMatrixArray[index] * vertex;
-
-        mat3 worldRotMatrix = mat3(worldMatrixArray[index]);
-        blendNormal += weight * worldRotMatrix * normal;
-        blendTangent += weight * worldRotMatrix * tangent;
-        blendBinormal += weight * worldRotMatrix * binormal;
+        blendedWorld += weight * worldMatrixArray[index];
     }
+    blendVertex = blendedWorld * vertex;
+
+    mat3 blendedWorldRot = mat3(blendedWorld);
+    blendNormal   = blendedWorldRot * normal;
+    blendTangent  = blendedWorldRot * tangent;
+    blendBinormal = blendedWorldRot * binormal;
 
     gl_Position = viewProj * vec4(blendVertex, 1.0f);
 
