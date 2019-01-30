@@ -77,6 +77,9 @@ class GameMode {
   void drawNodeChildren(Ogre::Node *node,
                         const Ogre::Affine3 &t = Ogre::Affine3::IDENTITY);
 
+  /// Update the enabled animation states of all entities in the scene.
+  void updateAnimation(float delta);
+
  public:
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
 
