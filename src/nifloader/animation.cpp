@@ -110,7 +110,10 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
     if (!interpolator) return nullptr;
 
     // This is the transformation of the bone from the origin to its binding
-    // pose.
+    // pose. The actual keyframes are *not* given relative to this, rather they
+    // already incorporate the binding pose. Since we need the keyframe
+    // transformations to be relative, we will apply the inverse of these to
+    // each keyframe.
     const auto &trans{interpolator->transform};
 
     const Ogre::Vector3 translation = [&]() {
@@ -163,7 +166,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
             const float time{key.time};
             auto *kf{track->createScalingKeyFrame(time)};
             const Ogre::Vector3 s{key.value, key.value, key.value};
-            kf->setScale(s);
+            kf->setScale(s / scale);
           }
         }, transformData->scales.keys);
       }
@@ -176,7 +179,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
             const float time{key.time};
             auto *kf{track->createTranslationKeyFrame(time)};
             const auto t{oo::fromBSCoordinates(oo::fromNif(key.value))};
-            kf->setTranslate(t);
+            kf->setTranslate(t - translation);
           }
         }, transformData->translations.keys);
       }
@@ -196,7 +199,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
               const float time{key.time};
               auto *kf{track->createRotationKeyFrame(time)};
               const auto r{oo::fromBSCoordinates(oo::fromNif(key.value))};
-              kf->setRotation(r);
+              kf->setRotation(rotation.Inverse() * r);
             }
           }, transformData->quaternionKeys);
         }
