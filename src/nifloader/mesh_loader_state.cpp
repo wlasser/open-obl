@@ -584,8 +584,6 @@ void addGenericSkinnedVertexShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setVertexProgram("genericSkinnedMaterial_vs_glsl", true);
   auto vsParams{pass->getVertexProgramParameters()};
-  vsParams->setNamedAutoConstant("world",
-                                 AutoConst::ACT_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("worldInverseTranspose",
                                  AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("viewProj",
