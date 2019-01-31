@@ -47,6 +47,7 @@ struct CollisionObjectVisitor {
 
   void discover_vertex(const nif::NiNode &node, const Graph &g);
   void discover_vertex(const nif::BSXFlags &bsxFlags, const Graph &g);
+  void discover_vertex(const nif::BSBound &bsBound, const Graph &g);
   void discover_vertex(const nif::bhk::CollisionObject &collisionObject,
                        const Graph &g);
 

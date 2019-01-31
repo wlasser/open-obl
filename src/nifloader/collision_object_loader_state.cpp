@@ -35,6 +35,8 @@ void CollisionObjectVisitor::discover_vertex(vertex_descriptor v,
     discover_vertex(dynamic_cast<const NiNode &>(niObject), g);
   } else if (dynamic_cast<const BSXFlags *>(&niObject)) {
     discover_vertex(dynamic_cast<const BSXFlags &>(niObject), g);
+  } else if (dynamic_cast<const BSBound *>(&niObject)) {
+    discover_vertex(dynamic_cast<const BSBound &>(niObject), g);
   } else if (dynamic_cast<const bhk::CollisionObject *>(&niObject)) {
     discover_vertex(dynamic_cast<const bhk::CollisionObject &>(niObject), g);
   }
@@ -62,6 +64,22 @@ void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
   if ((flags & Flags::bHavok) != Flags::bNone) {
     mHasHavok = true;
   }
+}
+
+void CollisionObjectVisitor::discover_vertex(const nif::BSBound &bsBound,
+                                             const Graph &) {
+  // btBoxShape needs to be centered at the origin, so use btConvexHullShape
+  auto collisionShape{std::make_unique<btConvexHullShape>()};
+  Ogre::Vector3 center{oo::fromBSCoordinates(oo::fromNif(bsBound.center))};
+  Ogre::Vector3
+      halfExtents{oo::fromBSCoordinates(oo::fromNif(bsBound.dimensions))};
+  const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
+
+  for (const auto &corner : box.getAllCorners()) {
+    collisionShape->addPoint(Ogre::toBullet(corner + center));
+  }
+
+  mRigidBody->_setCollisionShape(std::move(collisionShape));
 }
 
 void CollisionObjectVisitor::discover_vertex(
