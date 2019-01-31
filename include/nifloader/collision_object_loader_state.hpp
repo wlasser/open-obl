@@ -40,6 +40,8 @@ struct CollisionObjectVisitor {
       : mRigidBody(rigidBody), mLogger(spdlog::get(oo::LOG)) {}
 
  private:
+  using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
+
   Ogre::CollisionObject *mRigidBody{};
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   bool mHasHavok{false};
@@ -69,29 +71,31 @@ struct CollisionObjectVisitor {
   void parseCollisionObject(const Graph &g,
                             const nif::bhk::CollisionObject &block);
 
-  std::pair<std::unique_ptr<btCollisionShape>,
-            std::unique_ptr<Ogre::RigidBodyInfo>>
+  std::pair<CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
   parseWorldObject(const Graph &g, const nif::bhk::WorldObject &block);
 
   Ogre::RigidBodyInfo
   generateRigidBodyInfo(const nif::bhk::RigidBody &block) const;
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::Shape &block);
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::MoppBvTreeShape &shape);
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
+  parseShape(const Graph &g, const nif::bhk::ListShape &shape);
+
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape);
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::ConvexVerticesShape &shape);
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::BoxShape &shape);
 
-  std::unique_ptr<btCollisionShape>
+  CollisionShapeVector
   parseNiTriStripsData(const Graph &g,
                        const nif::hk::PackedNiTriStripsData &block);
 

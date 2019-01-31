@@ -37,15 +37,23 @@ void CollisionObject::unloadImpl() {
   mMeshInterface.reset();
 }
 
-void CollisionObject::_setRigidBodyInfo(std::unique_ptr<RigidBodyInfo> info) noexcept {
+void CollisionObject::_setRigidBodyInfo(
+    std::unique_ptr<RigidBodyInfo> info) noexcept {
   mInfo = std::move(info);
 }
 
-void CollisionObject::_setCollisionShape(std::unique_ptr<btCollisionShape> shape) noexcept {
+void CollisionObject::_setCollisionShape(
+    std::unique_ptr<btCollisionShape> shape) noexcept {
   mCollisionShape = std::move(shape);
 }
 
-void CollisionObject::_setMeshInterface(std::unique_ptr<btStridingMeshInterface> mesh) noexcept {
+void CollisionObject::_storeIndirectCollisionShapes(
+    std::vector<CollisionShapePtr> shapes) noexcept {
+  mIndirectShapes = std::move(shapes);
+}
+
+void CollisionObject::_setMeshInterface(
+    std::unique_ptr<btStridingMeshInterface> mesh) noexcept {
   mMeshInterface = std::move(mesh);
 }
 

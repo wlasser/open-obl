@@ -99,12 +99,18 @@ void CollisionObjectVisitor::parseCollisionObject(
   // TODO: COFlags
   // TODO: target
   const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
-  auto[collisionShape, info]{parseWorldObject(g, worldObj)};
-  if (collisionShape) mRigidBody->_setCollisionShape(std::move(collisionShape));
+  auto[collisionShapes, info]{parseWorldObject(g, worldObj)};
+  if (!collisionShapes.empty()) {
+    mRigidBody->_setCollisionShape(std::move(collisionShapes.front()));
+    collisionShapes.erase(collisionShapes.begin());
+    if (!collisionShapes.empty()) {
+      mRigidBody->_storeIndirectCollisionShapes(std::move(collisionShapes));
+    }
+  }
   if (info) mRigidBody->_setRigidBodyInfo(std::move(info));
 }
 
-std::pair<std::unique_ptr<btCollisionShape>,
+std::pair<CollisionObjectVisitor::CollisionShapeVector,
           std::unique_ptr<Ogre::RigidBodyInfo>>
 CollisionObjectVisitor::parseWorldObject(const Graph &g,
                                          const nif::bhk::WorldObject &block) {
@@ -121,16 +127,17 @@ CollisionObjectVisitor::parseWorldObject(const Graph &g,
   }();
   mTransform = mTransform * localTrans;
   const auto &shape{getRef<nif::bhk::Shape>(g, block.shape)};
-  auto collisionShape{parseShape(g, shape)};
+  auto collisionShapes{parseShape(g, shape)};
   mTransform = mTransform * localTrans.inverse();
 
   std::unique_ptr<Ogre::RigidBodyInfo> info{};
-  if (dynamic_cast<const nif::bhk::RigidBody *>(&block)) {
+  if (dynamic_cast<const nif::bhk::RigidBody *>(&block)
+      && !collisionShapes.empty()) {
     const auto &body{dynamic_cast<const nif::bhk::RigidBody &>(block)};
     info = std::make_unique<Ogre::RigidBodyInfo>(generateRigidBodyInfo(body));
-    info->m_collisionShape = collisionShape.get();
+    info->m_collisionShape = collisionShapes.front().get();
   }
-  return std::make_pair(std::move(collisionShape), std::move(info));
+  return std::make_pair(std::move(collisionShapes), std::move(info));
 }
 
 Ogre::RigidBodyInfo CollisionObjectVisitor::generateRigidBodyInfo(
@@ -183,12 +190,17 @@ Ogre::RigidBodyInfo CollisionObjectVisitor::generateRigidBodyInfo(
   return info;
 }
 
-std::unique_ptr<btCollisionShape>
+//===----------------------------------------------------------------------===//
+// parseShape overloads
+//===----------------------------------------------------------------------===//
+CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &g,
                                    const nif::bhk::Shape &block) {
   using namespace nif::bhk;
   if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
     return parseShape(g, dynamic_cast<const MoppBvTreeShape &>(block));
+  } else if (dynamic_cast<const ListShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const ListShape &>(block));
   } else if (dynamic_cast<const PackedNiTriStripsShape *>(&block)) {
     return parseShape(g, dynamic_cast<const PackedNiTriStripsShape &>(block));
   } else if (dynamic_cast<const ConvexVerticesShape *>(&block)) {
@@ -197,14 +209,14 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     return parseShape(g, dynamic_cast<const BoxShape &>(block));
   } else {
     mLogger->warn("Parsing unknown bhkShape");
-    return nullptr;
+    return {};
     //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
     //            "Unknown collision shape",
     //            "CollisionObjectVisitor::parseShape");
   }
 }
 
-std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &g,
                                    const nif::bhk::MoppBvTreeShape &shape) {
   // TODO: Use material information for collisions and sound
@@ -229,7 +241,32 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return collisionShape;
 }
 
-std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseShape(
+CollisionObjectVisitor::CollisionShapeVector
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::ListShape &shape) {
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
+
+  CollisionShapeVector children;
+  children.emplace_back(std::make_unique<btCompoundShape>(false));
+  auto *compoundShape{static_cast<btCompoundShape *>(children.back().get())};
+
+  for (const auto shapeRef : shape.subShapes) {
+    const auto &childShape{getRef<nif::bhk::Shape>(g, shapeRef)};
+    auto collisionShape{parseShape(g, childShape)};
+    if (collisionShape.empty()) continue;
+    compoundShape->addChildShape(btTransform::getIdentity(),
+                                 collisionShape.front().get());
+    children.insert(children.end(),
+                    std::make_move_iterator(collisionShape.begin()),
+                    std::make_move_iterator(collisionShape.end()));
+  }
+
+  return children;
+}
+
+CollisionObjectVisitor::CollisionShapeVector
+CollisionObjectVisitor::parseShape(
     const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape) {
   // TODO: Subshapes?
 
@@ -251,7 +288,7 @@ std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseShape(
   return collisionShape;
 }
 
-std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &/*g*/,
                                    const nif::bhk::ConvexVerticesShape &shape) {
   // TODO: Use material information for collisions and sound
@@ -264,10 +301,12 @@ CollisionObjectVisitor::parseShape(const Graph &/*g*/,
     const auto v{mTransform * ogreV * 7.0f};
     collisionShape->addPoint(Ogre::toBullet(v.xyz()));
   }
-  return collisionShape;
+  CollisionShapeVector v;
+  v.emplace_back(std::move(collisionShape));
+  return v;
 }
 
-std::unique_ptr<btCollisionShape>
+CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &/*g*/,
                                    const nif::bhk::BoxShape &shape) {
   // TODO: Use material information for collisions and sound
@@ -286,10 +325,13 @@ CollisionObjectVisitor::parseShape(const Graph &/*g*/,
     const auto v{mTransform * ogreV * 7.0f};
     collisionShape->addPoint(Ogre::toBullet(v.xyz()));
   }
-  return collisionShape;
+  CollisionShapeVector v;
+  v.emplace_back(std::move(collisionShape));
+  return v;
 }
 
-std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseNiTriStripsData(
+CollisionObjectVisitor::CollisionShapeVector
+CollisionObjectVisitor::parseNiTriStripsData(
     const Graph &/*g*/, const nif::hk::PackedNiTriStripsData &block) {
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
@@ -316,11 +358,18 @@ std::unique_ptr<btCollisionShape> CollisionObjectVisitor::parseNiTriStripsData(
   collisionMesh->addIndexedMesh(mesh, PHY_SHORT);
   auto *collisionMeshPtr{collisionMesh.get()};
   mRigidBody->_setMeshInterface(std::move(collisionMesh));
-  return std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr, false);
+
+  CollisionShapeVector v;
+  v.emplace_back(std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr,
+                                                          false));
+  return v;
 
   // TODO: Support dynamic concave geometry
 }
 
+//===----------------------------------------------------------------------===//
+// Vertex/Index buffer functions
+//===----------------------------------------------------------------------===//
 unsigned char *CollisionObjectVisitor::fillIndexBuffer(
     std::vector<uint16_t> &indexBuf,
     const nif::hk::PackedNiTriStripsData &block) {

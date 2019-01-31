@@ -10,6 +10,7 @@
 namespace Ogre {
 
 using RigidBodyInfo = btRigidBody::btRigidBodyConstructionInfo;
+using CollisionShapePtr = std::unique_ptr<btCollisionShape>;
 
 class CollisionObject : public Ogre::Resource {
  public:
@@ -29,7 +30,8 @@ class CollisionObject : public Ogre::Resource {
   const btCollisionShape *getCollisionShape() const noexcept;
 
   void _setRigidBodyInfo(std::unique_ptr<RigidBodyInfo> info) noexcept;
-  void _setCollisionShape(std::unique_ptr<btCollisionShape> shape) noexcept;
+  void _setCollisionShape(CollisionShapePtr shape) noexcept;
+  void _storeIndirectCollisionShapes(std::vector<CollisionShapePtr> shapes) noexcept;
   void _setMeshInterface(std::unique_ptr<btStridingMeshInterface> mesh) noexcept;
 
   std::vector<uint16_t> &_getIndexBuffer() noexcept;
@@ -47,7 +49,12 @@ class CollisionObject : public Ogre::Resource {
   // a non-owning pointer into a central store, which would store the collision
   // shape along with any necessary buffers.
   // TODO: Centralise the collision shapes and make this non-owning
-  std::unique_ptr<btCollisionShape> mCollisionShape{};
+  CollisionShapePtr mCollisionShape{};
+
+  // btCompoundShape stores non-owning pointers to its children, but with only
+  // one unique_ptr we have no way of keeping track of them all. This vector
+  // stores the children so they can be deleted properly.
+  std::vector<CollisionShapePtr> mIndirectShapes{};
 
   // Necessary for mesh-based collision shapes, Bullet does not take ownership.
   std::vector<uint16_t> mIndexBuffer{};
