@@ -197,7 +197,9 @@ CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &g,
                                    const nif::bhk::Shape &block) {
   using namespace nif::bhk;
-  if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
+  if (dynamic_cast<const CapsuleShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const CapsuleShape &>(block));
+  } else if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
     return parseShape(g, dynamic_cast<const MoppBvTreeShape &>(block));
   } else if (dynamic_cast<const ListShape *>(&block)) {
     return parseShape(g, dynamic_cast<const ListShape &>(block));
@@ -214,6 +216,47 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     //            "Unknown collision shape",
     //            "CollisionObjectVisitor::parseShape");
   }
+}
+
+CollisionObjectVisitor::CollisionShapeVector
+CollisionObjectVisitor::parseShape(const Graph &,
+                                   const nif::bhk::CapsuleShape &block) {
+  CollisionShapeVector v;
+
+  const Ogre::Vector3 p1{mTransform *
+      oo::fromBSCoordinates(oo::fromNif(block.firstPoint)) * 7.0f};
+  const Ogre::Vector3 p2{mTransform *
+      oo::fromBSCoordinates(oo::fromNif(block.secondPoint)) * 7.0f};
+  const float radius{oo::metersPerUnit<float> * block.radius * 7.0f};
+
+  // Bullet capsules must be axis-aligned and the midpoint of the centres must
+  // be the origin. Then, we also need to know which axis to align to.
+  const Ogre::Vector3 delta{p2 - p1};
+  const Ogre::Vector3 avg{(p1 + p2) / 2.0f};
+  const float avgSqLen{avg.squaredLength()};
+  auto isZero = [](float x) { return Ogre::Math::RealEqual(x, 0.0f, 1e-4f); };
+
+  if (isZero(avgSqLen) && isZero(delta.y) && isZero(delta.z)) {
+    v.emplace_back(std::make_unique<btCapsuleShapeX>(radius,
+                                                     Ogre::Math::Abs(delta.x)));
+  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.z)) {
+    v.emplace_back(std::make_unique<btCapsuleShape>(radius,
+                                                    Ogre::Math::Abs(delta.y)));
+  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.y)) {
+    v.emplace_back(std::make_unique<btCapsuleShapeZ>(radius,
+                                                     Ogre::Math::Abs(delta.z)));
+  }
+
+  if (!v.empty()) return v;
+
+  // Not axis-aligned, so use a btMultiSphereShape with two spheres. Bullet
+  // copies the positions and radii, so passing local vectors is ok.
+  std::array<btVector3, 2> positions{Ogre::toBullet(p1), Ogre::toBullet(p2)};
+  std::array<btScalar, 2> radii{radius, radius};
+  v.emplace_back(std::make_unique<btMultiSphereShape>(positions.data(),
+                                                      radii.data(), 2));
+
+  return v;
 }
 
 CollisionObjectVisitor::CollisionShapeVector
