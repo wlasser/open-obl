@@ -43,6 +43,7 @@ struct CollisionObjectVisitor {
   Ogre::CollisionObject *mRigidBody{};
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   bool mHasHavok{false};
+  bool mIsSkeleton{false};
   std::shared_ptr<spdlog::logger> mLogger{};
 
   void discover_vertex(const nif::NiNode &node, const Graph &g);

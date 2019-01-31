@@ -26,29 +26,27 @@ void CollisionObjectVisitor::start_vertex(vertex_descriptor, const Graph &) {
   mTransform = Ogre::Matrix4::IDENTITY;
 }
 
-void CollisionObjectVisitor::discover_vertex(vertex_descriptor v,
-                                             const Graph &g) {
-  using namespace nif;
-  const auto &niObject{*g[v]};
+void
+CollisionObjectVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
+  const auto &block{*g[v]};
 
-  if (dynamic_cast<const NiNode *>(&niObject)) {
-    discover_vertex(dynamic_cast<const NiNode &>(niObject), g);
-  } else if (dynamic_cast<const BSXFlags *>(&niObject)) {
-    discover_vertex(dynamic_cast<const BSXFlags &>(niObject), g);
-  } else if (dynamic_cast<const BSBound *>(&niObject)) {
-    discover_vertex(dynamic_cast<const BSBound &>(niObject), g);
-  } else if (dynamic_cast<const bhk::CollisionObject *>(&niObject)) {
-    discover_vertex(dynamic_cast<const bhk::CollisionObject &>(niObject), g);
+  if (dynamic_cast<const nif::NiNode *>(&block)) {
+    discover_vertex(static_cast<const nif::NiNode &>(block), g);
+  } else if (dynamic_cast<const nif::BSXFlags *>(&block)) {
+    discover_vertex(static_cast<const nif::BSXFlags &>(block), g);
+  } else if (dynamic_cast<const nif::BSBound *>(&block)) {
+    discover_vertex(static_cast<const nif::BSBound &>(block), g);
+  } else if (dynamic_cast<const nif::bhk::CollisionObject *>(&block)) {
+    discover_vertex(static_cast<const nif::bhk::CollisionObject &>(block), g);
   }
 }
 
-void CollisionObjectVisitor::finish_vertex(vertex_descriptor v,
-                                           const Graph &g) {
-  using namespace nif;
-  const auto &niObject{*g[v]};
+void
+CollisionObjectVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
+  const auto &block{*g[v]};
 
-  if (dynamic_cast<const NiNode *>(&niObject)) {
-    finish_vertex(dynamic_cast<const NiNode &>(niObject), g);
+  if (dynamic_cast<const nif::NiNode *>(&block)) {
+    finish_vertex(static_cast<const nif::NiNode &>(block), g);
   }
 }
 
@@ -63,6 +61,9 @@ void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
   const Flags flags{bsxFlags.data};
   if ((flags & Flags::bHavok) != Flags::bNone) {
     mHasHavok = true;
+  }
+  if ((flags & Flags::bRagdoll) != Flags::bNone) {
+    mIsSkeleton = true;
   }
 }
 
