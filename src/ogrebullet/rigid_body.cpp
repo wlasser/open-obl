@@ -102,9 +102,11 @@ void RigidBody::setScale(const Vector3 &scale) {
     auto override{std::make_unique<btConvexHullShape>()};
     auto points{gsl::make_span(convexHull->getUnscaledPoints(),
                                convexHull->getNumPoints())};
-    for (const auto &point : points) {
-      override->addPoint(point);
-    }
+    const btMatrix3x3 transform{localScale.x(), 0.0f, 0.0f,
+                                0.0f, localScale.y(), 0.0f,
+                                0.0f, 0.0f, localScale.z()};
+    for (const auto &point : points) override->addPoint(transform * point);
+
     mCollisionShapeOverride = std::move(override);
   } else {
     // TODO: Scale other collision shapes
