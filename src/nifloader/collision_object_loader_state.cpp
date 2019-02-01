@@ -101,6 +101,9 @@ void CollisionObjectVisitor::parseCollisionObject(
   const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
   auto[collisionShapes, info]{parseWorldObject(g, worldObj)};
   if (!collisionShapes.empty()) {
+    if (info && info->m_mass >= 0.1f) {
+      collisionShapes.front()->setMargin(0.01f);
+    }
     mRigidBody->_setCollisionShape(std::move(collisionShapes.front()));
     collisionShapes.erase(collisionShapes.begin());
     if (!collisionShapes.empty()) {
