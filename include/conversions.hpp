@@ -5,6 +5,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <OgreColourValue.h>
 #include <OgreMatrix3.h>
+#include <OgreMatrix4.h>
 #include <OgreVector.h>
 #include <filesystem>
 
@@ -39,6 +40,13 @@ inline Ogre::Matrix3 fromNif(const nif::compound::Matrix33 &m) {
                        m.m31, m.m32, m.m33};
 }
 
+inline Ogre::Matrix4 fromNif(const nif::compound::Matrix44 &m) {
+  return Ogre::Matrix4{m.m11, m.m12, m.m13, m.m14,
+                       m.m21, m.m22, m.m23, m.m24,
+                       m.m31, m.m32, m.m33, m.m34,
+                       m.m41, m.m42, m.m43, m.m44};
+}
+
 inline Ogre::ColourValue fromNif(const nif::compound::Color3 &c) {
   return Ogre::ColourValue(c.r, c.g, c.b);
 }
@@ -56,6 +64,15 @@ inline Ogre::Matrix3 fromBSCoordinates(const Ogre::Matrix3 &m) {
                            0, 0, 1,
                            0, -1, 0};
   return C * m * C.transpose();
+}
+
+inline Ogre::Matrix4 fromBSCoordinates(const Ogre::Matrix4 &m) {
+  const Ogre::Vector3 translation{m.getTrans()};
+  const Ogre::Matrix3 linear{m.linear()};
+  Ogre::Matrix4 trans{oo::fromBSCoordinates(linear)};
+  trans.setTrans(oo::fromBSCoordinates(translation));
+
+  return trans;
 }
 
 inline Ogre::Quaternion fromBSCoordinates(const Ogre::Quaternion &m) {

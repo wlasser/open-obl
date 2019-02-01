@@ -81,6 +81,9 @@ struct CollisionObjectVisitor {
   parseShape(const Graph &g, const nif::bhk::Shape &block);
 
   CollisionShapeVector
+  parseShape(const Graph &g, const nif::bhk::TransformShape &block);
+
+  CollisionShapeVector
   parseShape(const Graph &g, const nif::bhk::CapsuleShape &block);
 
   CollisionShapeVector

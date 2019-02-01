@@ -197,7 +197,9 @@ CollisionObjectVisitor::CollisionShapeVector
 CollisionObjectVisitor::parseShape(const Graph &g,
                                    const nif::bhk::Shape &block) {
   using namespace nif::bhk;
-  if (dynamic_cast<const CapsuleShape *>(&block)) {
+  if (dynamic_cast<const TransformShape *>(&block)) {
+    return parseShape(g, dynamic_cast<const TransformShape &>(block));
+  } else if (dynamic_cast<const CapsuleShape *>(&block)) {
     return parseShape(g, dynamic_cast<const CapsuleShape &>(block));
   } else if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
     return parseShape(g, dynamic_cast<const MoppBvTreeShape &>(block));
@@ -216,6 +218,19 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     //            "Unknown collision shape",
     //            "CollisionObjectVisitor::parseShape");
   }
+}
+
+CollisionObjectVisitor::CollisionShapeVector
+CollisionObjectVisitor::parseShape(const Graph &g,
+                                   const nif::bhk::TransformShape &block) {
+  const auto &childShape{getRef<nif::bhk::Shape>(g, block.shape)};
+
+  const Ogre::Matrix4 t{oo::fromBSCoordinates(oo::fromNif(block.transform))};
+  mTransform = mTransform * t;
+  auto collisionShape{parseShape(g, childShape)};
+  mTransform = mTransform * t.inverse();
+
+  return collisionShape;
 }
 
 CollisionObjectVisitor::CollisionShapeVector
@@ -362,7 +377,7 @@ CollisionObjectVisitor::parseShape(const Graph &/*g*/,
   // axis-aligned box and the rotated axis-aligned box.
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   const Ogre::Vector3 halfExtents{oo::fromNif(shape.dimensions).xyz()};
-  const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
+  const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
   for (const auto &corner : box.getAllCorners()) {
     const Ogre::Vector4 ogreV{oo::fromBSCoordinates(corner), 1.0f};
     const auto v{mTransform * ogreV * 7.0f};
