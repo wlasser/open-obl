@@ -1,19 +1,12 @@
 #ifndef OPENOBLIVION_NIF_LOADER_HPP
 #define OPENOBLIVION_NIF_LOADER_HPP
 
-#include "nif/basic.hpp"
 #include "nif/niobject.hpp"
-#include "nif/versionable.hpp"
 #include <boost/graph/adjacency_list.hpp>
-#include <OgreAxisAlignedBox.h>
-#include <OgreLogManager.h>
-#include <OgreResource.h>
 #include <polymorphic_value.h>
-#include <spdlog/spdlog.h>
+#include <algorithm>
 #include <istream>
 #include <map>
-#include <memory>
-#include <ostream>
 #include <string>
 #include <type_traits>
 

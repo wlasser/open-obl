@@ -5,6 +5,7 @@
 #include "nifloader/loader_state.hpp"
 #include "settings.hpp"
 #include <Ogre.h>
+#include <spdlog/spdlog.h>
 
 namespace oo {
 

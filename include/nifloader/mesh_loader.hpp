@@ -3,7 +3,7 @@
 
 #include "nifloader/loader.hpp"
 #include <Ogre.h>
-#include <memory>
+#include <spdlog/spdlog.h>
 
 namespace oo {
 
