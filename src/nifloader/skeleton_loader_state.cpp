@@ -5,23 +5,20 @@
 
 namespace oo {
 
-SkeletonLoaderState::SkeletonLoaderState(Ogre::Skeleton *skeleton,
-                                         oo::BlockGraph blocks) {
+SkeletonLoaderState::SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks)
+    : mSkeleton(skeleton), mLogger(spdlog::get(oo::LOG)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  const auto indexMap{boost::get(boost::vertex_index, blocks)};
-  const auto propertyMap{boost::make_iterator_property_map(colorMap.begin(),
-                                                           indexMap)};
-  SkeletonVisitor visitor(skeleton);
-  boost::depth_first_search(blocks, std::move(visitor), propertyMap);
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, blocks))};
+
+  boost::depth_first_search(blocks, *this, propertyMap);
 }
 
-void SkeletonVisitor::start_vertex(SkeletonVisitor::vertex_descriptor,
-                                   const SkeletonVisitor::Graph &) {
+void SkeletonLoaderState::start_vertex(vertex_descriptor, const Graph &) {
   mTransform = Ogre::Matrix4::IDENTITY;
 }
 
-void SkeletonVisitor::discover_vertex(SkeletonVisitor::vertex_descriptor v,
-                                      const SkeletonVisitor::Graph &g) {
+void SkeletonLoaderState::discover_vertex(vertex_descriptor v, const Graph &g) {
   const auto &niObject{*g[v]};
 
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
@@ -31,8 +28,7 @@ void SkeletonVisitor::discover_vertex(SkeletonVisitor::vertex_descriptor v,
   }
 }
 
-void SkeletonVisitor::finish_vertex(SkeletonVisitor::vertex_descriptor v,
-                                    const SkeletonVisitor::Graph &g) {
+void SkeletonLoaderState::finish_vertex(vertex_descriptor v, const Graph &g) {
   const auto &niObject{*g[v]};
 
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
@@ -40,8 +36,8 @@ void SkeletonVisitor::finish_vertex(SkeletonVisitor::vertex_descriptor v,
   }
 }
 
-void SkeletonVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
-                                      const SkeletonVisitor::Graph &) {
+void SkeletonLoaderState::discover_vertex(const nif::BSXFlags &bsxFlags,
+                                          const Graph &) {
   using Flags = nif::BSXFlags::Flags;
   const Flags flags{bsxFlags.data};
   if ((flags & Flags::bRagdoll) != Flags::bNone) {
@@ -49,8 +45,8 @@ void SkeletonVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
   }
 }
 
-void SkeletonVisitor::discover_vertex(const nif::NiNode &node,
-                                      const SkeletonVisitor::Graph &) {
+void
+SkeletonLoaderState::discover_vertex(const nif::NiNode &node, const Graph &) {
   mTransform = mTransform * oo::getTransform(node);
   if (!mIsSkeleton) return;
 
@@ -70,8 +66,8 @@ void SkeletonVisitor::discover_vertex(const nif::NiNode &node,
   bone->setBindingPose();
 }
 
-void SkeletonVisitor::finish_vertex(const nif::NiNode &node,
-                                    const SkeletonVisitor::Graph &) {
+void
+SkeletonLoaderState::finish_vertex(const nif::NiNode &node, const Graph &) {
   mTransform = mTransform * oo::getTransform(node).inverse();
 
   if (mIsSkeleton && mParentBone) {

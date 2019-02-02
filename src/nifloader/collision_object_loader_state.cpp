@@ -12,22 +12,22 @@ namespace oo {
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject,
-    oo::BlockGraph blocks) {
-
+    oo::BlockGraph blocks)
+    : mRigidBody(collisionObject), mLogger(spdlog::get(oo::LOG)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  const auto indexMap{boost::get(boost::vertex_index, blocks)};
-  const auto propertyMap{boost::make_iterator_property_map(colorMap.begin(),
-                                                           indexMap)};
-  CollisionObjectVisitor visitor(collisionObject);
-  boost::depth_first_search(blocks, std::move(visitor), propertyMap);
-}
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, blocks))};
 
-void CollisionObjectVisitor::start_vertex(vertex_descriptor, const Graph &) {
-  mTransform = Ogre::Matrix4::IDENTITY;
+  boost::depth_first_search(blocks, *this, propertyMap);
 }
 
 void
-CollisionObjectVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
+CollisionObjectLoaderState::start_vertex(vertex_descriptor, const Graph &) {
+  mTransform = Ogre::Matrix4::IDENTITY;
+}
+
+void CollisionObjectLoaderState::discover_vertex(vertex_descriptor v,
+                                                 const Graph &g) {
   const auto &block{*g[v]};
 
   if (dynamic_cast<const nif::NiNode *>(&block)) {
@@ -42,7 +42,7 @@ CollisionObjectVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void
-CollisionObjectVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
+CollisionObjectLoaderState::finish_vertex(vertex_descriptor v, const Graph &g) {
   const auto &block{*g[v]};
 
   if (dynamic_cast<const nif::NiNode *>(&block)) {
@@ -50,13 +50,13 @@ CollisionObjectVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
   }
 }
 
-void CollisionObjectVisitor::discover_vertex(const nif::NiNode &node,
-                                             const Graph &) {
+void CollisionObjectLoaderState::discover_vertex(const nif::NiNode &node,
+                                                 const Graph &) {
   mTransform = mTransform * getTransform(node);
 }
 
-void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
-                                             const Graph &) {
+void CollisionObjectLoaderState::discover_vertex(const nif::BSXFlags &bsxFlags,
+                                                 const Graph &) {
   using Flags = nif::BSXFlags::Flags;
   const Flags flags{bsxFlags.data};
   if ((flags & Flags::bHavok) != Flags::bNone) {
@@ -67,8 +67,8 @@ void CollisionObjectVisitor::discover_vertex(const nif::BSXFlags &bsxFlags,
   }
 }
 
-void CollisionObjectVisitor::discover_vertex(const nif::BSBound &bsBound,
-                                             const Graph &) {
+void CollisionObjectLoaderState::discover_vertex(const nif::BSBound &bsBound,
+                                                 const Graph &) {
   // btBoxShape needs to be centered at the origin, so use btConvexHullShape
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   Ogre::Vector3 center{oo::fromBSCoordinates(oo::fromNif(bsBound.center))};
@@ -83,18 +83,18 @@ void CollisionObjectVisitor::discover_vertex(const nif::BSBound &bsBound,
   mRigidBody->_setCollisionShape(std::move(collisionShape));
 }
 
-void CollisionObjectVisitor::discover_vertex(
+void CollisionObjectLoaderState::discover_vertex(
     const nif::bhk::CollisionObject &collisionObject, const Graph &g) {
   if (!mHasHavok) return;
   parseCollisionObject(g, collisionObject);
 }
 
-void CollisionObjectVisitor::finish_vertex(const nif::NiNode &node,
-                                           const Graph &/*g*/) {
+void CollisionObjectLoaderState::finish_vertex(const nif::NiNode &node,
+                                               const Graph &/*g*/) {
   mTransform = mTransform * getTransform(node).inverse();
 }
 
-void CollisionObjectVisitor::parseCollisionObject(
+void CollisionObjectLoaderState::parseCollisionObject(
     const Graph &g, const nif::bhk::CollisionObject &block) {
   // TODO: COFlags
   // TODO: target
@@ -113,10 +113,10 @@ void CollisionObjectVisitor::parseCollisionObject(
   if (info) mRigidBody->_setRigidBodyInfo(std::move(info));
 }
 
-std::pair<CollisionObjectVisitor::CollisionShapeVector,
+std::pair<CollisionObjectLoaderState::CollisionShapeVector,
           std::unique_ptr<Ogre::RigidBodyInfo>>
-CollisionObjectVisitor::parseWorldObject(const Graph &g,
-                                         const nif::bhk::WorldObject &block) {
+CollisionObjectLoaderState::parseWorldObject(
+    const Graph &g, const nif::bhk::WorldObject &block) {
   // TODO: Flags
 
   const Ogre::Matrix4 localTrans = [&block]() {
@@ -143,7 +143,7 @@ CollisionObjectVisitor::parseWorldObject(const Graph &g,
   return std::make_pair(std::move(collisionShapes), std::move(info));
 }
 
-Ogre::RigidBodyInfo CollisionObjectVisitor::generateRigidBodyInfo(
+Ogre::RigidBodyInfo CollisionObjectLoaderState::generateRigidBodyInfo(
     const nif::bhk::RigidBody &block) const {
   // This does not seem to affect the translation in any way.
   // TODO: What is the Havok origin used for?
@@ -196,9 +196,9 @@ Ogre::RigidBodyInfo CollisionObjectVisitor::generateRigidBodyInfo(
 //===----------------------------------------------------------------------===//
 // parseShape overloads
 //===----------------------------------------------------------------------===//
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::Shape &block) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &g,
+                                       const nif::bhk::Shape &block) {
   using namespace nif::bhk;
   if (dynamic_cast<const TransformShape *>(&block)) {
     return parseShape(g, dynamic_cast<const TransformShape &>(block));
@@ -219,13 +219,13 @@ CollisionObjectVisitor::parseShape(const Graph &g,
     return {};
     //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
     //            "Unknown collision shape",
-    //            "CollisionObjectVisitor::parseShape");
+    //            "CollisionObjectLoaderState::parseShape");
   }
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::TransformShape &block) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &g,
+                                       const nif::bhk::TransformShape &block) {
   const auto &childShape{getRef<nif::bhk::Shape>(g, block.shape)};
 
   const Ogre::Matrix4 t{oo::fromBSCoordinates(oo::fromNif(block.transform))};
@@ -236,9 +236,9 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return collisionShape;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &,
-                                   const nif::bhk::CapsuleShape &block) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &,
+                                       const nif::bhk::CapsuleShape &block) {
   CollisionShapeVector v;
 
   const Ogre::Vector3 p1{mTransform *
@@ -277,9 +277,9 @@ CollisionObjectVisitor::parseShape(const Graph &,
   return v;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::MoppBvTreeShape &shape) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &g,
+                                       const nif::bhk::MoppBvTreeShape &shape) {
   // TODO: Use material information for collisions and sound
   //const auto material{shape.material.material};
 
@@ -302,9 +302,9 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return collisionShape;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &g,
-                                   const nif::bhk::ListShape &shape) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &g,
+                                       const nif::bhk::ListShape &shape) {
   // TODO: Use material information for collisions and sound
   //const auto material{shape.material.material};
 
@@ -326,8 +326,8 @@ CollisionObjectVisitor::parseShape(const Graph &g,
   return children;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(
     const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape) {
   // TODO: Subshapes?
 
@@ -349,9 +349,9 @@ CollisionObjectVisitor::parseShape(
   return collisionShape;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &/*g*/,
-                                   const nif::bhk::ConvexVerticesShape &shape) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
+                                       const nif::bhk::ConvexVerticesShape &shape) {
   // TODO: Use material information for collisions and sound
   //const auto material{shape.material.material};
 
@@ -367,9 +367,9 @@ CollisionObjectVisitor::parseShape(const Graph &/*g*/,
   return v;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseShape(const Graph &/*g*/,
-                                   const nif::bhk::BoxShape &shape) {
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
+                                       const nif::bhk::BoxShape &shape) {
   // TODO: Use material information for collisions and sound
   //const auto material{shape.material.material};
 
@@ -391,8 +391,8 @@ CollisionObjectVisitor::parseShape(const Graph &/*g*/,
   return v;
 }
 
-CollisionObjectVisitor::CollisionShapeVector
-CollisionObjectVisitor::parseNiTriStripsData(
+CollisionObjectLoaderState::CollisionShapeVector
+CollisionObjectLoaderState::parseNiTriStripsData(
     const Graph &/*g*/, const nif::hk::PackedNiTriStripsData &block) {
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
   // triangles. Bullet doesn't copy the underlying vertex and index buffers,
@@ -431,7 +431,7 @@ CollisionObjectVisitor::parseNiTriStripsData(
 //===----------------------------------------------------------------------===//
 // Vertex/Index buffer functions
 //===----------------------------------------------------------------------===//
-unsigned char *CollisionObjectVisitor::fillIndexBuffer(
+unsigned char *CollisionObjectLoaderState::fillIndexBuffer(
     std::vector<uint16_t> &indexBuf,
     const nif::hk::PackedNiTriStripsData &block) {
 
@@ -446,7 +446,7 @@ unsigned char *CollisionObjectVisitor::fillIndexBuffer(
   return reinterpret_cast<unsigned char *>(indexBuf.data());
 }
 
-unsigned char *CollisionObjectVisitor::fillVertexBuffer(
+unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
     std::vector<float> &vertexBuf,
     const nif::hk::PackedNiTriStripsData &block) {
 

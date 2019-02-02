@@ -12,10 +12,6 @@ namespace oo {
 
 class SkeletonLoaderState {
  public:
-  explicit SkeletonLoaderState(Ogre::Skeleton *skeleton, oo::BlockGraph blocks);
-};
-
-struct SkeletonVisitor {
   using Graph = oo::BlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
@@ -31,8 +27,7 @@ struct SkeletonVisitor {
   [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
-  explicit SkeletonVisitor(Ogre::Skeleton *skeleton)
-      : mSkeleton(skeleton), mLogger(spdlog::get(oo::LOG)) {}
+  explicit SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks);
 
  private:
   Ogre::Skeleton *mSkeleton{};

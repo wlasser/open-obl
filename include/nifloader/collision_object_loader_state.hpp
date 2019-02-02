@@ -16,11 +16,6 @@ namespace oo {
 
 class CollisionObjectLoaderState {
  public:
-  CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
-                             oo::BlockGraph blocks);
-};
-
-struct CollisionObjectVisitor {
   using Graph = BlockGraph;
   using vertex_descriptor = Graph::vertex_descriptor;
   using edge_descriptor = Graph::edge_descriptor;
@@ -36,8 +31,8 @@ struct CollisionObjectVisitor {
   [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
-  explicit CollisionObjectVisitor(Ogre::CollisionObject *rigidBody)
-      : mRigidBody(rigidBody), mLogger(spdlog::get(oo::LOG)) {}
+  explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
+                                      Graph blocks);
 
  private:
   using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;

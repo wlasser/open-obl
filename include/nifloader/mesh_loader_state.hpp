@@ -3,7 +3,9 @@
 
 #include "nifloader/loader.hpp"
 #include "nifloader/loader_state.hpp"
+#include "settings.hpp"
 #include <Ogre.h>
+#include <spdlog/spdlog.h>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -120,9 +122,25 @@ struct TangentData {
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData);
 
 class MeshLoaderState {
- private:
-  friend class TBGVisitor;
+ public:
+  using Graph = BlockGraph;
+  using vertex_descriptor = Graph::vertex_descriptor;
+  using edge_descriptor = Graph::edge_descriptor;
 
+  void start_vertex(vertex_descriptor v, const Graph &g);
+  void discover_vertex(vertex_descriptor v, const Graph &g);
+  void finish_vertex(vertex_descriptor v, const Graph &g);
+
+  [[maybe_unused]] void initialize_vertex(vertex_descriptor, const Graph &) {}
+  [[maybe_unused]] void examine_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void tree_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void back_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
+  [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
+
+  explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks);
+
+ private:
   template<class T, class S> T &getBlock(nif::basic::Ref<S> ref);
   template<class T, class S> T &getBlock(nif::basic::Ptr<S> ptr);
 
@@ -170,34 +188,10 @@ class MeshLoaderState {
   /// has a `nif::NiSkinPartition`.
   std::vector<BoneBinding> getBoneBindings(const nif::NiTriBasedGeom &block);
 
-  BlockGraph mBlocks;
   Ogre::Mesh *mMesh;
-
- public:
-  explicit MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks);
-};
-
-class TBGVisitor {
- public:
-  using Graph = BlockGraph;
-  using vertex_descriptor = Graph::vertex_descriptor;
-  using edge_descriptor = Graph::edge_descriptor;
-
-  void initialize_vertex(vertex_descriptor /*v*/, const Graph &/*g*/) {}
-  void start_vertex(vertex_descriptor v, const Graph &g);
-  void discover_vertex(vertex_descriptor v, const Graph &g);
-  void examine_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
-  void tree_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
-  void back_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
-  void forward_or_cross_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
-  void finish_edge(edge_descriptor /*e*/, const Graph &/*g*/) {}
-  void finish_vertex(vertex_descriptor v, const Graph &g);
-
-  explicit TBGVisitor(MeshLoaderState &state) : state(state) {}
-
- private:
+  BlockGraph mBlocks;
   Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
-  MeshLoaderState &state;
+  std::shared_ptr<spdlog::logger> mLogger{};
 };
 
 template<class T, class S>

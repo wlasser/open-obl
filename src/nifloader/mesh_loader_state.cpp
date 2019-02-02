@@ -903,34 +903,34 @@ MeshLoaderState::getBoneBindings(const nif::NiTriBasedGeom &block) {
   return {};
 }
 
-MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, BlockGraph blocks)
-    : mBlocks(blocks), mMesh(mesh) {
+MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks)
+    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
-  auto propertyMap = boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, mBlocks));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
 
-  boost::depth_first_search(mBlocks, TBGVisitor(*this), propertyMap);
+  boost::depth_first_search(mBlocks, *this, propertyMap);
 }
 
 // This is a new connected component so we need to reset the transformation to
 // the identity. NB: This vertex will still be discovered so setting the
 // transformation to the vertex's will result in it being applied twice.
-void TBGVisitor::start_vertex(vertex_descriptor /*v*/, const Graph &/*g*/) {
+void MeshLoaderState::start_vertex(vertex_descriptor, const Graph &) {
   transform = Ogre::Matrix4::IDENTITY;
 }
 
 // If this vertex corresponds to a geometry block, then load it with the current
 // transformation. If it's an NiNode, update the current transformation so that
 // this child transformation occurs before any parent ones.
-void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
+void MeshLoaderState::discover_vertex(vertex_descriptor v, const Graph &g) {
   auto &niObject = *g[v];
 
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
     const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
-    auto[submesh, subBbox] = state.parseNiTriBasedGeom(geom, transform);
-    auto bbox{state.mMesh->getBounds()};
+    auto[submesh, subBbox] = parseNiTriBasedGeom(geom, transform);
+    auto bbox{mMesh->getBounds()};
     bbox.merge(subBbox);
-    state.mMesh->_setBounds(bbox);
+    mMesh->_setBounds(bbox);
   } else if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     transform = transform * getTransform(niNode);
@@ -938,7 +938,7 @@ void TBGVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 // If we have finished reading an NiNode, then we can remove its transformation.
-void TBGVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
+void MeshLoaderState::finish_vertex(vertex_descriptor v, const Graph &g) {
   auto &niObject{*g[v]};
   if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
