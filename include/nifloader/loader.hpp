@@ -117,6 +117,55 @@ void addVertex(BlockGraph &blocks,
 using AddVertexMap = std::map<std::string, decltype(&addVertex<nif::NiNode>)>;
 const AddVertexMap &getAddVertexMap();
 
+template<class T, class S>
+T &getBlock(BlockGraph &g, nif::basic::Ref<S> ref) {
+  const auto val{static_cast<int32_t>(ref)};
+  if (val < 0 || static_cast<std::size_t>(val) >= boost::num_vertices(g)) {
+    throw std::out_of_range("Nonexistent reference");
+  }
+  return dynamic_cast<T &>(*g[val]);
+}
+
+template<class T, class S>
+const T &getBlock(const BlockGraph &g, nif::basic::Ref<S> ref) {
+  const auto val{static_cast<int32_t>(ref)};
+  if (val < 0 || static_cast<std::size_t>(val) >= boost::num_vertices(g)) {
+    throw std::out_of_range("Nonexistent reference");
+  }
+  return dynamic_cast<const T &>(*g[val]);
+}
+
+template<class T, class S>
+T &getBlock(BlockGraph &g, nif::basic::Ptr<S> ptr) {
+  const auto val{static_cast<int32_t>(ptr)};
+  if (static_cast<std::size_t>(val) >= boost::num_vertices(g)) {
+    throw std::out_of_range("Nonexistent pointer");
+  }
+  return dynamic_cast<T &>(*g[val]);
+}
+
+// TODO: This is awful, stop doing dynamic_cast checks!
+template<class T, class S,
+    class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
+bool checkRefType(const BlockGraph &g, nif::basic::Ref<S> ref) {
+  const auto val{static_cast<int32_t>(ref)};
+  if (val < 0 || static_cast<std::size_t>(val) >= boost::num_vertices(g)) {
+    return false;
+  }
+  // This is horrific.
+  return dynamic_cast<const T *>(&*g[val]) != nullptr;
+}
+
+/// Returns an iterator into the BlockGraph vertex_set.
+// TODO: Get rid of this, it's hideous.
+template<class T> auto getBlockIndex(const BlockGraph &g, const T &block) {
+  // TODO: This is way more work than we need to do here
+  auto comp = [&](auto i) {
+    return dynamic_cast<const T *>(&*g[i]) == &block;
+  };
+  return std::find_if(g.vertex_set().begin(), g.vertex_set().end(), comp);
+}
+
 ///@}
 
 } // namespace oo

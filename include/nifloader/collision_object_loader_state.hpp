@@ -51,18 +51,6 @@ class CollisionObjectLoaderState {
 
   void finish_vertex(const nif::NiNode &node, const Graph &g);
 
-  template<class U, class T>
-  const U &getRef(const Graph &g, nif::basic::Ref<T> ref) {
-    const auto refInt{static_cast<int32_t>(ref)};
-    if (refInt < 0
-        || static_cast<std::size_t>(refInt) >= boost::num_vertices(g)) {
-      OGRE_EXCEPT(Ogre::Exception::ERR_INTERNAL_ERROR,
-                  "Nonexistent reference",
-                  "CollisionObjectVisitor");
-    }
-    return dynamic_cast<const U &>(*g[refInt]);
-  }
-
   void parseCollisionObject(const Graph &g,
                             const nif::bhk::CollisionObject &block);
 

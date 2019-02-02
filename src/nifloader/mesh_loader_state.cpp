@@ -707,12 +707,14 @@ MeshLoaderState::parseNiTexturingProperty(const nif::NiTexturingProperty &block,
 TangentData
 MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
   auto pred = [this](auto ref) {
-    const auto &data{this->getBlock<nif::NiExtraData>(ref)};
+    const auto &data{oo::getBlock<nif::NiExtraData>(mBlocks, ref)};
     return (data.name && data.name->str().find("Tangent space") == 0);
   };
   auto it{std::find_if(extraDataArray.begin(), extraDataArray.end(), pred)};
-  if (it != extraDataArray.end() && checkRefType<nif::NiBinaryExtraData>(*it)) {
-    return oo::getTangentData(getBlock<nif::NiBinaryExtraData>(*it));
+  if (it != extraDataArray.end()
+      && oo::checkRefType<nif::NiBinaryExtraData>(mBlocks, *it)) {
+    return oo::getTangentData(oo::getBlock<nif::NiBinaryExtraData>(mBlocks,
+                                                                   *it));
   }
   return TangentData{};
 }
@@ -720,12 +722,15 @@ MeshLoaderState::parseTangentData(const nif::NiExtraDataArray &extraDataArray) {
 bool
 MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
                                        Ogre::Pass *pass) {
-  auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
-    return checkRefType<nif::NiTexturingProperty>(ref);
+  auto it{std::find_if(properties.begin(),
+                       properties.end(),
+                       [g = mBlocks](auto ref) {
+                         return oo::checkRefType<nif::NiTexturingProperty>(g,
+                                                                           ref);
   })};
   if (it == properties.end()) return false;
 
-  const auto &texBlock{getBlock<nif::NiTexturingProperty>(*it)};
+  const auto &texBlock{oo::getBlock<nif::NiTexturingProperty>(mBlocks, *it)};
 
   auto family{parseNiTexturingProperty(texBlock, pass)};
 
@@ -743,12 +748,15 @@ bool
 MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
                                         Ogre::SubMesh *submesh,
                                         bool hasSkinning) {
-  auto it{std::find_if(properties.begin(), properties.end(), [this](auto ref) {
-    return checkRefType<nif::NiMaterialProperty>(ref);
+  auto it{std::find_if(properties.begin(),
+                       properties.end(),
+                       [g = mBlocks](auto ref) {
+                         return oo::checkRefType<nif::NiMaterialProperty>(g,
+                                                                          ref);
   })};
   if (it == properties.end()) return false;
 
-  const auto &matBlock{getBlock<nif::NiMaterialProperty>(*it)};
+  const auto &matBlock{oo::getBlock<nif::NiMaterialProperty>(mBlocks, *it)};
 
   const auto material{parseNiMaterialProperty(matBlock)};
   submesh->setMaterialName(material->getName(), material->getGroup());
@@ -790,7 +798,7 @@ MeshLoaderState::parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
 
   attachMaterialProperty(block.properties, submesh, !boneBindings.empty());
 
-  const auto &geomData{getBlock<nif::NiGeometryData>(block.data)};
+  const auto &geomData{oo::getBlock<nif::NiGeometryData>(mBlocks, block.data)};
 
   // For normal mapping we need tangent and bitangent information given inside
   // an NiBinaryExtraData block. For low versions, the extra data is arranged
@@ -834,7 +842,7 @@ MeshLoaderState::parseNiMaterialProperty(const nif::NiMaterialProperty &block) {
   // Unfortunately, nif material names are not necessarily unique, even within
   // a nif file. We therefore resort to using the block index.
   std::string meshName{mMesh->getName()};
-  auto it{getBlockIndex<nif::NiMaterialProperty>(block)};
+  auto it{oo::getBlockIndex<nif::NiMaterialProperty>(mBlocks, block)};
   const auto materialName{meshName.append("/").append(std::to_string(*it))};
 
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
@@ -865,7 +873,8 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
     oo::setTransform(*tex->textureTransform, textureUnit.get());
   }
 
-  const auto &source{getBlock<nif::NiSourceTexture &>(tex->source)};
+  const auto
+      &source{oo::getBlock<nif::NiSourceTexture &>(mBlocks, tex->source)};
   oo::setSourceTexture(source, textureUnit.get(), textureOverride);
 
   return textureUnit;
@@ -874,10 +883,11 @@ MeshLoaderState::parseTexDesc(const nif::compound::TexDesc *tex,
 std::vector<BoneBinding>
 MeshLoaderState::getBoneBindings(const nif::NiTriBasedGeom &block) {
   if (auto instRef{block.skinInstance}; instRef && *instRef) {
-    const auto &instance{getBlock<nif::NiSkinInstance>(*instRef)};
+    const auto &instance{oo::getBlock<nif::NiSkinInstance>(mBlocks, *instRef)};
     const auto &bones{instance.bones};
     if (auto partRef{instance.skinPartition}; partRef && *partRef) {
-      const auto &partition{getBlock<nif::NiSkinPartition>(*partRef)};
+      const auto
+          &partition{oo::getBlock<nif::NiSkinPartition>(mBlocks, *partRef)};
       auto bindings{oo::getBoneBindings(partition)};
 
       oo::Path meshName{mMesh->getName()};
@@ -892,7 +902,7 @@ MeshLoaderState::getBoneBindings(const nif::NiTriBasedGeom &block) {
       for (auto &binding : bindings) {
         std::transform(binding.indices.begin(), binding.indices.end(),
                        binding.indices.begin(), [&](auto idx) {
-              const auto &node{getBlock<nif::NiNode>(bones[idx])};
+              const auto &node{oo::getBlock<nif::NiNode>(mBlocks, bones[idx])};
               Ogre::Bone *bone{skelPtr->getBone(node.name.str())};
               return bone->getHandle();
             });

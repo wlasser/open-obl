@@ -141,18 +141,6 @@ class MeshLoaderState {
   explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks);
 
  private:
-  template<class T, class S> T &getBlock(nif::basic::Ref<S> ref);
-  template<class T, class S> T &getBlock(nif::basic::Ptr<S> ptr);
-
-  // TODO: This is awful, stop doing dynamic_cast checks!
-  template<class T, class S,
-      class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
-  bool checkRefType(nif::basic::Ref<S> ref);
-
-  /// Returns an iterator into the BlockGraph vertex_set.
-  // TODO: Get rid of this, it's hideous.
-  template<class T> auto getBlockIndex(const T &block);
-
   /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
   ///         with a single material and texture, and so translate to
   ///         `Ogre::SubMesh` objects.
@@ -193,44 +181,6 @@ class MeshLoaderState {
   Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
   std::shared_ptr<spdlog::logger> mLogger{};
 };
-
-template<class T, class S>
-T &MeshLoaderState::getBlock(nif::basic::Ref<S> ref) {
-  const auto val{static_cast<int32_t>(ref)};
-  if (val < 0 || static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
-    throw std::out_of_range("Nonexistent reference");
-  }
-  return dynamic_cast<T &>(*mBlocks[val]);
-}
-
-template<class T, class S>
-T &MeshLoaderState::getBlock(nif::basic::Ptr<S> ptr) {
-  const auto val{static_cast<int32_t>(ptr)};
-  if (static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
-    throw std::out_of_range("Nonexistent pointer");
-  }
-  return dynamic_cast<T &>(*mBlocks[val]);
-}
-
-template<class T, class S, class>
-bool MeshLoaderState::checkRefType(nif::basic::Ref<S> ref) {
-  const auto val{static_cast<int32_t>(ref)};
-  if (val < 0 || static_cast<std::size_t>(val) >= mBlocks.vertex_set().size()) {
-    return false;
-  }
-  // This is horrific.
-  return dynamic_cast<T *>(&*mBlocks[val]) != nullptr;
-}
-
-template<class T>
-auto MeshLoaderState::getBlockIndex(const T &block) {
-  // TODO: This is way more work than we need to do here
-  auto comp = [this, &block](auto i) {
-    return dynamic_cast<const T *>(&*mBlocks[i]) == &block;
-  };
-  return std::find_if(mBlocks.vertex_set().begin(), mBlocks.vertex_set().end(),
-                      comp);
-}
 
 /// @}
 

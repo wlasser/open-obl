@@ -98,7 +98,7 @@ void CollisionObjectLoaderState::parseCollisionObject(
     const Graph &g, const nif::bhk::CollisionObject &block) {
   // TODO: COFlags
   // TODO: target
-  const auto &worldObj{getRef<nif::bhk::WorldObject>(g, block.body)};
+  const auto &worldObj{oo::getBlock<nif::bhk::WorldObject>(g, block.body)};
   auto[collisionShapes, info]{parseWorldObject(g, worldObj)};
   if (!collisionShapes.empty()) {
     if (info && info->m_mass >= 0.1f) {
@@ -129,7 +129,7 @@ CollisionObjectLoaderState::parseWorldObject(
     }
   }();
   mTransform = mTransform * localTrans;
-  const auto &shape{getRef<nif::bhk::Shape>(g, block.shape)};
+  const auto &shape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
   auto collisionShapes{parseShape(g, shape)};
   mTransform = mTransform * localTrans.inverse();
 
@@ -226,7 +226,7 @@ CollisionObjectLoaderState::parseShape(const Graph &g,
 CollisionObjectLoaderState::CollisionShapeVector
 CollisionObjectLoaderState::parseShape(const Graph &g,
                                        const nif::bhk::TransformShape &block) {
-  const auto &childShape{getRef<nif::bhk::Shape>(g, block.shape)};
+  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
 
   const Ogre::Matrix4 t{oo::fromBSCoordinates(oo::fromNif(block.transform))};
   mTransform = mTransform * t;
@@ -284,7 +284,7 @@ CollisionObjectLoaderState::parseShape(const Graph &g,
   //const auto material{shape.material.material};
 
   // Instead of decoding the MOPP data we use the linked shape
-  const auto &childShape{getRef<nif::bhk::Shape>(g, shape.shape)};
+  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shape.shape)};
 
   // Apply the scale and recurse into the linked shape
   // The effort here is to avoid scaling the w component
@@ -313,7 +313,7 @@ CollisionObjectLoaderState::parseShape(const Graph &g,
   auto *compoundShape{static_cast<btCompoundShape *>(children.back().get())};
 
   for (const auto shapeRef : shape.subShapes) {
-    const auto &childShape{getRef<nif::bhk::Shape>(g, shapeRef)};
+    const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shapeRef)};
     auto collisionShape{parseShape(g, childShape)};
     if (collisionShape.empty()) continue;
     compoundShape->addChildShape(btTransform::getIdentity(),
@@ -331,7 +331,7 @@ CollisionObjectLoaderState::parseShape(
     const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape) {
   // TODO: Subshapes?
 
-  const auto &data{getRef<nif::hk::PackedNiTriStripsData>(g, shape.data)};
+  const auto &data{oo::getBlock<nif::hk::PackedNiTriStripsData>(g, shape.data)};
 
   const Ogre::Matrix4 scaleMat = [&shape]() {
     Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
