@@ -139,6 +139,8 @@ class MeshLoaderState {
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
   explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks);
+  explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks,
+                           vertex_descriptor start);
 
  private:
   /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry

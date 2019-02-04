@@ -727,7 +727,7 @@ MeshLoaderState::attachTextureProperty(const nif::NiPropertyArray &properties,
                        [g = mBlocks](auto ref) {
                          return oo::checkRefType<nif::NiTexturingProperty>(g,
                                                                            ref);
-  })};
+                       })};
   if (it == properties.end()) return false;
 
   const auto &texBlock{oo::getBlock<nif::NiTexturingProperty>(mBlocks, *it)};
@@ -753,7 +753,7 @@ MeshLoaderState::attachMaterialProperty(const nif::NiPropertyArray &properties,
                        [g = mBlocks](auto ref) {
                          return oo::checkRefType<nif::NiMaterialProperty>(g,
                                                                           ref);
-  })};
+                       })};
   if (it == properties.end()) return false;
 
   const auto &matBlock{oo::getBlock<nif::NiMaterialProperty>(mBlocks, *it)};
@@ -920,6 +920,16 @@ MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks)
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
 
   boost::depth_first_search(mBlocks, *this, propertyMap);
+}
+
+MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks,
+                                 vertex_descriptor start)
+    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
+
+  boost::depth_first_visit(mBlocks, start, *this, propertyMap);
 }
 
 // This is a new connected component so we need to reset the transformation to

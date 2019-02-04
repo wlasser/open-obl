@@ -1,5 +1,6 @@
 #include "esp.hpp"
 #include "conversions.hpp"
+#include "nifloader/scene.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include <Ogre.h>
 
@@ -197,6 +198,15 @@ reifyRecord(const record::CELL &refRec,
     } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
       cell->attach(*npc, node, std::forward_as_tuple(npc_Res, raceRes));
     }
+  }
+
+  // TODO: Testing only, remove this
+  for (int i = 0; i < 10; ++i) {
+    auto
+        *node{oo::insertNif("meshes/clutter/middleclass/middlemetalplate01.nif",
+                            oo::RESOURCE_GROUP, cell->scnMgr,
+                            gsl::make_not_null(cell->physicsWorld.get()))};
+    node->setPosition({2.0f, 2.0f, 2.0f + i * 0.2f});
   }
 
   return cell;

@@ -143,6 +143,7 @@ target_sources(OpenOblivion PRIVATE
         src/nifloader/mesh_loader_state.cpp
         src/nifloader/nif_resource.cpp
         src/nifloader/nif_resource_manager.cpp
+        src/nifloader/scene.cpp
         src/nifloader/skeleton_loader.cpp
         src/nifloader/skeleton_loader_state.cpp
         src/resolvers/acti_resolver.cpp
@@ -197,6 +198,7 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/mesh_loader_state.hpp
         include/nifloader/nif_resource.hpp
         include/nifloader/nif_resource_manager.hpp
+        include/nifloader/scene.hpp
         include/nifloader/skeleton_loader.hpp
         include/nifloader/skeleton_loader_state.hpp
         include/resolvers/acti_resolver.hpp

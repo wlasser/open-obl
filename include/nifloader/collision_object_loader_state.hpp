@@ -34,6 +34,12 @@ class CollisionObjectLoaderState {
   explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
                                       Graph blocks);
 
+  explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
+                                      Graph blocks,
+                                      vertex_descriptor start,
+                                      bool hasHavok = false,
+                                      bool isSkeleton = false);
+
  private:
   using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
 

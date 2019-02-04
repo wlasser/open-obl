@@ -30,6 +30,11 @@ class SkeletonLoaderState {
 
   explicit SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks);
 
+  explicit SkeletonLoaderState(Ogre::Skeleton *skeleton,
+                               Graph blocks,
+                               vertex_descriptor start,
+                               bool isSkeleton = false);
+
  private:
   Ogre::Skeleton *mSkeleton{};
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};

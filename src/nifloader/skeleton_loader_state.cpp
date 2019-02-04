@@ -14,6 +14,18 @@ SkeletonLoaderState::SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks)
   boost::depth_first_search(blocks, *this, propertyMap);
 }
 
+SkeletonLoaderState::SkeletonLoaderState(
+    Ogre::Skeleton *skeleton, Graph blocks, vertex_descriptor start,
+    bool isSkeleton) : mSkeleton(skeleton),
+                       mIsSkeleton(isSkeleton),
+                       mLogger(spdlog::get(oo::LOG)) {
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, blocks))};
+
+  boost::depth_first_visit(blocks, start, *this, propertyMap);
+}
+
 void SkeletonLoaderState::start_vertex(vertex_descriptor, const Graph &) {
   mTransform = Ogre::Matrix4::IDENTITY;
 }

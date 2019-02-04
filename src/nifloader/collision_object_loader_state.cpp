@@ -11,14 +11,27 @@
 namespace oo {
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
-    Ogre::CollisionObject *collisionObject,
-    oo::BlockGraph blocks)
+    Ogre::CollisionObject *collisionObject, oo::BlockGraph blocks)
     : mRigidBody(collisionObject), mLogger(spdlog::get(oo::LOG)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};
 
   boost::depth_first_search(blocks, *this, propertyMap);
+}
+
+CollisionObjectLoaderState::CollisionObjectLoaderState(
+    Ogre::CollisionObject *collisionObject, Graph blocks,
+    vertex_descriptor start, bool hasHavok, bool isSkeleton)
+    : mRigidBody(collisionObject),
+      mHasHavok(hasHavok),
+      mIsSkeleton(isSkeleton),
+      mLogger(spdlog::get(oo::LOG)) {
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, blocks))};
+
+  boost::depth_first_visit(blocks, start, *this, propertyMap);
 }
 
 void
