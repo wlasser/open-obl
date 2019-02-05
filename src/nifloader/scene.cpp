@@ -97,7 +97,7 @@ class RagdollVisitor {
   [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
-  RagdollVisitor(RagdollVisitorState *state) : mState(state) {}
+  explicit RagdollVisitor(RagdollVisitorState *state) : mState(state) {}
 
  private:
   void discover_vertex(const nif::bhk::BlendCollisionObject &node,
@@ -114,6 +114,7 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
                            gsl::not_null<Ogre::SceneNode *> parent) {
   auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
   if (!nifPtr) return nullptr;
+  nifPtr->load();
   auto graph{nifPtr->getBlockGraph()};
 
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
@@ -336,6 +337,12 @@ void NifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &g) {
+  if (!mState->mIsSkeleton) {
+    const std::string name{node.name.str()};
+    //C++20: if (name.starts_with("Bip01")
+    if (name.substr(0, 5u) == "Bip01") return;
+  }
+
   if (auto *parent{mState->mRoot->getParentSceneNode()};
       parent && parent != mState->mParent) {
     mState->mRoot = gsl::make_not_null(parent);
