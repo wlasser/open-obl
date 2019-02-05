@@ -16,6 +16,11 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
                            gsl::not_null<Ogre::SceneManager *> scnMgr,
                            gsl::not_null<btDiscreteDynamicsWorld *> world);
 
+void attachRagdoll(const std::string &name, const std::string &group,
+                   gsl::not_null<Ogre::SceneManager *> scnMgr,
+                   gsl::not_null<btDiscreteDynamicsWorld *> world,
+                   gsl::not_null<Ogre::Entity *> entity);
+
 } // namespace oo
 
 #endif // OPENOBLIVION_NIFLOADER_SCENE_HPP

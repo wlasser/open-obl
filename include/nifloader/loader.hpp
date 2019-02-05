@@ -137,6 +137,15 @@ T &getBlock(BlockGraph &g, nif::basic::Ptr<S> ptr) {
   return dynamic_cast<T &>(*g[val]);
 }
 
+template<class T, class S>
+const T &getBlock(const BlockGraph &g, nif::basic::Ptr<S> ptr) {
+  const auto val{static_cast<int32_t>(ptr)};
+  if (static_cast<std::size_t>(val) >= boost::num_vertices(g)) {
+    throw std::out_of_range("Nonexistent pointer");
+  }
+  return dynamic_cast<const T &>(*g[val]);
+}
+
 // TODO: This is awful, stop doing dynamic_cast checks!
 template<class T, class S,
     class = std::enable_if_t<std::is_convertible_v<T *, S *>>>
