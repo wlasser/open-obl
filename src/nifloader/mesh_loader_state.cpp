@@ -351,11 +351,15 @@ generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh) {
 }
 
 std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
+  // Vertices on the border of two partitions are present in both, so this is
+  // an overestimate that we will trim down by recording the largest index of
+  // the written vertices.
   const auto &blocks{skin.skinPartitionBlocks};
   const std::size_t numVertices{std::accumulate(
       blocks.begin(), blocks.end(), 0u, [](std::size_t a, const auto &block) {
         return a + block.numVertices;
       })};
+  std::size_t maxIndex{0};
 
   std::vector<BoneBinding> bindings(numVertices);
 
@@ -377,6 +381,7 @@ std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
     for (std::size_t i{0}; i < partition.numVertices; ++i) {
       // Get the actual index of this vertex in the mesh
       std::size_t j = partition.vertexMap[i];
+      if (j > maxIndex) maxIndex = j;
       auto len{std::min<std::size_t>(partition.numWeightsPerVertex, 4u)};
 
       // Copy the bone indices
@@ -395,6 +400,9 @@ std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
       }
     }
   }
+
+  // Trim vertices that are actually just overlap between partitions
+  bindings.resize(maxIndex + 1u);
 
   return bindings;
 }
