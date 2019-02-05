@@ -47,6 +47,8 @@ class NifVisitor {
   void discover_vertex(const nif::NiTriBasedGeom &node,
                        vertex_descriptor v, const Graph &g);
 
+  void finish_vertex(const nif::NiNode &node, const Graph &g);
+
   std::string mName;
   std::string mGroup;
   bool mHasHavok{false};
@@ -99,9 +101,9 @@ void NifVisitor::start_vertex(vertex_descriptor, const Graph &g) {
   }
 }
 
-void NifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
-
-}
+//===----------------------------------------------------------------------===//
+// discover_vertex
+//===----------------------------------------------------------------------===//
 
 void NifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
   const auto &block{*g[v]};
@@ -117,8 +119,20 @@ void NifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
+  // If we are not in a skeleton then skeletal nodes do not need to be added
+  // as scene nodes, they only need to present in the nif file when processing
+  // the mesh. This is purely an optimization, and there is no way for sure to
+  // know if a node is skeletal or not.
+  if (!mIsSkeleton) {
+    std::string name{node.name.str()};
+    //C++20: if (name.starts_with("Bip01")
+    if (name.substr(0, 5u) == "Bip01") return;
+  }
+
   const Ogre::Vector3 tra{oo::fromBSCoordinates(oo::fromNif(node.translation))};
   const Ogre::Quaternion rot{oo::fromBSCoordinates(oo::fromNif(node.rotation))};
+  if (mIsSkeleton) {
+  }
   mRoot = gsl::make_not_null(mRoot->createChildSceneNode(tra, rot));
 }
 
@@ -178,6 +192,24 @@ void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &node,
   if (!entity) return;
 
   mRoot->attachObject(entity);
+}
+
+//===----------------------------------------------------------------------===//
+// finish_vertex
+//===----------------------------------------------------------------------===//
+
+void NifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
+  const auto &block{*g[v]};
+
+  if (dynamic_cast<const nif::NiNode *>(&block)) {
+    finish_vertex(static_cast<const nif::NiNode &>(block), g);
+  }
+}
+
+void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &g) {
+  if (auto *parent{mRoot->getParentSceneNode()}; parent) {
+    mRoot = gsl::make_not_null(parent);
+  }
 }
 
 } // namespace oo
