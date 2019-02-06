@@ -1405,7 +1405,7 @@ struct BlendController : nif::NiTimeController {
   void read(std::istream &is) override;
 };
 
-struct BlendCollisionObject : bhk::NiCollisionObject {
+struct BlendCollisionObject : bhk::CollisionObject {
   basic::Float heirGain{};
   basic::Float velGain{};
   void read(std::istream &is) override;

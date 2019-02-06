@@ -973,7 +973,7 @@ void BlendController::read(std::istream &is) {
 }
 
 void BlendCollisionObject::read(std::istream &is) {
-  bhk::NiCollisionObject::read(is);
+  bhk::CollisionObject::read(is);
   io::readBytes(is, heirGain);
   io::readBytes(is, velGain);
 }
