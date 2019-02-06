@@ -6,7 +6,7 @@
 #include "nifloader/scene.hpp"
 #include "ogrebullet/collision_object_manager.hpp"
 #include <boost/graph/depth_first_search.hpp>
-#include <set>
+#include <OgreTagPoint.h>
 
 namespace oo {
 
@@ -320,9 +320,10 @@ void RagdollVisitor::discover_vertex(const nif::bhk::BlendCollisionObject &node,
   if (!rigidBody) return;
 
   const auto &target{oo::getBlock<nif::NiNode>(g, node.target)};
-  mState->mEntity->attachObjectToBone(target.name.str(), rigidBody);
+  mState->mWorld->addRigidBody(rigidBody->getRigidBody());
+  auto *tp{mState->mEntity->attachObjectToBone(target.name.str(), rigidBody)};
+  tp->setInheritOrientation(true);
 }
-
 
 //===----------------------------------------------------------------------===//
 // finish_vertex

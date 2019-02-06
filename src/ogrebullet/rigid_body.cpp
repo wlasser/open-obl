@@ -7,7 +7,12 @@ namespace Ogre {
 
 void RigidBody::_notifyAttached(Node *parent, bool isTagPoint) {
   MovableObject::_notifyAttached(parent, isTagPoint);
-  bind(parent);
+  if (isTagPoint) {
+    mRigidBody->setCollisionFlags(
+        btCollisionObject::CollisionFlags::CF_STATIC_OBJECT);
+  } else {
+    bind(parent);
+  }
 }
 
 void RigidBody::_notifyMoved() {
@@ -15,6 +20,12 @@ void RigidBody::_notifyMoved() {
   // parent, or even when this->setPosition is called? If the latter, using it
   // to notify the motion state will cause a cycle
   // TODO: When is _notifyMoved called, will it create a cycle?
+  if (!mMotionState) {
+    Ogre::Affine3 ogreTrans{_getParentNodeFullTransform()};
+    btTransform bulletTrans(Ogre::toBullet(ogreTrans.linear()),
+                            Ogre::toBullet(ogreTrans.getTrans()));
+    mRigidBody->setWorldTransform(bulletTrans);
+  }
 }
 
 void RigidBody::_updateRenderQueue(RenderQueue *queue) {
