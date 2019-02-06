@@ -65,9 +65,12 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
   skelPtr->load();
 
-  auto *anim{oo::createAnimation(skelPtr.get(),
-                                 "meshes/characters/_male/idle.kf",
-                                 oo::RESOURCE_GROUP)};
+  Ogre::Animation *anim = [&]() {
+    if (skelPtr->hasAnimation("Idle")) return skelPtr->getAnimation("Idle");
+    return oo::createAnimation(skelPtr.get(),
+                               "meshes/characters/_male/idle.kf",
+                               oo::RESOURCE_GROUP);
+  }();
 
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
@@ -97,6 +100,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     }();
     auto &part{bodyParts[type]};
     const std::string meshName{meshPath.c_str()};
+    if (meshName.empty()) continue;
     part.entity = scnMgr->createEntity(meshName);
     part.entity->getMesh()->setSkeletonName(skelPtr->getName());
     part.entity->_initialise(true);
