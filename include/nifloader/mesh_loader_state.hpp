@@ -70,6 +70,13 @@ struct BoneBinding {
 /// `nif::NiSkinInstance` that owns the `nif::NiSkinPartition`.
 std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin);
 
+/// Dispatch to `oo::getBoneBindings(const nif::NiSkinPartition &)` if `skin`
+/// has a `nif::NiSkinPartition`.
+std::vector<BoneBinding> getBoneBindings(const oo::BlockGraph &g,
+                                         const std::string &meshName,
+                                         const std::string &meshGroup,
+                                         const nif::NiTriBasedGeom &block);
+
 /// Read vertex, normal, and texcoord data from `nif::NiGeometryData` and
 /// prepare it for rendering.
 std::unique_ptr<Ogre::VertexData>
@@ -120,6 +127,47 @@ struct TangentData {
 };
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData);
+TangentData parseTangentData(const oo::BlockGraph &g,
+                             const nif::NiExtraDataArray &dataArray);
+
+/// \remark When setting the texture name of a texture unit, Ogre looks up and
+///         loads the texture using the resource group of its parent. Thus
+///         contrary to what addTextureUnitState seems to suggest, one should
+///         not create a `Ogre::TextureUnitState` with a nullptr parent, and
+///         we have to supply the parent pass here.
+std::unique_ptr<Ogre::TextureUnitState>
+parseTexDesc(const oo::BlockGraph &g,
+             const nif::compound::TexDesc *tex,
+             Ogre::Pass *parent,
+             const std::optional<std::string> &textureOverride = {});
+
+/// \remark See `parseTexDesc()` for why the pass is necessary.
+TextureFamily parseNiTexturingProperty(const oo::BlockGraph &g,
+                                       const nif::NiTexturingProperty &block,
+                                       Ogre::Pass *pass);
+
+bool attachTextureProperty(const oo::BlockGraph &g,
+                           const nif::NiPropertyArray &properties,
+                           Ogre::Pass *pass);
+
+std::shared_ptr<Ogre::Material>
+parseNiMaterialProperty(const oo::BlockGraph &g,
+                        const std::string &meshName,
+                        const std::string &meshGroup,
+                        const nif::NiMaterialProperty &block);
+
+bool attachMaterialProperty(const oo::BlockGraph &g,
+                            const Ogre::Mesh *mesh,
+                            const nif::NiPropertyArray &properties,
+                            Ogre::SubMesh *submesh, bool hasSkinning = false);
+
+/// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
+///         with a single material and texture, and so translate to
+///         `Ogre::SubMesh` objects.
+BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
+                                   Ogre::Mesh *mesh,
+                                   const nif::NiTriBasedGeom &block,
+                                   const Ogre::Matrix4 &transform);
 
 class MeshLoaderState {
  public:
@@ -143,44 +191,9 @@ class MeshLoaderState {
                            vertex_descriptor start);
 
  private:
-  /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
-  ///         with a single material and texture, and so translate to
-  ///         `Ogre::SubMesh` objects.
-  BoundedSubmesh parseNiTriBasedGeom(const nif::NiTriBasedGeom &block,
-                                     const Ogre::Matrix4 &transform);
-
-  std::shared_ptr<Ogre::Material>
-  parseNiMaterialProperty(const nif::NiMaterialProperty &block);
-
-  /// \remark When setting the texture name of a texture unit, Ogre looks up and
-  ///         loads the texture using the resource group of its parent. Thus
-  ///         contrary to what addTextureUnitState seems to suggest, one should
-  ///         not create a `Ogre::TextureUnitState` with a nullptr parent, and
-  ///         we have to supply the parent pass here.
-  std::unique_ptr<Ogre::TextureUnitState>
-  parseTexDesc(const nif::compound::TexDesc *tex,
-               Ogre::Pass *parent,
-               const std::optional<std::string> &textureOverride = {});
-
-  /// \remark See `parseTexDesc()` for why the pass is necessary.
-  TextureFamily parseNiTexturingProperty(const nif::NiTexturingProperty &block,
-                                         Ogre::Pass *pass);
-
-  TangentData parseTangentData(const nif::NiExtraDataArray &extraDataArray);
-
-  bool attachTextureProperty(const nif::NiPropertyArray &properties,
-                             Ogre::Pass *pass);
-
-  bool attachMaterialProperty(const nif::NiPropertyArray &properties,
-                              Ogre::SubMesh *submesh, bool hasSkinning = false);
-
-  /// Dispatch to `oo::getBoneBindings(const nif::NiSkinPartition &)` if `skin`
-  /// has a `nif::NiSkinPartition`.
-  std::vector<BoneBinding> getBoneBindings(const nif::NiTriBasedGeom &block);
-
   Ogre::Mesh *mMesh;
   BlockGraph mBlocks;
-  Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
+  Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   std::shared_ptr<spdlog::logger> mLogger{};
 };
 
