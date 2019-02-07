@@ -188,9 +188,9 @@ struct PlayerControllerImpl {
     const auto speed{getMoveSpeed()};
     // This is a rotation of the standard basis, so is still in SO(3)
     const auto axes{cameraNode->getLocalAxes()};
-    if (auto length = localVelocity.length() > 0.01f) {
+    if (auto len = localVelocity.length(); len > 0.01f) {
       const auto v{rigidBody->getLinearVelocity()};
-      auto newV{Ogre::toBullet(axes * localVelocity / length * speed)};
+      auto newV{qvm::convert_to<btVector3>(axes * localVelocity / len * speed)};
       newV.setY(v.y());
       rigidBody->setLinearVelocity(newV);
     } else {

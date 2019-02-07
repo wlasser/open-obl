@@ -89,7 +89,7 @@ void CollisionObjectLoaderState::discover_vertex(const nif::BSBound &bsBound,
   const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
 
   for (const auto &corner : box.getAllCorners()) {
-    collisionShape->addPoint(Ogre::toBullet(corner + center));
+    collisionShape->addPoint(qvm::convert_to<btVector3>(corner + center));
   }
 
   mRigidBody->_setCollisionShape(std::move(collisionShape));
@@ -194,7 +194,7 @@ Ogre::RigidBodyInfo CollisionObjectLoaderState::generateRigidBodyInfo(
   // TODO: Constraints
 
   // Convert the Ogre parameters to Bullet ones and set up the rigid body
-  const btVector3 bulletInertia{Ogre::toBullet(principalMoments)};
+  const auto bulletInertia{qvm::convert_to<btVector3>(principalMoments)};
   btRigidBody::btRigidBodyConstructionInfo
       info(mass, nullptr, nullptr, bulletInertia);
   info.m_linearDamping = linearDamping;
@@ -281,7 +281,9 @@ CollisionObjectLoaderState::parseShape(const Graph &,
 
   // Not axis-aligned, so use a btMultiSphereShape with two spheres. Bullet
   // copies the positions and radii, so passing local vectors is ok.
-  std::array<btVector3, 2> positions{Ogre::toBullet(p1), Ogre::toBullet(p2)};
+  std::array<btVector3, 2> positions{
+      qvm::convert_to<btVector3>(p1), qvm::convert_to<btVector3>(p2)
+  };
   std::array<btScalar, 2> radii{radius, radius};
   v.emplace_back(std::make_unique<btMultiSphereShape>(positions.data(),
                                                       radii.data(), 2));
@@ -369,9 +371,8 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
 
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   for (const auto &vertex : shape.vertices) {
-    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(vertex)};
-    const auto v{mTransform * ogreV * 7.0f};
-    collisionShape->addPoint(Ogre::toBullet(v.xyz()));
+    const auto v{mTransform * oo::fromBSCoordinates(vertex) * 7.0f};
+    collisionShape->addPoint(qvm::convert_to<btVector3>(v.xyz()));
   }
   CollisionShapeVector v;
   v.emplace_back(std::move(collisionShape));
@@ -396,7 +397,7 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
   for (const auto &corner : box.getAllCorners()) {
     const Ogre::Vector4 ogreV{oo::fromBSCoordinates(corner), 1.0f};
     const auto v{mTransform * ogreV * 7.0f};
-    collisionShape->addPoint(Ogre::toBullet(v.xyz()));
+    collisionShape->addPoint(qvm::convert_to<btVector3>(v.xyz()));
   }
   CollisionShapeVector v;
   v.emplace_back(std::move(collisionShape));

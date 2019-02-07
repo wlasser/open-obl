@@ -108,12 +108,11 @@ RefId GameMode::getCrosshairRef() {
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
   auto *const camera{mPlayerController->getCamera()};
-  const auto cameraPos{Ogre::toBullet(camera->getDerivedPosition())};
-  const auto cameraDir{Ogre::toBullet(camera->getDerivedDirection())};
-  const auto rayStart{cameraPos + 0.5f * cameraDir};
-  const float rayLength
-      {*iActivatePickLength * oo::metersPerUnit<float>};
-  const auto rayEnd{cameraPos + rayLength * cameraDir};
+  const auto camPos{qvm::convert_to<btVector3>(camera->getDerivedPosition())};
+  const auto camDir{qvm::convert_to<btVector3>(camera->getDerivedDirection())};
+  const auto rayStart{camPos + 0.5L * camDir};
+  const auto rayLength{*iActivatePickLength * oo::metersPerUnit<btScalar>};
+  const auto rayEnd{camPos + rayLength * camDir};
 
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
   mCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
@@ -172,11 +171,10 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
   if (!mDebugDrawer) return;
 
-  const auto nodePos{Ogre::toBullet(t * node->_getDerivedPosition())};
+  const auto p{qvm::convert_to<btVector3>(t * node->_getDerivedPosition())};
   for (auto *child : node->getChildren()) {
-    mDebugDrawer->drawLine(nodePos,
-                           Ogre::toBullet(t * child->_getDerivedPosition()),
-                           {1.0f, 0.0f, 0.0f});
+    const auto q{qvm::convert_to<btVector3>(t * child->_getDerivedPosition())};
+    mDebugDrawer->drawLine(p, q, {1.0f, 0.0f, 0.0f});
     drawNodeChildren(child, t);
   }
 }

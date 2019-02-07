@@ -50,6 +50,25 @@ template<> struct vec_traits<Ogre::Vector3> {
   }
 };
 
+template<> struct vec_traits<btVector3> {
+  static const int dim{3};
+  using scalar_type = btScalar;
+
+  template<int I> static inline scalar_type &
+  write_element(btVector3 &v) {
+    if constexpr (I == 0) return v[0];
+    else if constexpr (I == 1) return v[1];
+    else return v[2];
+  }
+
+  template<int I> static inline scalar_type
+  read_element(const btVector3 &v) {
+    if constexpr (I == 0) return v[0];
+    else if constexpr (I == 1) return v[1];
+    else return v[2];
+  }
+};
+
 template<> struct vec_traits<nif::compound::Vector4> {
   static const int dim{4};
   using scalar_type = nif::basic::Float;
@@ -149,6 +168,26 @@ template<> struct quat_traits<Ogre::Quaternion> {
     else if constexpr (I == 1) return q.x;
     else if constexpr (I == 2) return q.y;
     else return q.z;
+  }
+};
+
+template<> struct quat_traits<btQuaternion> {
+  using scalar_type = btScalar;
+
+  template<int I> static inline scalar_type &
+  write_element(btQuaternion &q) {
+    if constexpr (I == 0) return q[0];
+    else if constexpr (I == 1) return q[1];
+    else if constexpr (I == 2) return q[2];
+    else return q[3];
+  }
+
+  template<int I> static inline scalar_type
+  read_element(const btQuaternion &q) {
+    if constexpr (I == 0) return q[0];
+    else if constexpr (I == 1) return q[1];
+    else if constexpr (I == 2) return q[2];
+    else return q[3];
   }
 };
 
