@@ -121,7 +121,7 @@ getInterpolator(const BlockGraph &graph,
 
 Ogre::Vector3 getTranslation(const nif::compound::NiQuatTransform &trans) {
   if (!trans.trsValid || trans.trsValid->at(0)) {
-    return oo::fromBSCoordinates(oo::fromNif(trans.translation));
+    return oo::fromBSCoordinates(trans.translation);
   }
   return Ogre::Vector3::ZERO;
 }
@@ -135,7 +135,7 @@ Ogre::Vector3 getScale(const nif::compound::NiQuatTransform &trans) {
 
 Ogre::Quaternion getRotation(const nif::compound::NiQuatTransform &trans) {
   if (!trans.trsValid || trans.trsValid->at(1)) {
-    return oo::fromBSCoordinates(oo::fromNif(trans.rotation));
+    return oo::fromBSCoordinates(trans.rotation);
   }
   return Ogre::Quaternion::IDENTITY;
 }
@@ -212,7 +212,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
         std::visit([&](const auto &keys) {
           for (const auto &key : keys) {
             auto *kf{track->createTranslationKeyFrame(key.time)};
-            const auto t{oo::fromBSCoordinates(oo::fromNif(key.value))};
+            const auto t{oo::fromBSCoordinates(key.value)};
             kf->setTranslate(t - translation);
           }
         }, data->translations.keys);
@@ -226,7 +226,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
           std::visit([&](const auto &keys) {
             for (const auto &key : keys) {
               auto *kf{track->createRotationKeyFrame(key.time)};
-              const auto r{oo::fromBSCoordinates(oo::fromNif(key.value))};
+              const auto r{oo::fromBSCoordinates(key.value)};
               kf->setRotation(inv * r);
             }
           }, data->quaternionKeys);

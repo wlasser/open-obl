@@ -20,8 +20,7 @@ getBoundingBox(const nif::NiGeometryData &block, Ogre::Matrix4 transformation) {
   if (!block.hasVertices || block.vertices.empty()) return {};
 
   for (const auto &vertex : block.vertices) {
-    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex))};
-    const auto v = transformation * ogreV;
+    const auto v = transformation * oo::fromBSCoordinates(vertex);
     // NB: Cannot use else if, both branches apply if the mesh is flat
     if (v.x < bboxMin.x) bboxMin.x = v.x;
     if (v.x > bboxMax.x) bboxMax.x = v.x;
@@ -48,12 +47,12 @@ long numCCWTriangles(const nif::NiTriShapeData &block) {
   const auto &tris{block.triangles};
   return std::count_if(tris.begin(), tris.end(), [&](const auto &tri) {
     return oo::isWindingOrderCCW(
-        oo::fromNif(block.vertices[tri.v1]),
-        oo::fromNif(block.normals[tri.v1]),
-        oo::fromNif(block.vertices[tri.v2]),
-        oo::fromNif(block.normals[tri.v2]),
-        oo::fromNif(block.vertices[tri.v3]),
-        oo::fromNif(block.normals[tri.v3]));
+        qvm::convert_to<Ogre::Vector3>(block.vertices[tri.v1]),
+        qvm::convert_to<Ogre::Vector3>(block.normals[tri.v1]),
+        qvm::convert_to<Ogre::Vector3>(block.vertices[tri.v2]),
+        qvm::convert_to<Ogre::Vector3>(block.normals[tri.v2]),
+        qvm::convert_to<Ogre::Vector3>(block.vertices[tri.v3]),
+        qvm::convert_to<Ogre::Vector3>(block.normals[tri.v3]));
   });
 }
 
@@ -155,8 +154,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasVertices) {
     auto it = vertexBuffer.begin();
     for (const auto &vertex : block.vertices) {
-      const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex))};
-      const auto v{transformation * ogreV};
+      const auto v{transformation * oo::fromBSCoordinates(vertex)};
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
@@ -199,8 +197,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (block.hasNormals) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &normal : block.normals) {
-      const Ogre::Vector4 ogreN{oo::fromBSCoordinates(oo::fromNif(normal))};
-      const auto n{normalTransformation * ogreN};
+      const auto n{normalTransformation * oo::fromBSCoordinates(normal)};
       *it = n.x;
       *(it + 1) = n.y;
       *(it + 2) = n.z;
@@ -247,8 +244,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (bitangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &bitangent : *bitangents) {
-      const Ogre::Vector4 ogreBt{oo::fromBSCoordinates(oo::fromNif(bitangent))};
-      const auto bt{normalTransformation * ogreBt};
+      const auto bt{normalTransformation * oo::fromBSCoordinates(bitangent)};
       *it = bt.x;
       *(it + 1) = bt.y;
       *(it + 2) = bt.z;
@@ -263,8 +259,7 @@ generateVertexData(const nif::NiGeometryData &block,
   if (tangents) {
     auto it = vertexBuffer.begin() + localOffset;
     for (const auto &tangent : *tangents) {
-      const Ogre::Vector4 ogreT{oo::fromBSCoordinates(oo::fromNif(tangent))};
-      const auto t{normalTransformation * ogreT};
+      const auto t{normalTransformation * oo::fromBSCoordinates(tangent)};
       *it = t.x;
       *(it + 1) = t.y;
       *(it + 2) = t.z;

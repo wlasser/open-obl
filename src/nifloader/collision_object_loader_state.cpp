@@ -84,9 +84,8 @@ void CollisionObjectLoaderState::discover_vertex(const nif::BSBound &bsBound,
                                                  const Graph &) {
   // btBoxShape needs to be centered at the origin, so use btConvexHullShape
   auto collisionShape{std::make_unique<btConvexHullShape>()};
-  Ogre::Vector3 center{oo::fromBSCoordinates(oo::fromNif(bsBound.center))};
-  Ogre::Vector3
-      halfExtents{oo::fromBSCoordinates(oo::fromNif(bsBound.dimensions))};
+  Ogre::Vector3 center{oo::fromBSCoordinates(bsBound.center)};
+  Ogre::Vector3 halfExtents{oo::fromBSCoordinates(bsBound.dimensions)};
   const Ogre::AxisAlignedBox box{halfExtents, halfExtents};
 
   for (const auto &corner : box.getAllCorners()) {
@@ -241,7 +240,7 @@ CollisionObjectLoaderState::parseShape(const Graph &g,
                                        const nif::bhk::TransformShape &block) {
   const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
 
-  const Ogre::Matrix4 t{oo::fromBSCoordinates(oo::fromNif(block.transform))};
+  const Ogre::Matrix4 t{oo::fromBSCoordinates(block.transform)};
   mTransform = mTransform * t;
   auto collisionShape{parseShape(g, childShape)};
   mTransform = mTransform * t.inverse();
@@ -255,9 +254,9 @@ CollisionObjectLoaderState::parseShape(const Graph &,
   CollisionShapeVector v;
 
   const Ogre::Vector3 p1{mTransform *
-      oo::fromBSCoordinates(oo::fromNif(block.firstPoint)) * 7.0f};
+      oo::fromBSCoordinates(block.firstPoint) * 7.0f};
   const Ogre::Vector3 p2{mTransform *
-      oo::fromBSCoordinates(oo::fromNif(block.secondPoint)) * 7.0f};
+      oo::fromBSCoordinates(block.secondPoint) * 7.0f};
   const float radius{oo::metersPerUnit<float> * block.radius * 7.0f};
 
   // Bullet capsules must be axis-aligned and the midpoint of the centres must
@@ -348,7 +347,7 @@ CollisionObjectLoaderState::parseShape(
 
   const Ogre::Matrix4 scaleMat = [&shape]() {
     Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-    s.setScale(oo::fromNif(shape.scale).xyz());
+    s.setScale(qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.scale)));
     return s;
   }();
 
@@ -370,8 +369,7 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
 
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   for (const auto &vertex : shape.vertices) {
-    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(oo::fromNif(vertex).xyz()),
-                              1.0f};
+    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(vertex)};
     const auto v{mTransform * ogreV * 7.0f};
     collisionShape->addPoint(Ogre::toBullet(v.xyz()));
   }
@@ -392,7 +390,8 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
   // extracting the rotation and comparing the volumes of the original
   // axis-aligned box and the rotated axis-aligned box.
   auto collisionShape{std::make_unique<btConvexHullShape>()};
-  const Ogre::Vector3 halfExtents{oo::fromNif(shape.dimensions).xyz()};
+  const auto halfExtents
+      {qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.dimensions))};
   const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
   for (const auto &corner : box.getAllCorners()) {
     const Ogre::Vector4 ogreV{oo::fromBSCoordinates(corner), 1.0f};
@@ -467,7 +466,7 @@ unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
   auto it{vertexBuf.begin()};
   for (const auto &vertex : block.vertices) {
     using namespace oo;
-    const Ogre::Vector4 ogreV{fromBSCoordinates(fromNif(vertex))};
+    const Ogre::Vector4 ogreV{fromBSCoordinates(vertex)};
     const auto v{mTransform * ogreV};
     *it++ = v.x;
     *it++ = v.y;
@@ -477,11 +476,10 @@ unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
 }
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
-  using namespace oo;
   Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
-  t.makeTransform(fromBSCoordinates(fromNif(body.translation).xyz()),
+  t.makeTransform(oo::fromBSCoordinates(qvm::XYZ(body.translation)),
                   Ogre::Vector3::UNIT_SCALE,
-                  fromBSCoordinates(fromNif(body.rotation)));
+                  oo::fromBSCoordinates(body.rotation));
   return t;
 }
 

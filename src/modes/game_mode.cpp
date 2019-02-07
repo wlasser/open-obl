@@ -158,8 +158,9 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   ctx.setCamera(gsl::make_not_null(mPlayerController->getCamera()));
 
   const auto startPos = []() {
-    auto pos{oo::fromBSCoordinates({0, 0, 0})};
-    pos.y += 4.0f;
+    auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
+    pos.z += 3.0f;
+    pos.y -= 2.0f;
     return pos;
   }();
   mPlayerController->moveTo(startPos);

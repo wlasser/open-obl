@@ -1,5 +1,6 @@
 #include "esp.hpp"
 #include "conversions.hpp"
+#include "nifloader/animation.hpp"
 #include "nifloader/scene.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include <Ogre.h>
@@ -216,7 +217,8 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
                             const record::raw::REFRTransformation &transform) {
   const auto &data{transform.positionRotation.data};
 
-  node->setPosition(oo::fromBSCoordinates({data.x, data.y, data.z}));
+  node->setPosition(oo::fromBSCoordinates(
+      Ogre::Vector3{data.x, data.y, data.z}));
 
   if (transform.scale) {
     const float scale{transform.scale->data};

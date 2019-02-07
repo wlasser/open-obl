@@ -70,10 +70,9 @@ SkeletonLoaderState::discover_vertex(const nif::NiNode &node, const Graph &) {
   bone->setInheritOrientation(true);
   bone->setInheritScale(true);
 
-  bone->setPosition(oo::fromBSCoordinates(oo::fromNif(node.translation)));
+  bone->setPosition(oo::fromBSCoordinates(node.translation));
   bone->setScale(node.scale, node.scale, node.scale);
-  bone->setOrientation(oo::fromBSCoordinates(oo::fromNif(node.rotation))
-                           .transpose());
+  bone->setOrientation(oo::fromBSCoordinates(node.rotation).transpose());
 
   bone->setBindingPose();
 }

@@ -4,12 +4,10 @@
 namespace oo {
 
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
-  const Ogre::Vector3 translation{
-      oo::fromBSCoordinates(oo::fromNif(block.translation))
-  };
+  const Ogre::Vector3 translation{oo::fromBSCoordinates(block.translation)};
 
   const Ogre::Quaternion rotation = [&block]() {
-    const auto m{oo::fromBSCoordinates(oo::fromNif(block.rotation))};
+    const auto m{oo::fromBSCoordinates(block.rotation)};
     return Ogre::Quaternion{m.transpose()};
   }();
 

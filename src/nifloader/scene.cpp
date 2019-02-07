@@ -207,8 +207,8 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
     if (name.substr(0, 5u) == "Bip01") return;
   }
 
-  const Ogre::Vector3 tra{oo::fromBSCoordinates(oo::fromNif(node.translation))};
-  const Ogre::Quaternion rot{oo::fromBSCoordinates(oo::fromNif(node.rotation))};
+  const Ogre::Vector3 tra{oo::fromBSCoordinates(node.translation)};
+  const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
   if (mState->mIsSkeleton) {
   }
   mState->mRoot = gsl::make_not_null(mState->mRoot->createChildSceneNode(tra,
