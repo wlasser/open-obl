@@ -445,8 +445,7 @@ void setSourceTexture(const nif::NiSourceTexture &block,
     } else {
       using ExternalTextureFile = nif::NiSourceTexture::ExternalTextureFile;
       auto &texFile{std::get<ExternalTextureFile>(block.textureFileData)};
-      // TODO: Use fs not std::fs
-      tex->setTextureName(oo::normalizePath(texFile.filename.string.str()));
+      tex->setTextureName(oo::Path{texFile.filename.string.str()}.c_str());
     }
   } else {
     // We do not support internal textures, see InternalTextureFile comments

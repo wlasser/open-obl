@@ -387,16 +387,6 @@ Ogre::Quaternion fromBSCoordinates(const Quat &q) {
   return p * q * pInv;
 }
 
-// Convert a windows path to a lowercase nix path
-inline std::string normalizePath(std::string path) {
-  std::string out(path);
-  std::transform(path.begin(), path.end(), out.begin(),
-                 [](unsigned char c) {
-                   return std::tolower(c == '\\' ? '/' : c);
-                 });
-  return out;
-}
-
 } // namespace oo
 
 #endif // OPENOBLIVION_CONVERSIONS_HPP
