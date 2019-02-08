@@ -7,6 +7,7 @@
 #include "ogrebullet/collision_object_manager.hpp"
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreTagPoint.h>
+#include <set>
 
 namespace oo {
 
@@ -17,6 +18,8 @@ struct NifVisitorState {
   std::string mGroup;
   bool mHasHavok{false};
   bool mIsSkeleton{false};
+  /// Keep track of the NiNode blocks which have processed child geometry nodes.
+  std::set<oo::BlockGraph::vertex_descriptor> mVisitedGeometry{};
 
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<btDiscreteDynamicsWorld *> mWorld;
@@ -256,16 +259,23 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &node,
   mState->mWorld->addRigidBody(rigidBody->getRigidBody());
 }
 
-void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &node,
+void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
                                  vertex_descriptor v, const Graph &g) {
+  // All sibling NiTriBasedGeom blocks are submeshes of a mesh owned by the
+  // parent NiNode.
+  const vertex_descriptor u{boost::in_edges(v, g).first->m_source};
+
+  //C++20: if (mState->mVisitedGeometry.contains(u)) return;
+  if (mState->mVisitedGeometry.count(u) > 0) return;
+
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(v) + "Mesh"};
-  auto[ptr, created]{meshMgr.createOrRetrieve(
-      name, mState->mGroup, true, nullptr)};
+  const std::string name{mState->mName + std::to_string(u) + "Mesh"};
+  const std::string &group{mState->mGroup};
+  auto[ptr, created]{meshMgr.createOrRetrieve(name, group, true, nullptr)};
   Ogre::MeshPtr meshPtr{std::static_pointer_cast<Ogre::Mesh>(ptr)};
-  if (created) {
-    oo::MeshLoaderState loader(meshPtr.get(), g, v);
-  }
+  if (created) oo::MeshLoaderState loader(meshPtr.get(), g, u);
+  // Record that this node and its siblings have been visited.
+  mState->mVisitedGeometry.emplace(u);
 
   Ogre::Entity *entity{mState->mScnMgr->createEntity(meshPtr)};
   if (!entity) return;
