@@ -15,7 +15,7 @@ template<> struct CiteRecordTrait<record::ACTI> {
 };
 
 template<> struct ReifyRecordTrait<record::REFR_ACTI> {
-  using type = ecs::Entity<ecs::RigidBody<>, ecs::Mesh<>>;
+  using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::ACTI>;
 };
 
@@ -25,6 +25,7 @@ citeRecord(const record::ACTI &baseRec, tl::optional<RefId> refId);
 template<> ReifyRecordTrait<record::REFR_ACTI>::type
 reifyRecord(const record::REFR_ACTI &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers);
 
 } // namespace oo

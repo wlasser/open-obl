@@ -205,8 +205,7 @@ class Cell {
   Cell &operator=(Cell &&) noexcept = default;
 
   template<class Refr, class ...Res>
-  void attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
-              std::tuple<const Res &...> resolvers);
+  void attach(Refr ref, std::tuple<const Res &...> resolvers);
 
  protected:
   void setNodeTransform(Ogre::SceneNode *node,
@@ -317,12 +316,12 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
              ReifyRecordTrait<record::CELL>::resolvers resolvers);
 
 template<class Refr, class ...Res>
-void Cell::attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
-                  std::tuple<const Res &...> resolvers) {
-  auto entity{reifyRecord(ref, getSceneManager(), std::move(resolvers))};
-  setNodeTransform(node, ref);
-  setNodeScale(node, ref);
-  oo::attachAll(node, oo::RefId{ref.mFormId}, getPhysicsWorld(), entity);
+void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
+  // TODO: Support returning different types
+  auto *childNode{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
+                              std::move(resolvers))};
+  setNodeTransform(childNode, ref);
+  setNodeScale(childNode, ref);
 }
 
 } // namespace oo

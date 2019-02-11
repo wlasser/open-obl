@@ -14,11 +14,7 @@ template<> struct CiteRecordTrait<record::NPC_> {
 };
 
 template<> struct ReifyRecordTrait<record::REFR_NPC_> {
-  using type = ecs::Entity<ecs::RigidBody<0>,
-                           ecs::RigidBody<1>, ecs::Mesh<1>,
-                           ecs::RigidBody<2>, ecs::Mesh<2>,
-                           ecs::RigidBody<3>, ecs::Mesh<3>,
-                           ecs::RigidBody<4>, ecs::Mesh<4>>;
+  using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::NPC_, record::RACE>;
 };
 
@@ -28,6 +24,7 @@ citeRecord(const record::NPC_ &baseRec, tl::optional<RefId> refId);
 template<> ReifyRecordTrait<record::REFR_NPC_>::type
 reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers);
 
 } // namespace oo

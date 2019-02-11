@@ -3,9 +3,11 @@
 
 #include "fs/path.hpp"
 #include "meta.hpp"
+#include "nifloader/scene.hpp"
 #include "record/formid.hpp"
 #include "record/records.hpp"
 #include "resolvers/ecs.hpp"
+#include "settings.hpp"
 #include <boost/mp11.hpp>
 #include <gsl/gsl>
 #include <tuple>
@@ -60,6 +62,10 @@ attachLight(gsl::not_null<Ogre::SceneNode *> node,
 
 // Set the bullet user data in the RigidBody to the given RefId.
 void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId);
+
+// Set the bullet user data in the attached RigidBody to the given RefId.
+// TODO: Support rigid bodies anywhere down the hierarchy
+void setRefId(gsl::not_null<Ogre::SceneNode *> node, RefId refId);
 
 template<int I, class ...Components>
 gsl::not_null<Ogre::SceneNode *>
@@ -120,6 +126,28 @@ attachAll(gsl::not_null<Ogre::SceneNode *> node,
                                       ecs::subsetOf<I + 1>{}(entity));
     });
   }
+
+  return node;
+}
+
+template<class T> Ogre::SceneNode *
+insertNif(const T &baseRec, RefId refId,
+          gsl::not_null<Ogre::SceneManager *> scnMgr,
+          gsl::not_null<btDiscreteDynamicsWorld *> world) {
+  oo::Path baseName;
+  using modl_t = decltype(baseRec.modelFilename);
+  if constexpr (std::is_same_v<modl_t, std::optional<record::MODL>>) {
+    if (!baseRec.modelFilename) return nullptr;
+    baseName = oo::Path{baseRec.modelFilename->data};
+  } else if constexpr (std::is_same_v<modl_t, record::MODL>) {
+    baseName = oo::Path{baseRec.modelFilename.data};
+  } else {
+    static_assert(false_v<T>, "Missing MODL record");
+  }
+  oo::Path name{oo::Path{"meshes"} / baseName};
+  auto *node{oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world)};
+
+  oo::setRefId(gsl::make_not_null(node), refId);
 
   return node;
 }

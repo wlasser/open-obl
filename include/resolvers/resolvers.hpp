@@ -8,6 +8,7 @@
 #include <absl/container/flat_hash_map.h>
 #include <boost/fiber/mutex.hpp>
 #include <boost/mp11.hpp>
+#include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
@@ -167,9 +168,12 @@ struct ReifyRecordTrait {};
 ///               Ogre::SceneManager; it is not the caller's responsibility to
 ///               known how to link the possible components of the type together
 ///               in a scene.
+/// \param world The physics world is notified of any added rigid bodies; it is
+///              not the caller's responsibility to do this.
 template<class R>
 typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             typename ReifyRecordTrait<R>::resolvers resolvers);
 
 /// Metafunction mapping `Record` to `oo::Resolver<Record>`.

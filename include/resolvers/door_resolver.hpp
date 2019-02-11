@@ -17,7 +17,7 @@ struct CiteRecordTrait<record::DOOR> {
 
 template<>
 struct ReifyRecordTrait<record::REFR_DOOR> {
-  using type = ecs::Entity<ecs::RigidBody<>, ecs::Mesh<>>;
+  using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::DOOR>;
 };
 
@@ -29,6 +29,7 @@ template<>
 ReifyRecordTrait<record::REFR_DOOR>::type
 reifyRecord(const record::REFR_DOOR &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             ReifyRecordTrait<record::REFR_DOOR>::resolvers resolvers);
 
 } // namespace oo

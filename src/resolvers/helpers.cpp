@@ -66,4 +66,12 @@ void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, oo::RefId refId) {
   rigidBody->getRigidBody()->setUserPointer(oo::encodeFormId(formId));
 }
 
+void setRefId(gsl::not_null<Ogre::SceneNode *> node, RefId refId) {
+  for (auto obj : node->getAttachedObjects()) {
+    if (auto *body{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      oo::setRefId(gsl::make_not_null(body), refId);
+    }
+  }
+}
+
 } // namespace oo

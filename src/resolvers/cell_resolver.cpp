@@ -475,17 +475,16 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
   gsl::not_null<Ogre::SceneNode *> rootNode{cell->getRootSceneNode()};
 
   for (auto refId : *refs) {
-    gsl::not_null<Ogre::SceneNode *> node{rootNode->createChildSceneNode()};
     if (auto stat{refrStatRes.get(refId)}; stat) {
-      cell->attach(*stat, node, std::forward_as_tuple(statRes));
+      cell->attach(*stat, std::forward_as_tuple(statRes));
     } else if (auto door{refrDoorRes.get(refId)}; door) {
-      cell->attach(*door, node, std::forward_as_tuple(doorRes));
+      cell->attach(*door, std::forward_as_tuple(doorRes));
     } else if (auto ligh{refrLighRes.get(refId)}; ligh) {
-      cell->attach(*ligh, node, std::forward_as_tuple(lighRes));
+      cell->attach(*ligh, std::forward_as_tuple(lighRes));
     } else if (auto acti{refrActiRes.get(refId)}; acti) {
-      cell->attach(*acti, node, std::forward_as_tuple(actiRes));
+      cell->attach(*acti, std::forward_as_tuple(actiRes));
     } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
-      cell->attach(*npc, node, std::forward_as_tuple(npc_Res, raceRes));
+      cell->attach(*npc, std::forward_as_tuple(npc_Res, raceRes));
     }
   }
 

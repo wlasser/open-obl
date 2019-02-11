@@ -955,7 +955,7 @@ void MeshLoaderState::discover_vertex(vertex_descriptor v, const Graph &g) {
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
     const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
     auto[submesh, subBbox] = oo::parseNiTriBasedGeom(mBlocks, mMesh, geom,
-                                                     mTransform);
+                                                     Ogre::Matrix3::IDENTITY);
     auto bbox{mMesh->getBounds()};
     bbox.merge(subBbox);
     mMesh->_setBounds(bbox);

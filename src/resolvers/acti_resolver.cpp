@@ -21,19 +21,13 @@ citeRecord(const record::ACTI &baseRec, tl::optional<RefId> refId) {
 template<> oo::ReifyRecordTrait<record::REFR_ACTI>::type
 reifyRecord(const record::REFR_ACTI &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             oo::ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers) {
   const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
   auto baseRec{actiRes.get(refRec.baseId.data)};
-  if (!baseRec) return {ecs::RigidBody<>{nullptr}, ecs::Mesh<>{nullptr}};
+  if (!baseRec || !baseRec->modelFilename) return nullptr;
 
-  Ogre::Entity *mesh{oo::loadMesh(*baseRec, scnMgr)};
-  Ogre::RigidBody *rigidBody{oo::loadRigidBody(mesh, scnMgr)};
-
-  if (rigidBody) {
-    setRefId(gsl::make_not_null(rigidBody), oo::RefId{refRec.mFormId});
-  }
-
-  return {ecs::RigidBody<>{rigidBody}, ecs::Mesh<>{mesh}};
+  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world);
 }
 
 } // namespace oo

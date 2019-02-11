@@ -25,13 +25,11 @@ citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId) {
 template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
   const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
   auto baseRec{lighRes.get(refRec.baseId.data)};
-  if (!baseRec) {
-    return {ecs::Light<>{nullptr}, ecs::RigidBody<>{nullptr},
-            ecs::Mesh<>{nullptr}};
-  }
+  if (!baseRec) return nullptr;
 
   const auto &data{baseRec->data.data};
 
@@ -75,14 +73,12 @@ reifyRecord(const record::REFR_LIGH &refRec,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  Ogre::Entity *mesh{oo::loadMesh(*baseRec, scnMgr)};
-  Ogre::RigidBody *rigidBody{oo::loadRigidBody(mesh, scnMgr)};
+  auto *node{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world)};
+  if (!node) node = scnMgr->getRootSceneNode()->createChildSceneNode();
 
-  if (rigidBody) {
-    setRefId(gsl::make_not_null(rigidBody), oo::RefId{refRec.mFormId});
-  }
+  node->attachObject(light);
 
-  return {ecs::Light<>{light}, ecs::RigidBody<>{rigidBody}, ecs::Mesh<>{mesh}};
+  return node;
 }
 
 } // namespace oo

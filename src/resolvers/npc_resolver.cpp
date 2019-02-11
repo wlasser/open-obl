@@ -30,24 +30,16 @@ struct BodyData {
 template<> ReifyRecordTrait<record::REFR_NPC_>::type
 reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
+            gsl::not_null<btDiscreteDynamicsWorld *> world,
             ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers) {
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
   const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
-  // Object to return if loading fails
-  const ReifyRecordTrait<record::REFR_NPC_>::type empty{
-      ecs::RigidBody<0>{nullptr},
-      ecs::RigidBody<1>{nullptr}, ecs::Mesh<1>{nullptr},
-      ecs::RigidBody<2>{nullptr}, ecs::Mesh<2>{nullptr},
-      ecs::RigidBody<3>{nullptr}, ecs::Mesh<3>{nullptr},
-      ecs::RigidBody<4>{nullptr}, ecs::Mesh<4>{nullptr},
-  };
-
   auto baseRec{npc_Res.get(refRec.baseId.data)};
-  if (!baseRec) return empty;
+  if (!baseRec) return nullptr;
 
   auto raceRec{raceRes.get(baseRec->race.data)};
-  if (!raceRec) return empty;
+  if (!raceRec) return nullptr;
 
   const auto &acbs{baseRec->baseConfig.data};
   using ACBSFlags = record::raw::ACBS::Flag;
@@ -57,7 +49,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
   auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
 
-  if (!baseRec->skeletonFilename) return empty;
+  if (!baseRec->skeletonFilename) return nullptr;
 
   const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
   const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
@@ -74,6 +66,11 @@ reifyRecord(const record::REFR_NPC_ &refRec,
 
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
+
+  auto *parent{scnMgr->getRootSceneNode()->createChildSceneNode()};
+
+  // Set in loop below.
+  Ogre::Entity *upperBody{nullptr};
 
   const auto &bodyData{female ? raceRec->femaleBodyData
                               : raceRec->maleBodyData};
@@ -101,28 +98,38 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     auto &part{bodyParts[type]};
     const std::string meshName{meshPath.c_str()};
     if (meshName.empty()) continue;
-    part.entity = scnMgr->createEntity(meshName);
-    part.entity->getMesh()->setSkeletonName(skelPtr->getName());
-    part.entity->_initialise(true);
+    auto *node{oo::insertNif(meshName,
+                             oo::RESOURCE_GROUP,
+                             scnMgr,
+                             world,
+                             gsl::make_not_null(parent))};
 
-    auto *animState{part.entity->getAnimationState(anim->getName())};
+    Ogre::Entity *entity = [&]() -> Ogre::Entity * {
+      for (auto obj : node->getAttachedObjects()) {
+        if (auto *e{dynamic_cast<Ogre::Entity *>(obj)}) return e;
+      }
+      return nullptr;
+    }();
+    if (!entity) continue;
+
+    entity->getMesh()->setSkeletonName(skelPtr->getName());
+    entity->_initialise(true);
+
+    if (type == BodyParts::UpperBody) upperBody = entity;
+
+    auto *animState{entity->getAnimationState(anim->getName())};
     animState->setEnabled(true);
     animState->setTimePosition(0.0f);
 
-    part.rigidBody = oo::loadRigidBody(meshName, oo::RESOURCE_GROUP, scnMgr);
-    part.texture = texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP);
+//    auto texture{texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP)};
   }
 
-  return {ecs::RigidBody<0>{skelBox},
-          ecs::RigidBody<1>{bodyParts[BodyParts::UpperBody].rigidBody},
-          ecs::Mesh<1>{bodyParts[BodyParts::UpperBody].entity},
-          ecs::RigidBody<2>{bodyParts[BodyParts::LowerBody].rigidBody},
-          ecs::Mesh<2>{bodyParts[BodyParts::LowerBody].entity},
-          ecs::RigidBody<3>{bodyParts[BodyParts::Hand].rigidBody},
-          ecs::Mesh<3>{bodyParts[BodyParts::Hand].entity},
-          ecs::RigidBody<4>{bodyParts[BodyParts::Foot].rigidBody},
-          ecs::Mesh<4>{bodyParts[BodyParts::Foot].entity},
-  };
+  if (upperBody) {
+    oo::attachRagdoll(skelPath, oo::RESOURCE_GROUP, scnMgr, world,
+                      gsl::make_not_null(upperBody));
+  }
+
+  return parent;
 }
 
 } // namespace oo
