@@ -44,11 +44,10 @@ class PlayerController {
                        const btManifoldPoint &contact);
 
  private:
-  PlayerControllerImpl impl{};
-  StateVariant state{};
-  MovementStateVariant movementState{};
+  PlayerControllerImpl mImpl{};
+  StateVariant mState{};
+  MovementStateVariant mMovementStateVariant{};
 
-  void setAspectRatio(gsl::not_null<Ogre::Camera *> camera) const;
   void attachCamera(gsl::not_null<Ogre::Camera *> camera,
                     gsl::not_null<Ogre::SceneNode *> node);
   void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
