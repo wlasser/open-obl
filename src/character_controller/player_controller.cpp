@@ -9,7 +9,8 @@
 
 namespace oo {
 
-PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
+PlayerController::PlayerController(Ogre::SceneManager *scnMgr,
+                                   btDiscreteDynamicsWorld *world) {
   mImpl.camera = scnMgr->createCamera("PlayerCamera");
   auto camera{gsl::make_not_null(mImpl.camera)};
 
@@ -17,6 +18,11 @@ PlayerController::PlayerController(Ogre::SceneManager *scnMgr) {
   auto bodyNode{gsl::make_not_null(mImpl.bodyNode)};
   attachCamera(camera, bodyNode);
   createAndAttachRigidBody(bodyNode);
+
+  if (world) {
+    mImpl.world = world;
+    mImpl.world->addRigidBody(getRigidBody());
+  }
 
   mState = StandState{};
   enter(mState);
@@ -106,17 +112,19 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
 
 void PlayerController::attachCamera(gsl::not_null<Ogre::Camera *> camera,
                                     gsl::not_null<Ogre::SceneNode *> node) {
-  mImpl.cameraNode = node->createChildSceneNode(
-      Ogre::Vector3{0.0f, mImpl.height * 0.45f, 0.0f});
+  const auto h{(0.95f - 0.5f) * mImpl.height - mImpl.getCapsuleHeight() / 2.0f};
+  const auto camVector{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
+  mImpl.cameraNode = node->createChildSceneNode(camVector);
   mImpl.pitchNode = mImpl.cameraNode->createChildSceneNode();
   mImpl.pitchNode->attachObject(camera);
 }
 
 void PlayerController::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node) {
   mImpl.motionState = std::make_unique<Ogre::MotionState>(node);
-  const auto radius{0.3f};
-  const auto height{mImpl.height - 2.0f * radius};
-  mImpl.collisionShape = std::make_unique<btCapsuleShape>(radius, height);
+
+  const float r{mImpl.getCapsuleRadius()}, h{mImpl.getCapsuleHeight()};
+  mImpl.collisionShape = std::make_unique<btCapsuleShape>(r, h);
+
   btRigidBody::btRigidBodyConstructionInfo info(mImpl.mass,
                                                 mImpl.motionState.get(),
                                                 mImpl.collisionShape.get());

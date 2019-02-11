@@ -9,9 +9,25 @@
 
 namespace oo {
 
-std::optional<JumpState>
+std::optional<StandState>
 JumpState::update(PlayerControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
+
+  // Only apply the spring force if the player is falling, and sufficiently near
+  // to the ground.
+  const btVector3 gravityVector{impl.rigidBody->getGravity()};
+  const btVector3 v{impl.rigidBody->getLinearVelocity()};
+  if (v.dot(gravityVector) > 0.0f) {
+    const auto displacement{impl.getSpringDisplacement()};
+    // As the player is falling, displacement is negative, getting closer to
+    // zero. Once displacement is sufficiently small, the player has landed.
+    if (std::abs(displacement) < 0.1f) {
+      return StandState{};
+    } else if (displacement > -impl.getMaxSpringDisplacement()) {
+      impl.applySpringForce(displacement);
+    }
+  }
+
   return std::nullopt;
 }
 
@@ -23,6 +39,9 @@ void JumpState::enter(PlayerControllerImpl &impl) {
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
+  // TODO: The impulse should be calculated for some baseline gravity that the
+  //       player is 'used to', so that if the player goes somewhere with a
+  //       different amount of gravity then their jump height will change.
   const btVector3 gravityVector{impl.rigidBody->getGravity()};
   const float g{gravityVector.length()};
   const float apex{impl.jumpHeight(impl.acrobaticsSkill)};

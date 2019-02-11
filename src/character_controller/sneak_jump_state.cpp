@@ -9,9 +9,25 @@
 
 namespace oo {
 
-std::optional<SneakJumpState>
+std::optional<SneakStandState>
 SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
+
+  // Only apply the spring force if the player is falling, and sufficiently near
+  // to the ground.
+  const btVector3 gravityVector{impl.rigidBody->getGravity()};
+  const btVector3 v{impl.rigidBody->getLinearVelocity()};
+  if (v.dot(gravityVector) > 0.0f) {
+    const auto displacement{impl.getSpringDisplacement()};
+    // As the player is falling, displacement is negative, getting closer to
+    // zero. Once displacement is sufficiently small, the player has landed.
+    if (std::abs(displacement) < 0.1f) {
+      return SneakStandState{};
+    } else if (displacement > -impl.getMaxSpringDisplacement()) {
+      impl.applySpringForce(displacement);
+    }
+  }
+
   return std::nullopt;
 }
 

@@ -19,7 +19,7 @@ class SneakJumpState : public FallbackState<SneakJumpState>,
   using LookAbility::handleEvent;
   using FallbackState::handleEvent;
 
-  std::optional<SneakJumpState>
+  std::optional<SneakStandState>
   update(PlayerControllerImpl &impl, float elapsed);
 
   std::optional<SneakStandState>

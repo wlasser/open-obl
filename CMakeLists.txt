@@ -117,6 +117,7 @@ target_sources(OpenOblivion PRIVATE
         src/bsa_archive_factory.cpp
         src/character_controller/jump_state.cpp
         src/character_controller/player_controller.cpp
+        src/character_controller/player_controller_impl.cpp
         src/character_controller/run_state.cpp
         src/character_controller/sneak_jump_state.cpp
         src/character_controller/sneak_stand_state.cpp

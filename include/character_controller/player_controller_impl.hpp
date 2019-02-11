@@ -49,103 +49,59 @@ struct PlayerControllerImpl {
   std::function<float(bool, bool)> speedModifier{};
 
   // Multiplicative modifier of movement speed while running.
-  float runModifier(float athleticsSkill) const noexcept {
-    return *fMoveRunMult + *fMoveRunAthleticsMult * athleticsSkill * 0.01f;
-  }
+  float runModifier(float athleticsSkill) const noexcept;
 
   // Multiplicative modifier of movement speed while swimming while 'walking'.
-  float swimWalkModifier(float athleticsSkill) const noexcept {
-    return *fMoveSwimWalkBase
-        + *fMoveSwimWalkAthleticsMult * athleticsSkill * 0.01f;
-  }
+  float swimWalkModifier(float athleticsSkill) const noexcept;
 
   // Multiplicative modifier of movement speed while swimming while 'running'.
-  float swimRunModifier(float athleticsSkill) const noexcept {
-    return *fMoveSwimRunBase
-        + *fMoveSwimRunAthleticsMult * athleticsSkill * 0.01f;
-  }
+  float swimRunModifier(float athleticsSkill) const noexcept;
 
   // Multiplicative modifier of movement speed while sneaking.
-  float sneakModifier() const noexcept {
-    return *fMoveSneakMult;
-  }
+  float sneakModifier() const noexcept;
 
   // TODO: Incorporate into weapon state
-  float encumbranceEffectModifier(bool hasWeaponOut) const noexcept {
-    return hasWeaponOut ? *fMoveEncumEffect : *fMoveEncumEffectNoWea;
-  }
+  float encumbranceEffectModifier(bool hasWeaponOut) const noexcept;
 
   // Multiplicative modifier of movement speed due to items carried.
-  float encumbranceModifier(float wornWeight,
-                            bool hasWeaponOut) const noexcept {
-    const float clampedWornWeight{std::min(wornWeight, *fMoveWeightMax)};
-    const float weightRange{std::max(*fMoveWeightMax - *fMoveWeightMin, 0.1f)};
-    const float effectMod{encumbranceEffectModifier(hasWeaponOut)};
-    const float denominator{*fMoveWeightMin + clampedWornWeight};
-    return 1.0f - effectMod * denominator / weightRange;
-  }
+  float encumbranceModifier(float wornWeight, bool hasWeaponOut) const noexcept;
 
   // Multiplicative modifier of movement speed due to having a weapon out.
-  float weaponOutModifier(bool hasWeaponOut) const noexcept {
-    return hasWeaponOut ? 1.0f : *fMoveNoWeaponMult;
-  }
+  float weaponOutModifier(bool hasWeaponOut) const noexcept;
 
   // Base walk movement speed in units/s.
-  float baseSpeed(float speedAttribute) const noexcept {
-    const float walkRange{*fMoveCharWalkMax - *fMoveCharWalkMin};
-    return *fMoveCharWalkMin + walkRange * speedAttribute * 0.01f;
-  }
+  float baseSpeed(float speedAttribute) const noexcept;
 
   // Overall movement speed while running, in m/s.
   float runSpeed(float speedAttribute,
                  float athleticsSkill,
                  float wornWeight,
                  float height,
-                 bool hasWeaponOut) const noexcept {
-    return baseSpeed(speedAttribute) * runModifier(athleticsSkill)
-        * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * oo::metersPerUnit<float>;
-  }
+                 bool hasWeaponOut) const noexcept;
 
   // Overall movement speed while walking, in m/s.
   float walkSpeed(float speedAttribute,
-                  float /*athleticsSkill*/,
+                  float athleticsSkill,
                   float wornWeight,
                   float height,
-                  bool hasWeaponOut) const noexcept {
-    return baseSpeed(speedAttribute)
-        * encumbranceModifier(wornWeight, hasWeaponOut)
-        * height * oo::metersPerUnit<float>;
-  }
+                  bool hasWeaponOut) const noexcept;
 
   // Overall movement speed while 'running' in water, in m/s.
   float swimRunSpeed(float speedAttribute,
                      float athleticsSkill,
                      float wornWeight,
                      float height,
-                     bool hasWeaponOut) const noexcept {
-    return baseSpeed(speedAttribute) * swimRunModifier(athleticsSkill)
-        * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * oo::metersPerUnit<float>;
-  }
+                     bool hasWeaponOut) const noexcept;
 
   // Overall movement speed while 'walking' in water, in m/s.
   float swimWalkSpeed(float speedAttribute,
                       float athleticsSkill,
                       float wornWeight,
                       float height,
-                      bool hasWeaponOut) const noexcept {
-    return baseSpeed(speedAttribute) * swimWalkModifier(athleticsSkill)
-        * encumbranceModifier(wornWeight, hasWeaponOut) * height
-        * oo::metersPerUnit<float>;
-  }
+                      bool hasWeaponOut) const noexcept;
 
   // Distance from jump apex to ground, in m.
-  float jumpHeight(float acrobaticsSkill) const noexcept {
-    const float heightRange{*fJumpHeightMax - *fJumpHeightMin};
-    return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
-        * oo::metersPerUnit<float>;
-  }
+  float jumpHeight(float acrobaticsSkill) const noexcept;
 
   float height{raceHeight * 128 * oo::metersPerUnit<float>};
   float mass{80.0f};
@@ -163,48 +119,22 @@ struct PlayerControllerImpl {
   std::unique_ptr<btCollisionShape> collisionShape{};
   std::unique_ptr<btRigidBody> rigidBody{};
 
-  float getMoveSpeed() const noexcept {
-    const float base{baseSpeed(speedAttribute) * raceHeight
-                         * oo::metersPerUnit<float>};
-    const float weightMult{encumbranceModifier(wornWeight, hasWeaponOut)};
-    return base * weightMult
-        * (speedModifier ? speedModifier(hasWeaponOut, isRunning) : 1.0f);
-  }
+  btDiscreteDynamicsWorld *world{};
 
-  void reactivatePhysics() noexcept {
-    rigidBody->activate(true);
-  }
+  float getMoveSpeed() const noexcept;
 
-  void updateCameraOrientation() noexcept {
-    cameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
-                                                Ogre::Vector3::UNIT_X));
-    pitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
-                                               Ogre::Vector3::UNIT_X));
-    pitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
-    cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
-  }
+  float getCapsuleRadius() const noexcept;
+  float getCapsuleHeight() const noexcept;
 
-  void move() noexcept {
-    const auto speed{getMoveSpeed()};
-    // This is a rotation of the standard basis, so is still in SO(3)
-    const auto axes{cameraNode->getLocalAxes()};
-    if (auto len = localVelocity.length(); len > 0.01f) {
-      const auto v{rigidBody->getLinearVelocity()};
-      auto newV{qvm::convert_to<btVector3>(axes * localVelocity / len * speed)};
-      newV.setY(v.y());
-      rigidBody->setLinearVelocity(newV);
-    } else {
-      const auto v{rigidBody->getLinearVelocity()};
-      rigidBody->setLinearVelocity({0.0f, v.y(), 0.0f});
-    }
-  }
+  void reactivatePhysics() noexcept;
+  void updateCameraOrientation() noexcept;
+  void move() noexcept;
 
-  void updatePhysics(float /*elapsed*/) noexcept {
-    reactivatePhysics();
-    updateCameraOrientation();
-    move();
-  }
+  float getSpringDisplacement() noexcept;
+  float getMaxSpringDisplacement() noexcept;
 
+  void applySpringForce(float displacement) noexcept;
+  void updatePhysics(float /*elapsed*/) noexcept;
 };
 
 } // namespace oo

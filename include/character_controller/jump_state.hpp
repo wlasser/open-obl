@@ -19,7 +19,7 @@ class JumpState : public FallbackState<JumpState>,
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
 
-  std::optional<JumpState> update(PlayerControllerImpl &impl, float elapsed);
+  std::optional<StandState> update(PlayerControllerImpl &impl, float elapsed);
 
   std::optional<StandState>
   handleCollision(PlayerControllerImpl &impl,

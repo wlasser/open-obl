@@ -145,8 +145,8 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
-  mPlayerController = makePlayerController(mCell, mCell->scnMgr);
-  mCell->physicsWorld->addRigidBody(mPlayerController->getRigidBody());
+  mPlayerController = makePlayerController(mCell, mCell->scnMgr,
+                                           mCell->physicsWorld.get());
   oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),

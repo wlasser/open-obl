@@ -20,11 +20,12 @@ SneakStandState::handleEvent(PlayerControllerImpl &/*impl*/,
 std::optional<SneakStandState>
 SneakStandState::update(PlayerControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
+  impl.applySpringForce(impl.getSpringDisplacement());
   return std::nullopt;
 }
 
 void SneakStandState::enter(PlayerControllerImpl &impl) {
-  impl.cameraNode->setPosition({0.0f, impl.height * 0.25f, 0.0f});
+  impl.cameraNode->setPosition(Ogre::Vector3::ZERO);
   impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
     return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
         * impl.weaponOutModifier(hasWeaponOut) * impl.sneakModifier();
@@ -32,7 +33,9 @@ void SneakStandState::enter(PlayerControllerImpl &impl) {
 }
 
 void SneakStandState::exit(PlayerControllerImpl &impl) {
-  impl.cameraNode->setPosition({0.01, impl.height * 0.45f, 0.0f});
+  const auto h{(0.95f - 0.5f) * impl.height - impl.getCapsuleHeight() / 2.0f};
+  const auto camVector{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
+  impl.cameraNode->setPosition(camVector);
 }
 
 } // namespace oo

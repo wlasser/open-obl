@@ -21,6 +21,7 @@ StandState::handleEvent(PlayerControllerImpl &/*impl*/,
 std::optional<StandState>
 StandState::update(PlayerControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
+  impl.applySpringForce(impl.getSpringDisplacement());
   return std::nullopt;
 }
 
