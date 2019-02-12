@@ -72,6 +72,17 @@ void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::WRLD>().value};
+  const oo::BaseId baseId{rec.mFormId};
+  // TODO: Resolver
+  // Children will be loaded later, so if this world has any then skip over them
+  if (accessor.peekGroupType() == record::Group::GroupType::WorldChildren) {
+    accessor.skipGroup();
+  }
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::NPC_>().value};
   oo::getResolver<record::NPC_>(resolvers)

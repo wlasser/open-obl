@@ -810,6 +810,81 @@ raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
   return is;
 }
 
+// WRLD specialization
+template<> uint32_t WRLD::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(parentWorldspace)
+      + SizeOf(music)
+      + SizeOf(mapFilename)
+      + SizeOf(climate)
+      + SizeOf(water)
+      + SizeOf(mapData)
+      + SizeOf(data)
+      + SizeOf(bottomLeft)
+      + SizeOf(topRight);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::WRLD &t, std::size_t size) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.parentWorldspace);
+  writeRecord(os, t.music);
+  writeRecord(os, t.mapFilename);
+  writeRecord(os, t.climate);
+  writeRecord(os, t.water);
+  writeRecord(os, t.mapData);
+  writeRecord(os, t.data);
+  writeRecord(os, t.bottomLeft);
+  writeRecord(os, t.topRight);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::WRLD &t, std::size_t size) {
+  readRecord(is, t.editorId);
+  std::set<uint32_t> possibleSubrecords = {
+      "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec,
+      "CNAM"_rec, "NAM2"_rec, "MNAM"_rec,
+  };
+  uint32_t rec{};
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    switch (rec) {
+      case "FULL"_rec:readRecord(is, t.name);
+        break;
+      case "WNAM"_rec:readRecord(is, t.parentWorldspace);
+        break;
+      case "SNAM"_rec:readRecord(is, t.music);
+        break;
+      case "ICON"_rec:readRecord(is, t.mapFilename);
+        break;
+      case "CNAM"_rec:readRecord(is, t.climate);
+        break;
+      case "NAM2"_rec:readRecord(is, t.water);
+        break;
+      case "MNAM"_rec:readRecord(is, t.mapData);
+        break;
+      default: break;
+    }
+  }
+
+  readRecord(is, t.data);
+  readRecord(is, t.bottomLeft);
+  readRecord(is, t.topRight);
+
+  // We don't care about the annoying OFST record, so skip over it.
+  if (peekRecordType(is) == "XXXX"_rec) {
+    const uint32_t ofstSize{readRecord<record::XXXX>(is).data};
+    is.seekg(ofstSize + 6u, std::ios_base::cur);
+  } else if (peekRecordType(is) == "OFST"_rec) {
+    skipRecord(is);
+  }
+
+  return is;
+}
+
 // LIGH specialization
 template<> uint32_t LIGH::size() const {
   return SizeOf(editorId)

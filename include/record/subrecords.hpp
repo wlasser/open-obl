@@ -47,6 +47,8 @@ using CNAM_NPC_ = oo::BaseId;
 using CNAM_RACE = uint8_t;
 // ESM/ESP author. Max 512 bytes, for some reason
 using CNAM_TES4 = std::string;
+// Worldspace climate
+using CNAM_WRLD = oo::BaseId;
 // Unfortunately there are different subrecords with the type DATA,
 // and which one must be inferred from context.
 using DATA_ALCH = float;
@@ -121,6 +123,8 @@ using MODL = std::string;
 // Body data markers
 using NAM0 = std::tuple<>;
 using NAM1 = std::tuple<>;
+// Water in a worldspace. Functionally equivalent to XCWT.
+using NAM2 = oo::BaseId;
 // Base object formid
 using NAME = oo::BaseId;
 // Open by default. Its presence implies true.
@@ -153,6 +157,8 @@ using TNAM_DOOR = oo::BaseId;
 using SPLO = oo::BaseId;
 // Facegen face clamp
 using UNAM = float;
+// Parent worldspace
+using WNAM = oo::BaseId;
 // The climate of a cell, if it is exterior or an interior cell with the
 // BehaveLikeExterior flag set.
 using XCCM = oo::BaseId;
@@ -192,6 +198,9 @@ using XRTM = oo::RefId;
 using XSCL = float;
 // Target reference
 using XTRG = oo::RefId;
+// Stores the size of the next record. This is a workaround to allow subrecords
+// that are bigger than 2^16 bytes. It is used exactly once, for an OFST.
+using XXXX = uint32_t;
 // NPC combat style
 using ZNAM = oo::BaseId;
 
@@ -230,6 +239,18 @@ struct DATA_HAIR : Bitflag<8, DATA_HAIR> {
   static constexpr enum_t Fixed{1u << 3u};
 };
 
+// Worldspace flags
+struct DATA_WRLD : Bitflag<8, DATA_WRLD> {
+  static constexpr enum_t None{0};
+  static constexpr enum_t SmallWorld{1u};
+  static constexpr enum_t CannotTravelFromHere{1u << 1u};
+  static constexpr enum_t Oblivion{1u << 2u};
+  // Presumably this was present at some point during development since its flag
+  // is in the same place in the CS, but it was moved to the record flags.
+  /*static constexpr enum_t CannotWait{1u << 3u};*/
+  static constexpr enum_t NoLodWater{1u << 4u};
+};
+
 // Door flags
 struct FNAM_DOOR : Bitflag<8, FNAM_DOOR> {
   static constexpr enum_t None{0};
@@ -266,6 +287,13 @@ enum class INDX_FACE : uint32_t {
   Tongue,
   EyeLeft,
   EyeRight
+};
+
+// Worldspace music type. Functionally identical to XCMT, but stored in a long.
+enum class SNAM_WRLD : uint32_t {
+  Default = 0,
+  Public = 1u,
+  Dungeon = 2u
 };
 
 // Map marker location type
@@ -705,6 +733,20 @@ struct HNAM_LTEX {
   uint8_t restitution = 30;
 };
 
+// Worldspace map data
+struct MNAM_WRLD {
+  struct Position {
+    int16_t x{0};
+    int16_t y{0};
+  };
+  // Usable dimensions. Possibly dimensions of the map file, in pixels.
+  uint32_t width{0};
+  uint32_t height{0};
+  // Coordinates of the farthest visible cells in the map, in cell coordinates.
+  Position topLeft{};
+  Position bottomRight{};
+};
+
 // Texture hashes
 struct MODT {
   struct MODTRecord {
@@ -713,6 +755,20 @@ struct MODT {
     uint64_t folderHash = 0;
   };
   std::vector<MODTRecord> records{};
+};
+
+// Bottom-left worldspace coordinates, in units.
+struct NAM0_WRLD : Tuplifiable<float, float> {
+  float x{0.0f};
+  float y{0.0f};
+  MAKE_AS_TUPLE(&x, &y)
+};
+
+// Top-right worldspace coordinates, in units.
+struct NAM9_WRLD : Tuplifiable<float, float> {
+  float x{0.0f};
+  float y{0.0f};
+  MAKE_AS_TUPLE(&x, &y)
 };
 
 // Some kind of unused offset(?) record. Format is partially known.
@@ -937,6 +993,7 @@ using MODL = Subrecord<raw::MODL, "MODL"_rec>;
 using MODT = Subrecord<raw::MODT, "MODT"_rec>;
 using NAM0 = Subrecord<raw::NAM0, "NAM0"_rec>;
 using NAM1 = Subrecord<raw::NAM1, "NAM1"_rec>;
+using NAM2 = Subrecord<raw::NAM2, "NAM2"_rec>;
 using NAME = Subrecord<raw::NAME, "NAME"_rec>;
 using OFST = Subrecord<raw::OFST, "OFST"_rec>;
 using ONAM = Subrecord<raw::ONAM, "ONAM"_rec>;
@@ -953,6 +1010,7 @@ using SPLO = Subrecord<raw::SPLO, "SPLO"_rec>;
 using TNAM = Subrecord<raw::TNAM, "TNAM"_rec>;
 using UNAM = Subrecord<raw::UNAM, "UNAM"_rec>;
 using VNAM = Subrecord<raw::VNAM, "VNAM"_rec>;
+using WNAM = Subrecord<raw::WNAM, "WNAM"_rec>;
 using XACT = Subrecord<raw::XACT, "XACT"_rec>;
 using XCCM = Subrecord<raw::XCCM, "XCCM"_rec>;
 using XCHG = Subrecord<raw::XCHG, "XCHG"_rec>;
@@ -983,6 +1041,7 @@ using XSED = Subrecord<raw::XSED, "XSED"_rec>;
 using XSOL = Subrecord<raw::XSOL, "XSOL"_rec>;
 using XTEL = Subrecord<raw::XTEL, "XTEL"_rec>;
 using XTRG = Subrecord<raw::XTRG, "XTRG"_rec>;
+using XXXX = Subrecord<raw::XXXX, "XXXX"_rec>;
 using ZNAM = Subrecord<raw::ZNAM, "ZNAM"_rec>;
 
 using ANAM_DOOR = Subrecord<raw::ANAM_DOOR, "ANAM"_rec>;
@@ -992,6 +1051,7 @@ using CNAM_FACT = Subrecord<raw::CNAM_FACT, "CNAM"_rec>;
 using CNAM_NPC_ = Subrecord<raw::CNAM_NPC_, "CNAM"_rec>;
 using CNAM_RACE = Subrecord<raw::CNAM_RACE, "CNAM"_rec>;
 using CNAM_TES4 = Subrecord<raw::CNAM_TES4, "CNAM"_rec>;
+using CNAM_WRLD = Subrecord<raw::CNAM_WRLD, "CNAM"_rec>;
 using DATA_ALCH = Subrecord<raw::DATA_ALCH, "DATA"_rec>;
 using DATA_CELL = Subrecord<raw::DATA_CELL, "DATA"_rec>;
 using DATA_CLAS = Subrecord<raw::DATA_CLAS, "DATA"_rec>;
@@ -1007,6 +1067,7 @@ using DATA_RACE = Subrecord<raw::DATA_RACE, "DATA"_rec>;
 using DATA_REFR = Subrecord<raw::DATA_REFR, "DATA"_rec>;
 using DATA_SKIL = Subrecord<raw::DATA_SKIL, "DATA"_rec>;
 using DATA_TES4 = Subrecord<raw::DATA_TES4, "DATA"_rec>;
+using DATA_WRLD = Subrecord<raw::DATA_WRLD, "DATA"_rec>;
 using ENAM_NPC_ = Subrecord<raw::ENAM_NPC_, "ENAM"_rec>;
 using ENAM_SKIL = Subrecord<raw::ENAM_SKIL, "ENAM"_rec>;
 using ENIT_ENCH = Subrecord<raw::ENIT_ENCH, "ENIT"_rec>;
@@ -1027,6 +1088,9 @@ using INDX_SKIL = Subrecord<raw::INDX_SKIL, "INDX"_rec>;
 using JNAM_SKIL = Subrecord<raw::JNAM_SKIL, "JNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
+using MNAM_WRLD = Subrecord<raw::MNAM_WRLD, "MNAM"_rec>;
+using NAM0_WRLD = Subrecord<raw::NAM0_WRLD, "NAM0"_rec>;
+using NAM9_WRLD = Subrecord<raw::NAM9_WRLD, "NAM9"_rec>;
 using RNAM_NPC_ = Subrecord<raw::RNAM_NPC_, "RNAM"_rec>;
 using SNAM_ACTI = Subrecord<raw::SNAM_ACTI, "SNAM"_rec>;
 using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
@@ -1034,6 +1098,7 @@ using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
 using SNAM_NPC_ = Subrecord<raw::SNAM_NPC_, "SNAM"_rec>;
 using SNAM_RACE = Subrecord<raw::SNAM_RACE, "SNAM"_rec>;
+using SNAM_WRLD = Subrecord<raw::SNAM_WRLD, "SNAM"_rec>;
 using TNAM_DOOR = Subrecord<raw::TNAM_DOOR, "TNAM"_rec>;
 
 DECLARE_SPECIALIZED_SUBRECORD(ACBS);
@@ -1052,6 +1117,7 @@ DECLARE_SPECIALIZED_SUBRECORD(ENIT_ENCH);
 DECLARE_SPECIALIZED_SUBRECORD(ESCE);
 DECLARE_SPECIALIZED_SUBRECORD(HNAM);
 DECLARE_SPECIALIZED_SUBRECORD(HNAM_LTEX);
+DECLARE_SPECIALIZED_SUBRECORD(MNAM_WRLD);
 DECLARE_SPECIALIZED_SUBRECORD(MODT);
 DECLARE_SPECIALIZED_SUBRECORD(OFST);
 DECLARE_SPECIALIZED_SUBRECORD(SCIT);

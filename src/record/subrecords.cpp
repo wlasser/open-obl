@@ -581,6 +581,38 @@ std::istream &raw::read(std::istream &is, raw::DELE &t, std::size_t size) {
   return is;
 }
 
+// MNAM_WRLD specialization
+template<>
+uint16_t MNAM_WRLD::size() const {
+  return 16u;
+}
+
+template<>
+std::ostream &
+raw::write(std::ostream &os, const raw::MNAM_WRLD &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.width);
+  io::writeBytes(os, t.height);
+  io::writeBytes(os, t.topLeft.x);
+  io::writeBytes(os, t.topLeft.y);
+  io::writeBytes(os, t.bottomRight.x);
+  io::writeBytes(os, t.bottomRight.y);
+
+  return os;
+}
+
+template<>
+std::istream &
+raw::read(std::istream &is, raw::MNAM_WRLD &t, std::size_t size) {
+  io::readBytes(is, t.width);
+  io::readBytes(is, t.height);
+  io::readBytes(is, t.topLeft.x);
+  io::readBytes(is, t.topLeft.y);
+  io::readBytes(is, t.bottomRight.x);
+  io::readBytes(is, t.bottomRight.y);
+
+  return is;
+}
+
 // MODT specialization
 template<>
 uint16_t MODT::size() const {

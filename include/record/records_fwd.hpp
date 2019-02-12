@@ -32,6 +32,7 @@ struct STAT;
 struct NPC_;
 struct ALCH;
 struct CELL;
+struct WRLD;
 
 } // namespace raw
 
@@ -60,6 +61,7 @@ using STAT = Record<raw::STAT, "STAT"_rec, false>;
 using NPC_ = Record<raw::NPC_, "NPC_"_rec, true>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec, false>;
 using CELL = Record<raw::CELL, "CELL"_rec, false>;
+using WRLD = Record<raw::WRLD, "WRLD"_rec, false>;
 
 } // namespace record
 

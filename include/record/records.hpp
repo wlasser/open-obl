@@ -355,7 +355,10 @@ struct ALCH {
 // For internal consistency, we destroy the external order and reverse to the
 // order below.
 struct CELL {
-  record::EDID editorId{};
+  // The EDID is optional for exterior cells, where if not present is replaced
+  // with 'Wilderness'. To preseve uniqueness of EDIDs, we keep it optional
+  // instead of replacing it with the default.
+  std::optional<record::EDID> editorId{};
   std::optional<record::FULL> name{};
   record::DATA_CELL data{};
   std::optional<record::XCLL> lighting{};
@@ -368,6 +371,20 @@ struct CELL {
   std::optional<record::XCWT> water{};
   std::optional<record::XCLR> regions{};
   std::optional<record::XCLC> grid{};
+};
+
+struct WRLD {
+  record::EDID editorId{};
+  std::optional<record::FULL> name{};
+  std::optional<record::WNAM> parentWorldspace{};
+  std::optional<record::SNAM_WRLD> music{};
+  std::optional<record::ICON> mapFilename{};
+  std::optional<record::CNAM_WRLD> climate{};
+  std::optional<record::NAM2> water{};
+  std::optional<record::MNAM_WRLD> mapData{};
+  record::DATA_WRLD data{};
+  record::NAM0_WRLD bottomLeft{};
+  record::NAM9_WRLD topRight{};
 };
 
 } // namespace raw
@@ -395,6 +412,7 @@ using STAT = Record<raw::STAT, "STAT"_rec>;
 using NPC_ = Record<raw::NPC_, "NPC_"_rec, true>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
+using WRLD = Record<raw::WRLD, "WRLD"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(TES4);
 DECLARE_SPECIALIZED_RECORD(GMST);
@@ -419,6 +437,7 @@ DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
+DECLARE_SPECIALIZED_RECORD(WRLD);
 
 } // namespace Record
 

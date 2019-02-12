@@ -517,6 +517,22 @@ EspCoordinator::translateFormIds(record::raw::CELL rec, int modIndex) const {
 }
 
 template<>
+record::raw::WRLD
+EspCoordinator::translateFormIds(record::raw::WRLD rec, int modIndex) const {
+  if (rec.parentWorldspace) {
+    rec.parentWorldspace->data =
+        translateFormIds(rec.parentWorldspace->data, modIndex);
+  }
+  if (rec.climate) {
+    rec.climate->data = translateFormIds(rec.climate->data, modIndex);
+  }
+  if (rec.water) {
+    rec.water->data = translateFormIds(rec.water->data, modIndex);
+  }
+  return rec;
+}
+
+template<>
 record::raw::REFR_ACTI
 EspCoordinator::translateFormIds(record::raw::REFR_ACTI rec,
                                  int modIndex) const {

@@ -35,6 +35,10 @@
 // When a CELL record appears, it is (almost) always followed by a CellChildren
 // subgroup. It is expected that `readRecord<CELL>` read (or skip) both the CELL
 // record and all its children. The `readCellChildren` method assists with this.
+//
+// When a WRLD record appears, it is always followed by a WorldChildren
+// subgroup. It is expected that `readRecord<WRLD>` read (or skip) both the WRLD
+// record and all its children. The `readWrldChildren` method assists with this.
 namespace oo {
 
 // Read an entire esp file from the beginning, delegating the actual reading
@@ -63,6 +67,14 @@ void readCellChildren(EspAccessor &accessor,
 // PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
 template<class RecordVisitor>
 void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor);
+
+// This function reads the WorldChildren subgroup following a WRLD record.
+// The reading of the outer ROAD and CELL records, as well as all inner CELL
+// records, are delegated to the `visitor`. Note that CELL records are followed
+// by children, and `readRecord<record::CELL>` is expected to read the children
+// too.
+template<class Visitor>
+void readWrldChildren(EspAccessor &accessor, Visitor &visitor);
 
 template<class RecordVisitor>
 void readEsp(EspCoordinator &coordinator,
@@ -117,8 +129,15 @@ void readEsp(EspCoordinator &coordinator,
         }
         break;
       }
-      case "WRLD"_rec: accessor.skipGroup();
+      case "WRLD"_rec: {
+        // Unlike CELL, `readRecord<record::WRLD>` is expected to take care of
+        // the block and subblock groups using `readWrldChildren`; we are not
+        // required to do anything special.
+        while (accessor.peekRecordType() == "WRLD"_rec) {
+          visitor.template readRecord<record::WRLD>(accessor);
+        }
         break;
+      }
       case "DIAL"_rec: accessor.skipGroup();
         break;
       default: {
@@ -209,6 +228,11 @@ void readCellChildren(EspAccessor &accessor,
   if (accessor.peekGroupType() == GroupType::CellTemporaryChildren) {
     [[maybe_unused]] const Group temporaryChildren{accessor.readGroup().value};
 
+    if (accessor.peekRecordType() == "LAND"_rec) {
+      // TODO: LAND
+      accessor.skipRecord();
+    }
+
     // Unsure if PGRD is usually optional or not, but sometimes this entire
     // group is empty e.g. ImperialSewerSystemTG11
     if (accessor.peekRecordType() == "PGRD"_rec) {
@@ -217,6 +241,48 @@ void readCellChildren(EspAccessor &accessor,
     }
 
     parseCellChildrenBlock(accessor, temporaryVisitor);
+  }
+}
+
+template<class Visitor>
+void readWrldChildren(EspAccessor &accessor, Visitor &visitor) {
+  using record::operator ""_rec;
+  using GroupType = record::Group::GroupType;
+
+  // Expect a world children group
+  if (accessor.peekGroupType() != GroupType::WorldChildren) {
+    return;
+  }
+
+  [[maybe_unused]] const record::Group wrldChildren{accessor.readGroup().value};
+
+  // Optional road information, only the two main worldspaces have this.
+  if (accessor.peekRecordType() == "ROAD"_rec) {
+    // TODO: ROAD
+    accessor.skipRecord();
+  }
+
+  // Dummy cell containing all the persistent references in the entire
+  // worldspace.
+  if (accessor.peekRecordType() == "CELL"_rec) {
+    visitor.template readRecord<record::CELL>(accessor);
+  }
+
+  // Expect a series of ExteriorCellBlock groups
+  while (accessor.peekGroupType() == GroupType::ExteriorCellBlock) {
+    [[maybe_unused]] const record::Group exteriorCellBlock
+        {accessor.readGroup().value};
+
+    // Expect a series of ExteriorCellSubblock groups
+    while (accessor.peekGroupType() == GroupType::ExteriorCellSubblock) {
+      [[maybe_unused]] const record::Group exteriorCellSubblock
+          {accessor.readGroup().value};
+
+      // Expect a series of cells
+      while (accessor.peekRecordType() == "CELL"_rec) {
+        visitor.template readRecord<record::CELL>(accessor);
+      }
+    }
   }
 }
 

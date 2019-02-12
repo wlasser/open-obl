@@ -222,6 +222,8 @@ class EspCoordinator {
   translateFormIds(record::raw::ALCH rec, int modIndex) const;
   template<> record::raw::CELL
   translateFormIds(record::raw::CELL rec, int modIndex) const;
+  template<> record::raw::WRLD
+  translateFormIds(record::raw::WRLD rec, int modIndex) const;
 
   template<> record::raw::REFR_ACTI
   translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;
