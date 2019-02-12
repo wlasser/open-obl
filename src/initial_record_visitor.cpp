@@ -9,6 +9,7 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
+#include "resolvers/wrld_resolver.hpp"
 #include <cctype>
 
 namespace oo {
@@ -75,7 +76,8 @@ template<>
 void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::WRLD>().value};
   const oo::BaseId baseId{rec.mFormId};
-  // TODO: Resolver
+  oo::getResolver<record::WRLD>(resolvers)
+      .insertOrAppend(baseId, rec, accessor);
   // Children will be loaded later, so if this world has any then skip over them
   if (accessor.peekGroupType() == record::Group::GroupType::WorldChildren) {
     accessor.skipGroup();

@@ -559,6 +559,26 @@ std::istream &raw::read(std::istream &is, raw::OFST &t, std::size_t size) {
   return is;
 }
 
+// OFST_WRLD specialization
+template<>
+uint16_t OFST_WRLD::size() const {
+  return data.entries.size() * 4u;
+}
+
+template<>
+std::ostream &
+raw::write(std::ostream &os, const raw::OFST_WRLD &t, std::size_t /*size*/) {
+  for (const auto entry : t.entries) io::writeBytes(os, entry);
+  return os;
+}
+
+template<>
+std::istream &raw::read(std::istream &is, raw::OFST_WRLD &t, std::size_t size) {
+  const std::size_t length = size / 4u;
+  io::readBytes(is, t.entries, length);
+  return is;
+}
+
 // DELE specialization
 template<>
 uint16_t DELE::size() const {

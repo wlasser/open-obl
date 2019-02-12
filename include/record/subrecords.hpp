@@ -776,6 +776,12 @@ struct OFST {
   std::vector<std::array<uint32_t, 3>> unused{};
 };
 
+// Some kind of unusued offset(?) record. Possibly debug information, or a
+// lookup table.
+struct OFST_WRLD {
+  std::vector<uint32_t> entries;
+};
+
 // Script effect
 struct SCIT {
   struct Flag : Bitflag<8, Flag> {
@@ -1091,6 +1097,7 @@ using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
 using MNAM_WRLD = Subrecord<raw::MNAM_WRLD, "MNAM"_rec>;
 using NAM0_WRLD = Subrecord<raw::NAM0_WRLD, "NAM0"_rec>;
 using NAM9_WRLD = Subrecord<raw::NAM9_WRLD, "NAM9"_rec>;
+using OFST_WRLD = Subrecord<raw::OFST_WRLD, "OFST"_rec>;
 using RNAM_NPC_ = Subrecord<raw::RNAM_NPC_, "RNAM"_rec>;
 using SNAM_ACTI = Subrecord<raw::SNAM_ACTI, "SNAM"_rec>;
 using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
@@ -1120,6 +1127,7 @@ DECLARE_SPECIALIZED_SUBRECORD(HNAM_LTEX);
 DECLARE_SPECIALIZED_SUBRECORD(MNAM_WRLD);
 DECLARE_SPECIALIZED_SUBRECORD(MODT);
 DECLARE_SPECIALIZED_SUBRECORD(OFST);
+DECLARE_SPECIALIZED_SUBRECORD(OFST_WRLD);
 DECLARE_SPECIALIZED_SUBRECORD(SCIT);
 DECLARE_SPECIALIZED_SUBRECORD(SNDD);
 DECLARE_SPECIALIZED_SUBRECORD(SNDX);

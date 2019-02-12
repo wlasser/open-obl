@@ -846,8 +846,8 @@ template<> std::istream &
 raw::read(std::istream &is, raw::WRLD &t, std::size_t size) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
-      "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec,
-      "CNAM"_rec, "NAM2"_rec, "MNAM"_rec,
+      "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec, "CNAM"_rec,
+      "NAM2"_rec, "MNAM"_rec, "DATA"_rec, "NAM0"_rec, "NAM9"_rec,
   };
   uint32_t rec{};
   while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
@@ -866,20 +866,22 @@ raw::read(std::istream &is, raw::WRLD &t, std::size_t size) {
         break;
       case "MNAM"_rec:readRecord(is, t.mapData);
         break;
+      case "DATA"_rec:readRecord(is, t.data);
+        break;
+      case "NAM0"_rec:readRecord(is, t.bottomLeft);
+        break;
+      case "NAM9"_rec:readRecord(is, t.topRight);
+        break;
       default: break;
     }
   }
-
-  readRecord(is, t.data);
-  readRecord(is, t.bottomLeft);
-  readRecord(is, t.topRight);
 
   // We don't care about the annoying OFST record, so skip over it.
   if (peekRecordType(is) == "XXXX"_rec) {
     const uint32_t ofstSize{readRecord<record::XXXX>(is).data};
     is.seekg(ofstSize + 6u, std::ios_base::cur);
   } else if (peekRecordType(is) == "OFST"_rec) {
-    skipRecord(is);
+    (void) readRecord<record::OFST_WRLD>(is);
   }
 
   return is;

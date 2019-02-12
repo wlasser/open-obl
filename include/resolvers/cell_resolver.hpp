@@ -50,6 +50,8 @@ class Resolver<record::CELL> {
   /// Bullet configuration, for constructing physics worlds.
   const bullet::Configuration &mBulletConf;
 
+  class CellVisitor;
+ public:
   using RecordIterator = typename decltype(mRecords)::iterator;
 
   /// Insert a new record with the given accessor if one exists, otherwise
@@ -58,10 +60,6 @@ class Resolver<record::CELL> {
   insertOrAppend(oo::BaseId baseId,
                  const record::CELL &rec,
                  oo::EspAccessor accessor);
-
-  friend class InitialRecordVisitor;
-  class CellVisitor;
- public:
 
   /// The bullet::Configuration is necessary to construct cells.
   /// bulletConf should live for at least as long as this object.
@@ -101,7 +99,7 @@ class Resolver<record::CELL> {
             BaseResolverContext baseCtx);
 
   /// Return the RefIds of all reference records in the cell.
-  /// \warning This will return an empty std::vector if the cell has not been
+  /// \warning This will return an empty optional if the cell has not been
   ///          loaded first with a call to load.
   tl::optional<const absl::flat_hash_set<RefId> &>
   getReferences(oo::BaseId baseId) const;

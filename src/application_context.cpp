@@ -12,6 +12,7 @@
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
+#include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
 
 namespace oo {

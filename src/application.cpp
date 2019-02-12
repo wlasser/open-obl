@@ -21,7 +21,13 @@
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogreimgui/imgui_manager.hpp"
+#include "resolvers/acti_resolver.hpp"
+#include "resolvers/cell_resolver.hpp"
+#include "resolvers/door_resolver.hpp"
+#include "resolvers/light_resolver.hpp"
+#include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
+#include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
 #include "sdl/sdl.hpp"
 #include <boost/algorithm/string.hpp>
@@ -95,7 +101,8 @@ Application::Application(std::string windowName) : FrameListener() {
                       oo::add_resolver_t<record::ACTI>{},
                       oo::add_resolver_t<record::NPC_>{},
                       oo::add_resolver_t<record::CELL>{*ctx.bulletConf},
-                      oo::add_resolver_t<record::RACE>{}));
+                      oo::add_resolver_t<record::RACE>{},
+                      oo::add_resolver_t<record::WRLD>{}));
 
   ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
       std::make_tuple(oo::add_refr_resolver_t<record::REFR_DOOR>{},

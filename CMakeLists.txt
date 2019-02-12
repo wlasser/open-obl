@@ -154,6 +154,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/npc_resolver.cpp
         src/resolvers/helpers.cpp
         src/resolvers/static_resolver.cpp
+        src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         include/application.hpp
         include/application_context.hpp
@@ -211,6 +212,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/npc_resolver.hpp
         include/resolvers/resolvers.hpp
         include/resolvers/static_resolver.hpp
+        include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
         include/settings.hpp)
 
