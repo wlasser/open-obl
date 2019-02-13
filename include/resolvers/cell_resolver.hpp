@@ -31,6 +31,9 @@ class Resolver<record::CELL> {
     /// Time that the player most recently left the cell, in in-game hours.
     /// This is measured from the epoch.
     int mDetachTime{};
+    /// Whether the cell is an exterior cell. Interior cells that have the
+    /// `BehvaveLikeExterior` flag set do not count.
+    bool mIsExterior{false};
     /// Accessors, in load order of mods that modify the contents of the cell.
     std::vector<oo::EspAccessor> mAccessors{};
     /// All reference records inside the cell.
@@ -56,10 +59,13 @@ class Resolver<record::CELL> {
 
   /// Insert a new record with the given accessor if one exists, otherwise
   /// replace the existing record and append the accessor to the accessor list.
+  /// Optionally specify that this cell is an exterior cell, if it is being
+  /// registered in the context of a WRLD.
   std::pair<RecordIterator, bool>
   insertOrAppend(oo::BaseId baseId,
                  const record::CELL &rec,
-                 oo::EspAccessor accessor);
+                 oo::EspAccessor accessor,
+                 bool isExterior = false);
 
   /// The bullet::Configuration is necessary to construct cells.
   /// bulletConf should live for at least as long as this object.
@@ -133,17 +139,18 @@ class Resolver<record::CELL>::CellVisitor {
 class Cell {
  public:
   using PhysicsWorld = btDiscreteDynamicsWorld;
-  std::string name{};
-  oo::BaseId baseId{};
-  gsl::not_null<gsl::owner<Ogre::SceneManager *>> scnMgr;
-  std::unique_ptr<PhysicsWorld> physicsWorld{};
 
-  explicit Cell(oo::BaseId baseId, std::unique_ptr<PhysicsWorld> physicsWorld)
-      : baseId(baseId),
-        scnMgr(Ogre::Root::getSingleton().createSceneManager()),
-        physicsWorld(std::move(physicsWorld)) {}
+  virtual gsl::not_null<Ogre::SceneManager *> getSceneManager() const = 0;
+  virtual gsl::not_null<PhysicsWorld *> getPhysicsWorld() const = 0;
 
-  ~Cell();
+  oo::BaseId getBaseId() const;
+  std::string getName() const;
+  void setName(std::string name);
+
+  explicit Cell(oo::BaseId baseId, std::string name)
+      : mBaseId(baseId), mName(std::move(name)) {}
+
+  virtual ~Cell() = 0;
   Cell(const Cell &) = delete;
   Cell &operator=(const Cell &) = delete;
   Cell(Cell &&other) noexcept = default;
@@ -153,9 +160,45 @@ class Cell {
   void attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
               std::tuple<const Res &...> resolvers);
 
- private:
+ protected:
   void setNodeTransform(Ogre::SceneNode *node,
                         const record::raw::REFRTransformation &transform);
+ private:
+  oo::BaseId mBaseId{};
+  std::string mName{};
+};
+
+inline Cell::~Cell() = default;
+
+class InteriorCell : public Cell {
+ public:
+  gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
+  gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
+
+  explicit InteriorCell(oo::BaseId baseId, std::string name,
+                        std::unique_ptr<PhysicsWorld> physicsWorld);
+  ~InteriorCell() override;
+  InteriorCell(const InteriorCell &) = delete;
+  InteriorCell &operator=(const InteriorCell &) = delete;
+  InteriorCell(InteriorCell &&) noexcept = default;
+  InteriorCell &operator=(InteriorCell &&) noexcept = default;
+
+ private:
+  gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
+  std::unique_ptr<PhysicsWorld> mPhysicsWorld;
+};
+
+class ExteriorCell : public Cell {
+ public:
+  gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
+  gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
+
+  explicit ExteriorCell(oo::BaseId baseId, std::string name,
+                        gsl::not_null<Ogre::SceneManager *> scnMgr,
+                        gsl::not_null<PhysicsWorld *> physicsWorld);
+ private:
+  gsl::not_null<Ogre::SceneManager *> mScnMgr;
+  gsl::not_null<PhysicsWorld *> mPhysicsWorld;
 };
 
 template<>
@@ -167,7 +210,10 @@ struct ReifyRecordTrait<record::CELL> {
       std::declval<std::tuple<const oo::Resolver<record::CELL> &>>()));
 };
 
-/// Not a specialization because passing a Ogre::SceneManager doesn't make sense.
+/// Not a specialization because passing an Ogre::SceneManager is only necessary
+/// for exterior cells.
+/// \remark Pass nullptr for the Ogre::SceneManager to create a SceneManager for
+///         the cell.
 ReifyRecordTrait<record::CELL>::type
 reifyRecord(const record::CELL &refRec,
             ReifyRecordTrait<record::CELL>::resolvers resolvers);
@@ -175,12 +221,9 @@ reifyRecord(const record::CELL &refRec,
 template<class Refr, class ...Res>
 void Cell::attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
                   std::tuple<const Res &...> resolvers) {
-  auto entity{reifyRecord(ref, scnMgr, std::move(resolvers))};
+  auto entity{reifyRecord(ref, getSceneManager(), std::move(resolvers))};
   setNodeTransform(node, ref);
-  oo::attachAll(node,
-                oo::RefId{ref.mFormId},
-                gsl::make_not_null(physicsWorld.get()),
-                entity);
+  oo::attachAll(node, oo::RefId{ref.mFormId}, getPhysicsWorld(), entity);
 }
 
 } // namespace oo

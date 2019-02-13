@@ -75,7 +75,7 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
   auto &cellRes{oo::getResolver<record::CELL>(mBaseCtx)};
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
-  cellRes.insertOrAppend(baseId, rec, accessor);
+  cellRes.insertOrAppend(baseId, rec, accessor, /*isExterior=*/true);
   mMeta.mCells.emplace(baseId);
   if (accessor.peekGroupType() == record::Group::GroupType::CellChildren) {
     accessor.skipGroup();

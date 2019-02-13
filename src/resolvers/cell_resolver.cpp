@@ -10,9 +10,10 @@ namespace oo {
 std::pair<oo::Resolver<record::CELL>::RecordIterator, bool>
 oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
                                            const record::CELL &rec,
-                                           oo::EspAccessor accessor) {
+                                           oo::EspAccessor accessor,
+                                           bool isExterior) {
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
-  Metadata meta{0, {accessor}, {}};
+  Metadata meta{0, isExterior, {accessor}, {}};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
   if (inserted) return {it, inserted};
 
@@ -137,14 +138,55 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccesso
   }
 }
 
-Cell::~Cell() {
+oo::BaseId Cell::getBaseId() const {
+  return mBaseId;
+}
+
+std::string Cell::getName() const {
+  return mName;
+}
+
+void Cell::setName(std::string name) {
+  mName = std::move(name);
+}
+
+InteriorCell::InteriorCell(oo::BaseId baseId, std::string name,
+                           std::unique_ptr<PhysicsWorld> physicsWorld)
+    : Cell(baseId, std::move(name)),
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
+      mPhysicsWorld(std::move(physicsWorld)) {}
+
+gsl::not_null<Ogre::SceneManager *> InteriorCell::getSceneManager() const {
+  return mScnMgr;
+}
+
+gsl::not_null<Cell::PhysicsWorld *> InteriorCell::getPhysicsWorld() const {
+  return gsl::make_not_null(mPhysicsWorld.get());
+}
+
+InteriorCell::~InteriorCell() {
   // Destruct physics world to unregister all existing rigid bodies and free
   // their broadphase proxies, while they are still alive.
-  physicsWorld.reset();
+  mPhysicsWorld.reset();
   // Now destruct the scene manager, which destructs all the (now worldless)
   // rigid bodies.
   auto root{Ogre::Root::getSingletonPtr()};
-  if (root) root->destroySceneManager(scnMgr);
+  if (root) root->destroySceneManager(mScnMgr);
+}
+
+ExteriorCell::ExteriorCell(oo::BaseId baseId, std::string name,
+                           gsl::not_null<Ogre::SceneManager *> scnMgr,
+                           gsl::not_null<PhysicsWorld *> physicsWorld)
+    : Cell(baseId, std::move(name)),
+      mScnMgr(scnMgr),
+      mPhysicsWorld(physicsWorld) {}
+
+gsl::not_null<Ogre::SceneManager *> ExteriorCell::getSceneManager() const {
+  return mScnMgr;
+}
+
+gsl::not_null<Cell::PhysicsWorld *> ExteriorCell::getPhysicsWorld() const {
+  return mPhysicsWorld;
 }
 
 oo::ReifyRecordTrait<record::CELL>::type
@@ -153,20 +195,19 @@ reifyRecord(const record::CELL &refRec,
   const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
 
-  auto cell{std::make_shared<oo::Cell>(oo::BaseId{refRec.mFormId},
-                                       bulletConf.makeDynamicsWorld())};
-
-  cell->name = (refRec.name ? refRec.name->data : "");
+  auto cell{std::make_shared<oo::InteriorCell>(
+      oo::BaseId{refRec.mFormId}, refRec.name ? refRec.name->data : "",
+      bulletConf.makeDynamicsWorld())};
 
   if (auto lighting{refRec.lighting}; lighting) {
     Ogre::ColourValue ambient{};
     ambient.setAsABGR(lighting->data.ambient.v);
-    cell->scnMgr->setAmbientLight(ambient);
+    cell->getSceneManager()->setAmbientLight(ambient);
 
     // TODO: Directional lighting, fog, water, etc.
   }
 
-  cell->physicsWorld->setGravity({0.0f, -9.81f, 0.0f});
+  cell->getPhysicsWorld()->setGravity({0.0f, -9.81f, 0.0f});
 
   const auto refs{cellRes.getReferences(BaseId{refRec.mFormId})};
   if (!refs) return cell;
@@ -184,7 +225,7 @@ reifyRecord(const record::CELL &refRec,
   const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
   const auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(resolvers)};
 
-  Ogre::SceneNode *rootNode{cell->scnMgr->getRootSceneNode()};
+  Ogre::SceneNode *rootNode{cell->getSceneManager()->getRootSceneNode()};
 
   for (auto refId : *refs) {
     gsl::not_null<Ogre::SceneNode *> node{rootNode->createChildSceneNode()};
@@ -215,8 +256,9 @@ reifyRecord(const record::CELL &refRec,
     }();
 
     auto makeNode = [&](const std::string &name) -> Ogre::Entity * {
-      auto *node{oo::insertNif(name, oo::RESOURCE_GROUP, cell->scnMgr,
-                               gsl::make_not_null(cell->physicsWorld.get()))};
+      auto *node{oo::insertNif(name, oo::RESOURCE_GROUP,
+                               cell->getSceneManager(),
+                               cell->getPhysicsWorld())};
       auto *entity{dynamic_cast<Ogre::Entity *>(node->getAttachedObject(0))};
 
       entity->getMesh()->setSkeletonName(skelPtr->getName());
@@ -240,8 +282,8 @@ reifyRecord(const record::CELL &refRec,
 
     oo::attachRagdoll("meshes/characters/_male/skeleton.nif",
                       oo::RESOURCE_GROUP,
-                      cell->scnMgr,
-                      gsl::make_not_null(cell->physicsWorld.get()),
+                      cell->getSceneManager(),
+                      cell->getPhysicsWorld(),
                       gsl::make_not_null(upperbody));
   }
 

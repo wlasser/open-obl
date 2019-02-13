@@ -15,7 +15,7 @@ void
 releasePlayerController(Cell *cell, oo::PlayerController *playerController) {
   const auto *rigidBody{playerController->getRigidBody()};
   if (rigidBody->isInWorld()) {
-    cell->physicsWorld->removeRigidBody(playerController->getRigidBody());
+    cell->getPhysicsWorld()->removeRigidBody(playerController->getRigidBody());
   }
   delete playerController;
 }
@@ -99,7 +99,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
 }
 
 void GameMode::dispatchCollisions() {
-  auto *const btDispatcher{mCell->physicsWorld->getDispatcher()};
+  auto *const btDispatcher{mCell->getPhysicsWorld()->getDispatcher()};
   gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(btDispatcher)};
   mCollisionCaller.runCallbacks(dispatcher);
 }
@@ -115,7 +115,7 @@ RefId GameMode::getCrosshairRef() {
   const auto rayEnd{camPos + rayLength * camDir};
 
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
-  mCell->physicsWorld->rayTest(rayStart, rayEnd, callback);
+  mCell->getPhysicsWorld()->rayTest(rayStart, rayEnd, callback);
 
   if (callback.hasHit()) {
     return RefId{decodeFormId(callback.m_collisionObject->getUserPointer())};
@@ -145,8 +145,8 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
-  mPlayerController = makePlayerController(mCell, mCell->scnMgr,
-                                           mCell->physicsWorld.get());
+  mPlayerController = makePlayerController(mCell, mCell->getSceneManager(),
+                                           mCell->getPhysicsWorld());
   oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),
@@ -164,8 +164,8 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   }();
   mPlayerController->moveTo(startPos);
 
-  mCell->scnMgr->addRenderQueueListener(ctx.getImGuiManager());
-  mCell->scnMgr->addRenderQueueListener(ctx.getOverlaySystem());
+  mCell->getSceneManager()->addRenderQueueListener(ctx.getImGuiManager());
+  mCell->getSceneManager()->addRenderQueueListener(ctx.getOverlaySystem());
 }
 
 void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
@@ -180,7 +180,7 @@ void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
 }
 
 void GameMode::updateAnimation(float delta) {
-  for (auto it{mCell->scnMgr->getMovableObjectIterator("Entity")};
+  for (auto it{mCell->getSceneManager()->getMovableObjectIterator("Entity")};
        it.hasMoreElements();) {
     const auto *entity{static_cast<const Ogre::Entity *>(it.getNext())};
 
@@ -195,14 +195,14 @@ void GameMode::updateAnimation(float delta) {
 void GameMode::update(ApplicationContext &ctx, float delta) {
   updateAnimation(delta);
   mPlayerController->update(delta);
-  mCell->physicsWorld->stepSimulation(delta);
+  mCell->getPhysicsWorld()->stepSimulation(delta);
   dispatchCollisions();
 
   if (mDebugDrawer) {
     mDebugDrawer->clearLines();
-    mCell->physicsWorld->debugDrawWorld();
+    mCell->getPhysicsWorld()->debugDrawWorld();
 
-    auto it{mCell->scnMgr->getMovableObjectIterator("Entity")};
+    auto it{mCell->getSceneManager()->getMovableObjectIterator("Entity")};
     while (it.hasMoreElements()) {
       auto *entity{static_cast<Ogre::Entity *>(it.getNext())};
       if (!entity->hasSkeleton()) continue;
@@ -227,16 +227,16 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
 void GameMode::toggleCollisionGeometry() {
   if (!mCell) return;
   if (mDebugDrawer) {
-    mCell->scnMgr->destroySceneNode("__DebugDrawerNode");
-    mCell->physicsWorld->setDebugDrawer(nullptr);
+    mCell->getSceneManager()->destroySceneNode("__DebugDrawerNode");
+    mCell->getPhysicsWorld()->setDebugDrawer(nullptr);
     mDebugDrawer.reset();
   } else {
-    mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(mCell->scnMgr,
+    mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(mCell->getSceneManager(),
                                                        oo::SHADER_GROUP);
-    auto *root{mCell->scnMgr->getRootSceneNode()};
+    auto *root{mCell->getSceneManager()->getRootSceneNode()};
     auto *node{root->createChildSceneNode("__DebugDrawerNode")};
     node->attachObject(mDebugDrawer->getObject());
-    mCell->physicsWorld->setDebugDrawer(mDebugDrawer.get());
+    mCell->getPhysicsWorld()->setDebugDrawer(mDebugDrawer.get());
   }
 }
 
