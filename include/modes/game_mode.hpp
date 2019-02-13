@@ -9,6 +9,7 @@
 #include "ogrebullet/debug_drawer.hpp"
 #include "record/formid.hpp"
 #include "resolvers/cell_resolver.hpp"
+#include "resolvers/wrld_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <memory>
 #include <optional>
@@ -51,6 +52,7 @@ makePlayerController(const std::shared_ptr<oo::Cell> &cell, Args &&...args) {
 /// \ingroup OpenOblivionModes
 class GameMode {
  private:
+  std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
 
   oo::PlayerControllerPtr mPlayerController{};
@@ -68,6 +70,8 @@ class GameMode {
   /// null reference `0`.
   /// TODO: Move this to scripting
   oo::RefId getCrosshairRef();
+
+  void loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId);
 
   void loadCell(ApplicationContext &ctx, oo::BaseId cellId);
 

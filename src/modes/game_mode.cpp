@@ -124,6 +124,18 @@ RefId GameMode::getCrosshairRef() {
   }
 }
 
+void
+GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
+  auto baseResolvers{ctx.getBaseResolvers()};
+  auto &wrldRes{oo::getResolver<record::WRLD>(baseResolvers)};
+
+  wrldRes.load(worldspaceId, oo::getResolvers<record::CELL>(baseResolvers));
+
+  auto resolvers{oo::getResolvers<record::CELL, record::WRLD>(baseResolvers)};
+  const auto wrldRec{*wrldRes.get(worldspaceId)};
+  mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
+}
+
 void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
   if (!cellRes.contains(cellId)) {
@@ -158,12 +170,13 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 
   const auto startPos = []() {
     // Exterior
-//    auto pos{oo::fromBSCoordinates(Ogre::Vector3{103799.0f, -152970.0f, 1575.0f})};
-//    pos.y += 4.0f;
+    auto pos
+        {oo::fromBSCoordinates(Ogre::Vector3{103799.0f, -152970.0f, 1575.0f})};
+    pos.y += 4.0f;
 
-    auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
-    pos.z += 3.0f;
-    pos.y -= 4.0f;
+//    auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
+//    pos.z += 3.0f;
+//    pos.y -= 4.0f;
     return pos;
   }();
   mPlayerController->moveTo(startPos);
@@ -197,9 +210,10 @@ void GameMode::updateAnimation(float delta) {
 }
 
 void GameMode::enter(ApplicationContext &ctx) {
-  loadCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
+//  loadCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
 //    loadCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
-//  loadCell(ctx, BaseId{0x00'00619e}); // (25, -38)
+  loadWorldspace(ctx, oo::BaseId{0x00'00003c});
+  loadCell(ctx, mWrld->getCell({25, -38}));
   refocus(ctx);
 }
 

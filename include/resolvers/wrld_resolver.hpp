@@ -1,10 +1,12 @@
 #ifndef OPENOBLIVION_WRLD_RESOLVER_HPP
 #define OPENOBLIVION_WRLD_RESOLVER_HPP
 
+#include "conversions.hpp"
 #include "esp_coordinator.hpp"
 #include "resolvers/resolvers.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+#include <boost/multi_array.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
@@ -83,22 +85,7 @@ class Resolver<record::WRLD>::WrldVisitor {
   // TODO: record::ROAD specialization
 };
 
-class World {
- public:
-  std::string name{};
-  oo::BaseId baseId{};
-  gsl::not_null<gsl::owner<Ogre::SceneManager *>> scnMgr;
-
-  explicit World(oo::BaseId baseId)
-      : baseId(baseId),
-        scnMgr(Ogre::Root::getSingleton().createSceneManager()) {}
-
-  ~World();
-  World(const World &) = delete;
-  World &operator=(const World &) = delete;
-  World(World &&) noexcept = default;
-  World &operator=(World &&) noexcept = default;
-};
+class World;
 
 template<>
 struct ReifyRecordTrait<record::WRLD> {
@@ -113,6 +100,48 @@ struct ReifyRecordTrait<record::WRLD> {
 ReifyRecordTrait<record::WRLD>::type
 reifyRecord(const record::WRLD &refRec,
             ReifyRecordTrait<record::WRLD>::resolvers resolvers);
+
+class World {
+ public:
+  using CellIndex = qvm::vec<int32_t, 2>;
+  using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
+
+  gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
+
+  oo::BaseId getBaseId() const;
+  std::string getName() const;
+  void setName(std::string name);
+
+  explicit World(oo::BaseId baseId, std::string name, Resolvers resolvers);
+
+  ~World();
+  World(const World &) = delete;
+  World &operator=(const World &) = delete;
+  World(World &&) = delete;
+  World &operator=(World &&) = delete;
+
+  /// Get the coordinates of the cell containing the given position.
+  /// \remark `x` and `y` are measured in units.
+  CellIndex getCellIndex(float x, float y) const;
+
+  /// Get the oo::BaseId of the cell with the given coordinates.
+  oo::BaseId getCell(CellIndex index) const;
+
+ private:
+  oo::BaseId mBaseId{};
+  std::string mName{};
+  gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
+  Resolvers mResolvers;
+
+  using CellGrid = boost::multi_array<oo::BaseId, 2>;
+
+  /// Cells in the world stored in a grid mirroring their actual layout.
+  /// The array base is set such that the cell with coordinates `(X,Y)` is
+  /// located at `[X][Y]`.
+  CellGrid mCells{};
+
+  void makeCellGrid();
+};
 
 } // namespace oo
 

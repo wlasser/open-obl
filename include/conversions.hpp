@@ -329,6 +329,8 @@ namespace qvm = boost::qvm;
 // best with (needs?) SI units. By definition, 1 yd = 0.9144 m.
 template<class T> constexpr T unitsPerMeter = T(64.0L / 0.9144L);
 template<class T> constexpr T metersPerUnit = T(0.9144L / 64.0L);
+// Exterior cells are 4096u by 4096u.
+template<class T> constexpr T unitsPerCell = T(4096.0L);
 // Havok uses units 'hu' such that `7u = 1hu`.
 template<class T> constexpr T havokUnitsPerUnit = T(1.0L / 7.0L);
 template<class T> constexpr T unitsPerHavokUnit = T(7.0L);

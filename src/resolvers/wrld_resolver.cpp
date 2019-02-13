@@ -82,9 +82,72 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
   }
 }
 
+oo::BaseId oo::World::getBaseId() const {
+  return mBaseId;
+}
+
+std::string oo::World::getName() const {
+  return mName;
+}
+
+void oo::World::setName(std::string name) {
+  mName = std::move(name);
+}
+
+gsl::not_null<Ogre::SceneManager *> oo::World::getSceneManager() const {
+  return mScnMgr;
+}
+
+oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
+  return {
+      static_cast<int32_t>(std::floor(x / oo::unitsPerCell<float>)),
+      static_cast<int32_t>(std::floor(y / oo::unitsPerCell<float>))
+  };
+}
+
+oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
+    : mBaseId(baseId), mName(std::move(name)),
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
+      mResolvers(std::move(resolvers)) {
+  makeCellGrid();
+}
+
 oo::World::~World() {
   auto root{Ogre::Root::getSingletonPtr()};
-  if (root) root->destroySceneManager(scnMgr);
+  if (root) root->destroySceneManager(mScnMgr);
+}
+
+void oo::World::makeCellGrid() {
+  const auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+  const record::WRLD &rec{*wrldRes.get(mBaseId)};
+
+  // Worldspace bounds, in units.
+  const auto[x0, y0]{rec.bottomLeft.data};
+  const auto[x1, y1]{rec.topRight.data};
+
+  // Worldspace bounds, in cells.
+  const auto &p0{getCellIndex(x0, y0)};
+  const auto &p1{getCellIndex(x1, y1)};
+
+  mCells.resize(boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
+  mCells.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
+
+  const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  for (auto cellId : *wrldRes.getCells(mBaseId)) {
+    const auto cellOpt{cellRes.get(cellId)};
+    if (!cellOpt) continue;
+
+    const auto gridOpt{cellOpt->grid};
+    if (!gridOpt) continue;
+
+    const auto grid{gridOpt->data};
+    CellIndex p{grid.x, grid.y};
+    mCells[qvm::X(p)][qvm::Y(p)] = cellId;
+  }
+}
+
+oo::BaseId oo::World::getCell(CellIndex index) const {
+  return mCells[qvm::X(index)][qvm::Y(index)];
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type
@@ -92,7 +155,10 @@ oo::reifyRecord(const record::WRLD &refRec,
                 ReifyRecordTrait<record::WRLD>::resolvers resolvers) {
   const auto &wrldRes{oo::getResolver<record::WRLD>(resolvers)};
 
-  auto world{std::make_shared<oo::World>(oo::BaseId{refRec.mFormId})};
+  const oo::BaseId baseId{refRec.mFormId};
+  std::string name{refRec.name ? refRec.name->data : ""};
+
+  auto world{std::make_shared<oo::World>(baseId, name, resolvers)};
 
   return world;
 }
