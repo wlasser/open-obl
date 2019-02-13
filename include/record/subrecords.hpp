@@ -881,9 +881,9 @@ struct VNAM : Tuplifiable<oo::BaseId, oo::BaseId> {
 };
 
 // Coordinates of an exterior cell
-struct XCLC : Tuplifiable<uint32_t, uint32_t> {
-  uint32_t x = 0;
-  uint32_t y = 0;
+struct XCLC : Tuplifiable<int32_t, int32_t> {
+  int32_t x = 0;
+  int32_t y = 0;
   MAKE_AS_TUPLE(&x, &y)
 };
 
