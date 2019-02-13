@@ -157,9 +157,13 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
   ctx.setCamera(gsl::make_not_null(mPlayerController->getCamera()));
 
   const auto startPos = []() {
+    // Exterior
+//    auto pos{oo::fromBSCoordinates(Ogre::Vector3{103799.0f, -152970.0f, 1575.0f})};
+//    pos.y += 4.0f;
+
     auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
     pos.z += 3.0f;
-    pos.y -= 2.0f;
+    pos.y -= 4.0f;
     return pos;
   }();
   mPlayerController->moveTo(startPos);
@@ -190,6 +194,17 @@ void GameMode::updateAnimation(float delta) {
     const auto &animStates{anims->getEnabledAnimationStates()};
     for (auto state : animStates) state->addTime(delta);
   }
+}
+
+void GameMode::enter(ApplicationContext &ctx) {
+  loadCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
+//    loadCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
+//  loadCell(ctx, BaseId{0x00'00619e}); // (25, -38)
+  refocus(ctx);
+}
+
+void GameMode::refocus(ApplicationContext &) {
+  sdl::setRelativeMouseMode(true);
 }
 
 void GameMode::update(ApplicationContext &ctx, float delta) {

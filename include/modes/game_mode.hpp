@@ -87,15 +87,10 @@ class GameMode {
   explicit GameMode(ApplicationContext &/*ctx*/) {}
 
   /// \see Mode::enter()
-  void enter(ApplicationContext &ctx) {
-    loadCell(ctx, BaseId{0x00'048706});
-    refocus(ctx);
-  }
+  void enter(ApplicationContext &ctx);
 
   /// \see Mode::refocus()
-  void refocus(ApplicationContext &) {
-    sdl::setRelativeMouseMode(true);
-  }
+  void refocus(ApplicationContext &);
 
   /// \see Mode::handleEvent()
   transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
