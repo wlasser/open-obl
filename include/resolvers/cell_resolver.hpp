@@ -180,8 +180,8 @@ class InteriorCell : public Cell {
   ~InteriorCell() override;
   InteriorCell(const InteriorCell &) = delete;
   InteriorCell &operator=(const InteriorCell &) = delete;
-  InteriorCell(InteriorCell &&) noexcept = default;
-  InteriorCell &operator=(InteriorCell &&) noexcept = default;
+  InteriorCell(InteriorCell &&) = delete;
+  InteriorCell &operator=(InteriorCell &&) = delete;
 
  private:
   gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
