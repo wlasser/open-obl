@@ -139,7 +139,7 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
       record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers())};
 
   cellRes.load(cellId, refrResolvers, baseResolvers);
-  mCell = reifyRecord(*cellRec, std::tuple_cat(
+  mCell = reifyRecord(*cellRec, nullptr, nullptr, std::tuple_cat(
       baseResolvers, refrResolvers,
       oo::getResolvers<record::CELL>(ctx.getBaseResolvers())));
 

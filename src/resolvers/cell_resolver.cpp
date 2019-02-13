@@ -191,13 +191,35 @@ gsl::not_null<Cell::PhysicsWorld *> ExteriorCell::getPhysicsWorld() const {
 
 oo::ReifyRecordTrait<record::CELL>::type
 reifyRecord(const record::CELL &refRec,
+            Ogre::SceneManager *scnMgr,
+            btDiscreteDynamicsWorld *physicsWorld,
             oo::ReifyRecordTrait<record::CELL>::resolvers resolvers) {
   const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
 
-  auto cell{std::make_shared<oo::InteriorCell>(
-      oo::BaseId{refRec.mFormId}, refRec.name ? refRec.name->data : "",
-      bulletConf.makeDynamicsWorld())};
+  const oo::BaseId baseId{refRec.mFormId};
+  std::string name{refRec.name ? refRec.name->data : ""};
+
+  auto cell = [&]() -> std::shared_ptr<oo::Cell> {
+    if (scnMgr && physicsWorld) {
+      return std::make_shared<oo::ExteriorCell>(
+          baseId, name,
+          gsl::make_not_null(scnMgr),
+          gsl::make_not_null(physicsWorld));
+    } else {
+      return std::make_shared<oo::InteriorCell>(
+          baseId, name,
+          bulletConf.makeDynamicsWorld());
+    }
+  }();
+
+  return oo::populateCell(std::move(cell), refRec, std::move(resolvers));
+}
+
+ReifyRecordTrait<record::CELL>::type
+populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
+             ReifyRecordTrait<record::CELL>::resolvers resolvers) {
+  const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
 
   if (auto lighting{refRec.lighting}; lighting) {
     Ogre::ColourValue ambient{};

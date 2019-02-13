@@ -212,11 +212,18 @@ struct ReifyRecordTrait<record::CELL> {
 
 /// Not a specialization because passing an Ogre::SceneManager is only necessary
 /// for exterior cells.
-/// \remark Pass nullptr for the Ogre::SceneManager to create a SceneManager for
-///         the cell.
+/// \remark Pass nullptr for the Ogre::SceneManager and btDiscreteDynamicsWorld
+///         to create a SceneManager and physics world for the cell.
 ReifyRecordTrait<record::CELL>::type
 reifyRecord(const record::CELL &refRec,
+            Ogre::SceneManager *scnMgr,
+            btDiscreteDynamicsWorld *physicsWorld,
             ReifyRecordTrait<record::CELL>::resolvers resolvers);
+
+/// Parts of reifyRecord common to interior and exterior cells.
+ReifyRecordTrait<record::CELL>::type
+populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
+             ReifyRecordTrait<record::CELL>::resolvers resolvers);
 
 template<class Refr, class ...Res>
 void Cell::attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
