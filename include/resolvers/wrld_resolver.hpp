@@ -127,6 +127,43 @@ class World {
   /// Get the oo::BaseId of the cell with the given coordinates.
   oo::BaseId getCell(CellIndex index) const;
 
+  /// Return a neighbourhood of the cell at the given position.
+  /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
+  /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of
+  /// the worldspace and
+  /// \f[
+  ///     \lfloor x - d/2 \rfloor < X \leq \lfloor x + d/2 \rfloor, \quad
+  ///     \lfloor y - d/2 \rfloor < Y \leq \lfloor y + d/2 \rfloor.
+  /// \f]
+  /// `diameter` must be a non-negative integer. If `diameter` is zero and
+  /// `cell` is within the bounds of the worldspace, then `cell` is returned.
+  /// If the set of cells satisfying the above conditions is empty, the
+  /// behaviour is undefined.
+  // C++20: Codify the preconditions on cell and diameter.
+  auto getNeighbourhood(CellIndex cell, int diameter) const {
+    const int x{qvm::X(cell)}, y{qvm::Y(cell)};
+    // Adding 1 maps intervals (a, b] -> [a, b)
+
+    // For integer i and real r,
+    // floor(i - r) = i - ceil(r)
+    const int x0{1 + x - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+    const int y0{1 + y - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+    // floor(i + r) = i + floor(r)
+    const int x1{1 + x + diameter / 2};
+    const int y1{1 + y + diameter / 2};
+
+    // Keep within bounds.
+    const int X0{std::max<int>(x0, mCells.index_bases()[0])};
+    const int Y0{std::max<int>(y0, mCells.index_bases()[1])};
+    const int
+        X1{std::min<int>(x1, mCells.index_bases()[0] + mCells.shape()[0])};
+    const int
+        Y1{std::min<int>(y1, mCells.index_bases()[1] + mCells.shape()[1])};
+
+    using Range = CellGrid::index_range;
+    return mCells[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
+  }
+
  private:
   oo::BaseId mBaseId{};
   std::string mName{};
