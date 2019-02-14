@@ -103,7 +103,7 @@ template<> struct vec_traits<Ogre::Vector4> {
   }
 
   template<int I> static inline scalar_type
-  read_element(Ogre::Vector4 &v) {
+  read_element(const Ogre::Vector4 &v) {
     if constexpr (I == 0) return v.x;
     else if constexpr (I == 1) return v.y;
     else if constexpr (I == 2) return v.z;
@@ -329,6 +329,9 @@ namespace qvm = boost::qvm;
 // best with (needs?) SI units. By definition, 1 yd = 0.9144 m.
 template<class T> constexpr T unitsPerMeter = T(64.0L / 0.9144L);
 template<class T> constexpr T metersPerUnit = T(0.9144L / 64.0L);
+// Havok uses units 'hu' such that `7u = 1hu`.
+template<class T> constexpr T havokUnitsPerUnit = T(1.0L / 7.0L);
+template<class T> constexpr T unitsPerHavokUnit = T(7.0L);
 
 inline Ogre::ColourValue fromNif(const nif::compound::Color3 &c) {
   return Ogre::ColourValue(c.r, c.g, c.b);
@@ -385,6 +388,52 @@ Ogre::Quaternion fromBSCoordinates(const Quat &q) {
   const auto &p{qvm::rotx_quat(-Ogre::Math::HALF_PI)};
   const auto &pInv{qvm::rotx_quat(Ogre::Math::HALF_PI)};
   return p * q * pInv;
+}
+
+template<class Vec, typename = std::enable_if_t<
+    qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
+Ogre::Vector3 fromHavokCoordinates(const Vec &v) {
+  using namespace qvm;
+  using scalar_type = typename qvm::vec_traits<Vec>::scalar_type;
+  return Ogre::Vector3{qvm::X(v), qvm::Z(v), -qvm::Y(v)} *
+      oo::metersPerUnit<scalar_type> * oo::unitsPerHavokUnit<scalar_type>;
+}
+
+template<class Vec, typename = std::enable_if_t<
+    qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 4>>
+Ogre::Vector4 fromHavokCoordinates(const Vec &v) {
+  return Ogre::Vector4(oo::fromHavokCoordinates(qvm::XYZ(v)), qvm::W(v));
+}
+
+template<class Mat, typename = std::enable_if_t<
+    qvm::is_mat<Mat>::value
+        && qvm::mat_traits<Mat>::rows == 3
+        && qvm::mat_traits<Mat>::cols == 3>>
+Ogre::Matrix3 fromHavokCoordinates(const Mat &m) {
+  return oo::fromBSCoordinates(m);
+}
+
+template<class Mat, typename = std::enable_if_t<
+    qvm::is_mat<Mat>::value
+        && qvm::mat_traits<Mat>::rows == 4
+        && qvm::mat_traits<Mat>::cols == 4>>
+Ogre::Matrix4 fromHavokCoordinates(const Mat &m) {
+  using namespace qvm;
+  using scalar_type = typename qvm::mat_traits<Mat>::scalar_type;
+  const auto k{oo::metersPerUnit<scalar_type> *
+      oo::unitsPerHavokUnit<scalar_type>};
+  const auto &S{qvm::diag_mat(qvm::XXX1(k))};
+  const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
+
+  const auto &SInv{qvm::diag_mat(qvm::XXX1(1.0 / k))};
+  const auto &CInv{qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv};
+
+  return C * m * CInv;
+}
+
+template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
+Ogre::Quaternion fromHavokCoordinates(const Quat &q) {
+  return oo::fromBSCoordinates(q);
 }
 
 } // namespace oo

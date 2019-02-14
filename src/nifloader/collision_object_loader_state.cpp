@@ -253,11 +253,12 @@ CollisionObjectLoaderState::parseShape(const Graph &,
                                        const nif::bhk::CapsuleShape &block) {
   CollisionShapeVector v;
 
-  const Ogre::Vector3 p1{mTransform *
-      oo::fromBSCoordinates(block.firstPoint) * 7.0f};
-  const Ogre::Vector3 p2{mTransform *
-      oo::fromBSCoordinates(block.secondPoint) * 7.0f};
-  const float radius{oo::metersPerUnit<float> * block.radius * 7.0f};
+  const Ogre::Vector3 p1
+      {mTransform * oo::fromHavokCoordinates(block.firstPoint)};
+  const Ogre::Vector3 p2
+      {mTransform * oo::fromHavokCoordinates(block.secondPoint)};
+  const float radius
+      {oo::metersPerUnit<float> * oo::unitsPerHavokUnit<float> * block.radius};
 
   // Bullet capsules must be axis-aligned and the midpoint of the centres must
   // be the origin. Then, we also need to know which axis to align to.
@@ -350,15 +351,12 @@ CollisionObjectLoaderState::parseShape(
   const Ogre::Matrix4 scaleMat = [&shape]() {
     Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
     s.setScale(qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.scale)));
-    return s;
+    return oo::fromHavokCoordinates(s);
   }();
 
-  // For some reason the coordinates are scaled down in the nif file by a
-  // factor of 7. This scale needs to also apply to the translation, not
-  // just the linear part.
-  mTransform = mTransform * scaleMat * 7.0f;
+  mTransform = mTransform * scaleMat;
   auto collisionShape{parseNiTriStripsData(g, data)};
-  mTransform = mTransform * scaleMat.inverse() * (1.0f / 7.0f);
+  mTransform = mTransform * scaleMat.inverse();
 
   return collisionShape;
 }
@@ -371,8 +369,9 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
 
   auto collisionShape{std::make_unique<btConvexHullShape>()};
   for (const auto &vertex : shape.vertices) {
-    const auto v{mTransform * oo::fromBSCoordinates(vertex) * 7.0f};
-    collisionShape->addPoint(qvm::convert_to<btVector3>(v.xyz()));
+    using namespace qvm;
+    const auto v{mTransform * oo::fromHavokCoordinates(vertex)};
+    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
   }
   CollisionShapeVector v;
   v.emplace_back(std::move(collisionShape));
@@ -395,9 +394,9 @@ CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
       {qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.dimensions))};
   const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
   for (const auto &corner : box.getAllCorners()) {
-    const Ogre::Vector4 ogreV{oo::fromBSCoordinates(corner), 1.0f};
-    const auto v{mTransform * ogreV * 7.0f};
-    collisionShape->addPoint(qvm::convert_to<btVector3>(v.xyz()));
+    using namespace qvm;
+    const auto v{mTransform * qvm::XYZ1(oo::fromHavokCoordinates(corner))};
+    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
   }
   CollisionShapeVector v;
   v.emplace_back(std::move(collisionShape));
@@ -467,8 +466,7 @@ unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
   auto it{vertexBuf.begin()};
   for (const auto &vertex : block.vertices) {
     using namespace oo;
-    const Ogre::Vector4 ogreV{fromBSCoordinates(vertex)};
-    const auto v{mTransform * ogreV};
+    const auto v{mTransform * oo::fromHavokCoordinates(vertex)};
     *it++ = v.x;
     *it++ = v.y;
     *it++ = v.z;
@@ -478,9 +476,9 @@ unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
   Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
-  t.makeTransform(oo::fromBSCoordinates(qvm::XYZ(body.translation)),
+  t.makeTransform(oo::fromHavokCoordinates(qvm::XYZ(body.translation)),
                   Ogre::Vector3::UNIT_SCALE,
-                  oo::fromBSCoordinates(body.rotation));
+                  oo::fromHavokCoordinates(body.rotation));
   return t;
 }
 
