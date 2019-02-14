@@ -19,9 +19,7 @@ namespace record {
 ///           std::DefaultConstructible concept.
 /// \tparam c An integer representing the record type. If the type is `"ABCD"`
 ///           then `c == recOf("ABCD")`.
-/// \tparam Compress Whether the raw data of this record is saved as compressed
-///                  data. The default is to not use compression.
-template<class T, uint32_t c, bool Compress = false>
+template<class T, uint32_t c>
 class Record : public T {
  public:
   /// The integer representation of the record type.
@@ -66,9 +64,9 @@ class Record : public T {
 ///         should be specialized for `T` instead.
 /// \remark The output is 'formatted' in the sense that it is not the object
 ///         representation of the Record.
-template<class T, uint32_t c, bool Compressed> std::ostream &
-operator<<(std::ostream &os, const Record<T, c, Compressed> &record) {
-  if constexpr (Compressed) {
+template<class T, uint32_t c> std::ostream &
+operator<<(std::ostream &os, const Record<T, c> &record) {
+  if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
     // Write the uncompressed raw record into a buffer.
     const unsigned long uncompressedSize{record.size()};
     std::vector<uint8_t> uncompressedData(uncompressedSize);
@@ -118,25 +116,28 @@ operator<<(std::ostream &os, const Record<T, c, Compressed> &record) {
 ///         representation of the Record.
 /// \exception RecordNotFoundError Thrown if the record type read does not match
 ///                                the type of the record.
-template<class T, uint32_t c, bool Compressed> std::istream &
-operator>>(std::istream &is, Record<T, c, Compressed> &record) {
+template<class T, uint32_t c> std::istream &
+operator>>(std::istream &is, Record<T, c> &record) {
   std::array<char, 4> type{};
   io::readBytes(is, type);
   if (recOf(type) != c) {
     throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
   }
 
-  if constexpr (Compressed) {
-    // Read the size of the compressed raw record plus four bytes for the
-    // uncompressed size.
-    uint32_t compressedSizePlus4{};
-    io::readBytes(is, compressedSizePlus4);
-    const unsigned long compressedSize(compressedSizePlus4 - 4u);
+  // Read the size of the record on disk, which depending on compression may or
+  // may not be the actual size of the record.
+  uint32_t sizeOnDisk{};
+  io::readBytes(is, sizeOnDisk);
 
-    // Read the rest of the record header
-    io::readBytes(is, record.mRecordFlags);
-    io::readBytes(is, record.mFormId);
-    io::readBytes(is, record.mVersionControlInfo);
+  // Read the rest of the record header.
+  io::readBytes(is, record.mRecordFlags);
+  io::readBytes(is, record.mFormId);
+  io::readBytes(is, record.mVersionControlInfo);
+
+  if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
+    // The size on disk is actually the size of the compressed raw record plus
+    // four bytes for the uncompressed size.
+    const unsigned long compressedSize(sizeOnDisk - 4u);
 
     // Read the size of the uncompressed raw record.
     uint32_t uncompressedSize32{};
@@ -155,12 +156,8 @@ operator>>(std::istream &is, Record<T, c, Compressed> &record) {
     io::memstream mis(uncompressedData.data(), uncompressedSize);
     raw::read(mis, static_cast<T &>(record), uncompressedSize);
   } else {
-    uint32_t size{};
-    io::readBytes(is, size);
-    io::readBytes(is, record.mRecordFlags);
-    io::readBytes(is, record.mFormId);
-    io::readBytes(is, record.mVersionControlInfo);
-    raw::read(is, static_cast<T &>(record), size);
+    // The size on disk is actually the size of the record.
+    raw::read(is, static_cast<T &>(record), sizeOnDisk);
   }
 
   return is;

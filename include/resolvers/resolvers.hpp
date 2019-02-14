@@ -18,8 +18,8 @@ namespace oo {
 template<class R>
 struct is_record : std::false_type {};
 
-template<class T, uint32_t c, bool Compress>
-struct is_record<record::Record<T, c, Compress>> : std::true_type {};
+template<class T, uint32_t c>
+struct is_record<record::Record<T, c>> : std::true_type {};
 
 template<class R> inline constexpr bool is_record_v = is_record<R>::value;
 
