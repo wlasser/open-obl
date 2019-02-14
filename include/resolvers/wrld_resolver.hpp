@@ -105,8 +105,10 @@ class World {
  public:
   using CellIndex = qvm::vec<int32_t, 2>;
   using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
+  using PhysicsWorld = btDiscreteDynamicsWorld;
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
+  gsl::not_null<PhysicsWorld *> getPhysicsWorld() const;
 
   oo::BaseId getBaseId() const;
   std::string getName() const;
@@ -168,6 +170,7 @@ class World {
   oo::BaseId mBaseId{};
   std::string mName{};
   gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
+  std::unique_ptr<PhysicsWorld> mPhysicsWorld;
   Resolvers mResolvers;
 
   using CellGrid = boost::multi_array<oo::BaseId, 2>;
@@ -178,6 +181,7 @@ class World {
   CellGrid mCells{};
 
   void makeCellGrid();
+  void makePhysicsWorld();
 };
 
 } // namespace oo

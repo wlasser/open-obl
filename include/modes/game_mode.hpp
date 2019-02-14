@@ -35,15 +35,15 @@ using PlayerControllerDeleter = std::function<void(oo::PlayerController *)>;
 using PlayerControllerPtr = std::unique_ptr<oo::PlayerController,
                                             oo::PlayerControllerDeleter>;
 
-void
-releasePlayerController(oo::Cell *cell, oo::PlayerController *playerController);
+void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
+                             oo::PlayerController *playerController);
 
 template<class ... Args> oo::PlayerControllerPtr
-makePlayerController(const std::shared_ptr<oo::Cell> &cell, Args &&...args) {
+makePlayerController(btDiscreteDynamicsWorld *physicsWorld, Args &&...args) {
   return oo::PlayerControllerPtr(
       new oo::PlayerController(std::forward<Args>(args)...),
-      [cell](oo::PlayerController *pc) -> void {
-        oo::releasePlayerController(cell.get(), pc);
+      [physicsWorld](oo::PlayerController *pc) -> void {
+        oo::releasePlayerController(physicsWorld, pc);
       });
 }
 ///@}
@@ -54,6 +54,8 @@ class GameMode {
  private:
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
+  std::vector<std::shared_ptr<Cell>> mExteriorCells{};
+  bool mInInterior{true};
 
   oo::PlayerControllerPtr mPlayerController{};
 
@@ -72,8 +74,14 @@ class GameMode {
   oo::RefId getCrosshairRef();
 
   void loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId);
+  void loadInteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
+  void loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
 
-  void loadCell(ApplicationContext &ctx, oo::BaseId cellId);
+  void addPlayerToScene(ApplicationContext &ctx);
+  void registerSceneListeners(ApplicationContext &ctx);
+
+  gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
+  gsl::not_null<btDiscreteDynamicsWorld *> getPhysicsWorld() const;
 
   /// Use the debug drawer to draw a line from the given `node` to each of its
   /// children, then from each each child to their children, and so on.
@@ -83,6 +91,23 @@ class GameMode {
 
   /// Update the enabled animation states of all entities in the scene.
   void updateAnimation(float delta);
+
+  auto getCellBaseResolvers(ApplicationContext &ctx) const {
+    return oo::getResolvers<
+        record::STAT, record::DOOR, record::LIGH, record::ACTI,
+        record::NPC_, record::RACE>(ctx.getBaseResolvers());
+  }
+
+  auto getCellRefrResolvers(ApplicationContext &ctx) const {
+    return oo::getRefrResolvers<
+        record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
+        record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers());
+  }
+
+  auto getCellResolvers(ApplicationContext &ctx) {
+    return std::tuple_cat(getCellBaseResolvers(ctx), getCellRefrResolvers(ctx),
+                          oo::getResolvers<record::CELL>(ctx.getBaseResolvers()));
+  }
 
  public:
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;

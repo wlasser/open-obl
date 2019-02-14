@@ -98,6 +98,10 @@ gsl::not_null<Ogre::SceneManager *> oo::World::getSceneManager() const {
   return mScnMgr;
 }
 
+gsl::not_null<oo::World::PhysicsWorld *> oo::World::getPhysicsWorld() const {
+  return gsl::make_not_null(mPhysicsWorld.get());
+}
+
 oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
   return {
       static_cast<int32_t>(std::floor(x / oo::unitsPerCell<float>)),
@@ -109,6 +113,7 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     : mBaseId(baseId), mName(std::move(name)),
       mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
       mResolvers(std::move(resolvers)) {
+  makePhysicsWorld();
   makeCellGrid();
 }
 
@@ -144,6 +149,12 @@ void oo::World::makeCellGrid() {
     CellIndex p{grid.x, grid.y};
     mCells[qvm::X(p)][qvm::Y(p)] = cellId;
   }
+}
+
+void oo::World::makePhysicsWorld() {
+  const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  const auto &bulletConf{cellRes.getBulletConfiguration()};
+  mPhysicsWorld = bulletConf.makeDynamicsWorld();
 }
 
 oo::BaseId oo::World::getCell(CellIndex index) const {

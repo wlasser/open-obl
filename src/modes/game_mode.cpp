@@ -11,11 +11,11 @@
 
 namespace oo {
 
-void
-releasePlayerController(Cell *cell, oo::PlayerController *playerController) {
+void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
+                             oo::PlayerController *playerController) {
   const auto *rigidBody{playerController->getRigidBody()};
   if (rigidBody->isInWorld()) {
-    cell->getPhysicsWorld()->removeRigidBody(playerController->getRigidBody());
+    physicsWorld->removeRigidBody(playerController->getRigidBody());
   }
   delete playerController;
 }
@@ -99,7 +99,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
 }
 
 void GameMode::dispatchCollisions() {
-  auto *const btDispatcher{mCell->getPhysicsWorld()->getDispatcher()};
+  auto *const btDispatcher{getPhysicsWorld()->getDispatcher()};
   gsl::not_null dispatcher{dynamic_cast<btCollisionDispatcher *>(btDispatcher)};
   mCollisionCaller.runCallbacks(dispatcher);
 }
@@ -115,7 +115,7 @@ RefId GameMode::getCrosshairRef() {
   const auto rayEnd{camPos + rayLength * camDir};
 
   btCollisionWorld::ClosestRayResultCallback callback(rayStart, rayEnd);
-  mCell->getPhysicsWorld()->rayTest(rayStart, rayEnd, callback);
+  getPhysicsWorld()->rayTest(rayStart, rayEnd, callback);
 
   if (callback.hasHit()) {
     return RefId{decodeFormId(callback.m_collisionObject->getUserPointer())};
@@ -136,29 +136,56 @@ GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
 }
 
-void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
+void GameMode::loadInteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
   if (!cellRes.contains(cellId)) {
+    ctx.getLogger()->error("Cell {} does not exist", cellId);
     throw std::runtime_error("Cell does not exist");
   }
   const auto cellRec{cellRes.get(cellId)};
 
-  auto baseResolvers{oo::getResolvers<
-      record::STAT, record::DOOR, record::LIGH, record::ACTI,
-      record::NPC_, record::RACE>(ctx.getBaseResolvers())};
-  auto refrResolvers{oo::getRefrResolvers<
-      record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
-      record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers())};
-
-  cellRes.load(cellId, refrResolvers, baseResolvers);
-  mCell = reifyRecord(*cellRec, nullptr, nullptr, std::tuple_cat(
-      baseResolvers, refrResolvers,
-      oo::getResolvers<record::CELL>(ctx.getBaseResolvers())));
+  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+  mCell = reifyRecord(*cellRec, nullptr, nullptr, getCellResolvers(ctx));
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
 
-  mPlayerController = makePlayerController(mCell, mCell->getSceneManager(),
-                                           mCell->getPhysicsWorld());
+  addPlayerToScene(ctx);
+  registerSceneListeners(ctx);
+}
+
+void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
+  if (!mWrld) {
+    throw std::runtime_error("Attempting to load an exterior cell "
+                             "without a worldspace");
+  }
+
+  const auto wrldId{mWrld->getBaseId()};
+
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+  auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+
+  if (auto cells{wrldRes.getCells(wrldId)};
+      !cells || !cells->contains(cellId)) {
+    ctx.getLogger()->error("Cell {} does not exist in worldspace {}",
+                           cellId, wrldId);
+    throw std::runtime_error("Cell does not exist in worldspace");
+  }
+
+  const auto cellRec{cellRes.get(cellId)};
+
+  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+  mExteriorCells.emplace_back(reifyRecord(*cellRec,
+                                          mWrld->getSceneManager(),
+                                          mWrld->getPhysicsWorld(),
+                                          getCellResolvers(ctx)));
+
+  ctx.getLogger()->info("Loaded cell {}", cellId);
+}
+
+void GameMode::addPlayerToScene(ApplicationContext &ctx) {
+  mPlayerController = oo::makePlayerController(getPhysicsWorld(),
+                                               getSceneManager(),
+                                               getPhysicsWorld());
   oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),
@@ -170,19 +197,31 @@ void GameMode::loadCell(ApplicationContext &ctx, BaseId cellId) {
 
   const auto startPos = []() {
     // Exterior
-    auto pos
-        {oo::fromBSCoordinates(Ogre::Vector3{103799.0f, -152970.0f, 1575.0f})};
+    auto pos{oo::fromBSCoordinates(Ogre::Vector3
+                                       {103799.0f, -152970.0f, 1575.0f})};
     pos.y += 4.0f;
 
 //    auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
 //    pos.z += 3.0f;
-//    pos.y -= 4.0f;
+//    pos.y += 4.0f;
     return pos;
   }();
   mPlayerController->moveTo(startPos);
+}
 
-  mCell->getSceneManager()->addRenderQueueListener(ctx.getImGuiManager());
-  mCell->getSceneManager()->addRenderQueueListener(ctx.getOverlaySystem());
+void GameMode::registerSceneListeners(ApplicationContext &ctx) {
+  getSceneManager()->addRenderQueueListener(ctx.getImGuiManager());
+  getSceneManager()->addRenderQueueListener(ctx.getOverlaySystem());
+}
+
+gsl::not_null<Ogre::SceneManager *> GameMode::getSceneManager() const {
+  if (mInInterior) return mCell->getSceneManager();
+  return mExteriorCells.front()->getSceneManager();
+}
+
+gsl::not_null<btDiscreteDynamicsWorld *> GameMode::getPhysicsWorld() const {
+  if (mInInterior) return mCell->getPhysicsWorld();
+  return mExteriorCells.front()->getPhysicsWorld();
 }
 
 void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
@@ -197,7 +236,7 @@ void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
 }
 
 void GameMode::updateAnimation(float delta) {
-  for (auto it{mCell->getSceneManager()->getMovableObjectIterator("Entity")};
+  for (auto it{getSceneManager()->getMovableObjectIterator("Entity")};
        it.hasMoreElements();) {
     const auto *entity{static_cast<const Ogre::Entity *>(it.getNext())};
 
@@ -210,10 +249,20 @@ void GameMode::updateAnimation(float delta) {
 }
 
 void GameMode::enter(ApplicationContext &ctx) {
-//  loadCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
-//    loadCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
+//  loadInteriorCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
+//    loadInteriorCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
   loadWorldspace(ctx, oo::BaseId{0x00'00003c});
-  loadCell(ctx, mWrld->getCell({25, -38}));
+  mInInterior = false;
+  for (const auto &row : mWrld->getNeighbourhood({25, -38}, 3)) {
+    for (const auto &id : row) {
+      ctx.getLogger()->info(" - {}", id);
+      loadExteriorCell(ctx, id);
+    }
+  }
+//  loadExteriorCell(ctx, mWrld->getCell({25, -38}));
+  addPlayerToScene(ctx);
+  registerSceneListeners(ctx);
+
   refocus(ctx);
 }
 
@@ -224,14 +273,14 @@ void GameMode::refocus(ApplicationContext &) {
 void GameMode::update(ApplicationContext &ctx, float delta) {
   updateAnimation(delta);
   mPlayerController->update(delta);
-  mCell->getPhysicsWorld()->stepSimulation(delta);
+  getPhysicsWorld()->stepSimulation(delta);
   dispatchCollisions();
 
   if (mDebugDrawer) {
     mDebugDrawer->clearLines();
-    mCell->getPhysicsWorld()->debugDrawWorld();
+    getPhysicsWorld()->debugDrawWorld();
 
-    auto it{mCell->getSceneManager()->getMovableObjectIterator("Entity")};
+    auto it{getSceneManager()->getMovableObjectIterator("Entity")};
     while (it.hasMoreElements()) {
       auto *entity{static_cast<Ogre::Entity *>(it.getNext())};
       if (!entity->hasSkeleton()) continue;
@@ -254,18 +303,17 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
 }
 
 void GameMode::toggleCollisionGeometry() {
-  if (!mCell) return;
   if (mDebugDrawer) {
-    mCell->getSceneManager()->destroySceneNode("__DebugDrawerNode");
-    mCell->getPhysicsWorld()->setDebugDrawer(nullptr);
+    getSceneManager()->destroySceneNode("__DebugDrawerNode");
+    getPhysicsWorld()->setDebugDrawer(nullptr);
     mDebugDrawer.reset();
   } else {
-    mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(mCell->getSceneManager(),
+    mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(getSceneManager(),
                                                        oo::SHADER_GROUP);
-    auto *root{mCell->getSceneManager()->getRootSceneNode()};
+    auto *root{getSceneManager()->getRootSceneNode()};
     auto *node{root->createChildSceneNode("__DebugDrawerNode")};
     node->attachObject(mDebugDrawer->getObject());
-    mCell->getPhysicsWorld()->setDebugDrawer(mDebugDrawer.get());
+    getPhysicsWorld()->setDebugDrawer(mDebugDrawer.get());
   }
 }
 
