@@ -148,9 +148,6 @@ void GameMode::loadInteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
   mCell = reifyRecord(*cellRec, nullptr, nullptr, getCellResolvers(ctx));
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
-
-  addPlayerToScene(ctx);
-  registerSceneListeners(ctx);
 }
 
 void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
@@ -194,19 +191,6 @@ void GameMode::addPlayerToScene(ApplicationContext &ctx) {
       });
 
   ctx.setCamera(gsl::make_not_null(mPlayerController->getCamera()));
-
-  const auto startPos = []() {
-    // Exterior
-    auto pos{oo::fromBSCoordinates(Ogre::Vector3
-                                       {103799.0f, -152970.0f, 1575.0f})};
-    pos.y += 4.0f;
-
-//    auto pos{oo::fromBSCoordinates(Ogre::Vector3::ZERO)};
-//    pos.z += 3.0f;
-//    pos.y += 4.0f;
-    return pos;
-  }();
-  mPlayerController->moveTo(startPos);
 }
 
 void GameMode::registerSceneListeners(ApplicationContext &ctx) {
@@ -255,12 +239,15 @@ void GameMode::enter(ApplicationContext &ctx) {
   mInInterior = false;
   for (const auto &row : mWrld->getNeighbourhood({25, -38}, 3)) {
     for (const auto &id : row) {
-      ctx.getLogger()->info(" - {}", id);
       loadExteriorCell(ctx, id);
     }
   }
-//  loadExteriorCell(ctx, mWrld->getCell({25, -38}));
+
   addPlayerToScene(ctx);
+  mPlayerController->moveTo(oo::fromBSCoordinates(Ogre::Vector3{
+      103799.0f, -152970.0f, 1575.0f
+  }));
+
   registerSceneListeners(ctx);
 
   refocus(ctx);
