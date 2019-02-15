@@ -169,6 +169,10 @@ gsl::not_null<Cell::PhysicsWorld *> InteriorCell::getPhysicsWorld() const {
   return gsl::make_not_null(mPhysicsWorld.get());
 }
 
+gsl::not_null<Ogre::SceneNode *> InteriorCell::getRootSceneNode() const {
+  return gsl::make_not_null(mScnMgr->getRootSceneNode());
+}
+
 InteriorCell::~InteriorCell() {
   // Destruct physics world to unregister all existing rigid bodies and free
   // their broadphase proxies, while they are still alive.
@@ -184,7 +188,14 @@ ExteriorCell::ExteriorCell(oo::BaseId baseId, std::string name,
                            gsl::not_null<PhysicsWorld *> physicsWorld)
     : Cell(baseId, std::move(name)),
       mScnMgr(scnMgr),
-      mPhysicsWorld(physicsWorld) {}
+      mPhysicsWorld(physicsWorld),
+      mRootSceneNode(gsl::make_not_null(
+          mScnMgr->getRootSceneNode()->createChildSceneNode(
+              getBaseId().string()))) {}
+
+ExteriorCell::~ExteriorCell() {
+  mScnMgr->destroySceneNode(mRootSceneNode);
+}
 
 gsl::not_null<Ogre::SceneManager *> ExteriorCell::getSceneManager() const {
   return mScnMgr;
@@ -192,6 +203,10 @@ gsl::not_null<Ogre::SceneManager *> ExteriorCell::getSceneManager() const {
 
 gsl::not_null<Cell::PhysicsWorld *> ExteriorCell::getPhysicsWorld() const {
   return mPhysicsWorld;
+}
+
+gsl::not_null<Ogre::SceneNode *> ExteriorCell::getRootSceneNode() const {
+  return mRootSceneNode;
 }
 
 oo::ReifyRecordTrait<record::CELL>::type
@@ -252,7 +267,7 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
   const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
   const auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(resolvers)};
 
-  Ogre::SceneNode *rootNode{cell->getSceneManager()->getRootSceneNode()};
+  gsl::not_null<Ogre::SceneNode *> rootNode{cell->getRootSceneNode()};
 
   for (auto refId : *refs) {
     gsl::not_null<Ogre::SceneNode *> node{rootNode->createChildSceneNode()};
@@ -285,7 +300,8 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
     auto makeNode = [&](const std::string &name) -> Ogre::Entity * {
       auto *node{oo::insertNif(name, oo::RESOURCE_GROUP,
                                cell->getSceneManager(),
-                               cell->getPhysicsWorld())};
+                               cell->getPhysicsWorld(),
+                               rootNode)};
       auto *entity{dynamic_cast<Ogre::Entity *>(node->getAttachedObject(0))};
 
       entity->getMesh()->setSkeletonName(skelPtr->getName());

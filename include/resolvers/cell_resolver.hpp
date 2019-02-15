@@ -143,6 +143,7 @@ class Cell {
 
   virtual gsl::not_null<Ogre::SceneManager *> getSceneManager() const = 0;
   virtual gsl::not_null<PhysicsWorld *> getPhysicsWorld() const = 0;
+  virtual gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const = 0;
 
   oo::BaseId getBaseId() const;
   std::string getName() const;
@@ -175,6 +176,7 @@ class InteriorCell : public Cell {
  public:
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
+  gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const override;
 
   explicit InteriorCell(oo::BaseId baseId, std::string name,
                         std::unique_ptr<PhysicsWorld> physicsWorld);
@@ -193,13 +195,21 @@ class ExteriorCell : public Cell {
  public:
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
+  gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const override;
 
   explicit ExteriorCell(oo::BaseId baseId, std::string name,
                         gsl::not_null<Ogre::SceneManager *> scnMgr,
                         gsl::not_null<PhysicsWorld *> physicsWorld);
+  ~ExteriorCell() override;
+  ExteriorCell(const ExteriorCell &) = delete;
+  ExteriorCell &operator=(const ExteriorCell &) = delete;
+  ExteriorCell(ExteriorCell &&) = delete;
+  ExteriorCell &operator=(ExteriorCell &&) = delete;
+
  private:
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<PhysicsWorld *> mPhysicsWorld;
+  gsl::not_null<Ogre::SceneNode *> mRootSceneNode;
 };
 
 template<>
