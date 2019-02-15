@@ -175,6 +175,8 @@ void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
                                           mWrld->getSceneManager(),
                                           mWrld->getPhysicsWorld(),
                                           getCellResolvers(ctx)));
+  World::CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+  mWrld->loadTerrain(pos);
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
 }

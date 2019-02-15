@@ -112,12 +112,19 @@ oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
 oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     : mBaseId(baseId), mName(std::move(name)),
       mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
+      mTerrainGroup(mScnMgr, Ogre::Terrain::Alignment::ALIGN_X_Z,
+                    33u, 4096.0f * oo::metersPerUnit<Ogre::Real>),
       mResolvers(std::move(resolvers)) {
+  // Shift origin because cell coordinates give SW corner position but Ogre
+  // works with the centre.
+  mTerrainGroup.setOrigin(Ogre::Vector3(-0.5f, 0.0f, -0.5f) * 4096.0f
+                              * oo::metersPerUnit<Ogre::Real>);
   makePhysicsWorld();
   makeCellGrid();
 }
 
 oo::World::~World() {
+  mTerrainGroup.removeAllTerrains();
   auto root{Ogre::Root::getSingletonPtr()};
   if (root) root->destroySceneManager(mScnMgr);
 }
@@ -148,6 +155,29 @@ void oo::World::makeCellGrid() {
     const auto grid{gridOpt->data};
     CellIndex p{grid.x, grid.y};
     mCells[qvm::X(p)][qvm::Y(p)] = cellId;
+
+    Ogre::Terrain::ImportData importData{};
+    importData.constantHeight = 0.0f;
+    importData.inputFloat = nullptr;
+    importData.inputImage = nullptr;
+    importData.maxBatchSize = 8 + 1;
+    importData.minBatchSize = 2 + 1;
+
+    importData.layerDeclaration.elements.emplace_back(
+        /*src=*/0,
+                Ogre::TerrainLayerSamplerSemantic::TLSS_ALBEDO,
+        /*elementStart=*/0,
+        /*elementCount=*/4);
+    importData.layerDeclaration.samplers.emplace_back(
+        /*name=*/"sampler0",
+                 Ogre::PixelFormat::PF_BYTE_RGBA);
+
+    auto &layerInstance{importData.layerList.emplace_back()};
+    layerInstance.textureNames.emplace_back(
+        "textures/landscape/greatforestrockmoss02.dds");
+    layerInstance.worldSize = 1.0f;
+
+    mTerrainGroup.defineTerrain(qvm::X(p), qvm::Y(p), &importData);
   }
 }
 
@@ -159,6 +189,10 @@ void oo::World::makePhysicsWorld() {
 
 oo::BaseId oo::World::getCell(CellIndex index) const {
   return mCells[qvm::X(index)][qvm::Y(index)];
+}
+
+void oo::World::loadTerrain(CellIndex index) {
+  mTerrainGroup.loadTerrain(qvm::X(index), qvm::Y(index));
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type

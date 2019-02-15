@@ -16,8 +16,9 @@
 #include "resolvers/resolvers.hpp"
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
-#include <OgreRoot.h>
 #include <OgreOverlaySystem.h>
+#include <OgreRoot.h>
+#include <OGRE/Terrain/OgreTerrain.h>
 #include <spdlog/spdlog.h>
 #include <memory>
 
@@ -69,6 +70,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::SoundManager> soundMgr{};
 
   std::unique_ptr<Ogre::OverlaySystem> overlaySys{};
+  std::unique_ptr<Ogre::TerrainGlobalOptions> terrainOptions{};
 
   std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
 

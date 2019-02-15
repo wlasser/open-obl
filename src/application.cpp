@@ -30,6 +30,7 @@
 #include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
 #include "sdl/sdl.hpp"
+#include "terrain_material_generator.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>
@@ -70,6 +71,10 @@ Application::Application(std::string windowName) : FrameListener() {
 
   // Construct the Bullet configuration
   ctx.bulletConf = std::make_unique<bullet::Configuration>();
+
+  // Construct the global terrain options
+  ctx.terrainOptions = std::make_unique<Ogre::TerrainGlobalOptions>();
+  setTerrainOptions();
 
   // Start the sound engine
   ctx.soundMgr = std::make_unique<Ogre::SoundManager>();
@@ -328,6 +333,16 @@ void Application::setSoundSettings() {
 
   auto voiceBus{ctx.soundMgr->createMixingBus("voice")};
   voiceBus.setVolume(gameSettings.get("Audio.fDefaultVoiceVolume", 1.0f));
+}
+
+void Application::setTerrainOptions() {
+  auto &options{ctx.terrainOptions};
+  options->setMaxPixelError(8);
+  options->setCompositeMapDistance(oo::metersPerUnit<Ogre::Real> * 4096);
+  options->setDefaultMaterialGenerator(
+      std::make_shared<oo::TerrainMaterialGenerator>());
+  // Need to set scene manager ambient lighting, directional light, and
+  // directional light colour locally when a worldspace is loaded.
 }
 
 std::vector<oo::Path>

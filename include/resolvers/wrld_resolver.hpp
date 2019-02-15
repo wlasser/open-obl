@@ -9,6 +9,7 @@
 #include <boost/multi_array.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
+#include <OGRE/Terrain/OgreTerrainGroup.h>
 #include <tl/optional.hpp>
 #include <utility>
 
@@ -129,6 +130,9 @@ class World {
   /// Get the oo::BaseId of the cell with the given coordinates.
   oo::BaseId getCell(CellIndex index) const;
 
+  /// Load the terrain of the cell with the given coordinates.
+  void loadTerrain(CellIndex index);
+
   /// Return a neighbourhood of the cell at the given position.
   /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
   /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of
@@ -171,6 +175,7 @@ class World {
   std::string mName{};
   gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
   std::unique_ptr<PhysicsWorld> mPhysicsWorld;
+  Ogre::TerrainGroup mTerrainGroup;
   Resolvers mResolvers;
 
   using CellGrid = boost::multi_array<oo::BaseId, 2>;

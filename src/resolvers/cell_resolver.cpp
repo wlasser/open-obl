@@ -247,6 +247,9 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
     cell->getSceneManager()->setAmbientLight(ambient);
 
     // TODO: Directional lighting, fog, water, etc.
+  } else {
+    cell->getSceneManager()
+        ->setAmbientLight(Ogre::ColourValue{1.0f, 1.0f, 1.0f});
   }
 
   cell->getPhysicsWorld()->setGravity({0.0f, -9.81f, 0.0f});

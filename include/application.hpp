@@ -104,6 +104,9 @@ class Application : public Ogre::FrameListener {
   std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
   static createWindow(const std::string &windowName);
 
+  /// Set the global terrain options.
+  void setTerrainOptions();
+
   /// Set the audio settings from the ini configuration.
   void setSoundSettings();
 

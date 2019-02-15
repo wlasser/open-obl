@@ -214,7 +214,8 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/static_resolver.hpp
         include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
-        include/settings.hpp)
+        include/settings.hpp
+        include/terrain_material_generator.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})
@@ -237,7 +238,7 @@ target_link_libraries(OpenOblivion PRIVATE
         SDL2::SDL2
         SDL2::SDL2main
         SoLoud::SoLoud
-        OgreMain OgreGLSupport OgreOverlay
+        OgreMain OgreGLSupport OgreOverlay OgreTerrain
         spdlog::spdlog
         stdc++fs
         tloptional
