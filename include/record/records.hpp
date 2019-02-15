@@ -387,6 +387,15 @@ struct WRLD {
   record::NAM9_WRLD topRight{};
 };
 
+struct LAND {
+  std::optional<record::VNML> normals{};
+  std::optional<record::VHGT> heights{};
+  std::optional<record::VCLR> colors{};
+  std::vector<record::BTXT> quadrantTexture{};
+  std::vector<std::pair<record::ATXT, record::VTXT>> fineTextures{};
+  std::optional<record::VTEX> coarseTextures{};
+};
+
 } // namespace raw
 
 using TES4 = Record<raw::TES4, "TES4"_rec>;
@@ -413,6 +422,7 @@ using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using WRLD = Record<raw::WRLD, "WRLD"_rec>;
+using LAND = Record<raw::LAND, "LAND"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(TES4);
 DECLARE_SPECIALIZED_RECORD(GMST);
@@ -438,6 +448,7 @@ DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(CELL);
 DECLARE_SPECIALIZED_RECORD(WRLD);
+DECLARE_SPECIALIZED_RECORD(LAND);
 
 } // namespace Record
 

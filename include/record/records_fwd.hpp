@@ -33,6 +33,7 @@ struct NPC_;
 struct ALCH;
 struct CELL;
 struct WRLD;
+struct LAND;
 
 } // namespace raw
 
@@ -62,6 +63,7 @@ using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using WRLD = Record<raw::WRLD, "WRLD"_rec>;
+using LAND = Record<raw::LAND, "LAND"_rec>;
 
 } // namespace record
 

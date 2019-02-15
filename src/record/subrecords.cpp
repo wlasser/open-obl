@@ -34,6 +34,37 @@ raw::read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
   return is;
 }
 
+// VTXT specialization
+template<>
+uint16_t VTXT::size() const {
+  return data.points.size() * 8u;
+}
+
+template<>
+std::ostream &
+raw::write(std::ostream &os, const raw::VTXT &t, std::size_t /*size*/) {
+  for (const auto &p : t.points) {
+    io::writeBytes(os, p.position);
+    io::writeBytes(os, p.unused);
+    io::writeBytes(os, p.opacity);
+  }
+
+  return os;
+}
+
+template<>
+std::istream &
+raw::read(std::istream &is, raw::VTXT &t, std::size_t size) {
+  for (std::size_t i = 0; i < size / 8u; ++i) {
+    auto &p{t.points.emplace_back()};
+    io::readBytes(is, p.position);
+    io::readBytes(is, p.unused);
+    io::readBytes(is, p.opacity);
+  }
+
+  return is;
+}
+
 // XSED specialization
 template<>
 uint16_t XSED::size() const {

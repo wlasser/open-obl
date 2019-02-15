@@ -229,8 +229,7 @@ void readCellChildren(EspAccessor &accessor,
     [[maybe_unused]] const Group temporaryChildren{accessor.readGroup().value};
 
     if (accessor.peekRecordType() == "LAND"_rec) {
-      // TODO: LAND
-      accessor.skipRecord();
+      temporaryVisitor.template readRecord<record::LAND>(accessor);
     }
 
     // Unsure if PGRD is usually optional or not, but sometimes this entire

@@ -239,6 +239,18 @@ EspCoordinator::translateFormIds(record::raw::Effect rec, int modIndex) const {
   return rec;
 }
 
+template<> record::raw::ATXT
+EspCoordinator::translateFormIds(record::raw::ATXT rec, int modIndex) const {
+  rec.id = translateFormIds(rec.id, modIndex);
+  return rec;
+}
+
+template<> record::raw::BTXT
+EspCoordinator::translateFormIds(record::raw::BTXT rec, int modIndex) const {
+  rec.id = translateFormIds(rec.id, modIndex);
+  return rec;
+}
+
 template<> record::raw::CNTO
 EspCoordinator::translateFormIds(record::raw::CNTO rec, int modIndex) const {
   rec.id = translateFormIds(rec.id, modIndex);
@@ -304,6 +316,12 @@ record::raw::VNAM
 EspCoordinator::translateFormIds(record::raw::VNAM rec, int modIndex) const {
   rec.m = translateFormIds(rec.m, modIndex);
   rec.f = translateFormIds(rec.f, modIndex);
+  return rec;
+}
+
+template<> record::raw::VTEX
+EspCoordinator::translateFormIds(record::raw::VTEX rec, int modIndex) const {
+  for (auto &vtex : rec) vtex = translateFormIds(vtex, modIndex);
   return rec;
 }
 
@@ -529,6 +547,23 @@ EspCoordinator::translateFormIds(record::raw::WRLD rec, int modIndex) const {
   if (rec.water) {
     rec.water->data = translateFormIds(rec.water->data, modIndex);
   }
+  return rec;
+}
+
+template<>
+record::raw::LAND
+EspCoordinator::translateFormIds(record::raw::LAND rec, int modIndex) const {
+  for (auto &btxt : rec.quadrantTexture) {
+    btxt.data = translateFormIds(btxt.data, modIndex);
+  }
+  for (auto &[atxt, vtxt] : rec.fineTextures) {
+    atxt.data = translateFormIds(atxt.data, modIndex);
+  }
+  if (rec.coarseTextures) {
+    rec.coarseTextures->data =
+        translateFormIds(rec.coarseTextures->data, modIndex);
+  }
+
   return rec;
 }
 

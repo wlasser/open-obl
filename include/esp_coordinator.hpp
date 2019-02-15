@@ -171,6 +171,10 @@ class EspCoordinator {
   template<> record::raw::Effect
   translateFormIds(record::raw::Effect rec, int modIndex) const;
 
+  template<> record::raw::ATXT
+  translateFormIds(record::raw::ATXT rec, int modIndex) const;
+  template<> record::raw::BTXT
+  translateFormIds(record::raw::BTXT rec, int modIndex) const;
   template<> record::raw::CNTO
   translateFormIds(record::raw::CNTO rec, int modIndex) const;
   template<> record::raw::DATA_MGEF
@@ -187,6 +191,8 @@ class EspCoordinator {
   translateFormIds(record::raw::SNAM_NPC_ rec, int modIndex) const;
   template<> record::raw::VNAM
   translateFormIds(record::raw::VNAM rec, int modIndex) const;
+  template<> record::raw::VTEX
+  translateFormIds(record::raw::VTEX rec, int modIndex) const;
   template<> record::raw::XESP
   translateFormIds(record::raw::XESP rec, int modIndex) const;
   template<> record::raw::XLOC
@@ -224,6 +230,8 @@ class EspCoordinator {
   translateFormIds(record::raw::CELL rec, int modIndex) const;
   template<> record::raw::WRLD
   translateFormIds(record::raw::WRLD rec, int modIndex) const;
+  template<> record::raw::LAND
+  translateFormIds(record::raw::LAND rec, int modIndex) const;
 
   template<> record::raw::REFR_ACTI
   translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;

@@ -1239,6 +1239,54 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
   return is;
 }
 
+// LAND specialization
+template<> uint32_t LAND::size() const {
+  return SizeOf(normals)
+      + SizeOf(heights)
+      + SizeOf(colors)
+      + SizeOf(quadrantTexture)
+      + SizeOf(fineTextures)
+      + SizeOf(coarseTextures);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::LAND &t, std::size_t size) {
+  writeRecord(os, t.normals);
+  writeRecord(os, t.heights);
+  writeRecord(os, t.colors);
+  for (const auto &tex : t.quadrantTexture) writeRecord(os, tex);
+  for (const auto &[a, v] : t.fineTextures) {
+    writeRecord(os, a);
+    writeRecord(os, v);
+  }
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::LAND &t, std::size_t size) {
+  readRecord(is, t.normals);
+  readRecord(is, t.heights);
+  readRecord(is, t.colors);
+
+  // Expect either VTEX or (BTXT (ATXT VTXT)+)+
+  if (peekRecordType(is) == "VTEX"_rec) {
+    readRecord(is, t.coarseTextures);
+    return is;
+  }
+
+  while (peekRecordType(is) == "BTXT"_rec) {
+    readRecord(is, t.quadrantTexture.emplace_back());
+    while (peekRecordType(is) == "ATXT"_rec) {
+      auto &p{t.fineTextures.emplace_back()};
+      readRecord(is, p.first);
+      readRecord(is, p.second);
+    }
+  }
+
+  return is;
+}
+
 template<> std::ostream &
 raw::write(std::ostream &os, const raw::REFR_ACTI &t, std::size_t) {
   return t.write(os);

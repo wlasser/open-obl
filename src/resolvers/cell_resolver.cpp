@@ -138,6 +138,11 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccesso
   }
 }
 
+template<> void
+oo::Resolver<record::CELL>::CellVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::LAND>().value};
+}
+
 oo::BaseId Cell::getBaseId() const {
   return mBaseId;
 }

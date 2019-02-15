@@ -134,6 +134,7 @@ class Resolver<record::CELL>::CellVisitor {
 
   template<> void readRecord<record::REFR>(oo::EspAccessor &accessor);
   template<> void readRecord<record::ACHR>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::LAND>(oo::EspAccessor &accessor);
 };
 
 class Cell {

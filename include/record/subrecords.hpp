@@ -157,6 +157,13 @@ using TNAM_DOOR = oo::BaseId;
 using SPLO = oo::BaseId;
 // Facegen face clamp
 using UNAM = float;
+// Exterior cell terrain vertex colours
+using VCLR = std::array<std::array<int8_t, 3>, 33u * 33u>;
+// Exterior cell terrain normals
+using VNML = std::array<std::array<int8_t, 3>, 33u * 33u>;
+// Simplified exterior cell terrain land texture application. Placed every other
+// grid point and used in place of the BTXT, ATXT, VTXT combo.
+using VTEX = std::array<oo::BaseId, 256u>;
 // Parent worldspace
 using WNAM = oo::BaseId;
 // The climate of a cell, if it is exterior or an interior cell with the
@@ -401,6 +408,28 @@ struct ATTR : Tuplifiable<std::array<uint8_t, 8>, std::array<uint8_t, 8>> {
   std::array<uint8_t, 8> male{};
   std::array<uint8_t, 8> female{};
   MAKE_AS_TUPLE(&male, &female)
+};
+
+// Exterior cell terrain header. Specifies texture information for subsequent
+// VTXT record.
+struct ATXT : Tuplifiable<oo::BaseId, uint8_t, uint8_t, uint16_t> {
+  oo::BaseId id{};
+  // 2 3
+  // 0 1
+  uint8_t quadrant{};
+  uint8_t unused{};
+  uint16_t textureLayer{};
+  MAKE_AS_TUPLE(&id, &quadrant, &unused, &textureLayer);
+};
+
+// Exterior cell terrain quadrant land texture
+struct BTXT : Tuplifiable<oo::BaseId, uint8_t, std::array<uint8_t, 3>> {
+  oo::BaseId id{};
+  // 2 3
+  // 0 1
+  uint8_t quadrant{};
+  std::array<uint8_t, 3> unused{};
+  MAKE_AS_TUPLE(&id, &quadrant, &unused);
 };
 
 // Item in a container
@@ -873,11 +902,31 @@ struct SPIT {
   Flag flags{Flag::make(Flag::None)};
 };
 
+// Exterior cell terrain height
+struct VHGT : Tuplifiable<float, std::array<int8_t, 33u * 33u>> {
+  constexpr static float MULTIPLIER{8.0f};
+  float offset{};
+  std::array<int8_t, 33u * 33u> heights{};
+  MAKE_AS_TUPLE(&offset, &heights);
+};
+
 // Race determining voice
 struct VNAM : Tuplifiable<oo::BaseId, oo::BaseId> {
   oo::BaseId m{};
   oo::BaseId f{};
   MAKE_AS_TUPLE(&m, &f)
+};
+
+// Exterior cell terrain land texture application
+struct VTXT {
+  struct Point {
+    // 0=SW corner of quadrant going W -> E and S -> N, 17 points per quadrant.
+    uint16_t position{};
+    uint16_t unused{};
+    // Between 0.0f and 1.0f
+    float opacity{};
+  };
+  std::vector<Point> points{};
 };
 
 // Coordinates of an exterior cell
@@ -970,6 +1019,8 @@ struct XTEL : Tuplifiable<oo::RefId, float, float, float, float, float, float> {
 using ACBS = Subrecord<raw::ACBS, "ACBS"_rec>;
 using AIDT = Subrecord<raw::AIDT, "AIDT"_rec>;
 using ATTR = Subrecord<raw::ATTR, "ATTR"_rec>;
+using ATXT = Subrecord<raw::ATXT, "ATXT"_rec>;
+using BTXT = Subrecord<raw::BTXT, "BTXT"_rec>;
 using CNTO = Subrecord<raw::CNTO, "CNTO"_rec>;
 using DELE = Subrecord<raw::DELE, "DELE"_rec>;
 using DESC = Subrecord<raw::DESC, "DESC"_rec>;
@@ -1015,7 +1066,12 @@ using SPIT = Subrecord<raw::SPIT, "SPIT"_rec>;
 using SPLO = Subrecord<raw::SPLO, "SPLO"_rec>;
 using TNAM = Subrecord<raw::TNAM, "TNAM"_rec>;
 using UNAM = Subrecord<raw::UNAM, "UNAM"_rec>;
+using VCLR = Subrecord<raw::VCLR, "VCLR"_rec>;
+using VHGT = Subrecord<raw::VHGT, "VHGT"_rec>;
 using VNAM = Subrecord<raw::VNAM, "VNAM"_rec>;
+using VNML = Subrecord<raw::VNML, "VNML"_rec>;
+using VTEX = Subrecord<raw::VTEX, "VTEX"_rec>;
+using VTXT = Subrecord<raw::VTXT, "VTXT"_rec>;
 using WNAM = Subrecord<raw::WNAM, "WNAM"_rec>;
 using XACT = Subrecord<raw::XACT, "XACT"_rec>;
 using XCCM = Subrecord<raw::XCCM, "XCCM"_rec>;
@@ -1132,6 +1188,7 @@ DECLARE_SPECIALIZED_SUBRECORD(SCIT);
 DECLARE_SPECIALIZED_SUBRECORD(SNDD);
 DECLARE_SPECIALIZED_SUBRECORD(SNDX);
 DECLARE_SPECIALIZED_SUBRECORD(SPIT);
+DECLARE_SPECIALIZED_SUBRECORD(VTXT);
 DECLARE_SPECIALIZED_SUBRECORD(XCLR);
 DECLARE_SPECIALIZED_SUBRECORD(XESP);
 DECLARE_SPECIALIZED_SUBRECORD(XLOC);
