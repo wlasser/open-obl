@@ -23,23 +23,20 @@ namespace raw {
 struct REFRBase {
   std::optional<record::EDID> editorId{};
   record::NAME baseId{};
-  std::optional<record::XESP> parent{};
 
   virtual uint32_t size() const {
-    return SizeOf(baseId) + SizeOf(editorId) + SizeOf(parent);
+    return SizeOf(baseId) + SizeOf(editorId);
   }
 
   virtual std::ostream &write(std::ostream &os) const {
     writeRecord(os, editorId);
     writeRecord(os, baseId);
-    writeRecord(os, parent);
     return os;
   }
 
   virtual std::istream &read(std::istream &is) {
     readRecord(is, editorId);
     readRecord(is, baseId);
-    readRecord(is, parent);
     return is;
   }
 
@@ -47,21 +44,18 @@ struct REFRBase {
 };
 
 struct REFRTransformation {
-  std::optional<record::XSCL> scale{};
   record::DATA_REFR positionRotation{};
 
   virtual uint32_t size() const {
-    return SizeOf(scale) + SizeOf(positionRotation);
+    return SizeOf(positionRotation);
   }
 
   virtual std::ostream &write(std::ostream &os) const {
-    writeRecord(os, scale);
     writeRecord(os, positionRotation);
     return os;
   }
 
   virtual std::istream &read(std::istream &is) {
-    readRecord(is, scale);
     readRecord(is, positionRotation);
     return is;
   }
@@ -82,9 +76,23 @@ struct RecordTuplifiable {
   tuple_t asTuple() override { return {__VA_ARGS__}; } \
   const_tuple_t asTuple() const override { return {__VA_ARGS__}; }
 
+// Applies to everything but has a variable position so can't be placed strictly
+// in REFRTransformation.
+struct REFRScalable : RecordTuplifiable<std::optional<record::XSCL>> {
+  std::optional<record::XSCL> scale{};
+  RECORD_MAKE_AS_TUPLE(&scale);
+};
+
 struct REFRTargetable : RecordTuplifiable<std::optional<record::XTRG>> {
   std::optional<record::XTRG> target{};
   RECORD_MAKE_AS_TUPLE(&target);
+};
+
+// Applies to everything but has a variable position so can't be placed strictly
+// in REFRBase or REFRTransformation.
+struct REFRParentable : RecordTuplifiable<std::optional<record::XESP>> {
+  std::optional<record::XESP> parent{};
+  RECORD_MAKE_AS_TUPLE(&parent);
 };
 
 struct REFRMarker : RecordTuplifiable<std::optional<record::XMRK>,
@@ -123,11 +131,10 @@ struct REFRLockable : RecordTuplifiable<std::optional<record::XLOC>> {
   RECORD_MAKE_AS_TUPLE(&lockInfo);
 };
 
-struct REFRTree : RecordTuplifiable<std::optional<record::XSED>,
-                                    std::optional<record::XLOD>> {
+// Note: XLOD is compulsory for trees.
+struct REFRTree : RecordTuplifiable<std::optional<record::XSED>> {
   std::optional<record::XSED> speedTree{};
-  std::optional<record::XLOD> lod{};
-  RECORD_MAKE_AS_TUPLE(&speedTree, &lod);
+  RECORD_MAKE_AS_TUPLE(&speedTree);
 };
 
 struct REFRItem : RecordTuplifiable<std::optional<record::XCNT>> {
@@ -165,6 +172,11 @@ struct REFRMerchant : RecordTuplifiable<std::optional<record::XMRC>> {
 struct REFRRider : RecordTuplifiable<std::optional<record::XHRS>> {
   std::optional<record::XHRS> mount{};
   RECORD_MAKE_AS_TUPLE(&mount);
+};
+
+struct REFRLod : RecordTuplifiable<std::optional<record::XLOD>> {
+  std::optional<record::XLOD> lod{};
+  RECORD_MAKE_AS_TUPLE(&lod);
 };
 
 // TODO: Finish the rest of these
@@ -213,12 +225,17 @@ struct REFR : REFRBase, Components ..., REFRTransformation {
   }
 };
 
-using REFR_ACTI = raw::REFR<"ACTI"_rec, REFRTargetable>;
-using REFR_DOOR = raw::REFR<"DOOR"_rec, REFRDoor, REFRLockable, REFROwnable>;
-using REFR_LIGH = raw::REFR<"LIGH"_rec>;
-using REFR_MISC = raw::REFR<"MISC"_rec, REFRItem, REFROwnable>;
-using REFR_STAT = raw::REFR<"STAT"_rec, REFRTargetable>;
-using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRRagdoll, REFRRider, REFRMerchant>;
+using REFR_ACTI = raw::REFR<"ACTI"_rec, REFRParentable, REFRScalable,
+                            REFRTargetable>;
+using REFR_DOOR = raw::REFR<"DOOR"_rec, REFRParentable, REFRScalable,
+                            REFRDoor, REFRLockable, REFROwnable>;
+using REFR_LIGH = raw::REFR<"LIGH"_rec, REFRParentable, REFRScalable>;
+using REFR_MISC = raw::REFR<"MISC"_rec, REFRParentable, REFRScalable,
+                            REFRItem, REFROwnable>;
+using REFR_STAT = raw::REFR<"STAT"_rec, REFRParentable, REFRScalable,
+                            REFRTargetable, REFRLod>;
+using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRParentable, REFRScalable,
+                            REFRRagdoll, REFRRider, REFRMerchant>;
 
 } // namespace raw
 

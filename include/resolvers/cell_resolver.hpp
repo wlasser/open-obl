@@ -165,6 +165,8 @@ class Cell {
  protected:
   void setNodeTransform(Ogre::SceneNode *node,
                         const record::raw::REFRTransformation &transform);
+  void setNodeScale(Ogre::SceneNode *node,
+                    const record::raw::REFRScalable &scalable);
  private:
   oo::BaseId mBaseId{};
   std::string mName{};
@@ -241,6 +243,7 @@ void Cell::attach(Refr ref, gsl::not_null<Ogre::SceneNode *> node,
                   std::tuple<const Res &...> resolvers) {
   auto entity{reifyRecord(ref, getSceneManager(), std::move(resolvers))};
   setNodeTransform(node, ref);
+  setNodeScale(node, ref);
   oo::attachAll(node, oo::RefId{ref.mFormId}, getPhysicsWorld(), entity);
 }
 

@@ -343,11 +343,6 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   node->setPosition(oo::fromBSCoordinates(
       Ogre::Vector3{data.x, data.y, data.z}));
 
-  if (transform.scale) {
-    const float scale{transform.scale->data};
-    node->setScale(scale, scale, scale);
-  }
-
   // Rotations are extrinsic rotations about the z, y, then x axes.
   // Positive rotations refer to clockwise rotations, not anticlockwise.
   // This can no doubt be optimized by constructing a quaternion directly from
@@ -360,6 +355,14 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   const auto rotMat{oo::fromBSCoordinates(rotX * rotY * rotZ)};
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
+}
+
+void Cell::setNodeScale(Ogre::SceneNode *node,
+                        const record::raw::REFRScalable &scalable) {
+  if (scalable.scale) {
+    const float scale{scalable.scale->data};
+    node->setScale(scale, scale, scale);
+  }
 }
 
 } // namespace oo

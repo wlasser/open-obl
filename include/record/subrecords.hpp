@@ -186,7 +186,7 @@ using XHLT = int32_t;
 using XHRS = oo::RefId;
 // Placed leveled creature level modifier
 using XLCM = int32_t;
-// Distant lod data
+// Distant lod data, for trees at least it is the normal vector of the terrain.
 using XLOD = std::array<float, 3>;
 // Merchant container belonging to an NPC
 using XMRC = oo::RefId;
