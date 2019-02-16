@@ -231,6 +231,35 @@ gsl::not_null<Ogre::SceneNode *> ExteriorCell::getRootSceneNode() const {
   return mRootSceneNode;
 }
 
+btCollisionObject *ExteriorCell::getCollisionObject() const {
+  return mTerrainCollisionObject.get();
+}
+
+void ExteriorCell::setTerrain(Ogre::Terrain *terrain) {
+  mTerrain = terrain;
+  const float *heights{mTerrain->getHeightData()};
+  // Reverse rows
+  for (std::size_t j = 0; j < 33u; ++j) {
+    std::memcpy(&mTerrainHeights[j * 33u], &heights[(32u - j) * 33u], 33u * 4u);
+  }
+
+  const float width{4096.0f / oo::metersPerUnit<float>};
+  mTerrainCollisionShape = std::make_unique<btHeightfieldTerrainShape>(
+      33, 33, mTerrainHeights.data(), 1.0f,
+      -width / 2.0f, width / 2.0f,
+      1, PHY_ScalarType::PHY_FLOAT, false);
+
+  // By default each grid square is 1m^2, so we need to scale up.
+  mTerrainCollisionShape->setLocalScaling(qvm::convert_to<btVector3>(
+      qvm::X1X(4096.0f * oo::metersPerUnit<float> / 32.0f)));
+
+  mTerrainCollisionObject = std::make_unique<btCollisionObject>();
+  mTerrainCollisionObject->setCollisionShape(mTerrainCollisionShape.get());
+  btTransform trans(btMatrix3x3::getIdentity(),
+                    qvm::convert_to<btVector3>(mTerrain->getPosition()));
+  mTerrainCollisionObject->setWorldTransform(trans);
+}
+
 oo::ReifyRecordTrait<record::CELL>::type
 reifyRecord(const record::CELL &refRec,
             Ogre::SceneManager *scnMgr,

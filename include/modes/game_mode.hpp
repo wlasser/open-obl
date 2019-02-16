@@ -54,7 +54,7 @@ class GameMode {
  private:
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
-  std::vector<std::shared_ptr<Cell>> mExteriorCells{};
+  std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
   bool mInInterior{true};
 
   oo::PlayerControllerPtr mPlayerController{};

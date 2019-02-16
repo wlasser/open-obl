@@ -13,9 +13,11 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <tl/optional.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
+#include <OGRE/Terrain/OgreTerrain.h>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -231,6 +233,7 @@ class ExteriorCell : public Cell {
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
   gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const override;
+  btCollisionObject *getCollisionObject() const;
 
   explicit ExteriorCell(oo::BaseId baseId, std::string name,
                         gsl::not_null<Ogre::SceneManager *> scnMgr,
@@ -241,10 +244,22 @@ class ExteriorCell : public Cell {
   ExteriorCell(ExteriorCell &&) = delete;
   ExteriorCell &operator=(ExteriorCell &&) = delete;
 
+  void setTerrain(Ogre::Terrain *terrain);
  private:
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<PhysicsWorld *> mPhysicsWorld;
   gsl::not_null<Ogre::SceneNode *> mRootSceneNode;
+  /// Logically the Cell should own its Terrain, but because the Terrain of
+  /// every Cell needs to be known for LOD purposes before the Cell is reified,
+  /// the Terrain is instead owned by the parent worldspace and managed with a
+  /// TerrainGroup.
+  Ogre::Terrain *mTerrain;
+  /// Stores the row-reversed terrain heights needed by Bullet.
+  // Our heightmap has its rows in the reverse order to what Bullet wants;
+  // we go 'bottom to top' and Bullet needs 'top to bottom'.
+  std::array<float, 33u * 33u> mTerrainHeights;
+  std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
+  std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
 };
 
 template<>

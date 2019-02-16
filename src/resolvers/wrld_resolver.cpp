@@ -228,7 +228,24 @@ oo::BaseId oo::World::getCell(CellIndex index) const {
 }
 
 void oo::World::loadTerrain(CellIndex index) {
-  mTerrainGroup.loadTerrain(qvm::X(index), qvm::Y(index));
+  // TODO: Defer the loading of the collision mesh so this can be async
+  mTerrainGroup.loadTerrain(qvm::X(index), qvm::Y(index), true);
+}
+
+void oo::World::loadTerrain(oo::ExteriorCell &cell) {
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+
+  const auto cellRec{cellRes.get(cell.getBaseId())};
+  if (!cellRec) return;
+
+  CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+  loadTerrain(pos);
+
+  Ogre::Terrain *terrain{mTerrainGroup.getTerrain(qvm::X(pos), qvm::Y(pos))};
+  if (terrain) {
+    cell.setTerrain(terrain);
+    getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
+  }
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type

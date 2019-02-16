@@ -172,12 +172,10 @@ void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
   const auto cellRec{cellRes.get(cellId)};
 
   cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
-  mExteriorCells.emplace_back(reifyRecord(*cellRec,
-                                          mWrld->getSceneManager(),
-                                          mWrld->getPhysicsWorld(),
-                                          getCellResolvers(ctx)));
-  World::CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  mWrld->loadTerrain(pos);
+  mExteriorCells.emplace_back(std::static_pointer_cast<oo::ExteriorCell>(
+      reifyRecord(*cellRec, mWrld->getSceneManager(), mWrld->getPhysicsWorld(),
+                  getCellResolvers(ctx))));
+  mWrld->loadTerrain(*mExteriorCells.back());
 
   ctx.getLogger()->info("Loaded cell {}", cellId);
 }
