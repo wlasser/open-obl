@@ -104,6 +104,10 @@ class GameMode {
         record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers());
   }
 
+  auto getCellMoreResolvers(ApplicationContext &ctx) const {
+    return oo::getResolvers<record::LAND>(ctx.getBaseResolvers());
+  }
+
   auto getCellResolvers(ApplicationContext &ctx) {
     return std::tuple_cat(getCellBaseResolvers(ctx), getCellRefrResolvers(ctx),
                           oo::getResolvers<record::CELL>(ctx.getBaseResolvers()));

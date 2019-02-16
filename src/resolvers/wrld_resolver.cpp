@@ -143,7 +143,9 @@ void oo::World::makeCellGrid() {
   mCells.resize(boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
   mCells.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
 
-  const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  // Need non-const CELL and LAND for loadTerrain, then const LAND.
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  const auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
   for (auto cellId : *wrldRes.getCells(mBaseId)) {
     const auto cellOpt{cellRes.get(cellId)};
     if (!cellOpt) continue;
@@ -155,12 +157,47 @@ void oo::World::makeCellGrid() {
     CellIndex p{grid.x, grid.y};
     mCells[qvm::X(p)][qvm::Y(p)] = cellId;
 
+    cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
+    const auto landId{cellRes.getLandId(cellId)};
+    if (!landId) continue; // TODO: Is this an error?
+
+    const auto landOpt{landRes.get(*landId)};
+    if (!landOpt) continue;
+
+    if (!landOpt->heights) continue;
+    const record::raw::VHGT &heightRec{landOpt->heights->data};
+
     Ogre::Terrain::ImportData importData{};
     importData.constantHeight = 0.0f;
-    importData.inputFloat = nullptr;
+    importData.inputFloat = OGRE_ALLOC_T(float, 33u * 33u,
+                                         Ogre::MEMCATEGORY_GEOMETRY);
+    importData.deleteInputData = true;
     importData.inputImage = nullptr;
-    importData.maxBatchSize = 8 + 1;
-    importData.minBatchSize = 2 + 1;
+    // If these are not set---even though TerrainGroup knows them---then each
+    // defineTerrain will copy 4MB of data for inputFloat instead of the actual
+    // size, and promptly OOM your machine.
+    importData.terrainSize = 32 + 1;
+    importData.terrainAlign = Ogre::Terrain::Alignment::ALIGN_X_Z;
+    importData.worldSize = 4096.0f * oo::metersPerUnit<float>;
+    importData.maxBatchSize = 32 + 1;
+    importData.minBatchSize = 16 + 1;
+
+    // The height data is given as offsets. Moving to the right increases the
+    // offset by the height value, moving to a new row resets it to the height
+    // of the first value on the row before.
+    const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
+    float offset{heightRec.offset * scale};
+    for (std::size_t j = 0; j < 33u; ++j) {
+      offset += heightRec.heights[j * 33u] * scale;
+      importData.inputFloat[j * 33u] = offset;
+
+      float h{offset};
+      for (std::size_t i = 1; i < 33u; ++i) {
+        const float dh = heightRec.heights[j * 33u + i] * scale;
+        h += dh;
+        importData.inputFloat[j * 33u + i] = h;
+      }
+    }
 
     importData.layerDeclaration.elements.emplace_back(
         /*src=*/0,

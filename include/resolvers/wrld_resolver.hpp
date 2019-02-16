@@ -93,7 +93,8 @@ struct ReifyRecordTrait<record::WRLD> {
   using type = std::shared_ptr<World>;
   using resolvers = decltype(std::tuple_cat(
       std::declval<Resolver<record::WRLD>::BaseResolverContext>(),
-      std::declval<std::tuple<const oo::Resolver<record::WRLD> &>>()));
+      std::declval<std::tuple<const oo::Resolver<record::WRLD> &,
+                              oo::Resolver<record::LAND> &>>()));
 };
 
 /// Not a specialization because passing an Ogre::SceneManager doesn't make

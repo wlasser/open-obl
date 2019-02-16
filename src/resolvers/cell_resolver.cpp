@@ -13,7 +13,7 @@ oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
                                            oo::EspAccessor accessor,
                                            bool isExterior) {
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
-  Metadata meta{0, isExterior, {accessor}, {}};
+  Metadata meta{0, isExterior, {accessor}, {}, tl::nullopt};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
   if (inserted) return {it, inserted};
 
@@ -80,11 +80,30 @@ void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
   }
 }
 
+void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
+                                             MoreResolverContext moreCtx) {
+  auto it{mRecords.find(baseId)};
+  if (it == mRecords.end()) return;
+  auto &meta{it->second.second};
+  CellTerrainVisitor visitor(meta, moreCtx);
+  // Taking accessors by reference since readCellTerrain takes by value
+  for (const auto &accessor : meta.mAccessors) {
+    oo::readCellTerrain(accessor, visitor);
+  }
+}
+
 tl::optional<const absl::flat_hash_set<RefId> &>
 oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mReferences;
+}
+
+tl::optional<oo::BaseId>
+oo::Resolver<record::CELL>::getLandId(oo::BaseId baseId) const {
+  auto it{mRecords.find(baseId)};
+  if (it == mRecords.end()) return tl::nullopt;
+  return it->second.second.mLandId;
 }
 
 template<> void
@@ -139,8 +158,11 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccesso
 }
 
 template<> void
-oo::Resolver<record::CELL>::CellVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor) {
+oo::Resolver<record::CELL>::CellTerrainVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::LAND>().value};
+  const oo::BaseId baseId{rec.mFormId};
+  oo::getResolver<record::LAND>(mMoreCtx).insertOrAssignEspRecord(baseId, rec);
+  mMeta.mLandId.emplace(baseId);
 }
 
 oo::BaseId Cell::getBaseId() const {

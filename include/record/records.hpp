@@ -388,6 +388,7 @@ struct WRLD {
 };
 
 struct LAND {
+  record::DATA_LAND data{};
   std::optional<record::VNML> normals{};
   std::optional<record::VHGT> heights{};
   std::optional<record::VCLR> colors{};

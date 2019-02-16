@@ -39,6 +39,9 @@ class Resolver<record::CELL> {
     /// All reference records inside the cell.
     /// This includes both esp records and ess records.
     absl::flat_hash_set<RefId> mReferences{};
+    /// An optional base id for a LAND record describing the terrain of this
+    /// cell. Should be present if `mIsExterior` is true.
+    tl::optional<oo::BaseId> mLandId{};
   };
 
   /// Holds a record with an immutable backup of the original.
@@ -54,6 +57,7 @@ class Resolver<record::CELL> {
   const bullet::Configuration &mBulletConf;
 
   class CellVisitor;
+  class CellTerrainVisitor;
  public:
   using RecordIterator = typename decltype(mRecords)::iterator;
 
@@ -99,16 +103,27 @@ class Resolver<record::CELL> {
       record::STAT, record::DOOR, record::LIGH, record::ACTI, record::NPC_,
       record::RACE>;
 
+  using MoreResolverContext = std::tuple<oo::Resolver<record::LAND> &>;
+
   /// Load all child references of a cell.
   void load(oo::BaseId baseId,
             RefrResolverContext refrCtx,
             BaseResolverContext baseCtx);
+
+  /// Load the LAND and PGRD children of a cell, if it has them.
+  void loadTerrain(oo::BaseId baseId, MoreResolverContext moreCtx);
 
   /// Return the RefIds of all reference records in the cell.
   /// \warning This will return an empty optional if the cell has not been
   ///          loaded first with a call to load.
   tl::optional<const absl::flat_hash_set<RefId> &>
   getReferences(oo::BaseId baseId) const;
+
+  /// Return the BaseId of the LAND record describing the terrain geometry of
+  /// the cell.
+  /// \warning This will return an empty optional if the cell has not had its
+  ///          terrain loaded first with a call to `loadTerrain`.
+  tl::optional<oo::BaseId> getLandId(oo::BaseId baseId) const;
 };
 
 class Resolver<record::CELL>::CellVisitor {
@@ -134,6 +149,24 @@ class Resolver<record::CELL>::CellVisitor {
 
   template<> void readRecord<record::REFR>(oo::EspAccessor &accessor);
   template<> void readRecord<record::ACHR>(oo::EspAccessor &accessor);
+};
+
+class Resolver<record::CELL>::CellTerrainVisitor {
+ public:
+  using Metadata = Resolver<record::CELL>::Metadata;
+  using MoreContext = Resolver<record::CELL>::MoreResolverContext;
+ private:
+  Metadata &mMeta;
+  MoreContext mMoreCtx;
+
+ public:
+  CellTerrainVisitor(Metadata &meta, MoreContext moreCtx)
+      : mMeta(meta), mMoreCtx(std::move(moreCtx)) {}
+
+  template<class R> void readRecord(oo::EspAccessor &accessor) {
+    accessor.skipRecord();
+  }
+
   template<> void readRecord<record::LAND>(oo::EspAccessor &accessor);
 };
 

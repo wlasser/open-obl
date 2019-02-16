@@ -131,7 +131,8 @@ GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
 
   wrldRes.load(worldspaceId, oo::getResolvers<record::CELL>(baseResolvers));
 
-  auto resolvers{oo::getResolvers<record::CELL, record::WRLD>(baseResolvers)};
+  auto resolvers{oo::getResolvers<record::CELL, record::WRLD,
+                                  record::LAND>(baseResolvers)};
   const auto wrldRec{*wrldRes.get(worldspaceId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
 }
@@ -247,7 +248,7 @@ void GameMode::enter(ApplicationContext &ctx) {
 
   addPlayerToScene(ctx);
   mPlayerController->moveTo(oo::fromBSCoordinates(Ogre::Vector3{
-      103799.0f, -152970.0f, 1575.0f
+      103799.0f, -152970.0f, 2575.0f
   }));
 
   registerSceneListeners(ctx);

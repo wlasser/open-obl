@@ -52,6 +52,8 @@ using CNAM_WRLD = oo::BaseId;
 // Unfortunately there are different subrecords with the type DATA,
 // and which one must be inferred from context.
 using DATA_ALCH = float;
+// Unsure what this is, some kind of flags?
+using DATA_LAND = uint32_t;
 // Originally size of a master file, now unused
 using DATA_TES4 = uint64_t;
 // Class description
@@ -1121,6 +1123,7 @@ using DATA_EYES = Subrecord<raw::DATA_EYES, "DATA"_rec>;
 using DATA_FACT = Subrecord<raw::DATA_FACT, "DATA"_rec>;
 using DATA_GMST = Subrecord<raw::DATA_GMST, "DATA"_rec>;
 using DATA_HAIR = Subrecord<raw::DATA_HAIR, "DATA"_rec>;
+using DATA_LAND = Subrecord<raw::DATA_LAND, "DATA"_rec>;
 using DATA_LIGH = Subrecord<raw::DATA_LIGH, "DATA"_rec>;
 using DATA_MISC = Subrecord<raw::DATA_MISC, "DATA"_rec>;
 using DATA_MGEF = Subrecord<raw::DATA_MGEF, "DATA"_rec>;

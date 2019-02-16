@@ -1241,7 +1241,8 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
 
 // LAND specialization
 template<> uint32_t LAND::size() const {
-  return SizeOf(normals)
+  return SizeOf(data)
+      + SizeOf(normals)
       + SizeOf(heights)
       + SizeOf(colors)
       + SizeOf(quadrantTexture)
@@ -1251,6 +1252,7 @@ template<> uint32_t LAND::size() const {
 
 template<> std::ostream &
 raw::write(std::ostream &os, const raw::LAND &t, std::size_t size) {
+  writeRecord(os, t.data);
   writeRecord(os, t.normals);
   writeRecord(os, t.heights);
   writeRecord(os, t.colors);
@@ -1265,6 +1267,7 @@ raw::write(std::ostream &os, const raw::LAND &t, std::size_t size) {
 
 template<> std::istream &
 raw::read(std::istream &is, raw::LAND &t, std::size_t size) {
+  readRecord(is, t.data);
   readRecord(is, t.normals);
   readRecord(is, t.heights);
   readRecord(is, t.colors);

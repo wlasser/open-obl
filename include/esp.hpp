@@ -63,6 +63,11 @@ void readCellChildren(EspAccessor &accessor,
                       VisibleDistantVisitor &visibleDistantVisitor,
                       TemporaryVisitor &temporaryVisitor);
 
+// Read the LAND and PGRD children of the cell. The EspAccessor is taken by
+// value because the final position in the cell is unpredictable.
+template<class Visitor>
+void readCellTerrain(EspAccessor accessor, Visitor &visitor);
+
 // Read an individual subgroup of a CellChildren subgroup, namely a
 // PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
 template<class RecordVisitor>
@@ -240,6 +245,35 @@ void readCellChildren(EspAccessor &accessor,
     }
 
     parseCellChildrenBlock(accessor, temporaryVisitor);
+  }
+}
+
+template<class Visitor>
+void readCellTerrain(EspAccessor accessor, Visitor &visitor) {
+  using record::operator ""_rec;
+  using GroupType = record::Group::GroupType;
+
+  if (accessor.peekGroupType() != GroupType::CellChildren) return;
+  (void) accessor.readGroup();
+
+  if (accessor.peekGroupType() == GroupType::CellPersistentChildren) {
+    accessor.skipGroup();
+  }
+
+  if (accessor.peekGroupType() == GroupType::CellVisibleDistantChildren) {
+    accessor.skipGroup();
+  }
+
+  if (accessor.peekGroupType() != GroupType::CellTemporaryChildren) return;
+  (void) accessor.readGroup();
+
+  if (accessor.peekRecordType() == "LAND"_rec) {
+    visitor.template readRecord<record::LAND>(accessor);
+  }
+
+  if (accessor.peekRecordType() == "PGRD"_rec) {
+    // TODO: PGRD
+    accessor.skipRecord();
   }
 }
 
