@@ -145,8 +145,6 @@ float PlayerControllerImpl::getSpringDisplacement() noexcept {
   world->rayTest(p0, p1, callback);
 
   const int numHits{callback.m_collisionObjects.size()};
-  if (numHits == 0) return 0.0f;
-
   auto dist{rayLength};
 
   for (int i = 0; i < numHits; ++i) {
