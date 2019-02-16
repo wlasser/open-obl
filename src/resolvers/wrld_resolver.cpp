@@ -117,8 +117,7 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
       mResolvers(std::move(resolvers)) {
   // Shift origin because cell coordinates give SW corner position but Ogre
   // works with the centre.
-  mTerrainGroup.setOrigin(Ogre::Vector3(-0.5f, 0.0f, -0.5f) * 4096.0f
-                              * oo::metersPerUnit<Ogre::Real>);
+  mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{2048, 2048, 0}));
   makePhysicsWorld();
   makeCellGrid();
 }
