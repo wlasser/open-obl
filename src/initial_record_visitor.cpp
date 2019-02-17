@@ -31,6 +31,13 @@ void InitialRecordVisitor::readRecord<record::RACE>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::LTEX>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::LTEX>().value};
+  oo::getResolver<record::LTEX>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::ACTI>().value};
   oo::getResolver<record::ACTI>(resolvers)

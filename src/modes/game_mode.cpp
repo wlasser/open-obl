@@ -131,7 +131,7 @@ GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
 
   wrldRes.load(worldspaceId, oo::getResolvers<record::CELL>(baseResolvers));
 
-  auto resolvers{oo::getResolvers<record::CELL, record::WRLD,
+  auto resolvers{oo::getResolvers<record::CELL, record::WRLD, record::LTEX,
                                   record::LAND>(baseResolvers)};
   const auto wrldRec{*wrldRes.get(worldspaceId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));

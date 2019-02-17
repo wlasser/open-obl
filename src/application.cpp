@@ -101,6 +101,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // Create the engine managers
   ctx.baseResolvers = std::make_unique<oo::BaseResolvers>(
       std::make_tuple(oo::add_resolver_t<record::RACE>{},
+                      oo::add_resolver_t<record::LTEX>{},
                       oo::add_resolver_t<record::ACTI>{},
                       oo::add_resolver_t<record::DOOR>{},
                       oo::add_resolver_t<record::LIGH>{},

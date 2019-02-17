@@ -94,6 +94,7 @@ struct ReifyRecordTrait<record::WRLD> {
   using resolvers = decltype(std::tuple_cat(
       std::declval<Resolver<record::WRLD>::BaseResolverContext>(),
       std::declval<std::tuple<const oo::Resolver<record::WRLD> &,
+                              const oo::Resolver<record::LTEX> &,
                               oo::Resolver<record::LAND> &>>()));
 };
 

@@ -27,6 +27,9 @@ class InitialRecordVisitor {
   void readRecord<record::RACE>(oo::EspAccessor &accessor);
 
   template<>
+  void readRecord<record::LTEX>(oo::EspAccessor &accessor);
+
+  template<>
   void readRecord<record::ACTI>(oo::EspAccessor &accessor);
 
   template<>
