@@ -50,13 +50,25 @@ class TerrainMaterialProfile : public Ogre::TerrainMaterialGenerator::Profile {
     // up vectors for instance---but that seems like a waste.
     auto globalNormalName{matName + "normal"};
     if (!texMgr.resourceExists(globalNormalName, oo::RESOURCE_GROUP)) {
-      auto ptr{texMgr.createManual(
+      texMgr.createManual(
           globalNormalName, oo::RESOURCE_GROUP,
           Ogre::TEX_TYPE_2D, 33u, 33u, 1, 0,
-          Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC)};
+          Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
+    }
+
+    // Similarly to the global normal map, we need to create the vertex colour
+    // map here. Filling it with 0 or 255 would at least be a valid default,
+    // but there's no need to.
+    auto vertexColorName{matName + "vertexcolor"};
+    if (!texMgr.resourceExists(vertexColorName, oo::RESOURCE_GROUP)) {
+      texMgr.createManual(
+          vertexColorName, oo::RESOURCE_GROUP,
+          Ogre::TEX_TYPE_2D, 33u, 33u, 1, 0,
+          Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
     }
 
     auto *globalNormalState{pass->createTextureUnitState(globalNormalName)};
+    auto *vertexColorState{pass->createTextureUnitState(vertexColorName)};
 
     for (uint8_t i = 0; i < 2; ++i) {
       const std::string &diffuseName{terrain->getLayerTextureName(i, 0)};

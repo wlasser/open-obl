@@ -1,12 +1,12 @@
 #version 330 core
 in vec2 TexCoord;
 in vec3 FragPos;
-in vec3 VertexCol;
 
 #define MAX_LIGHTS 8
 
 uniform float time;
 uniform sampler2D globalNormal;
+uniform sampler2D vertexColor;
 uniform sampler2D diffuse0;
 uniform sampler2D normal0;
 uniform sampler2D diffuse1;
@@ -19,6 +19,8 @@ uniform vec4 ambientLightColor;
 out vec4 FragColor;
 
 void main() {
+    float gamma = 2.2f;
+
     // Terrain normal is given by a texture. Note that this is not the normal
     // map, it is the physics vertex normal. It is already normalized.
     vec3 normal = texture2D(globalNormal, TexCoord).xyz;
@@ -38,7 +40,7 @@ void main() {
     // Blend factor between layers
     float f = (abs(sin(uv.s)) + abs(cos(uv.t))) / sqrt(2.0f);
 
-    float gamma = 2.2f;
+    vec3 vertexCol = texture2D(vertexColor, TexCoord).xyz;
 
     // Undo gamma correction of textures so it is correct later
     vec3 diffuseColor0 = pow(texture2D(diffuse0, uv).xyz, vec3(gamma));
@@ -46,6 +48,7 @@ void main() {
 
     // Blend diffuse layers
     vec3 diffuseColor = f * diffuseColor0 + (1 - f) * diffuseColor1;
+    diffuseColor *= vertexCol;
 
     // Blend normal layers
     vec3 n = f * texture2D(normal0, uv).xyz + (1 - f) * texture2D(normal1, uv).xyz;
@@ -69,7 +72,7 @@ void main() {
             float diff = max(dot(n, lightDir), 0.0f);
             vec3 diffuse = diff * diffuseColor;
 
-            lighting += diffuse * lightDiffuse;
+            lighting += diffuse * lightDiffuse * vertexCol;
         } else {
             // Point light
             vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
@@ -83,7 +86,7 @@ void main() {
             float diff = max(dot(n, lightDir), 0.0f);
             vec3 diffuse = diff * diffuseColor;
 
-            lighting += diffuse * lightDiffuse * attenuation;
+            lighting += diffuse * lightDiffuse * attenuation * vertexCol;
         }
     }
 

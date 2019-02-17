@@ -284,8 +284,8 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   record::LAND &landRec{*landRes.get(*cellRes.getLandId(cell.getBaseId()))};
 
   if (landRec.normals) {
-    for (std::size_t y = 0; y < 33; ++y) {
-      for (std::size_t x = 0; x < 33; ++x) {
+    for (std::size_t y = 0; y < 33u; ++y) {
+      for (std::size_t x = 0; x < 33u; ++x) {
         auto[nx, ny, nz]{landRec.normals->data[y * 33u + x]};
         auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
         n.normalise();
@@ -303,6 +303,29 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   }
 
   normalMapPtr->getBuffer()->blitFromMemory(normalMapBox);
+
+  // Vertex colours are also set in a texture because the terrain does not
+  // provide them.
+  auto vertexColorPtr{texMgr.getByName(
+      terrain->getMaterialName() + "vertexcolor", oo::RESOURCE_GROUP)};
+  std::array<uint8_t, 33u * 33u * 3u> vertexColorData{};
+  Ogre::PixelBox vertexColorBox(33u, 33u, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                                vertexColorData.data());
+
+  if (landRec.colors) {
+    for (std::size_t y = 0; y < 33u; ++y) {
+      for (std::size_t x = 0; x < 33u; ++x) {
+        auto[r, g, b]{landRec.colors->data[y * 33u + x]};
+        vertexColorBox.setColourAt(Ogre::ColourValue(r, g, b) / 255.0f,
+                                   x, 32u - y, 0);
+      }
+    }
+  } else {
+    // No vertex colours, use white so textures actually shows up.
+    vertexColorData.fill(255u);
+  }
+
+  vertexColorPtr->getBuffer()->blitFromMemory(vertexColorBox);
 
   cell.setTerrain(terrain);
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
