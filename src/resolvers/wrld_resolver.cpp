@@ -116,6 +116,17 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
       mTerrainGroup(mScnMgr, Ogre::Terrain::Alignment::ALIGN_X_Z,
                     33u, 4096.0f * oo::metersPerUnit<Ogre::Real>),
       mResolvers(std::move(resolvers)) {
+  auto &importData{mTerrainGroup.getDefaultImportSettings()};
+  importData.constantHeight = 0.0f;
+  importData.inputFloat = nullptr;
+  importData.deleteInputData = true;
+  importData.inputImage = nullptr;
+  importData.terrainSize = 32 + 1;
+  importData.terrainAlign = Ogre::Terrain::Alignment::ALIGN_X_Z;
+  importData.worldSize = 4096.0f * oo::metersPerUnit<float>;
+  importData.maxBatchSize = 32 + 1;
+  importData.minBatchSize = 16 + 1;
+
   // Shift origin because cell coordinates give SW corner position but Ogre
   // works with the centre.
   mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{2048, 2048, 0}));
@@ -169,20 +180,14 @@ void oo::World::makeCellGrid() {
     if (!landOpt->heights) continue;
     const record::raw::VHGT &heightRec{landOpt->heights->data};
 
-    Ogre::Terrain::ImportData importData{};
-    importData.constantHeight = 0.0f;
+    // NB: If you want to change this to a standard ImportData() constructor
+    // then make sure its terrainSize is set correctly---even though the
+    // TerrainGroup knows it already---otherwise each defineTerrain will copy
+    // 4MB of data for inputFloat and promptly OOM your machine when the main
+    // worldspace loads.
+    auto importData{mTerrainGroup.getDefaultImportSettings()};
     importData.inputFloat = OGRE_ALLOC_T(float, 33u * 33u,
                                          Ogre::MEMCATEGORY_GEOMETRY);
-    importData.deleteInputData = true;
-    importData.inputImage = nullptr;
-    // If these are not set---even though TerrainGroup knows them---then each
-    // defineTerrain will copy 4MB of data for inputFloat instead of the actual
-    // size, and promptly OOM your machine.
-    importData.terrainSize = 32 + 1;
-    importData.terrainAlign = Ogre::Terrain::Alignment::ALIGN_X_Z;
-    importData.worldSize = 4096.0f * oo::metersPerUnit<float>;
-    importData.maxBatchSize = 32 + 1;
-    importData.minBatchSize = 16 + 1;
 
     // The height data is given as offsets. Moving to the right increases the
     // offset by the height value, moving to a new row resets it to the height
@@ -201,15 +206,9 @@ void oo::World::makeCellGrid() {
       }
     }
 
-    importData.layerDeclaration.elements.emplace_back(
-        /*src=*/0, Ogre::TerrainLayerSamplerSemantic::TLSS_ALBEDO, 0, 3);
-    importData.layerDeclaration.elements.emplace_back(
-        /*src=*/1, Ogre::TerrainLayerSamplerSemantic::TLSS_NORMAL, 0, 3);
-
-    importData.layerDeclaration.samplers.emplace_back(
-        "diffuse", Ogre::PixelFormat::PF_BYTE_RGB);
-    importData.layerDeclaration.samplers.emplace_back(
-        "normal", Ogre::PixelFormat::PF_BYTE_RGB);
+    auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
+    const auto matGen{terrainOpts.getDefaultMaterialGenerator()};
+    importData.layerDeclaration = matGen->getLayerDeclaration();
 
     auto &layer0{importData.layerList.emplace_back()};
     layer0.textureNames

@@ -156,6 +156,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/static_resolver.cpp
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
+        src/terrain_material_generator.cpp
         include/application.hpp
         include/application_context.hpp
         include/bitflag.hpp
