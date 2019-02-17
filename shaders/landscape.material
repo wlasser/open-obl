@@ -20,8 +20,6 @@ material __LandscapeMaterial {
                 param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
 
-                param_named_auto time TIME
-
                 param_named globalNormal int 0
                 param_named vertexColor int 1
 

@@ -4,7 +4,6 @@ in vec3 FragPos;
 
 #define MAX_LIGHTS 8
 
-uniform float time;
 uniform sampler2D globalNormal;
 uniform sampler2D vertexColor;
 uniform sampler2D diffuse0;
