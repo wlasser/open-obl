@@ -2,6 +2,7 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
+#include <OgrePixelFormat.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 
@@ -120,6 +121,7 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
   mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{2048, 2048, 0}));
   makePhysicsWorld();
   makeCellGrid();
+  makeAtmosphere();
 }
 
 oo::World::~World() {
@@ -200,18 +202,28 @@ void oo::World::makeCellGrid() {
     }
 
     importData.layerDeclaration.elements.emplace_back(
-        /*src=*/0,
-                Ogre::TerrainLayerSamplerSemantic::TLSS_ALBEDO,
-        /*elementStart=*/0,
-        /*elementCount=*/4);
-    importData.layerDeclaration.samplers.emplace_back(
-        /*name=*/"sampler0",
-                 Ogre::PixelFormat::PF_BYTE_RGBA);
+        /*src=*/0, Ogre::TerrainLayerSamplerSemantic::TLSS_ALBEDO, 0, 3);
+    importData.layerDeclaration.elements.emplace_back(
+        /*src=*/1, Ogre::TerrainLayerSamplerSemantic::TLSS_NORMAL, 0, 3);
 
-    auto &layerInstance{importData.layerList.emplace_back()};
-    layerInstance.textureNames.emplace_back(
-        "textures/landscape/greatforestrockmoss02.dds");
-    layerInstance.worldSize = 1.0f;
+    importData.layerDeclaration.samplers.emplace_back(
+        "diffuse", Ogre::PixelFormat::PF_BYTE_RGB);
+    importData.layerDeclaration.samplers.emplace_back(
+        "normal", Ogre::PixelFormat::PF_BYTE_RGB);
+
+    auto &layer0{importData.layerList.emplace_back()};
+    layer0.textureNames
+        .emplace_back("textures/landscape/greatforestrockmoss02.dds");
+    layer0.textureNames
+        .emplace_back("textures/landscape/greatforestrockmoss02_n.dds");
+    layer0.worldSize = 1.0f;
+
+    auto &layer1{importData.layerList.emplace_back()};
+    layer1.textureNames
+        .emplace_back("textures/landscape/terrainhdgrass01su.dds");
+    layer1.textureNames
+        .emplace_back("textures/landscape/terrainhdgrass01su_n.dds");
+    layer1.worldSize = 1.0f;
 
     mTerrainGroup.defineTerrain(qvm::X(p), qvm::Y(p), &importData);
   }
@@ -221,6 +233,20 @@ void oo::World::makePhysicsWorld() {
   const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
   mPhysicsWorld = bulletConf.makeDynamicsWorld();
+}
+
+void oo::World::makeAtmosphere() {
+  // TODO: Use climate and weather data for sun and sky
+  mScnMgr->setAmbientLight(Ogre::ColourValue{94.0f, 113.0f, 151.0f} / 255.0f);
+  auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
+  auto *sunLight{mScnMgr->createLight("__sunLight")};
+  sunNode->attachObject(sunLight);
+
+  sunNode
+      ->setDirection(0.0f, -1.0f, 0.0f, Ogre::Node::TransformSpace::TS_WORLD);
+  sunLight
+      ->setDiffuseColour(Ogre::ColourValue{255.0f, 241.0f, 223.0f} / 255.0f);
+  sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
 }
 
 oo::BaseId oo::World::getCell(CellIndex index) const {
@@ -240,12 +266,46 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
   loadTerrain(pos);
-
   Ogre::Terrain *terrain{mTerrainGroup.getTerrain(qvm::X(pos), qvm::Y(pos))};
-  if (terrain) {
-    cell.setTerrain(terrain);
-    getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
+  if (!terrain) return;
+
+  // Normal data can be generated implicitly by the terrain but instead of
+  // being passed as vertex data the normals are saved in a texture. This
+  // texture is in the wrong resource group for us, and since we have explicit
+  // normal information in the LAND record we will generate our own texture.
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto normalMapPtr{texMgr.getByName(terrain->getMaterialName() + "normal",
+                                     oo::RESOURCE_GROUP)};
+  std::array<uint8_t, 33u * 33u * 3u> normalMapData{};
+  Ogre::PixelBox normalMapBox(33u, 33u, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                              normalMapData.data());
+
+  auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
+  record::LAND &landRec{*landRes.get(*cellRes.getLandId(cell.getBaseId()))};
+
+  if (landRec.normals) {
+    for (std::size_t y = 0; y < 33; ++y) {
+      for (std::size_t x = 0; x < 33; ++x) {
+        auto[nx, ny, nz]{landRec.normals->data[y * 33u + x]};
+        auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
+        n.normalise();
+        normalMapBox.setColourAt(Ogre::ColourValue{n.x, n.y, n.z},
+                                 x, 32u - y, 0);
+      }
+    }
+  } else {
+    // No normal data, use vertical normals
+    for (std::size_t y = 0; y < 33; ++y) {
+      for (std::size_t x = 0; x < 33; ++x) {
+        normalMapBox.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
+      }
+    }
   }
+
+  normalMapPtr->getBuffer()->blitFromMemory(normalMapBox);
+
+  cell.setTerrain(terrain);
+  getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type

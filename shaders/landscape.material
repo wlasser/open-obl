@@ -11,10 +11,23 @@ material __LandscapeMaterial {
         pass {
             vertex_program_ref landscape_vs_glsl {
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
             }
 
             fragment_program_ref landscape_fs_glsl {
-                param_named diffuseMap int 0
+                param_named_auto lightPositionArray LIGHT_POSITION_ARRAY 8
+                param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
+                param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
+                param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+
+                param_named_auto time TIME
+
+                param_named globalNormal int 0
+
+                param_named diffuse0 int 1
+                param_named normal0 int 2
+                param_named diffuse1 int 3
+                param_named normal1 int 4
             }
 
             lighting off

@@ -191,6 +191,7 @@ class World {
 
   void makeCellGrid();
   void makePhysicsWorld();
+  void makeAtmosphere();
 };
 
 } // namespace oo

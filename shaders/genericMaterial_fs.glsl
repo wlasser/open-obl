@@ -40,23 +40,40 @@ void main() {
     vec3 ambient = diffuseColor * ambientLightColor.rgb;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
-        vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
-        vec3 reflectDir = reflect(-lightDir, normal);
-        float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-        float attenuation = 1.0f / (lightAttenuationArray[i].y
-            + lightAttenuationArray[i].z * lightDistance
-            + lightAttenuationArray[i].w * lightDistance * lightDistance);
+        if (lightPositionArray[i].w < 0.5f) {
+            // Directional light
+            vec3 lightDir = normalize(lightPositionArray[i].xyz);
+            vec3 reflectDir = reflect(-lightDir, normal);
+            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
 
-        vec3 lightDiffuse = pow(lightDiffuseArray[i].xyz, vec3(gamma));
+            float diff = max(dot(normal, lightDir), 0.0f);
+            vec3 diffuse = diff * diffuseColor * matDiffuse;
 
-        float diff = max(dot(normal, lightDir), 0.0f);
-        vec3 diffuse = diff * diffuseColor * matDiffuse;
+            vec3 halfwayDir = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
+            vec3 specular = 0.25f * spec * matSpecular;
 
-        vec3 halfwayDir = normalize(lightDir + viewDir);
-        float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
-        vec3 specular = 0.25f * spec * matSpecular;
+            lighting += (specular + diffuse) * lightDiffuse * VertexCol;
+        } else {
+            // Point light
+            vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
+            vec3 reflectDir = reflect(-lightDir, normal);
+            float lightDistance = length(lightPositionArray[i].xyz - FragPos);
+            float attenuation = 1.0f / (lightAttenuationArray[i].y
+                + lightAttenuationArray[i].z * lightDistance
+                + lightAttenuationArray[i].w * lightDistance * lightDistance);
 
-        lighting += (specular + diffuse) * lightDiffuse * VertexCol * attenuation;
+            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+
+            float diff = max(dot(normal, lightDir), 0.0f);
+            vec3 diffuse = diff * diffuseColor * matDiffuse;
+
+            vec3 halfwayDir = normalize(lightDir + viewDir);
+            float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
+            vec3 specular = 0.25f * spec * matSpecular;
+
+            lighting += (specular + diffuse) * lightDiffuse * VertexCol * attenuation;
+        }
     }
 
     vec3 fragColor = pow(min(ambient + lighting, 1.0f), vec3(1.0f / gamma));
