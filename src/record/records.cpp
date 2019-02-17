@@ -10,7 +10,9 @@ namespace record {
 
 using namespace io;
 
+//===----------------------------------------------------------------------===//
 // Effect members
+//===----------------------------------------------------------------------===//
 uint32_t raw::Effect::size() const {
   return name.entireSize() + data.entireSize()
       + (script ? (script->data.entireSize() + script->name.entireSize()) : 0u);
@@ -34,56 +36,9 @@ bool raw::Effect::isNext(std::istream &is) {
   return peekRecordType(is) == "EFID"_rec;
 }
 
-// ALCH specialization
-template<> uint32_t ALCH::size() const {
-  return SizeOf(editorId)
-      + SizeOf(itemName)
-      + SizeOf(modelFilename)
-      + SizeOf(boundRadius)
-      + SizeOf(textureHash)
-      + SizeOf(iconFilename)
-      + SizeOf(itemScript)
-      + SizeOf(itemWeight)
-      + SizeOf(itemValue)
-      + std::accumulate(effects.begin(), effects.end(), 0u,
-                        [](auto a, const auto &b) {
-                          return a + b.size();
-                        });
-}
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
-  writeRecord(os, t.editorId);
-  writeRecord(os, t.itemName);
-  writeRecord(os, t.modelFilename);
-  writeRecord(os, t.boundRadius);
-  writeRecord(os, t.textureHash);
-  writeRecord(os, t.iconFilename);
-  writeRecord(os, t.itemScript);
-  writeRecord(os, t.itemWeight);
-  writeRecord(os, t.itemValue);
-  for (const auto &effect : t.effects) effect.write(os);
-
-  return os;
-}
-
-template<> std::istream &
-raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
-  readRecord(is, t.editorId);
-  readRecord(is, t.itemName);
-  readRecord(is, t.modelFilename);
-  readRecord(is, t.boundRadius);
-  readRecord(is, t.textureHash);
-  readRecord(is, t.iconFilename);
-  readRecord(is, t.itemScript);
-  readRecord(is, t.itemWeight);
-  readRecord(is, t.itemValue);
-  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
-
-  return is;
-}
-
-// TES4 specialization
+//===----------------------------------------------------------------------===//
+// TES4 Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t TES4::size() const {
   return SizeOf(header)
       + SizeOf(offsets)
@@ -126,7 +81,9 @@ raw::read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
   return is;
 }
 
-// GMST specialization
+//===----------------------------------------------------------------------===//
+// GMST Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t GMST::size() const {
   return SizeOf(editorId) + SizeOf(value);
 }
@@ -145,7 +102,9 @@ raw::read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
   return is;
 }
 
-// GLOB specialization
+//===----------------------------------------------------------------------===//
+// GLOB Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t GLOB::size() const {
   return SizeOf(editorId) + SizeOf(type) + SizeOf(value);
 }
@@ -166,7 +125,9 @@ raw::read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
   return is;
 }
 
-// CLAS specialization
+//===----------------------------------------------------------------------===//
+// CLAS Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t CLAS::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -195,7 +156,9 @@ raw::read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
   return is;
 }
 
-// FACT specialization
+//===----------------------------------------------------------------------===//
+// FACT Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t FACT::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -250,7 +213,9 @@ raw::read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
   return is;
 }
 
-// HAIR specialization
+//===----------------------------------------------------------------------===//
+// HAIR Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t HAIR::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -287,7 +252,9 @@ raw::read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
   return is;
 }
 
-// EYES specialization
+//===----------------------------------------------------------------------===//
+// EYES Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t EYES::size() const {
   return SizeOf(editorId) + SizeOf(name) + SizeOf(iconFilename) + SizeOf(flags);
 }
@@ -312,7 +279,9 @@ raw::read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
   return is;
 }
 
-// RACE specialization
+//===----------------------------------------------------------------------===//
+// RACE Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t RACE::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -496,7 +465,9 @@ raw::read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
   return is;
 }
 
-// SOUN specialization
+//===----------------------------------------------------------------------===//
+// SOUN Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t SOUN::size() const {
   return SizeOf(editorId)
       + SizeOf(filename)
@@ -529,7 +500,9 @@ raw::read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
   return is;
 }
 
-// SKIL specialization
+//===----------------------------------------------------------------------===//
+// SKIL Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t SKIL::size() const {
   return SizeOf(editorId)
       + SizeOf(index)
@@ -571,7 +544,9 @@ raw::read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
   return is;
 }
 
-// MGEF specialization
+//===----------------------------------------------------------------------===//
+// MGEF Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t MGEF::size() const {
   return SizeOf(editorId)
       + SizeOf(effectName)
@@ -611,7 +586,9 @@ raw::read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
   return is;
 }
 
-// LTEX specialization
+//===----------------------------------------------------------------------===//
+// LTEX Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t LTEX::size() const {
   return SizeOf(editorId)
       + SizeOf(textureFilename)
@@ -645,40 +622,9 @@ raw::read(std::istream &is, raw::LTEX &t, std::size_t size) {
   return is;
 }
 
-// STAT specialization
-template<> uint32_t STAT::size() const {
-  return SizeOf(editorId)
-      + SizeOf(modelFilename)
-      + SizeOf(boundRadius)
-      + SizeOf(textureHash);
-}
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
-  writeRecord(os, t.editorId);
-  writeRecord(os, t.modelFilename);
-  writeRecord(os, t.boundRadius);
-  writeRecord(os, t.textureHash);
-
-  return os;
-}
-
-template<> std::istream &
-raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
-  // There are a few corrupted records making this harder than it needs to be:
-  // ARVineRising02 has no MODL, MODB, or MODT
-  // Empty STAT (size 0) after PalaceDRug01
-  if (size == 0) return is;
-  readRecord(is, t.editorId);
-  if (peekRecordType(is) != "MODL"_rec) return is;
-  readRecord(is, t.modelFilename);
-  readRecord(is, t.boundRadius);
-  readRecord(is, t.textureHash);
-
-  return is;
-}
-
-// ENCH specialization
+//===----------------------------------------------------------------------===//
+// ENCH Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t ENCH::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -707,7 +653,9 @@ raw::read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
   return is;
 }
 
-// SPEL specialization
+//===----------------------------------------------------------------------===//
+// SPEL Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t SPEL::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -736,158 +684,139 @@ raw::read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
   return is;
 }
 
-// CELL specialization
-template<> uint32_t CELL::size() const {
+//===----------------------------------------------------------------------===//
+// BSGN Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t BSGN::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
-      + SizeOf(data)
-      + SizeOf(lighting)
-      + SizeOf(music)
-      + SizeOf(owner)
-      + SizeOf(ownershipGlobal)
-      + SizeOf(ownershipRank)
-      + SizeOf(climate)
-      + SizeOf(water)
-      + SizeOf(waterHeight)
-      + SizeOf(regions)
-      + SizeOf(grid);
+      + SizeOf(icon)
+      + SizeOf(description)
+      + SizeOf(spells);
 }
 
 template<> std::ostream &
-raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
+raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
-  writeRecord(os, t.data);
-  writeRecord(os, t.lighting);
-  writeRecord(os, t.music);
-  writeRecord(os, t.owner);
-  writeRecord(os, t.ownershipGlobal);
-  writeRecord(os, t.ownershipRank);
-  writeRecord(os, t.climate);
-  writeRecord(os, t.waterHeight);
-  writeRecord(os, t.water);
-  writeRecord(os, t.regions);
-  writeRecord(os, t.grid);
+  writeRecord(os, t.icon);
+  writeRecord(os, t.description);
+  for (const auto &spell : t.spells) writeRecord(os, spell);
 
   return os;
 }
 
 template<> std::istream &
-raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
+raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
-  readRecord(is, t.data);
-  std::set<uint32_t> possibleSubrecords = {
-      "XCLL"_rec, "XOWN"_rec, "XGLB"_rec, "XRNK"_rec, "XCMT"_rec,
-      "XCCM"_rec, "XCLW"_rec, "XCWT"_rec, "XCLR"_rec, "XCLC"_rec
-  };
-  uint32_t rec{};
-  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    switch (rec) {
-      case "XCLL"_rec:readRecord(is, t.lighting);
-        break;
-      case "XOWN"_rec:readRecord(is, t.owner);
-        break;
-      case "XGLB"_rec:readRecord(is, t.ownershipGlobal);
-        break;
-      case "XRNK"_rec:readRecord(is, t.ownershipRank);
-        break;
-      case "XCMT"_rec:readRecord(is, t.music);
-        break;
-      case "XCCM"_rec:readRecord(is, t.climate);
-        break;
-      case "XCLW"_rec:readRecord(is, t.waterHeight);
-        break;
-      case "XCWT"_rec:readRecord(is, t.water);
-        break;
-      case "XCLR"_rec:readRecord(is, t.regions);
-        break;
-      case "XCLC"_rec:readRecord(is, t.grid);
-        break;
-      default: return is;
-    }
+  readRecord(is, t.icon);
+  readRecord(is, t.description);
+  while (peekRecordType(is) == "SPLO"_rec) {
+    record::SPLO r{};
+    is >> r;
+    t.spells.push_back(r);
   }
   return is;
 }
 
-// WRLD specialization
-template<> uint32_t WRLD::size() const {
+//===----------------------------------------------------------------------===//
+// ACTI Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t ACTI::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
-      + SizeOf(parentWorldspace)
-      + SizeOf(music)
-      + SizeOf(mapFilename)
-      + SizeOf(climate)
-      + SizeOf(water)
-      + SizeOf(mapData)
-      + SizeOf(data)
-      + SizeOf(bottomLeft)
-      + SizeOf(topRight);
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(script)
+      + SizeOf(sound);
 }
 
 template<> std::ostream &
-raw::write(std::ostream &os, const raw::WRLD &t, std::size_t size) {
+raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
-  writeRecord(os, t.parentWorldspace);
-  writeRecord(os, t.music);
-  writeRecord(os, t.mapFilename);
-  writeRecord(os, t.climate);
-  writeRecord(os, t.water);
-  writeRecord(os, t.mapData);
-  writeRecord(os, t.data);
-  writeRecord(os, t.bottomLeft);
-  writeRecord(os, t.topRight);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.sound);
 
   return os;
 }
 
 template<> std::istream &
-raw::read(std::istream &is, raw::WRLD &t, std::size_t size) {
+raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
-  std::set<uint32_t> possibleSubrecords = {
-      "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec, "CNAM"_rec,
-      "NAM2"_rec, "MNAM"_rec, "DATA"_rec, "NAM0"_rec, "NAM9"_rec,
-  };
-  uint32_t rec{};
-  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
-    switch (rec) {
-      case "FULL"_rec:readRecord(is, t.name);
-        break;
-      case "WNAM"_rec:readRecord(is, t.parentWorldspace);
-        break;
-      case "SNAM"_rec:readRecord(is, t.music);
-        break;
-      case "ICON"_rec:readRecord(is, t.mapFilename);
-        break;
-      case "CNAM"_rec:readRecord(is, t.climate);
-        break;
-      case "NAM2"_rec:readRecord(is, t.water);
-        break;
-      case "MNAM"_rec:readRecord(is, t.mapData);
-        break;
-      case "DATA"_rec:readRecord(is, t.data);
-        break;
-      case "NAM0"_rec:readRecord(is, t.bottomLeft);
-        break;
-      case "NAM9"_rec:readRecord(is, t.topRight);
-        break;
-      default: break;
-    }
-  }
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.sound);
 
-  // We don't care about the annoying OFST record, so skip over it.
-  if (peekRecordType(is) == "XXXX"_rec) {
-    const uint32_t ofstSize{readRecord<record::XXXX>(is).data};
-    is.seekg(ofstSize + 6u, std::ios_base::cur);
-  } else if (peekRecordType(is) == "OFST"_rec) {
-    (void) readRecord<record::OFST_WRLD>(is);
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// DOOR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t DOOR::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(script)
+      + SizeOf(openSound)
+      + SizeOf(closeSound)
+      + SizeOf(loopSound)
+      + SizeOf(flags)
+      + SizeOf(randomTeleports);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.openSound);
+  writeRecord(os, t.closeSound);
+  writeRecord(os, t.loopSound);
+  writeRecord(os, t.flags);
+  for (const auto &rec : t.randomTeleports) writeRecord(os, rec);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.openSound);
+  readRecord(is, t.closeSound);
+  readRecord(is, t.loopSound);
+  readRecord(is, t.flags);
+  while (peekRecordType(is) == "TNAM"_rec) {
+    record::TNAM_DOOR r{};
+    is >> r;
+    t.randomTeleports.push_back(r);
   }
 
   return is;
 }
 
-// LIGH specialization
+//===----------------------------------------------------------------------===//
+// LIGH Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t LIGH::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
@@ -949,41 +878,9 @@ raw::read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
   return is;
 }
 
-// BSGN specialization
-template<> uint32_t BSGN::size() const {
-  return SizeOf(editorId)
-      + SizeOf(name)
-      + SizeOf(icon)
-      + SizeOf(description)
-      + SizeOf(spells);
-}
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
-  writeRecord(os, t.editorId);
-  writeRecord(os, t.name);
-  writeRecord(os, t.icon);
-  writeRecord(os, t.description);
-  for (const auto &spell : t.spells) writeRecord(os, spell);
-
-  return os;
-}
-
-template<> std::istream &
-raw::read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
-  readRecord(is, t.editorId);
-  readRecord(is, t.name);
-  readRecord(is, t.icon);
-  readRecord(is, t.description);
-  while (peekRecordType(is) == "SPLO"_rec) {
-    record::SPLO r{};
-    is >> r;
-    t.spells.push_back(r);
-  }
-  return is;
-}
-
-// MISC specialization
+//===----------------------------------------------------------------------===//
+// MISC Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t MISC::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -1023,97 +920,44 @@ raw::read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
   return is;
 }
 
-// DOOR specialization
-template<> uint32_t DOOR::size() const {
+//===----------------------------------------------------------------------===//
+// STAT Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t STAT::size() const {
   return SizeOf(editorId)
-      + SizeOf(name)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
-      + SizeOf(textureHash)
-      + SizeOf(script)
-      + SizeOf(openSound)
-      + SizeOf(closeSound)
-      + SizeOf(loopSound)
-      + SizeOf(flags)
-      + SizeOf(randomTeleports);
+      + SizeOf(textureHash);
 }
 
 template<> std::ostream &
-raw::write(std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
+raw::write(std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
-  writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
   writeRecord(os, t.boundRadius);
   writeRecord(os, t.textureHash);
-  writeRecord(os, t.script);
-  writeRecord(os, t.openSound);
-  writeRecord(os, t.closeSound);
-  writeRecord(os, t.loopSound);
-  writeRecord(os, t.flags);
-  for (const auto &rec : t.randomTeleports) writeRecord(os, rec);
 
   return os;
 }
 
 template<> std::istream &
-raw::read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
+raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
+  // There are a few corrupted records making this harder than it needs to be:
+  // ARVineRising02 has no MODL, MODB, or MODT
+  // Empty STAT (size 0) after PalaceDRug01
+  if (size == 0) return is;
   readRecord(is, t.editorId);
-  readRecord(is, t.name);
+  if (peekRecordType(is) != "MODL"_rec) return is;
   readRecord(is, t.modelFilename);
   readRecord(is, t.boundRadius);
   readRecord(is, t.textureHash);
-  readRecord(is, t.script);
-  readRecord(is, t.openSound);
-  readRecord(is, t.closeSound);
-  readRecord(is, t.loopSound);
-  readRecord(is, t.flags);
-  while (peekRecordType(is) == "TNAM"_rec) {
-    record::TNAM_DOOR r{};
-    is >> r;
-    t.randomTeleports.push_back(r);
-  }
 
   return is;
 }
 
-// ACTI specialization
-template<> uint32_t ACTI::size() const {
-  return SizeOf(editorId)
-      + SizeOf(name)
-      + SizeOf(modelFilename)
-      + SizeOf(boundRadius)
-      + SizeOf(textureHash)
-      + SizeOf(script)
-      + SizeOf(sound);
-}
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
-  writeRecord(os, t.editorId);
-  writeRecord(os, t.name);
-  writeRecord(os, t.modelFilename);
-  writeRecord(os, t.boundRadius);
-  writeRecord(os, t.textureHash);
-  writeRecord(os, t.script);
-  writeRecord(os, t.sound);
-
-  return os;
-}
-
-template<> std::istream &
-raw::read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
-  readRecord(is, t.editorId);
-  readRecord(is, t.name);
-  readRecord(is, t.modelFilename);
-  readRecord(is, t.boundRadius);
-  readRecord(is, t.textureHash);
-  readRecord(is, t.script);
-  readRecord(is, t.sound);
-
-  return is;
-}
-
-// NPC_ specialization
+//===----------------------------------------------------------------------===//
+// NPC_ Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t NPC_::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
@@ -1239,7 +1083,215 @@ raw::read(std::istream &is, raw::NPC_ &t, std::size_t size) {
   return is;
 }
 
-// LAND specialization
+//===----------------------------------------------------------------------===//
+// ALCH Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t ALCH::size() const {
+  return SizeOf(editorId)
+      + SizeOf(itemName)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(iconFilename)
+      + SizeOf(itemScript)
+      + SizeOf(itemWeight)
+      + SizeOf(itemValue)
+      + std::accumulate(effects.begin(), effects.end(), 0u,
+                        [](auto a, const auto &b) {
+                          return a + b.size();
+                        });
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.itemName);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.iconFilename);
+  writeRecord(os, t.itemScript);
+  writeRecord(os, t.itemWeight);
+  writeRecord(os, t.itemValue);
+  for (const auto &effect : t.effects) effect.write(os);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.itemName);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.itemScript);
+  readRecord(is, t.itemWeight);
+  readRecord(is, t.itemValue);
+  while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// CELL Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t CELL::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(data)
+      + SizeOf(lighting)
+      + SizeOf(music)
+      + SizeOf(owner)
+      + SizeOf(ownershipGlobal)
+      + SizeOf(ownershipRank)
+      + SizeOf(climate)
+      + SizeOf(water)
+      + SizeOf(waterHeight)
+      + SizeOf(regions)
+      + SizeOf(grid);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::CELL &t, std::size_t size) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.data);
+  writeRecord(os, t.lighting);
+  writeRecord(os, t.music);
+  writeRecord(os, t.owner);
+  writeRecord(os, t.ownershipGlobal);
+  writeRecord(os, t.ownershipRank);
+  writeRecord(os, t.climate);
+  writeRecord(os, t.waterHeight);
+  writeRecord(os, t.water);
+  writeRecord(os, t.regions);
+  writeRecord(os, t.grid);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::CELL &t, std::size_t size) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.name);
+  readRecord(is, t.data);
+  std::set<uint32_t> possibleSubrecords = {
+      "XCLL"_rec, "XOWN"_rec, "XGLB"_rec, "XRNK"_rec, "XCMT"_rec,
+      "XCCM"_rec, "XCLW"_rec, "XCWT"_rec, "XCLR"_rec, "XCLC"_rec
+  };
+  uint32_t rec{};
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    switch (rec) {
+      case "XCLL"_rec:readRecord(is, t.lighting);
+        break;
+      case "XOWN"_rec:readRecord(is, t.owner);
+        break;
+      case "XGLB"_rec:readRecord(is, t.ownershipGlobal);
+        break;
+      case "XRNK"_rec:readRecord(is, t.ownershipRank);
+        break;
+      case "XCMT"_rec:readRecord(is, t.music);
+        break;
+      case "XCCM"_rec:readRecord(is, t.climate);
+        break;
+      case "XCLW"_rec:readRecord(is, t.waterHeight);
+        break;
+      case "XCWT"_rec:readRecord(is, t.water);
+        break;
+      case "XCLR"_rec:readRecord(is, t.regions);
+        break;
+      case "XCLC"_rec:readRecord(is, t.grid);
+        break;
+      default: return is;
+    }
+  }
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// WRLD Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t WRLD::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(parentWorldspace)
+      + SizeOf(music)
+      + SizeOf(mapFilename)
+      + SizeOf(climate)
+      + SizeOf(water)
+      + SizeOf(mapData)
+      + SizeOf(data)
+      + SizeOf(bottomLeft)
+      + SizeOf(topRight);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::WRLD &t, std::size_t size) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.parentWorldspace);
+  writeRecord(os, t.music);
+  writeRecord(os, t.mapFilename);
+  writeRecord(os, t.climate);
+  writeRecord(os, t.water);
+  writeRecord(os, t.mapData);
+  writeRecord(os, t.data);
+  writeRecord(os, t.bottomLeft);
+  writeRecord(os, t.topRight);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::WRLD &t, std::size_t size) {
+  readRecord(is, t.editorId);
+  std::set<uint32_t> possibleSubrecords = {
+      "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec, "CNAM"_rec,
+      "NAM2"_rec, "MNAM"_rec, "DATA"_rec, "NAM0"_rec, "NAM9"_rec,
+  };
+  uint32_t rec{};
+  while (possibleSubrecords.count(rec = peekRecordType(is)) == 1) {
+    switch (rec) {
+      case "FULL"_rec:readRecord(is, t.name);
+        break;
+      case "WNAM"_rec:readRecord(is, t.parentWorldspace);
+        break;
+      case "SNAM"_rec:readRecord(is, t.music);
+        break;
+      case "ICON"_rec:readRecord(is, t.mapFilename);
+        break;
+      case "CNAM"_rec:readRecord(is, t.climate);
+        break;
+      case "NAM2"_rec:readRecord(is, t.water);
+        break;
+      case "MNAM"_rec:readRecord(is, t.mapData);
+        break;
+      case "DATA"_rec:readRecord(is, t.data);
+        break;
+      case "NAM0"_rec:readRecord(is, t.bottomLeft);
+        break;
+      case "NAM9"_rec:readRecord(is, t.topRight);
+        break;
+      default: break;
+    }
+  }
+
+  // We don't care about the annoying OFST record, so skip over it.
+  if (peekRecordType(is) == "XXXX"_rec) {
+    const uint32_t ofstSize{readRecord<record::XXXX>(is).data};
+    is.seekg(ofstSize + 6u, std::ios_base::cur);
+  } else if (peekRecordType(is) == "OFST"_rec) {
+    (void) readRecord<record::OFST_WRLD>(is);
+  }
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// LAND Specialization
+//===----------------------------------------------------------------------===//
 template<> uint32_t LAND::size() const {
   return SizeOf(data)
       + SizeOf(normals)

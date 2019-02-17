@@ -18,16 +18,22 @@ InitialRecordVisitor::InitialRecordVisitor(oo::BaseResolversRef resolvers)
     : resolvers{std::move(resolvers)} {}
 
 template<>
-void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::ACTI>().value};
-  oo::getResolver<record::ACTI>(resolvers)
+void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::GMST>().value};
+  GameSettings::getSingleton().load(rec, true);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::RACE>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::RACE>().value};
+  oo::getResolver<record::RACE>(resolvers)
       .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 template<>
-void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::STAT>().value};
-  oo::getResolver<record::STAT>(resolvers)
+void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::ACTI>().value};
+  oo::getResolver<record::ACTI>(resolvers)
       .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
@@ -61,6 +67,20 @@ void InitialRecordVisitor::readRecord<record::MISC>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::STAT>().value};
+  oo::getResolver<record::STAT>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::NPC_>().value};
+  oo::getResolver<record::NPC_>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
@@ -82,26 +102,6 @@ void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
   if (accessor.peekGroupType() == record::Group::GroupType::WorldChildren) {
     accessor.skipGroup();
   }
-}
-
-template<>
-void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::NPC_>().value};
-  oo::getResolver<record::NPC_>(resolvers)
-      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
-}
-
-template<>
-void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::GMST>().value};
-  GameSettings::getSingleton().load(rec, true);
-}
-
-template<>
-void InitialRecordVisitor::readRecord<record::RACE>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::RACE>().value};
-  oo::getResolver<record::RACE>(resolvers)
-      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 } // namespace oo

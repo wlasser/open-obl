@@ -21,10 +21,13 @@ class InitialRecordVisitor {
   }
 
   template<>
-  void readRecord<record::ACTI>(oo::EspAccessor &accessor);
+  void readRecord<record::GMST>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::STAT>(oo::EspAccessor &accessor);
+  void readRecord<record::RACE>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::ACTI>(oo::EspAccessor &accessor);
 
   template<>
   void readRecord<record::DOOR>(oo::EspAccessor &accessor);
@@ -36,19 +39,16 @@ class InitialRecordVisitor {
   void readRecord<record::MISC>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::CELL>(oo::EspAccessor &accessor);
-
-  template<>
-  void readRecord<record::WRLD>(oo::EspAccessor &accessor);
+  void readRecord<record::STAT>(oo::EspAccessor &accessor);
 
   template<>
   void readRecord<record::NPC_>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::GMST>(oo::EspAccessor &accessor);
+  void readRecord<record::CELL>(oo::EspAccessor &accessor);
 
   template<>
-  void readRecord<record::RACE>(oo::EspAccessor &accessor);
+  void readRecord<record::WRLD>(oo::EspAccessor &accessor);
 };
 
 } // namespace oo
