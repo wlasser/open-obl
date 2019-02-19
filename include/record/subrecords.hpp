@@ -160,7 +160,7 @@ using SPLO = oo::BaseId;
 // Facegen face clamp
 using UNAM = float;
 // Exterior cell terrain vertex colours
-using VCLR = std::array<std::array<int8_t, 3>, 33u * 33u>;
+using VCLR = std::array<std::array<uint8_t, 3>, 33u * 33u>;
 // Exterior cell terrain normals
 using VNML = std::array<std::array<int8_t, 3>, 33u * 33u>;
 // Simplified exterior cell terrain land texture application. Placed every other
