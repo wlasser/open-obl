@@ -905,11 +905,14 @@ struct SPIT {
 };
 
 // Exterior cell terrain height
-struct VHGT : Tuplifiable<float, std::array<int8_t, 33u * 33u>> {
+struct VHGT : Tuplifiable<float,
+                          std::array<int8_t, 33u * 33u>,
+                          std::array<int8_t, 3u>> {
   constexpr static float MULTIPLIER{8.0f};
   float offset{};
   std::array<int8_t, 33u * 33u> heights{};
-  MAKE_AS_TUPLE(&offset, &heights);
+  std::array<int8_t, 3u> unused{};
+  MAKE_AS_TUPLE(&offset, &heights, &unused);
 };
 
 // Race determining voice

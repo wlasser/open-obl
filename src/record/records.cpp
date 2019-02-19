@@ -1313,6 +1313,7 @@ raw::write(std::ostream &os, const raw::LAND &t, std::size_t size) {
     writeRecord(os, a);
     writeRecord(os, v);
   }
+  writeRecord(os, t.coarseTextures);
 
   return os;
 }
@@ -1330,14 +1331,18 @@ raw::read(std::istream &is, raw::LAND &t, std::size_t size) {
     return is;
   }
 
-  while (peekRecordType(is) == "BTXT"_rec) {
-    readRecord(is, t.quadrantTexture.emplace_back());
-    while (peekRecordType(is) == "ATXT"_rec) {
+  do {
+    auto recType = peekRecordType(is);
+    if (recType == "BTXT"_rec) {
+      readRecord(is, t.quadrantTexture.emplace_back());
+    } else if (recType == "ATXT"_rec) {
       auto &p{t.fineTextures.emplace_back()};
       readRecord(is, p.first);
       readRecord(is, p.second);
+    } else {
+      break;
     }
-  }
+  } while (true);
 
   return is;
 }
