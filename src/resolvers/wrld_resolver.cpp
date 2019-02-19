@@ -2,6 +2,8 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/topological_sort.hpp>
 #include <OgrePixelFormat.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
@@ -159,6 +161,7 @@ void oo::World::makeCellGrid() {
   // Need non-const CELL and LAND for loadTerrain, then const LAND.
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
+  const auto &ltexRes{oo::getResolver<record::LTEX>(mResolvers)};
   for (auto cellId : *wrldRes.getCells(mBaseId)) {
     const auto cellOpt{cellRes.get(cellId)};
     if (!cellOpt) continue;
@@ -186,43 +189,106 @@ void oo::World::makeCellGrid() {
     // 4MB of data for inputFloat and promptly OOM your machine when the main
     // worldspace loads.
     auto importData{mTerrainGroup.getDefaultImportSettings()};
-    importData.inputFloat = OGRE_ALLOC_T(float, 33u * 33u,
-                                         Ogre::MEMCATEGORY_GEOMETRY);
 
-    // The height data is given as offsets. Moving to the right increases the
-    // offset by the height value, moving to a new row resets it to the height
-    // of the first value on the row before.
-    const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
-    float offset{heightRec.offset * scale};
-    for (std::size_t j = 0; j < 33u; ++j) {
-      offset += heightRec.heights[j * 33u] * scale;
-      importData.inputFloat[j * 33u] = offset;
-
-      float h{offset};
-      for (std::size_t i = 1; i < 33u; ++i) {
-        const float dh = heightRec.heights[j * 33u + i] * scale;
-        h += dh;
-        importData.inputFloat[j * 33u + i] = h;
-      }
-    }
+    setTerrainHeights(heightRec, importData);
 
     auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
     const auto matGen{terrainOpts.getDefaultMaterialGenerator()};
     importData.layerDeclaration = matGen->getLayerDeclaration();
 
-    auto &layer0{importData.layerList.emplace_back()};
-    layer0.textureNames
-        .emplace_back("textures/landscape/greatforestrockmoss02.dds");
-    layer0.textureNames
-        .emplace_back("textures/landscape/greatforestrockmoss02_n.dds");
-    layer0.worldSize = 1.0f;
+    auto layerMaps{makeDefaultLayerMaps(*landOpt)};
+    auto layerOrders{makeDefaultLayerOrders(*landOpt)};
 
-    auto &layer1{importData.layerList.emplace_back()};
-    layer1.textureNames
-        .emplace_back("textures/landscape/terrainhdgrass01su.dds");
-    layer1.textureNames
-        .emplace_back("textures/landscape/terrainhdgrass01su_n.dds");
-    layer1.worldSize = 1.0f;
+    // Common ordering of layers in all the qudrants, in graph form.
+    using Ordering = boost::adjacency_list<boost::vecS, boost::vecS,
+                                           boost::bidirectionalS, oo::BaseId>;
+    Ordering ordering;
+    // Each baseId should only occur once in the ordering, so we can store the
+    // vertex descriptor of each baseId in order to avoid searching for it.
+    absl::flat_hash_map<oo::BaseId, Ordering::vertex_descriptor> orderingMap;
+
+    // Find all the quadrant layer textures
+    for (const auto &[atxt, vtxt] : landOpt->fineTextures) {
+      const oo::BaseId id{atxt.data.id};
+      const std::size_t quadrant{atxt.data.quadrant};
+      const std::size_t textureLayer{atxt.data.textureLayer};
+
+      // Record the layer texture for this quadrant
+      auto &blendMap{layerMaps[quadrant][id]};
+      for (auto &point : vtxt.data.points) {
+        blendMap[point.position] = static_cast<uint8_t>(point.opacity * 255);
+      }
+
+      auto &order{layerOrders[quadrant]};
+      if (order.size() <= textureLayer) order.resize(textureLayer + 1u);
+      order[textureLayer] = id;
+    }
+
+    for (const auto &order : layerOrders) {
+      // First add all the layers to the graph as vertices. This has to be done
+      // in a separate pass because vertices without edges should still appear
+      // as layers in the final ordering.
+      for (auto id : order) {
+        if (!orderingMap.contains(id)) {
+          orderingMap.emplace(id, boost::add_vertex(id, ordering));
+        }
+      }
+
+      // Want a kind of pairwise 'for each' here
+      // TODO: Make this generic and shove it in meta
+      for (auto it{order.begin()}, jt{std::next(order.begin())};
+           jt != order.end(); ++it, ++jt) {
+        // We have u < v with u := *it and v := *jt, so we want to draw an edge
+        // from u to v.
+        boost::add_edge(orderingMap[*it], orderingMap[*jt], ordering);
+      }
+    }
+
+    // Find a common layer ordering, if one exists
+    // This returns a reversed order so use a reversed iterator to compensate.
+    std::vector<Ordering::vertex_descriptor>
+        order(boost::num_vertices(ordering));
+    try {
+      boost::topological_sort(ordering, order.rbegin());
+    } catch (const boost::not_a_dag &e) {
+      // This happens for e.g. (43, 17) 0x000031ba.
+      // TODO: Fall back to the texture synthesis method.
+    }
+
+    for (auto desc : order) {
+      auto &layer{importData.layerList.emplace_back()};
+      layer.worldSize = 1.0f;
+
+      const oo::BaseId id{ordering[desc]};
+      if (const auto ltexOpt{ltexRes.get(id)}) {
+        const oo::Path basePath{ltexOpt->textureFilename.data};
+        emplaceTexture(layer.textureNames, basePath.c_str());
+      } else {
+        emplaceTexture(layer.textureNames, "terrainhddirt01.dds");
+      }
+
+      std::array<uint8_t, 33u * 33u> blendMap;
+
+      const auto &map0{layerMaps[0][id]};
+      for (std::size_t j = 0; j < 17u; ++j) {
+        std::memcpy(&blendMap[33u * j], &map0[17u * j], 17u);
+      }
+
+      const auto &map1{layerMaps[1][id]};
+      for (std::size_t j = 0; j < 17u; ++j) {
+        std::memcpy(&blendMap[33u * j + 15u], &map1[17u * j], 17u);
+      }
+
+      const auto &map2{layerMaps[2][id]};
+      for (std::size_t j = 0; j < 17u; ++j) {
+        std::memcpy(&blendMap[33u * (j + 15u)], &map2[17u * j], 17u);
+      }
+
+      const auto &map3{layerMaps[3][id]};
+      for (std::size_t j = 0; j < 17u; ++j) {
+        std::memcpy(&blendMap[33u * (j + 15u) + 15u], &map3[17u * j], 17u);
+      }
+    }
 
     mTerrainGroup.defineTerrain(qvm::X(p), qvm::Y(p), &importData);
   }
@@ -246,6 +312,79 @@ void oo::World::makeAtmosphere() {
   sunLight
       ->setDiffuseColour(Ogre::ColourValue{255.0f, 241.0f, 223.0f} / 255.0f);
   sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
+}
+
+void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
+                                  Ogre::Terrain::ImportData &importData) const {
+  // Allocation method required for Ogre to manage the memory and delete it.
+  importData.inputFloat = OGRE_ALLOC_T(float, 33u * 33u,
+                                       Ogre::MEMCATEGORY_GEOMETRY);
+
+  // The height data is given as offsets. Moving to the right increases the
+  // offset by the height value, moving to a new row resets it to the height
+  // of the first value on the row before.
+  const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
+  float rowStartHeight{rec.offset * scale};
+
+  for (std::size_t j = 0; j < 33u; ++j) {
+    const std::size_t o{j * 33u};
+
+    rowStartHeight += rec.heights[o] * scale;
+    importData.inputFloat[o] = rowStartHeight;
+
+    float height{rowStartHeight};
+    for (std::size_t i = 1; i < 33u; ++i) {
+      height += rec.heights[o + i] * scale;
+      importData.inputFloat[o + i] = height;
+    }
+  }
+}
+
+void
+oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
+  std::string fullName{"textures/landscape/" + std::move(texName)};
+  list.emplace_back(fullName);
+  fullName.replace(fullName.begin() + fullName.find_last_of('.'),
+                   fullName.end(), "_n.dds");
+  list.emplace_back(std::move(fullName));
+}
+
+std::array<oo::World::LayerMap, 4u>
+oo::World::makeDefaultLayerMaps(const record::LAND &rec) const {
+  std::array<LayerMap, 4u> layerMaps;
+
+  std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
+    LayerMap layers{};
+    layers[oo::BaseId{0}].fill(255);
+    return layers;
+  });
+
+  // Find all the quadrant base textures, overwriting the default layer.
+  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
+    const int quadrant{quadrantTexture.data.quadrant};
+    oo::BaseId id{quadrantTexture.data.id};
+    layerMaps[quadrant].clear();
+    layerMaps[quadrant][id].fill(255);
+  }
+
+  return layerMaps;
+}
+
+std::array<oo::World::LayerOrder, 4u>
+oo::World::makeDefaultLayerOrders(const record::LAND &rec) const {
+  std::array<LayerOrder, 4u> layerOrders;
+  std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
+    return std::vector{oo::BaseId{0}};
+  });
+
+  // Find all the quadrant base textures, overwriting the default layer.
+  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
+    const int quadrant{quadrantTexture.data.quadrant};
+    oo::BaseId id{quadrantTexture.data.id};
+    layerOrders[quadrant][0] = id;
+  }
+
+  return layerOrders;
 }
 
 oo::BaseId oo::World::getCell(CellIndex index) const {
@@ -325,6 +464,17 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   }
 
   vertexColorPtr->getBuffer()->blitFromMemory(vertexColorBox);
+
+//  for (uint8_t i = 1; i < mBlendMaps.size(); ++i) {
+//    const auto &srcMap{mBlendMaps[i]};
+//    auto *dstMap{terrain->getLayerBlendMap(i)};
+//    for (std::size_t y = 0; y < 33u; ++y) {
+//      for (std::size_t x = 0; x < 33u; ++x) {
+//        dstMap->setBlendValue(x, y, srcMap[33u * y + x]);
+//      }
+//    }
+//    dstMap->update();
+//  }
 
   cell.setTerrain(terrain);
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());

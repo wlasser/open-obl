@@ -193,6 +193,27 @@ class World {
   void makeCellGrid();
   void makePhysicsWorld();
   void makeAtmosphere();
+
+  void setTerrainHeights(const record::raw::VHGT &rec,
+                         Ogre::Terrain::ImportData &importData) const;
+
+  /// Opacity of the layer at each point in a quadrant.
+  using QuadrantBlendMap = std::array<uint8_t, 17u * 17u>;
+
+  /// Ordering of layers in a quadrant.
+  using LayerOrder = std::vector<oo::BaseId>;
+
+  /// Map taking each LTEX id to a blend map, for a fixed quadrant.
+  /// \remark Access via [] will value-initialize any id which doesn't exist,
+  ///         giving a transparent QuadrantBlendMap.
+  using LayerMap = absl::flat_hash_map<oo::BaseId, QuadrantBlendMap>;
+
+  void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
+
+  std::array<LayerMap, 4u>
+  makeDefaultLayerMaps(const record::LAND &rec) const;
+  std::array<LayerOrder, 4u>
+  makeDefaultLayerOrders(const record::LAND &rec) const;
 };
 
 } // namespace oo

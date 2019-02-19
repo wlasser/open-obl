@@ -24,8 +24,8 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   auto *pass{matPtr->getTechnique(0)->getPass(0)};
   if (pass->getNumTextureUnitStates() > 0) return matPtr;
 
-  spdlog::get(oo::LOG)->info("Terrain has {} layers",
-                             terrain->getLayerCount());
+  const auto numLayers{terrain->getLayerCount()};
+  spdlog::get(oo::LOG)->info("Terrain has {} layers", numLayers);
 
   // The global normal map's name is dependent on the Terrain pointer, which
   // is not available until the terrain is loaded. This Material returned by
@@ -60,11 +60,16 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   auto *globalNormalState{pass->createTextureUnitState(globalNormalName)};
   auto *vertexColorState{pass->createTextureUnitState(vertexColorName)};
 
-  for (uint8_t i = 0; i < 2; ++i) {
-    const std::string &diffuseName{terrain->getLayerTextureName(i, 0)};
+  if (numLayers == 0) return matPtr;
+
+  constexpr uint8_t MAX_LAYERS{2};
+  for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
+    const auto layerNum{std::min(i, static_cast<uint8_t>(numLayers - 1u))};
+
+    const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
     auto *diffuseState{pass->createTextureUnitState(diffuseName)};
 
-    const std::string &normalName{terrain->getLayerTextureName(i, 1)};
+    const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
     auto *normalState{pass->createTextureUnitState(normalName)};
   }
 
