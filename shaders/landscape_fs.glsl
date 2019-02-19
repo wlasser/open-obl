@@ -6,10 +6,17 @@ in vec3 FragPos;
 
 uniform sampler2D globalNormal;
 uniform sampler2D vertexColor;
+uniform sampler2D blendMap;
+
 uniform sampler2D diffuse0;
 uniform sampler2D normal0;
+
 uniform sampler2D diffuse1;
 uniform sampler2D normal1;
+
+uniform sampler2D diffuse2;
+uniform sampler2D normal2;
+
 uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 uniform vec4 lightAttenuationArray[MAX_LIGHTS];
@@ -42,15 +49,27 @@ void main() {
     vec3 vertexCol = texture2D(vertexColor, TexCoord).xyz;
 
     // Undo gamma correction of textures so it is correct later
-    vec3 diffuseColor0 = pow(texture2D(diffuse0, uv).xyz, vec3(gamma));
-    vec3 diffuseColor1 = pow(texture2D(diffuse1, uv).xyz, vec3(gamma));
+    vec3 diffuseColor0 = pow(texture2D(diffuse0, uv).rgb, vec3(gamma));
+    vec3 diffuseColor1 = pow(texture2D(diffuse1, uv).rgb, vec3(gamma));
+    vec3 diffuseColor2 = pow(texture2D(diffuse2, uv).rgb, vec3(gamma));
+
+    float f0 = 1.0f;
+    float f1 = texture2D(blendMap, TexCoord).r;
+    float f2 = texture2D(blendMap, TexCoord).g;
 
     // Blend diffuse layers
-    vec3 diffuseColor = f * diffuseColor0 + (1 - f) * diffuseColor1;
+    float f10 = f1 + f0 * (1.0f - f1);
+    vec3 diffuseColor10 = (f1 * diffuseColor1 + f0 * diffuseColor0 * (1.0f - f1)) / f10;
+
+    float f210 = f2 + f10 * (1.0f - f2);
+    vec3 diffuseColor = (f2 * diffuseColor2 + f10 * diffuseColor10 * (1.0f - f2)) / f210;
+
     diffuseColor *= vertexCol;
 
     // Blend normal layers
-    vec3 n = f * texture2D(normal0, uv).xyz + (1 - f) * texture2D(normal1, uv).xyz;
+    vec3 n10 = (f1 * texture2D(normal1, uv).xyz + f0 * texture2D(normal0, uv).xyz * (1.0f - f1)) / f10;
+    vec3 n = (f2 * texture2D(normal2, uv).xyz + f10 * n10 * (1.0f - f2)) / f210;
+
     // Convert from dx to gl by flipping the green channel
     n.y = 1.0f - n.y;
     // Transform normal from [0, 1] -> [-1, 1]

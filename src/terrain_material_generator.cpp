@@ -59,10 +59,12 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
 
   auto *globalNormalState{pass->createTextureUnitState(globalNormalName)};
   auto *vertexColorState{pass->createTextureUnitState(vertexColorName)};
+  auto *blendState
+      {pass->createTextureUnitState(terrain->getBlendTextureName(0))};
 
   if (numLayers == 0) return matPtr;
 
-  constexpr uint8_t MAX_LAYERS{2};
+  constexpr uint8_t MAX_LAYERS{3};
   for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
     const auto layerNum{std::min(i, static_cast<uint8_t>(numLayers - 1u))};
 

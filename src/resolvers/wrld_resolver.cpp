@@ -129,6 +129,8 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
   importData.maxBatchSize = 32 + 1;
   importData.minBatchSize = 16 + 1;
 
+  mTerrainGroup.setResourceGroup(oo::RESOURCE_GROUP);
+
   // Shift origin because cell coordinates give SW corner position but Ogre
   // works with the centre.
   mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{2048, 2048, 0}));
@@ -196,97 +198,22 @@ void oo::World::makeCellGrid() {
     const auto matGen{terrainOpts.getDefaultMaterialGenerator()};
     importData.layerDeclaration = matGen->getLayerDeclaration();
 
-    auto layerMaps{makeDefaultLayerMaps(*landOpt)};
     auto layerOrders{makeDefaultLayerOrders(*landOpt)};
 
-    // Common ordering of layers in all the qudrants, in graph form.
-    using Ordering = boost::adjacency_list<boost::vecS, boost::vecS,
-                                           boost::bidirectionalS, oo::BaseId>;
-    Ordering ordering;
-    // Each baseId should only occur once in the ordering, so we can store the
-    // vertex descriptor of each baseId in order to avoid searching for it.
-    absl::flat_hash_map<oo::BaseId, Ordering::vertex_descriptor> orderingMap;
+    applyFineTextureLayers(layerOrders, *landOpt);
 
-    // Find all the quadrant layer textures
-    for (const auto &[atxt, vtxt] : landOpt->fineTextures) {
-      const oo::BaseId id{atxt.data.id};
-      const std::size_t quadrant{atxt.data.quadrant};
-      const std::size_t textureLayer{atxt.data.textureLayer};
+    auto orderGraph{makeLayerOrderGraph(layerOrders)};
+    auto order{makeLayerOrdering(orderGraph)};
 
-      // Record the layer texture for this quadrant
-      auto &blendMap{layerMaps[quadrant][id]};
-      for (auto &point : vtxt.data.points) {
-        blendMap[point.position] = static_cast<uint8_t>(point.opacity * 255);
-      }
-
-      auto &order{layerOrders[quadrant]};
-      if (order.size() <= textureLayer) order.resize(textureLayer + 1u);
-      order[textureLayer] = id;
-    }
-
-    for (const auto &order : layerOrders) {
-      // First add all the layers to the graph as vertices. This has to be done
-      // in a separate pass because vertices without edges should still appear
-      // as layers in the final ordering.
-      for (auto id : order) {
-        if (!orderingMap.contains(id)) {
-          orderingMap.emplace(id, boost::add_vertex(id, ordering));
-        }
-      }
-
-      // Want a kind of pairwise 'for each' here
-      // TODO: Make this generic and shove it in meta
-      for (auto it{order.begin()}, jt{std::next(order.begin())};
-           jt != order.end(); ++it, ++jt) {
-        // We have u < v with u := *it and v := *jt, so we want to draw an edge
-        // from u to v.
-        boost::add_edge(orderingMap[*it], orderingMap[*jt], ordering);
-      }
-    }
-
-    // Find a common layer ordering, if one exists
-    // This returns a reversed order so use a reversed iterator to compensate.
-    std::vector<Ordering::vertex_descriptor>
-        order(boost::num_vertices(ordering));
-    try {
-      boost::topological_sort(ordering, order.rbegin());
-    } catch (const boost::not_a_dag &e) {
-      // This happens for e.g. (43, 17) 0x000031ba.
-      // TODO: Fall back to the texture synthesis method.
-    }
-
-    for (auto desc : order) {
+    for (auto id : order) {
       auto &layer{importData.layerList.emplace_back()};
       layer.worldSize = 1.0f;
 
-      const oo::BaseId id{ordering[desc]};
       if (const auto ltexOpt{ltexRes.get(id)}) {
         const oo::Path basePath{ltexOpt->textureFilename.data};
         emplaceTexture(layer.textureNames, basePath.c_str());
       } else {
         emplaceTexture(layer.textureNames, "terrainhddirt01.dds");
-      }
-
-      std::array<uint8_t, 33u * 33u> blendMap;
-
-      const auto &map0{layerMaps[0][id]};
-      for (std::size_t j = 0; j < 17u; ++j) {
-        std::memcpy(&blendMap[33u * j], &map0[17u * j], 17u);
-      }
-
-      const auto &map1{layerMaps[1][id]};
-      for (std::size_t j = 0; j < 17u; ++j) {
-        std::memcpy(&blendMap[33u * j + 15u], &map1[17u * j], 17u);
-      }
-
-      const auto &map2{layerMaps[2][id]};
-      for (std::size_t j = 0; j < 17u; ++j) {
-        std::memcpy(&blendMap[33u * (j + 15u)], &map2[17u * j], 17u);
-      }
-
-      const auto &map3{layerMaps[3][id]};
-      for (std::size_t j = 0; j < 17u; ++j) {
-        std::memcpy(&blendMap[33u * (j + 15u) + 15u], &map3[17u * j], 17u);
       }
     }
 
@@ -387,6 +314,121 @@ oo::World::makeDefaultLayerOrders(const record::LAND &rec) const {
   return layerOrders;
 }
 
+void oo::World::applyFineTextureLayers(std::array<LayerMap, 4u> &layerMaps,
+                                       const record::LAND &rec) const {
+  // Find all the quadrant layer textures
+  for (const auto &[atxt, vtxt] : rec.fineTextures) {
+    const oo::BaseId id{atxt.data.id};
+    const std::size_t quadrant{atxt.data.quadrant};
+
+    // Record the layer texture for this quadrant
+    auto &blendMap{layerMaps[quadrant][id]};
+    for (auto &point : vtxt.data.points) {
+      blendMap[point.position] = static_cast<uint8_t>(point.opacity * 255);
+    }
+  }
+}
+
+void oo::World::applyFineTextureLayers(std::array<LayerOrder, 4u> &layerOrders,
+                                       const record::LAND &rec) const {
+  // Find all the quadrant layer textures
+  for (const auto &[atxt, vtxt] : rec.fineTextures) {
+    const oo::BaseId id{atxt.data.id};
+    const std::size_t quadrant{atxt.data.quadrant};
+    const std::size_t textureLayer{atxt.data.textureLayer};
+
+    // Record the layer texture for this quadrant
+    auto &order{layerOrders[quadrant]};
+    if (order.size() <= textureLayer) order.resize(textureLayer + 1u);
+    order[textureLayer] = id;
+  }
+}
+
+oo::World::LayerOrderGraph
+oo::World::makeLayerOrderGraph(const std::array<LayerOrder,
+                                                4u> &layerOrders) const {
+  // Each baseId should only occur once in the orderGraph, so we can store the
+  // vertex descriptor of each baseId in order to avoid searching for it.
+  absl::flat_hash_map<oo::BaseId, LayerOrderGraph::vertex_descriptor>
+      orderingMap;
+
+  LayerOrderGraph orderGraph;
+
+  for (const auto &order : layerOrders) {
+    // First add all the layers to the graph as vertices. This has to be done
+    // in a separate pass because vertices without edges should still appear
+    // as layers in the final ordering.
+    for (auto id : order) {
+      if (!orderingMap.contains(id)) {
+        orderingMap.emplace(id, boost::add_vertex(id, orderGraph));
+      }
+    }
+
+    // Want a kind of pairwise 'for each' here
+    // TODO: Make this generic and shove it in meta
+    for (auto it{order.begin()}, jt{std::next(order.begin())};
+         jt != order.end(); ++it, ++jt) {
+      // We have u < v with u := *it and v := *jt, so we want to draw an edge
+      // from u to v.
+      boost::add_edge(orderingMap[*it], orderingMap[*jt], orderGraph);
+    }
+  }
+
+  return orderGraph;
+}
+
+oo::World::LayerOrder
+oo::World::makeLayerOrdering(const LayerOrderGraph &g) const {
+  // Find a common layer ordering, if one exists
+  // This returns a reversed order so use a reversed iterator to compensate.
+  std::vector<LayerOrderGraph::vertex_descriptor> order(boost::num_vertices(g));
+  try {
+    boost::topological_sort(g, order.rbegin());
+  } catch (const boost::not_a_dag &e) {
+    // This happens for e.g. (43, 17) 0x000031ba.
+    // TODO: Fall back to the texture synthesis method.
+  }
+
+  LayerOrder out(order.size());
+  std::transform(order.begin(), order.end(), out.begin(), [&g](auto desc) {
+    return g[desc];
+  });
+
+  return out;
+}
+
+std::vector<oo::World::BlendMap>
+oo::World::makeBlendMaps(const LayerOrder &order,
+                         std::array<LayerMap, 4u> &layerMaps) const {
+  std::vector<BlendMap> blendMaps;
+
+  for (auto id : order) {
+    auto &blendMap{blendMaps.emplace_back()};
+
+    const auto &map0{layerMaps[0][id]};
+    for (std::size_t j = 0; j < 17u; ++j) {
+      std::memcpy(&blendMap[33u * j], &map0[17u * j], 17u);
+    }
+
+    const auto &map1{layerMaps[1][id]};
+    for (std::size_t j = 0; j < 17u; ++j) {
+      std::memcpy(&blendMap[33u * j + 15u], &map1[17u * j], 17u);
+    }
+
+    const auto &map2{layerMaps[2][id]};
+    for (std::size_t j = 0; j < 17u; ++j) {
+      std::memcpy(&blendMap[33u * (j + 15u)], &map2[17u * j], 17u);
+    }
+
+    const auto &map3{layerMaps[3][id]};
+    for (std::size_t j = 0; j < 17u; ++j) {
+      std::memcpy(&blendMap[33u * (j + 15u) + 15u], &map3[17u * j], 17u);
+    }
+  }
+
+  return blendMaps;
+}
+
 oo::BaseId oo::World::getCell(CellIndex index) const {
   return mCells[qvm::X(index)][qvm::Y(index)];
 }
@@ -465,16 +507,30 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
 
   vertexColorPtr->getBuffer()->blitFromMemory(vertexColorBox);
 
-//  for (uint8_t i = 1; i < mBlendMaps.size(); ++i) {
-//    const auto &srcMap{mBlendMaps[i]};
-//    auto *dstMap{terrain->getLayerBlendMap(i)};
-//    for (std::size_t y = 0; y < 33u; ++y) {
-//      for (std::size_t x = 0; x < 33u; ++x) {
-//        dstMap->setBlendValue(x, y, srcMap[33u * y + x]);
-//      }
-//    }
-//    dstMap->update();
-//  }
+  auto layerMaps{makeDefaultLayerMaps(landRec)};
+  auto layerOrders{makeDefaultLayerOrders(landRec)};
+
+  applyFineTextureLayers(layerMaps, landRec);
+  applyFineTextureLayers(layerOrders, landRec);
+
+  auto orderGraph{makeLayerOrderGraph(layerOrders)};
+  auto order{makeLayerOrdering(orderGraph)};
+
+  auto blendMaps{makeBlendMaps(order, layerMaps)};
+
+  for (uint8_t i = 1; i < blendMaps.size(); ++i) {
+    auto &srcMap{blendMaps[i]};
+    auto *dstMap{terrain->getLayerBlendMap(i)};
+    for (std::size_t y = 0; y < 33u; ++y) {
+      for (std::size_t x = 0; x < 33u; ++x) {
+        const float opacity = srcMap[33u * y + x];
+        std::size_t s{}, t{};
+        dstMap->convertUVToImageSpace(x / 33.0f, 1.0f - y / 33.0f, &s, &t);
+        dstMap->setBlendValue(s, t, opacity);
+      }
+    }
+    dstMap->update();
+  }
 
   cell.setTerrain(terrain);
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());

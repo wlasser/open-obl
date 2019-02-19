@@ -343,6 +343,7 @@ void Application::setTerrainOptions() {
   options->setCompositeMapDistance(oo::metersPerUnit<Ogre::Real> * 4096);
   options->setDefaultMaterialGenerator(
       std::make_shared<oo::TerrainMaterialGenerator>());
+  options->setLayerBlendMapSize(33u);
   // Need to set scene manager ambient lighting, directional light, and
   // directional light colour locally when a worldspace is loaded.
 }
