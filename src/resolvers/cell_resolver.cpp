@@ -235,12 +235,35 @@ btCollisionObject *ExteriorCell::getCollisionObject() const {
   return mTerrainCollisionObject.get();
 }
 
-void ExteriorCell::setTerrain(Ogre::Terrain *terrain) {
+void ExteriorCell::setTerrain(std::array<Ogre::Terrain *, 4> terrain) {
   mTerrain = terrain;
-  const float *heights{mTerrain->getHeightData()};
-  // Reverse rows
-  for (std::size_t j = 0; j < 33u; ++j) {
-    std::memcpy(&mTerrainHeights[j * 33u], &heights[(32u - j) * 33u], 33u * 4u);
+
+  // Join the four quadrants of terrain together, swapping the quadrants
+  // vertically and reversing the rows in each quadrant.
+  const float *h0{terrain[0]->getHeightData()};
+  for (std::size_t j = 0; j < 17u; ++j) {
+    std::memcpy(&mTerrainHeights[33u * (j + 16u)],
+                &h0[17u * (16u - j)],
+                17u * 4u);
+  }
+
+  const float *h1{terrain[1]->getHeightData()};
+  for (std::size_t j = 0; j < 17u; ++j) {
+    std::memcpy(&mTerrainHeights[33u * (j + 16u) + 16u],
+                &h1[17u * (16u - j)],
+                17u * 4u);
+  }
+
+  const float *h2{terrain[2]->getHeightData()};
+  for (std::size_t j = 0; j < 17u; ++j) {
+    std::memcpy(&mTerrainHeights[33u * j], &h2[17u * (16u - j)], 17u * 4u);
+  }
+
+  const float *h3{terrain[3]->getHeightData()};
+  for (std::size_t j = 0; j < 17u; ++j) {
+    std::memcpy(&mTerrainHeights[33u * j + 16u],
+                &h3[17u * (16u - j)],
+                17u * 4u);
   }
 
   const float width{4096.0f / oo::metersPerUnit<float>};
@@ -255,8 +278,12 @@ void ExteriorCell::setTerrain(Ogre::Terrain *terrain) {
 
   mTerrainCollisionObject = std::make_unique<btCollisionObject>();
   mTerrainCollisionObject->setCollisionShape(mTerrainCollisionShape.get());
+  const auto pos{mTerrain[0]->getPosition() / 4.0f
+                     + mTerrain[1]->getPosition() / 4.0f
+                     + mTerrain[2]->getPosition() / 4.0f
+                     + mTerrain[3]->getPosition() / 4.0f};
   btTransform trans(btMatrix3x3::getIdentity(),
-                    qvm::convert_to<btVector3>(mTerrain->getPosition()));
+                    qvm::convert_to<btVector3>(pos));
   mTerrainCollisionObject->setWorldTransform(trans);
 }
 

@@ -42,7 +42,7 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   if (!texMgr.resourceExists(globalNormalName, oo::RESOURCE_GROUP)) {
     texMgr.createManual(
         globalNormalName, oo::RESOURCE_GROUP,
-        Ogre::TEX_TYPE_2D, 33u, 33u, 1, 0,
+        Ogre::TEX_TYPE_2D, 17u, 17u, 1, 0,
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
 
@@ -53,7 +53,7 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   if (!texMgr.resourceExists(vertexColorName, oo::RESOURCE_GROUP)) {
     texMgr.createManual(
         vertexColorName, oo::RESOURCE_GROUP,
-        Ogre::TEX_TYPE_2D, 33u, 33u, 1, 0,
+        Ogre::TEX_TYPE_2D, 17u, 17u, 1, 0,
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
 
@@ -84,7 +84,7 @@ TerrainMaterialProfile::generateForCompositeMap(const Ogre::Terrain *terrain) {
 }
 
 uint8_t TerrainMaterialProfile::getMaxLayers(const Ogre::Terrain *) const {
-  return 2u;
+  return 3u;
 }
 
 bool TerrainMaterialProfile::isVertexCompressionSupported() const {

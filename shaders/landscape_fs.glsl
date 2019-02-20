@@ -41,8 +41,8 @@ void main() {
     tangent = cross(binormal, normal);
     mat3 TBN = mat3(tangent, binormal, normal);
 
-    // Scale uv so textures are repeated every grid square, not every cell.
-    vec2 uv = TexCoord * 32.0f;
+    // Scale uv so textures are repeated every grid square, not every quadrant.
+    vec2 uv = TexCoord * 16.0f;
     // Blend factor between layers
     float f = (abs(sin(uv.s)) + abs(cos(uv.t))) / sqrt(2.0f);
 

@@ -244,7 +244,7 @@ class ExteriorCell : public Cell {
   ExteriorCell(ExteriorCell &&) = delete;
   ExteriorCell &operator=(ExteriorCell &&) = delete;
 
-  void setTerrain(Ogre::Terrain *terrain);
+  void setTerrain(std::array<Ogre::Terrain *, 4> terrain);
  private:
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<PhysicsWorld *> mPhysicsWorld;
@@ -252,8 +252,9 @@ class ExteriorCell : public Cell {
   /// Logically the Cell should own its Terrain, but because the Terrain of
   /// every Cell needs to be known for LOD purposes before the Cell is reified,
   /// the Terrain is instead owned by the parent worldspace and managed with a
-  /// TerrainGroup.
-  Ogre::Terrain *mTerrain;
+  /// TerrainGroup. For terrain blending reasons, each Cell is actually split
+  /// into four quadrants of terrain;
+  std::array<Ogre::Terrain *, 4> mTerrain;
   /// Stores the row-reversed terrain heights needed by Bullet.
   // Our heightmap has its rows in the reverse order to what Bullet wants;
   // we go 'bottom to top' and Bullet needs 'top to bottom'.

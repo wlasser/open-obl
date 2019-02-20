@@ -6,7 +6,6 @@
 #include "resolvers/resolvers.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
-#include <boost/graph/adjacency_list.hpp>
 #include <boost/multi_array.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
@@ -196,13 +195,11 @@ class World {
   void makeAtmosphere();
 
   void setTerrainHeights(const record::raw::VHGT &rec,
-                         Ogre::Terrain::ImportData &importData) const;
+                         std::array<Ogre::Terrain::ImportData,
+                                    4u> &importData) const;
 
   /// Opacity of the layer at each point in a quadrant.
   using QuadrantBlendMap = std::array<uint8_t, 17u * 17u>;
-
-  /// Opacity of the layer at each point in a cell.
-  using BlendMap = std::array<uint8_t, 33u * 33u>;
 
   /// Ordering of layers in a quadrant or in a cell, depending on context.
   using LayerOrder = std::vector<oo::BaseId>;
@@ -211,12 +208,6 @@ class World {
   /// \remark Access via [] will value-initialize any id which doesn't exist,
   ///         giving a transparent QuadrantBlendMap.
   using LayerMap = absl::flat_hash_map<oo::BaseId, QuadrantBlendMap>;
-
-  // Common ordering of layers in all the quadrants, in graph form.
-  using LayerOrderGraph = boost::adjacency_list<boost::vecS,
-                                                boost::vecS,
-                                                boost::bidirectionalS,
-                                                oo::BaseId>;
 
   void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
 
@@ -229,15 +220,6 @@ class World {
                               const record::LAND &rec) const;
   void applyFineTextureLayers(std::array<LayerOrder, 4u> &layerOrders,
                               const record::LAND &rec) const;
-
-  LayerOrderGraph
-  makeLayerOrderGraph(const std::array<LayerOrder, 4u> &layerOrders) const;
-
-  LayerOrder makeLayerOrdering(const LayerOrderGraph &g) const;
-
-  std::vector<BlendMap>
-  makeBlendMaps(const LayerOrder &order,
-                std::array<LayerMap, 4u> &layerMaps) const;
 };
 
 } // namespace oo
