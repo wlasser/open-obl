@@ -362,52 +362,6 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
     }
   }
 
-  // TODO: Testing only, remove this
-  {
-    auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
-    auto skelPtr{skelMgr.getByName("meshes/characters/_male/skeleton.nif",
-                                   oo::RESOURCE_GROUP)};
-    skelPtr->load();
-    Ogre::Animation *anim = [&]() {
-      if (skelPtr->hasAnimation("Idle")) return skelPtr->getAnimation("Idle");
-      return oo::createAnimation(skelPtr.get(),
-                                 "meshes/characters/_male/idle.kf",
-                                 oo::RESOURCE_GROUP);
-    }();
-
-    auto makeNode = [&](const std::string &name) -> Ogre::Entity * {
-      auto *node{oo::insertNif(name, oo::RESOURCE_GROUP,
-                               cell->getSceneManager(),
-                               cell->getPhysicsWorld(),
-                               rootNode)};
-      auto *entity{dynamic_cast<Ogre::Entity *>(node->getAttachedObject(0))};
-
-      entity->getMesh()->setSkeletonName(skelPtr->getName());
-      entity->_initialise(true);
-
-      auto *animState{entity->getAnimationState(anim->getName())};
-      animState->setEnabled(true);
-      animState->setTimePosition(0.0f);
-
-      node->setPosition({2.0f, -6.0f, 0.0f});
-
-      return entity;
-    };
-
-    auto *upperbody{makeNode("meshes/characters/_male/femaleupperbody.nif")};
-    for (const auto &name : {"meshes/characters/_male/femalelowerbody.nif",
-                             "meshes/characters/_male/femalehand.nif",
-                             "meshes/characters/_male/femalefoot.nif"}) {
-      makeNode(name);
-    }
-
-    oo::attachRagdoll("meshes/characters/_male/skeleton.nif",
-                      oo::RESOURCE_GROUP,
-                      cell->getSceneManager(),
-                      cell->getPhysicsWorld(),
-                      gsl::make_not_null(upperbody));
-  }
-
   return cell;
 }
 
