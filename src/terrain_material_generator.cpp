@@ -57,33 +57,28 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
 
-  auto *globalNormalState{pass->createTextureUnitState(globalNormalName)};
-  globalNormalState
-      ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+  auto *globlNormal{pass->createTextureUnitState(globalNormalName)};
+  globlNormal->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
 
-  auto *vertexColorState{pass->createTextureUnitState(vertexColorName)};
-  vertexColorState
-      ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+  auto *vertexColor{pass->createTextureUnitState(vertexColorName)};
+  vertexColor->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
 
-  auto *blendState
-      {pass->createTextureUnitState(terrain->getBlendTextureName(0))};
-  blendState->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+  auto *blend{pass->createTextureUnitState(terrain->getBlendTextureName(0))};
+  blend->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
 
   if (numLayers == 0) return matPtr;
 
-  constexpr uint8_t MAX_LAYERS{3};
+  constexpr uint8_t MAX_LAYERS{4};
   for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
     const auto layerNum{std::min(i, static_cast<uint8_t>(numLayers - 1u))};
 
     const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
-    auto *diffuseState{pass->createTextureUnitState(diffuseName)};
-    diffuseState
-        ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
+    auto *diffuse{pass->createTextureUnitState(diffuseName)};
+    diffuse->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
 
     const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
-    auto *normalState{pass->createTextureUnitState(normalName)};
-    normalState
-        ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
+    auto *normal{pass->createTextureUnitState(normalName)};
+    normal->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
   }
 
   return matPtr;

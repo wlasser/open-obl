@@ -32,6 +32,9 @@ material __LandscapeMaterial {
 
                 param_named diffuse2 int 7
                 param_named normal2 int 8
+
+                param_named diffuse3 int 9
+                param_named normal3 int 10
             }
 
             lighting off
