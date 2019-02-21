@@ -729,12 +729,8 @@ raw::write(std::ostream &os, const raw::VTXT &t, std::size_t /*size*/) {
 
 template<> std::istream &
 raw::read(std::istream &is, raw::VTXT &t, std::size_t size) {
-  for (std::size_t i = 0; i < size / 8u; ++i) {
-    auto &p{t.points.emplace_back()};
-    io::readBytes(is, p.position);
-    io::readBytes(is, p.unused);
-    io::readBytes(is, p.opacity);
-  }
+  t.points.resize(size / 8u);
+  is.read(reinterpret_cast<char *>(t.points.data()), size);
 
   return is;
 }
