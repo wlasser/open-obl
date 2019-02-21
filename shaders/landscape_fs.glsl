@@ -20,6 +20,9 @@ uniform sampler2D normal2;
 uniform sampler2D diffuse3;
 uniform sampler2D normal3;
 
+uniform sampler2D diffuse4;
+uniform sampler2D normal4;
+
 uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 uniform vec4 lightAttenuationArray[MAX_LIGHTS];
@@ -62,28 +65,34 @@ void main() {
     vec3 diffuseColor1 = pow(texture(diffuse1, uv).rgb, vec3(gamma));
     vec3 diffuseColor2 = pow(texture(diffuse2, uv).rgb, vec3(gamma));
     vec3 diffuseColor3 = pow(texture(diffuse3, uv).rgb, vec3(gamma));
+    vec3 diffuseColor4 = pow(texture(diffuse4, uv).rgb, vec3(gamma));
 
     float f0 = 1.0f;
     float f1 = texture(blendMap, texCoord).r;
     float f2 = texture(blendMap, texCoord).g;
     float f3 = texture(blendMap, texCoord).b;
+    float f4 = texture(blendMap, texCoord).a;
 
     // Blend diffuse layers
-    float f10 = f1 + f0 * (1.0f - f1);
-    vec3 diffuseColor10 = (f1 * diffuseColor1 + f0 * diffuseColor0 * (1.0f - f1)) / f10;
+    float f_1 = f1 + f0 * (1.0f - f1);
+    vec3 diffuseColor_1 = (f1 * diffuseColor1 + f0 * diffuseColor0 * (1.0f - f1)) / f_1;
 
-    float f210 = f2 + f10 * (1.0f - f2);
-    vec3 diffuseColor210 = (f2 * diffuseColor2 + f10 * diffuseColor10 * (1.0f - f2)) / f210;
+    float f_2 = f2 + f_1 * (1.0f - f2);
+    vec3 diffuseColor_2 = (f2 * diffuseColor2 + f_1 * diffuseColor_1 * (1.0f - f2)) / f_2;
 
-    float f3210 = f3 + f210 * (1.0f - f3);
-    vec3 diffuseColor = (f3 * diffuseColor3 + f210 * diffuseColor210 * (1.0f - f3)) / f3210;
+    float f_3 = f3 + f_2 * (1.0f - f3);
+    vec3 diffuseColor_3 = (f3 * diffuseColor3 + f_2 * diffuseColor_2 * (1.0f - f3)) / f_3;
+
+    float f_4 = f4 + f_3 * (1.0f - f4);
+    vec3 diffuseColor   = (f4 * diffuseColor4 + f_3 * diffuseColor_3 * (1.0f - f4)) / f_4;
 
     diffuseColor *= vertexCol;
 
     // Blend normal layers
-    vec3 n10 = (f1 * texture(normal1, uv).xyz + f0 * texture(normal0, uv).xyz * (1.0f - f1)) / f10;
-    vec3 n210 = (f2 * texture(normal2, uv).xyz + f10 * n10 * (1.0f - f2)) / f210;
-    vec3 n = (f3 * texture(normal3, uv).xyz + f210 * n210 * (1.0f - f3)) / f3210;
+    vec3 n_1 = (f1 * texture(normal1, uv).xyz + f0 * texture(normal0, uv).xyz * (1.0f - f1)) / f_1;
+    vec3 n_2 = (f2 * texture(normal2, uv).xyz + f_1 * n_1 * (1.0f - f2)) / f_2;
+    vec3 n_3 = (f3 * texture(normal3, uv).xyz + f_2 * n_2 * (1.0f - f3)) / f_3;
+    vec3 n   = (f4 * texture(normal4, uv).xyz + f_3 * n_3 * (1.0f - f4)) / f_4;
 
     // Convert from dx to gl by flipping the green channel
     n.y = 1.0f - n.y;

@@ -6,7 +6,11 @@ fragment_program landscape_fs_glsl glsl {
     source landscape_fs.glsl
 }
 
-material __LandscapeMaterial {
+fragment_program landscape_blend_fs_glsl glsl {
+    source landscape_blend_fs.glsl
+}
+
+material __LandscapeMaterial5 {
     technique {
         pass {
             vertex_program_ref landscape_vs_glsl {
@@ -35,10 +39,82 @@ material __LandscapeMaterial {
 
                 param_named diffuse3 int 9
                 param_named normal3 int 10
+
+                param_named diffuse4 int 11
+                param_named normal4 int 12
             }
 
             lighting off
             ambient vertexcolour
+        }
+    }
+}
+
+material __LandscapeMaterial9 {
+    technique {
+        pass {
+            vertex_program_ref landscape_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+            }
+
+            fragment_program_ref landscape_fs_glsl {
+                param_named_auto lightPositionArray LIGHT_POSITION_ARRAY 8
+                param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
+                param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
+                param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+
+                param_named globalNormal int 0
+                param_named vertexColor int 1
+                param_named blendMap int 2
+
+                param_named diffuse0 int 3
+                param_named normal0 int 4
+
+                param_named diffuse1 int 5
+                param_named normal1 int 6
+
+                param_named diffuse2 int 7
+                param_named normal2 int 8
+
+                param_named diffuse3 int 9
+                param_named normal3 int 10
+
+                param_named diffuse4 int 11
+                param_named normal4 int 12
+            }
+        }
+
+        pass {
+            vertex_program_ref landscape_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+            }
+
+            fragment_program_ref landscape_blend_fs_glsl {
+                param_named_auto lightPositionArray LIGHT_POSITION_ARRAY 8
+                param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
+                param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
+                param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+
+                param_named globalNormal int 0
+                param_named vertexColor int 1
+                param_named blendMap int 2
+
+                param_named diffuse5 int 3
+                param_named normal5 int 4
+
+                param_named diffuse6 int 5
+                param_named normal6 int 6
+
+                param_named diffuse7 int 7
+                param_named normal7 int 8
+
+                param_named diffuse8 int 9
+                param_named normal8 int 10
+            }
+
+            scene_blend src_alpha one_minus_src_alpha
         }
     }
 }

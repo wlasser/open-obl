@@ -13,19 +13,20 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   auto &texMgr{Ogre::TextureManager::getSingleton()};
 
+  const auto numLayers{terrain->getLayerCount()};
+
   const std::string &matName{terrain->getMaterialName()};
   auto matPtr{matMgr.getByName(matName, oo::RESOURCE_GROUP)};
   if (!matPtr) {
-    auto baseMat{matMgr.getByName("__LandscapeMaterial", oo::SHADER_GROUP)};
+    auto baseMat{matMgr.getByName(numLayers <= 5 ? "__LandscapeMaterial5"
+                                                 : "__LandscapeMaterial9",
+                                  oo::SHADER_GROUP)};
     matPtr = baseMat->clone(terrain->getMaterialName(),
                             true, oo::RESOURCE_GROUP);
   }
 
-  auto *pass{matPtr->getTechnique(0)->getPass(0)};
-  if (pass->getNumTextureUnitStates() > 0) return matPtr;
-
-  const auto numLayers{terrain->getLayerCount()};
-  spdlog::get(oo::LOG)->info("Terrain has {} layers", numLayers);
+  auto *basePass{matPtr->getTechnique(0)->getPass(0)};
+  if (basePass->getNumTextureUnitStates() > 0) return matPtr;
 
   // The global normal map's name is dependent on the Terrain pointer, which
   // is not available until the terrain is loaded. This Material returned by
@@ -57,28 +58,54 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
 
-  auto *globlNormal{pass->createTextureUnitState(globalNormalName)};
-  globlNormal->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+  // WTF C++, why is this cast even necessary? You can *see* 1 and 2 fit in
+  // a short, the standard requires it! Using = just shifts changes error to a
+  // warning BTW.
+  // TODO: Make a short integer UDL.
+  const uint8_t numPasses{static_cast<uint8_t>(numLayers <= 5 ? 1u : 2u)};
 
-  auto *vertexColor{pass->createTextureUnitState(vertexColorName)};
-  vertexColor->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+  for (uint8_t passNumber = 0; passNumber < numPasses; ++passNumber) {
+    constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
+    constexpr auto WRAP{Ogre::TextureAddressingMode::TAM_WRAP};
+    auto *pass{matPtr->getTechnique(0)->getPass(passNumber)};
 
-  auto *blend{pass->createTextureUnitState(terrain->getBlendTextureName(0))};
-  blend->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+    auto *globalNormal{pass->createTextureUnitState(globalNormalName)};
+    globalNormal->setTextureAddressingMode(CLAMP);
 
-  if (numLayers == 0) return matPtr;
+    auto *vertexColor{pass->createTextureUnitState(vertexColorName)};
+    vertexColor->setTextureAddressingMode(CLAMP);
 
-  constexpr uint8_t MAX_LAYERS{4};
-  for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
-    const auto layerNum{std::min(i, static_cast<uint8_t>(numLayers - 1u))};
+    const auto &blendName{terrain->getBlendTextureName(passNumber)};
+    auto *blend{pass->createTextureUnitState(blendName)};
+    blend->setTextureAddressingMode(CLAMP);
 
-    const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
-    auto *diffuse{pass->createTextureUnitState(diffuseName)};
-    diffuse->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
+    if (numLayers == 0) return matPtr;
 
-    const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
-    auto *normal{pass->createTextureUnitState(normalName)};
-    normal->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
+    // Base texture
+    if (passNumber == 0) {
+      const std::string &diffuseName{terrain->getLayerTextureName(0, 0)};
+      auto *diffuse{pass->createTextureUnitState(diffuseName)};
+      diffuse->setTextureAddressingMode(WRAP);
+
+      const std::string &normalName{terrain->getLayerTextureName(0, 1)};
+      auto *normal{pass->createTextureUnitState(normalName)};
+      normal->setTextureAddressingMode(WRAP);
+    }
+
+    constexpr uint8_t MAX_LAYERS{4u};
+    for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
+      const auto layerNum{static_cast<uint8_t>(std::min(
+          MAX_LAYERS * passNumber + i + 1u,
+          numLayers - 1u))};
+
+      const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
+      auto *diffuse{pass->createTextureUnitState(diffuseName)};
+      diffuse->setTextureAddressingMode(WRAP);
+
+      const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
+      auto *normal{pass->createTextureUnitState(normalName)};
+      normal->setTextureAddressingMode(WRAP);
+    }
   }
 
   return matPtr;
