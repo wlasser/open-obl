@@ -419,17 +419,13 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
   record::LAND &landRec{*landRes.get(*cellRes.getLandId(cell.getBaseId()))};
 
-  // Because PixelBox uses the NW corner as (0,0) and LAND uses the SW we have
-  // to flip the y coordinate, but then we also need to flip the chunks when
-  // blitting to each quadrant.
   if (landRec.normals) {
     for (std::size_t y = 0; y < 33u; ++y) {
       for (std::size_t x = 0; x < 33u; ++x) {
         auto[nx, ny, nz]{landRec.normals->data[y * 33u + x]};
         auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
         n.normalise();
-        normalMapBox.setColourAt(Ogre::ColourValue{n.x, n.y, n.z},
-                                 x, 32u - y, 0);
+        normalMapBox.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
       }
     }
   } else {
@@ -445,29 +441,27 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
     auto ptr{texMgr.getByName(terrain[0]->getMaterialName() + "normal",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
+        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[1]->getMaterialName() + "normal",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
+        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[2]->getMaterialName() + "normal",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
+        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[3]->getMaterialName() + "normal",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
+        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
   }
 
-  // Vertex colours are also set in a texture because the terrain does not
-  // provide them. Same approach with flipping as the normals.
   std::array<uint8_t, 33u * 33u * 3u> vertexColorData{};
   Ogre::PixelBox vertexColorBox(33u, 33u, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                                 vertexColorData.data());
@@ -476,8 +470,8 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
     for (std::size_t y = 0; y < 33u; ++y) {
       for (std::size_t x = 0; x < 33u; ++x) {
         auto[r, g, b]{landRec.colors->data[y * 33u + x]};
-        vertexColorBox.setColourAt(Ogre::ColourValue(r, g, b) / 255.0f,
-                                   x, 32u - y, 0);
+        Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
+        vertexColorBox.setColourAt(col, x, y, 0);
       }
     }
   } else {
@@ -489,25 +483,25 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
     auto ptr{texMgr.getByName(terrain[0]->getMaterialName() + "vertexcolor",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
+        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[1]->getMaterialName() + "vertexcolor",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
+        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[2]->getMaterialName() + "vertexcolor",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
+        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
   }
   {
     auto ptr{texMgr.getByName(terrain[3]->getMaterialName() + "vertexcolor",
                               oo::RESOURCE_GROUP)};
     ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
+        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
   }
 
   auto layerMaps{makeDefaultLayerMaps(landRec)};
@@ -525,7 +519,7 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
         for (std::size_t x = 0; x < 17; ++x) {
           const float opacity = srcMap[17 * y + x] / 255.0f;
           std::size_t s{}, t{};
-          dstMap->convertUVToImageSpace(x / 16.0f, 1.0f - y / 16.0f, &s, &t);
+          dstMap->convertUVToImageSpace(x / 16.0f, y / 16.0f, &s, &t);
           dstMap->setBlendValue(s, t, opacity);
         }
       }

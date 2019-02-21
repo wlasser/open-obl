@@ -58,9 +58,16 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   }
 
   auto *globalNormalState{pass->createTextureUnitState(globalNormalName)};
+  globalNormalState
+      ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+
   auto *vertexColorState{pass->createTextureUnitState(vertexColorName)};
+  vertexColorState
+      ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
+
   auto *blendState
       {pass->createTextureUnitState(terrain->getBlendTextureName(0))};
+  blendState->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_CLAMP);
 
   if (numLayers == 0) return matPtr;
 
@@ -70,9 +77,13 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
 
     const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
     auto *diffuseState{pass->createTextureUnitState(diffuseName)};
+    diffuseState
+        ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
 
     const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
     auto *normalState{pass->createTextureUnitState(normalName)};
+    normalState
+        ->setTextureAddressingMode(Ogre::TextureAddressingMode::TAM_WRAP);
   }
 
   return matPtr;
