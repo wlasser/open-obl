@@ -81,9 +81,37 @@ void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::GRAS>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::GRAS>().value};
+  oo::getResolver<record::GRAS>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::TREE>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::TREE>().value};
+  oo::getResolver<record::TREE>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::NPC_>().value};
   oo::getResolver<record::NPC_>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::WTHR>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::WTHR>().value};
+  oo::getResolver<record::WTHR>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::CLMT>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::CLMT>().value};
+  oo::getResolver<record::CLMT>(resolvers)
       .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
@@ -109,6 +137,13 @@ void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
   if (accessor.peekGroupType() == record::Group::GroupType::WorldChildren) {
     accessor.skipGroup();
   }
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::WATR>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::WATR>().value};
+  oo::getResolver<record::WATR>(resolvers)
+      .insertOrAssignEspRecord(oo::BaseId{rec.mFormId}, rec);
 }
 
 } // namespace oo

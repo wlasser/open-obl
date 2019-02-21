@@ -29,11 +29,16 @@ struct DOOR;
 struct LIGH;
 struct MISC;
 struct STAT;
+struct GRAS;
+struct TREE;
 struct NPC_;
 struct ALCH;
+struct WTHR;
+struct CLMT;
 struct CELL;
 struct WRLD;
 struct LAND;
+struct WATR;
 
 } // namespace raw
 
@@ -59,11 +64,16 @@ using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
+using GRAS = Record<raw::GRAS, "GRAS"_rec>;
+using TREE = Record<raw::TREE, "TREE"_rec>;
 using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
+using WTHR = Record<raw::WTHR, "WTHR"_rec>;
+using CLMT = Record<raw::CLMT, "CLMT"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using WRLD = Record<raw::WRLD, "WRLD"_rec>;
 using LAND = Record<raw::LAND, "LAND"_rec>;
+using WATR = Record<raw::WATR, "WATR"_rec>;
 
 } // namespace record
 

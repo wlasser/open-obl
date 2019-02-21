@@ -137,6 +137,47 @@ raw::read(std::istream &is, raw::DATA_GMST &t, std::size_t size) {
 }
 
 //===----------------------------------------------------------------------===//
+// DATA_GRAS Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t DATA_GRAS::size() const {
+  return 32u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::DATA_GRAS &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.density);
+  io::writeBytes(os, t.minSlope);
+  io::writeBytes(os, t.maxSlope);
+  io::writeBytes(os, t.unused1);
+  io::writeBytes(os, t.unitsFromWater);
+  io::writeBytes(os, t.unused2);
+  io::writeBytes(os, t.positionRange);
+  io::writeBytes(os, t.heightRange);
+  io::writeBytes(os, t.colorRange);
+  io::writeBytes(os, t.wavePeriod);
+  io::writeBytes(os, t.flags);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::DATA_GRAS &t, std::size_t size) {
+  io::readBytes(is, t.density);
+  io::readBytes(is, t.minSlope);
+  io::readBytes(is, t.maxSlope);
+  io::readBytes(is, t.unused1);
+  io::readBytes(is, t.unitsFromWater);
+  io::readBytes(is, t.unused2);
+  io::readBytes(is, t.positionRange);
+  io::readBytes(is, t.heightRange);
+  io::readBytes(is, t.colorRange);
+  io::readBytes(is, t.wavePeriod);
+  io::readBytes(is, t.flags);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
 // DATA_LIGH Specialization
 //===----------------------------------------------------------------------===//
 template<> uint16_t DATA_LIGH::size() const {
@@ -285,6 +326,55 @@ raw::read(std::istream &is, raw::DATA_RACE &t, std::size_t size) {
   io::readBytes(is, t.weightMale);
   io::readBytes(is, t.weightFemale);
   raw::read(is, t.flags, 0);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// DATA_WTHR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t DATA_WTHR::size() const {
+  return 15u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::DATA_WTHR &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.windSpeed);
+  io::writeBytes(os, t.cloudSpeedLower);
+  io::writeBytes(os, t.cloudSpeedUpper);
+  io::writeBytes(os, t.transDelta);
+  io::writeBytes(os, t.sunGlare);
+  io::writeBytes(os, t.sunDamage);
+  io::writeBytes(os, t.beginPrecipitationFadeIn);
+  io::writeBytes(os, t.endPrecipitationFadeOut);
+  io::writeBytes(os, t.beginThunderFadeIn);
+  io::writeBytes(os, t.endThunderFadeOut);
+  io::writeBytes(os, t.frequency);
+  io::writeBytes(os, t.classification);
+  io::writeBytes(os, t.lightningR);
+  io::writeBytes(os, t.lightningG);
+  io::writeBytes(os, t.lightningB);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::DATA_WTHR &t, std::size_t /*size*/) {
+  io::readBytes(is, t.windSpeed);
+  io::readBytes(is, t.cloudSpeedLower);
+  io::readBytes(is, t.cloudSpeedUpper);
+  io::readBytes(is, t.transDelta);
+  io::readBytes(is, t.sunGlare);
+  io::readBytes(is, t.sunDamage);
+  io::readBytes(is, t.beginPrecipitationFadeIn);
+  io::readBytes(is, t.endPrecipitationFadeOut);
+  io::readBytes(is, t.beginThunderFadeIn);
+  io::readBytes(is, t.endThunderFadeOut);
+  io::readBytes(is, t.frequency);
+  io::readBytes(is, t.classification);
+  io::readBytes(is, t.lightningR);
+  io::readBytes(is, t.lightningG);
+  io::readBytes(is, t.lightningB);
 
   return is;
 }
@@ -546,6 +636,59 @@ raw::read(std::istream &is, raw::MODT &t, std::size_t size) {
 }
 
 //===----------------------------------------------------------------------===//
+// NAM0_WTHR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t NAM0_WTHR::size() const {
+  return 10u * 4u * 4u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::NAM0_WTHR &t, std::size_t /*size*/) {
+  auto writeColors = [&os](const raw::NAM0_WTHR::WeatherColors &c) {
+    io::writeBytes(os, c.sunrise);
+    io::writeBytes(os, c.day);
+    io::writeBytes(os, c.sunset);
+    io::writeBytes(os, c.night);
+  };
+
+  writeColors(t.skyUpper);
+  writeColors(t.fog);
+  writeColors(t.cloudsLower);
+  writeColors(t.ambient);
+  writeColors(t.sunlight);
+  writeColors(t.sun);
+  writeColors(t.stars);
+  writeColors(t.skyLower);
+  writeColors(t.horizon);
+  writeColors(t.cloudsUpper);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::NAM0_WTHR &t, std::size_t /*size*/) {
+  auto readColors = [&is](raw::NAM0_WTHR::WeatherColors &c) {
+    io::readBytes(is, c.sunrise);
+    io::readBytes(is, c.day);
+    io::readBytes(is, c.sunset);
+    io::readBytes(is, c.night);
+  };
+
+  readColors(t.skyUpper);
+  readColors(t.fog);
+  readColors(t.cloudsLower);
+  readColors(t.ambient);
+  readColors(t.sunlight);
+  readColors(t.sun);
+  readColors(t.stars);
+  readColors(t.skyLower);
+  readColors(t.horizon);
+  readColors(t.cloudsUpper);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
 // OFST Specialization
 //===----------------------------------------------------------------------===//
 template<> uint16_t OFST::size() const {
@@ -616,6 +759,46 @@ raw::read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
   raw::read(is, t.flags, 0);
   io::readBytes(is, t.unused);
 
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// SNAM_TREE Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t SNAM_TREE::size() const {
+  return 4u * data.seeds.size();
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::SNAM_TREE &t, std::size_t /*size*/) {
+  for (auto s : t.seeds) io::writeBytes(os, s);
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::SNAM_TREE &t, std::size_t size) {
+  io::readBytes(is, t.seeds, size / 4u);
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// SNAM_WTHR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t SNAM_WTHR::size() const {
+  return 8u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::SNAM_WTHR &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.soundId);
+  io::writeBytes(os, t.soundType);
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::SNAM_WTHR &t, std::size_t /*size*/) {
+  io::readBytes(is, t.soundId);
+  io::readBytes(is, t.soundType);
   return is;
 }
 
@@ -710,6 +893,45 @@ raw::read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
 }
 
 //===----------------------------------------------------------------------===//
+// TNAM_CLMT Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t TNAM_CLMT::size() const {
+  return 6u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::TNAM_CLMT &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.sunriseBegin);
+  io::writeBytes(os, t.sunriseEnd);
+  io::writeBytes(os, t.sunsetBegin);
+  io::writeBytes(os, t.sunsetEnd);
+  io::writeBytes(os, t.volatility);
+
+  auto flag{static_cast<uint8_t>(
+                (t.hasMasser << 7u) & (t.hasSecunda << 6u) & t.phaseLength)};
+  io::writeBytes(os, flag);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::TNAM_CLMT &t, std::size_t /*size*/) {
+  io::readBytes(is, t.sunriseBegin);
+  io::readBytes(is, t.sunriseEnd);
+  io::readBytes(is, t.sunsetBegin);
+  io::readBytes(is, t.sunsetEnd);
+  io::readBytes(is, t.volatility);
+
+  uint8_t flag;
+  io::readBytes(is, flag);
+  t.hasMasser = flag >> 7u;
+  t.hasSecunda = (flag & 0b01000000) >> 6u;
+  t.phaseLength = flag & 0b00111111;
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
 // VTXT Specialization
 //===----------------------------------------------------------------------===//
 template<> uint16_t VTXT::size() const {
@@ -731,6 +953,34 @@ template<> std::istream &
 raw::read(std::istream &is, raw::VTXT &t, std::size_t size) {
   t.points.resize(size / 8u);
   is.read(reinterpret_cast<char *>(t.points.data()), size);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// WLST Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t WLST::size() const {
+  return data.weathers.size() * 8u;
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::WLST &t, std::size_t /*size*/) {
+  for (auto weather : t.weathers) {
+    io::writeBytes(os, weather.formId);
+    io::writeBytes(os, weather.chance);
+  }
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::WLST &t, std::size_t size) {
+  t.weathers.resize(size / 8u);
+  for (std::size_t i = 0; i < size / 8u; ++i) {
+    io::readBytes(is, t.weathers[i].formId);
+    io::readBytes(is, t.weathers[i].chance);
+  }
 
   return is;
 }

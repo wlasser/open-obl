@@ -45,13 +45,28 @@ class InitialRecordVisitor {
   void readRecord<record::STAT>(oo::EspAccessor &accessor);
 
   template<>
+  void readRecord<record::GRAS>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::TREE>(oo::EspAccessor &accessor);
+
+  template<>
   void readRecord<record::NPC_>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::WTHR>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::CLMT>(oo::EspAccessor &accessor);
 
   template<>
   void readRecord<record::CELL>(oo::EspAccessor &accessor);
 
   template<>
   void readRecord<record::WRLD>(oo::EspAccessor &accessor);
+
+  template<>
+  void readRecord<record::WATR>(oo::EspAccessor &accessor);
 };
 
 } // namespace oo

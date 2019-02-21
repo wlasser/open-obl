@@ -956,6 +956,81 @@ raw::read(std::istream &is, raw::STAT &t, std::size_t size) {
 }
 
 //===----------------------------------------------------------------------===//
+// GRAS Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t GRAS::size() const {
+  return SizeOf(editorId)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash);
+  +SizeOf(data);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::GRAS &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.data);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::GRAS &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.data);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// TREE Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t TREE::size() const {
+  return SizeOf(editorId)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(leafFilename)
+      + SizeOf(seeds)
+      + SizeOf(data)
+      + SizeOf(billboardDimensions);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::TREE &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.leafFilename);
+  writeRecord(os, t.seeds);
+  writeRecord(os, t.data);
+  writeRecord(os, t.billboardDimensions);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::TREE &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.leafFilename);
+  readRecord(is, t.seeds);
+  readRecord(is, t.data);
+  readRecord(is, t.billboardDimensions);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
 // NPC_ Specialization
 //===----------------------------------------------------------------------===//
 template<> uint32_t NPC_::size() const {
@@ -1130,6 +1205,95 @@ raw::read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
   readRecord(is, t.itemWeight);
   readRecord(is, t.itemValue);
   while (Effect::isNext(is)) t.effects.emplace_back().read(is);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// WTHR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t WTHR::size() const {
+  return SizeOf(editorId)
+      + SizeOf(lowerLayerFilename)
+      + SizeOf(upperLayerFilename)
+      + SizeOf(precipitationFilename)
+      + SizeOf(precipitationBoundRadius)
+      + SizeOf(skyColors)
+      + SizeOf(fogDistances)
+      + SizeOf(hdr)
+      + SizeOf(data)
+      + SizeOf(sounds);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::WTHR &t, const std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.lowerLayerFilename);
+  writeRecord(os, t.upperLayerFilename);
+  writeRecord(os, t.precipitationFilename);
+  writeRecord(os, t.precipitationBoundRadius);
+  writeRecord(os, t.skyColors);
+  writeRecord(os, t.fogDistances);
+  writeRecord(os, t.hdr);
+  writeRecord(os, t.data);
+  for (const auto &sound : t.sounds) writeRecord(os, sound);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::WTHR &t, const std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.lowerLayerFilename);
+  readRecord(is, t.upperLayerFilename);
+  readRecord(is, t.precipitationFilename);
+  readRecord(is, t.precipitationBoundRadius);
+  readRecord(is, t.skyColors);
+  readRecord(is, t.fogDistances);
+  readRecord(is, t.hdr);
+  readRecord(is, t.data);
+  while (peekRecordType(is) == "SNAM"_rec) {
+    t.sounds.emplace_back(readRecord<record::SNAM_WTHR>(is));
+  }
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// CLMT Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t CLMT::size() const {
+  return SizeOf(editorId)
+      + SizeOf(weatherList)
+      + SizeOf(sunFilename)
+      + SizeOf(sunglareFilename)
+      + SizeOf(skyFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(settings);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::CLMT &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.weatherList);
+  writeRecord(os, t.sunFilename);
+  writeRecord(os, t.sunglareFilename);
+  writeRecord(os, t.skyFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.settings);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::CLMT &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.weatherList);
+  readRecord(is, t.sunFilename);
+  readRecord(is, t.sunglareFilename);
+  readRecord(is, t.skyFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.settings);
 
   return is;
 }
@@ -1343,6 +1507,48 @@ raw::read(std::istream &is, raw::LAND &t, std::size_t size) {
       break;
     }
   } while (true);
+
+  return is;
+}
+
+//===----------------------------------------------------------------------===//
+// WATR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t WATR::size() const {
+  return SizeOf(editorId)
+      + SizeOf(textureFilename)
+      + SizeOf(opacity)
+      + SizeOf(flags)
+      + SizeOf(materialId)
+      + SizeOf(soundId)
+      + SizeOf(data)
+      + SizeOf(variants);
+}
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::WATR &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.textureFilename);
+  writeRecord(os, t.opacity);
+  writeRecord(os, t.flags);
+  writeRecord(os, t.materialId);
+  writeRecord(os, t.soundId);
+  writeRecord(os, t.data);
+  writeRecord(os, t.variants);
+
+  return os;
+}
+
+template<> std::istream &
+raw::read(std::istream &is, raw::WATR &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.textureFilename);
+  readRecord(is, t.opacity);
+  readRecord(is, t.flags);
+  readRecord(is, t.materialId);
+  readRecord(is, t.soundId);
+  readRecord(is, t.data);
+  readRecord(is, t.variants);
 
   return is;
 }

@@ -231,8 +231,9 @@ constexpr auto &&getResolver(Tuple &&resolvers) {
 /// A tuple of all the base records which have resolvers.
 using BaseRecords = std::tuple<record::RACE, record::LTEX, record::ACTI,
                                record::DOOR, record::LIGH, record::STAT,
-                               record::NPC_, record::CELL, record::WRLD,
-                               record::LAND>;
+                               record::GRAS, record::TREE, record::NPC_,
+                               record::WTHR, record::CLMT, record::CELL,
+                               record::WRLD, record::LAND, record::WATR>;
 /// A tuple of all the reference records which have resolvers.
 using RefrRecords = std::tuple<record::REFR_ACTI, record::REFR_DOOR,
                                record::REFR_LIGH, record::REFR_STAT,

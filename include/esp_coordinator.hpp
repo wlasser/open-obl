@@ -183,16 +183,22 @@ class EspCoordinator {
   translateFormIds(record::raw::DNAM rec, int modIndex) const;
   template<> record::raw::ENAM
   translateFormIds(record::raw::ENAM rec, int modIndex) const;
+  template<> record::raw::GNAM_WATR
+  translateFormIds(record::raw::GNAM_WATR rec, int modIndex) const;
   template<> record::raw::HNAM
   translateFormIds(record::raw::HNAM rec, int modIndex) const;
   template<> record::raw::SCIT
   translateFormIds(record::raw::SCIT rec, int modIndex) const;
   template<> record::raw::SNAM_NPC_
   translateFormIds(record::raw::SNAM_NPC_ rec, int modIndex) const;
+  template<> record::raw::SNAM_WTHR
+  translateFormIds(record::raw::SNAM_WTHR rec, int modIndex) const;
   template<> record::raw::VNAM
   translateFormIds(record::raw::VNAM rec, int modIndex) const;
   template<> record::raw::VTEX
   translateFormIds(record::raw::VTEX rec, int modIndex) const;
+  template<> record::raw::WLST
+  translateFormIds(record::raw::WLST rec, int modIndex) const;
   template<> record::raw::XESP
   translateFormIds(record::raw::XESP rec, int modIndex) const;
   template<> record::raw::XLOC
@@ -226,12 +232,18 @@ class EspCoordinator {
   translateFormIds(record::raw::NPC_ rec, int modIndex) const;
   template<> record::raw::ALCH
   translateFormIds(record::raw::ALCH rec, int modIndex) const;
+  template<> record::raw::WTHR
+  translateFormIds(record::raw::WTHR rec, int modIndex) const;
+  template<> record::raw::CLMT
+  translateFormIds(record::raw::CLMT rec, int modIndex) const;
   template<> record::raw::CELL
   translateFormIds(record::raw::CELL rec, int modIndex) const;
   template<> record::raw::WRLD
   translateFormIds(record::raw::WRLD rec, int modIndex) const;
   template<> record::raw::LAND
   translateFormIds(record::raw::LAND rec, int modIndex) const;
+  template<> record::raw::WATR
+  translateFormIds(record::raw::WATR rec, int modIndex) const;
 
   template<> record::raw::REFR_ACTI
   translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;

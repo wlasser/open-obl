@@ -307,6 +307,25 @@ struct STAT {
   std::optional<record::MODT> textureHash{};
 };
 
+struct GRAS {
+  record::EDID editorId{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  record::DATA_GRAS data{};
+};
+
+struct TREE {
+  record::EDID editorId{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::ICON> leafFilename{};
+  std::optional<record::SNAM_TREE> seeds{};
+  std::optional<record::CNAM_TREE> data{};
+  std::optional<record::BNAM_TREE> billboardDimensions{};
+};
+
 struct NPC_ {
   record::EDID editorId{};
   std::optional<record::FULL> name{};
@@ -347,6 +366,29 @@ struct ALCH {
   record::DATA_ALCH itemWeight{};
   record::ENIT itemValue{};
   std::vector<Effect> effects{};
+};
+
+struct WTHR {
+  std::optional<record::EDID> editorId{};
+  std::optional<record::CNAM_WTHR> lowerLayerFilename{};
+  std::optional<record::DNAM_WTHR> upperLayerFilename{};
+  std::optional<record::MODL> precipitationFilename{};
+  std::optional<record::MODB> precipitationBoundRadius{};
+  std::optional<record::NAM0_WTHR> skyColors{};
+  std::optional<record::FNAM_WTHR> fogDistances{};
+  std::optional<record::HNAM_WTHR> hdr{};
+  std::optional<record::DATA_WTHR> data{};
+  std::vector<record::SNAM_WTHR> sounds{};
+};
+
+struct CLMT {
+  std::optional<record::EDID> editorId{};
+  std::optional<record::WLST> weatherList{};
+  std::optional<record::FNAM_CLMT> sunFilename{};
+  std::optional<record::GNAM_CLMT> sunglareFilename{};
+  std::optional<record::MODL> skyFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::TNAM_CLMT> settings{};
 };
 
 // The ordering of subrecords is inconsistent. For instance,
@@ -397,6 +439,17 @@ struct LAND {
   std::optional<record::VTEX> coarseTextures{};
 };
 
+struct WATR {
+  record::EDID editorId{};
+  std::optional<record::TNAM_WATR> textureFilename{};
+  std::optional<record::ANAM_WATR> opacity{};
+  std::optional<record::FNAM_WATR> flags{};
+  std::optional<record::MNAM_WATR> materialId{};
+  std::optional<record::SNAM_WATR> soundId{};
+  std::optional<record::DATA_WATR> data{};
+  std::optional<record::GNAM_WATR> variants{};
+};
+
 } // namespace raw
 
 using TES4 = Record<raw::TES4, "TES4"_rec>;
@@ -419,11 +472,16 @@ using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
+using GRAS = Record<raw::GRAS, "GRAS"_rec>;
+using TREE = Record<raw::TREE, "TREE"_rec>;
 using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
+using WTHR = Record<raw::WTHR, "WTHR"_rec>;
+using CLMT = Record<raw::CLMT, "CLMT"_rec>;
 using CELL = Record<raw::CELL, "CELL"_rec>;
 using WRLD = Record<raw::WRLD, "WRLD"_rec>;
 using LAND = Record<raw::LAND, "LAND"_rec>;
+using WATR = Record<raw::WATR, "WATR"_rec>;
 
 DECLARE_SPECIALIZED_RECORD(TES4);
 DECLARE_SPECIALIZED_RECORD(GMST);
@@ -445,11 +503,16 @@ DECLARE_SPECIALIZED_RECORD(DOOR);
 DECLARE_SPECIALIZED_RECORD(LIGH);
 DECLARE_SPECIALIZED_RECORD(MISC);
 DECLARE_SPECIALIZED_RECORD(STAT);
+DECLARE_SPECIALIZED_RECORD(GRAS);
+DECLARE_SPECIALIZED_RECORD(TREE);
 DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
+DECLARE_SPECIALIZED_RECORD(WTHR);
+DECLARE_SPECIALIZED_RECORD(CLMT);
 DECLARE_SPECIALIZED_RECORD(CELL);
 DECLARE_SPECIALIZED_RECORD(WRLD);
 DECLARE_SPECIALIZED_RECORD(LAND);
+DECLARE_SPECIALIZED_RECORD(WATR);
 
 } // namespace Record
 

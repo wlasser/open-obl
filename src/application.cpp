@@ -106,10 +106,15 @@ Application::Application(std::string windowName) : FrameListener() {
                       oo::add_resolver_t<record::DOOR>{},
                       oo::add_resolver_t<record::LIGH>{},
                       oo::add_resolver_t<record::STAT>{},
+                      oo::add_resolver_t<record::GRAS>{},
+                      oo::add_resolver_t<record::TREE>{},
                       oo::add_resolver_t<record::NPC_>{},
+                      oo::add_resolver_t<record::WTHR>{},
+                      oo::add_resolver_t<record::CLMT>{},
                       oo::add_resolver_t<record::CELL>{*ctx.bulletConf},
                       oo::add_resolver_t<record::WRLD>{},
-                      oo::add_resolver_t<record::LAND>{}));
+                      oo::add_resolver_t<record::LAND>{},
+                      oo::add_resolver_t<record::WATR>{}));
 
   ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
       std::make_tuple(oo::add_refr_resolver_t<record::REFR_ACTI>{},

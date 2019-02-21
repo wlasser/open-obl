@@ -288,6 +288,16 @@ EspCoordinator::translateFormIds(record::raw::ENAM rec, int modIndex) const {
   return rec;
 }
 
+template<> record::raw::GNAM_WATR
+EspCoordinator::translateFormIds(record::raw::GNAM_WATR rec,
+                                 int modIndex) const {
+  rec.daytimeVariant = translateFormIds(rec.daytimeVariant, modIndex);
+  rec.nighttimeVariant = translateFormIds(rec.nighttimeVariant, modIndex);
+  rec.underwaterVariant = translateFormIds(rec.underwaterVariant, modIndex);
+
+  return rec;
+}
+
 template<>
 record::raw::HNAM
 EspCoordinator::translateFormIds(record::raw::HNAM rec, int modIndex) const {
@@ -311,6 +321,13 @@ EspCoordinator::translateFormIds(record::raw::SNAM_NPC_ rec,
   return rec;
 }
 
+template<> record::raw::SNAM_WTHR
+EspCoordinator::translateFormIds(record::raw::SNAM_WTHR rec,
+                                 int modIndex) const {
+  rec.soundId = translateFormIds(rec.soundId, modIndex);
+  return rec;
+}
+
 template<>
 record::raw::VNAM
 EspCoordinator::translateFormIds(record::raw::VNAM rec, int modIndex) const {
@@ -322,6 +339,14 @@ EspCoordinator::translateFormIds(record::raw::VNAM rec, int modIndex) const {
 template<> record::raw::VTEX
 EspCoordinator::translateFormIds(record::raw::VTEX rec, int modIndex) const {
   for (auto &vtex : rec) vtex = translateFormIds(vtex, modIndex);
+  return rec;
+}
+
+template<> record::raw::WLST
+EspCoordinator::translateFormIds(record::raw::WLST rec, int modIndex) const {
+  for (auto &weather : rec.weathers) {
+    weather.formId = translateFormIds(weather.formId, modIndex);
+  }
   return rec;
 }
 
@@ -511,6 +536,22 @@ EspCoordinator::translateFormIds(record::raw::ALCH rec, int modIndex) const {
   return rec;
 }
 
+template<> record::raw::WTHR
+EspCoordinator::translateFormIds(record::raw::WTHR rec, int modIndex) const {
+  for (auto &sound : rec.sounds) {
+    sound.data = translateFormIds(sound.data, modIndex);
+  }
+  return rec;
+}
+
+template<> record::raw::CLMT
+EspCoordinator::translateFormIds(record::raw::CLMT rec, int modIndex) const {
+  if (rec.weatherList) {
+    rec.weatherList->data = translateFormIds(rec.weatherList->data, modIndex);
+  }
+  return rec;
+}
+
 template<>
 record::raw::CELL
 EspCoordinator::translateFormIds(record::raw::CELL rec, int modIndex) const {
@@ -564,6 +605,14 @@ EspCoordinator::translateFormIds(record::raw::LAND rec, int modIndex) const {
         translateFormIds(rec.coarseTextures->data, modIndex);
   }
 
+  return rec;
+}
+
+template<> record::raw::WATR
+EspCoordinator::translateFormIds(record::raw::WATR rec, int modIndex) const {
+  if (rec.variants) {
+    rec.variants->data = translateFormIds(rec.variants->data, modIndex);
+  }
   return rec;
 }
 
