@@ -7,5 +7,5 @@ uniform vec4 diffuseCol;
 out vec4 FragColor;
 
 void main() {
-    FragColor = texture2D(diffuseMap, TexCoord) * diffuseCol;
+    FragColor = texture(diffuseMap, TexCoord) * diffuseCol;
 }

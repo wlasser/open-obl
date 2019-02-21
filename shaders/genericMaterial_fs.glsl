@@ -24,9 +24,9 @@ void main() {
     float gamma = 2.2f;
 
     // Undo gamma correction of texture so it is correct later
-    vec3 diffuseColor = pow(texture2D(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
+    vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
 
-    vec3 normal = texture2D(normalMap, TexCoord).xyz;
+    vec3 normal = texture(normalMap, TexCoord).xyz;
     // Convert from dx to gl by flipping the green channel
     normal.y = 1.0f - normal.y;
     // Transform normal from [0, 1] -> [-1, 1]
