@@ -157,6 +157,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         src/terrain_material_generator.cpp
+        src/time_manager.cpp
         include/application.hpp
         include/application_context.hpp
         include/bitflag.hpp
@@ -216,7 +217,8 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
         include/settings.hpp
-        include/terrain_material_generator.hpp)
+        include/terrain_material_generator.hpp
+        include/time_manager.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

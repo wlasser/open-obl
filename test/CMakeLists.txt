@@ -13,7 +13,9 @@ add_subdirectory(gui)
 add_subdirectory(io)
 add_subdirectory(scripting)
 
-target_sources(OpenOblivionTest PRIVATE meta.cpp)
+target_sources(OpenOblivionTest PRIVATE chrono.cpp meta.cpp
+        ${CMAKE_SOURCE_DIR}/src/game_settings.cpp
+        ${CMAKE_SOURCE_DIR}/src/time_manager.cpp)
 
 target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionFS
