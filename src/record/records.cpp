@@ -962,8 +962,8 @@ template<> uint32_t GRAS::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
-      + SizeOf(textureHash);
-  +SizeOf(data);
+      + SizeOf(textureHash)
+      + SizeOf(data);
 }
 
 template<> std::ostream &
