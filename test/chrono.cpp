@@ -45,3 +45,18 @@ TEST_CASE("Can set the date") {
   const oo::chrono::year_month_day ymd(now);
   REQUIRE(ymd == date);
 }
+
+TEST_CASE("Interface with Globals is invertible") {
+  oo::chrono::GameClock::reset();
+  oo::chrono::GameClock::advance(oo::chrono::seconds(123456789));
+  const auto t0{oo::chrono::GameClock::now()};
+  oo::chrono::GameClock::updateGlobals();
+  oo::chrono::GameClock::updateFromGlobals();
+  const auto t1{oo::chrono::GameClock::now()};
+
+  // We can't actually expect 100% accuracy here because of the precision of
+  // float. Being accuracte to seconds is good enough.
+  // TODO: Test the largest possible time.
+  REQUIRE(oo::chrono::time_point_cast<oo::chrono::seconds>(t0) ==
+      oo::chrono::time_point_cast<oo::chrono::seconds>(t1));
+}

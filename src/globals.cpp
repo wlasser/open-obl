@@ -8,10 +8,13 @@
 namespace oo {
 
 Globals::Globals() {
-//  mValues["GameEra"].emplace<int16_t>(3);
-//  mValues["GameYear"].emplace<int16_t>(433);
-//  mValues["GameMonth"].emplace<int16_t>(unsigned(chrono::LastSeed));
-//  mValues["GameDay"].emplace<int16_t>(25); // 26th
+  mValues["GameEra"].emplace<int16_t>(0);
+  mValues["GameYear"].emplace<int16_t>(0);
+  mValues["GameMonth"].emplace<int16_t>(0);
+  mValues["GameDay"].emplace<int16_t>(0);
+  mValues["GameHour"].emplace<float>(0.0f);
+  mValues["TimeScale"].emplace<int16_t>(30);
+  mValues["GameDaysPassed"].emplace<int16_t>(0);
 }
 
 Globals &Globals::getSingleton() {

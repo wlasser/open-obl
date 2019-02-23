@@ -98,8 +98,21 @@ class GameClock {
   static void setDate(const chrono::year_month_day &date) noexcept
   /*C++20: [[expects : date > GameClock::getEpochDate()]]*/;
 
+  /// Get the clock time as a calendar date.
+  static chrono::year_month_day getDate() noexcept;
+
   /// Reset the clock back to the epoch.
   static void reset() noexcept { ticks = 0; }
+
+  /// Update all time-related `record::GLOB` records with the current clock
+  /// time. This should be called whenever the clock time is changed, such as
+  /// through `advance()` or `setDate()`.
+  static void updateGlobals();
+
+  /// Update the clock time to reflect the time-related `record::GLOB` records.
+  /// This should be called whenever a time-related global is updated without
+  /// the clock's knowledge, such as by a script.
+  static void updateFromGlobals();
 
  private:
   /// Each tick is 1 ms in the game world.
