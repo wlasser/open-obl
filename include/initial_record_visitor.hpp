@@ -24,6 +24,9 @@ class InitialRecordVisitor {
   void readRecord<record::GMST>(oo::EspAccessor &accessor);
 
   template<>
+  void readRecord<record::GLOB>(oo::EspAccessor &accessor);
+
+  template<>
   void readRecord<record::RACE>(oo::EspAccessor &accessor);
 
   template<>

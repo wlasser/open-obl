@@ -1,5 +1,6 @@
 #include "esp_coordinator.hpp"
 #include "game_settings.hpp"
+#include "globals.hpp"
 #include "initial_record_visitor.hpp"
 #include "record/group.hpp"
 #include "record/records.hpp"
@@ -21,6 +22,12 @@ template<>
 void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::GMST>().value};
   GameSettings::getSingleton().load(rec, true);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::GLOB>(oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<record::GLOB>().value};
+  Globals::getSingleton().load(rec, true);
 }
 
 template<>

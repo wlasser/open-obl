@@ -31,6 +31,11 @@ class Globals {
 
   static Globals &getSingleton();
 
+  /// Load the setting from a `record::GLOB`, optionally overwriting any
+  /// existing value with the new one
+  /// \warning The type of a global will not be changed, even if `overwrite` is
+  ///          true. This is mostly because `GameHour` is incorrectly typed in
+  ///          `oblivion.esm` as a `short` instead of a `float`.
   void load(const record::GLOB &rec, bool overwrite = true);
 
   template<class T> tl::optional<T> get(const std::string &edid) const;

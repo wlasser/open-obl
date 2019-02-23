@@ -27,29 +27,28 @@ Globals &Globals::getSingleton() {
 void Globals::load(const record::GLOB &rec, bool overwrite) {
   std::string key{rec.editorId.data};
 
-  switch (rec.type.data) {
-    case 's':
-      // C++20: if (overwrite || !mValues.contains(key)) {
-      if (overwrite || mValues.count(key) == 0) {
-        mValues[key].emplace<int16_t>(rec.value.data);
-      }
-      break;
-    case 'l':
-      // C++20: if (overwrite || !mValues.contains(key)) {
-      if (overwrite || mValues.count(key) == 0) {
-        mValues[key].emplace<int32_t>(rec.value.data);
-      }
-      break;
-    case 'f':
-      // C++20: if (overwrite || !mValues.contains(keys)) {
-      if (overwrite || mValues.count(key) == 0) {
-        mValues[key].emplace<float>(rec.value.data);
-      }
-      break;
-    default:
-      spdlog::get(oo::LOG)->warn("GLOB {} has invalid type '{0:#x}'",
-                                 key, rec.type.data);
-      break;
+  //C++20: if (mValues.contains(key)) {
+  if (mValues.count(key) == 0) {
+    switch (rec.type.data) {
+      case 's':mValues[key].emplace<int16_t>(rec.value.data);
+        break;
+      case 'l':mValues[key].emplace<int32_t>(rec.value.data);
+        break;
+      case 'f':mValues[key].emplace<float>(rec.value.data);
+        break;
+      default:
+        spdlog::get(oo::LOG)->warn("GLOB {} has invalid type '{0:#x}'",
+                                   key, rec.type.data);
+        break;
+    }
+  } else if (overwrite) {
+    if (std::holds_alternative<int16_t>(mValues[key])) {
+      mValues[key].emplace<int16_t>(static_cast<int16_t>(rec.value.data));
+    } else if (std::holds_alternative<int32_t>(mValues[key])) {
+      mValues[key].emplace<int32_t>(static_cast<int32_t>(rec.value.data));
+    } else {
+      mValues[key].emplace<float>(static_cast<float>(rec.value.data));
+    }
   }
 }
 

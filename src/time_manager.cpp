@@ -21,7 +21,7 @@ GameClock::time_point GameClock::now() noexcept {
 
 void GameClock::advance(float delta) noexcept {
   const auto &globs{Globals::getSingleton()};
-  ticks += static_cast<uint64_t>(1000.0f * globs.fGet("TimeScale") * delta);
+  ticks += static_cast<uint64_t>(1000.0f * globs.sGet("TimeScale") * delta);
 }
 
 chrono::year_month_day GameClock::getEpochDate() noexcept {
@@ -47,7 +47,7 @@ void GameClock::updateGlobals() {
 
   const auto time{GameClock::now() - chrono::game_days(now)};
   auto milliseconds{chrono::duration_cast<chrono::milliseconds>(time).count()};
-  globs.fGet("GameHour") = milliseconds / 3600000.0f;
+  globs.fGet("GameHour") = milliseconds / (1000.0f * 60.0f * 60.0f);
 }
 
 void GameClock::updateFromGlobals() {
@@ -58,7 +58,7 @@ void GameClock::updateFromGlobals() {
   GameClock::setDate(year / month / day);
 
   float hours{globs.fGet("GameHour")};
-  auto milliseconds{static_cast<uint64_t>(hours * 3600000.0f)};
+  auto milliseconds{static_cast<uint64_t>(hours * (1000.0f * 60.0f * 60.0f))};
   GameClock::advance(chrono::milliseconds(milliseconds));
 }
 
