@@ -531,6 +531,26 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
 }
 
+void oo::World::unloadTerrain(oo::ExteriorCell &cell) {
+  getPhysicsWorld()->removeCollisionObject(cell.getCollisionObject());
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+
+  const auto cellRec{cellRes.get(cell.getBaseId())};
+  if (!cellRec) return;
+
+  CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+  unloadTerrain(pos);
+}
+
+void oo::World::unloadTerrain(CellIndex index) {
+  auto x{qvm::X(index)};
+  auto y{qvm::Y(index)};
+  mTerrainGroup.unloadTerrain(2 * x + 0, 2 * y + 0);
+  mTerrainGroup.unloadTerrain(2 * x + 1, 2 * y + 0);
+  mTerrainGroup.unloadTerrain(2 * x + 0, 2 * y + 1);
+  mTerrainGroup.unloadTerrain(2 * x + 1, 2 * y + 1);
+}
+
 oo::ReifyRecordTrait<record::WRLD>::type
 oo::reifyRecord(const record::WRLD &refRec,
                 ReifyRecordTrait<record::WRLD>::resolvers resolvers) {

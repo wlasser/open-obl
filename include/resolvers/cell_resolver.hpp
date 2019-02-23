@@ -261,6 +261,8 @@ class ExteriorCell : public Cell {
   std::array<float, 33u * 33u> mTerrainHeights;
   std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
   std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
+
+  void destroyMovableObjects(Ogre::SceneNode *root);
 };
 
 template<>

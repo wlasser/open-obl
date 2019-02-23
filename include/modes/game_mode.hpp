@@ -55,6 +55,7 @@ class GameMode {
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
   std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
+  World::CellIndex mCenterCell{};
   bool mInInterior{true};
 
   oo::PlayerControllerPtr mPlayerController{};
@@ -91,6 +92,13 @@ class GameMode {
 
   /// Update the enabled animation states of all entities in the scene.
   void updateAnimation(float delta);
+
+  /// Update the centred cell if it has changed, loading new cells and unloading
+  /// old ones as appropriate.
+  /// Specifically, if the player has moved to a different cell this frame then
+  /// load all unloaded cells in the neighbourhood of the player and unload the
+  /// loaded cells outside of the neighbourhood.
+  void updateCenterCell(ApplicationContext &ctx);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<

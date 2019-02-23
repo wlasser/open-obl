@@ -216,8 +216,33 @@ ExteriorCell::ExteriorCell(oo::BaseId baseId, std::string name,
               getBaseId().string()))) {}
 
 ExteriorCell::~ExteriorCell() {
+  destroyMovableObjects(mRootSceneNode);
+  mRootSceneNode->removeAndDestroyAllChildren();
   mScnMgr->destroySceneNode(mRootSceneNode);
 }
+
+void oo::ExteriorCell::destroyMovableObjects(Ogre::SceneNode *root) {
+  if (!root) return;
+
+  // Detached objects are notified of their detachment so each object must be
+  // detached before it is destroyed.
+
+  // Repeatedly detach and destroy the last element.
+  auto &objects{root->getAttachedObjects()};
+  while (!objects.empty()) {
+    // Ogre pops and swaps to remove the object and needs an O(n) lookup if
+    // we detach by pointer instead of index.
+    auto *obj{root->detachObject(objects.size() - 1)};
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      mPhysicsWorld->removeRigidBody(rigidBody->getRigidBody());
+    }
+    mScnMgr->destroyMovableObject(obj);
+  }
+
+  for (auto *node : root->getChildren()) {
+    destroyMovableObjects(dynamic_cast<Ogre::SceneNode *>(node));
+  }
+};
 
 gsl::not_null<Ogre::SceneManager *> ExteriorCell::getSceneManager() const {
   return mScnMgr;

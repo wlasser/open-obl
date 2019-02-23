@@ -138,6 +138,13 @@ class World {
   /// Load the terrain of the given cell, notifying the cell of its terrain.
   void loadTerrain(oo::ExteriorCell &cell);
 
+  /// Unload the terrain of the given cell, removing its collision object from
+  /// the world.
+  void unloadTerrain(oo::ExteriorCell &cell);
+
+  /// Unload the tarrain of the cell with the given coordinates.
+  void unloadTerrain(CellIndex index);
+
   /// Return a neighbourhood of the cell at the given position.
   /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
   /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of

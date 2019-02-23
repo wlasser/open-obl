@@ -9,6 +9,7 @@
 #include "settings.hpp"
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
+#include <absl/container/flat_hash_set.h>
 #include <spdlog/fmt/ostr.h>
 
 namespace oo {
@@ -240,7 +241,8 @@ void GameMode::enter(ApplicationContext &ctx) {
 //    loadInteriorCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
   loadWorldspace(ctx, oo::BaseId{0x00'00003c});
   mInInterior = false;
-  for (const auto &row : mWrld->getNeighbourhood({25, -38}, 3)) {
+  mCenterCell = World::CellIndex{25, -38};
+  for (const auto &row : mWrld->getNeighbourhood(mCenterCell, 3)) {
     for (const auto &id : row) {
       loadExteriorCell(ctx, id);
     }
@@ -260,7 +262,45 @@ void GameMode::refocus(ApplicationContext &) {
   sdl::setRelativeMouseMode(true);
 }
 
+void GameMode::updateCenterCell(ApplicationContext &ctx) {
+  // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
+  auto pos{mPlayerController->getCamera()->getDerivedPosition()};
+  auto cellIndex{mWrld->getCellIndex(pos.x * oo::unitsPerMeter<float>,
+                                     -pos.z * oo::unitsPerMeter<float>)};
+
+  if (cellIndex == mCenterCell) return;
+
+  // Update the centre position and find all cells in the neighbourhood,
+  // loading any that aren't loaded. The set is to provide fast lookup of cells
+  // that need to be unloaded in the next step.
+  mCenterCell = cellIndex;
+  auto neighbours{mWrld->getNeighbourhood(mCenterCell, 3)};
+  absl::flat_hash_set<oo::BaseId> neighbourSet;
+  for (const auto &row : neighbours) {
+    for (auto id : row) {
+      neighbourSet.emplace(id);
+      auto p = [id](const auto &cell) { return cell->getBaseId() == id; };
+      if (std::none_of(mExteriorCells.begin(), mExteriorCells.end(), p)) {
+        loadExteriorCell(ctx, id);
+      }
+    }
+  }
+
+  // Remove any previously loaded cells that are not in the new neighbourhood.
+  // Use std::partition instead of std::remove_if because we need to do some
+  // processing on the cells to be removed before getting rid of them;
+  // std::remove_if leaves the to-be-removed elements in a valid but
+  // unspecified state.
+  auto begin{mExteriorCells.begin()}, end{mExteriorCells.end()};
+  auto it{std::partition(begin, end, [&neighbourSet](const auto &ptr) {
+    return neighbourSet.contains(ptr->getBaseId());
+  })};
+  for (auto jt = it; jt != end; ++jt) mWrld->unloadTerrain(**jt);
+  mExteriorCells.erase(it, end);
+}
+
 void GameMode::update(ApplicationContext &ctx, float delta) {
+  updateCenterCell(ctx);
   updateAnimation(delta);
   mPlayerController->update(delta);
   getPhysicsWorld()->stepSimulation(delta);
