@@ -15,6 +15,7 @@ add_subdirectory(scripting)
 
 target_sources(OpenOblivionTest PRIVATE chrono.cpp meta.cpp
         ${CMAKE_SOURCE_DIR}/src/game_settings.cpp
+        ${CMAKE_SOURCE_DIR}/src/globals.cpp
         ${CMAKE_SOURCE_DIR}/src/time_manager.cpp)
 
 target_link_libraries(OpenOblivionTest PRIVATE
@@ -25,4 +26,5 @@ target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionScripting
         Catch2::Catch2
         GSL
-        taocpp::pegtl)
+        taocpp::pegtl
+        tloptional)

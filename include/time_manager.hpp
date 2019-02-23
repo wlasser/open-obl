@@ -38,13 +38,28 @@ class TimeManager {
 namespace chrono {
 
 using std::chrono::duration;
+using std::chrono::duration_cast;
 using std::chrono::time_point;
 using std::chrono::time_point_cast;
 
+using std::chrono::nanoseconds;
+using std::chrono::microseconds;
+using std::chrono::milliseconds;
+using std::chrono::seconds;
+using std::chrono::minutes;
+using std::chrono::hours;
 using days   = chrono::duration<int32_t, std::ratio<86400>>;
 using weeks  = chrono::duration<int32_t, std::ratio<604800>>;
 using months = chrono::duration<int32_t, std::ratio<2629746>>;
 using years  = chrono::duration<int32_t, std::ratio<31556952>>;
+
+class day;
+class month;
+class year;
+class weekday;
+class month_day;
+class year_month;
+class year_month_day;
 
 /// Models the *Cpp17Clock* concept.
 /// This acts as a replacement for `std::chrono::system_clock`, representing the
@@ -52,18 +67,42 @@ using years  = chrono::duration<int32_t, std::ratio<31556952>>;
 /// Epoch is 12am Sundas 26th of Last Seed.
 class GameClock {
  public:
-  using duration = std::chrono::seconds;
+  using duration = std::chrono::milliseconds;
   using rep = duration::rep;
   using period = duration::period;
   using time_point = std::chrono::time_point<GameClock>;
   static const bool is_steady = false;
 
-  static time_point now() noexcept {
-    return time_point(duration(ticks));
+  static time_point now() noexcept;
+
+  /// Update the internal tick count by an external amount of seconds `delta`.
+  /// The given `delta` is multiplied by the `record::GLOB` `TimeScale` to
+  /// obtain the in-world amount of time.
+  /// This should be called exactly once every frame that gameplay is occurring
+  /// and the state of the world is advancing alongside the direct experience of
+  /// the player.
+  static void advance(float delta) noexcept/*C++20: [[expects: delta >= 0]]*/;
+
+  /// Advance the internal tick count by the given duration of game time.
+  /// If `t_0` is the value of `now()` before this call and `t_1` is the value
+  /// of `now()` immediately after, then `t_1 - t_0 = duration.`
+  template<class Duration> static void advance(Duration duration) noexcept
+  /*C++20: [[expects : duration >= Duration::zero()]]*/ {
+    ticks += chrono::duration_cast<GameClock::duration>(duration).count();
   }
 
+  /// Get the calendar date of the epoch.
+  static chrono::year_month_day getEpochDate() noexcept;
+
+  /// Set the clock to the given calendar time.
+  static void setDate(const chrono::year_month_day &date) noexcept
+  /*C++20: [[expects : date > GameClock::getEpochDate()]]*/;
+
+  /// Reset the clock back to the epoch.
+  static void reset() noexcept { ticks = 0; }
+
  private:
-  /// Each tick is 1 second in the game world.
+  /// Each tick is 1 ms in the game world.
   static uint64_t ticks;
 };
 
@@ -76,14 +115,6 @@ using game_time = std::chrono::time_point<GameClock, Duration>;
 using game_seconds = game_time<std::chrono::seconds>;
 using game_days = game_time<chrono::days>;
 /// @}
-
-class day;
-class month;
-class year;
-class weekday;
-class month_day;
-class year_month;
-class year_month_day;
 
 constexpr day operator+(const day &d, const days &ds) noexcept;
 constexpr day operator+(const days &ds, const day &d) noexcept;
@@ -725,8 +756,8 @@ class year_month_day {
       if (mM >= chrono::LastSeed) daysIntoTheYear += 31;
       if (mM >= chrono::Heartfire) daysIntoTheYear += 31;
       if (mM >= chrono::Frostfall) daysIntoTheYear += 30;
-      if (mM >= chrono::SunsDusk) daysIntoTheYear += 31;
-      if (mM >= chrono::EveningStar) daysIntoTheYear += 30;
+      if (mM >= chrono::SunsDusk) daysIntoTheYear += 30;
+      if (mM >= chrono::EveningStar) daysIntoTheYear += 31;
 
       return chrono::game_days()
           + chrono::days(365 * yearDiff + daysIntoTheYear - 238);
