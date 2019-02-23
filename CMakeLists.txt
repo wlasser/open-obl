@@ -127,6 +127,7 @@ target_sources(OpenOblivion PRIVATE
         src/esp_coordinator.cpp
         src/fnt_loader.cpp
         src/game_settings.cpp
+        src/globals.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
@@ -182,6 +183,7 @@ target_sources(OpenOblivion PRIVATE
         include/esp_coordinator.hpp
         include/fnt_loader.hpp
         include/game_settings.hpp
+        include/globals.hpp
         include/initial_record_visitor.hpp
         include/keep_strategy.hpp
         include/meta.hpp
