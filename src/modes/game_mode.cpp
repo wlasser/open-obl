@@ -1,4 +1,5 @@
 #include "game_settings.hpp"
+#include "globals.hpp"
 #include "gui/menu.hpp"
 #include "meta.hpp"
 #include "modes/console_mode.hpp"
@@ -6,6 +7,7 @@
 #include "modes/loading_menu_mode.hpp"
 #include "modes/menu_mode.hpp"
 #include "settings.hpp"
+#include "time_manager.hpp"
 #include "sdl/sdl.hpp"
 #include <spdlog/fmt/ostr.h>
 
@@ -263,6 +265,8 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   mPlayerController->update(delta);
   getPhysicsWorld()->stepSimulation(delta);
   dispatchCollisions();
+  chrono::GameClock::advance(delta);
+  chrono::GameClock::updateGlobals();
 
   if (mDebugDrawer) {
     mDebugDrawer->clearLines();
