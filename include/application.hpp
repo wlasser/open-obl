@@ -186,6 +186,9 @@ class Application : public Ogre::FrameListener {
   /// Register all the console commands with the console engine.
   void registerConsoleFunctions();
 
+  /// Register all scripting commands with the scripting engine.
+  void registerScriptFunctions();
+
  public:
   explicit Application(std::string windowName);
 

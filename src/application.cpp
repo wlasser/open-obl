@@ -28,7 +28,9 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
+#include "script_functions.hpp"
 #include "scripting/console_engine.hpp"
+#include "scripting/script_engine.hpp"
 #include "sdl/sdl.hpp"
 #include "terrain_material_generator.hpp"
 #include <boost/algorithm/string.hpp>
@@ -83,6 +85,10 @@ Application::Application(std::string windowName) : FrameListener() {
   // Start the developer console backend
   ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
   registerConsoleFunctions();
+
+  // Star the scripting backend
+  ctx.scriptEngine = std::make_unique<oo::ScriptEngine>();
+  registerScriptFunctions();
 
   // Add the resource managers
   ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
@@ -496,6 +502,16 @@ void Application::registerConsoleFunctions() {
   rcf("ShowMap", &console::ShowMap);
   rcf("ShowRaceMenu", &console::ShowRaceMenu);
   rcf("ShowSpellmaking", &console::ShowSpellmaking);
+  rcf("GetCurrentTime", &script::GetCurrentTime);
+}
+
+void Application::registerScriptFunctions() {
+  auto rsf = [this](const std::string &name, auto F) {
+    using F_t = std::remove_pointer_t<decltype(F)>;
+    ctx.scriptEngine->registerFunction<F_t>(name);
+  };
+
+  rsf("GetCurrentTime", &script::GetCurrentTime);
 }
 
 void Application::pollEvents() {

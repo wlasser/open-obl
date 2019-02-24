@@ -14,6 +14,7 @@
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
+#include "scripting/script_engine.hpp"
 
 namespace oo {
 
@@ -73,6 +74,10 @@ oo::RefrResolversRef ApplicationContext::getRefrResolvers() const {
 
 oo::ConsoleEngine &ApplicationContext::getConsoleEngine() {
   return *consoleEngine;
+}
+
+oo::ScriptEngine &ApplicationContext::getScriptEngine() {
+  return *scriptEngine;
 }
 
 Ogre::OverlaySystem *ApplicationContext::getOverlaySystem() {

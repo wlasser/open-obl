@@ -34,6 +34,7 @@ class EspCoordinator;
 class ConsoleEngine;
 class MeshLoader;
 class CollisionObjectLoader;
+class ScriptEngine;
 class SkeletonLoader;
 
 namespace event {
@@ -73,6 +74,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::TerrainGlobalOptions> terrainOptions{};
 
   std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
+  std::unique_ptr<oo::ScriptEngine> scriptEngine{};
 
   std::unique_ptr<oo::MeshLoader> nifLoader{};
   std::unique_ptr<oo::CollisionObjectLoader> nifCollisionLoader{};
@@ -112,6 +114,7 @@ class ApplicationContext {
   oo::RefrResolversRef getRefrResolvers() const;
 
   oo::ConsoleEngine &getConsoleEngine();
+  oo::ScriptEngine &getScriptEngine();
 
   Ogre::OverlaySystem *getOverlaySystem();
 
