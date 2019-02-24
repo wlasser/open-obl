@@ -110,6 +110,10 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   mImpl.rigidBody->setWorldTransform(trans);
 }
 
+Ogre::Vector3 PlayerController::getPosition() const noexcept {
+  return mImpl.bodyNode->getPosition();
+}
+
 void PlayerController::attachCamera(gsl::not_null<Ogre::Camera *> camera,
                                     gsl::not_null<Ogre::SceneNode *> node) {
   const auto h{(0.95f - 0.5f) * mImpl.height - mImpl.getCapsuleHeight() / 2.0f};

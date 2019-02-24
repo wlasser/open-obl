@@ -44,6 +44,8 @@ class PlayerController {
   void handleCollision(const btCollisionObject *other,
                        const btManifoldPoint &contact);
 
+  Ogre::Vector3 getPosition() const noexcept;
+
  private:
   PlayerControllerImpl mImpl{};
   StateVariant mState{};

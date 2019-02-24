@@ -264,7 +264,7 @@ void GameMode::refocus(ApplicationContext &) {
 
 void GameMode::updateCenterCell(ApplicationContext &ctx) {
   // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
-  auto pos{mPlayerController->getCamera()->getDerivedPosition()};
+  auto pos{mPlayerController->getPosition()};
   auto cellIndex{mWrld->getCellIndex(pos.x * oo::unitsPerMeter<float>,
                                      -pos.z * oo::unitsPerMeter<float>)};
 
@@ -300,13 +300,16 @@ void GameMode::updateCenterCell(ApplicationContext &ctx) {
 }
 
 void GameMode::update(ApplicationContext &ctx, float delta) {
-  updateCenterCell(ctx);
   updateAnimation(delta);
   mPlayerController->update(delta);
   getPhysicsWorld()->stepSimulation(delta);
   dispatchCollisions();
   chrono::GameClock::advance(delta);
   chrono::GameClock::updateGlobals();
+
+  if (!mInInterior) {
+    updateCenterCell(ctx);
+  }
 
   if (mDebugDrawer) {
     mDebugDrawer->clearLines();
