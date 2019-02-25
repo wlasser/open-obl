@@ -21,6 +21,7 @@ material __skyMaterial {
                 param_named upperSkyColor vec3
                 param_named lowerCloudColor vec3
                 param_named upperCloudColor vec3
+                param_named horizonColor vec3
             }
 
             texture_unit lowerLayer {

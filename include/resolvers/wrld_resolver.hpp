@@ -101,6 +101,7 @@ class Weather {
   Ogre::ColourValue getUpperSkyColor(chrono::QualitativeTimeOfDay tod) const;
   Ogre::ColourValue getLowerCloudColor(chrono::QualitativeTimeOfDay tod) const;
   Ogre::ColourValue getUpperCloudColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getHorizonColor(chrono::QualitativeTimeOfDay tod) const;
 
   void setSkyDome(Ogre::SceneManager *scnMgr);
 
