@@ -17,11 +17,11 @@ material __skyMaterial {
             fragment_program_ref sky_fs_glsl {
                 param_named lowerLayer int 0
                 param_named upperLayer int 1
-                param_named lowerSkyColor vec3
-                param_named upperSkyColor vec3
-                param_named lowerCloudColor vec3
-                param_named upperCloudColor vec3
-                param_named horizonColor vec3
+                param_named lowerSkyColor vec3 0 0 0
+                param_named upperSkyColor vec3 0 0 0
+                param_named lowerCloudColor vec3 0 0 0
+                param_named upperCloudColor vec3 0 0 0
+                param_named horizonColor vec3 0 0 0
             }
 
             texture_unit lowerLayer {
