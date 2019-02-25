@@ -4,6 +4,7 @@
 #include "conversions.hpp"
 #include "esp_coordinator.hpp"
 #include "resolvers/resolvers.hpp"
+#include "time_manager.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <boost/multi_array.hpp>
@@ -11,6 +12,7 @@
 #include <OgreSceneManager.h>
 #include <OGRE/Terrain/OgreTerrainGroup.h>
 #include <tl/optional.hpp>
+#include <random>
 #include <utility>
 
 namespace oo {
@@ -86,6 +88,48 @@ class Resolver<record::WRLD>::WrldVisitor {
   // TODO: record::ROAD specialization
 };
 
+class Weather {
+ public:
+  explicit Weather(const record::WTHR &rec);
+
+  oo::BaseId getBaseId() const noexcept;
+  Ogre::MaterialPtr getMaterial() const;
+
+  Ogre::ColourValue getAmbientColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getSunlightColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getLowerSkyColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getUpperSkyColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getLowerCloudColor(chrono::QualitativeTimeOfDay tod) const;
+  Ogre::ColourValue getUpperCloudColor(chrono::QualitativeTimeOfDay tod) const;
+
+  void setSkyDome(Ogre::SceneManager *scnMgr);
+
+ private:
+  oo::BaseId mBaseId;
+  Ogre::TexturePtr mLowerCloudsTex;
+  Ogre::TexturePtr mUpperCloudsTex;
+  Ogre::MaterialPtr mSkyDomeMaterial;
+  // TODO: Support rain and fog
+
+  Ogre::ColourValue makeColor(record::raw::Color c) const noexcept;
+
+  struct Colors {
+    Ogre::ColourValue lowerSky;
+    Ogre::ColourValue upperSky;
+    Ogre::ColourValue lowerClouds;
+    Ogre::ColourValue upperClouds;
+    Ogre::ColourValue fog;
+    Ogre::ColourValue horizon;
+    Ogre::ColourValue ambient;
+    Ogre::ColourValue sun;
+    Ogre::ColourValue sunlight;
+    Ogre::ColourValue stars;
+  };
+
+  /// Environment colours for sunrise, day, sunset, and night, in that order.
+  std::array<Colors, 4u> mColors;
+};
+
 class World;
 
 template<>
@@ -95,6 +139,8 @@ struct ReifyRecordTrait<record::WRLD> {
       std::declval<Resolver<record::WRLD>::BaseResolverContext>(),
       std::declval<std::tuple<const oo::Resolver<record::WRLD> &,
                               const oo::Resolver<record::LTEX> &,
+                              const oo::Resolver<record::WTHR> &,
+                              const oo::Resolver<record::CLMT> &,
                               oo::Resolver<record::LAND> &>>()));
 };
 
@@ -145,6 +191,8 @@ class World {
   /// Unload the tarrain of the cell with the given coordinates.
   void unloadTerrain(CellIndex index);
 
+  void updateAtmosphere(const oo::chrono::minutes &time);
+
   /// Return a neighbourhood of the cell at the given position.
   /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
   /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of
@@ -189,6 +237,19 @@ class World {
   std::unique_ptr<PhysicsWorld> mPhysicsWorld;
   Ogre::TerrainGroup mTerrainGroup;
   Resolvers mResolvers;
+
+  oo::chrono::minutes mSunriseBegin{};
+  oo::chrono::minutes mSunriseEnd{};
+  oo::chrono::minutes mSunsetBegin{};
+  oo::chrono::minutes mSunsetEnd{};
+  bool mHasMasser{false};
+  bool mHasSecunda{false};
+  bool mHasSun{false};
+  unsigned int mPhaseLength{0};
+  std::vector<oo::Weather> mWeathers{};
+  std::discrete_distribution<> mWeatherDistribution{};
+  float mVolatility{};
+  std::size_t mCurrentWeather{0};
 
   using CellGrid = boost::multi_array<oo::BaseId, 2>;
 

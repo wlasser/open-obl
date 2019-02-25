@@ -1,0 +1,35 @@
+vertex_program sky_vs_glsl glsl {
+    source sky_vs.glsl
+}
+
+fragment_program sky_fs_glsl glsl {
+    source sky_fs.glsl
+}
+
+material __skyMaterial {
+    technique {
+        pass {
+            vertex_program_ref sky_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+            }
+
+            fragment_program_ref sky_fs_glsl {
+                param_named lowerLayer int 0
+                param_named upperLayer int 1
+                param_named lowerSkyColor vec3
+                param_named upperSkyColor vec3
+                param_named lowerCloudColor vec3
+                param_named upperCloudColor vec3
+            }
+
+            texture_unit lowerLayer {
+                texture "textures/sky/cloudscloudy.dds"
+            }
+
+            texture_unit upperLayer {
+                texture "textures/sky/cloudsclear.dds"
+            }
+        }
+    }
+}

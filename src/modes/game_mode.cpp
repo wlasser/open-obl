@@ -135,6 +135,7 @@ GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
   wrldRes.load(worldspaceId, oo::getResolvers<record::CELL>(baseResolvers));
 
   auto resolvers{oo::getResolvers<record::CELL, record::WRLD, record::LTEX,
+                                  record::WTHR, record::CLMT,
                                   record::LAND>(baseResolvers)};
   const auto wrldRec{*wrldRes.get(worldspaceId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
@@ -269,6 +270,11 @@ void GameMode::updateCenterCell(ApplicationContext &ctx) {
                                      -pos.z * oo::unitsPerMeter<float>)};
 
   if (cellIndex == mCenterCell) return;
+  if (cellIndex == World::CellIndex{0, 0}) {
+    // TODO: Find out why this bug happens instead of just patching over it
+    ctx.getLogger()->info("WTF");
+    return;
+  }
 
   // Update the centre position and find all cells in the neighbourhood,
   // loading any that aren't loaded. The set is to provide fast lookup of cells
@@ -304,11 +310,17 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   mPlayerController->update(delta);
   getPhysicsWorld()->stepSimulation(delta);
   dispatchCollisions();
-  chrono::GameClock::advance(delta);
+  chrono::GameClock::advance(delta * 60.0f);
   chrono::GameClock::updateGlobals();
+
+  const auto date{chrono::GameClock::getDate()};
+  const auto today{chrono::game_days(date).time_since_epoch()};
+  const auto now{chrono::GameClock::now().time_since_epoch()};
 
   if (!mInInterior) {
     updateCenterCell(ctx);
+    mWrld
+        ->updateAtmosphere(chrono::duration_cast<chrono::minutes>(now - today));
   }
 
   if (mDebugDrawer) {

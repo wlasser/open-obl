@@ -83,6 +83,132 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
   }
 }
 
+oo::Weather::Weather(const record::WTHR &rec) {
+  mBaseId = oo::BaseId{rec.mFormId};
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  if (rec.lowerLayerFilename) {
+    oo::Path basePath{"textures/" + rec.lowerLayerFilename->data};
+    mLowerCloudsTex = texMgr.getByName(basePath.c_str(), oo::RESOURCE_GROUP);
+  }
+  if (rec.upperLayerFilename) {
+    oo::Path basePath{"textures/" + rec.upperLayerFilename->data};
+    mUpperCloudsTex = texMgr.getByName(basePath.c_str(), oo::RESOURCE_GROUP);
+  }
+  const auto &skyColors{rec.skyColors->data};
+
+  auto sunrise{unsigned(oo::chrono::Sunrise)};
+  mColors[sunrise].lowerSky = makeColor(skyColors.skyLower.sunrise);
+  mColors[sunrise].upperSky = makeColor(skyColors.skyUpper.sunrise);
+  mColors[sunrise].lowerClouds = makeColor(skyColors.cloudsLower.sunrise);
+  mColors[sunrise].upperClouds = makeColor(skyColors.cloudsUpper.sunrise);
+  mColors[sunrise].fog = makeColor(skyColors.fog.sunrise);
+  mColors[sunrise].horizon = makeColor(skyColors.horizon.sunrise);
+  mColors[sunrise].ambient = makeColor(skyColors.ambient.sunrise);
+  mColors[sunrise].sun = makeColor(skyColors.sun.sunrise);
+  mColors[sunrise].sunlight = makeColor(skyColors.sunlight.sunrise);
+  mColors[sunrise].stars = makeColor(skyColors.stars.sunrise);
+
+  auto daytime{unsigned(oo::chrono::Daytime)};
+  mColors[daytime].lowerSky = makeColor(skyColors.skyLower.day);
+  mColors[daytime].upperSky = makeColor(skyColors.skyUpper.day);
+  mColors[daytime].lowerClouds = makeColor(skyColors.cloudsLower.day);
+  mColors[daytime].upperClouds = makeColor(skyColors.cloudsUpper.day);
+  mColors[daytime].fog = makeColor(skyColors.fog.day);
+  mColors[daytime].horizon = makeColor(skyColors.horizon.day);
+  mColors[daytime].ambient = makeColor(skyColors.ambient.day);
+  mColors[daytime].sun = makeColor(skyColors.sun.day);
+  mColors[daytime].sunlight = makeColor(skyColors.sunlight.day);
+  mColors[daytime].stars = makeColor(skyColors.stars.day);
+
+  auto sunset{unsigned(oo::chrono::Sunset)};
+  mColors[sunset].lowerSky = makeColor(skyColors.skyLower.sunset);
+  mColors[sunset].upperSky = makeColor(skyColors.skyUpper.sunset);
+  mColors[sunset].lowerClouds = makeColor(skyColors.cloudsLower.sunset);
+  mColors[sunset].upperClouds = makeColor(skyColors.cloudsUpper.sunset);
+  mColors[sunset].fog = makeColor(skyColors.fog.sunset);
+  mColors[sunset].horizon = makeColor(skyColors.horizon.sunset);
+  mColors[sunset].ambient = makeColor(skyColors.ambient.sunset);
+  mColors[sunset].sun = makeColor(skyColors.sun.sunset);
+  mColors[sunset].sunlight = makeColor(skyColors.sunlight.sunset);
+  mColors[sunset].stars = makeColor(skyColors.stars.sunset);
+
+  auto nighttime{unsigned(oo::chrono::Nighttime)};
+  mColors[nighttime].lowerSky = makeColor(skyColors.skyLower.night);
+  mColors[nighttime].upperSky = makeColor(skyColors.skyUpper.night);
+  mColors[nighttime].lowerClouds = makeColor(skyColors.cloudsLower.night);
+  mColors[nighttime].upperClouds = makeColor(skyColors.cloudsUpper.night);
+  mColors[nighttime].fog = makeColor(skyColors.fog.night);
+  mColors[nighttime].horizon = makeColor(skyColors.horizon.night);
+  mColors[nighttime].ambient = makeColor(skyColors.ambient.night);
+  mColors[nighttime].sun = makeColor(skyColors.sun.night);
+  mColors[nighttime].sunlight = makeColor(skyColors.sunlight.night);
+  mColors[nighttime].stars = makeColor(skyColors.stars.night);
+}
+
+void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  if (!mSkyDomeMaterial) {
+    auto matPtr{matMgr.getByName("__skyMaterial", oo::SHADER_GROUP)};
+    mSkyDomeMaterial = matPtr->clone("__skyMaterial" + getBaseId().string(),
+                                     true, oo::RESOURCE_GROUP);
+    if (mLowerCloudsTex && mUpperCloudsTex) {
+      Ogre::AliasTextureNamePairList layers{
+          {"lowerLayer", mLowerCloudsTex->getName()},
+          {"upperLayer", mUpperCloudsTex->getName()}
+      };
+      mSkyDomeMaterial->applyTextureAliases(layers, true);
+    }
+  }
+
+  scnMgr->setSkyDome(true, mSkyDomeMaterial->getName(), 10, 8, 4000, true,
+                     Ogre::Quaternion::IDENTITY, 16, 16, -1,
+                     oo::RESOURCE_GROUP);
+}
+
+oo::BaseId oo::Weather::getBaseId() const noexcept {
+  return mBaseId;
+}
+
+Ogre::MaterialPtr oo::Weather::getMaterial() const {
+  return mSkyDomeMaterial;
+}
+
+Ogre::ColourValue oo::Weather::makeColor(record::raw::Color c) const noexcept {
+  Ogre::ColourValue cv;
+  cv.setAsABGR(c.v);
+  return cv;
+}
+
+Ogre::ColourValue
+oo::Weather::getAmbientColor(oo::chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].ambient;
+}
+
+Ogre::ColourValue
+oo::Weather::getSunlightColor(oo::chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].sunlight;
+}
+
+Ogre::ColourValue
+oo::Weather::getLowerSkyColor(chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].lowerSky;
+}
+
+Ogre::ColourValue
+oo::Weather::getUpperSkyColor(chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].upperSky;
+}
+
+Ogre::ColourValue
+oo::Weather::getLowerCloudColor(chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].lowerClouds;
+}
+
+Ogre::ColourValue
+oo::Weather::getUpperCloudColor(chrono::QualitativeTimeOfDay tod) const {
+  return mColors[unsigned(tod)].upperClouds;
+}
+
 oo::BaseId oo::World::getBaseId() const {
   return mBaseId;
 }
@@ -233,17 +359,239 @@ void oo::World::makePhysicsWorld() {
 }
 
 void oo::World::makeAtmosphere() {
-  // TODO: Use climate and weather data for sun and sky
-  mScnMgr->setAmbientLight(Ogre::ColourValue{94.0f, 113.0f, 151.0f} / 255.0f);
-  auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
-  auto *sunLight{mScnMgr->createLight("__sunLight")};
-  sunNode->attachObject(sunLight);
+  auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+  auto &clmtRes{oo::getResolver<record::CLMT>(mResolvers)};
+  auto &wthrRes{oo::getResolver<record::WTHR>(mResolvers)};
+  const record::WRLD &rec{*wrldRes.get(mBaseId)};
 
-  sunNode
-      ->setDirection(0.0f, -1.0f, 0.0f, Ogre::Node::TransformSpace::TS_WORLD);
-  sunLight
-      ->setDiffuseColour(Ogre::ColourValue{255.0f, 241.0f, 223.0f} / 255.0f);
-  sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
+  const auto clmtOpt = [&]() {
+    if (rec.climate) return clmtRes.get(rec.climate->data);
+    return clmtRes.get(oo::BaseId{0x00'00015f});
+  }();
+
+  if (!clmtOpt) return;
+  const record::CLMT &clmt{*clmtOpt};
+
+  if (clmt.settings) {
+    const record::raw::TNAM_CLMT &settings{clmt.settings->data};
+
+    mSunriseBegin = oo::chrono::minutes{settings.sunriseBegin * 10};
+    mSunriseEnd = oo::chrono::minutes{settings.sunriseEnd * 10};
+    mSunsetBegin = oo::chrono::minutes{settings.sunsetBegin * 10};
+    mSunsetEnd = oo::chrono::minutes{settings.sunsetEnd * 10};
+
+    mVolatility = settings.volatility;
+
+    mHasMasser = settings.hasMasser;
+    mHasSecunda = settings.hasSecunda;
+    mPhaseLength = settings.phaseLength;
+  }
+
+  if (clmt.sunFilename) {
+    mHasSun = true;
+    oo::Path sunFilename{clmt.sunFilename->data};
+    auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
+    auto *sunLight{mScnMgr->createLight("__sunLight")};
+    sunNode->attachObject(sunLight);
+
+    sunNode->setDirection(0.0f, -1.0f, 0.0f,
+                          Ogre::Node::TransformSpace::TS_WORLD);
+    sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
+  }
+
+  if (clmt.weatherList) {
+    const auto &weathers{clmt.weatherList->data.weathers};
+    std::vector<uint32_t> chances;
+
+    chances.reserve(chances.size());
+    mWeathers.reserve(weathers.size());
+
+    for (const auto &entry : clmt.weatherList->data.weathers) {
+      auto wthrOpt{wthrRes.get(entry.formId)};
+      if (!wthrOpt) continue;
+      mWeathers.emplace_back(*wthrOpt);
+      chances.emplace_back(entry.chance);
+    }
+
+    mWeatherDistribution = std::discrete_distribution(chances.begin(),
+                                                      chances.end());
+
+    if (mWeathers.empty()) return;
+    auto &weather{mWeathers[mCurrentWeather]};
+    weather.setSkyDome(mScnMgr);
+  }
+}
+
+void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
+  if (mWeathers.empty()) return;
+  const auto &weather{mWeathers[mCurrentWeather]};
+
+  // getLight() throws if the light doesn't exist instead of returning nullptr.
+  Ogre::Light *light = [&]() -> Ogre::Light * {
+    if (mScnMgr->hasLight("__sunLight")) {
+      return mScnMgr->getLight("__sunLight");
+    }
+    return nullptr;
+  }();
+
+  auto skyMaterial{weather.getMaterial()};
+  auto skyPass = [&skyMaterial]() -> Ogre::Pass * {
+    return skyMaterial ? skyMaterial->getTechnique(0)->getPass(0) : nullptr;
+  }();
+  auto skyParams = [&skyPass]() -> Ogre::GpuProgramParametersSharedPtr {
+    return skyPass ? skyPass->getFragmentProgramParameters()
+                   : Ogre::GpuProgramParametersSharedPtr();
+  }();
+
+  if (mSunriseBegin <= time && time <= mSunriseEnd) {
+    // Sunrise
+    const auto sunriseMid{(mSunriseEnd + mSunriseBegin) / 2};
+    const auto dt{static_cast<float>((sunriseMid - mSunriseBegin).count())};
+
+    if (time <= sunriseMid) {
+      const auto c0{weather.getAmbientColor(oo::chrono::Nighttime)};
+      const auto s0{weather.getSunlightColor(oo::chrono::Nighttime)};
+      const auto ls0{weather.getLowerSkyColor(oo::chrono::Nighttime)};
+      const auto us0{weather.getUpperSkyColor(oo::chrono::Nighttime)};
+      const auto lc0{weather.getLowerCloudColor(oo::chrono::Nighttime)};
+      const auto uc0{weather.getUpperCloudColor(oo::chrono::Nighttime)};
+
+      const auto c1{weather.getAmbientColor(oo::chrono::Sunrise)};
+      const auto s1{weather.getSunlightColor(oo::chrono::Sunrise)};
+      const auto ls1{weather.getLowerSkyColor(oo::chrono::Sunrise)};
+      const auto us1{weather.getUpperSkyColor(oo::chrono::Sunrise)};
+      const auto lc1{weather.getLowerCloudColor(oo::chrono::Sunrise)};
+      const auto uc1{weather.getUpperCloudColor(oo::chrono::Sunrise)};
+
+      const float t{(time - mSunriseBegin).count() / dt};
+      const auto c{(1 - t) * c0 + t * c1};
+      const auto s{(1 - t) * s0 + t * s1};
+      const auto ls{(1 - t) * ls0 + t * ls1};
+      const auto us{(1 - t) * us0 + t * us1};
+      const auto lc{(1 - t) * lc0 + t * lc1};
+      const auto uc{(1 - t) * uc0 + t * uc1};
+
+      mScnMgr->setAmbientLight(c);
+      if (light) light->setDiffuseColour(s);
+      if (skyParams) {
+        skyParams->setNamedConstant("lowerSkyColor", ls);
+        skyParams->setNamedConstant("upperSkyColor", us);
+        skyParams->setNamedConstant("lowerCloudColor", lc);
+        skyParams->setNamedConstant("upperCloudColor", uc);
+      }
+    } else {
+      const auto c0{weather.getAmbientColor(oo::chrono::Sunrise)};
+      const auto s0{weather.getSunlightColor(oo::chrono::Sunrise)};
+      const auto ls0{weather.getLowerSkyColor(oo::chrono::Sunrise)};
+      const auto us0{weather.getUpperSkyColor(oo::chrono::Sunrise)};
+      const auto lc0{weather.getLowerCloudColor(oo::chrono::Sunrise)};
+      const auto uc0{weather.getUpperCloudColor(oo::chrono::Sunrise)};
+
+      const auto c1{weather.getAmbientColor(oo::chrono::Daytime)};
+      const auto s1{weather.getSunlightColor(oo::chrono::Daytime)};
+      const auto ls1{weather.getLowerSkyColor(oo::chrono::Daytime)};
+      const auto us1{weather.getUpperSkyColor(oo::chrono::Daytime)};
+      const auto lc1{weather.getLowerCloudColor(oo::chrono::Daytime)};
+      const auto uc1{weather.getUpperCloudColor(oo::chrono::Daytime)};
+
+      const float t{(time - sunriseMid).count() / dt};
+      const auto c{(1 - t) * c0 + t * c1};
+      const auto s{(1 - t) * s0 + t * s1};
+      const auto ls{(1 - t) * ls0 + t * ls1};
+      const auto us{(1 - t) * us0 + t * us1};
+      const auto lc{(1 - t) * lc0 + t * lc1};
+      const auto uc{(1 - t) * uc0 + t * uc1};
+
+      mScnMgr->setAmbientLight(c);
+      if (light) light->setDiffuseColour(s);
+      if (skyParams) {
+        skyParams->setNamedConstant("lowerSkyColor", ls);
+        skyParams->setNamedConstant("upperSkyColor", us);
+        skyParams->setNamedConstant("lowerCloudColor", lc);
+        skyParams->setNamedConstant("upperCloudColor", uc);
+      }
+    }
+  } else if (mSunriseEnd < time && time < mSunsetBegin) {
+    // Daytime
+    const auto c{weather.getAmbientColor(oo::chrono::Daytime)};
+    const auto s{weather.getSunlightColor(oo::chrono::Daytime)};
+    mScnMgr->setAmbientLight(c);
+    if (light) light->setDiffuseColour(s);
+  } else if (mSunsetBegin <= time && time <= mSunsetEnd) {
+    // Sunset
+    const auto sunsetMid{(mSunsetEnd + mSunsetBegin) / 2};
+    const auto dt{static_cast<float>((sunsetMid - mSunsetBegin).count())};
+
+    if (time <= sunsetMid) {
+      const auto c0{weather.getAmbientColor(oo::chrono::Daytime)};
+      const auto s0{weather.getSunlightColor(oo::chrono::Daytime)};
+      const auto ls0{weather.getLowerSkyColor(oo::chrono::Daytime)};
+      const auto us0{weather.getUpperSkyColor(oo::chrono::Daytime)};
+      const auto lc0{weather.getLowerCloudColor(oo::chrono::Daytime)};
+      const auto uc0{weather.getUpperCloudColor(oo::chrono::Daytime)};
+
+      const auto c1{weather.getAmbientColor(oo::chrono::Sunset)};
+      const auto s1{weather.getSunlightColor(oo::chrono::Sunset)};
+      const auto ls1{weather.getLowerSkyColor(oo::chrono::Sunset)};
+      const auto us1{weather.getUpperSkyColor(oo::chrono::Sunset)};
+      const auto lc1{weather.getLowerCloudColor(oo::chrono::Sunset)};
+      const auto uc1{weather.getUpperCloudColor(oo::chrono::Sunset)};
+
+      const float t{(time - mSunsetBegin).count() / dt};
+      const auto c{(1 - t) * c0 + t * c1};
+      const auto s{(1 - t) * s0 + t * s1};
+      const auto ls{(1 - t) * ls0 + t * ls1};
+      const auto us{(1 - t) * us0 + t * us1};
+      const auto lc{(1 - t) * lc0 + t * lc1};
+      const auto uc{(1 - t) * uc0 + t * uc1};
+
+      mScnMgr->setAmbientLight(c);
+      if (light) light->setDiffuseColour(s);
+      if (skyParams) {
+        skyParams->setNamedConstant("lowerSkyColor", ls);
+        skyParams->setNamedConstant("upperSkyColor", us);
+        skyParams->setNamedConstant("lowerCloudColor", lc);
+        skyParams->setNamedConstant("upperCloudColor", uc);
+      }
+    } else {
+      const auto c0{weather.getAmbientColor(oo::chrono::Sunset)};
+      const auto s0{weather.getSunlightColor(oo::chrono::Sunset)};
+      const auto ls0{weather.getLowerSkyColor(oo::chrono::Sunset)};
+      const auto us0{weather.getUpperSkyColor(oo::chrono::Sunset)};
+      const auto lc0{weather.getLowerCloudColor(oo::chrono::Sunset)};
+      const auto uc0{weather.getUpperCloudColor(oo::chrono::Sunset)};
+
+      const auto c1{weather.getAmbientColor(oo::chrono::Nighttime)};
+      const auto s1{weather.getSunlightColor(oo::chrono::Nighttime)};
+      const auto ls1{weather.getLowerSkyColor(oo::chrono::Nighttime)};
+      const auto us1{weather.getUpperSkyColor(oo::chrono::Nighttime)};
+      const auto lc1{weather.getLowerCloudColor(oo::chrono::Nighttime)};
+      const auto uc1{weather.getUpperCloudColor(oo::chrono::Nighttime)};
+
+      const float t{(time - sunsetMid).count() / dt};
+      const auto c{(1 - t) * c0 + t * c1};
+      const auto s{(1 - t) * s0 + t * s1};
+      const auto ls{(1 - t) * ls0 + t * ls1};
+      const auto us{(1 - t) * us0 + t * us1};
+      const auto lc{(1 - t) * lc0 + t * lc1};
+      const auto uc{(1 - t) * uc0 + t * uc1};
+
+      mScnMgr->setAmbientLight(c);
+      if (light) light->setDiffuseColour(s);
+      if (skyParams) {
+        skyParams->setNamedConstant("lowerSkyColor", ls);
+        skyParams->setNamedConstant("upperSkyColor", us);
+        skyParams->setNamedConstant("lowerCloudColor", lc);
+        skyParams->setNamedConstant("upperCloudColor", uc);
+      }
+    }
+  } else {
+    // Nighttime
+    const auto c{weather.getAmbientColor(oo::chrono::Nighttime)};
+    const auto s{weather.getSunlightColor(oo::chrono::Nighttime)};
+    mScnMgr->setAmbientLight(c);
+    if (light) light->setDiffuseColour(s);
+  }
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,

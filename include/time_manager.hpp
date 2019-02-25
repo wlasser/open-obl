@@ -61,6 +61,20 @@ class month_day;
 class year_month;
 class year_month_day;
 
+class QualitativeTimeOfDay {
+ private:
+  uint8_t mTime;
+ public:
+  explicit constexpr QualitativeTimeOfDay(unsigned t)
+      : mTime(static_cast<uint8_t>(t)) {}
+  explicit constexpr operator unsigned() const noexcept { return mTime; }
+};
+
+inline constexpr chrono::QualitativeTimeOfDay Sunrise{0};
+inline constexpr chrono::QualitativeTimeOfDay Daytime{1};
+inline constexpr chrono::QualitativeTimeOfDay Sunset{2};
+inline constexpr chrono::QualitativeTimeOfDay Nighttime{3};
+
 /// Models the *Cpp17Clock* concept.
 /// This acts as a replacement for `std::chrono::system_clock`, representing the
 /// time as experienced in the game world.
