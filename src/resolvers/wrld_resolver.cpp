@@ -5,6 +5,7 @@
 #include <OgrePixelFormat.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
+#include <Terrain/OgreTerrainGroup.h>
 
 std::pair<oo::Resolver<record::WRLD>::RecordIterator, bool>
 oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
@@ -790,6 +791,10 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+
+  // Check if terrain is already loaded first, if so do nothing.
+  if (mTerrainGroup.getTerrain(2 * qvm::X(pos), 2 * qvm::Y(pos))) return;
+
   loadTerrain(pos, async);
 
   std::array<Ogre::Terrain *, 4u> terrain{
@@ -945,6 +950,16 @@ void oo::World::unloadTerrain(oo::ExteriorCell &cell) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
 
   const auto cellRec{cellRes.get(cell.getBaseId())};
+  if (!cellRec) return;
+
+  CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+  unloadTerrain(pos);
+}
+
+void oo::World::unloadTerrain(oo::BaseId cellId) {
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+
+  const auto cellRec{cellRes.get(cellId)};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};

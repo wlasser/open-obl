@@ -55,6 +55,7 @@ class GameMode {
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
   std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
+  std::vector<oo::BaseId> mFarExteriorCells{};
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
 
@@ -100,8 +101,7 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
-  void loadNeighbourhood(ApplicationContext &ctx,
-                         World::CellIndex centerCell);
+  void loadNeighbourhood(ApplicationContext &ctx, World::CellIndex centerCell);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<

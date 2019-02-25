@@ -192,8 +192,11 @@ class World {
   /// the world.
   void unloadTerrain(oo::ExteriorCell &cell);
 
-  /// Unload the tarrain of the cell with the given coordinates.
+  /// Unload the terrain of the cell with the given coordinates.
   void unloadTerrain(CellIndex index);
+
+  /// Unload therrain of the cell with the given id.
+  void unloadTerrain(oo::BaseId cellId);
 
   void updateAtmosphere(const oo::chrono::minutes &time);
 

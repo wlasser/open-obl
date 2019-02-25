@@ -261,14 +261,34 @@ void GameMode::refocus(ApplicationContext &) {
 
 void GameMode::loadNeighbourhood(ApplicationContext &ctx,
                                  World::CellIndex centerCell) {
-  // Fina all cells in the neighbourhood, loading any that aren't loaded.
-  // The set will be used to provide a fast lookup of cells that need to be
-  // unloaded in the next step.
-  auto neighbours{mWrld->getNeighbourhood(centerCell, 3)};
-  absl::flat_hash_set<oo::BaseId> neighbourSet;
-  for (const auto &row : neighbours) {
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+  const auto nearDiameter{gameSettings.get<unsigned int>(
+      "General.uGridsToLoad", 3)};
+  const auto farDiameter{gameSettings.get<unsigned int>(
+      "General.uGridDistantCount", 5)};
+
+  // Find all cells in the far neighbourhood and make sure that they are loaded.
+  // The set will be used later to provide fast lookup of cells that need to be
+  // unloaded.
+  auto farNeighbours{mWrld->getNeighbourhood(centerCell, farDiameter)};
+  absl::flat_hash_set<oo::BaseId> farNeighbourSet;
+  for (const auto &row : farNeighbours) {
     for (auto id : row) {
-      neighbourSet.emplace(id);
+      farNeighbourSet.emplace(id);
+      if (std::find(mFarExteriorCells.begin(), mFarExteriorCells.end(), id)
+          == mFarExteriorCells.end()) {
+        mFarExteriorCells.emplace_back(id);
+        mWrld->loadTerrainOnly(id, false);
+      }
+    }
+  }
+
+  // Find all cells in the near neighbourhood, loading any that aren't loaded.
+  auto nearNeighbours{mWrld->getNeighbourhood(centerCell, nearDiameter)};
+  absl::flat_hash_set<oo::BaseId> nearNeighbourSet;
+  for (const auto &row : nearNeighbours) {
+    for (auto id : row) {
+      nearNeighbourSet.emplace(id);
       auto p = [id](const auto &cell) { return cell->getBaseId() == id; };
       if (std::none_of(mExteriorCells.begin(), mExteriorCells.end(), p)) {
         loadExteriorCell(ctx, id);
@@ -276,23 +296,34 @@ void GameMode::loadNeighbourhood(ApplicationContext &ctx,
     }
   }
 
-  // Remove any previously loaded cells that are not in the new neighbourhood.
-  // Use std::partition instead of std::remove_if because we need to do some
-  // processing on the cells to be removed before getting rid of them;
-  // std::remove_if leaves the to-be-removed elements in a valid but
+  // Remove any previously loaded far cells that are not in the new far
+  // neighbourhood. Note that the near neighbour is a subset of the far
+  // neighbourhood.
+  // Use std::partition instead of std::remove_if because we need
+  // to do some processing on the cells to be removed before getting rid of
+  // then; std::remove_if leaves the to-be-removed elements in a valid but
   // unspecified state.
-  auto begin{mExteriorCells.begin()}, end{mExteriorCells.end()};
-  auto it{std::partition(begin, end, [&neighbourSet](const auto &ptr) {
-    return neighbourSet.contains(ptr->getBaseId());
-  })};
-  for (auto jt = it; jt != end; ++jt) mWrld->unloadTerrain(**jt);
-  mExteriorCells.erase(it, end);
+  {
+    auto begin{mFarExteriorCells.begin()}, end{mFarExteriorCells.end()};
+    auto it{std::partition(begin, end, [&farNeighbourSet](auto id) {
+      return farNeighbourSet.contains(id);
+    })};
+    for (auto jt = it; jt != end; ++jt) mWrld->unloadTerrain(*jt);
+    mFarExteriorCells.erase(it, end);
+  }
 
-  auto lodNeighbours{mWrld->getNeighbourhood(mCenterCell, 10)};
-  for (const auto &row : lodNeighbours) {
-    for (auto id : row) {
-      mWrld->loadTerrainOnly(id, false);
+  // Remove any previously loaded near cells that are not in the new near
+  // neighbour, in particular removing their terrain collision object, but do
+  // not unload their terrain.
+  {
+    auto begin{mExteriorCells.begin()}, end{mExteriorCells.end()};
+    auto it{std::partition(begin, end, [&nearNeighbourSet](const auto &ptr) {
+      return nearNeighbourSet.contains(ptr->getBaseId());
+    })};
+    for (auto jt = it; jt != end; ++jt) {
+      getPhysicsWorld()->removeCollisionObject((*jt)->getCollisionObject());
     }
+    mExteriorCells.erase(it, end);
   }
 }
 
