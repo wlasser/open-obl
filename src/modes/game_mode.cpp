@@ -243,11 +243,7 @@ void GameMode::enter(ApplicationContext &ctx) {
   loadWorldspace(ctx, oo::BaseId{0x00'00003c});
   mInInterior = false;
   mCenterCell = World::CellIndex{25, -38};
-  for (const auto &row : mWrld->getNeighbourhood(mCenterCell, 3)) {
-    for (const auto &id : row) {
-      loadExteriorCell(ctx, id);
-    }
-  }
+  loadNeighbourhood(ctx, mCenterCell);
 
   addPlayerToScene(ctx);
   mPlayerController->moveTo(oo::fromBSCoordinates(Ogre::Vector3{
@@ -263,24 +259,12 @@ void GameMode::refocus(ApplicationContext &) {
   sdl::setRelativeMouseMode(true);
 }
 
-void GameMode::updateCenterCell(ApplicationContext &ctx) {
-  // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
-  auto pos{mPlayerController->getPosition()};
-  auto cellIndex{mWrld->getCellIndex(pos.x * oo::unitsPerMeter<float>,
-                                     -pos.z * oo::unitsPerMeter<float>)};
-
-  if (cellIndex == mCenterCell) return;
-  if (cellIndex == World::CellIndex{0, 0}) {
-    // TODO: Find out why this bug happens instead of just patching over it
-    ctx.getLogger()->info("WTF");
-    return;
-  }
-
-  // Update the centre position and find all cells in the neighbourhood,
-  // loading any that aren't loaded. The set is to provide fast lookup of cells
-  // that need to be unloaded in the next step.
-  mCenterCell = cellIndex;
-  auto neighbours{mWrld->getNeighbourhood(mCenterCell, 3)};
+void GameMode::loadNeighbourhood(ApplicationContext &ctx,
+                                 World::CellIndex centerCell) {
+  // Fina all cells in the neighbourhood, loading any that aren't loaded.
+  // The set will be used to provide a fast lookup of cells that need to be
+  // unloaded in the next step.
+  auto neighbours{mWrld->getNeighbourhood(centerCell, 3)};
   absl::flat_hash_set<oo::BaseId> neighbourSet;
   for (const auto &row : neighbours) {
     for (auto id : row) {
@@ -303,6 +287,33 @@ void GameMode::updateCenterCell(ApplicationContext &ctx) {
   })};
   for (auto jt = it; jt != end; ++jt) mWrld->unloadTerrain(**jt);
   mExteriorCells.erase(it, end);
+
+  auto lodNeighbours{mWrld->getNeighbourhood(mCenterCell, 10)};
+  for (const auto &row : lodNeighbours) {
+    for (auto id : row) {
+      mWrld->loadTerrainOnly(id, false);
+    }
+  }
+}
+
+bool GameMode::updateCenterCell(ApplicationContext &ctx) {
+  // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
+  auto pos{mPlayerController->getPosition()};
+  auto cellIndex{mWrld->getCellIndex(pos.x * oo::unitsPerMeter<float>,
+                                     -pos.z * oo::unitsPerMeter<float>)};
+
+  if (cellIndex == World::CellIndex{0, 0}) {
+    // TODO: Find out why this bug happens instead of just patching over it
+    ctx.getLogger()->info("WTF");
+    return false;
+  }
+
+  if (cellIndex != mCenterCell) {
+    mCenterCell = cellIndex;
+    return true;
+  }
+
+  return false;
 }
 
 void GameMode::update(ApplicationContext &ctx, float delta) {
@@ -318,9 +329,11 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   const auto now{chrono::GameClock::now().time_since_epoch()};
 
   if (!mInInterior) {
-    updateCenterCell(ctx);
-    mWrld
-        ->updateAtmosphere(chrono::duration_cast<chrono::minutes>(now - today));
+    if (updateCenterCell(ctx)) {
+      loadNeighbourhood(ctx, mCenterCell);
+    }
+    mWrld->updateAtmosphere(
+        chrono::duration_cast<chrono::minutes>(now - today));
   }
 
   if (mDebugDrawer) {

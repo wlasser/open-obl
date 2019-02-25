@@ -98,7 +98,10 @@ class GameMode {
   /// Specifically, if the player has moved to a different cell this frame then
   /// load all unloaded cells in the neighbourhood of the player and unload the
   /// loaded cells outside of the neighbourhood.
-  void updateCenterCell(ApplicationContext &ctx);
+  bool updateCenterCell(ApplicationContext &ctx);
+
+  void loadNeighbourhood(ApplicationContext &ctx,
+                         World::CellIndex centerCell);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<

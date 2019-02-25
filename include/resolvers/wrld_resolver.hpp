@@ -180,10 +180,13 @@ class World {
   oo::BaseId getCell(CellIndex index) const;
 
   /// Load the terrain of the cell with the given coordinates.
-  void loadTerrain(CellIndex index);
+  void loadTerrain(CellIndex index, bool async = true);
 
   /// Load the terrain of the given cell, notifying the cell of its terrain.
   void loadTerrain(oo::ExteriorCell &cell);
+
+  /// Load the terrain of the cell with the given id.
+  void loadTerrainOnly(oo::BaseId cellId, bool async = true);
 
   /// Unload the terrain of the given cell, removing its collision object from
   /// the world.

@@ -773,24 +773,24 @@ oo::BaseId oo::World::getCell(CellIndex index) const {
   return mCells[qvm::X(index)][qvm::Y(index)];
 }
 
-void oo::World::loadTerrain(CellIndex index) {
+void oo::World::loadTerrain(CellIndex index, bool async) {
   // TODO: Defer the loading of the collision mesh so this can be async
   auto x{qvm::X(index)};
   auto y{qvm::Y(index)};
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, true);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, true);
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, true);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, true);
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, !async);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, !async);
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, !async);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, !async);
 }
 
-void oo::World::loadTerrain(oo::ExteriorCell &cell) {
+void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
 
-  const auto cellRec{cellRes.get(cell.getBaseId())};
+  const auto cellRec{cellRes.get(cellId)};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  loadTerrain(pos);
+  loadTerrain(pos, async);
 
   std::array<Ogre::Terrain *, 4u> terrain{
       mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
@@ -810,7 +810,7 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
                               normalMapData.data());
 
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
-  record::LAND &landRec{*landRes.get(*cellRes.getLandId(cell.getBaseId()))};
+  record::LAND &landRec{*landRes.get(*cellRes.getLandId(cellId))};
 
   if (landRec.normals) {
     for (std::size_t y = 0; y < 33u; ++y) {
@@ -919,6 +919,22 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
       dstMap->update();
     }
   }
+}
+
+void oo::World::loadTerrain(oo::ExteriorCell &cell) {
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  loadTerrainOnly(cell.getBaseId(), false);
+
+  const auto cellRec{cellRes.get(cell.getBaseId())};
+  if (!cellRec) return;
+
+  CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
+  std::array<Ogre::Terrain *, 4u> terrain{
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 1),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
+  };
 
   cell.setTerrain(terrain);
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
