@@ -591,7 +591,13 @@ oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   list.emplace_back(fullName);
   fullName.replace(fullName.begin() + fullName.find_last_of('.'),
                    fullName.end(), "_n.dds");
-  list.emplace_back(std::move(fullName));
+
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  if (texMgr.resourceExists(fullName, oo::RESOURCE_GROUP)) {
+    list.emplace_back(std::move(fullName));
+  } else {
+    list.emplace_back("textures/flat_n.dds");
+  }
 }
 
 oo::World::LayerMaps
