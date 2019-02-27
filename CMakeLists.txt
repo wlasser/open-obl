@@ -156,6 +156,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/helpers.cpp
         src/resolvers/static_resolver.cpp
         src/resolvers/wrld_resolver.cpp
+        src/resolvers/wthr_resolver.cpp
         src/save_state.cpp
         src/script_functions.cpp
         src/terrain_material_generator.cpp
@@ -218,6 +219,7 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/resolvers.hpp
         include/resolvers/static_resolver.hpp
         include/resolvers/wrld_resolver.hpp
+        include/resolvers/wthr_resolver.hpp
         include/save_state.hpp
         include/script_functions.hpp
         include/settings.hpp

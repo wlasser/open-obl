@@ -4,6 +4,7 @@
 #include "conversions.hpp"
 #include "esp_coordinator.hpp"
 #include "resolvers/resolvers.hpp"
+#include "resolvers/wthr_resolver.hpp"
 #include "time_manager.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
@@ -86,49 +87,6 @@ class Resolver<record::WRLD>::WrldVisitor {
 
   template<> void readRecord<record::CELL>(oo::EspAccessor &accessor);
   // TODO: record::ROAD specialization
-};
-
-class Weather {
- public:
-  explicit Weather(const record::WTHR &rec);
-
-  oo::BaseId getBaseId() const noexcept;
-  Ogre::MaterialPtr getMaterial() const;
-
-  Ogre::ColourValue getAmbientColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getSunlightColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getLowerSkyColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getUpperSkyColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getLowerCloudColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getUpperCloudColor(chrono::QualitativeTimeOfDay tod) const;
-  Ogre::ColourValue getHorizonColor(chrono::QualitativeTimeOfDay tod) const;
-
-  void setSkyDome(Ogre::SceneManager *scnMgr);
-
- private:
-  oo::BaseId mBaseId;
-  Ogre::TexturePtr mLowerCloudsTex;
-  Ogre::TexturePtr mUpperCloudsTex;
-  Ogre::MaterialPtr mSkyDomeMaterial;
-  // TODO: Support rain and fog
-
-  Ogre::ColourValue makeColor(record::raw::Color c) const noexcept;
-
-  struct Colors {
-    Ogre::ColourValue lowerSky;
-    Ogre::ColourValue upperSky;
-    Ogre::ColourValue lowerClouds;
-    Ogre::ColourValue upperClouds;
-    Ogre::ColourValue fog;
-    Ogre::ColourValue horizon;
-    Ogre::ColourValue ambient;
-    Ogre::ColourValue sun;
-    Ogre::ColourValue sunlight;
-    Ogre::ColourValue stars;
-  };
-
-  /// Environment colours for sunrise, day, sunset, and night, in that order.
-  std::array<Colors, 4u> mColors;
 };
 
 class World;
@@ -265,16 +223,27 @@ class World {
   /// located at `[X][Y]`.
   CellGrid mCells{};
 
+  /// Set up the default `Ogre::Terrain::ImportData` for our
+  /// `Ogre::TerrainGroup`.
+  /// `Ogre::TerrainGroup` provides a convenient `getDefaultImportSettings()`
+  /// method to obtain an `Ogre::Terrain::ImportData` with customizable
+  /// defaults, which should be preferred to default-constructing an
+  /// `Ogre::Terrain::ImportData` and populating it manually.
+  void setDefaultImportData();
+
   void makeCellGrid();
   void makePhysicsWorld();
   void makeAtmosphere();
 
+  using ImportDataArray = std::array<Ogre::Terrain::ImportData, 4u>;
+
   void setTerrainHeights(const record::raw::VHGT &rec,
-                         std::array<Ogre::Terrain::ImportData,
-                                    4u> &importData) const;
+                         ImportDataArray &importData) const;
 
   /// Opacity of the layer at each point in a quadrant.
-  using QuadrantBlendMap = std::array<uint8_t, 17u * 17u>;
+  using QuadrantBlendMap = std::array<uint8_t,
+                                      oo::verticesPerQuad<std::size_t>
+                                          * oo::verticesPerQuad<std::size_t>>;
 
   /// Ordering of layers in a quadrant or in a cell, depending on context.
   using LayerOrder = std::vector<oo::BaseId>;
@@ -286,15 +255,17 @@ class World {
 
   void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
 
-  std::array<LayerMap, 4u>
-  makeDefaultLayerMaps(const record::LAND &rec) const;
-  std::array<LayerOrder, 4u>
-  makeDefaultLayerOrders(const record::LAND &rec) const;
+  using LayerMaps = std::array<LayerMap, 4u>;
+  using LayerOrders = std::array<LayerOrder, 4u>;
 
-  void applyFineTextureLayers(std::array<LayerMap, 4u> &layerMaps,
-                              const record::LAND &rec) const;
-  void applyFineTextureLayers(std::array<LayerOrder, 4u> &layerOrders,
-                              const record::LAND &rec) const;
+  LayerMaps makeDefaultLayerMaps(const record::LAND &rec) const;
+  LayerOrders makeDefaultLayerOrders(const record::LAND &rec) const;
+
+  void applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
+  void applyBaseLayers(LayerOrders &layerOrders, const record::LAND &rec) const;
+
+  void applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
+  void applyFineLayers(LayerOrders &layerOrders, const record::LAND &rec) const;
 };
 
 } // namespace oo

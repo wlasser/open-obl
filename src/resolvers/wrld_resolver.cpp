@@ -7,6 +7,10 @@
 #include <spdlog/spdlog.h>
 #include <Terrain/OgreTerrainGroup.h>
 
+//===----------------------------------------------------------------------===//
+// WRLD resolver definitions
+//===----------------------------------------------------------------------===//
+
 std::pair<oo::Resolver<record::WRLD>::RecordIterator, bool>
 oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
                                            const record::WRLD &rec,
@@ -84,136 +88,9 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
   }
 }
 
-oo::Weather::Weather(const record::WTHR &rec) {
-  mBaseId = oo::BaseId{rec.mFormId};
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  if (rec.lowerLayerFilename) {
-    oo::Path basePath{"textures/" + rec.lowerLayerFilename->data};
-    mLowerCloudsTex = texMgr.getByName(basePath.c_str(), oo::RESOURCE_GROUP);
-  }
-  if (rec.upperLayerFilename) {
-    oo::Path basePath{"textures/" + rec.upperLayerFilename->data};
-    mUpperCloudsTex = texMgr.getByName(basePath.c_str(), oo::RESOURCE_GROUP);
-  }
-  const auto &skyColors{rec.skyColors->data};
-
-  auto sunrise{unsigned(oo::chrono::Sunrise)};
-  mColors[sunrise].lowerSky = makeColor(skyColors.skyLower.sunrise);
-  mColors[sunrise].upperSky = makeColor(skyColors.skyUpper.sunrise);
-  mColors[sunrise].lowerClouds = makeColor(skyColors.cloudsLower.sunrise);
-  mColors[sunrise].upperClouds = makeColor(skyColors.cloudsUpper.sunrise);
-  mColors[sunrise].fog = makeColor(skyColors.fog.sunrise);
-  mColors[sunrise].horizon = makeColor(skyColors.horizon.sunrise);
-  mColors[sunrise].ambient = makeColor(skyColors.ambient.sunrise);
-  mColors[sunrise].sun = makeColor(skyColors.sun.sunrise);
-  mColors[sunrise].sunlight = makeColor(skyColors.sunlight.sunrise);
-  mColors[sunrise].stars = makeColor(skyColors.stars.sunrise);
-
-  auto daytime{unsigned(oo::chrono::Daytime)};
-  mColors[daytime].lowerSky = makeColor(skyColors.skyLower.day);
-  mColors[daytime].upperSky = makeColor(skyColors.skyUpper.day);
-  mColors[daytime].lowerClouds = makeColor(skyColors.cloudsLower.day);
-  mColors[daytime].upperClouds = makeColor(skyColors.cloudsUpper.day);
-  mColors[daytime].fog = makeColor(skyColors.fog.day);
-  mColors[daytime].horizon = makeColor(skyColors.horizon.day);
-  mColors[daytime].ambient = makeColor(skyColors.ambient.day);
-  mColors[daytime].sun = makeColor(skyColors.sun.day);
-  mColors[daytime].sunlight = makeColor(skyColors.sunlight.day);
-  mColors[daytime].stars = makeColor(skyColors.stars.day);
-
-  auto sunset{unsigned(oo::chrono::Sunset)};
-  mColors[sunset].lowerSky = makeColor(skyColors.skyLower.sunset);
-  mColors[sunset].upperSky = makeColor(skyColors.skyUpper.sunset);
-  mColors[sunset].lowerClouds = makeColor(skyColors.cloudsLower.sunset);
-  mColors[sunset].upperClouds = makeColor(skyColors.cloudsUpper.sunset);
-  mColors[sunset].fog = makeColor(skyColors.fog.sunset);
-  mColors[sunset].horizon = makeColor(skyColors.horizon.sunset);
-  mColors[sunset].ambient = makeColor(skyColors.ambient.sunset);
-  mColors[sunset].sun = makeColor(skyColors.sun.sunset);
-  mColors[sunset].sunlight = makeColor(skyColors.sunlight.sunset);
-  mColors[sunset].stars = makeColor(skyColors.stars.sunset);
-
-  auto nighttime{unsigned(oo::chrono::Nighttime)};
-  mColors[nighttime].lowerSky = makeColor(skyColors.skyLower.night);
-  mColors[nighttime].upperSky = makeColor(skyColors.skyUpper.night);
-  mColors[nighttime].lowerClouds = makeColor(skyColors.cloudsLower.night);
-  mColors[nighttime].upperClouds = makeColor(skyColors.cloudsUpper.night);
-  mColors[nighttime].fog = makeColor(skyColors.fog.night);
-  mColors[nighttime].horizon = makeColor(skyColors.horizon.night);
-  mColors[nighttime].ambient = makeColor(skyColors.ambient.night);
-  mColors[nighttime].sun = makeColor(skyColors.sun.night);
-  mColors[nighttime].sunlight = makeColor(skyColors.sunlight.night);
-  mColors[nighttime].stars = makeColor(skyColors.stars.night);
-}
-
-void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
-  auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  if (!mSkyDomeMaterial) {
-    auto matPtr{matMgr.getByName("__skyMaterial", oo::SHADER_GROUP)};
-    mSkyDomeMaterial = matPtr->clone("__skyMaterial" + getBaseId().string(),
-                                     true, oo::RESOURCE_GROUP);
-    if (mLowerCloudsTex && mUpperCloudsTex) {
-      Ogre::AliasTextureNamePairList layers{
-          {"lowerLayer", mLowerCloudsTex->getName()},
-          {"upperLayer", mUpperCloudsTex->getName()}
-      };
-      mSkyDomeMaterial->applyTextureAliases(layers, true);
-    }
-  }
-
-  scnMgr->setSkyDome(true, mSkyDomeMaterial->getName(), 10, 8, 4000, true,
-                     Ogre::Quaternion::IDENTITY, 16, 16, -1,
-                     oo::RESOURCE_GROUP);
-}
-
-oo::BaseId oo::Weather::getBaseId() const noexcept {
-  return mBaseId;
-}
-
-Ogre::MaterialPtr oo::Weather::getMaterial() const {
-  return mSkyDomeMaterial;
-}
-
-Ogre::ColourValue oo::Weather::makeColor(record::raw::Color c) const noexcept {
-  Ogre::ColourValue cv;
-  cv.setAsABGR(c.v);
-  return cv;
-}
-
-Ogre::ColourValue
-oo::Weather::getAmbientColor(oo::chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].ambient;
-}
-
-Ogre::ColourValue
-oo::Weather::getSunlightColor(oo::chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].sunlight;
-}
-
-Ogre::ColourValue
-oo::Weather::getLowerSkyColor(chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].lowerSky;
-}
-
-Ogre::ColourValue
-oo::Weather::getUpperSkyColor(chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].upperSky;
-}
-
-Ogre::ColourValue
-oo::Weather::getLowerCloudColor(chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].lowerClouds;
-}
-
-Ogre::ColourValue
-oo::Weather::getUpperCloudColor(chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].upperClouds;
-}
-
-Ogre::ColourValue
-oo::Weather::getHorizonColor(chrono::QualitativeTimeOfDay tod) const {
-  return mColors[unsigned(tod)].horizon;
-}
+//===----------------------------------------------------------------------===//
+// World definitions
+//===----------------------------------------------------------------------===//
 
 oo::BaseId oo::World::getBaseId() const {
   return mBaseId;
@@ -242,28 +119,37 @@ oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
   };
 }
 
-oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
-    : mBaseId(baseId), mName(std::move(name)),
-      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
-      mTerrainGroup(mScnMgr, Ogre::Terrain::Alignment::ALIGN_X_Z,
-                    17u, 2048.0f * oo::metersPerUnit<Ogre::Real>),
-      mResolvers(std::move(resolvers)) {
+void oo::World::setDefaultImportData() {
   auto &importData{mTerrainGroup.getDefaultImportSettings()};
   importData.constantHeight = 0.0f;
   importData.inputFloat = nullptr;
   importData.deleteInputData = true;
   importData.inputImage = nullptr;
-  importData.terrainSize = 16u + 1;
+  importData.terrainSize = oo::verticesPerQuad<uint16_t>;
   importData.terrainAlign = Ogre::Terrain::Alignment::ALIGN_X_Z;
-  importData.worldSize = 2048.0f * oo::metersPerUnit<float>;
-  importData.maxBatchSize = 16u + 1;
-  importData.minBatchSize = 8u + 1;
+  importData.worldSize = oo::metersPerUnit<float> * oo::unitsPerQuad<float>;
+  importData.maxBatchSize = oo::verticesPerQuad<uint16_t>;
+  importData.minBatchSize = static_cast<uint16_t>(
+      oo::verticesPerQuad<uint16_t> / 2u + 1u);
+}
 
-  mTerrainGroup.setResourceGroup(oo::RESOURCE_GROUP);
-
+oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
+    : mBaseId(baseId), mName(std::move(name)),
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
+      mTerrainGroup(mScnMgr, Ogre::Terrain::Alignment::ALIGN_X_Z,
+                    oo::verticesPerQuad<uint16_t>,
+                    oo::metersPerUnit<Ogre::Real> * oo::unitsPerQuad<float>),
+      mResolvers(std::move(resolvers)) {
   // Shift origin because cell coordinates give SW corner position but Ogre
   // works with the centre.
-  mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{1024, 1024, 0}));
+  mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{
+      oo::unitsPerQuad<float> / 2.0f,
+      oo::unitsPerQuad<float> / 2.0f,
+      0.0f
+  }));
+  mTerrainGroup.setResourceGroup(oo::RESOURCE_GROUP);
+  setDefaultImportData();
+
   makePhysicsWorld();
   makeCellGrid();
   makeAtmosphere();
@@ -320,7 +206,7 @@ void oo::World::makeCellGrid() {
     // TerrainGroup knows it already---otherwise each defineTerrain will copy
     // 4MB of data for inputFloat and promptly OOM your machine when the main
     // worldspace loads.
-    std::array<Ogre::Terrain::ImportData, 4u> importData;
+    ImportDataArray importData;
     importData.fill(mTerrainGroup.getDefaultImportSettings());
 
     setTerrainHeights(heightRec, importData);
@@ -331,9 +217,9 @@ void oo::World::makeCellGrid() {
       data.layerDeclaration = matGen->getLayerDeclaration();
     }
 
-    auto layerMaps{makeDefaultLayerMaps(*landOpt)};
     auto layerOrders{makeDefaultLayerOrders(*landOpt)};
-    applyFineTextureLayers(layerOrders, *landOpt);
+    applyBaseLayers(layerOrders, *landOpt);
+    applyFineLayers(layerOrders, *landOpt);
 
     for (std::size_t i = 0; i < 4; ++i) {
       for (auto id : layerOrders[i]) {
@@ -641,11 +527,13 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
-                                  std::array<Ogre::Terrain::ImportData,
-                                             4u> &importData) const {
+                                  ImportDataArray &importData) const {
+  constexpr auto vpc{oo::verticesPerCell<std::size_t>};
+  constexpr auto vpq{oo::verticesPerQuad<std::size_t>};
+
   // Allocation method required for Ogre to manage the memory and delete it.
   for (auto &data : importData) {
-    data.inputFloat = OGRE_ALLOC_T(float, 17u * 17u,
+    data.inputFloat = OGRE_ALLOC_T(float, vpq * vpq,
                                    Ogre::MEMCATEGORY_GEOMETRY);
   }
 
@@ -657,38 +545,43 @@ void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
 
   // Because of the offsets its much easier to treat the entire cell as a whole,
   // then pull out the quadrants afterwards.
-  std::array<float, 33u * 33u> tmp{};
+  std::array<float, vpc * vpc> tmp{};
 
-  for (std::size_t j = 0; j < 33u; ++j) {
-    const std::size_t o{j * 33u};
+  for (std::size_t j = 0; j < vpc; ++j) {
+    const std::size_t o{j * vpc};
 
     rowStartHeight += rec.heights[o] * scale;
     tmp[o] = rowStartHeight;
 
     float height{rowStartHeight};
-    for (std::size_t i = 1; i < 33u; ++i) {
+    for (std::size_t i = 1; i < vpc; ++i) {
       height += rec.heights[o + i] * scale;
       tmp[o + i] = height;
     }
   }
 
-  for (std::size_t j = 0; j < 17u; ++j) {
-    std::memcpy(&importData[0].inputFloat[17u * j], &tmp[33u * j], 17u * 4u);
+  for (std::size_t j = 0; j < vpq; ++j) {
+    std::memcpy(&importData[0].inputFloat[vpq * j],
+                &tmp[vpc * j],
+                vpq * sizeof(float));
   }
 
-  for (std::size_t j = 0; j < 17u; ++j) {
-    std::memcpy(&importData[1].inputFloat[17u * j], &tmp[33u * j + 16u],
-                17u * 4u);
+  for (std::size_t j = 0; j < vpq; ++j) {
+    std::memcpy(&importData[1].inputFloat[vpq * j],
+                &tmp[vpc * j + (vpq - 1u)],
+                vpq * sizeof(float));
   }
 
-  for (std::size_t j = 0; j < 17u; ++j) {
-    std::memcpy(&importData[2].inputFloat[17u * j], &tmp[33u * (j + 16u)],
-                17u * 4u);
+  for (std::size_t j = 0; j < vpq; ++j) {
+    std::memcpy(&importData[2].inputFloat[vpq * j],
+                &tmp[vpc * (j + vpq - 1u)],
+                vpq * sizeof(float));
   }
 
-  for (std::size_t j = 0; j < 17u; ++j) {
-    std::memcpy(&importData[3].inputFloat[17u * j], &tmp[33u * (j + 16u) + 16u],
-                17u * 4u);
+  for (std::size_t j = 0; j < vpq; ++j) {
+    std::memcpy(&importData[3].inputFloat[vpq * j],
+                &tmp[vpc * (j + vpq - 1u) + (vpq - 1u)],
+                vpq * sizeof(float));
   }
 }
 
@@ -701,16 +594,30 @@ oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   list.emplace_back(std::move(fullName));
 }
 
-std::array<oo::World::LayerMap, 4u>
+oo::World::LayerMaps
 oo::World::makeDefaultLayerMaps(const record::LAND &rec) const {
-  std::array<LayerMap, 4u> layerMaps;
-
+  LayerMaps layerMaps;
   std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
     LayerMap layers{};
     layers[oo::BaseId{0}].fill(255);
     return layers;
   });
 
+  return layerMaps;
+}
+
+oo::World::LayerOrders
+oo::World::makeDefaultLayerOrders(const record::LAND &rec) const {
+  LayerOrders layerOrders;
+  std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
+    return std::vector{oo::BaseId{0}};
+  });
+
+  return layerOrders;
+}
+
+void oo::World::applyBaseLayers(LayerMaps &layerMaps,
+                                const record::LAND &rec) const {
   // Find all the quadrant base textures, overwriting the default layer.
   for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
     const int quadrant{quadrantTexture.data.quadrant};
@@ -718,29 +625,20 @@ oo::World::makeDefaultLayerMaps(const record::LAND &rec) const {
     layerMaps[quadrant].clear();
     layerMaps[quadrant][id].fill(255);
   }
-
-  return layerMaps;
 }
 
-std::array<oo::World::LayerOrder, 4u>
-oo::World::makeDefaultLayerOrders(const record::LAND &rec) const {
-  std::array<LayerOrder, 4u> layerOrders;
-  std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
-    return std::vector{oo::BaseId{0}};
-  });
-
+void oo::World::applyBaseLayers(LayerOrders &layerOrders,
+                                const record::LAND &rec) const {
   // Find all the quadrant base textures, overwriting the default layer.
   for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
     const int quadrant{quadrantTexture.data.quadrant};
     oo::BaseId id{quadrantTexture.data.id};
     layerOrders[quadrant][0] = id;
   }
-
-  return layerOrders;
 }
 
-void oo::World::applyFineTextureLayers(std::array<LayerMap, 4u> &layerMaps,
-                                       const record::LAND &rec) const {
+void oo::World::applyFineLayers(LayerMaps &layerMaps,
+                                const record::LAND &rec) const {
   // Find all the quadrant layer textures
   for (const auto &[atxt, vtxt] : rec.fineTextures) {
     const oo::BaseId id{atxt.data.id};
@@ -754,8 +652,8 @@ void oo::World::applyFineTextureLayers(std::array<LayerMap, 4u> &layerMaps,
   }
 }
 
-void oo::World::applyFineTextureLayers(std::array<LayerOrder, 4u> &layerOrders,
-                                       const record::LAND &rec) const {
+void oo::World::applyFineLayers(LayerOrders &layerOrders,
+                                const record::LAND &rec) const {
   // Find all the quadrant layer textures
   for (const auto &[atxt, vtxt] : rec.fineTextures) {
     const oo::BaseId id{atxt.data.id};
@@ -793,34 +691,39 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
 
   // Check if terrain is already loaded first, if so do nothing.
-  if (mTerrainGroup.getTerrain(2 * qvm::X(pos), 2 * qvm::Y(pos))) return;
+  if (auto *terrain{mTerrainGroup.getTerrain(2 * qvm::X(pos), 2 * qvm::Y(pos))};
+      terrain && terrain->isLoaded()) {
+    return;
+  }
 
+  if (async) {
+    spdlog::get(oo::LOG)->warn("Asynchronous loading of terrain is not "
+                               "currently supported, falling back to "
+                               "synchronous loading");
+    async = false;
+  }
+
+  // Begin loading the terrain itself, possibly in the background.
   loadTerrain(pos, async);
 
-  std::array<Ogre::Terrain *, 4u> terrain{
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 1),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
-  };
-  if (std::any_of(terrain.begin(), terrain.end(), std::logical_not<>{})) return;
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
 
   // Normal data can be generated implicitly by the terrain but instead of
-  // being passed as vertex data the normals are saved in a texture. This
-  // texture is in the wrong resource group for us, and since we have explicit
-  // normal information in the LAND record we will generate our own texture.
+  // being passed as vertex data the normals are saved in a texture. We have
+  // explicit normal data in the LAND record so will just generate it ourselves.
   auto &texMgr{Ogre::TextureManager::getSingleton()};
-  std::array<uint8_t, 33u * 33u * 3u> normalMapData{};
-  Ogre::PixelBox normalMapBox(33u, 33u, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+  std::array<uint8_t, vpc * vpc * 3u> normalMapData{};
+  Ogre::PixelBox normalMapBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                               normalMapData.data());
 
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
   record::LAND &landRec{*landRes.get(*cellRes.getLandId(cellId))};
 
   if (landRec.normals) {
-    for (std::size_t y = 0; y < 33u; ++y) {
-      for (std::size_t x = 0; x < 33u; ++x) {
-        auto[nx, ny, nz]{landRec.normals->data[y * 33u + x]};
+    for (std::size_t y = 0; y < vpc; ++y) {
+      for (std::size_t x = 0; x < vpc; ++x) {
+        auto[nx, ny, nz]{landRec.normals->data[y * vpc + x]};
         auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
         n.normalise();
         normalMapBox.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
@@ -828,46 +731,23 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
     }
   } else {
     // No normal data, use vertical normals
-    for (std::size_t y = 0; y < 33; ++y) {
-      for (std::size_t x = 0; x < 33; ++x) {
+    for (std::size_t y = 0; y < vpc; ++y) {
+      for (std::size_t x = 0; x < vpc; ++x) {
         normalMapBox.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
       }
     }
   }
 
-  {
-    auto ptr{texMgr.getByName(terrain[0]->getMaterialName() + "normal",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[1]->getMaterialName() + "normal",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[2]->getMaterialName() + "normal",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[3]->getMaterialName() + "normal",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(
-        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
-  }
-
-  std::array<uint8_t, 33u * 33u * 3u> vertexColorData{};
-  Ogre::PixelBox vertexColorBox(33u, 33u, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+  // Vertex colours are also stored in a texture instead of being passed as
+  // vertex data.
+  std::array<uint8_t, vpc * vpc * 3u> vertexColorData{};
+  Ogre::PixelBox vertexColorBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                                 vertexColorData.data());
 
   if (landRec.colors) {
-    for (std::size_t y = 0; y < 33u; ++y) {
-      for (std::size_t x = 0; x < 33u; ++x) {
-        auto[r, g, b]{landRec.colors->data[y * 33u + x]};
+    for (std::size_t y = 0; y < vpc; ++y) {
+      for (std::size_t x = 0; x < vpc; ++x) {
+        auto[r, g, b]{landRec.colors->data[y * vpc + x]};
         Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
         vertexColorBox.setColourAt(col, x, y, 0);
       }
@@ -877,53 +757,89 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
     vertexColorData.fill(255u);
   }
 
-  {
-    auto ptr{texMgr.getByName(terrain[0]->getMaterialName() + "vertexcolor",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(0u, 0u, 17u, 17u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[1]->getMaterialName() + "vertexcolor",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(16u, 0u, 33u, 17u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[2]->getMaterialName() + "vertexcolor",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(0u, 16u, 17u, 33u), /*resetOrigin=*/true));
-  }
-  {
-    auto ptr{texMgr.getByName(terrain[3]->getMaterialName() + "vertexcolor",
-                              oo::RESOURCE_GROUP)};
-    ptr->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(
-        Ogre::Box(16u, 16u, 33u, 33u), /*resetOrigin=*/true));
-  }
-
+  // Build the base texture layer and blend layers.
   auto layerMaps{makeDefaultLayerMaps(landRec)};
   auto layerOrders{makeDefaultLayerOrders(landRec)};
 
-  applyFineTextureLayers(layerMaps, landRec);
-  applyFineTextureLayers(layerOrders, landRec);
+  applyBaseLayers(layerMaps, landRec);
+  applyBaseLayers(layerOrders, landRec);
 
-  for (std::size_t i = 0; i < 4; ++i) {
+  applyFineLayers(layerMaps, landRec);
+  applyFineLayers(layerOrders, landRec);
+
+  // Note that if async then we are not waiting on these pointers being non-null
+  // but instead are waiting on their isLoaded().
+  std::array<Ogre::Terrain *, 4u> terrain{
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 1),
+      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
+  };
+  if (std::any_of(terrain.begin(), terrain.end(), std::logical_not<>{})) {
+    spdlog::error("Terrain is nullptr at ({}, {})", qvm::X(pos), qvm::Y(pos));
+    throw std::runtime_error("Terrain is nullptr");
+  }
+
+  auto blitBoxes = [&](const std::string &matName, const Ogre::Box &box) {
+    auto np{texMgr.getByName(matName + "normal", oo::RESOURCE_GROUP)};
+    np->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(box, true));
+
+    auto vcp{texMgr.getByName(matName + "vertexcolor", oo::RESOURCE_GROUP)};
+    vcp->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(box, true));
+  };
+
+  auto blitLayerMaps = [&](std::size_t i) {
     for (uint8_t j = 1; j < layerOrders[i].size(); ++j) {
       const auto id{layerOrders[i][j]};
       const auto &srcMap{layerMaps[i][id]};
       auto *dstMap{terrain[i]->getLayerBlendMap(j)};
-      for (std::size_t y = 0; y < 17; ++y) {
-        for (std::size_t x = 0; x < 17; ++x) {
-          const float opacity = srcMap[17 * y + x] / 255.0f;
+      for (std::size_t y = 0; y < vpq; ++y) {
+        for (std::size_t x = 0; x < vpq; ++x) {
+          const float opacity = srcMap[vpq * y + x] / 255.0f;
           std::size_t s{}, t{};
-          dstMap->convertUVToImageSpace(x / 16.0f, y / 16.0f, &s, &t);
+          dstMap->convertUVToImageSpace(x / (oo::verticesPerQuad<float> - 1.0f),
+                                        y / (oo::verticesPerQuad<float> - 1.0f),
+                                        &s, &t);
           dstMap->setBlendValue(s, t, opacity);
         }
       }
       dstMap->update();
     }
-  }
+  };
+
+  // TODO: Properly implement asynchronous terrain loading.
+  //       This doesn't actually work because WorkQueue responses are not
+  //       processed until the end of the frame, but this function is blocking.
+  uint8_t terrainDone{0b0000};
+  do {
+    if (!(terrainDone & 0b0001) && terrain[0]->isLoaded()) {
+      const Ogre::Box box(0u, 0u, vpq, vpq);
+      blitBoxes(terrain[0]->getMaterialName(), box);
+      blitLayerMaps(0);
+      terrainDone |= 0b0001;
+    }
+
+    if (!(terrainDone & 0b0010) && terrain[1]->isLoaded()) {
+      const Ogre::Box box(vpc - 1u, 0u, vpc, vpq);
+      blitBoxes(terrain[1]->getMaterialName(), box);
+      blitLayerMaps(1);
+      terrainDone |= 0b0010;
+    }
+
+    if (!(terrainDone & 0b0100) && terrain[2]->isLoaded()) {
+      const Ogre::Box box(0u, vpc - 1u, vpq, vpc);
+      blitBoxes(terrain[2]->getMaterialName(), box);
+      blitLayerMaps(2);
+      terrainDone |= 0b0100;
+    }
+
+    if (!(terrainDone & 0b1000) && terrain[3]->isLoaded()) {
+      const Ogre::Box box(vpc - 1u, vpc - 1u, vpc, vpc);
+      blitBoxes(terrain[3]->getMaterialName(), box);
+      blitLayerMaps(3);
+      terrainDone |= 0b1000;
+    }
+  } while (terrainDone != 0b1111);
 }
 
 void oo::World::loadTerrain(oo::ExteriorCell &cell) {
