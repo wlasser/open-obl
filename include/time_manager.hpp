@@ -75,6 +75,15 @@ inline constexpr chrono::QualitativeTimeOfDay Daytime{1};
 inline constexpr chrono::QualitativeTimeOfDay Sunset{2};
 inline constexpr chrono::QualitativeTimeOfDay Nighttime{3};
 
+constexpr bool operator==(const chrono::QualitativeTimeOfDay &x,
+                          const chrono::QualitativeTimeOfDay &y) noexcept {
+  return unsigned(x) == unsigned(y);
+}
+constexpr bool operator!=(const chrono::QualitativeTimeOfDay &x,
+                          const chrono::QualitativeTimeOfDay &y) noexcept {
+  return unsigned(x) != unsigned(y);
+}
+
 /// Models the *Cpp17Clock* concept.
 /// This acts as a replacement for `std::chrono::system_clock`, representing the
 /// time as experienced in the game world.
