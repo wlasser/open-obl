@@ -326,209 +326,80 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
     return nullptr;
   }();
 
-  auto skyMaterial{weather.getMaterial()};
-  auto skyPass = [&skyMaterial]() -> Ogre::Pass * {
-    return skyMaterial ? skyMaterial->getTechnique(0)->getPass(0) : nullptr;
-  }();
-  auto skyParams = [&skyPass]() -> Ogre::GpuProgramParametersSharedPtr {
-    return skyPass ? skyPass->getFragmentProgramParameters()
-                   : Ogre::GpuProgramParametersSharedPtr();
-  }();
-
   if (mSunriseBegin <= time && time <= mSunriseEnd) {
     // Sunrise
     const auto sunriseMid{(mSunriseEnd + mSunriseBegin) / 2};
     const auto dt{static_cast<float>((sunriseMid - mSunriseBegin).count())};
 
     if (time <= sunriseMid) {
-      const auto c0{weather.getAmbientColor(oo::chrono::Nighttime)};
-      const auto s0{weather.getSunlightColor(oo::chrono::Nighttime)};
-      const auto ls0{weather.getLowerSkyColor(oo::chrono::Nighttime)};
-      const auto us0{weather.getUpperSkyColor(oo::chrono::Nighttime)};
-      const auto lc0{weather.getLowerCloudColor(oo::chrono::Nighttime)};
-      const auto uc0{weather.getUpperCloudColor(oo::chrono::Nighttime)};
-      const auto h0{weather.getHorizonColor(oo::chrono::Nighttime)};
-
-      const auto c1{weather.getAmbientColor(oo::chrono::Sunrise)};
-      const auto s1{weather.getSunlightColor(oo::chrono::Sunrise)};
-      const auto ls1{weather.getLowerSkyColor(oo::chrono::Sunrise)};
-      const auto us1{weather.getUpperSkyColor(oo::chrono::Sunrise)};
-      const auto lc1{weather.getLowerCloudColor(oo::chrono::Sunrise)};
-      const auto uc1{weather.getUpperCloudColor(oo::chrono::Sunrise)};
-      const auto h1{weather.getHorizonColor(oo::chrono::Sunrise)};
-
+      // Blending into middle of sunrise from nighttime
       const float t{(time - mSunriseBegin).count() / dt};
-      const auto c{(1 - t) * c0 + t * c1};
-      const auto s{(1 - t) * s0 + t * s1};
-      const auto ls{(1 - t) * ls0 + t * ls1};
-      const auto us{(1 - t) * us0 + t * us1};
-      const auto lc{(1 - t) * lc0 + t * lc1};
-      const auto uc{(1 - t) * uc0 + t * uc1};
-      const auto h{(1 - t) * h0 + t * h1};
 
-      weather.setFog(mScnMgr, oo::chrono::Sunrise);
+      const auto c{weather.getAmbientColor(oo::chrono::Sunrise, t)};
+      const auto s{weather.getSunlightColor(oo::chrono::Sunrise, t)};
+
+      weather.setFog(mScnMgr, oo::chrono::Sunrise, t);
+      weather.setSkyMaterial(oo::chrono::Sunrise, t);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
-      if (skyParams) {
-        skyParams->setNamedConstant("lowerSkyColor", ls);
-        skyParams->setNamedConstant("upperSkyColor", us);
-        skyParams->setNamedConstant("lowerCloudColor", lc);
-        skyParams->setNamedConstant("upperCloudColor", uc);
-        skyParams->setNamedConstant("horizonColor", h);
-      }
     } else {
-      const auto c0{weather.getAmbientColor(oo::chrono::Sunrise)};
-      const auto s0{weather.getSunlightColor(oo::chrono::Sunrise)};
-      const auto ls0{weather.getLowerSkyColor(oo::chrono::Sunrise)};
-      const auto us0{weather.getUpperSkyColor(oo::chrono::Sunrise)};
-      const auto lc0{weather.getLowerCloudColor(oo::chrono::Sunrise)};
-      const auto uc0{weather.getUpperCloudColor(oo::chrono::Sunrise)};
-      const auto h0{weather.getHorizonColor(oo::chrono::Sunrise)};
-
-      const auto c1{weather.getAmbientColor(oo::chrono::Daytime)};
-      const auto s1{weather.getSunlightColor(oo::chrono::Daytime)};
-      const auto ls1{weather.getLowerSkyColor(oo::chrono::Daytime)};
-      const auto us1{weather.getUpperSkyColor(oo::chrono::Daytime)};
-      const auto lc1{weather.getLowerCloudColor(oo::chrono::Daytime)};
-      const auto uc1{weather.getUpperCloudColor(oo::chrono::Daytime)};
-      const auto h1{weather.getHorizonColor(oo::chrono::Daytime)};
-
+      // Blending into daytime from middle of sunrise
       const float t{(time - sunriseMid).count() / dt};
-      const auto c{(1 - t) * c0 + t * c1};
-      const auto s{(1 - t) * s0 + t * s1};
-      const auto ls{(1 - t) * ls0 + t * ls1};
-      const auto us{(1 - t) * us0 + t * us1};
-      const auto lc{(1 - t) * lc0 + t * lc1};
-      const auto uc{(1 - t) * uc0 + t * uc1};
-      const auto h{(1 - t) * h0 + t * h1};
 
-      weather.setFog(mScnMgr, oo::chrono::Sunrise);
+      const auto c{weather.getAmbientColor(oo::chrono::Daytime, t)};
+      const auto s{weather.getSunlightColor(oo::chrono::Daytime, t)};
+
+      weather.setFog(mScnMgr, oo::chrono::Daytime, t);
+      weather.setSkyMaterial(oo::chrono::Daytime, t);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
-      if (skyParams) {
-        skyParams->setNamedConstant("lowerSkyColor", ls);
-        skyParams->setNamedConstant("upperSkyColor", us);
-        skyParams->setNamedConstant("lowerCloudColor", lc);
-        skyParams->setNamedConstant("upperCloudColor", uc);
-        skyParams->setNamedConstant("horizonColor", h);
-      }
     }
   } else if (mSunriseEnd < time && time < mSunsetBegin) {
     // Daytime
     const auto c{weather.getAmbientColor(oo::chrono::Daytime)};
     const auto s{weather.getSunlightColor(oo::chrono::Daytime)};
-    const auto ls{weather.getLowerSkyColor(oo::chrono::Daytime)};
-    const auto us{weather.getUpperSkyColor(oo::chrono::Daytime)};
-    const auto lc{weather.getLowerCloudColor(oo::chrono::Daytime)};
-    const auto uc{weather.getUpperCloudColor(oo::chrono::Daytime)};
-    const auto h{weather.getHorizonColor(oo::chrono::Daytime)};
+
     weather.setFog(mScnMgr, oo::chrono::Daytime);
+    weather.setSkyMaterial(oo::chrono::Daytime);
     mScnMgr->setAmbientLight(c);
     if (light) light->setDiffuseColour(s);
-    if (skyParams) {
-      skyParams->setNamedConstant("lowerSkyColor", ls);
-      skyParams->setNamedConstant("upperSkyColor", us);
-      skyParams->setNamedConstant("lowerCloudColor", lc);
-      skyParams->setNamedConstant("upperCloudColor", uc);
-      skyParams->setNamedConstant("horizonColor", h);
-    }
   } else if (mSunsetBegin <= time && time <= mSunsetEnd) {
     // Sunset
     const auto sunsetMid{(mSunsetEnd + mSunsetBegin) / 2};
     const auto dt{static_cast<float>((sunsetMid - mSunsetBegin).count())};
 
     if (time <= sunsetMid) {
-      const auto c0{weather.getAmbientColor(oo::chrono::Daytime)};
-      const auto s0{weather.getSunlightColor(oo::chrono::Daytime)};
-      const auto ls0{weather.getLowerSkyColor(oo::chrono::Daytime)};
-      const auto us0{weather.getUpperSkyColor(oo::chrono::Daytime)};
-      const auto lc0{weather.getLowerCloudColor(oo::chrono::Daytime)};
-      const auto uc0{weather.getUpperCloudColor(oo::chrono::Daytime)};
-      const auto h0{weather.getHorizonColor(oo::chrono::Daytime)};
-
-      const auto c1{weather.getAmbientColor(oo::chrono::Sunset)};
-      const auto s1{weather.getSunlightColor(oo::chrono::Sunset)};
-      const auto ls1{weather.getLowerSkyColor(oo::chrono::Sunset)};
-      const auto us1{weather.getUpperSkyColor(oo::chrono::Sunset)};
-      const auto lc1{weather.getLowerCloudColor(oo::chrono::Sunset)};
-      const auto uc1{weather.getUpperCloudColor(oo::chrono::Sunset)};
-      const auto h1{weather.getHorizonColor(oo::chrono::Sunset)};
-
+      // Blending into middle of sunset from daytime
       const float t{(time - mSunsetBegin).count() / dt};
-      const auto c{(1 - t) * c0 + t * c1};
-      const auto s{(1 - t) * s0 + t * s1};
-      const auto ls{(1 - t) * ls0 + t * ls1};
-      const auto us{(1 - t) * us0 + t * us1};
-      const auto lc{(1 - t) * lc0 + t * lc1};
-      const auto uc{(1 - t) * uc0 + t * uc1};
-      const auto h{(1 - t) * h0 + t * h1};
 
-      weather.setFog(mScnMgr, oo::chrono::Sunset);
+      const auto c{weather.getAmbientColor(oo::chrono::Sunset, t)};
+      const auto s{weather.getSunlightColor(oo::chrono::Sunset, t)};
+
+      weather.setFog(mScnMgr, oo::chrono::Sunset, t);
+      weather.setSkyMaterial(oo::chrono::Sunset, t);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
-      if (skyParams) {
-        skyParams->setNamedConstant("lowerSkyColor", ls);
-        skyParams->setNamedConstant("upperSkyColor", us);
-        skyParams->setNamedConstant("lowerCloudColor", lc);
-        skyParams->setNamedConstant("upperCloudColor", uc);
-        skyParams->setNamedConstant("horizonColor", h);
-      }
     } else {
-      const auto c0{weather.getAmbientColor(oo::chrono::Sunset)};
-      const auto s0{weather.getSunlightColor(oo::chrono::Sunset)};
-      const auto ls0{weather.getLowerSkyColor(oo::chrono::Sunset)};
-      const auto us0{weather.getUpperSkyColor(oo::chrono::Sunset)};
-      const auto lc0{weather.getLowerCloudColor(oo::chrono::Sunset)};
-      const auto uc0{weather.getUpperCloudColor(oo::chrono::Sunset)};
-      const auto h0{weather.getHorizonColor(oo::chrono::Sunset)};
-
-      const auto c1{weather.getAmbientColor(oo::chrono::Nighttime)};
-      const auto s1{weather.getSunlightColor(oo::chrono::Nighttime)};
-      const auto ls1{weather.getLowerSkyColor(oo::chrono::Nighttime)};
-      const auto us1{weather.getUpperSkyColor(oo::chrono::Nighttime)};
-      const auto lc1{weather.getLowerCloudColor(oo::chrono::Nighttime)};
-      const auto uc1{weather.getUpperCloudColor(oo::chrono::Nighttime)};
-      const auto h1{weather.getHorizonColor(oo::chrono::Nighttime)};
-
+      // Blending into nighttime from middle of sunset
       const float t{(time - sunsetMid).count() / dt};
-      const auto c{(1 - t) * c0 + t * c1};
-      const auto s{(1 - t) * s0 + t * s1};
-      const auto ls{(1 - t) * ls0 + t * ls1};
-      const auto us{(1 - t) * us0 + t * us1};
-      const auto lc{(1 - t) * lc0 + t * lc1};
-      const auto uc{(1 - t) * uc0 + t * uc1};
-      const auto h{(1 - t) * h0 + t * h1};
 
-      weather.setFog(mScnMgr, oo::chrono::Sunset);
+      const auto c{weather.getAmbientColor(oo::chrono::Nighttime, t)};
+      const auto s{weather.getSunlightColor(oo::chrono::Nighttime, t)};
+
+      weather.setFog(mScnMgr, oo::chrono::Nighttime, t);
+      weather.setSkyMaterial(oo::chrono::Nighttime, t);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
-      if (skyParams) {
-        skyParams->setNamedConstant("lowerSkyColor", ls);
-        skyParams->setNamedConstant("upperSkyColor", us);
-        skyParams->setNamedConstant("lowerCloudColor", lc);
-        skyParams->setNamedConstant("upperCloudColor", uc);
-        skyParams->setNamedConstant("horizonColor", h);
-      }
     }
   } else {
     // Nighttime
     const auto c{weather.getAmbientColor(oo::chrono::Nighttime)};
     const auto s{weather.getSunlightColor(oo::chrono::Nighttime)};
-    const auto ls{weather.getLowerSkyColor(oo::chrono::Nighttime)};
-    const auto us{weather.getUpperSkyColor(oo::chrono::Nighttime)};
-    const auto lc{weather.getLowerCloudColor(oo::chrono::Nighttime)};
-    const auto uc{weather.getUpperCloudColor(oo::chrono::Nighttime)};
-    const auto h{weather.getHorizonColor(oo::chrono::Nighttime)};
+
     weather.setFog(mScnMgr, oo::chrono::Nighttime);
+    weather.setSkyMaterial(oo::chrono::Nighttime);
     mScnMgr->setAmbientLight(c);
     if (light) light->setDiffuseColour(s);
-    if (skyParams) {
-      skyParams->setNamedConstant("lowerSkyColor", ls);
-      skyParams->setNamedConstant("upperSkyColor", us);
-      skyParams->setNamedConstant("lowerCloudColor", lc);
-      skyParams->setNamedConstant("upperCloudColor", uc);
-      skyParams->setNamedConstant("horizonColor", h);
-    }
   }
 }
 
