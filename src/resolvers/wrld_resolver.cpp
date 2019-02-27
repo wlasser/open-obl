@@ -703,21 +703,21 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
     }
 
     if (!(terrainDone & 0b0010) && terrain[1]->isLoaded()) {
-      const Ogre::Box box(vpc - 1u, 0u, vpc, vpq);
+      const Ogre::Box box(vpq - 1u, 0u, vpc, vpq);
       blitBoxes(terrain[1]->getMaterialName(), box);
       blitLayerMaps(1);
       terrainDone |= 0b0010;
     }
 
     if (!(terrainDone & 0b0100) && terrain[2]->isLoaded()) {
-      const Ogre::Box box(0u, vpc - 1u, vpq, vpc);
+      const Ogre::Box box(0u, vpq - 1u, vpq, vpc);
       blitBoxes(terrain[2]->getMaterialName(), box);
       blitLayerMaps(2);
       terrainDone |= 0b0100;
     }
 
     if (!(terrainDone & 0b1000) && terrain[3]->isLoaded()) {
-      const Ogre::Box box(vpc - 1u, vpc - 1u, vpc, vpc);
+      const Ogre::Box box(vpq - 1u, vpq - 1u, vpc, vpc);
       blitBoxes(terrain[3]->getMaterialName(), box);
       blitLayerMaps(3);
       terrainDone |= 0b1000;
