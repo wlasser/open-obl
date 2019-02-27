@@ -366,6 +366,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const auto uc{(1 - t) * uc0 + t * uc1};
       const auto h{(1 - t) * h0 + t * h1};
 
+      weather.setFog(mScnMgr, oo::chrono::Sunrise);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
       if (skyParams) {
@@ -401,6 +402,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const auto uc{(1 - t) * uc0 + t * uc1};
       const auto h{(1 - t) * h0 + t * h1};
 
+      weather.setFog(mScnMgr, oo::chrono::Sunrise);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
       if (skyParams) {
@@ -420,6 +422,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
     const auto lc{weather.getLowerCloudColor(oo::chrono::Daytime)};
     const auto uc{weather.getUpperCloudColor(oo::chrono::Daytime)};
     const auto h{weather.getHorizonColor(oo::chrono::Daytime)};
+    weather.setFog(mScnMgr, oo::chrono::Daytime);
     mScnMgr->setAmbientLight(c);
     if (light) light->setDiffuseColour(s);
     if (skyParams) {
@@ -460,6 +463,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const auto uc{(1 - t) * uc0 + t * uc1};
       const auto h{(1 - t) * h0 + t * h1};
 
+      weather.setFog(mScnMgr, oo::chrono::Sunset);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
       if (skyParams) {
@@ -495,6 +499,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const auto uc{(1 - t) * uc0 + t * uc1};
       const auto h{(1 - t) * h0 + t * h1};
 
+      weather.setFog(mScnMgr, oo::chrono::Sunset);
       mScnMgr->setAmbientLight(c);
       if (light) light->setDiffuseColour(s);
       if (skyParams) {
@@ -514,6 +519,7 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
     const auto lc{weather.getLowerCloudColor(oo::chrono::Nighttime)};
     const auto uc{weather.getUpperCloudColor(oo::chrono::Nighttime)};
     const auto h{weather.getHorizonColor(oo::chrono::Nighttime)};
+    weather.setFog(mScnMgr, oo::chrono::Nighttime);
     mScnMgr->setAmbientLight(c);
     if (light) light->setDiffuseColour(s);
     if (skyParams) {

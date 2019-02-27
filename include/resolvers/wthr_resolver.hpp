@@ -29,13 +29,15 @@ class Weather {
   Ogre::ColourValue getHorizonColor(chrono::QualitativeTimeOfDay tod) const;
 
   void setSkyDome(Ogre::SceneManager *scnMgr);
+  void setFog(Ogre::SceneManager *scnMgr,
+              chrono::QualitativeTimeOfDay tod) const;
 
  private:
   oo::BaseId mBaseId;
   Ogre::TexturePtr mLowerCloudsTex;
   Ogre::TexturePtr mUpperCloudsTex;
   Ogre::MaterialPtr mSkyDomeMaterial;
-  // TODO: Support rain and fog
+  // TODO: Support rain
 
   Ogre::ColourValue makeColor(record::raw::Color c) const noexcept;
 
@@ -54,6 +56,15 @@ class Weather {
 
   /// Environment colours for sunrise, day, sunset, and night, in that order.
   std::array<Colors, 4u> mColors;
+
+  struct FogDistance {
+    float near{};
+    float far{};
+  };
+
+  /// Near and far fog distances for sunrise, day, sunset, and night, in that
+  /// order.
+  std::array<FogDistance, 4u> mFogDistances;
 };
 
 } // namespace oo

@@ -1,6 +1,7 @@
 #version 330 core
 in vec2 TexCoord;
 in vec3 FragPos;
+in vec3 ViewPos;
 
 #define MAX_LIGHTS 8
 
@@ -24,6 +25,9 @@ uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 uniform vec4 lightAttenuationArray[MAX_LIGHTS];
 uniform vec4 ambientLightColor;
+uniform vec4 fogColor;
+// x = density, y = start, z = end, w = 1 / (end - start)
+uniform vec4 fogParams;
 
 out vec4 FragColor;
 
@@ -181,6 +185,10 @@ void main() {
     }
 
     vec3 fragColor = pow(min(lighting, 1.0f), vec3(1.0f / gamma));
+
+    float distance = length(FragPos.xyz - ViewPos.xyz) * 10.0f;
+    float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
+    fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
 
     FragColor = vec4(fragColor, f);
 }

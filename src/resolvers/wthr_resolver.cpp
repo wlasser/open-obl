@@ -1,3 +1,4 @@
+#include "conversions.hpp"
 #include "record/records.hpp"
 #include "resolvers/wthr_resolver.hpp"
 #include "settings.hpp"
@@ -66,6 +67,21 @@ oo::Weather::Weather(const record::WTHR &rec) {
   mColors[nighttime].sun = makeColor(skyColors.sun.night);
   mColors[nighttime].sunlight = makeColor(skyColors.sunlight.night);
   mColors[nighttime].stars = makeColor(skyColors.stars.night);
+
+  if (rec.fogDistances) {
+    mFogDistances[daytime] = FogDistance{
+        rec.fogDistances->data.fogDayNear * oo::metersPerUnit<float>,
+        rec.fogDistances->data.fogDayFar * oo::metersPerUnit<float>
+    };
+    mFogDistances[nighttime] = FogDistance{
+        rec.fogDistances->data.fogNightNear * oo::metersPerUnit<float>,
+        rec.fogDistances->data.fogNightFar * oo::metersPerUnit<float>
+    };
+    mFogDistances[sunrise] = mFogDistances[daytime];
+    mFogDistances[sunset] = mFogDistances[nighttime];
+  } else {
+    mFogDistances.fill(FogDistance{1.0f, 2.0f});
+  }
 }
 
 void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
@@ -90,6 +106,13 @@ void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
                      distanceToPlane, /*drawFirst=*/true,
                      Ogre::Quaternion::IDENTITY, 16, 16, -1,
                      oo::RESOURCE_GROUP);
+}
+
+void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
+                         chrono::QualitativeTimeOfDay tod) const {
+  scnMgr->setFog(Ogre::FogMode::FOG_LINEAR, mColors[unsigned(tod)].fog, 0,
+                 mFogDistances[unsigned(tod)].near,
+                 mFogDistances[unsigned(tod)].far);
 }
 
 oo::BaseId oo::Weather::getBaseId() const noexcept {

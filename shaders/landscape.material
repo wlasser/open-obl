@@ -16,6 +16,7 @@ material __LandscapeMaterial5 {
             vertex_program_ref landscape_vs_glsl {
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
                 param_named_auto world WORLD_MATRIX
+                param_named_auto viewPos CAMERA_POSITION
             }
 
             fragment_program_ref landscape_fs_glsl {
@@ -23,6 +24,8 @@ material __LandscapeMaterial5 {
                 param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
                 param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+                param_named_auto fogColor FOG_COLOUR
+                param_named_auto fogParams FOG_PARAMS
 
                 param_named globalNormal int 0
                 param_named vertexColor int 1
@@ -56,6 +59,7 @@ material __LandscapeMaterial9 {
             vertex_program_ref landscape_vs_glsl {
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
                 param_named_auto world WORLD_MATRIX
+                param_named_auto viewPos CAMERA_POSITION
             }
 
             fragment_program_ref landscape_fs_glsl {
@@ -63,6 +67,8 @@ material __LandscapeMaterial9 {
                 param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
                 param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+                param_named_auto fogColor FOG_COLOUR
+                param_named_auto fogParams FOG_PARAMS
 
                 param_named globalNormal int 0
                 param_named vertexColor int 1
@@ -89,6 +95,7 @@ material __LandscapeMaterial9 {
             vertex_program_ref landscape_vs_glsl {
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
                 param_named_auto world WORLD_MATRIX
+                param_named_auto viewPos CAMERA_POSITION
             }
 
             fragment_program_ref landscape_blend_fs_glsl {
@@ -96,6 +103,8 @@ material __LandscapeMaterial9 {
                 param_named_auto lightDiffuseArray LIGHT_DIFFUSE_COLOUR_ARRAY 8
                 param_named_auto lightAttenuationArray LIGHT_ATTENUATION_ARRAY 8
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+                param_named_auto fogColor FOG_COLOUR
+                param_named_auto fogParams FOG_PARAMS
 
                 param_named globalNormal int 0
                 param_named vertexColor int 1

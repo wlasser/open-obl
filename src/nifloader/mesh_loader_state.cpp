@@ -667,6 +667,10 @@ void addGenericFragmentShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
   fsParams->setNamedAutoConstant("matSpecular",
                                  AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
+  fsParams->setNamedAutoConstant("fogColor",
+                                 AutoConst::ACT_FOG_COLOUR);
+  fsParams->setNamedAutoConstant("fogParams",
+                                 AutoConst::ACT_FOG_PARAMS);
 }
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
