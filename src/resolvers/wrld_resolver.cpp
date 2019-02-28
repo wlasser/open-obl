@@ -303,7 +303,8 @@ void oo::World::makeAtmosphere() {
 
   if (clmt.sunFilename) {
     mHasSun = true;
-    auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
+    auto *sunNode
+        {mScnMgr->getRootSceneNode()->createChildSceneNode("__sunNode")};
     auto *sunLight{mScnMgr->createLight("__sunLight")};
     sunNode->attachObject(sunLight);
 
@@ -313,7 +314,7 @@ void oo::World::makeAtmosphere() {
     auto *sunBillboardSet{mScnMgr->createBillboardSet("__sunBillboardSet", 1)};
     sunNode->attachObject(sunBillboardSet);
 
-    sunBillboardSet->setDefaultDimensions(100.0f, 100.0f);
+    sunBillboardSet->setDefaultDimensions(2500.0f, 2500.0f);
     sunBillboardSet->setBillboardOrigin(Ogre::BillboardOrigin::BBO_CENTER);
     sunBillboardSet
         ->setBillboardRotationType(Ogre::BillboardRotationType::BBR_VERTEX);
@@ -439,7 +440,18 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
 
   const auto domePos{mScnMgr->getSkyDomeNode()->getPosition()};
   auto *sunNode{mScnMgr->getSceneNode("__sunNode")};
-  sunNode->setPosition(domePos + Ogre::Vector3(0.0f, 5.0f, 0.0f));
+  if (mSunriseBegin <= time && time <= mSunsetEnd) {
+    auto dt{static_cast<float>((mSunsetEnd - mSunriseBegin).count())};
+    Ogre::Radian theta{(time - mSunriseBegin).count() / dt * 3.14159f};
+    const Ogre::Vector3 pos{
+        3900.0f * Ogre::Math::Cos(theta),
+        3900.0f * Ogre::Math::Sin(theta),
+        0.0f
+    };
+    sunNode->setPosition(domePos + pos);
+  } else {
+    sunNode->setPosition(domePos + Ogre::Vector3(0.0f, -3900.0f, 0.0f));
+  }
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
