@@ -141,6 +141,7 @@ void oo::Weather::setSkyMaterial(oo::chrono::QualitativeTimeOfDay tod,
   skyParams->setNamedConstant("upperSkyColor", getUpperSkyColor(tod, t));
   skyParams->setNamedConstant("lowerCloudColor", getLowerCloudColor(tod, t));
   skyParams->setNamedConstant("upperCloudColor", getUpperCloudColor(tod, t));
+  skyParams->setNamedConstant("sunColor", getSunColor(tod, t));
   skyParams->setNamedConstant("horizonColor", getHorizonColor(tod, t));
 }
 
@@ -192,6 +193,11 @@ Ogre::ColourValue
 oo::Weather::getUpperCloudColor(chrono::QualitativeTimeOfDay tod,
                                 float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.upperClouds; });
+}
+
+Ogre::ColourValue
+oo::Weather::getSunColor(chrono::QualitativeTimeOfDay tod, float t) const {
+  return getColor(tod, t, [](const Colors &c) { return c.sun; });
 }
 
 Ogre::ColourValue

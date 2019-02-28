@@ -55,6 +55,8 @@ class Weather {
   Ogre::ColourValue
   getUpperCloudColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
+  getSunColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  Ogre::ColourValue
   getHorizonColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
   /// @}
 
