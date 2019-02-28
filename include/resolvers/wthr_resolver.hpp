@@ -38,7 +38,6 @@ class Weather {
   explicit Weather(const record::WTHR &rec);
 
   oo::BaseId getBaseId() const noexcept;
-  Ogre::MaterialPtr getMaterial() const;
 
   /// Colour getters
   /// @{
@@ -72,11 +71,30 @@ class Weather {
   /// Set the shader uniforms of the sky dome material based on the time of day.
   void setSkyMaterial(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
 
+  /// Weather-related constants
+  /// These are needed by both `oo::World` and `oo::Weather`; putting them here
+  /// is as good a place as any.
+  ///@{
+
+  /// Distance from the camera to the sun billboard, in meters.
+  static constexpr float SUN_DISTANCE{6000.0f * 1.414213562f};
+  /// Width and height of the sun billboard, in meters.
+  static constexpr float SUN_WIDTH{5000.0f};
+  /// Half-extent of the cloud sky box, in meters.
+  static constexpr float CLOUD_HEIGHT{3500.0f};
+  /// Half-extent of the sky dome, in meters.
+  /// \remark OGRE's sky dome is actually a cube, with clever UV mapping to look
+  ///         like a sphere.
+  static constexpr float SKY_HEIGHT{SUN_DISTANCE + SUN_WIDTH / 0.70710678f};
+
+  ///@}
+
  private:
   oo::BaseId mBaseId;
   Ogre::TexturePtr mLowerCloudsTex;
   Ogre::TexturePtr mUpperCloudsTex;
-  Ogre::MaterialPtr mSkyDomeMaterial;
+  Ogre::MaterialPtr mSkyMaterial;
+  Ogre::MaterialPtr mCloudsMaterial;
   // TODO: Support rain
 
   /// Linearly interpolate from the quantity `a` at `t = 0` to the quantity

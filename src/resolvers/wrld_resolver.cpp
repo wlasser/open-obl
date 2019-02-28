@@ -314,10 +314,11 @@ void oo::World::makeAtmosphere() {
     auto *sunBillboardSet{mScnMgr->createBillboardSet("__sunBillboardSet", 1)};
     sunNode->attachObject(sunBillboardSet);
 
-    sunBillboardSet->setDefaultDimensions(2500.0f, 2500.0f);
+    sunBillboardSet->setDefaultDimensions(oo::Weather::SUN_WIDTH,
+                                          oo::Weather::SUN_WIDTH);
     sunBillboardSet->setBillboardOrigin(Ogre::BillboardOrigin::BBO_CENTER);
-    sunBillboardSet
-        ->setBillboardRotationType(Ogre::BillboardRotationType::BBR_VERTEX);
+    sunBillboardSet->setBillboardRotationType(
+        Ogre::BillboardRotationType::BBR_VERTEX);
     sunBillboardSet->setBillboardType(Ogre::BillboardType::BBT_POINT);
 
     std::string matName = "__sunMaterial" + oo::BaseId{clmt.mFormId}.string();
@@ -362,6 +363,12 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
     return nullptr;
   }();
 
+  Ogre::Billboard *sunBillboard = [&]() -> Ogre::Billboard * {
+    auto *set{mScnMgr->getBillboardSet("__sunBillboardSet")};
+    if (!set) return nullptr;
+    return set->getBillboard(0);
+  }();
+
   if (mSunriseBegin <= time && time <= mSunriseEnd) {
     // Sunrise
     const auto sunriseMid{(mSunriseEnd + mSunriseBegin) / 2};
@@ -372,33 +379,39 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const float t{(time - mSunriseBegin).count() / dt};
 
       const auto c{weather.getAmbientColor(oo::chrono::Sunrise, t)};
-      const auto s{weather.getSunlightColor(oo::chrono::Sunrise, t)};
+      const auto sl{weather.getSunlightColor(oo::chrono::Sunrise, t)};
+      const auto s{weather.getSunColor(oo::chrono::Sunrise, t)};
 
       weather.setFog(mScnMgr, oo::chrono::Sunrise, t);
       weather.setSkyMaterial(oo::chrono::Sunrise, t);
       mScnMgr->setAmbientLight(c);
-      if (light) light->setDiffuseColour(s);
+      if (light) light->setDiffuseColour(sl);
+      if (sunBillboard) sunBillboard->setColour(s);
     } else {
       // Blending into daytime from middle of sunrise
       const float t{(time - sunriseMid).count() / dt};
 
       const auto c{weather.getAmbientColor(oo::chrono::Daytime, t)};
-      const auto s{weather.getSunlightColor(oo::chrono::Daytime, t)};
+      const auto sl{weather.getSunlightColor(oo::chrono::Daytime, t)};
+      const auto s{weather.getSunColor(oo::chrono::Daytime, t)};
 
       weather.setFog(mScnMgr, oo::chrono::Daytime, t);
       weather.setSkyMaterial(oo::chrono::Daytime, t);
       mScnMgr->setAmbientLight(c);
-      if (light) light->setDiffuseColour(s);
+      if (light) light->setDiffuseColour(sl);
+      if (sunBillboard) sunBillboard->setColour(s);
     }
   } else if (mSunriseEnd < time && time < mSunsetBegin) {
     // Daytime
     const auto c{weather.getAmbientColor(oo::chrono::Daytime)};
-    const auto s{weather.getSunlightColor(oo::chrono::Daytime)};
+    const auto sl{weather.getSunlightColor(oo::chrono::Daytime)};
+    const auto s{weather.getSunColor(oo::chrono::Daytime)};
 
     weather.setFog(mScnMgr, oo::chrono::Daytime);
     weather.setSkyMaterial(oo::chrono::Daytime);
     mScnMgr->setAmbientLight(c);
-    if (light) light->setDiffuseColour(s);
+    if (light) light->setDiffuseColour(sl);
+    if (sunBillboard) sunBillboard->setColour(s);
   } else if (mSunsetBegin <= time && time <= mSunsetEnd) {
     // Sunset
     const auto sunsetMid{(mSunsetEnd + mSunsetBegin) / 2};
@@ -409,49 +422,55 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
       const float t{(time - mSunsetBegin).count() / dt};
 
       const auto c{weather.getAmbientColor(oo::chrono::Sunset, t)};
-      const auto s{weather.getSunlightColor(oo::chrono::Sunset, t)};
+      const auto sl{weather.getSunlightColor(oo::chrono::Sunset, t)};
+      const auto s{weather.getSunColor(oo::chrono::Sunset, t)};
 
       weather.setFog(mScnMgr, oo::chrono::Sunset, t);
       weather.setSkyMaterial(oo::chrono::Sunset, t);
       mScnMgr->setAmbientLight(c);
-      if (light) light->setDiffuseColour(s);
+      if (light) light->setDiffuseColour(sl);
+      if (sunBillboard) sunBillboard->setColour(s);
     } else {
       // Blending into nighttime from middle of sunset
       const float t{(time - sunsetMid).count() / dt};
 
       const auto c{weather.getAmbientColor(oo::chrono::Nighttime, t)};
-      const auto s{weather.getSunlightColor(oo::chrono::Nighttime, t)};
+      const auto sl{weather.getSunlightColor(oo::chrono::Nighttime, t)};
+      const auto s{weather.getSunColor(oo::chrono::Nighttime, t)};
 
       weather.setFog(mScnMgr, oo::chrono::Nighttime, t);
       weather.setSkyMaterial(oo::chrono::Nighttime, t);
       mScnMgr->setAmbientLight(c);
-      if (light) light->setDiffuseColour(s);
+      if (light) light->setDiffuseColour(sl);
+      if (sunBillboard) sunBillboard->setColour(s);
     }
   } else {
     // Nighttime
     const auto c{weather.getAmbientColor(oo::chrono::Nighttime)};
-    const auto s{weather.getSunlightColor(oo::chrono::Nighttime)};
+    const auto sl{weather.getSunlightColor(oo::chrono::Nighttime)};
+    const auto s{weather.getSunColor(oo::chrono::Nighttime)};
 
     weather.setFog(mScnMgr, oo::chrono::Nighttime);
     weather.setSkyMaterial(oo::chrono::Nighttime);
     mScnMgr->setAmbientLight(c);
-    if (light) light->setDiffuseColour(s);
+    if (light) light->setDiffuseColour(sl);
+    if (sunBillboard) sunBillboard->setColour(s);
   }
 
-  const auto domePos{mScnMgr->getSkyDomeNode()->getPosition()};
   auto *sunNode{mScnMgr->getSceneNode("__sunNode")};
-  if (mSunriseBegin <= time && time <= mSunsetEnd) {
-    auto dt{static_cast<float>((mSunsetEnd - mSunriseBegin).count())};
-    Ogre::Radian theta{(time - mSunriseBegin).count() / dt * 3.14159f};
-    const Ogre::Vector3 pos{
-        3900.0f * Ogre::Math::Cos(theta),
-        3900.0f * Ogre::Math::Sin(theta),
-        0.0f
-    };
-    sunNode->setPosition(domePos + pos);
-  } else {
-    sunNode->setPosition(domePos + Ogre::Vector3(0.0f, -3900.0f, 0.0f));
-  }
+
+  const auto domePos{mScnMgr->getSkyDomeNode()->getPosition()};
+  const auto relPos = [&]() -> Ogre::Vector3 {
+    if (mSunriseBegin <= time && time <= mSunsetEnd) {
+      auto dt{static_cast<float>((mSunsetEnd - mSunriseBegin).count())};
+      Ogre::Radian theta{(time - mSunriseBegin).count() / dt * Ogre::Math::PI};
+      return Ogre::Vector3{Ogre::Math::Cos(theta), Ogre::Math::Sin(theta), 0.0f}
+          * oo::Weather::SUN_DISTANCE;
+    }
+    return Ogre::Vector3::NEGATIVE_UNIT_Y * oo::Weather::SUN_DISTANCE;
+  }();
+
+  sunNode->setPosition(domePos + relPos);
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,

@@ -6,6 +6,10 @@ fragment_program sky_fs_glsl glsl {
     source sky_fs.glsl
 }
 
+fragment_program cloud_fs_glsl glsl {
+    source cloud_fs.glsl
+}
+
 vertex_program sun_vs_glsl glsl {
     source sun_vs.glsl
 }
@@ -23,13 +27,29 @@ material __skyMaterial {
             }
 
             fragment_program_ref sky_fs_glsl {
-                param_named lowerLayer int 0
-                param_named upperLayer int 1
                 param_named lowerSkyColor float3 0 0 0
                 param_named upperSkyColor float3 0 0 0
+                param_named horizonColor float3 0 0 0
+            }
+
+            scene_blend one one
+        }
+    }
+}
+
+material __cloudMaterial {
+    technique {
+        pass {
+            vertex_program_ref sky_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+            }
+
+            fragment_program_ref cloud_fs_glsl {
+                param_named lowerLayer int 0
+                param_named upperLayer int 1
                 param_named lowerCloudColor float3 0 0 0
                 param_named upperCloudColor float3 0 0 0
-                param_named horizonColor float3 0 0 0
             }
 
             texture_unit lowerLayer {
@@ -39,6 +59,8 @@ material __skyMaterial {
             texture_unit upperLayer {
                 texture "textures/sky/cloudsclear.dds"
             }
+
+            scene_blend one one_minus_src_alpha
         }
     }
 }
@@ -59,10 +81,12 @@ material __sunMaterial {
                 texture "textures/sky/sun.dds"
             }
 
-            scene_blend src_alpha one_minus_src_alpha
+            //scene_blend src_alpha one_minus_src_alpha
+            scene_blend one one
             cull_hardware none
             cull_software none
             lighting off
+            depth_write on
         }
     }
 }

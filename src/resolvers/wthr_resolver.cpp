@@ -88,26 +88,35 @@ oo::Weather::Weather(const record::WTHR &rec) {
 
 void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  if (!mSkyDomeMaterial) {
+
+  if (!mSkyMaterial) {
     auto matPtr{matMgr.getByName("__skyMaterial", oo::SHADER_GROUP)};
-    mSkyDomeMaterial = matPtr->clone("__skyMaterial" + getBaseId().string(),
+    mSkyMaterial = matPtr->clone("__skyMaterial" + getBaseId().string(),
+        /*changeGroup=*/true, oo::RESOURCE_GROUP);
+  }
+
+  if (!mCloudsMaterial) {
+    auto matPtr{matMgr.getByName("__cloudMaterial", oo::SHADER_GROUP)};
+    mCloudsMaterial = matPtr->clone("__cloudMaterial" + getBaseId().string(),
         /*changeGroup=*/true, oo::RESOURCE_GROUP);
     if (mLowerCloudsTex && mUpperCloudsTex) {
       Ogre::AliasTextureNamePairList layers{
           {"lowerLayer", mLowerCloudsTex->getName()},
           {"upperLayer", mUpperCloudsTex->getName()}
       };
-      mSkyDomeMaterial->applyTextureAliases(layers, true);
+      mCloudsMaterial->applyTextureAliases(layers, true);
     }
   }
 
   constexpr Ogre::Real curvature{10};
   constexpr Ogre::Real tiling{8};
-  constexpr Ogre::Real distanceToPlane{4000};
-  scnMgr->setSkyDome(true, mSkyDomeMaterial->getName(), curvature, tiling,
-                     distanceToPlane, /*drawFirst=*/true,
+  scnMgr->setSkyDome(true, mCloudsMaterial->getName(), curvature, tiling,
+                     oo::Weather::CLOUD_HEIGHT, /*drawFirst=*/false,
                      Ogre::Quaternion::IDENTITY, 16, 16, -1,
                      oo::RESOURCE_GROUP);
+
+  scnMgr->setSkyBox(true, mSkyMaterial->getName(), oo::Weather::SKY_HEIGHT,
+      /*drawFirst=*/true, Ogre::Quaternion::IDENTITY, oo::RESOURCE_GROUP);
 }
 
 void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
@@ -129,8 +138,8 @@ void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
 
 void oo::Weather::setSkyMaterial(oo::chrono::QualitativeTimeOfDay tod,
                                  float t) const {
-  if (!mSkyDomeMaterial) return;
-  auto skyPass{mSkyDomeMaterial->getTechnique(0)->getPass(0)};
+  if (!mSkyMaterial) return;
+  auto skyPass{mSkyMaterial->getTechnique(0)->getPass(0)};
   auto skyParams = [&skyPass]() -> Ogre::GpuProgramParametersSharedPtr {
     return skyPass ? skyPass->getFragmentProgramParameters()
                    : Ogre::GpuProgramParametersSharedPtr();
@@ -139,18 +148,22 @@ void oo::Weather::setSkyMaterial(oo::chrono::QualitativeTimeOfDay tod,
 
   skyParams->setNamedConstant("lowerSkyColor", getLowerSkyColor(tod, t));
   skyParams->setNamedConstant("upperSkyColor", getUpperSkyColor(tod, t));
-  skyParams->setNamedConstant("lowerCloudColor", getLowerCloudColor(tod, t));
-  skyParams->setNamedConstant("upperCloudColor", getUpperCloudColor(tod, t));
-  skyParams->setNamedConstant("sunColor", getSunColor(tod, t));
   skyParams->setNamedConstant("horizonColor", getHorizonColor(tod, t));
+
+  if (!mCloudsMaterial) return;
+  auto cloudsPass{mCloudsMaterial->getTechnique(0)->getPass(0)};
+  auto cloudsParams = [&cloudsPass]() -> Ogre::GpuProgramParametersSharedPtr {
+    return cloudsPass ? cloudsPass->getFragmentProgramParameters()
+                      : Ogre::GpuProgramParametersSharedPtr();
+  }();
+  if (!cloudsParams) return;
+
+  cloudsParams->setNamedConstant("lowerCloudColor", getLowerCloudColor(tod, t));
+  cloudsParams->setNamedConstant("upperCloudColor", getUpperCloudColor(tod, t));
 }
 
 oo::BaseId oo::Weather::getBaseId() const noexcept {
   return mBaseId;
-}
-
-Ogre::MaterialPtr oo::Weather::getMaterial() const {
-  return mSkyDomeMaterial;
 }
 
 Ogre::ColourValue oo::Weather::makeColor(record::raw::Color c) const noexcept {
