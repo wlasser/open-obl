@@ -6,6 +6,14 @@ fragment_program sky_fs_glsl glsl {
     source sky_fs.glsl
 }
 
+vertex_program sun_vs_glsl glsl {
+    source sun_vs.glsl
+}
+
+fragment_program sun_fs_glsl glsl {
+    source sun_fs.glsl
+}
+
 material __skyMaterial {
     technique {
         pass {
@@ -31,6 +39,30 @@ material __skyMaterial {
             texture_unit upperLayer {
                 texture "textures/sky/cloudsclear.dds"
             }
+        }
+    }
+}
+
+material __sunMaterial {
+    technique {
+        pass {
+            vertex_program_ref sun_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+            }
+
+            fragment_program_ref sun_fs_glsl {
+                param_named sunTexture int 0
+            }
+
+            texture_unit sunTexture {
+                texture "textures/sky/sun.dds"
+            }
+
+            scene_blend src_alpha one_minus_src_alpha
+            cull_hardware none
+            cull_software none
+            lighting off
         }
     }
 }

@@ -279,18 +279,6 @@ void oo::World::makeAtmosphere() {
     mPhaseLength = settings.phaseLength;
   }
 
-  if (clmt.sunFilename) {
-    mHasSun = true;
-    oo::Path sunFilename{clmt.sunFilename->data};
-    auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
-    auto *sunLight{mScnMgr->createLight("__sunLight")};
-    sunNode->attachObject(sunLight);
-
-    sunNode->setDirection(0.0f, -1.0f, 0.0f,
-                          Ogre::Node::TransformSpace::TS_WORLD);
-    sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
-  }
-
   if (clmt.weatherList) {
     const auto &weathers{clmt.weatherList->data.weathers};
     std::vector<uint32_t> chances;
@@ -311,6 +299,53 @@ void oo::World::makeAtmosphere() {
     if (mWeathers.empty()) return;
     auto &weather{mWeathers[mCurrentWeather]};
     weather.setSkyDome(mScnMgr);
+  }
+
+  if (clmt.sunFilename) {
+    mHasSun = true;
+    auto *sunNode{mScnMgr->createSceneNode("__sunNode")};
+    auto *sunLight{mScnMgr->createLight("__sunLight")};
+    sunNode->attachObject(sunLight);
+
+    sunNode->setDirection(0.0f, -1.0f, 0.0f,
+                          Ogre::Node::TransformSpace::TS_WORLD);
+
+    auto *sunBillboardSet{mScnMgr->createBillboardSet("__sunBillboardSet", 1)};
+    sunNode->attachObject(sunBillboardSet);
+
+    sunBillboardSet->setDefaultDimensions(100.0f, 100.0f);
+    sunBillboardSet->setBillboardOrigin(Ogre::BillboardOrigin::BBO_CENTER);
+    sunBillboardSet
+        ->setBillboardRotationType(Ogre::BillboardRotationType::BBR_VERTEX);
+    sunBillboardSet->setBillboardType(Ogre::BillboardType::BBT_POINT);
+
+    std::string matName = "__sunMaterial" + oo::BaseId{clmt.mFormId}.string();
+    auto matPtr = [&]() {
+      auto &matMgr{Ogre::MaterialManager::getSingleton()};
+      if (matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
+        return matMgr.getByName(matName, oo::RESOURCE_GROUP);
+      }
+      auto basePtr{matMgr.getByName("__sunMaterial", oo::SHADER_GROUP)};
+      return basePtr->clone(matName, /*changeGroup=*/true, oo::RESOURCE_GROUP);
+    }();
+
+    oo::Path sunFilename{"textures/" + clmt.sunFilename->data};
+
+    Ogre::AliasTextureNamePairList aliases{
+        {"sunTexture", std::string{sunFilename.c_str()}}
+    };
+    matPtr->applyTextureAliases(aliases, true);
+
+    sunBillboardSet->setMaterial(matPtr);
+    sunBillboardSet->setPointRenderingEnabled(false);
+    sunBillboardSet->setVisible(true);
+
+    auto *sunBillboard{sunBillboardSet->createBillboard(Ogre::Vector3::ZERO)};
+    if (!sunBillboard) {
+      spdlog::get(oo::LOG)->warn("Failed to create sun billboard");
+    }
+
+    sunLight->setType(Ogre::Light::LightTypes::LT_DIRECTIONAL);
   }
 }
 
@@ -401,6 +436,10 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
     mScnMgr->setAmbientLight(c);
     if (light) light->setDiffuseColour(s);
   }
+
+  const auto domePos{mScnMgr->getSkyDomeNode()->getPosition()};
+  auto *sunNode{mScnMgr->getSceneNode("__sunNode")};
+  sunNode->setPosition(domePos + Ogre::Vector3(0.0f, 5.0f, 0.0f));
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
