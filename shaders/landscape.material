@@ -123,7 +123,7 @@ material __LandscapeMaterial9 {
                 param_named normal8 int 10
             }
 
-            scene_blend src_alpha one_minus_src_alpha
+            scene_blend one one_minus_src_alpha
         }
     }
 }

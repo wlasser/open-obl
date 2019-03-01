@@ -190,5 +190,6 @@ void main() {
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
     fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
 
-    FragColor = vec4(fragColor, f);
+    // Premultiply alpha to blend correctly over previous layer
+    FragColor = vec4(fragColor * f, f);
 }
