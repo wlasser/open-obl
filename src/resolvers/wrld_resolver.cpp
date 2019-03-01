@@ -460,17 +460,107 @@ void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
   auto *sunNode{mScnMgr->getSceneNode("__sunNode")};
 
   const auto domePos{mScnMgr->getSkyDomeNode()->getPosition()};
+//  const auto relPos = [&]() -> Ogre::Vector3 {
+//    if (mSunriseBegin <= time && time <= mSunsetEnd) {
+//      auto dt{static_cast<float>((mSunsetEnd - mSunriseBegin).count())};
+//      Ogre::Radian theta{(time - mSunriseBegin).count() / dt * Ogre::Math::PI};
+//      return Ogre::Vector3{Ogre::Math::Cos(theta), Ogre::Math::Sin(theta), 0.0f}
+//          * oo::Weather::SUN_DISTANCE;
+//    }
+//    return Ogre::Vector3::NEGATIVE_UNIT_Y * oo::Weather::SUN_DISTANCE;
+//  }();
   const auto relPos = [&]() -> Ogre::Vector3 {
-    if (mSunriseBegin <= time && time <= mSunsetEnd) {
-      auto dt{static_cast<float>((mSunsetEnd - mSunriseBegin).count())};
-      Ogre::Radian theta{(time - mSunriseBegin).count() / dt * Ogre::Math::PI};
-      return Ogre::Vector3{Ogre::Math::Cos(theta), Ogre::Math::Sin(theta), 0.0f}
-          * oo::Weather::SUN_DISTANCE;
-    }
-    return Ogre::Vector3::NEGATIVE_UNIT_Y * oo::Weather::SUN_DISTANCE;
+    // Thanks to Wikipedia for all of these calculations.
+    // https://en.wikipedia.org/Sunrise_equation
+    // https://en.wikipedia.org/Position_of_the_Sun
+    // https://en.wikipedia.org/Celestial_coordinate_system#Converting_coordinates
+
+    // No orbiting, so pick some mean longitude and mean anomaly
+    // TODO: Use actual calendar time to get the correct position instead of
+    //       hardcoding the epoch.
+    // These should be wrapped into [0, 360).
+    Ogre::Degree meanLongitude{std::fmod(280.5f + 238.0f, 360.0f)};
+    Ogre::Degree meanAnomaly{std::fmod(357.5f + 238.0f, 360.0f)};
+
+    // Eccentricity of the orbit is constant
+    constexpr float eccentricity{0.01671f};
+    // Semimajor axis is constant, measured in (our version of) AU.
+    constexpr float semiMajorAxis{1.0f};
+    constexpr float semiLatusRectum{semiMajorAxis
+                                        * (1.0f - eccentricity * eccentricity)};
+    // Obliquity of the ecliptic is constant (ignoring precession)
+    // TODO: Add constexpr to OGRE
+    const Ogre::Degree obliquity{23.4f};
+
+    // Use the equation of the centre to find the actual ecliptic longitude
+    Ogre::Radian L1{2.0f * eccentricity
+                        - 0.25f * Ogre::Math::Pow(eccentricity, 3)};
+    Ogre::Radian L2{5.0f / 4.0f * Ogre::Math::Pow(eccentricity, 2)
+                        - 11.0f / 24.0f * Ogre::Math::Pow(eccentricity, 4)};
+    Ogre::Degree eclipticLongitude{
+        meanLongitude + Ogre::Degree(L1) * Ogre::Math::Sin(meanAnomaly)
+            + Ogre::Degree(L2) * Ogre::Math::Sin(2 * meanAnomaly)};
+
+    // Ecliptic latitude of the sun is approximately zero
+    Ogre::Degree eclipticLatitude{0.0f};
+
+    // Distance to the sun using polar coordinates
+    // This is fudged because we don't actually place the sun that far away
+    // and we only need it for final positioning
+    float r = oo::Weather::SUN_DISTANCE;
+//    float r = semiLatusRectum / (1.0f + Ogre::Math::Cos(eclipticLongitude));
+
+    // Compute position in equatorial coordinates
+    Ogre::Radian rightAscension{Ogre::Math::ATan2(
+        Ogre::Math::Cos(obliquity) * Ogre::Math::Sin(eclipticLongitude),
+        Ogre::Math::Cos(eclipticLongitude))};
+    Ogre::Radian declination{Ogre::Math::ASin(
+        Ogre::Math::Sin(obliquity) * Ogre::Math::Sin(eclipticLongitude)
+    )};
+
+    // Obviously we don't know the player's actual longitude and latitude.
+    // The relative location and climate of the other continents on Nirn suggest
+    // that Tamriel is in the northern hemisphere, and we may as well take the
+    // prime meridian as going through the Imperial City.
+    // Since we don't know the equatorial circumference of Nirn, we can't change
+    // the longitude and latitude anyway so just pick a value.
+
+    // For simplicity take sidereal time equal to solar time.
+    // Note 360 * t / (60 * 24) = t / 4
+    Ogre::Degree siderealTime{time.count() / 4.0f};
+    auto hourAngle{siderealTime - rightAscension};
+    // Observer's latitude
+    Ogre::Degree latitude{0.0f};
+
+    // Compute position in horizontal coordinates
+    const float cosDeclination{Ogre::Math::Cos(declination)};
+    const float sinDeclination{Ogre::Math::Sin(declination)};
+    const float cosLatitude{Ogre::Math::Cos(latitude)};
+    const float sinLatitude{Ogre::Math::Sin(latitude)};
+
+    // Azimuth is measured from South, turning positive Westward
+    Ogre::Radian azimuth{Ogre::Math::ATan2(
+        Ogre::Math::Sin(hourAngle) * cosDeclination,
+        Ogre::Math::Cos(hourAngle) * sinLatitude * cosDeclination
+            - sinDeclination * cosLatitude
+    )};
+
+    // Altitude is measured from the horizon towards the zenith
+    Ogre::Radian altitude{Ogre::Math::ASin(
+        sinLatitude * sinDeclination
+            + cosLatitude * cosDeclination * Ogre::Math::Cos(hourAngle)
+    )};
+
+    // X is East, Y is towards zenith, Z is North
+    return Ogre::Vector3{
+        -Ogre::Math::Cos(altitude) * Ogre::Math::Sin(azimuth),
+        Ogre::Math::Sin(altitude),
+        Ogre::Math::Cos(altitude) * Ogre::Math::Cos(azimuth)
+    } * oo::Weather::SUN_DISTANCE;
   }();
 
   sunNode->setPosition(domePos + relPos);
+  sunNode->setDirection(-relPos, Ogre::Node::TransformSpace::TS_WORLD);
 }
 
 void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
