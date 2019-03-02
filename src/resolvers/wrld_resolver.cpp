@@ -400,6 +400,9 @@ void oo::World::makeAtmosphere() {
   makeWeatherList(clmt);
   makeSun(clmt);
 
+//  const auto declination{getSunEquatorialCoordinates().declination};
+//  setSunriseSunsetTimes(declination, Ogre::Degree(45.0f));
+
   if (!mWeathers.empty()) {
     mWeathers.front().setSkyDome(mScnMgr);
   }
@@ -415,13 +418,8 @@ oo::World::getSunPositionSimple(const chrono::minutes &time) const {
   return Ogre::Vector3::NEGATIVE_UNIT_Y;
 }
 
-Ogre::Vector3
-oo::World::getSunPositionPhysical(const chrono::minutes &time) const {
-  // Thanks to Wikipedia for all of these calculations.
-  // https://en.wikipedia.org/Sunrise_equation
-  // https://en.wikipedia.org/Position_of_the_Sun
-  // https://en.wikipedia.org/Celestial_coordinate_system#Converting_coordinates
-
+oo::World::EquatorialCoordinates
+oo::World::getSunEquatorialCoordinates() const {
   // No constexpr math functions, so we use statics to cache calculations.
   // TODO: Add constexpr to OGRE, in particular Ogre::Degree and Ogre::Radian
 
@@ -437,8 +435,8 @@ oo::World::getSunPositionPhysical(const chrono::minutes &time) const {
   // TODO: Use actual calendar time to get the correct position instead of
   //       hardcoding the epoch.
   // These should be wrapped into [0, 360).
-  const Ogre::Degree meanLongitude{std::fmod(280.5f + 238.0f, 360.0f)};
-  const Ogre::Degree meanAnomaly{std::fmod(357.5f + 238.0f, 360.0f)};
+  const Ogre::Degree meanLongitude{std::fmod(280.5f + 138.0f, 360.0f)};
+  const Ogre::Degree meanAnomaly{std::fmod(357.5f + 138.0f, 360.0f)};
 
   // Get the ecliptic coordinates of the sun.
   // Use the equation of the centre to find the actual ecliptic longitude,
@@ -459,6 +457,41 @@ oo::World::getSunPositionPhysical(const chrono::minutes &time) const {
   const Ogre::Radian declination{Ogre::Math::ASin(
       sinObliquity * Ogre::Math::Sin(eclipticLongitude)
   )};
+
+  return {rightAscension, declination};
+}
+
+void oo::World::setSunriseSunsetTimes(const Ogre::Radian &declination,
+                                      const Ogre::Radian &latitude) {
+  const Ogre::Degree hourAngle{Ogre::Math::ACos(
+      -Ogre::Math::Tan(declination) * Ogre::Math::Tan(latitude))};
+  // Proportion of day from noon that sunrise/sunset occurs.
+  // Our time is measured from midnight.
+  const float t{hourAngle.valueDegrees() / 360.0f};
+  const float sunriseBegin{(0.5f - t) * 24.0f * 60.0f};
+  const float sunsetEnd{(0.5f + t) * 24.0f * 60.0f};
+
+  // TODO: Fix these.
+  const float sunriseEnd{sunriseBegin + 120.0f};
+  const float sunsetBegin{sunsetEnd - 120.0f};
+
+  spdlog::get(oo::LOG)->info("Sunrise t = {}", t);
+  spdlog::get(oo::LOG)->info("Sunrise starts at {} and sunset ends at {}",
+                             sunriseBegin / 60.0f, sunsetEnd / 60.0f);
+
+  mSunriseBegin = chrono::minutes(static_cast<unsigned long>(sunriseBegin));
+  mSunriseEnd = chrono::minutes(static_cast<unsigned long>(sunriseEnd));
+  mSunsetBegin = chrono::minutes(static_cast<unsigned long>(sunsetBegin));
+  mSunsetEnd = chrono::minutes(static_cast<unsigned long>(sunsetEnd));
+}
+
+Ogre::Vector3
+oo::World::getSunPositionPhysical(const chrono::minutes &time) const {
+  // Thanks to Wikipedia for all of these calculations.
+  // https://en.wikipedia.org/Sunrise_equation
+  // https://en.wikipedia.org/Position_of_the_Sun
+  // https://en.wikipedia.org/Celestial_coordinate_system#Converting_coordinates
+  const auto[rightAscension, declination]{getSunEquatorialCoordinates()};
 
   // Obviously we don't know the player's actual longitude and latitude.
   // The relative location and climate of the other continents on Nirn suggest
@@ -507,7 +540,7 @@ oo::World::getSunPositionPhysical(const chrono::minutes &time) const {
 }
 
 Ogre::Vector3 oo::World::getSunPosition(const chrono::minutes &time) const {
-  return getSunPositionPhysical(time);
+  return getSunPositionSimple(time);
 }
 
 std::pair<oo::chrono::QualitativeTimeOfDay, float>

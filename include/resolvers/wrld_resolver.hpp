@@ -299,6 +299,20 @@ class World {
   /// \todo Use the actual time of year, instead of the epoch.
   Ogre::Vector3 getSunPositionPhysical(const chrono::minutes &time) const;
 
+  struct EquatorialCoordinates {
+    Ogre::Radian rightAscension{};
+    Ogre::Radian declination{};
+  };
+
+  /// Return the position of the sun in equatorial coordinates based on the time
+  /// of year. This is an implementation function for `getSunPositionPhysical`.
+  EquatorialCoordinates getSunEquatorialCoordinates() const;
+
+  /// Set the sunrise and sunset times based on the given sun coordinates and
+  /// observer latitude.
+  void setSunriseSunsetTimes(const Ogre::Radian &declination,
+                             const Ogre::Radian &latitude);
+
   /// Split a time in minutes from 12:00 am into a `(time of day, t)` pair
   /// required by `oo::Weather`.
   std::pair<chrono::QualitativeTimeOfDay, float>
