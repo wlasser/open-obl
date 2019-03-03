@@ -352,6 +352,7 @@ void Application::setTerrainOptions() {
   auto &options{ctx.terrainOptions};
   options->setMaxPixelError(8);
   options->setCompositeMapDistance(oo::metersPerUnit<Ogre::Real> * 4096);
+  options->setCompositeMapSize(64u);
   options->setDefaultMaterialGenerator(
       std::make_shared<oo::TerrainMaterialGenerator>());
   options->setLayerBlendMapSize(17u);

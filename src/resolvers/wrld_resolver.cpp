@@ -902,6 +902,9 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       const Ogre::Box box(0u, 0u, vpq, vpq);
       blitBoxes(terrain[0]->getMaterialName(), box);
       blitLayerMaps(0);
+      terrain[0]->setGlobalColourMapEnabled(true, 2u);
+      terrain[0]->setGlobalColourMapEnabled(false, 2u);
+      terrain[0]->_setCompositeMapRequired(true);
       terrainDone |= 0b0001;
     }
 
@@ -909,6 +912,9 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       const Ogre::Box box(vpq - 1u, 0u, vpc, vpq);
       blitBoxes(terrain[1]->getMaterialName(), box);
       blitLayerMaps(1);
+      terrain[1]->setGlobalColourMapEnabled(true, 2u);
+      terrain[1]->setGlobalColourMapEnabled(false, 2u);
+      terrain[1]->_setCompositeMapRequired(true);
       terrainDone |= 0b0010;
     }
 
@@ -916,6 +922,9 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       const Ogre::Box box(0u, vpq - 1u, vpq, vpc);
       blitBoxes(terrain[2]->getMaterialName(), box);
       blitLayerMaps(2);
+      terrain[2]->setGlobalColourMapEnabled(true, 2u);
+      terrain[2]->setGlobalColourMapEnabled(false, 2u);
+      terrain[2]->_setCompositeMapRequired(true);
       terrainDone |= 0b0100;
     }
 
@@ -923,6 +932,9 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       const Ogre::Box box(vpq - 1u, vpq - 1u, vpc, vpc);
       blitBoxes(terrain[3]->getMaterialName(), box);
       blitLayerMaps(3);
+      terrain[3]->setGlobalColourMapEnabled(true, 2u);
+      terrain[3]->setGlobalColourMapEnabled(false, 2u);
+      terrain[3]->_setCompositeMapRequired(true);
       terrainDone |= 0b1000;
     }
   } while (terrainDone != 0b1111);

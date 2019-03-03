@@ -8,37 +8,50 @@
 
 namespace oo {
 
-Ogre::MaterialPtr
-TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
+std::pair<Ogre::MaterialPtr, bool>
+TerrainMaterialProfile::createOrRetrieveMaterial(const Ogre::Terrain *terrain) {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-
   const auto numLayers{terrain->getLayerCount()};
-
   const std::string &matName{terrain->getMaterialName()};
-  auto matPtr{matMgr.getByName(matName, oo::RESOURCE_GROUP)};
-  if (!matPtr) {
-    auto baseMat{matMgr.getByName(numLayers <= 5 ? "__LandscapeMaterial5"
-                                                 : "__LandscapeMaterial9",
-                                  oo::SHADER_GROUP)};
-    matPtr = baseMat->clone(terrain->getMaterialName(),
-                            true, oo::RESOURCE_GROUP);
+
+  if (auto matPtr{matMgr.getByName(matName, oo::RESOURCE_GROUP)}) {
+    return {std::move(matPtr), false};
   }
 
-  auto *basePass{matPtr->getTechnique(0)->getPass(0)};
-  if (basePass->getNumTextureUnitStates() > 0) return matPtr;
+  auto baseMat{matMgr.getByName(numLayers <= 5 ? "__LandscapeMaterial5"
+                                               : "__LandscapeMaterial9",
+                                oo::SHADER_GROUP)};
+  return {baseMat->clone(terrain->getMaterialName(), true, oo::RESOURCE_GROUP),
+          true};
+}
 
-  // The global normal map's name is dependent on the Terrain pointer, which
-  // is not available until the terrain is loaded. This Material returned by
-  // this function is required to reference the global normal map, but this
-  // function is called during load, and thus we have to create the map here
-  // even though we cannot populate it.
+std::pair<Ogre::MaterialPtr, bool>
+TerrainMaterialProfile::createOrRetrieveCompositeMaterial(const Ogre::Terrain *terrain) {
+  if (auto matPtr{terrain->_getCompositeMapMaterial()}) {
+    return {std::move(matPtr), false};
+  }
+
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  const std::string &matName{terrain->getMaterialName() + "Composite"};
+  if (auto matPtr = matMgr.getByName(matName, oo::RESOURCE_GROUP)) {
+    return {std::move(matPtr), false};
+  }
+
+  auto baseMat{matMgr.getByName("__LandscapeMaterialDiffuseComposite",
+                                oo::SHADER_GROUP)};
+
+  return {baseMat->clone(matName, true, oo::RESOURCE_GROUP), true};
+}
+
+Ogre::String
+TerrainMaterialProfile::createGlobalNormalMap(const Ogre::String &matName) {
   // Leaving the data uninitialized or filling it with zeroes both result in
   // UB if the normals are not populated correctly before rendering; shaders
   // are allowed to assume that the normals are indeed normalized and thus
   // can do things like normalize(n x (nonzero vector)).
   // Alternatively we could fill this with normalized placeholder data---all
   // up vectors for instance---but that seems like a waste.
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
   auto globalNormalName{matName + "normal"};
   if (!texMgr.resourceExists(globalNormalName, oo::RESOURCE_GROUP)) {
     texMgr.createManual(
@@ -46,10 +59,14 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
         Ogre::TEX_TYPE_2D, 17u, 17u, 1, 0,
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
+  return globalNormalName;
+}
 
-  // Similarly to the global normal map, we need to create the vertex colour
-  // map here. Filling it with 0 or 255 would at least be a valid default,
-  // but there's no need to.
+Ogre::String
+TerrainMaterialProfile::createVertexColorMap(const Ogre::String &matName) {
+  // Filling it with 0 or 255 would at least be a valid default, but there's no
+  // need to.
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
   auto vertexColorName{matName + "vertexcolor"};
   if (!texMgr.resourceExists(vertexColorName, oo::RESOURCE_GROUP)) {
     texMgr.createManual(
@@ -57,9 +74,49 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
         Ogre::TEX_TYPE_2D, 17u, 17u, 1, 0,
         Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
   }
+  return vertexColorName;
+}
+
+Ogre::String
+TerrainMaterialProfile::createCompositeDiffuseMap(const Ogre::String &matName) {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  const auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
+
+  auto compDiffuseName{matName + "compDiffuse"};
+  if (!texMgr.resourceExists(compDiffuseName, oo::RESOURCE_GROUP)) {
+    texMgr.createManual(
+        compDiffuseName, oo::RESOURCE_GROUP, Ogre::TEX_TYPE_2D,
+        terrainOpts.getCompositeMapSize(), terrainOpts.getCompositeMapSize(),
+        1, 0, Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
+  }
+  return compDiffuseName;
+}
+
+Ogre::String
+TerrainMaterialProfile::createCompositeNormalMap(const Ogre::String &matName) {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  const auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
+
+  auto compNormalName{matName + "compNormal"};
+  if (!texMgr.resourceExists(compNormalName, oo::RESOURCE_GROUP)) {
+    texMgr.createManual(
+        compNormalName, oo::RESOURCE_GROUP, Ogre::TEX_TYPE_2D,
+        terrainOpts.getCompositeMapSize(), terrainOpts.getCompositeMapSize(),
+        1, 0, Ogre::PixelFormat::PF_BYTE_RGB, Ogre::TU_STATIC);
+  }
+  return compNormalName;
+}
+
+void TerrainMaterialProfile::makeHighLodTechnique(const Ogre::Terrain *terrain,
+                                                  Ogre::Technique *technique) {
+  const std::string &matName{terrain->getMaterialName()};
+  const auto numLayers{terrain->getLayerCount()};
+
+  auto globalNormalName{createGlobalNormalMap(matName)};
+  auto vertexColorName{createVertexColorMap(matName)};
 
   // WTF C++, why is this cast even necessary? You can *see* 1 and 2 fit in
-  // a short, the standard requires it! Using = just shifts changes error to a
+  // a short, the standard requires it! Using = just changes the error to a
   // warning BTW.
   // TODO: Make a short integer UDL.
   const uint8_t numPasses{static_cast<uint8_t>(numLayers <= 5 ? 1u : 2u)};
@@ -67,7 +124,8 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
   for (uint8_t passNumber = 0; passNumber < numPasses; ++passNumber) {
     constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
     constexpr auto WRAP{Ogre::TextureAddressingMode::TAM_WRAP};
-    auto *pass{matPtr->getTechnique(0)->getPass(passNumber)};
+    auto *pass{technique->getPass(passNumber)};
+    pass->removeAllTextureUnitStates();
 
     auto *globalNormal{pass->createTextureUnitState(globalNormalName)};
     globalNormal->setTextureAddressingMode(CLAMP);
@@ -79,7 +137,7 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
     auto *blend{pass->createTextureUnitState(blendName)};
     blend->setTextureAddressingMode(CLAMP);
 
-    if (numLayers == 0) return matPtr;
+    if (numLayers == 0) break;
 
     // Base texture
     if (passNumber == 0) {
@@ -94,18 +152,90 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
 
     constexpr uint8_t MAX_LAYERS{4u};
     for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
-      const auto layerNum{static_cast<uint8_t>(std::min(
+      // Compute layer number
+      const auto n{static_cast<uint8_t>(std::min(
           MAX_LAYERS * passNumber + i + 1u,
           numLayers - 1u))};
 
-      const std::string &diffuseName{terrain->getLayerTextureName(layerNum, 0)};
+      const std::string &diffuseName{terrain->getLayerTextureName(n, 0)};
       auto *diffuse{pass->createTextureUnitState(diffuseName)};
       diffuse->setTextureAddressingMode(WRAP);
 
-      const std::string &normalName{terrain->getLayerTextureName(layerNum, 1)};
+      const std::string &normalName{terrain->getLayerTextureName(n, 1)};
       auto *normal{pass->createTextureUnitState(normalName)};
       normal->setTextureAddressingMode(WRAP);
     }
+  }
+}
+
+void TerrainMaterialProfile::makeLowLodTechnique(const Ogre::Terrain *terrain,
+                                                 Ogre::Technique *technique) {
+  const std::string &matName{terrain->getMaterialName()};
+  auto *pass{technique->getPass(0)};
+  pass->removeAllTextureUnitStates();
+
+  constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
+
+  auto compDiffuseName{terrain->getCompositeMap()->getName()};
+  auto *compDiffuse{pass->createTextureUnitState(compDiffuseName)};
+  compDiffuse->setTextureAddressingMode(CLAMP);
+
+//  auto compNormalName{createCompositeNormalMap(matName)};
+  auto compNormalName{createGlobalNormalMap(matName)};
+  auto *compNormal{pass->createTextureUnitState(compNormalName)};
+  compNormal->setTextureAddressingMode(CLAMP);
+}
+
+void TerrainMaterialProfile::makeDiffuseCompositeTechnique(const Ogre::Terrain *terrain,
+                                                           Ogre::Technique *technique) {
+  const std::string &matName{terrain->getMaterialName()};
+  auto *pass{technique->getPass(0)};
+  pass->removeAllTextureUnitStates();
+
+  constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
+  constexpr auto WRAP{Ogre::TextureAddressingMode::TAM_WRAP};
+
+  const auto numLayers{terrain->getLayerCount()};
+
+  pass->getFragmentProgramParameters()->setNamedConstant(
+      "numBlendMaps", numLayers <= 5 ? 1 : 2);
+
+  auto vertexColorName{createVertexColorMap(matName)};
+  auto *vertexColor{pass->createTextureUnitState(vertexColorName)};
+  vertexColor->setTextureAddressingMode(CLAMP);
+
+  const auto &blendMap0Name{terrain->getBlendTextureName(0)};
+  auto *blendMap0{pass->createTextureUnitState(blendMap0Name)};
+  blendMap0->setTextureAddressingMode(CLAMP);
+
+  const auto &blendMap1Name{numLayers <= 5 ? blendMap0Name
+                                           : terrain->getBlendTextureName(1)};
+  auto *blendMap1{pass->createTextureUnitState(blendMap1Name)};
+  blendMap1->setTextureAddressingMode(CLAMP);
+
+  // Every diffuse map is assigned to. If we don't have enough layers then the
+  // last layer is used for each subsequent diffuse map.
+  for (uint8_t i = 0; i < 9; ++i) {
+    const auto n{std::min(i, static_cast<uint8_t>(numLayers - 1u))};
+
+    const std::string &diffuseName{terrain->getLayerTextureName(n, 0)};
+    auto *diffuse{pass->createTextureUnitState(diffuseName)};
+    diffuse->setTextureAddressingMode(WRAP);
+  }
+}
+
+Ogre::MaterialPtr
+TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
+  auto matPtr{createOrRetrieveMaterial(terrain).first};
+
+  Ogre::Material::LodValueList lodValues{
+      Ogre::TerrainGlobalOptions::getSingleton().getCompositeMapDistance()
+  };
+  matPtr->setLodLevels(lodValues);
+
+  makeHighLodTechnique(terrain, matPtr->getTechnique("HighLOD"));
+  if (terrain->isLoaded()) {
+    makeLowLodTechnique(terrain, matPtr->getTechnique("LowLOD"));
   }
 
   return matPtr;
@@ -113,11 +243,17 @@ TerrainMaterialProfile::generate(const Ogre::Terrain *terrain) {
 
 Ogre::MaterialPtr
 TerrainMaterialProfile::generateForCompositeMap(const Ogre::Terrain *terrain) {
-  return generate(terrain);
+  if (!terrain->isLoaded()) return Ogre::MaterialPtr();
+
+  auto matPtr{createOrRetrieveCompositeMaterial(terrain).first};
+
+  makeDiffuseCompositeTechnique(terrain, matPtr->getTechnique(0));
+
+  return matPtr;
 }
 
 uint8_t TerrainMaterialProfile::getMaxLayers(const Ogre::Terrain *) const {
-  return 3u;
+  return 9u;
 }
 
 bool TerrainMaterialProfile::isVertexCompressionSupported() const {
@@ -126,11 +262,9 @@ bool TerrainMaterialProfile::isVertexCompressionSupported() const {
 
 void TerrainMaterialProfile::requestOptions(Ogre::Terrain *terrain) {
   terrain->_setMorphRequired(false);
-  // We generate our own normal map because Ogre's is in the wrong group and
-  // we have explicit normal information anyway.
   terrain->_setNormalMapRequired(false);
   terrain->_setLightMapRequired(false);
-  terrain->_setCompositeMapRequired(false);
+  terrain->_setCompositeMapRequired(terrain->isLoaded());
 }
 
 void TerrainMaterialProfile::setLightmapEnabled(bool) {
