@@ -349,15 +349,26 @@ void Application::setSoundSettings() {
 }
 
 void Application::setTerrainOptions() {
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+  const auto nearDiameter{gameSettings.get<unsigned int>(
+      "General.uGridsToLoad", 3)};
+  const auto nearRadius{(nearDiameter - 1u) / 2u};
+
   auto &options{ctx.terrainOptions};
   options->setMaxPixelError(8);
-  options->setCompositeMapDistance(oo::metersPerUnit<Ogre::Real> * 4096);
-  options->setCompositeMapSize(64u);
+  options->setCompositeMapDistance(nearRadius * oo::unitsPerCell<Ogre::Real>
+                                       * oo::metersPerUnit<Ogre::Real>);
+
+  const auto lodTexSizePow = [&]() {
+    auto pow{gameSettings.get<int>("LOD.iLODTextureSizePow2", 6)};
+    return (pow <= 0 || pow > 16) ? 6 : pow;
+  }();
+  const auto lodTexSize{1u << static_cast<unsigned int>(lodTexSizePow)};
+
+  options->setCompositeMapSize(static_cast<uint16_t>(lodTexSize));
   options->setDefaultMaterialGenerator(
       std::make_shared<oo::TerrainMaterialGenerator>());
-  options->setLayerBlendMapSize(17u);
-  // Need to set scene manager ambient lighting, directional light, and
-  // directional light colour locally when a worldspace is loaded.
+  options->setLayerBlendMapSize(oo::verticesPerQuad<uint16_t>);
 }
 
 std::vector<oo::Path>
