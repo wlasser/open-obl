@@ -50,19 +50,18 @@ void main () {
     }
 
     // Blend the diffuse layers
-    float f_[9];
-    vec3 dc_[9];
-
-    f_[0] = f[0];
-    dc_[0] = dc[0];
-
+    // dc can be updated in place instead of introducing a dc_, but we need
+    // a working value for f as both f_[i+1] and f[i] are used simultaneously.
     for (int i = 0; i < 8; ++i) {
-        f_[i + 1] = f[i + 1] + f_[i] * (1.0f - f[i + 1]);
-        dc_[i + 1] = (f[i + 1] * dc[i + 1] + f_[i] * dc_[i] * (1.0f - f[i + 1])) / f_[i + 1];
+//        f_[i + 1] = f[i + 1] + f_[i] * (1.0f - f[i + 1]);
+//        dc_[i + 1] = (f[i + 1] * dc[i + 1] + f_[i] * dc_[i] * (1.0f - f[i + 1])) / f_[i + 1];
+        float fOld = f[i + 1];
+        f[i + 1] = mix(f[i], 1.0f, f[i + 1]);
+        dc[i + 1] = mix(f[i] * dc[i], dc[i + 1], fOld) / f[i + 1];
     }
 
-    dc_[8] *= texture(vertexColor, texCoord).rgb;
+    dc[8] *= texture(vertexColor, texCoord).rgb;
     // Leave the gamma, no point correcting it then immediately undoing it in
     // the lod shader
-    FragColor = vec4(dc_[8], 1.0f);
+    FragColor = vec4(dc[8], 1.0f);
 }

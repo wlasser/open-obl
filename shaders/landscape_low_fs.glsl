@@ -38,36 +38,32 @@ void main() {
     lighting += ambient;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
+        vec3 lightDir;
+        float attenuation;
         if (lightPositionArray[i].w < 0.5f) {
             // Directional light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz);
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse;
+            lightDir = normalize(lightPositionArray[i].xyz);
+            attenuation = 1.0f;
         } else {
             // Point light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
-            float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-            float attenuation = 1.0f / (lightAttenuationArray[i].y
-                + lightAttenuationArray[i].z * lightDistance
-                + lightAttenuationArray[i].w * lightDistance * lightDistance);
-
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse * attenuation;
+            lightDir = normalize(lightPositionArray[i].xyz - FragPos);
+            float lightDist = length(lightPositionArray[i].xyz - FragPos);
+            vec4 attenVec = vec4(0.0f, 1.0f, lightDist, lightDist * lightDist);
+            attenuation = 1.0f / dot(lightAttenuationArray[i], attenVec);
         }
+
+        vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+        float diff = max(dot(n, lightDir), 0.0f);
+        vec3 diffuse = diff * diffuseColor;
+
+        lighting += diffuse * lightDiffuse * attenuation;
     }
 
     vec3 fragColor = pow(min(lighting, 1.0f), vec3(1.0f / gamma));
 
     float distance = length(FragPos.xyz - ViewPos.xyz);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
-    fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
+    fragColor = mix(fogColor.rgb, fragColor, fog);
 
     FragColor = vec4(fragColor, 1.0f);
 }

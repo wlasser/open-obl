@@ -59,44 +59,42 @@ void main() {
 
     // Scale uv so textures are repeated every grid square, not every quadrant.
     vec2 uv = texCoord * 17.0f;
-    // Blend factor between layers
-    float f = (abs(sin(uv.s)) + abs(cos(uv.t))) / sqrt(2.0f);
 
     vec3 vertexCol = texture(vertexColor, texCoord).xyz;
 
     // Undo gamma correction of textures so it is correct later
-    vec3 diffuseColor0 = pow(texture(diffuse0, uv).rgb, vec3(gamma));
-    vec3 diffuseColor1 = pow(texture(diffuse1, uv).rgb, vec3(gamma));
-    vec3 diffuseColor2 = pow(texture(diffuse2, uv).rgb, vec3(gamma));
-    vec3 diffuseColor3 = pow(texture(diffuse3, uv).rgb, vec3(gamma));
-    vec3 diffuseColor4 = pow(texture(diffuse4, uv).rgb, vec3(gamma));
+    vec3 dc0 = pow(texture(diffuse0, uv).rgb, vec3(gamma));
+    vec3 dc1 = pow(texture(diffuse1, uv).rgb, vec3(gamma));
+    vec3 dc2 = pow(texture(diffuse2, uv).rgb, vec3(gamma));
+    vec3 dc3 = pow(texture(diffuse3, uv).rgb, vec3(gamma));
+    vec3 dc4 = pow(texture(diffuse4, uv).rgb, vec3(gamma));
 
-    float f0 = 1.0f;
-    float f1 = texture(blendMap, texCoord).r;
-    float f2 = texture(blendMap, texCoord).g;
-    float f3 = texture(blendMap, texCoord).b;
-    float f4 = texture(blendMap, texCoord).a;
+    float f_0 = 1.0f;
+    vec4 f = texture(blendMap, texCoord);
 
     // Blend diffuse layers
-    float f_1 = f1 + f0 * (1.0f - f1);
-    vec3 diffuseColor_1 = (f1 * diffuseColor1 + f0 * diffuseColor0 * (1.0f - f1)) / f_1;
+    float f_1 = mix(f_0, 1.0f, f.x);
+    vec3 dc_1 = mix(f_0 * dc0, dc1, f.x) / f_1;
 
-    float f_2 = f2 + f_1 * (1.0f - f2);
-    vec3 diffuseColor_2 = (f2 * diffuseColor2 + f_1 * diffuseColor_1 * (1.0f - f2)) / f_2;
+    float f_2 = mix(f_1, 1.0f, f.y);
+    vec3 dc_2 = mix(f_1 * dc_1, dc2, f.y) / f_2;
 
-    float f_3 = f3 + f_2 * (1.0f - f3);
-    vec3 diffuseColor_3 = (f3 * diffuseColor3 + f_2 * diffuseColor_2 * (1.0f - f3)) / f_3;
+    float f_3 = mix(f_2, 1.0f, f.z);
+    vec3 dc_3 = mix(f_2 * dc_2, dc3, f.z) / f_3;
 
-    float f_4 = f4 + f_3 * (1.0f - f4);
-    vec3 diffuseColor   = (f4 * diffuseColor4 + f_3 * diffuseColor_3 * (1.0f - f4)) / f_4;
+    float f_4 = mix(f_3, 1.0f, f.a);
+    vec3 dc_4 = mix(f_3 * dc_3, dc4, f.w) / f_4;
 
-    diffuseColor *= vertexCol;
+    vec3 diffuseColor = dc_4 * vertexCol;
 
     // Blend normal layers
-    vec3 n_1 = (f1 * texture(normal1, uv).xyz + f0 * texture(normal0, uv).xyz * (1.0f - f1)) / f_1;
-    vec3 n_2 = (f2 * texture(normal2, uv).xyz + f_1 * n_1 * (1.0f - f2)) / f_2;
-    vec3 n_3 = (f3 * texture(normal3, uv).xyz + f_2 * n_2 * (1.0f - f3)) / f_3;
-    vec3 n   = (f4 * texture(normal4, uv).xyz + f_3 * n_3 * (1.0f - f4)) / f_4;
+    vec3 n_0 = texture(normal0, uv).xyz;
+    vec3 n_1 = mix(f_0 * n_0, texture(normal1, uv).xyz, f.x) / f_1;
+    vec3 n_2 = mix(f_1 * n_1, texture(normal2, uv).xyz, f.y) / f_2;
+    vec3 n_3 = mix(f_2 * n_2, texture(normal3, uv).xyz, f.z) / f_3;
+    vec3 n_4 = mix(f_3 * n_3, texture(normal4, uv).xyz, f.w) / f_4;
+
+    vec3 n = n_4;
 
     // Convert from dx to gl by flipping the green channel
     n.y = 1.0f - n.y;
@@ -111,36 +109,32 @@ void main() {
     lighting += ambient;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
+        vec3 lightDir;
+        float attenuation;
         if (lightPositionArray[i].w < 0.5f) {
             // Directional light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz);
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse * vertexCol;
+            lightDir = normalize(lightPositionArray[i].xyz);
+            attenuation = 1.0f;
         } else {
             // Point light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
-            float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-            float attenuation = 1.0f / (lightAttenuationArray[i].y
-                + lightAttenuationArray[i].z * lightDistance
-                + lightAttenuationArray[i].w * lightDistance * lightDistance);
-
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse * attenuation * vertexCol;
+            lightDir = normalize(lightPositionArray[i].xyz - FragPos);
+            float lightDist = length(lightPositionArray[i].xyz - FragPos);
+            vec4 attenVec = vec4(0.0f, 1.0f, lightDist, lightDist * lightDist);
+            attenuation = 1.0f / dot(lightAttenuationArray[i], attenVec);
         }
+
+        vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+        float diff = max(dot(n, lightDir), 0.0f);
+        vec3 diffuse = diff * diffuseColor;
+
+        lighting += diffuse * lightDiffuse * attenuation * vertexCol;
     }
 
     vec3 fragColor = pow(min(lighting, 1.0f), vec3(1.0f / gamma));
 
     float distance = length(FragPos.xyz - ViewPos.xyz);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
-    fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
+    fragColor = mix(fogColor.rgb, fragColor, fog);
 
     FragColor = vec4(fragColor, 1.0f);
 }

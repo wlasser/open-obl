@@ -60,16 +60,13 @@ void main() {
     vec3 vertexCol = texture(vertexColor, texCoord).xyz;
 
     // Undo gamma correction of textures so it is correct later
-    vec3 diffuseColor5 = pow(texture(diffuse5, uv).rgb, vec3(gamma));
-    vec3 diffuseColor6 = pow(texture(diffuse6, uv).rgb, vec3(gamma));
-    vec3 diffuseColor7 = pow(texture(diffuse7, uv).rgb, vec3(gamma));
-    vec3 diffuseColor8 = pow(texture(diffuse8, uv).rgb, vec3(gamma));
+    vec3 dc5 = pow(texture(diffuse5, uv).rgb, vec3(gamma));
+    vec3 dc6 = pow(texture(diffuse6, uv).rgb, vec3(gamma));
+    vec3 dc7 = pow(texture(diffuse7, uv).rgb, vec3(gamma));
+    vec3 dc8 = pow(texture(diffuse8, uv).rgb, vec3(gamma));
 
     // Alpha values of the blend maps
-    float f5 = texture(blendMap, texCoord).r;
-    float f6 = texture(blendMap, texCoord).g;
-    float f7 = texture(blendMap, texCoord).b;
-    float f8 = texture(blendMap, texCoord).a;
+    vec4 fv = texture(blendMap, texCoord);
 
     // Blended diffuse, normal, and alpha
     vec3 diffuseColor;
@@ -85,25 +82,25 @@ void main() {
     // potential division by zero then, we need to hunt for the first blend
     // layer with nonzero alpha, if one even exists, and start the blend there.
     int layer;
-    if (f5 > 0.1f) {
-        f = f5;
-        diffuseColor = f * diffuseColor5;
+    if (fv.x > 0.1f) {
+        f = fv.x;
+        diffuseColor = f * dc5;
         n = f * texture(normal5, uv).xyz;
         layer = 0;
-    } else if (f6 > 0.1f) {
-        f = f6;
-        diffuseColor = f * diffuseColor6;
+    } else if (fv.y > 0.1f) {
+        f = fv.y;
+        diffuseColor = f * dc6;
         n = f * texture(normal6, uv).xyz;
         layer = 1;
-    } else if (f7 > 0.1f) {
-        f = f7;
-        diffuseColor = f * diffuseColor7;
+    } else if (fv.z > 0.1f) {
+        f = fv.z;
+        diffuseColor = f * dc7;
         n = f * texture(normal7, uv).xyz;
         layer = 2;
-    } else if (f8 > 0.1f) {
-        f = f8;
-        diffuseColor = f * diffuseColor8;
-        n = 5 * texture(normal8, uv).xyz;
+    } else if (fv.w > 0.1f) {
+        f = fv.w;
+        diffuseColor = f * dc8;
+        n = f * texture(normal8, uv).xyz;
         layer = 3;
     } else {
         FragColor = vec4(0.0f);
@@ -112,31 +109,30 @@ void main() {
 
     // Blend layer6 over the previous layer
     if (layer == 0) {
-        float f_new = f6 + f * (1.0f - f6);
+        float f_new = mix(f, 1.0f, fv.y);
         if (f_new > 0.1f) {
-            diffuseColor = (f6 * diffuseColor6 + f * diffuseColor * (1.0f - f6)) / f_new;
-            n = (f6 * texture(normal6, uv).xyz + f * n * (1.0f - f6)) / f_new;
+            diffuseColor = mix(f * diffuseColor, dc6, fv.y) / f_new;
+            n = mix(f * n, texture(normal6, uv).xyz, fv.y) / f_new;
             f = f_new;
         }
     }
 
     // Blend layer7 over the previous layers
     if (layer <= 1) {
-        float f_new = f7 + f * (1.0f - f7);
+        float f_new = mix(f, 1.0f, fv.z);
         if (f_new > 0.1f) {
-            diffuseColor = (f7 * diffuseColor7 + f * diffuseColor * (1.0f - f7)) / f_new;
-            n = (f7 * texture(normal7, uv).xyz + f * n * (1.0f - f7)) / f_new;
+            diffuseColor = mix(f * diffuseColor, dc7, fv.z) / f_new;
+            n = mix(f * n, texture(normal7, uv).xyz, fv.z) / f_new;
             f = f_new;
         }
     }
 
-
     // Blend layer8 over the previous layers
     if (layer <= 2) {
-        float f_new = f8 + f * (1.0f - f8);
+        float f_new = mix(f, 1.0f, fv.w);
         if (f_new > 0.1f) {
-            diffuseColor = (f8 * diffuseColor8 + f * diffuseColor * (1.0f - f8)) / f_new;
-            n = (f8 * texture(normal8, uv).xyz + f * n * (1.0f - f8)) / f_new;
+            diffuseColor = mix(f * diffuseColor, dc8, fv.w) / f_new;
+            n = mix(f * n, texture(normal8, uv).xyz, fv.w) / f_new;
             f = f_new;
         }
     }
@@ -159,36 +155,32 @@ void main() {
     lighting += ambient;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
+        vec3 lightDir;
+        float attenuation;
         if (lightPositionArray[i].w < 0.5f) {
             // Directional light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz);
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse * vertexCol;
+            lightDir = normalize(lightPositionArray[i].xyz);
+            attenuation = 1.0f;
         } else {
             // Point light
-            vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
-            float lightDistance = length(lightPositionArray[i].xyz - FragPos);
-            float attenuation = 1.0f / (lightAttenuationArray[i].y
-                + lightAttenuationArray[i].z * lightDistance
-                + lightAttenuationArray[i].w * lightDistance * lightDistance);
-
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
-
-            float diff = max(dot(n, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor;
-
-            lighting += diffuse * lightDiffuse * attenuation * vertexCol;
+            lightDir = normalize(lightPositionArray[i].xyz - FragPos);
+            float lightDist = length(lightPositionArray[i].xyz - FragPos);
+            vec4 attenVec = vec4(0.0f, 1.0f, lightDist, lightDist * lightDist);
+            attenuation = 1.0f / dot(lightAttenuationArray[i], attenVec);
         }
+
+        vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+        float diff = max(dot(n, lightDir), 0.0f);
+        vec3 diffuse = diff * diffuseColor;
+
+        lighting += diffuse * lightDiffuse * attenuation * vertexCol;
     }
 
     vec3 fragColor = pow(min(lighting, 1.0f), vec3(1.0f / gamma));
 
     float distance = length(FragPos.xyz - ViewPos.xyz);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
-    fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
+    fragColor = mix(fogColor.rgb, fragColor, fog);
 
     // Premultiply alpha to blend correctly over previous layer
     FragColor = vec4(fragColor * f, f);
