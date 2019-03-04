@@ -350,7 +350,7 @@ bool GameMode::updateCenterCell(ApplicationContext &ctx) {
 void GameMode::update(ApplicationContext &ctx, float delta) {
   updateAnimation(delta);
   mPlayerController->update(delta);
-  getPhysicsWorld()->stepSimulation(delta);
+  getPhysicsWorld()->stepSimulation(delta, 4);
   dispatchCollisions();
   chrono::GameClock::advance(delta * 60.0f);
   chrono::GameClock::updateGlobals();
