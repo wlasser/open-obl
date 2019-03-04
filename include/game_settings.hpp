@@ -54,6 +54,8 @@ namespace oo {
 ///         Defines the size of the player's *far neighbourhood*.
 ///         Should be a positive odd integer, and greater than or equal to
 ///         `General.uGridsToLoad`.</td></tr>
+/// <tr><td>General.fDefaultFOV</td>
+///     <td>The horizontal field of view of the camera in degrees.</td></tr>
 /// <tr><td>Archive.sArchiveList</td>
 ///     <td>A comma-separated list of BSA files to load, relative to
 ///         `General.SLocalMasterPath`.</td></tr>
