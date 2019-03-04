@@ -8,9 +8,66 @@
 #include <OgreMatrix3.h>
 #include <OgreMatrix4.h>
 #include <OgreVector.h>
-#include <filesystem>
 
+/// \file
+/// Functions to convert between different coordinate systems and linear
+/// algebra types.
+///
+/// Different parts of the game engine are required---for various reasons---to
+/// use different coordinate systems and linear algebra types. Converting
+/// between the types is achieved through a mix of conversion factor variable
+/// templates, for changing units; Boost QVM specializations, for changing
+/// linear algebra types; and function templates, for changing coordinate
+/// systems.
+///
+/// The preferrred coordinate system used by the engine is called the *Ogre* or
+/// *Bullet* coordinate system. (Not because those engines force it upon us,
+/// just because it's what we use with those engines). SI units are used to
+/// measure masses, distances, velocities and so on; a mass of `1.0f`
+/// corresponds to `1 kg`, a distance of `1.0f` corresponds to `1 m`, etc.
+/// Regarding axes, the \f$x\f$-axis increases eastwards, the \f$z\f$-axis
+/// increases southwards, and the \f$y\f$-axis increases 'upwards', i.e.
+/// opposite to the direction of gravity and such that the \f$(x,y,z)\f$
+/// coordinates form a right-handed coordinate system. In terrible ASCII art,
+///
+/// ```
+///    Y+
+///    |
+///    |
+///    |_____X+ (East)
+///   /
+///  /
+/// Z+ (South)
+/// ```
+///
+/// A positive rotation about an axis in the Ogre coordinate system corresponds
+/// to a counter-clockwise rotation about that axis, as in the right-hand rule.
+///
+/// The *BS* coordinate system used by the game data differs from the Ogre
+/// coordinate system. Distances are measured in (what we call) 'BS units',
+/// though masses are still measured in kilograms. The \f$x\f$-axis increases
+/// eastwards, the \f$y\f$-axis increases northwards, and the \f$z\f$-axis
+/// increases upwards, again in the opposite direction to gravity and such that
+/// \f$(x,y,z)\f$ forms a right-handed coordinate system. In a picture,
+///
+/// ```
+/// Z+
+/// |  Y+ (North)
+/// | /
+/// |/_____X+ (East)
+/// ```
+///
+/// One sees that the axes of the Ogre coordinate system are obtained from the
+/// BS coordinate system by a \f$90\f$ degree counter-clockwise rotation about
+/// the \f$x\f$-axis.
+
+//===----------------------------------------------------------------------===//
+// Boost QVM Specializations
+//===----------------------------------------------------------------------===//
 namespace boost::qvm {
+
+/// \name Boost QVM Specializations
+/// @{
 
 template<> struct vec_traits<nif::compound::Vector3> {
   static const int dim{3};
@@ -319,30 +376,50 @@ template<> struct mat_traits<Ogre::Matrix4> {
   }
 };
 
+///@}
+
 } // namespace boost::qvm
 
 namespace oo {
 
 namespace qvm = boost::qvm;
 
-// Game data uses 'u' has a unit of distance, with 64 u = 1 yd, but Bullet works
-// best with (needs?) SI units. By definition, 1 yd = 0.9144 m.
+//===----------------------------------------------------------------------===//
+// Conversion factors
+//===----------------------------------------------------------------------===//
+
+/// The number of BS units in a meter.
+/// The game data uses `u` as a unit of distance, with `64 u = 1 yd`, but
+/// Bullet works best with SI units. By definition, `1 yd = 0.9144 m`.
 template<class T> constexpr T unitsPerMeter = T(64.0L / 0.9144L);
+/// The number of meters in a BS unit.
 template<class T> constexpr T metersPerUnit = T(0.9144L / 64.0L);
 
-// Exterior cells are 4096u by 4096u.
+/// The length of an edge of an exterior cell in BS units.
+/// Exterior cells are square.
 template<class T> constexpr T unitsPerCell = T(4096.0L);
-// Exterior cells are split into four square quads.
+/// The length of an edge of a cell quadrant in BS units.
+/// Exterior cells are split into four square quadrants for texturing purposes.
 template<class T> constexpr T unitsPerQuad = unitsPerCell<T> / T(2);
-// Number of vertices along the edge of a cell, as a closed range.
+/// The number of vertices along the edge of an exterior cell, as a closed
+/// range. Must be one plus a power of two.
 template<class T> constexpr T verticesPerCell = T(33u);
-// Number of vertices along the edge of a cell quad, as a closed range.
+/// The number of vertices along the edge of an exterior cell quad, as a closed
+/// range. This could be worked out from `oo::verticesPerCell`.
 template<class T> constexpr T verticesPerQuad = T(17u);
 
-// Havok uses units 'hu' such that `7u = 1hu`.
+/// The number of Havok units in a BS unit.
+/// Havok uses units 'hu' such that `7u = 1hu`.
 template<class T> constexpr T havokUnitsPerUnit = T(1.0L / 7.0L);
+/// The number of BS units in a Havok unit.
 template<class T> constexpr T unitsPerHavokUnit = T(7.0L);
 
+//===----------------------------------------------------------------------===//
+// Conversion factors
+//===----------------------------------------------------------------------===//
+
+/// Colour Conversions
+/// @{
 inline Ogre::ColourValue fromNif(const nif::compound::Color3 &c) {
   return Ogre::ColourValue(c.r, c.g, c.b);
 }
@@ -350,7 +427,9 @@ inline Ogre::ColourValue fromNif(const nif::compound::Color3 &c) {
 inline Ogre::ColourValue fromNif(const nif::compound::Color4 &c) {
   return Ogre::ColourValue(c.r, c.g, c.b, c.a);
 }
+/// @}
 
+/// Convert a QVM-compatible vector from BS coordinates into Ogre coordinates.
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
 Ogre::Vector3 fromBSCoordinates(const Vec &v) {
@@ -359,12 +438,15 @@ Ogre::Vector3 fromBSCoordinates(const Vec &v) {
       oo::metersPerUnit<typename qvm::vec_traits<Vec>::scalar_type>;
 }
 
+/// Convert a QVM-compatible vector from BS coordinates into Ogre coordinates.
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 4>>
 Ogre::Vector4 fromBSCoordinates(const Vec &v) {
   return Ogre::Vector4(oo::fromBSCoordinates(qvm::XYZ(v)), qvm::W(v));
 }
 
+/// Convert a QVM-compatible transformation matrix from BS coordinates into
+/// Ogre coordinates.
 template<class Mat, typename = std::enable_if_t<
     qvm::is_mat<Mat>::value
         && qvm::mat_traits<Mat>::rows == 3
@@ -376,6 +458,8 @@ Ogre::Matrix3 fromBSCoordinates(const Mat &m) {
   return C * m * CInv;
 }
 
+/// Convert a QVM-compatible transformation matrix from BS coordinates into
+/// Ogre coordinates.
 template<class Mat, typename = std::enable_if_t<
     qvm::is_mat<Mat>::value
         && qvm::mat_traits<Mat>::rows == 4
@@ -392,6 +476,8 @@ Ogre::Matrix4 fromBSCoordinates(const Mat &m) {
   return C * m * CInv;
 }
 
+/// Convert a QVM-compatible quaternion from BS coordinates to Ogre
+/// coordinates.
 template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
 Ogre::Quaternion fromBSCoordinates(const Quat &q) {
   using namespace qvm;
@@ -400,6 +486,7 @@ Ogre::Quaternion fromBSCoordinates(const Quat &q) {
   return p * q * pInv;
 }
 
+/// Convert a QVM-compatible vector from Havok coordinates to Ogre coordinates.
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
 Ogre::Vector3 fromHavokCoordinates(const Vec &v) {
@@ -409,12 +496,15 @@ Ogre::Vector3 fromHavokCoordinates(const Vec &v) {
       oo::metersPerUnit<scalar_type> * oo::unitsPerHavokUnit<scalar_type>;
 }
 
+/// Convert a QVM-compatible vector from Havok coordinates to Ogre coordinates.
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 4>>
 Ogre::Vector4 fromHavokCoordinates(const Vec &v) {
   return Ogre::Vector4(oo::fromHavokCoordinates(qvm::XYZ(v)), qvm::W(v));
 }
 
+/// Convert a QVM-compatible transformation matrix from Havok coordinates to
+/// Ogre coordinates.
 template<class Mat, typename = std::enable_if_t<
     qvm::is_mat<Mat>::value
         && qvm::mat_traits<Mat>::rows == 3
@@ -423,6 +513,8 @@ Ogre::Matrix3 fromHavokCoordinates(const Mat &m) {
   return oo::fromBSCoordinates(m);
 }
 
+/// Convert a QVM-compatible transformation matrix from Havok coordinates to
+/// Ogre coordinates.
 template<class Mat, typename = std::enable_if_t<
     qvm::is_mat<Mat>::value
         && qvm::mat_traits<Mat>::rows == 4
@@ -441,6 +533,8 @@ Ogre::Matrix4 fromHavokCoordinates(const Mat &m) {
   return C * m * CInv;
 }
 
+/// Convert a QVM-compatible quaternion from Havok coordinates to Ogre
+/// coordinates.
 template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
 Ogre::Quaternion fromHavokCoordinates(const Quat &q) {
   return oo::fromBSCoordinates(q);
