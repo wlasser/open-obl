@@ -333,12 +333,6 @@ bool GameMode::updateCenterCell(ApplicationContext &ctx) {
   auto cellIndex{mWrld->getCellIndex(pos.x * oo::unitsPerMeter<float>,
                                      -pos.z * oo::unitsPerMeter<float>)};
 
-  if (cellIndex == World::CellIndex{0, 0}) {
-    // TODO: Find out why this bug happens instead of just patching over it
-    ctx.getLogger()->info("WTF");
-    return false;
-  }
-
   if (cellIndex != mCenterCell) {
     mCenterCell = cellIndex;
     return true;
