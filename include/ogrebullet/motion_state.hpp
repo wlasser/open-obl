@@ -6,13 +6,15 @@
 
 namespace Ogre {
 
-// By binding a MotionState to a SceneNode and then pointing a RigidBody to the
-// MotionState, the position and orientation of the SceneNode and RigidBody are
-// automatically kept in sync.
-// This class takes ownership over a SceneNode and all its children, in the
-// sense that no two MotionState objects should point to the same SceneNode, or
-// to two different SceneNodes which share a parent that is also pointed to by
-// a MotionState.
+/// Synchronizes the position of a `Ogre::RigidBody` with an `Ogre::Node`.
+/// By binding an `Ogre::MotionState` to an `Ogre::Node` and then pointing an
+/// `Ogre::RigidBody` to the `Ogre::MotionState`, the position and orientation
+/// of the `Ogre::Node` and `Ogre::RigidBody` are automatically kept in sync.
+///
+/// This class takes ownership over an `Ogre::Node` and all its children, in
+/// the sense that no two `Ogre::MotionState` objects should point to the same
+/// `Ogre::Node`, or to two different `Ogre::Node`s which share a parent that
+/// is also pointed to by an `Ogre::MotionState`.
 class MotionState : public btMotionState {
  public:
   explicit MotionState(Node *node);
@@ -25,17 +27,22 @@ class MotionState : public btMotionState {
   void getWorldTransform(btTransform &worldTrans) const override;
   void setWorldTransform(const btTransform &worldTrans) override;
 
-  Vector3 getPosition() const {
+  Vector3 getPosition() const noexcept {
     return mPosition;
   }
 
-  Quaternion getOrientation() const {
+  Quaternion getOrientation() const noexcept {
     return mOrientation;
   }
 
-  // One should avoid transforming the SceneNode explicitly, but if it must be
-  // done then call this function afterwards to resync the stored transform to
-  // the SceneNode's.
+  /// Synchronize the internal transform of the `Ogre::Node` with its external
+  /// transform.
+  /// One should avoid transforming the `Ogre::Node` explicitly, but if it must
+  /// be done then call this function afterwards to resynchronize the stored
+  /// transform to the `Ogre::Node`'s.
+  /// \remark This function should be called whenever the `Ogre::Node` is
+  ///         transformed externally at all, even indirectly by transforming
+  ///         its parent.
   void notify();
 
  private:

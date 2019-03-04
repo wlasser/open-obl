@@ -4,8 +4,8 @@
 namespace Ogre {
 
 MotionState::MotionState(Node *node) : mNode(node) {
-  mPosition = mNode->getPosition();
-  mOrientation = mNode->getOrientation();
+  mPosition = mNode->_getDerivedPosition();
+  mOrientation = mNode->_getDerivedOrientation();
 }
 
 MotionState::MotionState(MotionState &&other) noexcept {
@@ -33,13 +33,13 @@ void MotionState::getWorldTransform(btTransform &worldTrans) const {
 void MotionState::setWorldTransform(const btTransform &worldTrans) {
   mPosition = Ogre::fromBullet(worldTrans.getOrigin());
   mOrientation = Ogre::fromBullet(worldTrans.getRotation());
-  mNode->setPosition(mPosition);
-  mNode->setOrientation(mOrientation);
+  mNode->_setDerivedPosition(mPosition);
+  mNode->_setDerivedOrientation(mOrientation);
 }
 
 void MotionState::notify() {
-  mPosition = mNode->getPosition();
-  mOrientation = mNode->getOrientation();
+  mPosition = mNode->_getDerivedPosition();
+  mOrientation = mNode->_getDerivedOrientation();
 }
 
 } // namespace Ogre
