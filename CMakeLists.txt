@@ -76,7 +76,7 @@ endif ()
 find_package(ZLIB 1.2.11 REQUIRED)
 find_package(SDL2 2.0 REQUIRED)
 find_package(OGRE 1.11 REQUIRED)
-find_package(Boost 1.67 REQUIRED)
+find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
 find_package(Bullet 2.85 REQUIRED)
 find_package(pugixml REQUIRED)
 find_package(LLVM 7.0.0 REQUIRED CONFIG)
@@ -187,6 +187,7 @@ target_sources(OpenOblivion PRIVATE
         include/game_settings.hpp
         include/globals.hpp
         include/initial_record_visitor.hpp
+        include/job/job.hpp
         include/keep_strategy.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
@@ -243,6 +244,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionSDL
         OpenOblivion::OpenOblivionScripting
         Boost::boost
+        Boost::fiber
         ZLIB::ZLIB
         SDL2::SDL2
         SDL2::SDL2main

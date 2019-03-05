@@ -28,3 +28,19 @@ target_link_libraries(OpenOblivionTest PRIVATE
         GSL
         taocpp::pegtl
         tloptional)
+
+find_package(Threads REQUIRED)
+
+add_executable(OpenOblivionJobsTest jobs.cpp)
+target_compile_options(OpenOblivionJobsTest PRIVATE -Wall)
+target_compile_features(OpenOblivionJobsTest PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionJobsTest PROPERTY CXX_EXTENSION OFF)
+
+target_include_directories(OpenOblivionJobsTest PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+target_sources(OpenOblivionJobsTest PRIVATE jobs.cpp)
+
+target_link_libraries(OpenOblivionJobsTest
+        Threads::Threads
+        Boost::boost
+        Boost::fiber)
