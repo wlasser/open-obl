@@ -11,6 +11,7 @@
 #include "gui/logging.hpp"
 #include "gui/menu.hpp"
 #include "initial_record_visitor.hpp"
+#include "job/job.hpp"
 #include "meta.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
@@ -55,12 +56,15 @@ Application::Application(std::string windowName) : FrameListener() {
   createLoggers();
   ctx.logger = spdlog::get(oo::LOG);
 
-  loadIniConfiguration();
-  auto &gameSettings = oo::GameSettings::getSingleton();
+  oo::JobCounter iniCounter{1};
+  oo::JobManager::runJob([]() { loadIniConfiguration(); }, &iniCounter);
 
   auto &&[ogreRoot, overlaySys] = createOgreRoot();
   ctx.ogreRoot = std::move(ogreRoot);
   ctx.overlaySys = std::move(overlaySys);
+
+  oo::JobManager::waitOn(&iniCounter);
+  auto &gameSettings = oo::GameSettings::getSingleton();
 
   // Creating an Ogre::RenderWindow initialises the render system, which is
   // necessary to create shaders (including reading scripts), so this has to be
@@ -69,73 +73,96 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.windows = createWindow(windowName);
 
   // Set the keyboard configuration
-  ctx.keyMap = std::make_unique<oo::event::KeyMap>(gameSettings);
+  oo::JobManager::runJob([&ctx = ctx, &gameSettings]() {
+    ctx.keyMap = std::make_unique<oo::event::KeyMap>(gameSettings);
+  });
 
   // Construct the Bullet configuration
-  ctx.bulletConf = std::make_unique<bullet::Configuration>();
+  oo::JobManager::runJob([&ctx = ctx]() {
+    ctx.bulletConf = std::make_unique<bullet::Configuration>();
+  });
 
   // Construct the global terrain options
-  ctx.terrainOptions = std::make_unique<Ogre::TerrainGlobalOptions>();
-  setTerrainOptions();
+  oo::JobManager::runJob([this]() {
+    this->ctx.terrainOptions = std::make_unique<Ogre::TerrainGlobalOptions>();
+    this->setTerrainOptions();
+  });
 
   // Start the sound engine
   ctx.soundMgr = std::make_unique<Ogre::SoundManager>();
   setSoundSettings();
 
   // Start the developer console backend
-  ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
-  registerConsoleFunctions();
+  oo::JobManager::runJob([this]() {
+    ctx.consoleEngine = std::make_unique<oo::ConsoleEngine>();
+    registerConsoleFunctions();
+  });
 
   // Star the scripting backend
-  ctx.scriptEngine = std::make_unique<oo::ScriptEngine>();
-  registerScriptFunctions();
+  oo::JobManager::runJob([this]() {
+    ctx.scriptEngine = std::make_unique<oo::ScriptEngine>();
+    registerScriptFunctions();
+  });
 
   // Add the resource managers
-  ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
-  ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
-  ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
-  ctx.wavResourceMgr = std::make_unique<Ogre::WavResourceManager>();
+  oo::JobCounter managersAndFactoriesCounter{2};
+  oo::JobManager::runJob([&ctx = ctx]() {
+    ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
+    ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
+    ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
+    ctx.wavResourceMgr = std::make_unique<Ogre::WavResourceManager>();
+  }, &managersAndFactoriesCounter);
 
-  // Add the factories
-  ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
-  ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
+  // Add the factories and codecs
+  oo::JobManager::runJob([&ctx = ctx]() {
+    ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
+    ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
-  // Add the codecs
-  ctx.texImageCodec = std::make_unique<Ogre::TexImageCodec>();
-  Ogre::Codec::registerCodec(ctx.texImageCodec.get());
+    boost::this_fiber::yield();
 
-  // Create the engine managers
-  ctx.baseResolvers = std::make_unique<oo::BaseResolvers>(
-      std::make_tuple(oo::add_resolver_t<record::RACE>{},
-                      oo::add_resolver_t<record::LTEX>{},
-                      oo::add_resolver_t<record::ACTI>{},
-                      oo::add_resolver_t<record::DOOR>{},
-                      oo::add_resolver_t<record::LIGH>{},
-                      oo::add_resolver_t<record::STAT>{},
-                      oo::add_resolver_t<record::GRAS>{},
-                      oo::add_resolver_t<record::TREE>{},
-                      oo::add_resolver_t<record::NPC_>{},
-                      oo::add_resolver_t<record::WTHR>{},
-                      oo::add_resolver_t<record::CLMT>{},
-                      oo::add_resolver_t<record::CELL>{*ctx.bulletConf},
-                      oo::add_resolver_t<record::WRLD>{},
-                      oo::add_resolver_t<record::LAND>{},
-                      oo::add_resolver_t<record::WATR>{}));
+    ctx.texImageCodec = std::make_unique<Ogre::TexImageCodec>();
+    Ogre::Codec::registerCodec(ctx.texImageCodec.get());
+  }, &managersAndFactoriesCounter);
 
-  ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
-      std::make_tuple(oo::add_refr_resolver_t<record::REFR_ACTI>{},
-                      oo::add_refr_resolver_t<record::REFR_DOOR>{},
-                      oo::add_refr_resolver_t<record::REFR_LIGH>{},
-                      oo::add_refr_resolver_t<record::REFR_STAT>{},
-                      oo::add_refr_resolver_t<record::REFR_NPC_>{}));
+  // Create the resolvers
+  oo::JobCounter resolversCounter{1};
+  oo::JobManager::runJob([&ctx = ctx]() {
+    ctx.baseResolvers = std::make_unique<oo::BaseResolvers>(
+        std::make_tuple(oo::add_resolver_t<record::RACE>{},
+                        oo::add_resolver_t<record::LTEX>{},
+                        oo::add_resolver_t<record::ACTI>{},
+                        oo::add_resolver_t<record::DOOR>{},
+                        oo::add_resolver_t<record::LIGH>{},
+                        oo::add_resolver_t<record::STAT>{},
+                        oo::add_resolver_t<record::GRAS>{},
+                        oo::add_resolver_t<record::TREE>{},
+                        oo::add_resolver_t<record::NPC_>{},
+                        oo::add_resolver_t<record::WTHR>{},
+                        oo::add_resolver_t<record::CLMT>{},
+                        oo::add_resolver_t<record::CELL>{*ctx.bulletConf},
+                        oo::add_resolver_t<record::WRLD>{},
+                        oo::add_resolver_t<record::LAND>{},
+                        oo::add_resolver_t<record::WATR>{}));
+
+    ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
+        std::make_tuple(oo::add_refr_resolver_t<record::REFR_ACTI>{},
+                        oo::add_refr_resolver_t<record::REFR_DOOR>{},
+                        oo::add_refr_resolver_t<record::REFR_LIGH>{},
+                        oo::add_refr_resolver_t<record::REFR_STAT>{},
+                        oo::add_refr_resolver_t<record::REFR_NPC_>{}));
+  }, &resolversCounter);
+
+  //===-------------------------------------------------------------------===//
+  // Add resource groups and locations.
+  // ResourceGroupManager is not thread safe so we can't use jobs here :(
+  //===-------------------------------------------------------------------===//
 
   // Add the main resource group
   auto &resGrpMgr = Ogre::ResourceGroupManager::getSingleton();
   resGrpMgr.createResourceGroup(oo::RESOURCE_GROUP);
 
   // Shaders are not stored in the data folder (mostly for vcs reasons)
-  resGrpMgr.addResourceLocation("./shaders", "FileSystem",
-                                oo::SHADER_GROUP);
+  resGrpMgr.addResourceLocation("./shaders", "FileSystem", oo::SHADER_GROUP);
 
   // Register the BSA archive format
   auto &archiveMgr = Ogre::ArchiveManager::getSingleton();
@@ -161,15 +188,27 @@ Application::Application(std::string windowName) : FrameListener() {
   const std::string bsaList{gameSettings.get("Archive.sArchiveList", "")};
   const auto bsaFilenames{parseBsaList(dataPath, bsaList)};
 
+  // Need managers before adding resources
+  oo::JobManager::waitOn(&managersAndFactoriesCounter);
+
+  // The bsa files need to be explicitly loaded before being added as resource
+  // locations in order to guarantee thread safety.
+  for (const auto &bsa : bsaFilenames) {
+    const auto sysPath{bsa.sysPath()};
+    Ogre::ArchiveManager::getSingleton().load(sysPath, "BSA", true);
+    ctx.getLogger()->info("Loaded archive {}", sysPath);
+  }
+
   // Meshes need to be declared explicitly as they use a ManualResourceLoader.
   // We could just use Archive.SMasterMeshesArchiveFileName, but it is not
   // guaranteed to match any of Archive.sArchiveList, and also will not work for
   // any mod bsa files. While we're at it, we'll add the bsa files as resource
   // locations and declare every other recognised resource too.
   for (const auto &bsa : bsaFilenames) {
-    declareBsaArchive(bsa);
-    declareBsaResources(bsa);
+    this->declareBsaArchive(bsa);
+    this->declareBsaResources(bsa);
   }
+
   declareFilesystemResources(dataPath);
 
   // All resources have been declared by now, so we can initialise the resource
@@ -178,6 +217,9 @@ Application::Application(std::string windowName) : FrameListener() {
   resGrpMgr.initialiseResourceGroup(oo::SHADER_GROUP, true);
 
   ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
+
+  // Need resolvers before reading esp files
+  oo::JobManager::waitOn(&resolversCounter);
 
   // Load esp files
   const auto loadOrder{getLoadOrder(dataPath)};
@@ -188,10 +230,13 @@ Application::Application(std::string windowName) : FrameListener() {
   ctx.espCoordinator = std::make_unique<oo::EspCoordinator>(loadOrder.begin(),
                                                             loadOrder.end());
   // Read the main esm
-  InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers());
-  for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
-    oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
-  }
+  oo::JobCounter espCounter{1};
+  oo::JobManager::runJob([&, &ctx = ctx]() {
+    InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers());
+    for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
+      oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
+    }
+  }, &espCounter);
 
   createDummySceneManager();
   createDummyRenderQueue();
@@ -200,6 +245,8 @@ Application::Application(std::string windowName) : FrameListener() {
   std::visit([this](auto &&state) {
     state.enter(ctx);
   }, modeStack.back());
+
+  oo::JobManager::waitOn(&espCounter);
 }
 
 void Application::createLoggers() {
