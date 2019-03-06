@@ -115,6 +115,7 @@ target_sources(OpenOblivion PRIVATE
         src/application.cpp
         src/application_context.cpp
         src/bsa_archive_factory.cpp
+        src/cell_cache.cpp
         src/character_controller/jump_state.cpp
         src/character_controller/player_controller.cpp
         src/character_controller/player_controller_impl.cpp
@@ -167,6 +168,7 @@ target_sources(OpenOblivion PRIVATE
         include/bsa_archive_factory.hpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
+        include/cell_cache.hpp
         include/character_controller/abilities.hpp
         include/character_controller/fallback_state.hpp
         include/character_controller/jump_state.hpp
@@ -188,7 +190,6 @@ target_sources(OpenOblivion PRIVATE
         include/globals.hpp
         include/initial_record_visitor.hpp
         include/job/job.hpp
-        include/keep_strategy.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
         include/modes/game_mode.hpp
@@ -225,7 +226,8 @@ target_sources(OpenOblivion PRIVATE
         include/script_functions.hpp
         include/settings.hpp
         include/terrain_material_generator.hpp
-        include/time_manager.hpp)
+        include/time_manager.hpp
+        include/world_cache.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

@@ -1,4 +1,3 @@
-#include "modes/game_mode.hpp"
 #include "modes/load_menu_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/main_menu_mode.hpp"
@@ -69,7 +68,17 @@ MainMenuMode::handleEventImpl(ApplicationContext &ctx,
   if (btnContinue && btnContinue->is_clicked()) {
     getMenuCtx()->getOverlay()->hide();
     mBackgroundMusic->stop();
-    return {false, oo::GameMode(ctx)};
+    const oo::BaseId cheydinhalCountyHall{0x00'031b59};
+    const oo::BaseId horseWhispererStables{0x00'048706};
+
+    oo::CellRequest request{
+        // {25, -38}
+        oo::BaseId{0x00'00619e},
+        oo::fromBSCoordinates(Ogre::Vector3(103799.0f, -152970.0f, 2575.0f))
+//      oo::BaseId{0x00'031b59},
+//      oo::fromBSCoordinates(Ogre::Vector3(0.0f, 0.0f, -400.0f))
+    };
+    return {false, oo::LoadingMenuMode(ctx, std::move(request))};
   }
 
   if (btnLoad && btnLoad->is_clicked()) {

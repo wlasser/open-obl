@@ -3,6 +3,7 @@
 
 #include "application_context.hpp"
 #include "bullet/collision.hpp"
+#include "cell_cache.hpp"
 #include "character_controller/player_controller.hpp"
 #include "modes/mode.hpp"
 #include "modes/menu_mode.hpp"
@@ -59,6 +60,12 @@ class GameMode {
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
 
+  // TODO: These are only here because they need to be passed from the
+  //       constructor to enter(), when they should be given to enter() in the
+  //       first place.
+  Ogre::Vector3 mPlayerStartPos{Ogre::Vector3::ZERO};
+  Ogre::Quaternion mPlayerStartOrientation{Ogre::Quaternion::IDENTITY};
+
   oo::PlayerControllerPtr mPlayerController{};
 
   bullet::CollisionCaller mCollisionCaller{};
@@ -74,10 +81,6 @@ class GameMode {
   /// null reference `0`.
   /// TODO: Move this to scripting
   oo::RefId getCrosshairRef();
-
-  void loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId);
-  void loadInteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
-  void loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
 
   void addPlayerToScene(ApplicationContext &ctx);
   void registerSceneListeners(ApplicationContext &ctx);
@@ -101,6 +104,7 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
+  void loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
   void loadNeighbourhood(ApplicationContext &ctx, World::CellIndex centerCell);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
@@ -128,7 +132,7 @@ class GameMode {
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
 
   /// \see Mode::Mode()
-  explicit GameMode(ApplicationContext &/*ctx*/) {}
+  explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);
 
   /// \see Mode::enter()
   void enter(ApplicationContext &ctx);

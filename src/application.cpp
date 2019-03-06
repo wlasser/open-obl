@@ -1,8 +1,8 @@
 #include "application.hpp"
 #include "bullet/collision.hpp"
+#include "cell_cache.hpp"
 #include "conversions.hpp"
 #include "console_functions.hpp"
-#include "keep_strategy.hpp"
 #include "settings.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
@@ -34,6 +34,7 @@
 #include "scripting/script_engine.hpp"
 #include "sdl/sdl.hpp"
 #include "terrain_material_generator.hpp"
+#include "world_cache.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>
@@ -237,6 +238,17 @@ Application::Application(std::string windowName) : FrameListener() {
       oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
     }
   }, &espCounter);
+
+  // Create the cell cache
+  ctx.cellCache = std::make_unique<oo::CellCache>(
+      gameSettings.get("General.uInterior Cell Buffer", 3u),
+      std::max(gameSettings.get("General.uGridsToLoad", 3u)
+                   * gameSettings.get("General.uGridsToLoad", 3u),
+               gameSettings.get("General.uExterior Cell Buffer", 36u)));
+
+  // Create the world cache
+  ctx.worldCache = std::make_unique<oo::WorldCache>(
+      gameSettings.get("General.uWorld Buffer", 1u));
 
   createDummySceneManager();
   createDummyRenderQueue();

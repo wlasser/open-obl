@@ -66,6 +66,11 @@ class Resolver<record::WRLD> {
   ///          loaded first with a call to load.
   tl::optional<const absl::flat_hash_set<BaseId> &>
   getCells(oo::BaseId baseId) const;
+
+  /// Return the `BaseId`s of all worldspaces.
+  /// This method should generally be avoided but is necessary when trying to
+  /// find which worldspace contains a given cell.
+  absl::flat_hash_set<BaseId> getWorlds() const;
 };
 
 class Resolver<record::WRLD>::WrldVisitor {

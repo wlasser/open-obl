@@ -14,6 +14,18 @@
 
 namespace oo {
 
+GameMode::GameMode(ApplicationContext &/*ctx*/,
+                   oo::CellPacket cellPacket) {
+  mWrld = std::move(cellPacket.mWrld);
+  mCell = std::move(cellPacket.mInteriorCell);
+  mExteriorCells = std::move(cellPacket.mExteriorCells);
+
+  mPlayerStartPos = std::move(cellPacket.mPlayerPosition);
+  mPlayerStartOrientation = std::move(cellPacket.mPlayerOrientation);
+
+  mInInterior = mExteriorCells.empty();
+}
+
 void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
                              oo::PlayerController *playerController) {
   const auto *rigidBody{playerController->getRigidBody()};
@@ -67,12 +79,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
           return {};
         },
         [](oo::event::TogglePov) -> transition_t { return {}; },
-        [&ctx](oo::event::MenuMode e) -> transition_t {
-          if (e.down) {
-            return {false, oo::LoadingMenuMode(ctx)};
-          }
-          return {};
-        },
+        [](oo::event::MenuMode) -> transition_t { return {}; },
         [](oo::event::Rest) -> transition_t { return {}; },
         [](oo::event::QuickMenu) -> transition_t { return {}; },
         [](oo::event::Quick) -> transition_t { return {}; },
@@ -125,34 +132,6 @@ RefId GameMode::getCrosshairRef() {
   } else {
     return RefId{};
   }
-}
-
-void
-GameMode::loadWorldspace(ApplicationContext &ctx, oo::BaseId worldspaceId) {
-  auto baseResolvers{ctx.getBaseResolvers()};
-  auto &wrldRes{oo::getResolver<record::WRLD>(baseResolvers)};
-
-  wrldRes.load(worldspaceId, oo::getResolvers<record::CELL>(baseResolvers));
-
-  auto resolvers{oo::getResolvers<record::CELL, record::WRLD, record::LTEX,
-                                  record::WTHR, record::CLMT,
-                                  record::LAND>(baseResolvers)};
-  const auto wrldRec{*wrldRes.get(worldspaceId)};
-  mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
-}
-
-void GameMode::loadInteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
-  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
-  if (!cellRes.contains(cellId)) {
-    ctx.getLogger()->error("Cell {} does not exist", cellId);
-    throw std::runtime_error("Cell does not exist");
-  }
-  const auto cellRec{cellRes.get(cellId)};
-
-  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
-  mCell = reifyRecord(*cellRec, nullptr, nullptr, getCellResolvers(ctx));
-
-  ctx.getLogger()->info("Loaded cell {}", cellId);
 }
 
 void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
@@ -238,17 +217,10 @@ void GameMode::updateAnimation(float delta) {
 }
 
 void GameMode::enter(ApplicationContext &ctx) {
-//  loadInteriorCell(ctx, BaseId{0x00'031b59}); // Cheydinhal County Hall
-//    loadInteriorCell(ctx, BaseId{0x00'048706}); // Horse Whisperer Stables
-  loadWorldspace(ctx, oo::BaseId{0x00'00003c});
-  mInInterior = false;
-  mCenterCell = World::CellIndex{25, -38};
-  loadNeighbourhood(ctx, mCenterCell);
-
   addPlayerToScene(ctx);
-  mPlayerController->moveTo(oo::fromBSCoordinates(Ogre::Vector3{
-      103799.0f, -152970.0f, 2575.0f
-  }));
+  mPlayerController->moveTo(mPlayerStartPos);
+  // TODO: Set the player's orientation, this needs a new method on the
+  //       PlayerController.
 
   registerSceneListeners(ctx);
 

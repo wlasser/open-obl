@@ -73,7 +73,15 @@ tl::optional<const absl::flat_hash_set<oo::BaseId> &>
 oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
-  return it->second.second.mCells;
+  const auto &cells{it->second.second.mCells};
+  if (cells.empty()) return tl::nullopt;
+  return cells;
+}
+
+absl::flat_hash_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
+  absl::flat_hash_set<oo::BaseId> ids{};
+  for (const auto &[id, _] : mRecords) ids.emplace(id);
+  return ids;
 }
 
 template<> void

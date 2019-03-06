@@ -54,6 +54,22 @@ namespace oo {
 ///         Defines the size of the player's *far neighbourhood*.
 ///         Should be a positive odd integer, and greater than or equal to
 ///         `General.uGridsToLoad`.</td></tr>
+/// <tr><td>General.uInterior Cell Buffer</td>
+///     <td>The maximum number of interior cells to keep fully loaded in memory
+///         at once. This number *includes* the interior cell that is being
+///         rendered, so should be positive.</td></tr>
+/// <tr><td>General.uExterior Cell Buffer</td>
+///     <td>The maximum number of exterior cells to keep fully loaded in memory
+///         at once. This *includes* the exterior cells that are currently being
+///         rendered, so should be positive and in particular greater than or
+///         equal to the square of `General.uGridsToLoad`.</td></tr>
+/// <tr><td>General.uWorld Buffer</td>
+///     <td>The maximum number of worldspaces to keep fully loaded in memory at
+///         once. Unlike `General.uExterior Cell Buffer` and
+///         `General.uInterior Cell Buffer` 'fully loaded' does not mean that
+///         the *contents* of the worldspace are kept loaded, only that all the
+///         intrinsic information of the worldspace---such as the list of cells
+///         that it owns---is.</td></tr>
 /// <tr><td>General.fDefaultFOV</td>
 ///     <td>The horizontal field of view of the camera in degrees.</td></tr>
 /// <tr><td>General.sMainMenuMusicTrack</td></tr>

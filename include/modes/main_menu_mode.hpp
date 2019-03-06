@@ -11,8 +11,7 @@ namespace oo {
 
 /// \ingroup OpenOblivionModes
 template<> struct MenuModeTransition<MainMenuMode> {
-  using type = ModeTransition<MainMenuMode, LoadMenuMode, LoadingMenuMode,
-                              GameMode>;
+  using type = ModeTransition<MainMenuMode, LoadMenuMode, LoadingMenuMode>;
 };
 
 /// Specialization of `oo::MenuMode` for the Main Menu.
