@@ -42,7 +42,7 @@ namespace oo {
 ///
 /// <table>
 /// <tr><th>Setting Group and Name</th><th>Setting Description</th></tr>
-/// <tr><td>General.SLocalMasterPath</td>
+/// <tr><td>General.sLocalMasterPath</td>
 ///     <td>The name of the directory containing the BSA and esp/esm files,
 ///         relative to the location of the executable.</td></tr>
 /// <tr><td>General.uGridsToLoad</td>
@@ -56,9 +56,12 @@ namespace oo {
 ///         `General.uGridsToLoad`.</td></tr>
 /// <tr><td>General.fDefaultFOV</td>
 ///     <td>The horizontal field of view of the camera in degrees.</td></tr>
+/// <tr><td>General.sMainMenuMusicTrack</td></tr>
+///     <td>The background music to play on the title menu, relative to
+///         `General.sLocalMasterPath`.</tr></tr>
 /// <tr><td>Archive.sArchiveList</td>
 ///     <td>A comma-separated list of BSA files to load, relative to
-///         `General.SLocalMasterPath`.</td></tr>
+///         `General.sLocalMasterPath`.</td></tr>
 /// <tr><td>Debug.sOgreLogLevel</td>
 ///     <td>The minimum level of log message issued by the OGRE logger that will
 ///         appear in the log. Specifically, must be a string accepted by
@@ -119,20 +122,20 @@ namespace oo {
 /// <tr><td>Controls.fMouseSensitivity</td>
 ///     <td>Conversion factor from a mouse move delta in pixels to a change in
 ///         camera look angle in radians.</td></tr>
-/// <tr><td>Fonts.SFontFile_X</td>
+/// <tr><td>Fonts.sFontFile_X</td>
 ///     <td>Path to the font file describing font number `X` relative to
-///         `General.SLocalMasterPath`. This option can appear any number of
+///         `General.sLocalMasterPath`. This option can appear any number of
 ///         times with `X` replaced by a different positive integer each time.
 ///         It is expected that settings appear at least for `X` equal to 1
 ///         through 5.
 ///
 ///         Note: The original implementation used paths relative to the
-///         application, not relative to `General.SLocalMasterPath`.</td></tr>
+///         application, not relative to `General.sLocalMasterPath`.</td></tr>
 /// </table>
 ///
 class GameSettings {
  private:
-  boost::property_tree::ptree tree{};
+  boost::property_tree::iptree tree{};
   GameSettings() = default;
 
  public:
