@@ -104,8 +104,8 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
-  void loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId);
-  void loadNeighbourhood(ApplicationContext &ctx, World::CellIndex centerCell);
+  void reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+  void reifyNeighborhood(World::CellIndex centerCell, ApplicationContext &ctx);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<

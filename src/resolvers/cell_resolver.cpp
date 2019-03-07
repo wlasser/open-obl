@@ -244,6 +244,58 @@ void oo::ExteriorCell::destroyMovableObjects(Ogre::SceneNode *root) {
   }
 };
 
+bool oo::ExteriorCell::isVisible() const noexcept {
+  return mIsVisible;
+}
+
+void oo::ExteriorCell::setVisible(bool visible) {
+  if (visible == isVisible()) return;
+
+  std::function<void(Ogre::SceneNode *)> show = [&](Ogre::SceneNode *root) {
+    showNode(root);
+    for (auto *node : root->getChildren()) {
+      show(dynamic_cast<Ogre::SceneNode *>(node));
+    }
+  };
+
+  std::function<void(Ogre::SceneNode *)> hide = [&](Ogre::SceneNode *root) {
+    hideNode(root);
+    for (auto *node : root->getChildren()) {
+      hide(dynamic_cast<Ogre::SceneNode *>(node));
+    }
+  };
+
+  if (visible) {
+    mIsVisible = true;
+    show(mRootSceneNode);
+    mPhysicsWorld->addCollisionObject(mTerrainCollisionObject.get());
+  } else {
+    mIsVisible = false;
+    hide(mRootSceneNode);
+    mPhysicsWorld->removeCollisionObject(mTerrainCollisionObject.get());
+  }
+}
+
+void oo::ExteriorCell::showNode(Ogre::SceneNode *root) {
+  root->setVisible(true, /*cascade=*/false);
+  auto &objects{root->getAttachedObjects()};
+  for (Ogre::MovableObject *obj : objects) {
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      mPhysicsWorld->addRigidBody(rigidBody->getRigidBody());
+    }
+  }
+}
+
+void oo::ExteriorCell::hideNode(Ogre::SceneNode *root) {
+  root->setVisible(false, /*cascade=*/false);
+  auto &objects{root->getAttachedObjects()};
+  for (Ogre::MovableObject *obj : objects) {
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      mPhysicsWorld->removeRigidBody(rigidBody->getRigidBody());
+    }
+  }
+}
+
 gsl::not_null<Ogre::SceneManager *> ExteriorCell::getSceneManager() const {
   return mScnMgr;
 }

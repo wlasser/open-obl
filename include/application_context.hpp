@@ -93,8 +93,8 @@ class ApplicationContext {
   std::unique_ptr<oo::RefrResolvers> refrResolvers{};
 
   std::unique_ptr<oo::EspCoordinator> espCoordinator{};
-  std::unique_ptr<oo::CellCache> cellCache{};
   std::unique_ptr<oo::WorldCache> worldCache{};
+  std::unique_ptr<oo::CellCache> cellCache{};
 
   void setCameraAspectRatio(gsl::not_null<Ogre::Camera *> camera) const;
 
@@ -122,8 +122,8 @@ class ApplicationContext {
 
   Ogre::OverlaySystem *getOverlaySystem();
 
-  oo::CellCache *getCellCache();
   oo::WorldCache *getWorldCache();
+  oo::CellCache *getCellCache();
 
   void setCamera(gsl::not_null<Ogre::Camera *> camera);
 };

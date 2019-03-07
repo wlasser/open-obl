@@ -134,7 +134,7 @@ RefId GameMode::getCrosshairRef() {
   }
 }
 
-void GameMode::loadExteriorCell(ApplicationContext &ctx, oo::BaseId cellId) {
+void GameMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   if (!mWrld) {
     throw std::runtime_error("Attempting to load an exterior cell "
                              "without a worldspace");
@@ -231,13 +231,15 @@ void GameMode::refocus(ApplicationContext &) {
   sdl::setRelativeMouseMode(true);
 }
 
-void GameMode::loadNeighbourhood(ApplicationContext &ctx,
-                                 World::CellIndex centerCell) {
+void GameMode::reifyNeighborhood(World::CellIndex centerCell,
+                                 ApplicationContext &ctx) {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   const auto nearDiameter{gameSettings.get<unsigned int>(
       "General.uGridsToLoad", 3)};
   const auto farDiameter{gameSettings.get<unsigned int>(
       "General.uGridDistantCount", 5)};
+
+  const auto &cache{*ctx.getCellCache()};
 
   // Find all cells in the far neighbourhood and make sure that they are loaded.
   // The set will be used later to provide fast lookup of cells that need to be
@@ -247,8 +249,17 @@ void GameMode::loadNeighbourhood(ApplicationContext &ctx,
   for (const auto &row : farNeighbours) {
     for (auto id : row) {
       farNeighbourSet.emplace(id);
+      // C++20: if (mFarExteriorCells.contains(id)) {
       if (std::find(mFarExteriorCells.begin(), mFarExteriorCells.end(), id)
-          == mFarExteriorCells.end()) {
+          != mFarExteriorCells.end()) {
+        // Already loaded, skip
+        continue;
+      } else if (auto[cell, isInterior]{cache.get(id)}; cell && !isInterior) {
+        // In cache, so its terrain has already been loaded and will stay loaded
+        // even if it gets pushed out the cache later.
+        // TODO: Show the terrain
+        mFarExteriorCells.emplace_back(id);
+      } else {
         mFarExteriorCells.emplace_back(id);
         mWrld->loadTerrainOnly(id, false);
       }
@@ -262,30 +273,50 @@ void GameMode::loadNeighbourhood(ApplicationContext &ctx,
     for (auto id : row) {
       nearNeighbourSet.emplace(id);
       auto p = [id](const auto &cell) { return cell->getBaseId() == id; };
-      if (std::none_of(mExteriorCells.begin(), mExteriorCells.end(), p)) {
-        loadExteriorCell(ctx, id);
+      if (std::any_of(mExteriorCells.begin(), mExteriorCells.end(), p)) {
+        // Already loaded, skip
+        continue;
+      } else if (auto[cell, isInterior]{cache.get(id)}; cell && !isInterior) {
+        // In cache so just copy the pointer
+        mExteriorCells.emplace_back(
+            std::static_pointer_cast<oo::ExteriorCell>(cell));
+        static_cast<oo::ExteriorCell *>(cell.get())->setVisible(true);
+        ctx.getLogger()->info("Loaded cell {} from cache", id);
+      } else {
+        reifyExteriorCell(id, ctx);
+        ctx.getCellCache()->push_back(mExteriorCells.back());
       }
     }
   }
 
   // Remove any previously loaded far cells that are not in the new far
-  // neighbourhood. Note that the near neighbour is a subset of the far
+  // neighbourhood, but only remove their terrain if they are not cached (this
+  // can happen with sufficiently large cache sizes or close near/far
+  // neighbourhoods). Note that the near neighbour is a subset of the far
   // neighbourhood.
   // Use std::partition instead of std::remove_if because we need
   // to do some processing on the cells to be removed before getting rid of
-  // then; std::remove_if leaves the to-be-removed elements in a valid but
+  // them; std::remove_if leaves the to-be-removed elements in a valid but
   // unspecified state.
   {
     auto begin{mFarExteriorCells.begin()}, end{mFarExteriorCells.end()};
     auto it{std::partition(begin, end, [&farNeighbourSet](auto id) {
       return farNeighbourSet.contains(id);
     })};
-    for (auto jt = it; jt != end; ++jt) mWrld->unloadTerrain(*jt);
+    for (auto jt = it; jt != end; ++jt) {
+      if (std::find_if(cache.exteriors().begin(), cache.exteriors().end(),
+                       [&jt](const auto &cellPtr) {
+                         return cellPtr->getBaseId() == *jt;
+                       }) == cache.exteriors().end()) {
+        mWrld->unloadTerrain(*jt);
+      }
+    }
     mFarExteriorCells.erase(it, end);
   }
 
   // Remove any previously loaded near cells that are not in the new near
-  // neighbour, in particular removing their terrain collision object, but do
+  // neighbour, removing their collision object if they are not cached, but not
+  // unloading their terrain.
   // not unload their terrain.
   {
     auto begin{mExteriorCells.begin()}, end{mExteriorCells.end()};
@@ -293,7 +324,15 @@ void GameMode::loadNeighbourhood(ApplicationContext &ctx,
       return nearNeighbourSet.contains(ptr->getBaseId());
     })};
     for (auto jt = it; jt != end; ++jt) {
-      getPhysicsWorld()->removeCollisionObject((*jt)->getCollisionObject());
+      auto kt{std::find_if(cache.exteriors().begin(), cache.exteriors().end(),
+                           [&jt](const auto &cellPtr) {
+                             return cellPtr->getBaseId() == (*jt)->getBaseId();
+                           })};
+      if (kt != cache.exteriors().end()) {
+        static_cast<oo::ExteriorCell *>(kt->get())->setVisible(false);
+      } else {
+        getPhysicsWorld()->removeCollisionObject((*jt)->getCollisionObject());
+      }
     }
     mExteriorCells.erase(it, end);
   }
@@ -327,7 +366,7 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
 
   if (!mInInterior) {
     if (updateCenterCell(ctx)) {
-      loadNeighbourhood(ctx, mCenterCell);
+      reifyNeighborhood(mCenterCell, ctx);
     }
     mWrld->updateAtmosphere(
         chrono::duration_cast<chrono::minutes>(now - today));

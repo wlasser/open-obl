@@ -244,6 +244,17 @@ class ExteriorCell : public Cell {
   ExteriorCell(ExteriorCell &&) = delete;
   ExteriorCell &operator=(ExteriorCell &&) = delete;
 
+  /// Show or hide the contents of this cell.
+  /// Due to the `oo::CellCache`, an `ExteriorCell` may still be alive but not
+  /// in the current scene. This method shows/hides the root scene node of this
+  /// cell and all its children, as well as adding/removing all the owned
+  /// physics objects, including the terrain's collision object. The terrain
+  /// itself is not unloaded, since that is the responsibility of the `World`.
+  /// \pre The current visibility is `!visible`.
+  void setVisible(bool visible);
+
+  bool isVisible() const noexcept;
+
   void setTerrain(std::array<Ogre::Terrain *, 4> terrain);
  private:
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
@@ -262,7 +273,12 @@ class ExteriorCell : public Cell {
   std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
   std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
 
+  bool mIsVisible{true};
+
   void destroyMovableObjects(Ogre::SceneNode *root);
+
+  void showNode(Ogre::SceneNode *node);
+  void hideNode(Ogre::SceneNode *node);
 };
 
 template<>
