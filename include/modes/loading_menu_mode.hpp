@@ -2,6 +2,7 @@
 #define OPENOBLIVION_LOADING_MENU_MODE_HPP
 
 #include "cell_cache.hpp"
+#include "job/job.hpp"
 #include "modes/menu_mode.hpp"
 #include "modes/menu_mode_base.hpp"
 #include "resolvers/cell_resolver.hpp"
@@ -42,6 +43,10 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
   std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
   /// The request telling us which cell to load and where to place the player.
   oo::CellRequest mRequest;
+  /// Whether the load job has been started.
+  bool mLoadStarted{false};
+  /// Keep track of the loading progress. When this is zero, we're done.
+  std::shared_ptr<oo::JobCounter> mJc{};
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<
@@ -124,6 +129,8 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
 
   void reifyNearNeighborhood(oo::World::CellIndex center,
                              ApplicationContext &ctx);
+
+  void startLoadJob(ApplicationContext &ctx);
 
  public:
   explicit MenuMode<gui::MenuType::LoadingMenu>(ApplicationContext &ctx,
