@@ -32,6 +32,10 @@ class JobCounter {
     }
     mCv.notify_all();
   }
+
+  int get() const noexcept {
+    return mV;
+  }
 };
 
 struct Job {
@@ -139,6 +143,68 @@ class JobManager {
   /// Add a new job to the queue.
   template<class F> static void runJob(F &&f, JobCounter *counter = nullptr) {
     getQueue().push(Job(std::forward<F>(f), counter));
+  }
+
+  /// Wait on a job counter.
+  static void waitOn(JobCounter *counter) noexcept { counter->wait(); }
+};
+
+/// Fiber-based job manager that takes control of the calling thread.
+/// `oo::JobManager` is unsuitable for tasks that must be run on the rendering
+/// thread, since all the tasks execute on worker threads created by the
+/// `oo::JobManager`. This manager acts similarly to `oo::JobManager` but does
+/// not spawn any workers, and instead blocks---executing the jobs in its
+/// queue---until the queue is empty. Because of this, the `start()` function
+/// must be given an initial `Job` which takes on the role of the main thread,
+/// presumably launching `Job`s on both the main thread---via
+/// `oo::RenderJobManager`---and on worker threads---via `oo::JobManager`.
+/// Worker jobs are themselves able to launch jobs using the
+/// `oo::RenderJobManager`, which allows asynchronous tasks to use the rendering
+/// thread when needed.
+class RenderJobManager {
+ private:
+  static constexpr std::size_t BUFFER_CAPACITY{1024u};
+  using JobQueue = boost::fibers::buffered_channel<Job>;
+
+  /// Get a reference to the job queue.
+  /// \see JobManager::getJobQueue()
+  static JobQueue &getQueue() {
+    static JobQueue queue{BUFFER_CAPACITY};
+    return queue;
+  }
+
+ public:
+  RenderJobManager() = delete;
+  RenderJobManager(const RenderJobManager &) = delete;
+  RenderJobManager &operator=(const RenderJobManager &) = delete;
+  RenderJobManager(RenderJobManager &&) = delete;
+  RenderJobManager &operator=(RenderJobManager &&) = delete;
+
+  /// Add a new job to the queue.
+  /// This can be called from any thread.
+  template<class F> static void runJob(F &&f, JobCounter *counter = nullptr) {
+    getQueue().push(Job(std::forward<F>(f), counter));
+  }
+
+  /// Start the job system on the calling thread.
+  template<class F> static void start(F &&f) noexcept {
+    constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
+
+    // Create pool of fibers that can be pulling jobs.
+    for (int i = 0; i < 10; ++i) {
+      boost::fibers::fiber{[]() {
+        Job job;
+        while (getQueue().pop(job) != CLOSED) job();
+      }}.detach();
+    }
+
+    // Run the initial job on the main fiber, closing the buffer when it's done
+    JobCounter jc{1};
+    Job job(std::forward<F>(f), &jc);
+    job();
+    waitOn(&jc);
+
+    getQueue().close();
   }
 
   /// Wait on a job counter.

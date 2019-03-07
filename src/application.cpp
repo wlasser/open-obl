@@ -676,6 +676,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
     deferredMode.reset();
   }
 
+  boost::this_fiber::yield();
+
   return true;
 }
 

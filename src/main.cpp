@@ -5,9 +5,11 @@
 int main() {
   oo::JobManager::start();
 
-  oo::Application app(oo::RENDER_TARGET);
-  oo::getApplication(&app);
-  app.getRoot()->startRendering();
+  oo::RenderJobManager::start([]() {
+    oo::Application app(oo::RENDER_TARGET);
+    oo::getApplication(&app);
+    app.getRoot()->startRendering();
+  });
 
   oo::JobManager::stop();
 
