@@ -12,6 +12,7 @@
 #include "resolvers/static_resolver.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+#include <boost/fiber/mutex.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <tl/optional.hpp>
@@ -19,6 +20,7 @@
 #include <OgreSceneManager.h>
 #include <OGRE/Terrain/OgreTerrain.h>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -55,6 +57,9 @@ class Resolver<record::CELL> {
   /// Record storage.
   absl::flat_hash_map<oo::BaseId, WrappedRecordEntry> mRecords{};
 
+  /// Record storage mutex.
+  mutable boost::fibers::mutex mMtx{};
+
   /// Bullet configuration, for constructing physics worlds.
   const bullet::Configuration &mBulletConf;
 
@@ -62,6 +67,12 @@ class Resolver<record::CELL> {
   class CellTerrainVisitor;
  public:
   using RecordIterator = typename decltype(mRecords)::iterator;
+
+  ~Resolver() = default;
+  Resolver(const Resolver &) = delete;
+  Resolver &operator=(const Resolver &) = delete;
+  Resolver(Resolver &&) noexcept;
+  Resolver &operator=(Resolver &&) noexcept;
 
   /// Insert a new record with the given accessor if one exists, otherwise
   /// replace the existing record and append the accessor to the accessor list.

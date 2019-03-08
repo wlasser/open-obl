@@ -9,11 +9,13 @@
 #include "time_manager.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
+#include <boost/fiber/mutex.hpp>
 #include <boost/multi_array.hpp>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
 #include <OGRE/Terrain/OgreTerrainGroup.h>
 #include <tl/optional.hpp>
+#include <mutex>
 #include <random>
 #include <utility>
 
@@ -37,9 +39,20 @@ class Resolver<record::WRLD> {
 
   /// Record storage.
   absl::flat_hash_map<oo::BaseId, WrappedRecordEntry> mRecords{};
+
+  /// Record storage mutex.
+  mutable boost::fibers::mutex mMtx{};
+
   class WrldVisitor;
  public:
   using RecordIterator = typename decltype(mRecords)::iterator;
+
+  Resolver() = default;
+  ~Resolver() = default;
+  Resolver(const Resolver &) = delete;
+  Resolver &operator=(const Resolver &) = delete;
+  Resolver(Resolver &&) noexcept;
+  Resolver &operator=(Resolver &&) noexcept;
 
   /// Insert a new record with the given accessor if one exists, otherwise
   /// replace the existing record and append the accessor to the accessor list.

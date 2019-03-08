@@ -7,11 +7,29 @@
 
 namespace oo {
 
+Resolver<record::CELL>::Resolver(Resolver &&other) noexcept
+    : mBulletConf(other.mBulletConf) {
+  std::scoped_lock lock{other.mMtx};
+  mRecords = std::move(other.mRecords);
+}
+
+Resolver<record::CELL> &Resolver<record::CELL>::operator=(Resolver &&other) noexcept {
+  if (this != &other) {
+    assert(&other.mBulletConf == &mBulletConf);
+    std::scoped_lock lock{mMtx, other.mMtx};
+    using std::swap;
+    swap(mRecords, other.mRecords);
+  }
+
+  return *this;
+}
+
 std::pair<oo::Resolver<record::CELL>::RecordIterator, bool>
 oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
                                            const record::CELL &rec,
                                            oo::EspAccessor accessor,
                                            bool isExterior) {
+  std::scoped_lock lock{mMtx};
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
   Metadata meta{0, isExterior, {accessor}, {}, tl::nullopt};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
@@ -31,6 +49,7 @@ oo::Resolver<record::CELL>::getBulletConfiguration() const {
 
 tl::optional<const record::CELL &>
 oo::Resolver<record::CELL>::get(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const auto &entry{it->second.first};
@@ -40,6 +59,7 @@ oo::Resolver<record::CELL>::get(oo::BaseId baseId) const {
 
 tl::optional<record::CELL &>
 oo::Resolver<record::CELL>::get(oo::BaseId baseId) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   auto &entry{it->second.first};
@@ -50,24 +70,28 @@ oo::Resolver<record::CELL>::get(oo::BaseId baseId) {
 
 void
 oo::Resolver<record::CELL>::setDetachTime(oo::BaseId baseId, int detachTime) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   it->second.second.mDetachTime = detachTime;
 }
 
 int oo::Resolver<record::CELL>::getDetachTime(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return 0;
   return it->second.second.mDetachTime;
 }
 
 bool oo::Resolver<record::CELL>::contains(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   return mRecords.find(baseId) != mRecords.end();
 }
 
 void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
                                       RefrResolverContext refrCtx,
                                       BaseResolverContext baseCtx) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   auto &meta{it->second.second};
@@ -82,6 +106,7 @@ void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
 
 void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
                                              MoreResolverContext moreCtx) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   auto &meta{it->second.second};
@@ -94,6 +119,7 @@ void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
 
 tl::optional<const absl::flat_hash_set<RefId> &>
 oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mReferences;
@@ -101,6 +127,7 @@ oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
 
 tl::optional<oo::BaseId>
 oo::Resolver<record::CELL>::getLandId(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mLandId;

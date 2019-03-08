@@ -6,10 +6,12 @@
 #include "record/reference_records.hpp"
 #include "meta.hpp"
 #include <absl/container/flat_hash_map.h>
+#include <boost/fiber/mutex.hpp>
 #include <boost/mp11.hpp>
 #include <gsl/gsl>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
+#include <mutex>
 
 namespace oo {
 
@@ -60,9 +62,19 @@ class Resolver {
   /// Record storage.
   absl::flat_hash_map<IdType, RecordEntry> mRecords{};
 
+  /// Record storage mutex.
+  mutable boost::fibers::mutex mMtx{};
+
   using RecordIterator = typename decltype(mRecords)::iterator;
 
  public:
+
+  Resolver() = default;
+  ~Resolver() = default;
+  Resolver(const Resolver &) = delete;
+  Resolver &operator=(const Resolver &) = delete;
+  Resolver(Resolver &&) noexcept;
+  Resolver &operator=(Resolver &&) noexcept;
 
   /// Insert an esp record or replace an existing one, doing nothing if baseId
   /// refers to an ess record.
@@ -258,8 +270,27 @@ using RefrResolversRef = boost::mp11::mp_transform<std::add_lvalue_reference_t,
 //===----------------------------------------------------------------------===//
 
 template<class R, class IdType>
+Resolver<R, IdType>::Resolver(Resolver &&other) noexcept {
+  std::scoped_lock lock{other.mMtx};
+  mRecords = std::move(other.mRecords);
+}
+
+template<class R, class IdType>
+Resolver<R, IdType> &Resolver<R, IdType>::operator=(Resolver &&other) noexcept {
+  if (&other != this) {
+    std::scoped_lock lock{mMtx, other.mMtx};
+    using std::swap;
+    swap(mRecords, other.mRecords);
+  }
+
+  return *this;
+}
+
+template<class R, class IdType>
 std::pair<typename Resolver<R, IdType>::RecordIterator, bool>
 Resolver<R, IdType>::insertOrAssignEspRecord(IdType baseId, const R &rec) {
+  std::scoped_lock lock{mMtx};
+
   auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<0>,
                                           rec, tl::nullopt)};
   if (inserted) return {it, inserted};
@@ -276,11 +307,13 @@ Resolver<R, IdType>::insertOrAssignEspRecord(IdType baseId, const R &rec) {
 template<class R, class IdType>
 std::pair<typename Resolver<R, IdType>::RecordIterator, bool>
 Resolver<R, IdType>::insertEspRecord(IdType baseId, const R &rec) {
+  std::scoped_lock lock{mMtx};
   return mRecords.try_emplace(baseId, std::in_place_index<0>, rec, tl::nullopt);
 }
 
 template<class R, class IdType>
 tl::optional<const R &> Resolver<R, IdType>::get(IdType baseId) const {
+  std::scoped_lock lock{mMtx};
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const std::variant<std::pair<const R, tl::optional<R>>, R> &entry{it->second};
@@ -294,6 +327,7 @@ tl::optional<const R &> Resolver<R, IdType>::get(IdType baseId) const {
 
 template<class R, class IdType>
 tl::optional<R &> Resolver<R, IdType>::get(IdType baseId) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   RecordEntry &entry{it->second};
@@ -308,11 +342,13 @@ tl::optional<R &> Resolver<R, IdType>::get(IdType baseId) {
 
 template<class R, class IdType>
 bool Resolver<R, IdType>::contains(IdType baseId) const {
+  std::scoped_lock lock{mMtx};
   return mRecords.find(baseId) != mRecords.end();
 }
 
 template<class R, class IdType>
 bool Resolver<R, IdType>::insertOrAssign(IdType baseId, const R &rec) {
+  std::scoped_lock lock{mMtx};
   auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<1>, rec)};
   if (inserted) return true;
   return std::visit(overloaded{
@@ -330,6 +366,7 @@ bool Resolver<R, IdType>::insertOrAssign(IdType baseId, const R &rec) {
 
 template<class R, class IdType>
 bool Resolver<R, IdType>::insert(IdType baseId, const R &rec) {
+  std::scoped_lock lock{mMtx};
   return mRecords.try_emplace(baseId, std::in_place_index<1>, rec).second;
 }
 

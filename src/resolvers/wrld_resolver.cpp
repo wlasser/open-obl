@@ -12,10 +12,27 @@
 // WRLD resolver definitions
 //===----------------------------------------------------------------------===//
 
+oo::Resolver<record::WRLD>::Resolver(Resolver &&other) noexcept {
+  std::scoped_lock lock{other.mMtx};
+  mRecords = std::move(other.mRecords);
+}
+
+oo::Resolver<record::WRLD> &
+oo::Resolver<record::WRLD>::operator=(Resolver &&other) noexcept {
+  if (this != &other) {
+    std::scoped_lock lock{mMtx, other.mMtx};
+    using std::swap;
+    swap(mRecords, other.mRecords);
+  }
+
+  return *this;
+}
+
 std::pair<oo::Resolver<record::WRLD>::RecordIterator, bool>
 oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
                                            const record::WRLD &rec,
                                            oo::EspAccessor accessor) {
+  std::scoped_lock lock{mMtx};
   spdlog::get(oo::LOG)->info("Inserting WRLD {}, {}", baseId,
                              rec.editorId.data);
 
@@ -33,6 +50,7 @@ oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
 
 tl::optional<const record::WRLD &>
 oo::Resolver<record::WRLD>::get(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const auto &entry{it->second.first};
@@ -43,6 +61,7 @@ oo::Resolver<record::WRLD>::get(oo::BaseId baseId) const {
 /// \overload get(oo::BaseId)
 tl::optional<record::WRLD &>
 oo::Resolver<record::WRLD>::get(oo::BaseId baseId) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   auto &entry{it->second.first};
@@ -53,11 +72,13 @@ oo::Resolver<record::WRLD>::get(oo::BaseId baseId) {
 
 /// Check if there is a world with the baseId.
 bool oo::Resolver<record::WRLD>::contains(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   return mRecords.find(baseId) != mRecords.end();
 }
 
 void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
                                       BaseResolverContext baseCtx) {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   auto &meta{it->second.second};
@@ -72,6 +93,7 @@ void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
 
 tl::optional<const absl::flat_hash_set<oo::BaseId> &>
 oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
+  std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   const auto &cells{it->second.second.mCells};
@@ -80,6 +102,7 @@ oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
 }
 
 absl::flat_hash_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
+  std::scoped_lock lock{mMtx};
   absl::flat_hash_set<oo::BaseId> ids{};
   for (const auto &[id, _] : mRecords) ids.emplace(id);
   return ids;
