@@ -3,6 +3,7 @@
 
 #include "conversions.hpp"
 #include "esp_coordinator.hpp"
+#include "job/job.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/wthr_resolver.hpp"
 #include "time_manager.hpp"
@@ -143,7 +144,12 @@ class World {
   oo::BaseId getCell(CellIndex index) const;
 
   /// Load the terrain of the cell with the given coordinates.
-  void loadTerrain(CellIndex index, bool async = true);
+  /// If `async` is true then returns immediately with a `oo::JobCounter` which
+  /// will reach zero when the terrain is loaded, otherwise loads the terrain
+  /// synchronously and returns nullptr when the terrain is loaded. If `async`
+  /// is false then this function must be called on the render thread.
+  std::shared_ptr<oo::JobCounter>
+  loadTerrain(CellIndex index, bool async = true);
 
   /// Load the terrain of the given cell, notifying the cell of its terrain.
   void loadTerrain(oo::ExteriorCell &cell);

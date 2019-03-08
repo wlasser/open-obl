@@ -1,4 +1,5 @@
 #include "esp.hpp"
+#include "job/job.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
@@ -158,9 +159,19 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
   mTerrainGroup.setResourceGroup(oo::RESOURCE_GROUP);
   setDefaultImportData();
 
+  auto logger{spdlog::get(oo::LOG)};
+
+  logger->info("WRLD {}: Making physics world...", baseId);
   makePhysicsWorld();
+  boost::this_fiber::yield();
+
+  logger->info("WRLD {}: Making cell grid...", baseId);
   makeCellGrid();
+  boost::this_fiber::yield();
+
+  logger->info("WRLD {}: Making atmosphere...", baseId);
   makeAtmosphere();
+  boost::this_fiber::yield();
 }
 
 oo::World::~World() {
@@ -183,6 +194,12 @@ void oo::World::makeCellGrid() {
 
   mCells.resize(boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
   mCells.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
+
+  // Number of cells to load before yielding this fiber. We have a *lot* of
+  // cells to load, and yielding after every cell is slow.
+  constexpr unsigned CELLS_PER_YIELD{64};
+  // Increment this every cell load and reset to zero once we yield.
+  unsigned cellsAfterYield{0};
 
   // Need non-const CELL and LAND for loadTerrain, then const LAND.
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
@@ -249,6 +266,11 @@ void oo::World::makeCellGrid() {
     mTerrainGroup.defineTerrain(2 * x + 1, 2 * y + 0, &importData[1]);
     mTerrainGroup.defineTerrain(2 * x + 0, 2 * y + 1, &importData[2]);
     mTerrainGroup.defineTerrain(2 * x + 1, 2 * y + 1, &importData[3]);
+
+    if (++cellsAfterYield > CELLS_PER_YIELD) {
+      cellsAfterYield = 0u;
+      boost::this_fiber::yield();
+    }
   }
 }
 
@@ -766,14 +788,33 @@ oo::BaseId oo::World::getCell(CellIndex index) const {
   return mCells[qvm::X(index)][qvm::Y(index)];
 }
 
-void oo::World::loadTerrain(CellIndex index, bool async) {
-  // TODO: Defer the loading of the collision mesh so this can be async
+std::shared_ptr<oo::JobCounter>
+oo::World::loadTerrain(CellIndex index, bool async) {
   auto x{qvm::X(index)};
   auto y{qvm::Y(index)};
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, !async);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, !async);
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, !async);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, !async);
+  if (async) {
+    auto jc{std::make_shared<oo::JobCounter>(4)};
+    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      group.loadTerrain(2 * x + 0, 2 * y + 0, true);
+    }, jc.get());
+    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      group.loadTerrain(2 * x + 1, 2 * y + 0, true);
+    }, jc.get());
+    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      group.loadTerrain(2 * x + 0, 2 * y + 1, true);
+    }, jc.get());
+    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      group.loadTerrain(2 * x + 1, 2 * y + 1, true);
+    }, jc.get());
+
+    return jc;
+  }
+
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, true);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, true);
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, true);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, true);
+  return std::shared_ptr<oo::JobCounter>();
 }
 
 void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
@@ -790,15 +831,8 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
     return;
   }
 
-  if (async) {
-    spdlog::get(oo::LOG)->warn("Asynchronous loading of terrain is not "
-                               "currently supported, falling back to "
-                               "synchronous loading");
-    async = false;
-  }
-
-  // Begin loading the terrain itself, possibly in the background.
-  loadTerrain(pos, async);
+  // Begin loading the terrain itself
+  auto terrainCounter{loadTerrain(pos, async)};
 
   constexpr auto vpc{oo::verticesPerCell<uint32_t>};
   constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
@@ -861,8 +895,8 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   applyFineLayers(layerMaps, landRec);
   applyFineLayers(layerOrders, landRec);
 
-  // Note that if async then we are not waiting on these pointers being non-null
-  // but instead are waiting on their isLoaded().
+  if (terrainCounter) oo::RenderJobManager::waitOn(terrainCounter.get());
+
   std::array<Ogre::Terrain *, 4u> terrain{
       mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
       mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
@@ -901,51 +935,52 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
     }
   };
 
-  // TODO: Properly implement asynchronous terrain loading.
-  //       This doesn't actually work because WorkQueue responses are not
-  //       processed until the end of the frame, but this function is blocking.
-  uint8_t terrainDone{0b0000};
-  do {
-    if (!(terrainDone & 0b0001) && terrain[0]->isLoaded()) {
+  oo::JobCounter blitCounter{1};
+  oo::RenderJobManager::runJob([terrain, &blitLayerMaps, &blitBoxes]() {
+    {
       const Ogre::Box box(0u, 0u, vpq, vpq);
       blitBoxes(terrain[0]->getMaterialName(), box);
       blitLayerMaps(0);
       terrain[0]->setGlobalColourMapEnabled(true, 2u);
       terrain[0]->setGlobalColourMapEnabled(false, 2u);
       terrain[0]->_setCompositeMapRequired(true);
-      terrainDone |= 0b0001;
     }
 
-    if (!(terrainDone & 0b0010) && terrain[1]->isLoaded()) {
+    boost::this_fiber::yield();
+
+    {
       const Ogre::Box box(vpq - 1u, 0u, vpc, vpq);
       blitBoxes(terrain[1]->getMaterialName(), box);
       blitLayerMaps(1);
       terrain[1]->setGlobalColourMapEnabled(true, 2u);
       terrain[1]->setGlobalColourMapEnabled(false, 2u);
       terrain[1]->_setCompositeMapRequired(true);
-      terrainDone |= 0b0010;
     }
 
-    if (!(terrainDone & 0b0100) && terrain[2]->isLoaded()) {
+    boost::this_fiber::yield();
+
+    {
       const Ogre::Box box(0u, vpq - 1u, vpq, vpc);
       blitBoxes(terrain[2]->getMaterialName(), box);
       blitLayerMaps(2);
       terrain[2]->setGlobalColourMapEnabled(true, 2u);
       terrain[2]->setGlobalColourMapEnabled(false, 2u);
       terrain[2]->_setCompositeMapRequired(true);
-      terrainDone |= 0b0100;
     }
 
-    if (!(terrainDone & 0b1000) && terrain[3]->isLoaded()) {
+    boost::this_fiber::yield();
+
+    {
       const Ogre::Box box(vpq - 1u, vpq - 1u, vpc, vpc);
       blitBoxes(terrain[3]->getMaterialName(), box);
       blitLayerMaps(3);
       terrain[3]->setGlobalColourMapEnabled(true, 2u);
       terrain[3]->setGlobalColourMapEnabled(false, 2u);
       terrain[3]->_setCompositeMapRequired(true);
-      terrainDone |= 0b1000;
     }
-  } while (terrainDone != 0b1111);
+  }, &blitCounter);
+
+  blitCounter.wait();
 }
 
 void oo::World::loadTerrain(oo::ExteriorCell &cell) {

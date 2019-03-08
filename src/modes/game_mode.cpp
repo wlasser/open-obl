@@ -246,6 +246,7 @@ void GameMode::reifyNeighborhood(World::CellIndex centerCell,
   // unloaded.
   auto farNeighbours{mWrld->getNeighbourhood(centerCell, farDiameter)};
   absl::flat_hash_set<oo::BaseId> farNeighbourSet;
+  std::vector<oo::BaseId> farNeighboursToLoad;
   for (const auto &row : farNeighbours) {
     for (auto id : row) {
       farNeighbourSet.emplace(id);
@@ -261,10 +262,21 @@ void GameMode::reifyNeighborhood(World::CellIndex centerCell,
         mFarExteriorCells.emplace_back(id);
       } else {
         mFarExteriorCells.emplace_back(id);
-        mWrld->loadTerrainOnly(id, false);
+        farNeighboursToLoad.emplace_back(id);
       }
     }
   }
+
+  // TODO: Launching multiple background jobs instead of one job (worker or
+  //       render) that yields causes a crash, presumably due to a race
+  //       condition, but I'm not sure where.
+  oo::RenderJobManager::runJob([&wrld = mWrld,
+                                   arr = std::move(farNeighboursToLoad)]() {
+    for (auto id : arr) {
+      wrld->loadTerrainOnly(id, true);
+      boost::this_fiber::yield();
+    }
+  });
 
   // Find all cells in the near neighbourhood, loading any that aren't loaded.
   auto nearNeighbours{mWrld->getNeighbourhood(centerCell, nearDiameter)};
@@ -365,11 +377,15 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   const auto now{chrono::GameClock::now().time_since_epoch()};
 
   if (!mInInterior) {
-    if (updateCenterCell(ctx)) {
-      reifyNeighborhood(mCenterCell, ctx);
-    }
-    mWrld->updateAtmosphere(
-        chrono::duration_cast<chrono::minutes>(now - today));
+    oo::RenderJobManager::runJob([&]() {
+      if (updateCenterCell(ctx)) {
+        reifyNeighborhood(mCenterCell, ctx);
+      }
+    });
+    oo::RenderJobManager::runJob([&]() {
+      mWrld->updateAtmosphere(
+          chrono::duration_cast<chrono::minutes>(now - today));
+    });
   }
 
   if (mDebugDrawer) {
