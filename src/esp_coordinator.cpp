@@ -72,13 +72,14 @@ EspCoordinator &EspCoordinator::operator=(EspCoordinator &&other) noexcept {
 }
 
 EspAccessor EspCoordinator::makeAccessor(int modIndex) {
-  return EspAccessor(modIndex, this);
+  return EspAccessor(modIndex, gsl::make_not_null(this));
 }
 
-std::optional<int> EspCoordinator::getModIndex(oo::Path modName) const {
+std::optional<int> EspCoordinator::getModIndex(const oo::Path &modName) const {
+  std::scoped_lock lock{mMutex};
   const auto begin{mLoadOrder.begin()};
   const auto end{mLoadOrder.end()};
-  const auto it{std::find_if(begin, end, [modName](const EspEntry &e) {
+  const auto it{std::find_if(begin, end, [&modName](const EspEntry &e) {
     return e.filename == modName;
   })};
   return it == end ? std::nullopt : std::optional<int>{it - begin};
@@ -98,7 +99,7 @@ void EspCoordinator::close(int modIndex) {
 }
 
 FormId EspCoordinator::translateFormId(FormId id, int modIndex) const {
-  const int localIndex{static_cast<int>((id & 0xff'000000) >> 24u)};
+  const int localIndex{static_cast<int>((id & 0xff'000000u) >> 24u)};
   if (static_cast<std::size_t>(localIndex)
       >= mLoadOrder[modIndex].localLoadOrder.size()) {
     spdlog::get(oo::LOG)->critical(
@@ -106,8 +107,12 @@ FormId EspCoordinator::translateFormId(FormId id, int modIndex) const {
     throw std::runtime_error("FormId refers to a non-dependent mod");
   }
   const int globalIndex{mLoadOrder[modIndex].localLoadOrder[localIndex]};
-  return (static_cast<unsigned int>(globalIndex) << 24u) | (id & 0x00'ffffff);
+  return (static_cast<unsigned int>(globalIndex) << 24u) | (id & 0x00'ffffffu);
 }
+
+//===----------------------------------------------------------------------===//
+// EspCoordinator input method implementations
+//===----------------------------------------------------------------------===//
 
 EspCoordinator::ReadHeaderResult
 EspCoordinator::readRecordHeader(int modIndex, SeekPos seekPos) {
@@ -182,6 +187,10 @@ EspCoordinator::peekGroupType(int modIndex, SeekPos seekPos) {
   return record::peekGroupType(it->stream);
 }
 
+//===----------------------------------------------------------------------===//
+// EspAccessor implementations
+//===----------------------------------------------------------------------===//
+
 EspAccessor::ReadHeaderResult EspAccessor::readRecordHeader() {
   auto r{mCoordinator->readRecordHeader(mIndex, mPos)};
   mPos = r.end;
@@ -215,6 +224,10 @@ void EspAccessor::skipGroup() {
 std::optional<record::Group::GroupType> EspAccessor::peekGroupType() {
   return mCoordinator->peekGroupType(mIndex, mPos);
 }
+
+//===----------------------------------------------------------------------===//
+// translateFormIds implementations
+//===----------------------------------------------------------------------===//
 
 template<>
 BaseId EspCoordinator::translateFormIds(BaseId rec, int modIndex) const {

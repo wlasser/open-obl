@@ -10,51 +10,57 @@
 #include <array>
 #include <string>
 
-// The functions in this file handle reading an esp (or esm) file.
-// Since these files can be quite large, it is not necessarily practical to
-// load the entire file into memory. Broadly speaking, the global parsing of the
-// file is handled by these functions, whereas the local parsing is delegated to
-// an instance of a RecordVisitor type.
-//
-// A RecordVisitor is required to implement a function template
-// ```
-// template<class T>
-// void readRecord(EspAccessor esp);
-// ```
-// for each type `T` arising from the class template `record::Record`.
-// Instantiations of this function template are invoked by the caller when a
-// record of type `T` is encountered in the esp file, with `pos` pointing to
-// the beginning of the record header.
-//
-// If a group in the esp file is being read, then `readRecord` is guaranteed to
-// be invoked for every record in the group in the order that they appear,
-// expect in the groups CELL, WRLD, and DIAL. Some of the entries in these
-// groups contain a list of child groups, which the RecordVisitor may handle
-// differently.
-//
-// When a CELL record appears, it is (almost) always followed by a CellChildren
-// subgroup. It is expected that `readRecord<CELL>` read (or skip) both the CELL
-// record and all its children. The `readCellChildren` method assists with this.
-//
-// When a WRLD record appears, it is always followed by a WorldChildren
-// subgroup. It is expected that `readRecord<WRLD>` read (or skip) both the WRLD
-// record and all its children. The `readWrldChildren` method assists with this.
+/// \file esp.hpp
+/// Functions handling the reading of esp (or esm) files.
+/// Since these files can be quite large, it is not necessarily practical to
+/// load the entire file into memory. Broadly speaking, the global parsing of
+/// the file is handled by these functions, whereas the local parsing is
+/// delegated to an instance of a `RecordVisitor` type.
+///
+/// A `RecordVisitor` is required to implement a function template
+/// ```
+/// template<class T>
+/// void readRecord(EspAccessor esp);
+/// ```
+/// for each type `T` arising from the class template `record::Record`.
+/// Instantiations of this function template are invoked by the caller when a
+/// record of type `T` is encountered in the esp file, with `pos` pointing to
+/// the beginning of the record header.
+///
+/// If a group in the esp file is being read, then `readRecord` is guaranteed to
+/// be invoked for every record in the group in the order that they appear,
+/// expect in the groups `record::CELL`, `record::WRLD`, and `record::DIAL`.
+/// Some of the entries in these groups contain a list of child groups, which
+/// the `RecordVisitor` may handle differently.
+///
+/// When a `record::CELL` appears, it is (almost) always followed by a
+/// `CellChildren` subgroup. It is expected that `readRecord<record::CELL>`
+/// read (or skip) both the `record::CELL` and all its children.
+/// The `oo::readCellChildren` method assists with this.
+///
+/// When a `record::WRLD` appears, it is always followed by a `WorldChildren`
+/// subgroup. It is expected that `readRecord<record::WRLD>` read (or skip) both
+/// the `record::WRLD` and all its children. The `oo::readWrldChildren` method
+/// assists with this.
 namespace oo {
 
-// Read an entire esp file from the beginning, delegating the actual reading
-// to the visitor.
+/// Read an entire esp file from the beginning, delegating the actual reading
+/// to the visitor.
 template<class RecordVisitor>
 void readEsp(EspCoordinator &coordinator, int modIndex, RecordVisitor &visitor);
 
-// This function reads the CellChildren subgroup following a CELL record.
-// The reading of the PersistentChildren, VisibleDistantChildren, and
-// TemporaryChildren are delegated to the corresponding visitors. The first
-// two visitors must be able to read REFR, ACHR, and ACRE. The third visitor
-// must be able to read REFR, ACHR, ACRE, and PGRD records. If the parent CELL
-// is part of an exterior cell, then the third visitor must also be able to
-// read LAND records.
-// Note that in rare cases, a CELL may not have any children, in which case
-// this function does nothing.
+/// Read the `CellChildren` subgroup following a `record::CELL`. The reading of
+/// the `PersistentChildren`, `VisibleDistantChildren`, and `TemporaryChildren`
+/// are delegated to the corresponding visitors.
+///
+/// The first two visitors must be able to read `record::REFR`, `record::ACHR`,
+/// and `record::ACRE`. The third visitor must be able to read `record::REFR`,
+/// `record::ACHR`, `record::ACRE`, and `record::PGRD` records. If the parent
+/// `record::CELL` is part of an exterior cell, then the third visitor must also
+/// be able to read `record::LAND` records.
+///
+/// Note that in rare cases, a `record::CELL` may not have any children, in
+/// which case this function does nothing.
 template<class PersistentVisitor,
     class VisibleDistantVisitor,
     class TemporaryVisitor>
@@ -63,68 +69,69 @@ void readCellChildren(EspAccessor &accessor,
                       VisibleDistantVisitor &visibleDistantVisitor,
                       TemporaryVisitor &temporaryVisitor);
 
-// Read the LAND and PGRD children of the cell. The EspAccessor is taken by
-// value because the final position in the cell is unpredictable.
+/// Read the `record::LAND` and `record::PGRD` children of the cell. The
+/// `EspAccessor` is taken by value because the final position in the cell is
+/// unpredictable.
 template<class Visitor>
 void readCellTerrain(EspAccessor accessor, Visitor &visitor);
 
-// Read an individual subgroup of a CellChildren subgroup, namely a
-// PersistentChildren, VisibleDistantChildren, or TemporaryChildren subgroup.
+/// Read an individual subgroup of a `CellChildren` subgroup, namely a
+/// `PersistentChildren`, `VisibleDistantChildren`, or `TemporaryChildren`
+/// subgroup.
 template<class RecordVisitor>
 void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor);
 
-// This function reads the WorldChildren subgroup following a WRLD record.
-// The reading of the outer ROAD and CELL records, as well as all inner CELL
-// records, are delegated to the `visitor`. Note that CELL records are followed
-// by children, and `readRecord<record::CELL>` is expected to read the children
-// too.
+/// Read the `WorldChildren` subgroup following a `record::WRLD` record.
+/// The reading of the outer `record::ROAD` and `record::CELL` records, as well
+/// as all inner `record::CELL` records, are delegated to the `visitor`. Note
+/// that `record::CELL` records are followed by children, and
+/// `readRecord<record::CELL>` is expected to read the children too.
 template<class Visitor>
 void readWrldChildren(EspAccessor &accessor, Visitor &visitor);
+
+//===----------------------------------------------------------------------===//
+// Function template definitions
+//===----------------------------------------------------------------------===//
 
 template<class RecordVisitor>
 void readEsp(EspCoordinator &coordinator,
              int modIndex,
              RecordVisitor &visitor) {
-  using namespace record;
+  using record::operator ""_rec;
 
   auto accessor{coordinator.makeAccessor(modIndex)};
 
   // First is always a TES4 record
   if (const auto recType{accessor.peekRecordType()}; recType != "TES4"_rec) {
-    throw record::RecordNotFoundError("TES4", recOf(recType));
+    throw record::RecordNotFoundError("TES4", record::recOf(recType));
   }
   visitor.template readRecord<record::TES4>(accessor);
 
   // Now we expect a collection of top groups
   while (accessor.peekRecordType() == "GRUP"_rec) {
-    const Group topGrp{accessor.readGroup().value};
+    const record::Group topGrp{accessor.readGroup().value};
 
     if (topGrp.groupType != record::Group::GroupType::Top) {
       throw record::GroupError("Expected TOP GRUP at top level");
     }
 
-    // Get the record type of the top group. This is a little verbose because
-    // we need an int to switch over.
-    const auto &rt = topGrp.label.recordType;
-    std::array<char, 4> recTypeArr = {rt[0], rt[1], rt[2], rt[3]};
-    auto recType = recOf(recTypeArr);
+    const auto &rt{topGrp.label.recordType};
+    const uint32_t recType{record::recOf(rt)};
 
     // All top groups except CELL, WRLD, and DIAL contain only records of the
     // same type as the group.
     switch (recType) {
       // Invalid record
-      case 0: throw RecordNotFoundError("a record", rt);
+      case 0: throw record::RecordNotFoundError("a record", rt);
       case "CELL"_rec: {
-        using GroupType = Group::GroupType;
+        using GroupType = record::Group::GroupType;
         // Expect a series of InteriorCellBlock groups
         while (accessor.peekGroupType() == GroupType::InteriorCellBlock) {
-          [[maybe_unused]] const Group
-              interiorCellBlock{accessor.readGroup().value};
+          (void) accessor.readGroup();
 
           // Expect a series of InteriorCellSubblock groups
           while (accessor.peekGroupType() == GroupType::InteriorCellSubblock) {
-            [[maybe_unused]] const Group
-                interiorCellSubblock{accessor.readGroup().value};
+            (void) accessor.readGroup();
 
             // Expect a series of cells
             while (accessor.peekRecordType() == "CELL"_rec) {
@@ -147,8 +154,7 @@ void readEsp(EspCoordinator &coordinator,
         break;
       default: {
         // Otherwise we expect a block of records all of the same type
-        while (accessor.peekRecordType()
-            == recOf(std::string_view(topGrp.label.recordType, 4))) {
+        while (accessor.peekRecordType() == recType) {
           switch (recType) {
             case "GMST"_rec:visitor.template readRecord<record::GMST>(accessor);
               break;
@@ -223,25 +229,21 @@ void readCellChildren(EspAccessor &accessor,
 
   // Expect a cell children group, though there exist empty cells,
   // like Hackdirt, so this is optional.
-  if (accessor.peekGroupType() != GroupType::CellChildren) {
-    return;
-  }
-
-  [[maybe_unused]] const Group cellChildren{accessor.readGroup().value};
+  if (accessor.peekGroupType() != GroupType::CellChildren) return;
+  (void) accessor.readGroup();
 
   if (accessor.peekGroupType() == GroupType::CellPersistentChildren) {
-    [[maybe_unused]] const Group persistentChildren{accessor.readGroup().value};
+    (void) accessor.readGroup();
     parseCellChildrenBlock(accessor, persistentVisitor);
   }
 
   if (accessor.peekGroupType() == GroupType::CellVisibleDistantChildren) {
-    [[maybe_unused]] const Group
-        visibleDistantChildren{accessor.readGroup().value};
+    (void) accessor.readGroup();
     parseCellChildrenBlock(accessor, visibleDistantVisitor);
   }
 
   if (accessor.peekGroupType() == GroupType::CellTemporaryChildren) {
-    [[maybe_unused]] const Group temporaryChildren{accessor.readGroup().value};
+    (void) accessor.readGroup();
 
     if (accessor.peekRecordType() == "LAND"_rec) {
       temporaryVisitor.template readRecord<record::LAND>(accessor);
@@ -293,11 +295,8 @@ void readWrldChildren(EspAccessor &accessor, Visitor &visitor) {
   using GroupType = record::Group::GroupType;
 
   // Expect a world children group
-  if (accessor.peekGroupType() != GroupType::WorldChildren) {
-    return;
-  }
-
-  [[maybe_unused]] const record::Group wrldChildren{accessor.readGroup().value};
+  if (accessor.peekGroupType() != GroupType::WorldChildren) return;
+  (void) accessor.readGroup();
 
   // Optional road information, only the two main worldspaces have this.
   if (accessor.peekRecordType() == "ROAD"_rec) {
@@ -313,13 +312,11 @@ void readWrldChildren(EspAccessor &accessor, Visitor &visitor) {
 
   // Expect a series of ExteriorCellBlock groups
   while (accessor.peekGroupType() == GroupType::ExteriorCellBlock) {
-    [[maybe_unused]] const record::Group exteriorCellBlock
-        {accessor.readGroup().value};
+    (void) accessor.readGroup();
 
     // Expect a series of ExteriorCellSubblock groups
     while (accessor.peekGroupType() == GroupType::ExteriorCellSubblock) {
-      [[maybe_unused]] const record::Group exteriorCellSubblock
-          {accessor.readGroup().value};
+      (void) accessor.readGroup();
 
       // Expect a series of cells
       while (accessor.peekRecordType() == "CELL"_rec) {
@@ -333,15 +330,14 @@ template<class RecordVisitor>
 void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
   using namespace record;
   for (;;) {
-    const auto type{accessor.peekRecordType()};
-    if (type == "REFR"_rec) {
-      visitor.template readRecord<record::REFR>(accessor);
-    } else if (type == "ACHR"_rec) {
-      visitor.template readRecord<record::ACHR>(accessor);
-    } else if (type == "ACRE"_rec) {
-      accessor.skipRecord();
-    } else {
-      return;
+    switch (accessor.peekRecordType()) {
+      case "REFR"_rec: visitor.template readRecord<record::REFR>(accessor);
+        break;
+      case "ACHR"_rec: visitor.template readRecord<record::ACHR>(accessor);
+        break;
+      case "ACRE"_rec: accessor.skipRecord();
+        break;
+      default: return;
     }
   }
 }

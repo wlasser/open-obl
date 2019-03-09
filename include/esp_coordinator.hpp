@@ -8,6 +8,8 @@
 #include "record/reference_records.hpp"
 #include "record/subrecords.hpp"
 #include "settings.hpp"
+#include <boost/fiber/mutex.hpp>
+#include <gsl/gsl>
 #include <spdlog/spdlog.h>
 #include <array>
 #include <algorithm>
@@ -24,11 +26,19 @@ namespace oo {
 
 class EspAccessor;
 
+/// Abstraction layer for access to esp files.
+/// The `oo::EspCoordinator` acts a gateway for the esp files loaded by the
+/// program, abstracting away the load order and providing thread-safe IO of the
+/// records.
+/// \todo Output is not currently supported, and needs to be added.
+/// \see \ref md_doc_esp
 class EspCoordinator {
  private:
-  // The maximum number of streams open at any one time.
+  /// The maximum number of streams open at any one time.
   constexpr static inline int MaxOpenStreams{16};
-  // The maximum number of plugins loaded at any one time.
+  /// The maximum number of plugins loaded at any one time.
+  /// This is very much a hard limit of the system, and increasing number would
+  /// require changing the size of `oo::FormId` and similar.
   constexpr static inline int MaxPlugins{0xff};
 
   struct Stream {
@@ -37,60 +47,73 @@ class EspCoordinator {
 
   using Streams = std::array<Stream, MaxOpenStreams>;
 
-  // Array of streams that can be used for reading esps.
+  /// Array of streams that can be used for reading esps.
   Streams mStreams{};
 
   struct EspEntry {
-    // Path of the esp file.
-    oo::Path filename{};
-    // Local load order of the esp given as indices into mLoadOrder. The last
-    // element is the index of this esp.
-    std::vector<int> localLoadOrder{};
-    // Iterator to the stream in mStreams that is currently open to this file.
-    Streams::iterator it{};
+    /// Path of the esp file.
+    /// \invariant This shall not be modified after construction, except to be
+    ///            moved from.
+    oo::Path filename;
+    /// Local load order of the esp given as indices into `mLoadOrder`. The last
+    /// element is the index of this esp.
+    /// \invariant This shall not be modified after construction, except to be
+    ///            moved from.
+    std::vector<int> localLoadOrder;
+    /// Iterator to the stream in `mStreams` that is currently open to this
+    /// file, or one-past-the-end if no stream is open to this file.
+    Streams::iterator it;
 
     EspEntry() = delete;
-    template<class InputIt>
-    EspEntry(oo::Path name, Streams::iterator it, InputIt loadOrderStart,
-             InputIt loadOrderEnd) : filename(std::move(name)), it(it) {
-      localLoadOrder.insert(localLoadOrder.end(), loadOrderStart, loadOrderEnd);
-    }
-
     ~EspEntry() = default;
+
+    template<class InputIt>
+    EspEntry(oo::Path name, Streams::iterator it,
+             InputIt loadOrderBegin, InputIt loadOrderEnd)
+        : filename(std::move(name)),
+          localLoadOrder(loadOrderBegin, loadOrderEnd),
+          it(it) {}
 
     EspEntry(const EspEntry &) = delete;
     EspEntry &operator=(const EspEntry &) = delete;
 
-    EspEntry(EspEntry &&) noexcept = default;
+    EspEntry(EspEntry &&other) noexcept = default;
     EspEntry &operator=(EspEntry &&) noexcept = default;
   };
 
-  // The mod index of a mod is its position in this list. Must always contain
-  // MaxPlugins elements or fewer.
+  /// The mod index of a mod is its position in this list. Must always contain
+  /// `MaxPlugins` elements or fewer.
+  /// \invariant The size and ordering of elements of the load order shall not
+  ///            be modified after construction. In particular, the invariants
+  ///            of `EspEntry` ensure that only the `it` member of each entry
+  ///            may be modified, unless the entire `EspCoordinator` is moved
+  ///            from. In particular, this means that all properties of the
+  ///            load order except the state of the `it` member are free to be
+  ///            read without locking `mMutex`.
   std::vector<EspEntry> mLoadOrder{};
 
-  std::mutex mMutex{};
+  mutable boost::fibers::mutex mMutex{};
 
-  // Find the esp wih the given stream and point its iterator to the end,
-  // marking it as no longer loaded.
+  /// Find the esp wih the given stream and point its iterator to the end,
+  /// marking it as no longer loaded.
   void invalidateEsp(Streams::iterator it);
 
-  // Invalidate any esp with the given stream, open the stream to the given esp,
-  // and point the esp entry to it.
+  /// Invalidate any esp with the given stream, open the stream to the given
+  /// esp, and point the esp entry to it.
   void openStreamForEsp(EspEntry &esp, Streams::iterator it);
   //C++20: [[expects: mStreams.begin() <= it && it < mStreams.end()]];
 
-  // Return the first closed entry in mStreams.
+  /// Return the first closed entry in `mStreams`.
   Streams::iterator getFirstClosedStream();
 
-  // If the esp already has a stream associated to it, return it. If not,
-  // open and return the first closed stream. If all stream are already open,
-  // choose a random stream, open it to the esp, and return.
+  /// If the esp already has a stream associated to it, return it. If not,
+  /// open and return the first closed stream. If all streams are already open,
+  /// choose a random stream, open it to the esp, and return.
   Streams::iterator getAvailableStream(EspEntry &esp);
 
  public:
-  // first and last are iterators to a collection of oo::Paths equal to the mod
-  // filenames sorted in load order from 'load first' to 'load last'.
+  /// `first` and `last` are iterators to a collection of `oo::Path`s equal to
+  /// the mod filenames sorted in load order from 'load first' to 'load last'.
   template<class InputIt>
   EspCoordinator(InputIt first, InputIt last);
 
@@ -101,67 +124,102 @@ class EspCoordinator {
   EspCoordinator &operator=(EspCoordinator &&) noexcept;
 
   ~EspCoordinator() = default;
+  EspCoordinator() = delete;
 
   EspAccessor makeAccessor(int modIndex);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
-  // Return the mod index (i.e. position in the load order) of the given mod.
-  std::optional<int> getModIndex(oo::Path modName) const;
+  /// Return the mod index (i.e. position in the load order) of the given mod.
+  std::optional<int> getModIndex(const oo::Path &modName) const;
 
-  // Returns the number of mods in the load order
+  /// Returns the number of mods in the load order
   int getNumMods() const;
 
-  // If the given mod has an open stream, close it and invalidate its iterator
-  // to make the stream available for another mod. If the mod does not have an
-  // open stream, do nothing. Calling this method is never required, but it is
-  // polite to do so if the mod's stream is no longer needed.
+  /// If the given mod has an open stream, close it and invalidate its iterator
+  /// to make the stream available for another mod. If the mod does not have an
+  /// open stream, do nothing. Calling this method is never required, but it is
+  /// polite to do so if the mod's stream is no longer needed.
   void close(int modIndex);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
-  // Take a FormId whose mod index is local to the given mod and return the same
-  // FormId but with its mod index translated to the global load order.
+  /// Take a `FormId` whose mod index is local to the given mod and return the
+  /// same `FormId` but with its mod index translated to the global load order.
   FormId translateFormId(FormId id, int modIndex) const;
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
   using SeekPos = std::ifstream::pos_type;
 
+  /// The result of a read operation. Contains both the read value and the
+  /// position of the stream indicator one-past-the-end of the read value.
   template<class T>
   struct ReadResult {
     T value{};
     SeekPos end{};
   };
 
+  /// The result of a header read operation. Contains both the read header and
+  /// the position of the stream indicator one-past-the-end of the read value.
   struct ReadHeaderResult {
     [[maybe_unused]] record::RecordHeader header{};
     SeekPos end{};
   };
 
+  /// \name Read Operations
+  /// Each read operation takes the global mod index of the esp to read from,
+  /// and a position in the esp file to move the stream indicator to before
+  /// reading. Often this will be the position returned by a previous read
+  /// operation, but it need not be. It is necessary that the caller be
+  /// responsible for where they are reading, as multiple callers can read the
+  /// file and would all likely expect their reads to be sequential.
+  /// @{
+
+  /// Read a `record::Record<T>`.
   template<class T>
   ReadResult<T> readRecord(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Read only the `record::RecordHeader` of the next record.
   ReadHeaderResult readRecordHeader(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Skip over the next record, of whatever type, returning its header when
+  /// doing so.
   ReadHeaderResult skipRecord(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Return the type of the next `record::Record`, but don't advance the stream
+  /// indicator. If `seekPos` is not positioned at the start of a
+  /// `record::Record`, then return zero.
   uint32_t peekRecordType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Return the `oo::BaseId` of the next `record::Record`, but don't advance
+  /// the stream indicator.
   BaseId peekBaseId(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Read a `record::Group`.
   ReadResult<record::Group> readGroup(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Skip over the next `record::Group`.
   SeekPos skipGroup(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// Return the type of next `record::Group`, but don't advance the stream.
+  /// If the `seekPos` is not positioned at the start of a `record::Group`, then
+  /// return an empty optional.
   std::optional<record::Group::GroupType>
   peekGroupType(int modIndex, SeekPos seekPos);
   //C++20: [[expects: 0 <= modIndex && modIndex < getNumMods()]];
 
+  /// @}
+
+  /// \name FormId Translation Functions
+  /// These functions take objects which have `oo::FormId` objects as members
+  /// and return a new object with `translateFormId` applied to each of the
+  /// members.
+  /// @{
   template<class T> T translateFormIds(T rec, int modIndex) const;
 
   template<> BaseId translateFormIds(BaseId rec, int modIndex) const;
@@ -265,17 +323,35 @@ class EspCoordinator {
   template<>
   record::RecordHeader
   translateFormIds(record::RecordHeader rec, int modIndex) const;
+
+  /// @}
 };
 
+/// Convenience class for reading a specific mod sequentially.
+/// Instances of this class are produced by `EspCoordinator::makeAccessor` and
+/// expose the same IO interface as `EspCoordinator` but restricted to
+/// sequential access of a fixed mod file.
+///
+/// From a caller's point of view, IO is generally sequential, and so keeping
+/// track of a mod index and stream position seems unnecessarily burdensome. An
+/// added benefit of wrapping both those things is that passing around an
+/// `EspAccessor` between functions allows abstracting away exactly *which* file
+/// is being read; the caller may not care exactly where they are reading from,
+/// only that they are reading a particular `record::Record`.
+///
+/// A single instance of `EspAccessor` is not fiber safe, however it *is* safe
+/// for two different `EspAccessor`s accessing the same file to be used
+/// concurrently.
 class EspAccessor {
  private:
   friend EspCoordinator;
 
-  int mIndex{};
-  EspCoordinator *mCoordinator{};
+  int mIndex;
+  gsl::not_null<EspCoordinator *> mCoordinator;
   EspCoordinator::SeekPos mPos{0};
 
-  explicit EspAccessor(int modIndex, EspCoordinator *coordinator)
+  explicit EspAccessor(int modIndex,
+                       gsl::not_null<EspCoordinator *> coordinator)
       : mIndex(modIndex), mCoordinator(coordinator) {}
 
  public:
@@ -283,8 +359,10 @@ class EspAccessor {
   using ReadResult = EspCoordinator::ReadResult<T>;
   using ReadHeaderResult = EspCoordinator::ReadHeaderResult;
 
-  template<class T>
-  ReadResult<T> readRecord();
+  /// \name Read Operations
+  /// \see oo::EspCoordinator
+  /// @{
+  template<class T> ReadResult<T> readRecord();
 
   ReadHeaderResult readRecordHeader();
 
@@ -299,12 +377,17 @@ class EspAccessor {
   void skipGroup();
 
   std::optional<record::Group::GroupType> peekGroupType();
+  /// @}
 };
 
-// Load espFilename, read the TES4 record, and return the names of its masters.
-// espFilename should be prefixed with the data folder. The returned names will
-// be prefixed by the data folder.
+/// Load `espFilename`, read the `record::TES4` record, and return the names of
+/// its masters. `espFilename` should be prefixed with the data folder. The
+/// returned names will also be prefixed by the data folder.
 std::vector<oo::Path> getMasters(const oo::Path &espFilename);
+
+//===----------------------------------------------------------------------===//
+// EspCoordinator template implementations
+//===----------------------------------------------------------------------===//
 
 template<class InputIt>
 EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
