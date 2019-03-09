@@ -133,6 +133,8 @@ class World {
   using CellIndex = qvm::vec<int32_t, 2>;
   using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
   using PhysicsWorld = btDiscreteDynamicsWorld;
+  using CellGridView = boost::multi_array<oo::BaseId,
+                                          2>::const_array_view<2>::type;
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const;
@@ -177,7 +179,7 @@ class World {
   /// Unload the terrain of the cell with the given coordinates.
   void unloadTerrain(CellIndex index);
 
-  /// Unload therrain of the cell with the given id.
+  /// Unload the terrain of the cell with the given id.
   void unloadTerrain(oo::BaseId cellId);
 
   void updateAtmosphere(const oo::chrono::minutes &time);
@@ -195,29 +197,7 @@ class World {
   /// If the set of cells satisfying the above conditions is empty, the
   /// behaviour is undefined.
   // C++20: Codify the preconditions on cell and diameter.
-  auto getNeighbourhood(CellIndex cell, int diameter) const {
-    const int x{qvm::X(cell)}, y{qvm::Y(cell)};
-    // Adding 1 maps intervals (a, b] -> [a, b)
-
-    // For integer i and real r,
-    // floor(i - r) = i - ceil(r)
-    const int x0{1 + x - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
-    const int y0{1 + y - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
-    // floor(i + r) = i + floor(r)
-    const int x1{1 + x + diameter / 2};
-    const int y1{1 + y + diameter / 2};
-
-    // Keep within bounds.
-    const int X0{std::max<int>(x0, mCells.index_bases()[0])};
-    const int Y0{std::max<int>(y0, mCells.index_bases()[1])};
-    const int
-        X1{std::min<int>(x1, mCells.index_bases()[0] + mCells.shape()[0])};
-    const int
-        Y1{std::min<int>(y1, mCells.index_bases()[1] + mCells.shape()[1])};
-
-    using Range = CellGrid::index_range;
-    return mCells[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
-  }
+  CellGridView getNeighbourhood(CellIndex cell, int diameter) const;
 
  private:
   oo::BaseId mBaseId{};

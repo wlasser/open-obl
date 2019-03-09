@@ -151,6 +151,29 @@ oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
   };
 }
 
+oo::World::CellGridView
+oo::World::getNeighbourhood(CellIndex cell, int diameter) const {
+  const int x{qvm::X(cell)}, y{qvm::Y(cell)};
+  // Adding 1 maps intervals (a, b] -> [a, b)
+
+  // For integer i and real r,
+  // floor(i - r) = i - ceil(r)
+  const int x0{1 + x - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+  const int y0{1 + y - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+  // floor(i + r) = i + floor(r)
+  const int x1{1 + x + diameter / 2};
+  const int y1{1 + y + diameter / 2};
+
+  // Keep within bounds.
+  const int X0{std::max<int>(x0, mCells.index_bases()[0])};
+  const int Y0{std::max<int>(y0, mCells.index_bases()[1])};
+  const int X1{std::min<int>(x1, mCells.index_bases()[0] + mCells.shape()[0])};
+  const int Y1{std::min<int>(y1, mCells.index_bases()[1] + mCells.shape()[1])};
+
+  using Range = CellGrid::index_range;
+  return mCells[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
+}
+
 void oo::World::setDefaultImportData() {
   auto &importData{mTerrainGroup.getDefaultImportSettings()};
   importData.constantHeight = 0.0f;
