@@ -3,6 +3,7 @@
 
 #include "record/formid.hpp"
 #include <boost/circular_buffer.hpp>
+#include <boost/fiber/mutex.hpp>
 #include <OgreQuaternion.h>
 #include <OgreVector3.h>
 #include <memory>
@@ -32,6 +33,7 @@ class CellCache {
  private:
   InteriorBuffer mInteriors{};
   ExteriorBuffer mExteriors{};
+  mutable boost::fibers::mutex mMutex{};
 
  public:
   explicit CellCache(std::size_t interiorCapacity, std::size_t exteriorCapacity)

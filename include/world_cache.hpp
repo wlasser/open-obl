@@ -3,6 +3,7 @@
 
 #include "record/formid.hpp"
 #include <boost/circular_buffer.hpp>
+#include <boost/fiber/mutex.hpp>
 #include <memory>
 
 namespace oo {
@@ -18,6 +19,7 @@ class WorldCache {
 
  private:
   WorldBuffer mWorlds{};
+  mutable boost::fibers::mutex mMutex{};
 
  public:
   explicit WorldCache(std::size_t capacity) : mWorlds(capacity) {}

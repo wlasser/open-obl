@@ -3,11 +3,13 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include <algorithm>
+#include <mutex>
 
 namespace oo {
 
 CellCache::GetResult CellCache::get(oo::BaseId id) const {
   const auto isId = [id](const auto &ptr) { return ptr->getBaseId() == id; };
+  std::scoped_lock lock{mMutex};
 
   auto intIt{std::find_if(mInteriors.begin(), mInteriors.end(), isId)};
   if (intIt != mInteriors.end()) return GetResult{*intIt, true};
@@ -19,14 +21,17 @@ CellCache::GetResult CellCache::get(oo::BaseId id) const {
 }
 
 void CellCache::push_back(const InteriorPtr &interiorCell) {
+  std::scoped_lock lock{mMutex};
   mInteriors.push_back(interiorCell);
 }
 
 void CellCache::push_back(const ExteriorPtr &exteriorCell) {
+  std::scoped_lock lock{mMutex};
   mExteriors.push_back(exteriorCell);
 }
 
 void CellCache::promote(oo::BaseId id) {
+  std::scoped_lock lock{mMutex};
   const auto isId = [id](const auto &ptr) { return ptr->getBaseId() == id; };
 
   auto intIt{std::find_if(mInteriors.begin(), mInteriors.end(), isId)};
@@ -50,10 +55,12 @@ const CellCache::ExteriorBuffer &CellCache::exteriors() const {
 }
 
 void WorldCache::push_back(const WorldPtr &world) {
+  std::scoped_lock lock{mMutex};
   mWorlds.push_back(world);
 }
 
 WorldCache::GetResult WorldCache::get(oo::BaseId id) const {
+  std::scoped_lock lock{mMutex};
   const auto isId = [id](const auto &ptr) { return ptr->getBaseId() == id; };
 
   auto it{std::find_if(mWorlds.begin(), mWorlds.end(), isId)};
@@ -65,6 +72,7 @@ WorldCache::GetResult WorldCache::get(oo::BaseId id) const {
 const WorldCache::WorldBuffer &WorldCache::worlds() const { return mWorlds; }
 
 void WorldCache::promote(oo::BaseId id) {
+  std::scoped_lock lock{mMutex};
   const auto isId = [id](const auto &ptr) { return ptr->getBaseId() == id; };
 
   auto it{std::find_if(mWorlds.begin(), mWorlds.end(), isId)};
