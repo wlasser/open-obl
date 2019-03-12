@@ -4,6 +4,7 @@
 #include "nifloader/scene.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include <Ogre.h>
+#include <spdlog/fmt/ostr.h>
 
 namespace oo {
 
@@ -243,9 +244,20 @@ ExteriorCell::ExteriorCell(oo::BaseId baseId, std::string name,
               getBaseId().string()))) {}
 
 ExteriorCell::~ExteriorCell() {
+  // TODO: If the cell is hidden then rigid bodies have already been removed so
+  //       destroyMovableObjects cannot be used; we can improve performance by
+  //       changing destroyMovableObjects instead of showing the cell before
+  //       destruction then removing its terrain collision object (which is
+  //       readded by setVisible if previously removed).
+  setVisible(true);
+  if (mTerrainCollisionObject) {
+    mPhysicsWorld->removeCollisionObject(mTerrainCollisionObject.get());
+  }
+
   destroyMovableObjects(mRootSceneNode);
   mRootSceneNode->removeAndDestroyAllChildren();
   mScnMgr->destroySceneNode(mRootSceneNode);
+  spdlog::get(oo::LOG)->info("Destroying cell {}", this->getBaseId());
 }
 
 void oo::ExteriorCell::destroyMovableObjects(Ogre::SceneNode *root) {

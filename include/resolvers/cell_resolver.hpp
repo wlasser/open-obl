@@ -276,11 +276,11 @@ class ExteriorCell : public Cell {
   /// the Terrain is instead owned by the parent worldspace and managed with a
   /// TerrainGroup. For terrain blending reasons, each Cell is actually split
   /// into four quadrants of terrain;
-  std::array<Ogre::Terrain *, 4> mTerrain;
+  std::array<Ogre::Terrain *, 4> mTerrain{};
   /// Stores the row-reversed terrain heights needed by Bullet.
   // Our heightmap has its rows in the reverse order to what Bullet wants;
   // we go 'bottom to top' and Bullet needs 'top to bottom'.
-  std::array<float, 33u * 33u> mTerrainHeights;
+  std::array<float, 33u * 33u> mTerrainHeights{};
   std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
   std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
 

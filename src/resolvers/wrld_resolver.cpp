@@ -1091,7 +1091,11 @@ void oo::World::unloadTerrain(oo::BaseId cellId) {
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  oo::RenderJobManager::runJob([this, pos]() { this->unloadTerrain(pos); });
+  oo::JobCounter unloadDone{1};
+  oo::RenderJobManager::runJob([this, pos]() {
+    this->unloadTerrain(pos);
+  }, &unloadDone);
+  unloadDone.wait();
 }
 
 void oo::World::unloadTerrain(CellIndex index) {

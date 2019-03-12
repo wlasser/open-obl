@@ -56,16 +56,17 @@ class GameMode {
  private:
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
-  std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
+  std::vector<std::shared_ptr<ExteriorCell>> mNearCells{};
+  boost::fibers::mutex mReifyMutex{};
+
   std::set<oo::BaseId> mNearLoaded{};
+  boost::fibers::mutex mNearMutex{};
+
   std::set<oo::BaseId> mFarLoaded{};
+  boost::fibers::mutex mFarMutex{};
+
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
-
-  std::set<oo::BaseId> mNearLoading{};
-  boost::fibers::mutex mNearMutex{};
-  std::set<oo::BaseId> mFarLoading{};
-  boost::fibers::mutex mFarMutex{};
 
   void reifyFarNeighborhood(World::CellIndex centerCell,
                             ApplicationContext &ctx);
