@@ -163,7 +163,8 @@ class JobManager {
 /// thread when needed.
 class RenderJobManager {
  private:
-  static constexpr std::size_t BUFFER_CAPACITY{1024u};
+  static constexpr std::size_t BUFFER_CAPACITY{4096u};
+  static constexpr std::size_t POOL_SIZE{1024u};
   using JobQueue = boost::fibers::buffered_channel<Job>;
 
   /// Get a reference to the job queue.
@@ -191,7 +192,7 @@ class RenderJobManager {
     constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
 
     // Create pool of fibers that can be pulling jobs.
-    for (int i = 0; i < 10; ++i) {
+    for (std::size_t i = 0; i < POOL_SIZE; ++i) {
       boost::fibers::fiber{[]() {
         Job job;
         while (getQueue().pop(job) != CLOSED) job();
