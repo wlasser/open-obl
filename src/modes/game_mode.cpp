@@ -26,6 +26,53 @@ GameMode::GameMode(ApplicationContext &/*ctx*/,
   mInInterior = mExteriorCells.empty();
 }
 
+GameMode::GameMode(GameMode &&other) noexcept {
+  std::scoped_lock lock{other.mNearMutex, other.mFarMutex};
+  mWrld = std::move(other.mWrld);
+  mCell = std::move(other.mCell);
+  mExteriorCells = std::move(other.mExteriorCells);
+  mNearLoaded = std::move(other.mNearLoaded);
+  mFarLoaded = std::move(other.mFarLoaded);
+  mCenterCell = std::move(other.mCenterCell);
+  mInInterior = other.mInInterior;
+  mNearLoading = std::move(other.mNearLoading);
+  mFarLoading = std::move(other.mFarLoading);
+  mPlayerStartPos = std::move(other.mPlayerStartPos);
+  mPlayerStartOrientation = std::move(other.mPlayerStartOrientation);
+  mPlayerController = std::move(other.mPlayerController);
+  mCollisionCaller = std::move(other.mCollisionCaller);
+  mDebugDrawer = std::move(other.mDebugDrawer);
+
+  // TODO: Some jobs launched by the GameMode capture `this`, despite how
+  //       terrible an idea that is. Obviously they'll break if the GameMode
+  //       is moved while they're active. As of writing that can't happen so
+  //       long as no jobs are launched in the constructor, but I don't think
+  //       that should really be relied on...
+}
+
+GameMode &GameMode::operator=(GameMode &&other) noexcept {
+  if (this != &other) {
+    std::scoped_lock lock{mNearMutex, mFarMutex,
+                          other.mNearMutex, other.mFarMutex};
+    mWrld = std::move(other.mWrld);
+    mCell = std::move(other.mCell);
+    mExteriorCells = std::move(other.mExteriorCells);
+    mNearLoaded = std::move(other.mNearLoaded);
+    mFarLoaded = std::move(other.mFarLoaded);
+    mCenterCell = std::move(other.mCenterCell);
+    mInInterior = other.mInInterior;
+    mNearLoading = std::move(other.mNearLoading);
+    mFarLoading = std::move(other.mFarLoading);
+    mPlayerStartPos = std::move(other.mPlayerStartPos);
+    mPlayerStartOrientation = std::move(other.mPlayerStartOrientation);
+    mPlayerController = std::move(other.mPlayerController);
+    mCollisionCaller = std::move(other.mCollisionCaller);
+    mDebugDrawer = std::move(other.mDebugDrawer);
+  }
+
+  return *this;
+}
+
 void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
                              oo::PlayerController *playerController) {
   const auto *rigidBody{playerController->getRigidBody()};
@@ -134,35 +181,6 @@ RefId GameMode::getCrosshairRef() {
   }
 }
 
-void GameMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
-  if (!mWrld) {
-    throw std::runtime_error("Attempting to load an exterior cell "
-                             "without a worldspace");
-  }
-
-  const auto wrldId{mWrld->getBaseId()};
-
-  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
-  auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
-
-  if (auto cells{wrldRes.getCells(wrldId)};
-      !cells || !cells->contains(cellId)) {
-    ctx.getLogger()->error("Cell {} does not exist in worldspace {}",
-                           cellId, wrldId);
-    throw std::runtime_error("Cell does not exist in worldspace");
-  }
-
-  const auto cellRec{cellRes.get(cellId)};
-
-  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
-  mExteriorCells.emplace_back(std::static_pointer_cast<oo::ExteriorCell>(
-      reifyRecord(*cellRec, mWrld->getSceneManager(), mWrld->getPhysicsWorld(),
-                  getCellResolvers(ctx))));
-  mWrld->loadTerrain(*mExteriorCells.back());
-
-  ctx.getLogger()->info("Loaded cell {}", cellId);
-}
-
 void GameMode::addPlayerToScene(ApplicationContext &ctx) {
   mPlayerController = oo::makePlayerController(getPhysicsWorld(),
                                                getSceneManager(),
@@ -228,126 +246,274 @@ void GameMode::enter(ApplicationContext &ctx) {
 }
 
 void GameMode::refocus(ApplicationContext &) {
-  sdl::setRelativeMouseMode(true);
+  sdl::setRelativeMouseMode(false);
+}
+
+void GameMode::reifyFarExteriorCell(oo::BaseId cellId,
+                                    ApplicationContext &ctx) {
+  std::unique_lock lock{mFarMutex};
+  ctx.getLogger()->info("[{}]: reifyFarExteriorCell({}) started",
+                        boost::this_fiber::get_id(), cellId);
+  auto _ = gsl::finally([&]() {
+    // Lock is still kept due to destruction order.
+    auto jt{std::find(mFarLoading.begin(), mFarLoading.end(), cellId)};
+    if (jt != mFarLoading.end()) mFarLoading.erase(jt);
+    ctx.getLogger()->info("[{}]: reifyFarExteriorCell({}) finished",
+                          boost::this_fiber::get_id(), cellId);
+  });
+
+  // If it's already loaded, we're done
+  auto it{std::find(mFarLoaded.begin(), mFarLoaded.end(), cellId)};
+  if (it != mFarLoaded.end()) {
+    ctx.getLogger()->info("[{}]: Cell {} is already loaded",
+                          boost::this_fiber::get_id(), cellId);
+    return;
+  }
+
+  // If it's cached, no loading to do
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+      cellPtr && !isInterior) {
+    // TODO: Show the terrain
+    mFarLoaded.emplace(cellId);
+    ctx.getLogger()->info("[{}]: Cell {} is cached",
+                          boost::this_fiber::get_id(), cellId);
+    return;
+  }
+
+  // Otherwise need to actually load
+  mWrld->loadTerrainOnly(cellId, /*async=*/true);
+  mFarLoaded.emplace(cellId);
+}
+
+void GameMode::unloadFarExteriorCell(oo::BaseId cellId,
+                                     ApplicationContext &ctx) {
+  std::unique_lock lock{mFarMutex};
+
+  // If it isn't loaded, we're done
+  auto it{std::find(mFarLoaded.begin(), mFarLoaded.end(), cellId)};
+  if (it == mFarLoaded.end()) return;
+
+  // If it's cached, then no unloading to do
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+      cellPtr && !isInterior) {
+    // TODO: Hide the terrain
+    mFarLoaded.erase(it);
+    return;
+  }
+
+  // Otherwise need to actually unload
+  mWrld->unloadTerrain(cellId);
+  mFarLoaded.erase(it);
+}
+
+void GameMode::reifyFarNeighborhood(World::CellIndex centerCell,
+                                    ApplicationContext &ctx) {
+  std::scoped_lock lock{mFarMutex};
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+  const auto farDiameter{gameSettings.get<unsigned int>(
+      "General.uGridDistantCount", 5)};
+
+  // Get the set of far neighbours that we want to end up being loaded.
+  auto farNbrsArray{mWrld->getNeighbourhood(centerCell, farDiameter)};
+  std::set<oo::BaseId> farNbrsNew{};
+  for (const auto &row : farNbrsArray) {
+    for (auto id : row) {
+      farNbrsNew.emplace(id);
+    }
+  }
+
+  // Get the set of all far neighbours that need loading,
+  // farToLoad = farNbrsNew - mFarLoading
+  // and start jobs to load them all. Some of these might already be loaded,
+  // which is fine.
+  std::set<oo::BaseId> farToLoad{};
+  std::set_difference(farNbrsNew.begin(), farNbrsNew.end(),
+                      mFarLoading.begin(), mFarLoading.end(),
+                      std::inserter(farToLoad, farToLoad.end()));
+
+  for (auto id : farToLoad) {
+    mFarLoading.emplace(id);
+    oo::JobManager::runJob([this, id, &ctx]() {
+      this->reifyFarExteriorCell(id, ctx);
+    });
+  }
+
+  // The set of far neighbours that are currently being loaded but that we don't
+  // want to be loaded at all may be nonempty, but we don't really mind because
+  // on the next reifyNeighbourhood after they're loaded they will be unloaded
+  // by the next step.
+
+  // Get the set of far neighbours that are currently loaded that we don't want
+  // to be, and unload them.
+  std::set<oo::BaseId> farToUnload{};
+  std::set_difference(mFarLoaded.begin(), mFarLoaded.end(),
+                      farNbrsNew.begin(), farNbrsNew.end(),
+                      std::inserter(farToUnload, farToUnload.end()));
+
+  for (auto id : farToUnload) {
+    oo::JobManager::runJob([this, id, &ctx]() {
+      this->unloadFarExteriorCell(id, ctx);
+    });
+  }
+}
+
+void GameMode::reifyNearExteriorCell(oo::BaseId cellId,
+                                     ApplicationContext &ctx) {
+  std::unique_lock lock{mNearMutex};
+  ctx.getLogger()->info("reifyNearExteriorCell({}) started", cellId);
+  auto _ = gsl::finally([&]() {
+    auto it{std::find(mNearLoading.begin(), mNearLoading.end(), cellId)};
+    if (it != mNearLoading.end()) mNearLoading.erase(it);
+    mNearLoaded.emplace(cellId);
+    ctx.getLogger()->info("reifyNearExteriorCell({}) finished", cellId);
+  });
+
+  // If its already loaded, we're done
+  auto it{std::find(mNearLoaded.begin(), mNearLoaded.end(), cellId)};
+  if (it != mNearLoaded.end()) {
+    ctx.getCellCache()->promote(cellId);
+    return;
+  }
+
+  // If it's cached, no loading to do
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+      cellPtr && !isInterior) {
+    auto extCellPtr{std::static_pointer_cast<oo::ExteriorCell>(cellPtr)};
+    extCellPtr->setVisible(true);
+    mExteriorCells.emplace_back(std::move(extCellPtr));
+    ctx.getLogger()->info("Loaded cell {} from cache", cellId);
+    return;
+  }
+
+  // Otherwise need to actually load.
+  if (!mWrld) {
+    throw std::runtime_error("Attempting to load an exterior cell "
+                             "without a worldspace");
+  }
+
+  const auto wrldId{mWrld->getBaseId()};
+
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+  auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+
+  if (auto cells{wrldRes.getCells(wrldId)};
+      !cells || !cells->contains(cellId)) {
+    ctx.getLogger()->error("Cell {} does not exist in worldspace {}",
+                           cellId, wrldId);
+    throw std::runtime_error("Cell does not exist in worldspace");
+  }
+
+  const auto cellRec{cellRes.get(cellId)};
+
+  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+  boost::this_fiber::yield();
+
+  oo::JobCounter reifyDone{1};
+  oo::RenderJobManager::runJob([this, cellRec, &ctx]() {
+    mExteriorCells.emplace_back(std::static_pointer_cast<oo::ExteriorCell>(
+        reifyRecord(*cellRec,
+                    mWrld->getSceneManager(),
+                    mWrld->getPhysicsWorld(),
+                    getCellResolvers(ctx))));
+  }, &reifyDone);
+  reifyDone.wait();
+
+  // This function could be called at the same time as reifyFarExteriorCell()
+  // with the same cellId, because the far neighbourhood contains the near
+  // neighbourhood. loadTerrain() calls loadTerrainOnly() to load the actual
+  // terrain, which doesn't do anything if the terrain is already loaded, so
+  // we don't have to worry about whether this function or
+  // reifyFarExteriorCell() occurs first, so long as they don't occur
+  // simultaneously. An easy way to prevent this is to just take the far lock.
+  oo::RenderJobManager::runJob([this]() {
+    std::scoped_lock farLock{mFarMutex};
+    mWrld->loadTerrain(*mExteriorCells.back());
+  });
+  ctx.getCellCache()->push_back(mExteriorCells.back());
+  ctx.getLogger()->info("Loaded cell {}", cellId);
+}
+
+void GameMode::unloadNearExteriorCell(oo::BaseId cellId,
+                                      ApplicationContext &ctx) {
+  std::scoped_lock lock{mNearMutex};
+
+  // If it isn't loaded, we're done
+  auto it{std::find(mNearLoaded.begin(), mNearLoaded.end(), cellId)};
+  if (it == mNearLoaded.end()) return;
+
+  // If it's cached, then don't need to unload, but do need to hide things.
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+      cellPtr && !isInterior) {
+    static_cast<oo::ExteriorCell *>(cellPtr.get())->setVisible(false);
+    return;
+  }
+
+  // Otherwise actually need to unload.
+  auto jt{std::find_if(mExteriorCells.begin(), mExteriorCells.end(),
+                       [&](const auto &cellPtr) {
+                         return cellPtr->getBaseId() == cellId;
+                       })};
+
+  getPhysicsWorld()->removeCollisionObject((*jt)->getCollisionObject());
+  mExteriorCells.erase(jt);
+  mNearLoaded.erase(it);
+}
+
+void GameMode::reifyNearNeighborhood(World::CellIndex centerCell,
+                                     ApplicationContext &ctx) {
+  std::scoped_lock lock{mNearMutex};
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+  const auto nearDiameter{gameSettings.get<unsigned int>(
+      "General.uGridsToLoad", 3)};
+
+  // Get the set of near neighbours that we want to end up being loaded.
+  auto nearNbrsArray{mWrld->getNeighbourhood(centerCell, nearDiameter)};
+  std::set<oo::BaseId> nearNbrsNew{};
+  for (const auto &row : nearNbrsArray) {
+    for (auto id : row) {
+      nearNbrsNew.emplace(id);
+    }
+  }
+
+  // Get the set of all near neighbours that need loading and start jobs to
+  // load them all. Some might already be loaded, which is fine.
+  std::set<oo::BaseId> nearToLoad{};
+  std::set_difference(nearNbrsNew.begin(), nearNbrsNew.end(),
+                      mNearLoading.begin(), mNearLoading.end(),
+                      std::inserter(nearToLoad, nearToLoad.end()));
+
+  for (auto id : nearToLoad) {
+    mNearLoading.emplace(id);
+    oo::JobManager::runJob([this, id, &ctx]() {
+      this->reifyNearExteriorCell(id, ctx);
+    });
+  }
+
+  // TODO: Keeping near cells loaded that shouldn't be because they haven't
+  //       finished loading when we issue the unload request is more of an issue
+  //       than keeping far cells loaded, but I haven't found a nice way to
+  //       solve this yet.
+
+  // Get the set of near neighbours that are currently loaded but that we don't
+  // want to be, and unload them.
+  std::set<oo::BaseId> nearToUnload{};
+  std::set_difference(mNearLoaded.begin(), mNearLoaded.end(),
+                      nearNbrsNew.begin(), nearNbrsNew.end(),
+                      std::inserter(nearToUnload, nearToUnload.end()));
+
+  for (auto id : nearToUnload) {
+    oo::RenderJobManager::runJob([this, id, &ctx]() {
+      this->unloadNearExteriorCell(id, ctx);
+    });
+  }
 }
 
 void GameMode::reifyNeighborhood(World::CellIndex centerCell,
                                  ApplicationContext &ctx) {
-  const auto &gameSettings{oo::GameSettings::getSingleton()};
-  const auto nearDiameter{gameSettings.get<unsigned int>(
-      "General.uGridsToLoad", 3)};
-  const auto farDiameter{gameSettings.get<unsigned int>(
-      "General.uGridDistantCount", 5)};
-
-  const auto &cache{*ctx.getCellCache()};
-
-  // Find all cells in the far neighbourhood and make sure that they are loaded.
-  // The set will be used later to provide fast lookup of cells that need to be
-  // unloaded.
-  auto farNeighbours{mWrld->getNeighbourhood(centerCell, farDiameter)};
-  absl::flat_hash_set<oo::BaseId> farNeighbourSet;
-  std::vector<oo::BaseId> farNeighboursToLoad;
-  for (const auto &row : farNeighbours) {
-    for (auto id : row) {
-      farNeighbourSet.emplace(id);
-      // C++20: if (mFarExteriorCells.contains(id)) {
-      if (std::find(mFarExteriorCells.begin(), mFarExteriorCells.end(), id)
-          != mFarExteriorCells.end()) {
-        // Already loaded, skip
-        continue;
-      } else if (auto[cell, isInterior]{cache.get(id)}; cell && !isInterior) {
-        // In cache, so its terrain has already been loaded and will stay loaded
-        // even if it gets pushed out the cache later.
-        // TODO: Show the terrain
-        mFarExteriorCells.emplace_back(id);
-      } else {
-        mFarExteriorCells.emplace_back(id);
-        farNeighboursToLoad.emplace_back(id);
-      }
-    }
-  }
-
-  // TODO: Launching multiple background jobs instead of one job (worker or
-  //       render) that yields causes a crash, presumably due to a race
-  //       condition, but I'm not sure where.
-  oo::RenderJobManager::runJob([&wrld = mWrld,
-                                   arr = std::move(farNeighboursToLoad)]() {
-    for (auto id : arr) {
-      wrld->loadTerrainOnly(id, true);
-      boost::this_fiber::yield();
-    }
-  });
-
-  // Find all cells in the near neighbourhood, loading any that aren't loaded.
-  auto nearNeighbours{mWrld->getNeighbourhood(centerCell, nearDiameter)};
-  absl::flat_hash_set<oo::BaseId> nearNeighbourSet;
-  for (const auto &row : nearNeighbours) {
-    for (auto id : row) {
-      nearNeighbourSet.emplace(id);
-      auto p = [id](const auto &cell) { return cell->getBaseId() == id; };
-      if (std::any_of(mExteriorCells.begin(), mExteriorCells.end(), p)) {
-        // Already loaded, skip
-        continue;
-      } else if (auto[cell, isInterior]{cache.get(id)}; cell && !isInterior) {
-        // In cache so just copy the pointer
-        mExteriorCells.emplace_back(
-            std::static_pointer_cast<oo::ExteriorCell>(cell));
-        static_cast<oo::ExteriorCell *>(cell.get())->setVisible(true);
-        ctx.getLogger()->info("Loaded cell {} from cache", id);
-      } else {
-        reifyExteriorCell(id, ctx);
-        ctx.getCellCache()->push_back(mExteriorCells.back());
-      }
-    }
-  }
-
-  // Remove any previously loaded far cells that are not in the new far
-  // neighbourhood, but only remove their terrain if they are not cached (this
-  // can happen with sufficiently large cache sizes or close near/far
-  // neighbourhoods). Note that the near neighbour is a subset of the far
-  // neighbourhood.
-  // Use std::partition instead of std::remove_if because we need
-  // to do some processing on the cells to be removed before getting rid of
-  // them; std::remove_if leaves the to-be-removed elements in a valid but
-  // unspecified state.
-  {
-    auto begin{mFarExteriorCells.begin()}, end{mFarExteriorCells.end()};
-    auto it{std::partition(begin, end, [&farNeighbourSet](auto id) {
-      return farNeighbourSet.contains(id);
-    })};
-    for (auto jt = it; jt != end; ++jt) {
-      if (std::find_if(cache.exteriors().begin(), cache.exteriors().end(),
-                       [&jt](const auto &cellPtr) {
-                         return cellPtr->getBaseId() == *jt;
-                       }) == cache.exteriors().end()) {
-        mWrld->unloadTerrain(*jt);
-      }
-    }
-    mFarExteriorCells.erase(it, end);
-  }
-
-  // Remove any previously loaded near cells that are not in the new near
-  // neighbour, removing their collision object if they are not cached, but not
-  // unloading their terrain.
-  // not unload their terrain.
-  {
-    auto begin{mExteriorCells.begin()}, end{mExteriorCells.end()};
-    auto it{std::partition(begin, end, [&nearNeighbourSet](const auto &ptr) {
-      return nearNeighbourSet.contains(ptr->getBaseId());
-    })};
-    for (auto jt = it; jt != end; ++jt) {
-      auto kt{std::find_if(cache.exteriors().begin(), cache.exteriors().end(),
-                           [&jt](const auto &cellPtr) {
-                             return cellPtr->getBaseId() == (*jt)->getBaseId();
-                           })};
-      if (kt != cache.exteriors().end()) {
-        static_cast<oo::ExteriorCell *>(kt->get())->setVisible(false);
-      } else {
-        getPhysicsWorld()->removeCollisionObject((*jt)->getCollisionObject());
-      }
-    }
-    mExteriorCells.erase(it, end);
-  }
+  ctx.getLogger()->info("[{}]: reifyNeighborhood()",
+                        boost::this_fiber::get_id());
+  reifyNearNeighborhood(centerCell, ctx);
+  reifyFarNeighborhood(centerCell, ctx);
 }
 
 bool GameMode::updateCenterCell(ApplicationContext &ctx) {
@@ -377,11 +543,11 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   const auto now{chrono::GameClock::now().time_since_epoch()};
 
   if (!mInInterior) {
-    oo::RenderJobManager::runJob([&]() {
-      if (updateCenterCell(ctx)) {
+    if (updateCenterCell(ctx)) {
+      oo::JobManager::runJob([&]() {
         reifyNeighborhood(mCenterCell, ctx);
-      }
-    });
+      });
+    }
     oo::RenderJobManager::runJob([&]() {
       mWrld->updateAtmosphere(
           chrono::duration_cast<chrono::minutes>(now - today));

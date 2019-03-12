@@ -14,6 +14,7 @@
 #include "sdl/sdl.hpp"
 #include <memory>
 #include <optional>
+#include <set>
 #include <tuple>
 #include <variant>
 
@@ -56,9 +57,27 @@ class GameMode {
   std::shared_ptr<World> mWrld{};
   std::shared_ptr<Cell> mCell{};
   std::vector<std::shared_ptr<ExteriorCell>> mExteriorCells{};
-  std::vector<oo::BaseId> mFarExteriorCells{};
+  std::set<oo::BaseId> mNearLoaded{};
+  std::set<oo::BaseId> mFarLoaded{};
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
+
+  std::set<oo::BaseId> mNearLoading{};
+  boost::fibers::mutex mNearMutex{};
+  std::set<oo::BaseId> mFarLoading{};
+  boost::fibers::mutex mFarMutex{};
+
+  void reifyFarNeighborhood(World::CellIndex centerCell,
+                            ApplicationContext &ctx);
+
+  void reifyFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+  void unloadFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+
+  void reifyNearNeighborhood(World::CellIndex centerCell,
+                             ApplicationContext &ctx);
+
+  void reifyNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+  void unloadNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
   // TODO: These are only here because they need to be passed from the
   //       constructor to enter(), when they should be given to enter() in the
@@ -104,7 +123,6 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
-  void reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
   void reifyNeighborhood(World::CellIndex centerCell, ApplicationContext &ctx);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
@@ -133,6 +151,12 @@ class GameMode {
 
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);
+
+  ~GameMode() = default;
+  GameMode(const GameMode &) = delete;
+  GameMode &operator=(const GameMode &) = delete;
+  GameMode(GameMode &&) noexcept;
+  GameMode &operator=(GameMode &&) noexcept;
 
   /// \see Mode::enter()
   void enter(ApplicationContext &ctx);

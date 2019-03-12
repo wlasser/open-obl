@@ -841,15 +841,23 @@ oo::World::loadTerrain(CellIndex index, bool async) {
   if (async) {
     auto jc{std::make_shared<oo::JobCounter>(4)};
     oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 0",
+                                 boost::this_fiber::get_id());
       group.loadTerrain(2 * x + 0, 2 * y + 0, true);
     }, jc.get());
     oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 1",
+                                 boost::this_fiber::get_id());
       group.loadTerrain(2 * x + 1, 2 * y + 0, true);
     }, jc.get());
     oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 2",
+                                 boost::this_fiber::get_id());
       group.loadTerrain(2 * x + 0, 2 * y + 1, true);
     }, jc.get());
     oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
+      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 3",
+                                 boost::this_fiber::get_id());
       group.loadTerrain(2 * x + 1, 2 * y + 1, true);
     }, jc.get());
 
@@ -864,6 +872,9 @@ oo::World::loadTerrain(CellIndex index, bool async) {
 }
 
 void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
+  auto logger{spdlog::get(oo::LOG)};
+  logger->info("[{}]: loadTerrainOnly({})",
+               boost::this_fiber::get_id(), cellId);
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
 
   const auto cellRec{cellRes.get(cellId)};
@@ -874,11 +885,14 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   // Check if terrain is already loaded first, if so do nothing.
   if (auto *terrain{mTerrainGroup.getTerrain(2 * qvm::X(pos), 2 * qvm::Y(pos))};
       terrain && terrain->isLoaded()) {
+    logger->info("[{}]: Terrain is already loaded",
+                 boost::this_fiber::get_id());
     return;
   }
 
   // Begin loading the terrain itself
   auto terrainCounter{loadTerrain(pos, async)};
+  logger->info("[{}]: Started loadTerrain() jobs", boost::this_fiber::get_id());
 
   constexpr auto vpc{oo::verticesPerCell<uint32_t>};
   constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
@@ -941,7 +955,11 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   applyFineLayers(layerMaps, landRec);
   applyFineLayers(layerOrders, landRec);
 
+  logger->info("[{}]: Waiting on terrainLoad jobs...",
+               boost::this_fiber::get_id());
   if (terrainCounter) oo::RenderJobManager::waitOn(terrainCounter.get());
+  logger->info("[{}]: terrainLoad jobs complete!",
+               boost::this_fiber::get_id());
 
   std::array<Ogre::Terrain *, 4u> terrain{
       mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
@@ -983,6 +1001,7 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
 
   oo::JobCounter blitCounter{1};
   oo::RenderJobManager::runJob([terrain, &blitLayerMaps, &blitBoxes]() {
+    auto logger{spdlog::get(oo::LOG)};
     {
       const Ogre::Box box(0u, 0u, vpq, vpq);
       blitBoxes(terrain[0]->getMaterialName(), box);
@@ -990,6 +1009,7 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       terrain[0]->setGlobalColourMapEnabled(true, 2u);
       terrain[0]->setGlobalColourMapEnabled(false, 2u);
       terrain[0]->_setCompositeMapRequired(true);
+      logger->info("[{}]: Blit layer 0", boost::this_fiber::get_id());
     }
 
     boost::this_fiber::yield();
@@ -1001,6 +1021,7 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       terrain[1]->setGlobalColourMapEnabled(true, 2u);
       terrain[1]->setGlobalColourMapEnabled(false, 2u);
       terrain[1]->_setCompositeMapRequired(true);
+      logger->info("[{}]: Blit layer 1", boost::this_fiber::get_id());
     }
 
     boost::this_fiber::yield();
@@ -1012,6 +1033,7 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       terrain[2]->setGlobalColourMapEnabled(true, 2u);
       terrain[2]->setGlobalColourMapEnabled(false, 2u);
       terrain[2]->_setCompositeMapRequired(true);
+      logger->info("[{}]: Blit layer 2", boost::this_fiber::get_id());
     }
 
     boost::this_fiber::yield();
@@ -1023,10 +1045,13 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       terrain[3]->setGlobalColourMapEnabled(true, 2u);
       terrain[3]->setGlobalColourMapEnabled(false, 2u);
       terrain[3]->_setCompositeMapRequired(true);
+      logger->info("[{}]: Blit layer 3", boost::this_fiber::get_id());
     }
   }, &blitCounter);
 
+  logger->info("[{}]: Waiting on blitCounter...", boost::this_fiber::get_id());
   blitCounter.wait();
+  logger->info("[{}]: blitCounter complete!", boost::this_fiber::get_id());
 }
 
 void oo::World::loadTerrain(oo::ExteriorCell &cell) {
@@ -1066,7 +1091,7 @@ void oo::World::unloadTerrain(oo::BaseId cellId) {
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  unloadTerrain(pos);
+  oo::RenderJobManager::runJob([this, pos]() { this->unloadTerrain(pos); });
 }
 
 void oo::World::unloadTerrain(CellIndex index) {
