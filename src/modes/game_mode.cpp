@@ -250,12 +250,11 @@ void GameMode::refocus(ApplicationContext &) {
 
 void GameMode::reifyFarExteriorCell(oo::BaseId cellId,
                                     ApplicationContext &ctx) {
-  std::unique_lock lock{mFarMutex};
-
   ctx.getLogger()->info("[{}]: reifyFarExteriorCell({}) started",
                         boost::this_fiber::get_id(), cellId);
 
   auto _ = gsl::finally([&]() {
+    std::unique_lock lock{mFarMutex};
     mFarLoaded.emplace(cellId);
     ctx.getLogger()->info("[{}]: reifyFarExteriorCell({}) finished",
                           boost::this_fiber::get_id(), cellId);
@@ -276,6 +275,7 @@ void GameMode::reifyFarExteriorCell(oo::BaseId cellId,
   // Otherwise need to actually load
   oo::JobCounter terrainLoadDone{1};
   oo::RenderJobManager::runJob([this, cellId]() {
+    std::unique_lock lock{mFarMutex};
     mWrld->loadTerrainOnly(cellId, /*async=*/true);
   }, &terrainLoadDone);
   terrainLoadDone.wait();
@@ -283,12 +283,11 @@ void GameMode::reifyFarExteriorCell(oo::BaseId cellId,
 
 void GameMode::unloadFarExteriorCell(oo::BaseId cellId,
                                      ApplicationContext &ctx) {
-  std::unique_lock lock{mFarMutex};
-
   ctx.getLogger()->info("[{}]: unloadFarExteriorCell({}) started",
                         boost::this_fiber::get_id(), cellId);
 
   auto _ = gsl::finally([&]() {
+    std::unique_lock lock{mFarMutex};
     auto it{std::find(mFarLoaded.begin(), mFarLoaded.end(), cellId)};
     mFarLoaded.erase(it);
     ctx.getLogger()->info("[{}]: unloadFarExteriorCell({}) finished",
@@ -307,6 +306,7 @@ void GameMode::unloadFarExteriorCell(oo::BaseId cellId,
   }
 
   // Otherwise need to actually unload.
+  std::unique_lock lock{mFarMutex};
   mWrld->unloadTerrain(cellId);
 }
 
@@ -362,11 +362,11 @@ void GameMode::reifyFarNeighborhood(World::CellIndex centerCell,
 
 void GameMode::reifyNearExteriorCell(oo::BaseId cellId,
                                      ApplicationContext &ctx) {
-  std::unique_lock lock{mNearMutex};
   ctx.getLogger()->info("[{}]: reifyNearExteriorCell({}) started",
                         boost::this_fiber::get_id(), cellId);
 
   auto _ = gsl::finally([&]() {
+    std::unique_lock lock{mNearMutex};
     mNearLoaded.emplace(cellId);
     ctx.getLogger()->info("[{}]: reifyNearExteriorCell({}) finished",
                           boost::this_fiber::get_id(), cellId);
@@ -380,6 +380,7 @@ void GameMode::reifyNearExteriorCell(oo::BaseId cellId,
     ctx.getCellCache()->promote(cellId);
     auto extCellPtr{std::static_pointer_cast<oo::ExteriorCell>(cellPtr)};
     extCellPtr->setVisible(true);
+    std::unique_lock lock{mNearMutex};
     mNearCells.emplace_back(std::move(extCellPtr));
     ctx.getLogger()->info("[{}]: Loaded cell {} from cache",
                           boost::this_fiber::get_id(), cellId);
@@ -411,30 +412,28 @@ void GameMode::reifyNearExteriorCell(oo::BaseId cellId,
 
   oo::JobCounter reifyDone{1};
   oo::RenderJobManager::runJob([this, cellRec, &ctx]() {
+    std::unique_lock nearLock{mNearMutex};
+    // TODO: We only need to lock mNearMutex for the emplace_back(), but some
+    //       locking is required to prevent concurrent reifyRecords to avoid
+    //       race conditions due to getPhysicsWorld() and getSceneManager().
     mNearCells.emplace_back(std::static_pointer_cast<oo::ExteriorCell>(
         reifyRecord(*cellRec,
                     mWrld->getSceneManager(),
                     mWrld->getPhysicsWorld(),
                     getCellResolvers(ctx))));
+    // Note: we can't yield between reifyRecord and loadTerrain because if
+    // control passes to the main render fiber then it will attempt to run
+    // physics on the cell terrain, which doesn't exist yet.
+
+    // Take the far lock to avoid concurrent terrain loads from the far cells.
+    std::unique_lock farLock{mFarMutex};
+    mWrld->loadTerrain(*mNearCells.back());
   }, &reifyDone);
   reifyDone.wait();
 
-  // This function could be called at the same time as reifyFarExteriorCell()
-  // with the same cellId, because the far neighbourhood contains the near
-  // neighbourhood. loadTerrain() calls loadTerrainOnly() to load the actual
-  // terrain, which doesn't do anything if the terrain is already loaded, so
-  // we don't have to worry about whether this function or
-  // reifyFarExteriorCell() occurs first, so long as they don't occur
-  // simultaneously. An easy way to prevent this is to just take the far lock.
-  oo::JobCounter terrainLoadDone{1};
-  oo::RenderJobManager::runJob([this]() {
-    std::scoped_lock farLock{mFarMutex};
-    mWrld->loadTerrain(*mNearCells.back());
-  }, &terrainLoadDone);
-  terrainLoadDone.wait();
-
   oo::JobCounter cacheAddDone{1};
   oo::RenderJobManager::runJob([this, &ctx]() {
+    std::unique_lock lock{mNearMutex};
     ctx.getCellCache()->push_back(mNearCells.back());
   }, &cacheAddDone);
   cacheAddDone.wait();
@@ -442,7 +441,7 @@ void GameMode::reifyNearExteriorCell(oo::BaseId cellId,
 
 void GameMode::unloadNearExteriorCell(oo::BaseId cellId,
                                       ApplicationContext &ctx) {
-  std::scoped_lock lock{mNearMutex};
+  std::unique_lock lock{mNearMutex};
 
   auto _ = gsl::finally([&]() {
     auto it{std::find(mNearLoaded.begin(), mNearLoaded.end(), cellId)};
@@ -523,7 +522,7 @@ void GameMode::reifyNearNeighborhood(World::CellIndex centerCell,
 
 void GameMode::reifyNeighborhood(World::CellIndex centerCell,
                                  ApplicationContext &ctx) {
-  std::scoped_lock lock{mReifyMutex};
+  std::unique_lock lock{mReifyMutex};
   ctx.getLogger()->info("[{}]: reifyNeighborhood()",
                         boost::this_fiber::get_id());
   reifyNearNeighborhood(centerCell, ctx);
