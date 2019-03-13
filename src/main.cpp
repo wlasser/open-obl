@@ -5,10 +5,12 @@
 int main() {
   oo::JobManager::start();
 
-  oo::RenderJobManager::start([]() {
-    oo::Application app(oo::RENDER_TARGET);
-    oo::getApplication(&app);
-    app.getRoot()->startRendering();
+  std::unique_ptr<oo::Application> application{};
+
+  oo::RenderJobManager::start([&application]() {
+    application = std::make_unique<oo::Application>(oo::RENDER_TARGET);
+    oo::getApplication(application.get());
+    application->getRoot()->startRendering();
   });
 
   oo::JobManager::stop();
