@@ -126,6 +126,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/walk_state.cpp
         src/console_functions.cpp
         src/esp_coordinator.cpp
+        src/exterior_manager.cpp
         src/fnt_loader.cpp
         src/game_settings.cpp
         src/globals.cpp
@@ -185,6 +186,7 @@ target_sources(OpenOblivion PRIVATE
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
+        include/exterior_manager.hpp
         include/fnt_loader.hpp
         include/game_settings.hpp
         include/globals.hpp

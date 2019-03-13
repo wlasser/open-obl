@@ -5,6 +5,7 @@
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "character_controller/player_controller.hpp"
+#include "exterior_manager.hpp"
 #include "modes/mode.hpp"
 #include "modes/menu_mode.hpp"
 #include "ogrebullet/debug_drawer.hpp"
@@ -54,31 +55,11 @@ makePlayerController(btDiscreteDynamicsWorld *physicsWorld, Args &&...args) {
 /// \ingroup OpenOblivionModes
 class GameMode {
  private:
-  std::shared_ptr<World> mWrld{};
+  ExteriorManager mExteriorMgr;
   std::shared_ptr<Cell> mCell{};
-  std::vector<std::shared_ptr<ExteriorCell>> mNearCells{};
-  boost::fibers::mutex mReifyMutex{};
-
-  std::set<oo::BaseId> mNearLoaded{};
-  boost::fibers::mutex mNearMutex{};
-
-  std::set<oo::BaseId> mFarLoaded{};
-  boost::fibers::mutex mFarMutex{};
 
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
-
-  void reifyFarNeighborhood(World::CellIndex centerCell,
-                            ApplicationContext &ctx);
-
-  void reifyFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
-  void unloadFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
-
-  void reifyNearNeighborhood(World::CellIndex centerCell,
-                             ApplicationContext &ctx);
-
-  void reifyNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
-  void unloadNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
   // TODO: These are only here because they need to be passed from the
   //       constructor to enter(), when they should be given to enter() in the
@@ -124,40 +105,12 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
-  void reifyNeighborhood(World::CellIndex centerCell, ApplicationContext &ctx);
-
-  auto getCellBaseResolvers(ApplicationContext &ctx) const {
-    return oo::getResolvers<
-        record::STAT, record::DOOR, record::LIGH, record::ACTI,
-        record::NPC_, record::RACE>(ctx.getBaseResolvers());
-  }
-
-  auto getCellRefrResolvers(ApplicationContext &ctx) const {
-    return oo::getRefrResolvers<
-        record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
-        record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers());
-  }
-
-  auto getCellMoreResolvers(ApplicationContext &ctx) const {
-    return oo::getResolvers<record::LAND>(ctx.getBaseResolvers());
-  }
-
-  auto getCellResolvers(ApplicationContext &ctx) {
-    return std::tuple_cat(getCellBaseResolvers(ctx), getCellRefrResolvers(ctx),
-                          oo::getResolvers<record::CELL>(ctx.getBaseResolvers()));
-  }
 
  public:
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
 
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);
-
-  ~GameMode() = default;
-  GameMode(const GameMode &) = delete;
-  GameMode &operator=(const GameMode &) = delete;
-  GameMode(GameMode &&) noexcept;
-  GameMode &operator=(GameMode &&) noexcept;
 
   /// \see Mode::enter()
   void enter(ApplicationContext &ctx);
