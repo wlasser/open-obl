@@ -155,8 +155,8 @@ LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   ctx.getLogger()->info("Reifying exterior CELL {}", cellId);
 
   auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(
-      oo::reifyRecord(cellRec, mWrld->getSceneManager(),
-                      mWrld->getPhysicsWorld(), getCellResolvers(ctx)))};
+      oo::reifyRecord(cellRec, mWrld->getSceneManager().get(),
+                      mWrld->getPhysicsWorld().get(), getCellResolvers(ctx)))};
   ctx.getCellCache()->push_back(extPtr);
   mExteriorCells.emplace_back(std::move(extPtr));
 

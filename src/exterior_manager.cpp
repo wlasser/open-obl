@@ -224,8 +224,8 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
     //       race conditions due to getPhysicsWorld() and getSceneManager().
     mNearCells.emplace_back(std::static_pointer_cast<oo::ExteriorCell>(
         reifyRecord(*cellRec,
-                    mWrld->getSceneManager(),
-                    mWrld->getPhysicsWorld(),
+                    mWrld->getSceneManager().get(),
+                    mWrld->getPhysicsWorld().get(),
                     getCellResolvers(ctx))));
     // Note: we can't yield between reifyRecord and loadTerrain because if
     // control passes to the main render fiber then it will attempt to run
