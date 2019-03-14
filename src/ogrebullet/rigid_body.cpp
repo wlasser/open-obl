@@ -28,7 +28,7 @@ void RigidBody::_notifyMoved() {
   }
 }
 
-void RigidBody::_updateRenderQueue(RenderQueue *queue) {
+void RigidBody::_updateRenderQueue(RenderQueue */*queue*/) {
   // This is not renderable
 }
 
@@ -54,8 +54,8 @@ const String &RigidBody::getMovableType() const {
   return mType;
 }
 
-void RigidBody::visitRenderables(Renderable::Visitor *visitor,
-                                 bool debugRenderables) {
+void RigidBody::visitRenderables(Renderable::Visitor */*visitor*/,
+                                 bool /*debugRenderables*/) {
   // This is not renderable
 }
 

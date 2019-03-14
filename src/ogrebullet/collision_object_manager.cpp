@@ -35,26 +35,29 @@ CollisionObjectManager::~CollisionObjectManager() {
 // statically downcast the shared_ptr<Resource> returned by createResource or
 // getResourceByName into a shared_ptr<CollisionObject>.
 
-CollisionObjectPtr CollisionObjectManager::create(const Ogre::String &name,
-                                                  const Ogre::String &group,
-                                                  bool isManual,
-                                                  Ogre::ManualResourceLoader *loader,
-                                                  const Ogre::NameValuePairList *createParams) {
+CollisionObjectPtr
+CollisionObjectManager::create(const Ogre::String &name,
+                               const Ogre::String &group,
+                               bool isManual,
+                               Ogre::ManualResourceLoader *loader,
+                               const Ogre::NameValuePairList *createParams) {
   return static_pointer_cast<CollisionObject>(
       createResource(name, group, isManual, loader, createParams));
 }
 
-CollisionObjectPtr CollisionObjectManager::getByName(const Ogre::String &name,
-                                                     const Ogre::String &group) {
+CollisionObjectPtr
+CollisionObjectManager::getByName(const Ogre::String &name,
+                                  const Ogre::String &group) {
   return static_pointer_cast<CollisionObject>(getResourceByName(name, group));
 }
 
-Resource *CollisionObjectManager::createImpl(const Ogre::String &name,
-                                             Ogre::ResourceHandle handle,
-                                             const Ogre::String &group,
-                                             bool isManual,
-                                             Ogre::ManualResourceLoader *loader,
-                                             const Ogre::NameValuePairList *params) {
+Resource *
+CollisionObjectManager::createImpl(const Ogre::String &name,
+                                   Ogre::ResourceHandle handle,
+                                   const Ogre::String &group,
+                                   bool isManual,
+                                   Ogre::ManualResourceLoader *loader,
+                                   const Ogre::NameValuePairList */*params*/) {
   return OGRE_NEW CollisionObject(this, name, handle, group, isManual, loader);
 }
 
