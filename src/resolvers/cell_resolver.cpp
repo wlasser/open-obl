@@ -510,6 +510,22 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   const auto rotMat{oo::fromBSCoordinates(rotX * rotY * rotZ)};
   const Ogre::Quaternion rotation{rotMat};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
+
+  std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *node) {
+    for (Ogre::Node *child : node->getChildren()) {
+      if (auto *sceneChild{dynamic_cast<Ogre::SceneNode *>(child)}) {
+        notify(sceneChild);
+      }
+    }
+
+    for (Ogre::MovableObject *obj : node->getAttachedObjects()) {
+      if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+        rigidBody->notify();
+      }
+    }
+  };
+
+  notify(node);
 }
 
 void Cell::setNodeScale(Ogre::SceneNode *node,
@@ -517,6 +533,22 @@ void Cell::setNodeScale(Ogre::SceneNode *node,
   if (scalable.scale) {
     const float scale{scalable.scale->data};
     node->setScale(scale, scale, scale);
+
+    std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *node) {
+      for (Ogre::Node *child : node->getChildren()) {
+        if (auto *sceneChild{dynamic_cast<Ogre::SceneNode *>(child)}) {
+          notify(sceneChild);
+        }
+      }
+
+      for (Ogre::MovableObject *obj : node->getAttachedObjects()) {
+        if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+          rigidBody->setScale({scale, scale, scale});
+        }
+      }
+    };
+
+    notify(node);
   }
 }
 

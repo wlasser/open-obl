@@ -195,6 +195,7 @@ class MeshLoaderState {
   BlockGraph mBlocks;
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   std::shared_ptr<spdlog::logger> mLogger{};
+  bool mUndoRootTransform;
 };
 
 /// @}

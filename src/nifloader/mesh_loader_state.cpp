@@ -921,7 +921,8 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
 }
 
 MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks)
-    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
+    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)),
+      mUndoRootTransform(false) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
@@ -931,7 +932,8 @@ MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks)
 
 MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks,
                                  vertex_descriptor start)
-    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
+    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)),
+      mUndoRootTransform(true) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
@@ -942,8 +944,20 @@ MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks,
 // This is a new connected component so we need to reset the transformation to
 // the identity. NB: This vertex will still be discovered so setting the
 // transformation to the vertex's will result in it being applied twice.
-void MeshLoaderState::start_vertex(vertex_descriptor, const Graph &) {
-  mTransform = Ogre::Matrix4::IDENTITY;
+void MeshLoaderState::start_vertex(vertex_descriptor v, const Graph &g) {
+  if (mUndoRootTransform) {
+    // Must undo transformation of start node so as to not apply it twice.
+    // TODO: This is ugly, just don't apply it in the first place.
+    const auto &block{*g[v]};
+    if (dynamic_cast<const nif::NiNode *>(&block)) {
+      const auto &node{static_cast<const nif::NiNode &>(block)};
+      const Ogre::Vector3 tra{oo::fromBSCoordinates(node.translation)};
+      const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
+      mTransform.makeInverseTransform(tra, Ogre::Vector3::UNIT_SCALE, rot);
+    }
+  } else {
+    mTransform = Ogre::Matrix4::IDENTITY;
+  }
 }
 
 // If this vertex corresponds to a geometry block, then load it with the current
@@ -955,7 +969,7 @@ void MeshLoaderState::discover_vertex(vertex_descriptor v, const Graph &g) {
   if (dynamic_cast<const nif::NiTriBasedGeom *>(&niObject)) {
     const auto &geom{dynamic_cast<const nif::NiTriBasedGeom &>(niObject)};
     auto[submesh, subBbox] = oo::parseNiTriBasedGeom(mBlocks, mMesh, geom,
-                                                     Ogre::Matrix3::IDENTITY);
+                                                     mTransform);
     auto bbox{mMesh->getBounds()};
     bbox.merge(subBbox);
     mMesh->_setBounds(bbox);

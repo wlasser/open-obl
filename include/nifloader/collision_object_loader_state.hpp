@@ -48,6 +48,7 @@ class CollisionObjectLoaderState {
   bool mHasHavok{false};
   bool mIsSkeleton{false};
   std::shared_ptr<spdlog::logger> mLogger{};
+  bool mUndoRootTransform;
 
   void discover_vertex(const nif::NiNode &node, const Graph &g);
   void discover_vertex(const nif::BSXFlags &bsxFlags, const Graph &g);

@@ -18,7 +18,8 @@ struct NifVisitorState {
   std::string mGroup;
   bool mHasHavok{false};
   bool mIsSkeleton{false};
-  /// Keep track of the NiNode blocks which have processed child geometry nodes.
+  /// Keep track of the NiNode blocks which have had their child geometry nodes
+  /// processed.
   std::set<oo::BlockGraph::vertex_descriptor> mVisitedGeometry{};
 
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
@@ -91,7 +92,7 @@ class RagdollVisitor {
 
   void start_vertex(vertex_descriptor v, const Graph &g);
   void discover_vertex(vertex_descriptor v, const Graph &g);
-  [[maybe_unused]] void finish_vertex(vertex_descriptor v, const Graph &g) {}
+  [[maybe_unused]] void finish_vertex(vertex_descriptor, const Graph &) {}
 
   [[maybe_unused]] void initialize_vertex(vertex_descriptor, const Graph &) {}
   [[maybe_unused]] void examine_edge(edge_descriptor, const Graph &) {}
@@ -150,6 +151,10 @@ void attachRagdoll(const std::string &name, const std::string &group,
   RagdollVisitorState state(name, group, scnMgr, world, entity);
   boost::depth_first_search(graph, RagdollVisitor(&state), propertyMap);
 }
+
+//===----------------------------------------------------------------------===//
+// start_vertex
+//===----------------------------------------------------------------------===//
 
 void NifVisitor::start_vertex(vertex_descriptor, const Graph &g) {
   // Look for a BSXFlags
@@ -214,15 +219,14 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
   const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
   if (mState->mIsSkeleton) {
   }
-  mState->mRoot = gsl::make_not_null(mState->mRoot->createChildSceneNode(tra,
-                                                                         rot));
+  mState->mRoot = gsl::make_not_null(
+      mState->mRoot->createChildSceneNode(tra, rot));
 }
 
-void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &node,
+void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
                                  vertex_descriptor v,
                                  const Graph &g) {
-  // Collision objects come in one piece. Dispatch to the collision loader,
-  // starting from current working root.
+  const vertex_descriptor u{boost::in_edges(v, g).first->m_source};
 
   // We can't create a reloadable resource because the loader requires state.
   auto &colObjMgr{Ogre::CollisionObjectManager::getSingleton()};
@@ -231,7 +235,7 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &node,
       name, mState->mGroup, true, nullptr)};
   if (created) {
     oo::CollisionObjectLoaderState loader(
-        static_cast<Ogre::CollisionObject *>(collisionObjectPtr.get()), g, v,
+        static_cast<Ogre::CollisionObject *>(collisionObjectPtr.get()), g, u,
         mState->mHasHavok, mState->mIsSkeleton);
   }
 
@@ -347,7 +351,7 @@ void NifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
   }
 }
 
-void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &g) {
+void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &) {
   if (!mState->mIsSkeleton) {
     const std::string name{node.name.str()};
     //C++20: if (name.starts_with("Bip01")

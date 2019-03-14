@@ -12,7 +12,8 @@ namespace oo {
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject, oo::BlockGraph blocks)
-    : mRigidBody(collisionObject), mLogger(spdlog::get(oo::LOG)) {
+    : mRigidBody(collisionObject), mLogger(spdlog::get(oo::LOG)),
+      mUndoRootTransform(false) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};
@@ -26,7 +27,8 @@ CollisionObjectLoaderState::CollisionObjectLoaderState(
     : mRigidBody(collisionObject),
       mHasHavok(hasHavok),
       mIsSkeleton(isSkeleton),
-      mLogger(spdlog::get(oo::LOG)) {
+      mLogger(spdlog::get(oo::LOG)),
+      mUndoRootTransform(true) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};
@@ -35,8 +37,20 @@ CollisionObjectLoaderState::CollisionObjectLoaderState(
 }
 
 void
-CollisionObjectLoaderState::start_vertex(vertex_descriptor, const Graph &) {
-  mTransform = Ogre::Matrix4::IDENTITY;
+CollisionObjectLoaderState::start_vertex(vertex_descriptor v, const Graph &g) {
+  if (mUndoRootTransform) {
+    // Must undo transformation of start node so as to not apply it twice.
+    // TODO: This is ugly, just don't apply it in the first place.
+    const auto &block{*g[v]};
+    if (dynamic_cast<const nif::NiNode *>(&block)) {
+      const auto &node{static_cast<const nif::NiNode &>(block)};
+      const Ogre::Vector3 tra{oo::fromBSCoordinates(node.translation)};
+      const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
+      mTransform.makeInverseTransform(tra, Ogre::Vector3::UNIT_SCALE, rot);
+    }
+  } else {
+    mTransform = Ogre::Matrix4::IDENTITY;
+  }
 }
 
 void CollisionObjectLoaderState::discover_vertex(vertex_descriptor v,
