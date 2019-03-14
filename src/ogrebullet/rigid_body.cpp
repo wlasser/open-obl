@@ -92,7 +92,14 @@ void RigidBody::bind(Node *node) {
 }
 
 void RigidBody::notify() {
-  if (mMotionState) mMotionState->notify();
+  if (mMotionState) {
+    mMotionState->notify();
+    // Notifying the motionState is insufficient. We cannot force the
+    // btRigidBody to update its transform, and must do it manually.
+    btTransform trans{};
+    mMotionState->getWorldTransform(trans);
+    mRigidBody->setWorldTransform(trans);
+  }
 }
 
 void RigidBody::setScale(const Vector3 &scale) {
