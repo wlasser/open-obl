@@ -440,7 +440,18 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
     ambient.setAsABGR(lighting->data.ambient.v);
     cell->getSceneManager()->setAmbientLight(ambient);
 
-    // TODO: Directional lighting, fog, water, etc.
+    // Shaders expect fog, so if fog no fog then we just set it to be far away.
+    const float fogNear{lighting->data.fogNear * oo::metersPerUnit<float>};
+    const float fogFar = [&]() {
+      float f{lighting->data.fogFar * oo::metersPerUnit<float>};
+      return Ogre::Math::RealEqual(fogFar, 0.0f, 0.1f) ? 10'000.0f : f;
+    }();
+    Ogre::ColourValue fog{};
+    fog.setAsABGR(lighting->data.fogColor.v);
+    cell->getSceneManager()->setFog(Ogre::FogMode::FOG_LINEAR, fog, 0,
+                                    fogNear, fogFar);
+
+    // TODO: Directional lighting, water, etc.
   }
 
   cell->getPhysicsWorld()->setGravity({0.0f, -9.81f, 0.0f});
