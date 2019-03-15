@@ -14,6 +14,83 @@ namespace oo {
 /// \addtogroup OpenOblivionNifloader
 /// @{
 
+void parseCollisionObject(const oo::BlockGraph &g,
+                          Ogre::CollisionObject *rigidBody,
+                          const nif::bhk::CollisionObject &block,
+                          const Ogre::Matrix4 &transform);
+
+using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
+
+std::pair<CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
+parseWorldObject(const oo::BlockGraph &g,
+                 Ogre::CollisionObject *rigidBody,
+                 const nif::bhk::WorldObject &block,
+                 const Ogre::Matrix4 &transform);
+
+Ogre::RigidBodyInfo generateRigidBodyInfo(const nif::bhk::RigidBody &block);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::Shape &block,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::TransformShape &block,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           const nif::bhk::CapsuleShape &block,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::MoppBvTreeShape &shape,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::ListShape &shape,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::PackedNiTriStripsShape &shape,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           const nif::bhk::ConvexVerticesShape &shape,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           const nif::bhk::BoxShape &shape,
+           const Ogre::Matrix4 &transform);
+
+CollisionShapeVector
+parseNiTriStripsData(const oo::BlockGraph &g,
+                     Ogre::CollisionObject *rigidBody,
+                     const nif::hk::PackedNiTriStripsData &block,
+                     const Ogre::Matrix4 &transform);
+
+// Fill indexBuf with the indexed triangle data of block and return a pointer
+// to the first byte. indexBuf will be resized if necessary.
+unsigned char *fillIndexBuffer(std::vector<uint16_t> &indexBuf,
+                               const nif::hk::PackedNiTriStripsData &block);
+
+// Fill vertexBuf with the vertex data of block and return a pointer to the
+// first byte. vertexBuf will be resized if necessary.
+unsigned char *fillVertexBuffer(std::vector<float> &vertexBuf,
+                                const nif::hk::PackedNiTriStripsData &block,
+                                const Ogre::Matrix4 &transform);
+
 class CollisionObjectLoaderState {
  public:
   using Graph = BlockGraph;
@@ -34,12 +111,6 @@ class CollisionObjectLoaderState {
   explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
                                       Graph blocks);
 
-  explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
-                                      Graph blocks,
-                                      vertex_descriptor start,
-                                      bool hasHavok = false,
-                                      bool isSkeleton = false);
-
  private:
   using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
 
@@ -47,8 +118,6 @@ class CollisionObjectLoaderState {
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   bool mHasHavok{false};
   bool mIsSkeleton{false};
-  std::shared_ptr<spdlog::logger> mLogger{};
-  bool mUndoRootTransform;
 
   void discover_vertex(const nif::NiNode &node, const Graph &g);
   void discover_vertex(const nif::BSXFlags &bsxFlags, const Graph &g);
@@ -57,57 +126,13 @@ class CollisionObjectLoaderState {
                        const Graph &g);
 
   void finish_vertex(const nif::NiNode &node, const Graph &g);
-
-  void parseCollisionObject(const Graph &g,
-                            const nif::bhk::CollisionObject &block);
-
-  std::pair<CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
-  parseWorldObject(const Graph &g, const nif::bhk::WorldObject &block);
-
-  Ogre::RigidBodyInfo
-  generateRigidBodyInfo(const nif::bhk::RigidBody &block) const;
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::Shape &block);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::TransformShape &block);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::CapsuleShape &block);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::MoppBvTreeShape &shape);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::ListShape &shape);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::ConvexVerticesShape &shape);
-
-  CollisionShapeVector
-  parseShape(const Graph &g, const nif::bhk::BoxShape &shape);
-
-  CollisionShapeVector
-  parseNiTriStripsData(const Graph &g,
-                       const nif::hk::PackedNiTriStripsData &block);
-
-  // Fill indexBuf with the indexed triangle data of block and return a pointer
-  // to the first byte. indexBuf will be resized if necessary.
-  unsigned char *fillIndexBuffer(std::vector<uint16_t> &indexBuf,
-                                 const nif::hk::PackedNiTriStripsData &block);
-
-  // Fill vertexBuf with the vertex data of block and return a pointer to the
-  // first byte. vertexBuf will be resized if necessary.
-  unsigned char *fillVertexBuffer(std::vector<float> &vertexBuf,
-                                  const nif::hk::PackedNiTriStripsData &block);
 };
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
 
+void createCollisionObject(Ogre::CollisionObject *rigidBody,
+                           oo::BlockGraph::vertex_descriptor start,
+                           const oo::BlockGraph &g);
 ///@}
 
 } // namespace oo

@@ -10,10 +10,407 @@
 
 namespace oo {
 
+void createCollisionObject(Ogre::CollisionObject *rigidBody,
+                           oo::BlockGraph::vertex_descriptor start,
+                           const oo::BlockGraph &g) {
+  const auto &rootBlock{*g[start]};
+  if (!dynamic_cast<const nif::NiNode *>(&rootBlock)) {
+    OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
+                "Cannot create a CollisionObject with a root node that is not "
+                "an NiNode",
+                "oo::createCollisionObject");
+  }
+
+  // It is assumed that the transformation of the root node will be applied via
+  // its Ogre::Node transformation, and thus we do not need to bake it in.
+  const Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
+
+  for (const auto &e : boost::make_iterator_range(boost::out_edges(start, g))) {
+    auto v{boost::target(e, g)};
+    const auto &block{*g[v]};
+    if (!dynamic_cast<const nif::bhk::CollisionObject *>(&block)) continue;
+
+    const auto &obj{static_cast<const nif::bhk::CollisionObject &>(block)};
+    oo::parseCollisionObject(g, rigidBody, obj, transform);
+  }
+}
+
+void parseCollisionObject(const oo::BlockGraph &g,
+                          Ogre::CollisionObject *rigidBody,
+                          const nif::bhk::CollisionObject &block,
+                          const Ogre::Matrix4 &transform) {
+  // TODO: COFlags
+  // TODO: target
+  const auto &worldObj{oo::getBlock<nif::bhk::WorldObject>(g, block.body)};
+  auto[shapes, info]{oo::parseWorldObject(g, rigidBody, worldObj, transform)};
+
+  if (!shapes.empty()) {
+    if (info && info->m_mass >= 0.1f) shapes.front()->setMargin(0.01f);
+    rigidBody->_setCollisionShape(std::move(shapes.front()));
+    if (shapes.erase(shapes.begin()) != shapes.end()) {
+      rigidBody->_storeIndirectCollisionShapes(std::move(shapes));
+    }
+  }
+
+  if (info) rigidBody->_setRigidBodyInfo(std::move(info));
+}
+
+std::pair<oo::CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
+parseWorldObject(const oo::BlockGraph &g,
+                 Ogre::CollisionObject *rigidBody,
+                 const nif::bhk::WorldObject &block,
+                 const Ogre::Matrix4 &transform) {
+  // TODO: Flags
+
+  const Ogre::Matrix4 localTrans = [&block, &transform]() {
+    // TODO: RigidBody that is not a RigidBodyT
+    if (dynamic_cast<const nif::bhk::RigidBodyT *>(&block)) {
+      const auto &body{dynamic_cast<const nif::bhk::RigidBodyT &>(block)};
+      return transform * oo::getRigidBodyTransform(body);
+    } else {
+      return transform;
+    }
+  }();
+  const auto &shape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
+  auto shapes{oo::parseShape(g, rigidBody, shape, localTrans)};
+
+  std::unique_ptr<Ogre::RigidBodyInfo> info{};
+  if (dynamic_cast<const nif::bhk::RigidBody *>(&block) && !shapes.empty()) {
+    const auto &body{dynamic_cast<const nif::bhk::RigidBody &>(block)};
+    info = std::make_unique<Ogre::RigidBodyInfo>(
+        oo::generateRigidBodyInfo(body));
+    info->m_collisionShape = shapes.front().get();
+  }
+  return std::make_pair(std::move(shapes), std::move(info));
+}
+
+Ogre::RigidBodyInfo generateRigidBodyInfo(const nif::bhk::RigidBody &block) {
+  // This does not seem to affect the translation in any way.
+  // TODO: What is the Havok origin used for?
+  // const Ogre::Vector3 origin{oo::fromNif(block.center).xyz()};
+
+  // Bullet needs a diagonalized inertia tensor given as a vector, and the
+  // file stores it as a 3x4 matrix. We ignore the last (w) column and
+  // compute the eigenvalues. Also we need to change from BS coordinates.
+  const auto &hkI{block.inertiaTensor};
+  const Ogre::Matrix3 bsI{hkI.m11, hkI.m12, hkI.m13,
+                          hkI.m21, hkI.m22, hkI.m23,
+                          hkI.m31, hkI.m32, hkI.m33};
+  const Ogre::Matrix3 inertiaTensor{oo::fromBSCoordinates(bsI)};
+  std::array<Ogre::Vector3, 3> principalAxes{};
+  Ogre::Vector3 principalMoments{};
+  inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
+                                    principalAxes.data());
+  // Coordinates in havok are scaled up by a factor of 7, and the units of the
+  // moments of inertia are kg m^2.
+  principalMoments *= Ogre::Math::Sqr(oo::havokUnitsPerUnit<Ogre::Real>);
+
+  // We have the diagonalization
+  // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
+  // To do this properly we should change to the principal frame but for now
+  // assume the principal axes are coordinate-axis aligned (this seems to hold
+  // in practice).
+  // TODO: Change to principal frame
+
+  // The units for these are the same in Bullet and Havok
+  const float mass{block.mass};
+  const float linearDamping{block.linearDamping};
+  const float angularDamping{block.angularDamping};
+  const float friction{block.friction};
+  const float restitution{block.restitution};
+
+  // TODO: Constraints
+
+  // Convert the Ogre parameters to Bullet ones and set up the rigid body
+  const auto bulletInertia{qvm::convert_to<btVector3>(principalMoments)};
+  btRigidBody::btRigidBodyConstructionInfo
+      info(mass, nullptr, nullptr, bulletInertia);
+  info.m_linearDamping = linearDamping;
+  info.m_angularDamping = angularDamping;
+  info.m_friction = friction;
+  info.m_restitution = restitution;
+
+  return info;
+}
+
+//===----------------------------------------------------------------------===//
+// parseShape overloads
+//===----------------------------------------------------------------------===//
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &g, Ogre::CollisionObject *rigidBody,
+           const nif::bhk::Shape &block, const Ogre::Matrix4 &transform) {
+  if (dynamic_cast<const nif::bhk::TransformShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::TransformShape &>(block)};
+    return oo::parseShape(g, rigidBody, b, transform);
+  } else if (dynamic_cast<const nif::bhk::CapsuleShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::CapsuleShape &>(block)};
+    return oo::parseShape(g, b, transform);
+  } else if (dynamic_cast<const nif::bhk::MoppBvTreeShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::MoppBvTreeShape &>(block)};
+    return oo::parseShape(g, rigidBody, b, transform);
+  } else if (dynamic_cast<const nif::bhk::ListShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::ListShape &>(block)};
+    return oo::parseShape(g, rigidBody, b, transform);
+  } else if (dynamic_cast<const nif::bhk::PackedNiTriStripsShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::PackedNiTriStripsShape &>(block)};
+    return oo::parseShape(g, rigidBody, b, transform);
+  } else if (dynamic_cast<const nif::bhk::ConvexVerticesShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::ConvexVerticesShape &>(block)};
+    return oo::parseShape(g, b, transform);
+  } else if (dynamic_cast<const nif::bhk::BoxShape *>(&block)) {
+    const auto &b{static_cast<const nif::bhk::BoxShape &>(block)};
+    return oo::parseShape(g, b, transform);
+  } else {
+    spdlog::get(oo::LOG)->warn("Parsing unknown bhkShape");
+    return {};
+    //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
+    //            "Unknown collision shape",
+    //            "oo::parseShape");
+  }
+}
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::TransformShape &block,
+           const Ogre::Matrix4 &transform) {
+  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
+  const Ogre::Matrix4 t{oo::fromBSCoordinates(block.transform)};
+  return oo::parseShape(g, rigidBody, childShape, transform * t);
+}
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &,
+           const nif::bhk::CapsuleShape &block,
+           const Ogre::Matrix4 &transform) {
+  CollisionShapeVector v;
+
+  const Ogre::Vector3 p1
+      {transform * oo::fromHavokCoordinates(block.firstPoint)};
+  const Ogre::Vector3 p2
+      {transform * oo::fromHavokCoordinates(block.secondPoint)};
+  const float radius
+      {oo::metersPerUnit<float> * oo::unitsPerHavokUnit<float> * block.radius};
+
+  // Bullet capsules must be axis-aligned and the midpoint of the centres must
+  // be the origin. Then, we also need to know which axis to align to.
+  const Ogre::Vector3 delta{p2 - p1};
+  const Ogre::Vector3 avg{(p1 + p2) / 2.0f};
+  const float avgSqLen{avg.squaredLength()};
+  auto isZero = [](float x) { return Ogre::Math::RealEqual(x, 0.0f, 1e-4f); };
+
+  if (isZero(avgSqLen) && isZero(delta.y) && isZero(delta.z)) {
+    v.emplace_back(std::make_unique<btCapsuleShapeX>(radius,
+                                                     Ogre::Math::Abs(delta.x)));
+  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.z)) {
+    v.emplace_back(std::make_unique<btCapsuleShape>(radius,
+                                                    Ogre::Math::Abs(delta.y)));
+  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.y)) {
+    v.emplace_back(std::make_unique<btCapsuleShapeZ>(radius,
+                                                     Ogre::Math::Abs(delta.z)));
+  }
+
+  if (!v.empty()) return v;
+
+  // Not axis-aligned, so use a btMultiSphereShape with two spheres. Bullet
+  // copies the positions and radii, so passing local vectors is ok.
+  std::array<btVector3, 2> positions{
+      qvm::convert_to<btVector3>(p1), qvm::convert_to<btVector3>(p2)
+  };
+  std::array<btScalar, 2> radii{radius, radius};
+  v.emplace_back(std::make_unique<btMultiSphereShape>(positions.data(),
+                                                      radii.data(), 2));
+
+  return v;
+}
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::MoppBvTreeShape &shape,
+           const Ogre::Matrix4 &transform) {
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
+
+  // Instead of decoding the MOPP data we use the linked shape
+  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shape.shape)};
+
+  // Apply the scale and recurse into the linked shape
+  using namespace qvm::sfinae;
+  const auto &scaleMat{qvm::diag_mat(qvm::XXX1(shape.shapeScale))};
+
+  return oo::parseShape(g, rigidBody, childShape, transform * scaleMat);
+}
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::ListShape &shape,
+           const Ogre::Matrix4 &transform) {
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
+
+  oo::CollisionShapeVector children;
+  children.emplace_back(std::make_unique<btCompoundShape>(false));
+  auto *compoundShape{static_cast<btCompoundShape *>(children.back().get())};
+
+  for (const auto shapeRef : shape.subShapes) {
+    const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shapeRef)};
+    auto collisionShape{oo::parseShape(g, rigidBody, childShape, transform)};
+    if (collisionShape.empty()) continue;
+    compoundShape->addChildShape(btTransform::getIdentity(),
+                                 collisionShape.front().get());
+    children.insert(children.end(),
+                    std::make_move_iterator(collisionShape.begin()),
+                    std::make_move_iterator(collisionShape.end()));
+  }
+
+  return children;
+}
+
+oo::CollisionShapeVector
+parseShape(const oo::BlockGraph &g,
+           Ogre::CollisionObject *rigidBody,
+           const nif::bhk::PackedNiTriStripsShape &shape,
+           const Ogre::Matrix4 &transform) {
+  // TODO: Subshapes?
+
+  const auto &data{oo::getBlock<nif::hk::PackedNiTriStripsData>(g, shape.data)};
+
+  using namespace qvm::sfinae;
+  const auto &havokScaleMat{qvm::diag_mat(qvm::XYZ1(shape.scale))};
+  const Ogre::Matrix4 scaleMat{oo::fromHavokCoordinates(havokScaleMat)};
+
+  return oo::parseNiTriStripsData(g, rigidBody, data, transform * scaleMat);
+}
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &, const nif::bhk::ConvexVerticesShape &shape,
+           const Ogre::Matrix4 &transform) {
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
+
+  auto collisionShape{std::make_unique<btConvexHullShape>()};
+  for (const auto &vertex : shape.vertices) {
+    const auto v{transform * oo::fromHavokCoordinates(vertex)};
+    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
+  }
+  CollisionShapeVector v;
+  v.emplace_back(std::move(collisionShape));
+  return v;
+}
+
+CollisionShapeVector
+parseShape(const oo::BlockGraph &, const nif::bhk::BoxShape &shape,
+           const Ogre::Matrix4 &transform) {
+  // TODO: Use material information for collisions and sound
+  //const auto material{shape.material.material};
+
+  // Applying the nif transform may result in a non-axis-aligned box, which
+  // btBoxShape does not support, so we use a btConvexHullShape instead.
+  // If necessary, one could check that the box stays axis-aligned by
+  // extracting the rotation and comparing the volumes of the original
+  // axis-aligned box and the rotated axis-aligned box.
+  auto collisionShape{std::make_unique<btConvexHullShape>()};
+  const auto &qvmHalfExtents{qvm::XYZ(shape.dimensions)};
+  const auto halfExtents{qvm::convert_to<Ogre::Vector3>(qvmHalfExtents)};
+  const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
+  for (const auto &corner : box.getAllCorners()) {
+    using namespace qvm::sfinae;
+    const auto v{transform * qvm::XYZ1(oo::fromHavokCoordinates(corner))};
+    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
+  }
+  CollisionShapeVector v;
+  v.emplace_back(std::move(collisionShape));
+  return v;
+}
+
+CollisionShapeVector
+parseNiTriStripsData(const oo::BlockGraph &, Ogre::CollisionObject *rigidBody,
+                     const nif::hk::PackedNiTriStripsData &block,
+                     const Ogre::Matrix4 &transform) {
+  // For static geometry we construct a btBvhTriangleMeshShape using indexed
+  // triangles. Bullet doesn't copy the underlying vertex and index buffers,
+  // so they need to be kept alive for the lifetime of the collision object.
+  btIndexedMesh mesh{};
+
+  mesh.m_numTriangles = block.numTriangles;
+  mesh.m_numVertices = block.numVertices;
+
+  // TODO: Is aligning the triangles to 8-byte boundaries faster than packing?
+  mesh.m_triangleIndexStride = 3u * sizeof(nif::basic::UShort);
+
+  // Vertex data is always in single-precision, regardless of Ogre or Bullet
+  mesh.m_vertexType = PHY_FLOAT;
+  mesh.m_vertexStride = 3u * sizeof(float);
+
+  mesh.m_triangleIndexBase = oo::fillIndexBuffer(rigidBody->_getIndexBuffer(),
+                                                 block);
+  mesh.m_vertexBase = oo::fillVertexBuffer(rigidBody->_getVertexBuffer(),
+                                           block,
+                                           transform);
+
+  // Construct the actual mesh and give ownership to the rigid body.
+  auto collisionMesh{std::make_unique<btTriangleIndexVertexArray>()};
+  collisionMesh->addIndexedMesh(mesh, PHY_SHORT);
+  auto *collisionMeshPtr{collisionMesh.get()};
+  rigidBody->_setMeshInterface(std::move(collisionMesh));
+
+  CollisionShapeVector v;
+  v.emplace_back(std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr,
+                                                          false));
+  return v;
+
+  // TODO: Support dynamic concave geometry
+}
+
+//===----------------------------------------------------------------------===//
+// Vertex/Index buffer functions
+//===----------------------------------------------------------------------===//
+unsigned char *fillIndexBuffer(std::vector<uint16_t> &indexBuf,
+                               const nif::hk::PackedNiTriStripsData &block) {
+  indexBuf.assign(block.numTriangles * 3u, 0u);
+  auto it{indexBuf.begin()};
+  for (const auto &triData : block.triangles) {
+    const auto &tri{triData.triangle};
+    *it++ = tri.v1;
+    *it++ = tri.v2;
+    *it++ = tri.v3;
+  }
+  return reinterpret_cast<unsigned char *>(indexBuf.data());
+}
+
+unsigned char *fillVertexBuffer(std::vector<float> &vertexBuf,
+                                const nif::hk::PackedNiTriStripsData &block,
+                                const Ogre::Matrix4 &transform) {
+  vertexBuf.assign(block.numVertices * 3u, 0.0f);
+  auto it{vertexBuf.begin()};
+  for (const auto &vertex : block.vertices) {
+    using namespace oo;
+    const auto v{transform * oo::fromHavokCoordinates(vertex)};
+    *it++ = v.x;
+    *it++ = v.y;
+    *it++ = v.z;
+  }
+  return reinterpret_cast<unsigned char *>(vertexBuf.data());
+}
+
+Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
+  Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
+  t.makeTransform(oo::fromHavokCoordinates(qvm::XYZ(body.translation)),
+                  Ogre::Vector3::UNIT_SCALE,
+                  oo::fromHavokCoordinates(body.rotation));
+  return t;
+}
+
+//===----------------------------------------------------------------------===//
+// CollisionObjectLoaderState definitions
+//===----------------------------------------------------------------------===//
+
 CollisionObjectLoaderState::CollisionObjectLoaderState(
     Ogre::CollisionObject *collisionObject, oo::BlockGraph blocks)
-    : mRigidBody(collisionObject), mLogger(spdlog::get(oo::LOG)),
-      mUndoRootTransform(false) {
+    : mRigidBody(collisionObject) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};
@@ -21,36 +418,9 @@ CollisionObjectLoaderState::CollisionObjectLoaderState(
   boost::depth_first_search(blocks, *this, propertyMap);
 }
 
-CollisionObjectLoaderState::CollisionObjectLoaderState(
-    Ogre::CollisionObject *collisionObject, Graph blocks,
-    vertex_descriptor start, bool hasHavok, bool isSkeleton)
-    : mRigidBody(collisionObject),
-      mHasHavok(hasHavok),
-      mIsSkeleton(isSkeleton),
-      mLogger(spdlog::get(oo::LOG)),
-      mUndoRootTransform(true) {
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
-  const auto propertyMap{boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, blocks))};
-
-  boost::depth_first_visit(blocks, start, *this, propertyMap);
-}
-
 void
-CollisionObjectLoaderState::start_vertex(vertex_descriptor v, const Graph &g) {
-  if (mUndoRootTransform) {
-    // Must undo transformation of start node so as to not apply it twice.
-    // TODO: This is ugly, just don't apply it in the first place.
-    const auto &block{*g[v]};
-    if (dynamic_cast<const nif::NiNode *>(&block)) {
-      const auto &node{static_cast<const nif::NiNode &>(block)};
-      const Ogre::Vector3 tra{oo::fromBSCoordinates(node.translation)};
-      const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
-      mTransform.makeInverseTransform(tra, Ogre::Vector3::UNIT_SCALE, rot);
-    }
-  } else {
-    mTransform = Ogre::Matrix4::IDENTITY;
-  }
+CollisionObjectLoaderState::start_vertex(vertex_descriptor, const Graph &) {
+  mTransform = Ogre::Matrix4::IDENTITY;
 }
 
 void CollisionObjectLoaderState::discover_vertex(vertex_descriptor v,
@@ -112,388 +482,12 @@ void CollisionObjectLoaderState::discover_vertex(const nif::BSBound &bsBound,
 void CollisionObjectLoaderState::discover_vertex(
     const nif::bhk::CollisionObject &collisionObject, const Graph &g) {
   if (!mHasHavok) return;
-  parseCollisionObject(g, collisionObject);
+  oo::parseCollisionObject(g, mRigidBody, collisionObject, mTransform);
 }
 
 void CollisionObjectLoaderState::finish_vertex(const nif::NiNode &node,
                                                const Graph &/*g*/) {
   mTransform = mTransform * getTransform(node).inverse();
-}
-
-void CollisionObjectLoaderState::parseCollisionObject(
-    const Graph &g, const nif::bhk::CollisionObject &block) {
-  // TODO: COFlags
-  // TODO: target
-  const auto &worldObj{oo::getBlock<nif::bhk::WorldObject>(g, block.body)};
-  auto[collisionShapes, info]{parseWorldObject(g, worldObj)};
-  if (!collisionShapes.empty()) {
-    if (info && info->m_mass >= 0.1f) {
-      collisionShapes.front()->setMargin(0.01f);
-    }
-    mRigidBody->_setCollisionShape(std::move(collisionShapes.front()));
-    collisionShapes.erase(collisionShapes.begin());
-    if (!collisionShapes.empty()) {
-      mRigidBody->_storeIndirectCollisionShapes(std::move(collisionShapes));
-    }
-  }
-  if (info) mRigidBody->_setRigidBodyInfo(std::move(info));
-}
-
-std::pair<CollisionObjectLoaderState::CollisionShapeVector,
-          std::unique_ptr<Ogre::RigidBodyInfo>>
-CollisionObjectLoaderState::parseWorldObject(
-    const Graph &g, const nif::bhk::WorldObject &block) {
-  // TODO: Flags
-
-  const Ogre::Matrix4 localTrans = [&block]() {
-    // TODO: RigidBody that is not a RigidBodyT
-    if (dynamic_cast<const nif::bhk::RigidBodyT *>(&block)) {
-      const auto &body{dynamic_cast<const nif::bhk::RigidBodyT &>(block)};
-      return getRigidBodyTransform(body);
-    } else {
-      return Ogre::Matrix4::IDENTITY;
-    }
-  }();
-  mTransform = mTransform * localTrans;
-  const auto &shape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
-  auto collisionShapes{parseShape(g, shape)};
-  mTransform = mTransform * localTrans.inverse();
-
-  std::unique_ptr<Ogre::RigidBodyInfo> info{};
-  if (dynamic_cast<const nif::bhk::RigidBody *>(&block)
-      && !collisionShapes.empty()) {
-    const auto &body{dynamic_cast<const nif::bhk::RigidBody &>(block)};
-    info = std::make_unique<Ogre::RigidBodyInfo>(generateRigidBodyInfo(body));
-    info->m_collisionShape = collisionShapes.front().get();
-  }
-  return std::make_pair(std::move(collisionShapes), std::move(info));
-}
-
-Ogre::RigidBodyInfo CollisionObjectLoaderState::generateRigidBodyInfo(
-    const nif::bhk::RigidBody &block) const {
-  // This does not seem to affect the translation in any way.
-  // TODO: What is the Havok origin used for?
-  // const Ogre::Vector3 origin{oo::fromNif(block.center).xyz()};
-
-  // Bullet needs a diagonalized inertia tensor given as a vector, and the
-  // file stores it as a 3x4 matrix. We ignore the last (w) column and
-  // compute the eigenvalues. Also we need to change from BS coordinates.
-  const auto &hkI{block.inertiaTensor};
-  const Ogre::Matrix3 bsI{hkI.m11, hkI.m12, hkI.m13,
-                          hkI.m21, hkI.m22, hkI.m23,
-                          hkI.m31, hkI.m32, hkI.m33};
-  const Ogre::Matrix3 inertiaTensor{oo::fromBSCoordinates(bsI)};
-  std::array<Ogre::Vector3, 3> principalAxes{};
-  Ogre::Vector3 principalMoments{};
-  inertiaTensor.EigenSolveSymmetric(principalMoments.ptr(),
-                                    principalAxes.data());
-  // Coordinates in havok are scaled up by a factor of 7, and the units of the
-  // moments of inertia are kg m^2.
-  principalMoments /= (7.0f * 7.0f);
-
-  // We have the diagonalization
-  // inertiaTensor = principalAxes * diag(principalMoments) * principalAxes^T
-  // To do this properly we should change to the principal frame but for now
-  // assume the principal axes are coordinate-axis aligned (this seems to hold
-  // in practice).
-  // TODO: Change to principal frame
-
-  // The units for these are the same in Bullet and Havok
-  const float mass{block.mass};
-  const float linearDamping{block.linearDamping};
-  const float angularDamping{block.angularDamping};
-  const float friction{block.friction};
-  const float restitution{block.restitution};
-
-  // TODO: Constraints
-
-  // Convert the Ogre parameters to Bullet ones and set up the rigid body
-  const auto bulletInertia{qvm::convert_to<btVector3>(principalMoments)};
-  btRigidBody::btRigidBodyConstructionInfo
-      info(mass, nullptr, nullptr, bulletInertia);
-  info.m_linearDamping = linearDamping;
-  info.m_angularDamping = angularDamping;
-  info.m_friction = friction;
-  info.m_restitution = restitution;
-
-  return info;
-}
-
-//===----------------------------------------------------------------------===//
-// parseShape overloads
-//===----------------------------------------------------------------------===//
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &g,
-                                       const nif::bhk::Shape &block) {
-  using namespace nif::bhk;
-  if (dynamic_cast<const TransformShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const TransformShape &>(block));
-  } else if (dynamic_cast<const CapsuleShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const CapsuleShape &>(block));
-  } else if (dynamic_cast<const MoppBvTreeShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const MoppBvTreeShape &>(block));
-  } else if (dynamic_cast<const ListShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const ListShape &>(block));
-  } else if (dynamic_cast<const PackedNiTriStripsShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const PackedNiTriStripsShape &>(block));
-  } else if (dynamic_cast<const ConvexVerticesShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const ConvexVerticesShape &>(block));
-  } else if (dynamic_cast<const BoxShape *>(&block)) {
-    return parseShape(g, dynamic_cast<const BoxShape &>(block));
-  } else {
-    mLogger->warn("Parsing unknown bhkShape");
-    return {};
-    //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
-    //            "Unknown collision shape",
-    //            "CollisionObjectLoaderState::parseShape");
-  }
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &g,
-                                       const nif::bhk::TransformShape &block) {
-  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
-
-  const Ogre::Matrix4 t{oo::fromBSCoordinates(block.transform)};
-  mTransform = mTransform * t;
-  auto collisionShape{parseShape(g, childShape)};
-  mTransform = mTransform * t.inverse();
-
-  return collisionShape;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &,
-                                       const nif::bhk::CapsuleShape &block) {
-  CollisionShapeVector v;
-
-  const Ogre::Vector3 p1
-      {mTransform * oo::fromHavokCoordinates(block.firstPoint)};
-  const Ogre::Vector3 p2
-      {mTransform * oo::fromHavokCoordinates(block.secondPoint)};
-  const float radius
-      {oo::metersPerUnit<float> * oo::unitsPerHavokUnit<float> * block.radius};
-
-  // Bullet capsules must be axis-aligned and the midpoint of the centres must
-  // be the origin. Then, we also need to know which axis to align to.
-  const Ogre::Vector3 delta{p2 - p1};
-  const Ogre::Vector3 avg{(p1 + p2) / 2.0f};
-  const float avgSqLen{avg.squaredLength()};
-  auto isZero = [](float x) { return Ogre::Math::RealEqual(x, 0.0f, 1e-4f); };
-
-  if (isZero(avgSqLen) && isZero(delta.y) && isZero(delta.z)) {
-    v.emplace_back(std::make_unique<btCapsuleShapeX>(radius,
-                                                     Ogre::Math::Abs(delta.x)));
-  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.z)) {
-    v.emplace_back(std::make_unique<btCapsuleShape>(radius,
-                                                    Ogre::Math::Abs(delta.y)));
-  } else if (isZero(avgSqLen) && isZero(delta.x) && isZero(delta.y)) {
-    v.emplace_back(std::make_unique<btCapsuleShapeZ>(radius,
-                                                     Ogre::Math::Abs(delta.z)));
-  }
-
-  if (!v.empty()) return v;
-
-  // Not axis-aligned, so use a btMultiSphereShape with two spheres. Bullet
-  // copies the positions and radii, so passing local vectors is ok.
-  std::array<btVector3, 2> positions{
-      qvm::convert_to<btVector3>(p1), qvm::convert_to<btVector3>(p2)
-  };
-  std::array<btScalar, 2> radii{radius, radius};
-  v.emplace_back(std::make_unique<btMultiSphereShape>(positions.data(),
-                                                      radii.data(), 2));
-
-  return v;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &g,
-                                       const nif::bhk::MoppBvTreeShape &shape) {
-  // TODO: Use material information for collisions and sound
-  //const auto material{shape.material.material};
-
-  // Instead of decoding the MOPP data we use the linked shape
-  const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shape.shape)};
-
-  // Apply the scale and recurse into the linked shape
-  // The effort here is to avoid scaling the w component
-  const float scale{shape.shapeScale};
-  const Ogre::Matrix4 scaleMat = [scale]() {
-    Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-    s.setScale({scale, scale, scale});
-    return s;
-  }();
-
-  mTransform = mTransform * scaleMat;
-  auto collisionShape{parseShape(g, childShape)};
-  mTransform = mTransform * scaleMat.inverse();
-
-  return collisionShape;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &g,
-                                       const nif::bhk::ListShape &shape) {
-  // TODO: Use material information for collisions and sound
-  //const auto material{shape.material.material};
-
-  CollisionShapeVector children;
-  children.emplace_back(std::make_unique<btCompoundShape>(false));
-  auto *compoundShape{static_cast<btCompoundShape *>(children.back().get())};
-
-  for (const auto shapeRef : shape.subShapes) {
-    const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shapeRef)};
-    auto collisionShape{parseShape(g, childShape)};
-    if (collisionShape.empty()) continue;
-    compoundShape->addChildShape(btTransform::getIdentity(),
-                                 collisionShape.front().get());
-    children.insert(children.end(),
-                    std::make_move_iterator(collisionShape.begin()),
-                    std::make_move_iterator(collisionShape.end()));
-  }
-
-  return children;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(
-    const Graph &g, const nif::bhk::PackedNiTriStripsShape &shape) {
-  // TODO: Subshapes?
-
-  const auto &data{oo::getBlock<nif::hk::PackedNiTriStripsData>(g, shape.data)};
-
-  const Ogre::Matrix4 scaleMat = [&shape]() {
-    Ogre::Matrix4 s{Ogre::Matrix4::IDENTITY};
-    s.setScale(qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.scale)));
-    return oo::fromHavokCoordinates(s);
-  }();
-
-  mTransform = mTransform * scaleMat;
-  auto collisionShape{parseNiTriStripsData(g, data)};
-  mTransform = mTransform * scaleMat.inverse();
-
-  return collisionShape;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
-                                       const nif::bhk::ConvexVerticesShape &shape) {
-  // TODO: Use material information for collisions and sound
-  //const auto material{shape.material.material};
-
-  auto collisionShape{std::make_unique<btConvexHullShape>()};
-  for (const auto &vertex : shape.vertices) {
-    using namespace qvm;
-    const auto v{mTransform * oo::fromHavokCoordinates(vertex)};
-    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
-  }
-  CollisionShapeVector v;
-  v.emplace_back(std::move(collisionShape));
-  return v;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseShape(const Graph &/*g*/,
-                                       const nif::bhk::BoxShape &shape) {
-  // TODO: Use material information for collisions and sound
-  //const auto material{shape.material.material};
-
-  // Applying the nif transform may result in a non-axis-aligned box, which
-  // btBoxShape does not support, so we use a btConvexHullShape instead.
-  // If necessary, one could check that the box stays axis-aligned by
-  // extracting the rotation and comparing the volumes of the original
-  // axis-aligned box and the rotated axis-aligned box.
-  auto collisionShape{std::make_unique<btConvexHullShape>()};
-  const auto halfExtents
-      {qvm::convert_to<Ogre::Vector3>(qvm::XYZ(shape.dimensions))};
-  const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
-  for (const auto &corner : box.getAllCorners()) {
-    using namespace qvm;
-    const auto v{mTransform * qvm::XYZ1(oo::fromHavokCoordinates(corner))};
-    collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
-  }
-  CollisionShapeVector v;
-  v.emplace_back(std::move(collisionShape));
-  return v;
-}
-
-CollisionObjectLoaderState::CollisionShapeVector
-CollisionObjectLoaderState::parseNiTriStripsData(
-    const Graph &/*g*/, const nif::hk::PackedNiTriStripsData &block) {
-  // For static geometry we construct a btBvhTriangleMeshShape using indexed
-  // triangles. Bullet doesn't copy the underlying vertex and index buffers,
-  // so they need to be kept alive for the lifetime of the collision object.
-  btIndexedMesh mesh{};
-
-  mesh.m_numTriangles = block.numTriangles;
-  mesh.m_numVertices = block.numVertices;
-
-  // TODO: Is aligning the triangles to 8-byte boundaries faster than packing?
-  mesh.m_triangleIndexStride = 3u * sizeof(nif::basic::UShort);
-
-  // Vertex data is always in single-precision, regardless of Ogre or Bullet
-  mesh.m_vertexType = PHY_FLOAT;
-  mesh.m_vertexStride = 3u * sizeof(float);
-
-  mesh.m_triangleIndexBase = fillIndexBuffer(mRigidBody->_getIndexBuffer(),
-                                             block);
-  mesh.m_vertexBase = fillVertexBuffer(mRigidBody->_getVertexBuffer(),
-                                       block);
-
-  // Construct the actual mesh and give ownership to the rigid body.
-  auto collisionMesh{std::make_unique<btTriangleIndexVertexArray>()};
-  collisionMesh->addIndexedMesh(mesh, PHY_SHORT);
-  auto *collisionMeshPtr{collisionMesh.get()};
-  mRigidBody->_setMeshInterface(std::move(collisionMesh));
-
-  CollisionShapeVector v;
-  v.emplace_back(std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr,
-                                                          false));
-  return v;
-
-  // TODO: Support dynamic concave geometry
-}
-
-//===----------------------------------------------------------------------===//
-// Vertex/Index buffer functions
-//===----------------------------------------------------------------------===//
-unsigned char *CollisionObjectLoaderState::fillIndexBuffer(
-    std::vector<uint16_t> &indexBuf,
-    const nif::hk::PackedNiTriStripsData &block) {
-
-  indexBuf.assign(block.numTriangles * 3u, 0u);
-  auto it{indexBuf.begin()};
-  for (const auto &triData : block.triangles) {
-    const auto &tri{triData.triangle};
-    *it++ = tri.v1;
-    *it++ = tri.v2;
-    *it++ = tri.v3;
-  }
-  return reinterpret_cast<unsigned char *>(indexBuf.data());
-}
-
-unsigned char *CollisionObjectLoaderState::fillVertexBuffer(
-    std::vector<float> &vertexBuf,
-    const nif::hk::PackedNiTriStripsData &block) {
-
-  vertexBuf.assign(block.numVertices * 3u, 0.0f);
-  auto it{vertexBuf.begin()};
-  for (const auto &vertex : block.vertices) {
-    using namespace oo;
-    const auto v{mTransform * oo::fromHavokCoordinates(vertex)};
-    *it++ = v.x;
-    *it++ = v.y;
-    *it++ = v.z;
-  }
-  return reinterpret_cast<unsigned char *>(vertexBuf.data());
-}
-
-Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
-  Ogre::Matrix4 t{Ogre::Matrix4::IDENTITY};
-  t.makeTransform(oo::fromHavokCoordinates(qvm::XYZ(body.translation)),
-                  Ogre::Vector3::UNIT_SCALE,
-                  oo::fromHavokCoordinates(body.rotation));
-  return t;
 }
 
 } // namespace oo

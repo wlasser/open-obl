@@ -236,13 +236,11 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
   // We can't create a reloadable resource because the loader requires state.
   auto &colObjMgr{Ogre::CollisionObjectManager::getSingleton()};
   const std::string name{mState->mName + std::to_string(v) + "CollisionObject"};
-  auto[collisionObjectPtr, created]{colObjMgr.createOrRetrieve(
-      name, mState->mGroup, true, nullptr)};
-  if (created) {
-    oo::CollisionObjectLoaderState loader(
-        static_cast<Ogre::CollisionObject *>(collisionObjectPtr.get()), g, u,
-        mState->mHasHavok, mState->mIsSkeleton);
-  }
+  const std::string &group{mState->mGroup};
+  auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
+  Ogre::CollisionObjectPtr collisionObjectPtr
+      {std::static_pointer_cast<Ogre::CollisionObject>(ptr)};
+  if (created) oo::createCollisionObject(collisionObjectPtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
     const std::map<std::string, std::string> params{
@@ -305,19 +303,16 @@ void RagdollVisitor::discover_vertex(const nif::bhk::BlendCollisionObject &node,
                                      vertex_descriptor v,
                                      const Graph &g) {
   // TODO: Reduce duplication
-  // Collision objects come in one piece. Dispatch to the collision loader,
-  // starting from current working root.
+  const vertex_descriptor u{boost::in_edges(v, g).first->m_source};
 
   // We can't create a reloadable resource because the loader requires state.
   auto &colObjMgr{Ogre::CollisionObjectManager::getSingleton()};
   const std::string name{mState->mName + std::to_string(v) + "CollisionObject"};
-  auto[collisionObjectPtr, created]{colObjMgr.createOrRetrieve(
-      name, mState->mGroup, true, nullptr)};
-  if (created) {
-    oo::CollisionObjectLoaderState loader(
-        static_cast<Ogre::CollisionObject *>(collisionObjectPtr.get()), g, v,
-        mState->mHasHavok, mState->mIsSkeleton);
-  }
+  const std::string &group{mState->mGroup};
+  auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
+  Ogre::CollisionObjectPtr collisionObjectPtr
+      {std::static_pointer_cast<Ogre::CollisionObject>(ptr)};
+  if (created) oo::createCollisionObject(collisionObjectPtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
     const std::map<std::string, std::string> params{
