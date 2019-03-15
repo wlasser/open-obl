@@ -219,8 +219,13 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
   const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
   if (mState->mIsSkeleton) {
   }
-  mState->mRoot = gsl::make_not_null(
-      mState->mRoot->createChildSceneNode(tra, rot));
+  mState->mRoot = gsl::make_not_null(mState->mRoot->createChildSceneNode());
+  mState->mRoot->setPosition(tra);
+  // TODO: I don't know why this needs to be inverted, I can only imagine
+  //       somewhere there is a bug, but I cannot find it. If you can work it
+  //       out, dear reader, please tell me...
+  mState->mRoot->rotate(rot.Inverse(), Ogre::SceneNode::TS_WORLD);
+  mState->mRoot->setInitialState();
 }
 
 void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
@@ -277,7 +282,7 @@ void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
   const std::string &group{mState->mGroup};
   auto[ptr, created]{meshMgr.createOrRetrieve(name, group, true, nullptr)};
   Ogre::MeshPtr meshPtr{std::static_pointer_cast<Ogre::Mesh>(ptr)};
-  if (created) oo::MeshLoaderState loader(meshPtr.get(), g, u);
+  if (created) oo::createMesh(meshPtr.get(), u, g);
   // Record that this node and its siblings have been visited.
   mState->mVisitedGeometry.emplace(u);
 

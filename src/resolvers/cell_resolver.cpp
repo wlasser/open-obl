@@ -495,6 +495,8 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
                             const record::raw::REFRTransformation &transform) {
   const auto &data{transform.positionRotation.data};
 
+  node->resetToInitialState();
+
   node->setPosition(oo::fromBSCoordinates(
       Ogre::Vector3{data.x, data.y, data.z}));
 

@@ -187,16 +187,17 @@ class MeshLoaderState {
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
   explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks);
-  explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks,
-                           vertex_descriptor start);
 
  private:
   Ogre::Mesh *mMesh;
   BlockGraph mBlocks;
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   std::shared_ptr<spdlog::logger> mLogger{};
-  bool mUndoRootTransform;
 };
+
+void createMesh(Ogre::Mesh *mesh,
+                oo::BlockGraph::vertex_descriptor start,
+                const oo::BlockGraph &g);
 
 /// @}
 

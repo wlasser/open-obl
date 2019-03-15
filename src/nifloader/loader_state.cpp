@@ -8,7 +8,7 @@ Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
 
   const Ogre::Quaternion rotation = [&block]() {
     const auto m{oo::fromBSCoordinates(block.rotation)};
-    return Ogre::Quaternion{m.transpose()};
+    return Ogre::Quaternion{m};
   }();
 
   const Ogre::Vector3 scale{block.scale, block.scale, block.scale};
