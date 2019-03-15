@@ -443,8 +443,8 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
     // Shaders expect fog, so if fog no fog then we just set it to be far away.
     const float fogNear{lighting->data.fogNear * oo::metersPerUnit<float>};
     const float fogFar = [&]() {
-      float f{lighting->data.fogFar * oo::metersPerUnit<float>};
-      return Ogre::Math::RealEqual(fogFar, 0.0f, 0.1f) ? 10'000.0f : f;
+      const float f{lighting->data.fogFar * oo::metersPerUnit<float>};
+      return Ogre::Math::RealEqual(f, 0.0f, 0.1f) ? 10'000.0f : f;
     }();
     Ogre::ColourValue fog{};
     fog.setAsABGR(lighting->data.fogColor.v);
