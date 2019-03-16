@@ -21,6 +21,8 @@ void createCollisionObject(Ogre::CollisionObject *rigidBody,
                 "oo::createCollisionObject");
   }
 
+  spdlog::get(oo::LOG)->info("createCollisionObject({})", rigidBody->getName());
+
   // It is assumed that the transformation of the root node will be applied via
   // its Ogre::Node transformation, and thus we do not need to bake it in.
   const Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};

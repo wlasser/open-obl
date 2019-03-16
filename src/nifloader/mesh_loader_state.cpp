@@ -973,6 +973,8 @@ void createMesh(Ogre::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
                 "oo::createMesh");
   }
 
+  spdlog::get(oo::LOG)->info("createMesh({})", mesh->getName());
+
   // It is assumed that the transformation of the root node will be applied via
   // it's Ogre::Node transformation, and thus we do not need to bake it in.
   const Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
