@@ -43,7 +43,20 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   ///        called before the first physics update of the scene. If called
   ///        afterwards, there's no guarantee that you won't upset Bullet.
   void setScale(const Vector3 &scale);
+
+  /// Disable or enable the Bullet `CF_NO_CONTACT_RESPONSE` flag.
+  /// \remark If `enabled` is true then `CF_NO_CONTACT_RESPONSE` will *not* be
+  ///         set.
+  void setContactResponseEnabled(bool enabled);
+
+  /// Return false if the Bullet `CF_NO_CONTACT_RESPONSE` flag is set, and true
+  /// otherwise.
+  bool getContactResponseEnabled() const noexcept;
+
  private:
+  using flag_t = std::make_unsigned_t<
+      std::underlying_type_t<btCollisionObject::CollisionFlags>>;
+
   friend class RigidBodyFactory;
 
   /// \remark `Ogre::RigidBody` objects should be created through

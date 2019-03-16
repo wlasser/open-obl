@@ -9,7 +9,8 @@ void RigidBody::_notifyAttached(Node *parent, bool isTagPoint) {
   MovableObject::_notifyAttached(parent, isTagPoint);
   if (isTagPoint) {
     mRigidBody->setCollisionFlags(
-        btCollisionObject::CollisionFlags::CF_STATIC_OBJECT);
+        static_cast<flag_t>(mRigidBody->getCollisionFlags())
+            | static_cast<flag_t>(btCollisionObject::CF_STATIC_OBJECT));
   } else {
     bind(parent);
   }
@@ -61,6 +62,21 @@ void RigidBody::visitRenderables(Renderable::Visitor */*visitor*/,
 
 btRigidBody *RigidBody::getRigidBody() const {
   return mRigidBody.get();
+}
+
+void RigidBody::setContactResponseEnabled(bool enabled) {
+  constexpr auto NoContactResponse
+      {static_cast<flag_t>(btCollisionObject::CF_NO_CONTACT_RESPONSE)};
+
+  const auto flags{static_cast<flag_t>(mRigidBody->getCollisionFlags())};
+
+  mRigidBody->setCollisionFlags(enabled ? (flags & ~NoContactResponse)
+                                        : (flags | NoContactResponse));
+}
+
+bool RigidBody::getContactResponseEnabled() const noexcept {
+  return 0 != (static_cast<flag_t>(mRigidBody->getCollisionFlags())
+      & static_cast<flag_t>(btCollisionObject::CF_NO_CONTACT_RESPONSE));
 }
 
 RigidBody::RigidBody(const String &name, CollisionObjectPtr collisionObject)
