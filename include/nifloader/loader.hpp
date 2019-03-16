@@ -13,43 +13,155 @@
 /// \defgroup OpenOblivionNifloader NIF Loader
 /// Parsers for NIF files into different OGRE resources.
 ///
-/// A single NIF file can contain descriptions of what amounts to several
-/// different `Ogre::Resource`s. For example, NIF files can contain collision
-/// and animation information as well as mesh information. Because of this,
-/// a single NIF file is arguably more structurally similar to a subgraph of the
-/// scene graph than a single resource. Nonetheless, because NIF files use a
-/// much wider variety of types of scene node than Ogre, we do in fact treat NIF
-/// files as a resource.
+/// ### Overview
 ///
-/// In particular, each NIF is an `Ogre::Resource` in its own right---an
-/// `Ogre::NifResource`---and it is not predetermined that a NIF file
-/// represents an `Ogre::Mesh`, or `Ogre::Skeleton`, or another resource.
-/// Rather, each `Ogre::NifResource` is expected to be loaded once generically
-/// and then used several times as a starting point for other specialized
-/// loaders which interpret the `Ogre::NifResource` as a conventional resource.
-/// Any irrelevant parts of the NIF are simply ignored during this second
-/// stage.
+/// An object in the game world usually consists of multiple components; it has
+/// an `Ogre::Entity` component defining how it looks, an `Ogre::RigidBody`
+/// component defining the physics it obeys, and possibly an
+/// `Ogre::SkeletonInstance` describing how it is animated. All these things
+/// represent different facets of a single object, and it is unlikely that one
+/// would exist without all the others. To OGRE, these three things each come
+/// from a different `Ogre::Resource`: an `Ogre::Mesh` for the `Ogre::Entity`,
+/// an `Ogre::CollisionObject` for the `Ogre::RigidBody`, and an
+/// `Ogre::Skeleton` for the `Ogre::SkeletonInstance`. To a NIF file however,
+/// they are all part of the same whole and thus are all described by the same
+/// file (with the exception of some skeletons, discussed later).
 ///
-/// The order of operations above is slightly backwards; in actuality a single
-/// NIF file---as it appears in an `Ogre::ResourceLocation`---is declared as
-/// each type of `Ogre::Resource` that it could represent, but never explicitly
-/// as an `Ogre::NifResource`. When the user loads a NIF file with the loader
-/// corresponding to the resource type they require, the loader first attempts
-/// to load the NIF as an `Ogre::NifResource`, then proceeds with the
-/// specialized loading that it was declared with.
+/// A NIF file consists of a hierarchy of *blocks* forming a subgraph of some
+/// hypothetical scene graph. Each block corresponds to a node in the graph,
+/// each describing different properties of the object represented by the file.
+/// In the NIF file, every piece of information is part of the scene graph, such
+/// that an engine could---and presumably does, in the original
+/// implementation---take the subgraph and copy it directly into the scene graph
+/// of the game world. For us it is not the simple, as OGRE does *not* treat
+/// every piece of information as an `Ogre::SceneNode`; `Ogre::Entity`s and
+/// `Ogre::RigidBody`s are instances of `Ogre::MovableObject`, which are
+/// *attached* to `Ogre::SceneNode`s instead of being `Ogre::SceneNode`s
+/// themselves.
 ///
-/// In the case of a `record::STAT` for example, the specified NIF file is
-/// expected to represent both an `Ogre::Mesh` and an `Ogre::CollisionObject`.
-/// Both the `oo::MeshLoader` and `oo::CollisionObjectLoader` will load the NIF
-/// as an `Ogre::NifResource`, but the loading will only actually happen once
-/// because OGRE helpfully caches the `Ogre::NifResource` after the first load.
-/// This means that the NIF file still only has to be loaded from disk once,
-/// even though it is used to construct multiple different resources.
+/// Because NIF file contain descriptions of what are, to OGRE, different
+/// resources, it is tempting to split apart each NIF file into an `Ogre::Mesh`,
+/// an `Ogre::CollisionObject`, and so on. Not only does this present
+/// difficulties when multiple different meshes or physics objects are contained
+/// in the same file (consider a falling rockslide trap for instance, which has
+/// many different rocks), the graph structure of the file carries key
+/// information about how to assemble the different components in the game
+/// world, and cannot be discarded. Nonetheless, we would still like to use
+/// OGRE's very handy resource system, and thus treat each NIF file as a single
+/// `Ogre::NifResource`.
 ///
-/// Unlike the specialized loaders, there is no explicit `oo::NifLoader`
-/// because there is only one way to load an `Ogre::NifResource`. The main work
-/// is done in `Ogre::NifResource::load()` via `oo::createBlockGraph()`.
-
+/// We now have the problem that a single `Ogre::NifResource` actually contains
+/// multiple *other* OGRE resources, and moreover the number and type of
+/// resources is not known until the `Ogre::NifResource` has been loaded.
+/// `Ogre::NifResource`s are therefore not used to produce individual
+/// `Ogre::MovableObject`s directly, but instead are used to insert new
+/// `Ogre::SceneNode`s with attached `Ogre::MovableObject`s directly into an
+/// `Ogre::SceneManager`'s scene graph. This is done primarily by the
+/// `oo::insertNif()` function. An `Ogre::NifResource` is then a representation
+/// of the subgraph stored in the NIF file, while `oo::insertNif()` is a
+/// transformation of that subgraph into a form understandable by OGRE, followed
+/// by an inclusion of that transformed subgraph into our scene graph.
+///
+/// It is notable that multiple calls to `oo::insertNif()` with the same NIF
+/// file as input do not require multiple reads of the NIF file; the first call
+/// will load the appropriate `Ogre::NifResource`, and any subsequent calls will
+/// simply use that resource cached by OGRE. The different `Ogre::Resource`s
+/// produced by `oo::insertNif()` are also cached, so multiple insertions of
+/// the same NIF file require only relatively quick constructions of
+/// `Ogre::MovableObject`s, which would be required in any other implementation
+/// of a model loading system.
+///
+/// ### The Block Graph
+///
+/// In the NIF file, the vertices of the subgraph, called *blocks*, are given a
+/// type deriving from `nif::NiObject`. These types for a very deep hierarchy
+/// and, along with a version number for the NIF file, precisely define the
+/// properties of that block. The blocks themselves are stored sequentially in
+/// some order (think a `std::vector<nif::NiObject *>`), with the position of
+/// the block, called its *block index*, uniquely identifying the block in that
+/// NIF file.
+///
+/// The subgraph itself is variously referred to as *the block hierarchy*,
+/// *the hierarchy*, or *the block graph*, and is represented by the Boost
+/// Graph Library (BGL) type `oo::BlockGraph`. The vertices of this graph type
+/// are instances of `oo::Block`, which are owning wrappers around a polymorphic
+/// `nif::NiObject` instance. In the NIF file, the various relationships
+/// between blocks are expressed using the `nif::basic::Ref<T>` and
+/// `nif::basic::Ptr<T>` class templates. These are specialized for each block
+/// type (class derived from `nif::NiObject`), with their instances storing the
+/// block index of some block of that type---or any type derived from it---in
+/// the hierarchy. They therefore act a lot like pointers, though there are some
+/// important differences. Firstly, `nif::basic::Ref`s point 'down' the
+/// hierarchy, to blocks whose block index is greater than the block containing
+/// the `nif::basic::Ref`, whereas `nif::basic::Ptr`s point 'up' the hierarchy.
+/// Moreover `nif::basic::Ref`s can be null, whereas `nif::basic::Ptr`s cannot
+/// be. This terminology is unfortunate, as it is opposite to the C++ notion of
+/// pointers and references!
+///
+/// \todo It might be nice if `nif::basic::Ptr` and `nif::basic::Ref` can know
+///       which block graph they point into somehow, and then become actual
+///       fancy pointers which are dereferenceable.
+///
+/// The distinction between `nif::basic::Ref`s and `nif::basic::Ptr`s is
+/// mirrored in the construction of the block graph. Draw an edge from block `A`
+/// to block `B` if and only if block `A` contains a `nif::basic::Ref` pointing
+/// to block `B`. If this is done, then because `nif::basic::Ref`s point down
+/// the hierarchy, every edge will go from a block with index \f$i\f$ to a block
+/// with index \f$j > i\f$. The ordering of the blocks is then automatically a
+/// topological ordering, and the block graph is a DAG (directed acyclic graph).
+/// On the other hand, the use of `nif::basic::Ptr`s as a way to point back up
+/// the hierarchy can create cycles if introduced as edges.
+///
+/// \remark In practice not all edges are added to the graph. The implication
+///         'If there is an edge from `A` to `B` then `A` contains a
+///         `nif::basic::Ref` pointing to `B`' is true, but the converse is not.
+///         Only those edges that are actually needed have been added; see
+///         the implementation of `oo::createBlockGraph()` for an list.
+///
+/// ### Inserting NIF Files
+///
+/// The primary method of inserting the contents of a NIF file into a scene is
+/// through the `oo::insertNif()` function, which does a depth-first visit
+/// through the block graph of a NIF file and performs a different action
+/// depending on the type of the block. The terminology used by
+/// `boost::depth_first_visit` in the BGL is used below. The current working
+/// node is set initially to a given root node, usually the scene root.
+///  - If a `nif::NiNode` is discovered, then an `Ogre::SceneNode` is added
+///    to the scene graph with the same transformation, respecting the
+///    parent-child relationships of the `nif::NiNode` with any other
+///    `nif::NiNode`s in the file. The transformation is set as the initial
+///    state of the node for animation purposes via
+///    `Ogre::SceneNode::setInitialState()`.
+///
+///    The added node is set as the current working node. The first block of
+///    most NIF files---at least all those intended to be added directly to the
+///    scene---is a `nif::NiNode` representing the root node of the object. One
+///    therefore does not usually need to create any new nodes before calling
+///    `oo::insertNif()`.
+///  - If a `nif::NiNode` is finished then the parent of the current working
+///    node is made the new working node, effectively moving a level up the
+///    scene graph. This doesn't happen for the NIF's root node, which is
+///    returned by the method.
+///  - If a `nif::NiTriBasedGeom` is discovered, then an `Ogre::SubMesh` is
+///    created using the vertex and material information blocks that the
+///    `nif::NiTriBasedGeom` has references to. Sibling `nif::NiTriBasedGeom`
+///    blocks represent sibling `Ogre::SubMesh`s of an `Ogre::Mesh`, which we
+///    take as being attached to the parent (and current working) node.
+///
+///    The actual creation of the `Ogre::SubMesh` and `Ogre::Mesh` is performed
+///    by the `oo::createMesh()` function, which takes a pointer to a
+///    `Ogre::Mesh` resource to populate and the vertex of the parent node in
+///    the block graph.
+///
+///    The resulting `Ogre::Mesh` is used to construct an `Ogre::Entity` which
+///    is then attached to the current working node.
+///  - If a `nif::bhk::CollisionObject` is discovered, then an
+///    `Ogre::CollisionObject` is created using that block and its child
+///    `nif::bhk::RigidBody` child by delegating to the
+///    `oo::createCollisionObject()` function, analogous to `oo::createMesh()`.
+///    The `Ogre::CollisionObject` is used to construct an `Ogre::RigidBody`
+///    which is then attached to the current working node and added to the
+///    physics world passed to `oo::insertNif`.
 namespace oo {
 
 /// \addtogroup OpenOblivionNifloader
