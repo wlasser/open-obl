@@ -21,7 +21,7 @@ const nif::NiControllerSequence &getRoot(const BlockGraph &graph) {
 
   const auto &root{*graph[0]};
   if (const auto *ptr{dynamic_cast<const nif::NiControllerSequence *>(&root)}) {
-    return dynamic_cast<const nif::NiControllerSequence &>(root);
+    return *ptr;
   }
 
   OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND,
