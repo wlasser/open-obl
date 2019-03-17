@@ -134,6 +134,7 @@ Application::Application(std::string windowName) : FrameListener() {
                         oo::add_resolver_t<record::ACTI>{},
                         oo::add_resolver_t<record::DOOR>{},
                         oo::add_resolver_t<record::LIGH>{},
+                        oo::add_resolver_t<record::MISC>{},
                         oo::add_resolver_t<record::STAT>{},
                         oo::add_resolver_t<record::GRAS>{},
                         oo::add_resolver_t<record::TREE>{},
@@ -149,6 +150,7 @@ Application::Application(std::string windowName) : FrameListener() {
         std::make_tuple(oo::add_refr_resolver_t<record::REFR_ACTI>{},
                         oo::add_refr_resolver_t<record::REFR_DOOR>{},
                         oo::add_refr_resolver_t<record::REFR_LIGH>{},
+                        oo::add_refr_resolver_t<record::REFR_MISC>{},
                         oo::add_refr_resolver_t<record::REFR_STAT>{},
                         oo::add_refr_resolver_t<record::REFR_NPC_>{}));
   }, &resolversCounter);

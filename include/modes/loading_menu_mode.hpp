@@ -50,14 +50,15 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<
-        record::STAT, record::DOOR, record::LIGH, record::ACTI,
-        record::NPC_, record::RACE>(ctx.getBaseResolvers());
+        record::RACE, record::ACTI, record::DOOR, record::LIGH, record::MISC,
+        record::STAT, record::NPC_>(ctx.getBaseResolvers());
   }
 
   auto getCellRefrResolvers(ApplicationContext &ctx) const {
     return oo::getRefrResolvers<
-        record::REFR_STAT, record::REFR_DOOR, record::REFR_LIGH,
-        record::REFR_ACTI, record::REFR_NPC_>(ctx.getRefrResolvers());
+        record::REFR_ACTI, record::REFR_DOOR, record::REFR_LIGH,
+        record::REFR_MISC, record::REFR_STAT,
+        record::REFR_NPC_>(ctx.getRefrResolvers());
   }
 
   auto getCellMoreResolvers(ApplicationContext &ctx) const {

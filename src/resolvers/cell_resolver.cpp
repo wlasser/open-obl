@@ -138,19 +138,21 @@ template<> void
 oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
-  const auto &statRes{oo::getResolver<record::STAT>(mBaseCtx)};
+  const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
   const auto &doorRes{oo::getResolver<record::DOOR>(mBaseCtx)};
   const auto &lighRes{oo::getResolver<record::LIGH>(mBaseCtx)};
-  const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
+  const auto &miscRes{oo::getResolver<record::MISC>(mBaseCtx)};
+  const auto &statRes{oo::getResolver<record::STAT>(mBaseCtx)};
 
-  auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(mRefrCtx)};
+  auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(mRefrCtx)};
   auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(mRefrCtx)};
   auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(mRefrCtx)};
-  auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(mRefrCtx)};
+  auto &refrMiscRes{oo::getRefrResolver<record::REFR_MISC>(mRefrCtx)};
+  auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(mRefrCtx)};
 
-  if (statRes.contains(baseId)) {
-    const auto ref{accessor.readRecord<record::REFR_STAT>().value};
-    refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+  if (actiRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
+    refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
@@ -160,9 +162,14 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccesso
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
     refrLighRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
-  } else if (actiRes.contains(baseId)) {
-    const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
-    refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+  } else if (miscRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_MISC>().value};
+    refrMiscRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
+  } else if (statRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_STAT>().value};
+    refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
   } else {
     accessor.skipRecord();
   }
@@ -459,30 +466,34 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
   const auto refs{cellRes.getReferences(BaseId{refRec.mFormId})};
   if (!refs) return cell;
 
-  const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
+  const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
+  const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
   const auto &doorRes{oo::getResolver<record::DOOR>(resolvers)};
   const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
-  const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
+  const auto &miscRes{oo::getResolver<record::MISC>(resolvers)};
+  const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
-  const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
-  const auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(resolvers)};
+  const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
   const auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(resolvers)};
   const auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(resolvers)};
-  const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
+  const auto &refrMiscRes{oo::getRefrResolver<record::REFR_MISC>(resolvers)};
+  const auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(resolvers)};
   const auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(resolvers)};
 
-  gsl::not_null<Ogre::SceneNode *> rootNode{cell->getRootSceneNode()};
-
   for (auto refId : *refs) {
-    if (auto stat{refrStatRes.get(refId)}; stat) {
-      cell->attach(*stat, std::forward_as_tuple(statRes));
+    if (auto acti{refrActiRes.get(refId)}; acti) {
+      // TODO: Activators include fire, which isn't supported yet. Add this
+      // when NiBillboardNode is implemented.
+//      cell->attach(*acti, std::forward_as_tuple(actiRes));
     } else if (auto door{refrDoorRes.get(refId)}; door) {
       cell->attach(*door, std::forward_as_tuple(doorRes));
     } else if (auto ligh{refrLighRes.get(refId)}; ligh) {
       cell->attach(*ligh, std::forward_as_tuple(lighRes));
-    } else if (auto acti{refrActiRes.get(refId)}; acti) {
-      cell->attach(*acti, std::forward_as_tuple(actiRes));
+    } else if (auto misc{refrMiscRes.get(refId)}; misc) {
+      cell->attach(*misc, std::forward_as_tuple(miscRes));
+    } else if (auto stat{refrStatRes.get(refId)}; stat) {
+      cell->attach(*stat, std::forward_as_tuple(statRes));
     } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
       cell->attach(*npc, std::forward_as_tuple(npc_Res, raceRes));
     }
