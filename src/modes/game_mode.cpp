@@ -261,14 +261,30 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
 
+    auto &refrDoorRes
+        {oo::getRefrResolver<record::REFR_DOOR>(ctx.getRefrResolvers())};
+
     if (auto doorOpt{oo::getComponent<record::raw::REFRDoor>(refUnderCrosshair,
                                                              ctx.getRefrResolvers())}) {
       ctx.getLogger()->info("Looking at the door {}", refUnderCrosshair);
+
       if (auto teleport{doorOpt->teleport}) {
         const auto &data{teleport->data};
         ctx.getLogger()->info(" - Teleports to {}", data.destinationId);
         ctx.getLogger()->info(" - Position ({}, {}, {})",
                               data.x, data.y, data.z);
+        if (auto destDoorOpt{refrDoorRes.get(data.destinationId)}) {
+          ctx.getLogger()->info("Found door destination {}",
+                                data.destinationId);
+
+          if (auto destTeleport{destDoorOpt->teleport}) {
+            const auto &destData{destTeleport->data};
+            ctx.getLogger()->info(" - Destination teleports to {}",
+                                  destData.destinationId);
+            ctx.getLogger()->info(" - Destination position ({}, {}, {})",
+                                  destData.x, destData.y, destData.z);
+          }
+        }
       }
     }
 

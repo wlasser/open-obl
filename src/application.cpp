@@ -235,7 +235,8 @@ Application::Application(std::string windowName) : FrameListener() {
   // Read the main esm
   oo::JobCounter espCounter{1};
   oo::JobManager::runJob([&, &ctx = ctx]() {
-    InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers());
+    InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers(),
+                                              ctx.getRefrResolvers());
     for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
       oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
     }

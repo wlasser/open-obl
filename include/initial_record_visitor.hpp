@@ -10,10 +10,12 @@ namespace oo {
 
 class InitialRecordVisitor {
  private:
-  oo::BaseResolversRef resolvers;
+  oo::BaseResolversRef mBaseCtx;
+  oo::RefrResolversRef mRefrCtx;
 
  public:
-  explicit InitialRecordVisitor(oo::BaseResolversRef resolvers);
+  explicit InitialRecordVisitor(oo::BaseResolversRef baseCtx,
+                                oo::RefrResolversRef refrCtx) noexcept;
 
   template<class R>
   void readRecord(oo::EspAccessor &accessor) {

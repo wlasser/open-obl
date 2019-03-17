@@ -225,17 +225,28 @@ struct REFR : REFRBase, Components ..., REFRTransformation {
   }
 };
 
+// ACTI reference records are not able to be doors, but RFWHallPortcullis01
+// nonetheless has XACT and ONAM records, as REFRDoor.
 using REFR_ACTI = raw::REFR<"ACTI"_rec, REFRParentable, REFRScalable,
-                            REFRTargetable>;
+                            REFRTargetable, REFROwnable, REFRDoor, REFRLod>;
+// REFRUnused is required due to an XPCI record in the Toddland worldspace.
 using REFR_DOOR = raw::REFR<"DOOR"_rec, REFRParentable, REFRScalable,
-                            REFRDoor, REFRLockable, REFROwnable>;
+                            REFRDoor, REFRLockable, REFROwnable,
+                            REFRLod, REFRUnused>;
 using REFR_LIGH = raw::REFR<"LIGH"_rec, REFRParentable, REFRScalable>;
 using REFR_MISC = raw::REFR<"MISC"_rec, REFRParentable, REFRScalable,
                             REFRItem, REFROwnable>;
+// STAT reference records are not able to be given owners in the construction
+// set, but MS51ValgaPortraitRef is nonetheless owned. We therefore have to
+// allow REFR_STAT to be REFROwnable, even if it has no practical use.
+// REFRUnused is required due to an XPCI record in the Toddland worldspace.
 using REFR_STAT = raw::REFR<"STAT"_rec, REFRParentable, REFRScalable,
-                            REFRTargetable, REFRLod>;
+                            REFRTargetable, REFROwnable, REFRMarker,
+                            REFRLod, REFRUnused>;
+// REFRUnused is required due to an XPCI record in the Toddland worldspace.
 using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRParentable, REFRScalable,
-                            REFRRagdoll, REFRRider, REFRMerchant>;
+                            REFRRagdoll, REFRRider, REFRMerchant, REFRLod,
+                            REFRUnused>;
 
 } // namespace raw
 

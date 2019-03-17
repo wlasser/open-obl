@@ -89,6 +89,9 @@ void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor);
 template<class Visitor>
 void readWrldChildren(EspAccessor &accessor, Visitor &visitor);
 
+struct SkipGroupVisitorTag_t {};
+constexpr static inline SkipGroupVisitorTag_t SkipGroupVisitorTag{};
+
 //===----------------------------------------------------------------------===//
 // Function template definitions
 //===----------------------------------------------------------------------===//
@@ -233,30 +236,45 @@ void readCellChildren(EspAccessor &accessor,
   (void) accessor.readGroup();
 
   if (accessor.peekGroupType() == GroupType::CellPersistentChildren) {
-    (void) accessor.readGroup();
-    parseCellChildrenBlock(accessor, persistentVisitor);
+    if constexpr (std::is_same_v<std::decay_t<PersistentVisitor>,
+                                 SkipGroupVisitorTag_t>) {
+      accessor.skipGroup();
+    } else {
+      (void) accessor.readGroup();
+      parseCellChildrenBlock(accessor, persistentVisitor);
+    }
   }
 
   if (accessor.peekGroupType() == GroupType::CellVisibleDistantChildren) {
-    (void) accessor.readGroup();
-    parseCellChildrenBlock(accessor, visibleDistantVisitor);
+    if constexpr (std::is_same_v<std::decay_t<VisibleDistantVisitor>,
+                                 SkipGroupVisitorTag_t>) {
+      accessor.skipGroup();
+    } else {
+      (void) accessor.readGroup();
+      parseCellChildrenBlock(accessor, visibleDistantVisitor);
+    }
   }
 
   if (accessor.peekGroupType() == GroupType::CellTemporaryChildren) {
-    (void) accessor.readGroup();
+    if constexpr (std::is_same_v<std::decay_t<TemporaryVisitor>,
+                                 SkipGroupVisitorTag_t>) {
+      accessor.skipGroup();
+    } else {
+      (void) accessor.readGroup();
 
-    if (accessor.peekRecordType() == "LAND"_rec) {
-      temporaryVisitor.template readRecord<record::LAND>(accessor);
+      if (accessor.peekRecordType() == "LAND"_rec) {
+        temporaryVisitor.template readRecord<record::LAND>(accessor);
+      }
+
+      // Unsure if PGRD is usually optional or not, but sometimes this entire
+      // group is empty e.g. ImperialSewerSystemTG11
+      if (accessor.peekRecordType() == "PGRD"_rec) {
+        // TODO: PGRD
+        accessor.skipRecord();
+      }
+
+      parseCellChildrenBlock(accessor, temporaryVisitor);
     }
-
-    // Unsure if PGRD is usually optional or not, but sometimes this entire
-    // group is empty e.g. ImperialSewerSystemTG11
-    if (accessor.peekRecordType() == "PGRD"_rec) {
-      // TODO: PGRD
-      accessor.skipRecord();
-    }
-
-    parseCellChildrenBlock(accessor, temporaryVisitor);
   }
 }
 
