@@ -272,6 +272,45 @@ using BaseResolversRef = boost::mp11::mp_transform<std::add_lvalue_reference_t,
 using RefrResolversRef = boost::mp11::mp_transform<std::add_lvalue_reference_t,
                                                    RefrResolvers>;
 
+/// Given a `refId` to look up and a tuple of nonconst references to reference
+/// resolvers, find the reference record with the `refId` and return a reference
+/// to the given `Component` of that record. If no reference record with the
+/// `refId` exists in any of the provided resolvers, or the record does exist
+/// but does not have the requested `Component`, return an empty optional.
+template<class Component, class Tuple>
+tl::optional<Component &> getComponent(oo::RefId refId, Tuple &&resolvers) {
+  using Types = boost::mp11::mp_transform<std::remove_reference_t,
+                                          std::remove_reference_t<Tuple>>;
+  static_assert(boost::mp11::mp_none_of<Types, std::is_const>::value,
+                "All the resolvers must be nonconst references");
+  // tuple_for_each cannot give us a return value so instead put the result in
+  // `component` and use `done` to early-exit future calls to the lambda.
+  tl::optional<Component &> component;
+  bool done{false};
+  boost::mp11::tuple_for_each(resolvers, [&](auto &resolver) {
+    // Component must be a base of the record type served by this resolver.
+    using Type = typename std::decay_t<decltype(resolver)>::RawType;
+    if constexpr (std::is_convertible_v<Type *, Component *>) {
+      if (done) return;
+      // For at most one resolver get() will return a nonempty optional
+      // reference to the desired reference record.
+      if (auto opt{resolver.get(refId)}) {
+        // RefIds are unique so we found the right record and can stop looking,
+        // whether it has the desired component or not.
+        done = true;
+        // Record inherits from raw::REFR which inherits from all the
+        // components, so this cast succeeds iff the component exists.
+        if (dynamic_cast<Component *>(&*opt)) {
+          component = tl::optional<Component &>{static_cast<Component &>(*opt)};
+        }
+      }
+    } else return;
+  });
+  // If the record wasn't found or was found but didn't have the desired
+  // component, this will be empty.
+  return component;
+}
+
 //===----------------------------------------------------------------------===//
 // Resolver member function implementations
 //===----------------------------------------------------------------------===//
