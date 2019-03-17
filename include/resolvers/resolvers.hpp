@@ -232,6 +232,10 @@ template<class Record, class Tuple>
 constexpr auto &&getRefrResolver(Tuple &&resolvers) {
   using Types = boost::mp11::mp_transform<std::decay_t,
                                           std::remove_reference_t<Tuple>>;
+  static_assert(boost::mp11::mp_contains<Types,
+                                         add_refr_resolver_t<Record>>::value,
+                "Resolvers tuple does not contain a resolver for the "
+                "requested type");
   return std::get<boost::mp11::mp_find<Types,
                                        add_refr_resolver_t<Record>>::value>(
       std::forward<Tuple>(resolvers));
@@ -242,6 +246,9 @@ template<class Record, class Tuple>
 constexpr auto &&getResolver(Tuple &&resolvers) {
   using Types = boost::mp11::mp_transform<std::decay_t,
                                           std::remove_reference_t<Tuple>>;
+  static_assert(boost::mp11::mp_contains<Types, add_resolver_t<Record>>::value,
+                "Resolvers tuple does not contain a resolver for the "
+                "requested type");
   return std::get<boost::mp11::mp_find<Types,
                                        add_resolver_t<Record>>::value>(
       std::forward<Tuple>(resolvers));
