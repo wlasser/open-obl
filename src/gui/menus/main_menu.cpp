@@ -5,7 +5,9 @@
 #include <OgreOverlayManager.h>
 #include <OgrePanelOverlayElement.h>
 
-gui::Menu<gui::MenuType::MainMenu>::~Menu<gui::MenuType::MainMenu>() {
+namespace gui {
+
+Menu<MenuType::MainMenu>::~Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     if (mOverlayContainer) {
       overlayMgr->destroyOverlayElement(mOverlayContainer);
@@ -16,7 +18,7 @@ gui::Menu<gui::MenuType::MainMenu>::~Menu<gui::MenuType::MainMenu>() {
   }
 }
 
-gui::Menu<gui::MenuType::MainMenu>::Menu() {
+Menu<MenuType::MainMenu>::Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = overlayMgr->create("__MainMenuOverlay");
     mOverlay->show();
@@ -36,15 +38,17 @@ gui::Menu<gui::MenuType::MainMenu>::Menu() {
   }
 }
 
-void gui::MainMenu::set_visible(bool visible) {
+void MainMenu::set_visible(bool visible) {
   mVisible = visible;
   if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
 }
 
-Ogre::Overlay *gui::MainMenu::getOverlay() const {
+Ogre::Overlay *MainMenu::getOverlay() const {
   return mOverlay;
 }
 
-Ogre::OverlayElement *gui::MainMenu::getOverlayElement() const {
+Ogre::OverlayElement *MainMenu::getOverlayElement() const {
   return mOverlayContainer;
 }
+
+} // namespace gui

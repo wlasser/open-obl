@@ -21,15 +21,15 @@ namespace oo {
 class Path {
  private:
   using size_type = std::string::size_type;
-  /// Lowercase normalized path with `/` separators and no trailing `/` or
-  /// `&period;`.
+  /// \brief Lowercase normalized path with `/` separators and no trailing `/`
+  ///        or <tt>.\ </tt>.
   /*const*/ std::string mPath{};
   mutable std::optional<std::filesystem::path> mSysPath{};
   mutable std::mutex mSysPathMutex{};
 
   /// Copy the given range, without leading and trailing characters satisfying
   /// the predicate `p`.
-  /// This is faster than boost::algorithm::trim_copy_if for our purposes.
+  /// This is faster than `boost::algorithm::trim_copy_if` for our purposes.
   template<class InputIt, class OutputIt, class Predicate>
   void trim_copy(InputIt first, InputIt last, OutputIt out, Predicate &&p) {
     auto begIt{first};
@@ -74,13 +74,13 @@ class Path {
   /// The returned path is always lowercase.
   std::string_view filename() const;
 
-  /// Return the complement of filename() without the trailing `/`.
+  /// Return the complement of `filename()` without the trailing `/`.
   /// The returned path is always lowercase.
   std::string_view folder() const;
 
-  /// Return the part of the filename strictly after the last `.\ ` that
+  /// Return the part of the filename strictly after the last <tt>.\ /</tt> that
   /// does not occur at the beginning of the filename.
-  /// Note that this is different to std::filesystem::path::extension, which
+  /// Note that this is different to `std::filesystem::path::extension`, which
   /// includes the `.`.
   std::string_view extension() const;
 

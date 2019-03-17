@@ -34,8 +34,9 @@ using ArgumentType = variant_with<ValueType, TraitName>;
 using Stack = std::vector<ValueType>;
 
 /// Deduce the type of the value in `str` and return a ValueType with that value.
-/// The entities `&true;` and `&false;` are used for true and false. Floating
-/// point numbers are written in standard format without the trailing `f`.
+/// The entities `&true``;` and `&false``;` are used for true and false.
+/// Floating point numbers are written in standard format without the trailing
+/// `f`.
 ValueType parseValueType(std::string_view str);
 
 /// Stringify `val` and append it to `name`. This is used to implement a switch

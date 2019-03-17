@@ -5,7 +5,9 @@
 #include <OgreOverlayManager.h>
 #include <OgrePanelOverlayElement.h>
 
-gui::Menu<gui::MenuType::LoadingMenu>::~Menu<gui::MenuType::LoadingMenu>() {
+namespace gui {
+
+Menu<MenuType::LoadingMenu>::~Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     if (mOverlayContainer) {
       overlayMgr->destroyOverlayElement(mOverlayContainer);
@@ -16,7 +18,7 @@ gui::Menu<gui::MenuType::LoadingMenu>::~Menu<gui::MenuType::LoadingMenu>() {
   }
 };
 
-gui::Menu<gui::MenuType::LoadingMenu>::Menu() {
+Menu<MenuType::LoadingMenu>::Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = overlayMgr->create("__LoadingMenuOverlay");
     mOverlay->show();
@@ -36,15 +38,17 @@ gui::Menu<gui::MenuType::LoadingMenu>::Menu() {
   }
 }
 
-void gui::LoadingMenu::set_visible(bool visible) {
+void LoadingMenu::set_visible(bool visible) {
   mVisible = visible;
   if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
 }
 
-Ogre::Overlay *gui::LoadingMenu::getOverlay() const {
+Ogre::Overlay *LoadingMenu::getOverlay() const {
   return mOverlay;
 }
 
-Ogre::OverlayElement *gui::LoadingMenu::getOverlayElement() const {
+Ogre::OverlayElement *LoadingMenu::getOverlayElement() const {
   return mOverlayContainer;
 }
+
+} // namespace gui

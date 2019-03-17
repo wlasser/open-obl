@@ -47,8 +47,8 @@ void XmlEntityConverter::operator()(std::string_view entity,
 
 /// \name Xml node value getters
 /// `xml_node::value` and `xml_node::child_value` return `const char *`, which
-/// frequently has untrimmed whitespace due to the xml formatting, e.g.
-/// `<x> 0 </x>` or `<locus> &true; </locus>`. These functions trim the
+/// frequently has untrimmed whitespace due to the xml formatting, such as
+/// `<x> 0 </x>` or `<locus> &true``; </locus>`. These functions trim the
 /// whitespace and convert to the requested type.
 ///@{
 

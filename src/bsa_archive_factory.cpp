@@ -63,8 +63,6 @@ class BsaArchive : public Ogre::Archive {
   open(const Ogre::String &filename, bool readOnly) const override;
 };
 
-}
-
 template<class T>
 std::shared_ptr<std::vector<T>>
 BsaArchive::find(const Ogre::String &pattern,
@@ -202,6 +200,8 @@ bool BsaArchive::isCaseSensitive() const {
 bool BsaArchive::isReadOnly() const {
   return true;
 }
+
+} // namespace
 
 gsl::owner<Ogre::Archive *>
 BsaArchiveFactory::createInstance(const Ogre::String &name, bool readOnly) {

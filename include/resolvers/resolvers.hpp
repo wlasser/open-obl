@@ -136,7 +136,7 @@ struct CiteRecordTrait {};
 /// \tparam R A record::Record. Specifically, the expression
 ///           `std::is_same_v<R, record::Record<R::Raw, R::RecordType>` must
 ///           evaluate to true.
-/// \param rec The base record to cite.
+/// \param baseRec The base record to cite.
 /// \param refId The RefId to give the returned reference record. One will be
 ///              generated if refId is not provided.
 ///
@@ -164,12 +164,15 @@ struct ReifyRecordTrait {};
 /// Construct a concrete realization of a reference record within the scope of
 /// the rendering engine.
 /// \tparam R A reference record.
+/// \param refRec The reference record to reify.
 /// \param scnMgr The reified object is constructed in and owned by the
 ///               Ogre::SceneManager; it is not the caller's responsibility to
 ///               known how to link the possible components of the type together
 ///               in a scene.
 /// \param world The physics world is notified of any added rigid bodies; it is
 ///              not the caller's responsibility to do this.
+/// \param resolvers A tuple of references to resolvers specified by
+///                  `ReifyRecordTrait<R>`.
 template<class R>
 typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,

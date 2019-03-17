@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_CONSOLE_FUNCTIONS_HPP
 #define OPENOBLIVION_CONSOLE_FUNCTIONS_HPP
 
-/// \defgroup OpenOblivionConsole
+/// \defgroup OpenOblivionConsole Developer Console
 /// Scripting commands that can be run exclusively inside the developer console.
 /// Because the scripting engine does not understand `void`, every function must
 /// return a value. The convention used is that if the function does not have an

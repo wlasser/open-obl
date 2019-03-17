@@ -204,7 +204,7 @@ class TraitFun {
   }
 
   /// Call the stored function.
-  /// \precondition The `TraitFun` should actually contain a function.
+  /// \pre The `TraitFun` should actually contain a function.
   T operator()() const /*C++20: [[requires: *this]]*/ {
     return mFun();
   }

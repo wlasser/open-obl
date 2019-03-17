@@ -38,7 +38,7 @@ MenuMode<gui::MenuType::MainMenu>::~MenuMode() {
   if (root && mScnMgr) root->destroySceneManager(mScnMgr);
 }
 
-MenuMode<gui::MenuType::MainMenu>::MenuMode(MenuMode<gui::MenuType::MainMenu> &&other) noexcept
+MenuMode<gui::MenuType::MainMenu>::MenuMode(MenuMode &&other) noexcept
     : MenuModeBase<MainMenuMode>(std::move(other)),
       mScnMgr(other.mScnMgr),
       mCamera(other.mCamera),
@@ -54,7 +54,7 @@ MenuMode<gui::MenuType::MainMenu>::MenuMode(MenuMode<gui::MenuType::MainMenu> &&
 }
 
 MenuMode<gui::MenuType::MainMenu> &
-MenuMode<gui::MenuType::MainMenu>::operator=(MenuMode<gui::MenuType::MainMenu> &&other) noexcept {
+MenuMode<gui::MenuType::MainMenu>::operator=(MenuMode &&other) noexcept {
   if (this != &other) {
     auto tmp{std::move(other)};
     std::swap(*this, tmp);

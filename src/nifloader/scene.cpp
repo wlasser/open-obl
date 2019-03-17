@@ -110,47 +110,6 @@ class RagdollVisitor {
   RagdollVisitorState *mState;
 };
 
-} // namespace
-
-Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
-                           gsl::not_null<Ogre::SceneManager *> scnMgr,
-                           gsl::not_null<btDiscreteDynamicsWorld *> world,
-                           gsl::not_null<Ogre::SceneNode *> parent) {
-  auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
-  if (!nifPtr) return nullptr;
-  nifPtr->load();
-  auto graph{nifPtr->getBlockGraph()};
-
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
-  const auto propertyMap{boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, graph))};
-  NifVisitorState state(name, group, scnMgr, world, parent);
-  boost::depth_first_search(graph, NifVisitor(&state), propertyMap);
-
-  return state.mRoot;
-}
-
-Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
-                           gsl::not_null<Ogre::SceneManager *> scnMgr,
-                           gsl::not_null<btDiscreteDynamicsWorld *> world) {
-  return oo::insertNif(name, group, scnMgr, world,
-                       gsl::make_not_null(scnMgr->getRootSceneNode()));
-}
-
-void attachRagdoll(const std::string &name, const std::string &group,
-                   gsl::not_null<Ogre::SceneManager *> scnMgr,
-                   gsl::not_null<btDiscreteDynamicsWorld *> world,
-                   gsl::not_null<Ogre::Entity *> entity) {
-  auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
-  if (!nifPtr) return;
-  auto graph{nifPtr->getBlockGraph()};
-
-  std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
-  const auto propertyMap{boost::make_iterator_property_map(
-      colorMap.begin(), boost::get(boost::vertex_index, graph))};
-  RagdollVisitorState state(name, group, scnMgr, world, entity);
-  boost::depth_first_search(graph, RagdollVisitor(&state), propertyMap);
-}
 
 //===----------------------------------------------------------------------===//
 // start_vertex
@@ -362,6 +321,52 @@ void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &) {
       parent && parent != mState->mParent) {
     mState->mRoot = gsl::make_not_null(parent);
   }
+}
+
+} // namespace
+
+//===----------------------------------------------------------------------===//
+// insertNif and Friends
+//===----------------------------------------------------------------------===//
+
+Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
+                           gsl::not_null<Ogre::SceneManager *> scnMgr,
+                           gsl::not_null<btDiscreteDynamicsWorld *> world,
+                           gsl::not_null<Ogre::SceneNode *> parent) {
+  auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
+  if (!nifPtr) return nullptr;
+  nifPtr->load();
+  auto graph{nifPtr->getBlockGraph()};
+
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, graph))};
+  NifVisitorState state(name, group, scnMgr, world, parent);
+  boost::depth_first_search(graph, NifVisitor(&state), propertyMap);
+
+  return state.mRoot;
+}
+
+Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
+                           gsl::not_null<Ogre::SceneManager *> scnMgr,
+                           gsl::not_null<btDiscreteDynamicsWorld *> world) {
+  return oo::insertNif(name, group, scnMgr, world,
+                       gsl::make_not_null(scnMgr->getRootSceneNode()));
+}
+
+void attachRagdoll(const std::string &name, const std::string &group,
+                   gsl::not_null<Ogre::SceneManager *> scnMgr,
+                   gsl::not_null<btDiscreteDynamicsWorld *> world,
+                   gsl::not_null<Ogre::Entity *> entity) {
+  auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
+  if (!nifPtr) return;
+  auto graph{nifPtr->getBlockGraph()};
+
+  std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
+  const auto propertyMap{boost::make_iterator_property_map(
+      colorMap.begin(), boost::get(boost::vertex_index, graph))};
+  RagdollVisitorState state(name, group, scnMgr, world, entity);
+  boost::depth_first_search(graph, RagdollVisitor(&state), propertyMap);
 }
 
 } // namespace oo

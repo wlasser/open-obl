@@ -14,7 +14,7 @@ class TimeManager {
   static TimeManager &getSingleton();
 };
 
-/// \defgroup OpenOblivionChrono
+/// \defgroup OpenOblivionChrono Chrono
 /// Provides in-universe date and time functionality similar to `std::chrono`.
 /// The `<chrono>` header provides a nice interface for dealing with time as
 /// measured in the 'real world', but beyond a few predefined constants the only

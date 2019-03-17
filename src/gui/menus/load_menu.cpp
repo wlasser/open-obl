@@ -5,7 +5,9 @@
 #include <OgreOverlayManager.h>
 #include <OgrePanelOverlayElement.h>
 
-gui::Menu<gui::MenuType::LoadMenu>::~Menu<gui::MenuType::LoadMenu>() {
+namespace gui {
+
+Menu<MenuType::LoadMenu>::~Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     if (mOverlayContainer) {
       overlayMgr->destroyOverlayElement(mOverlayContainer);
@@ -16,7 +18,7 @@ gui::Menu<gui::MenuType::LoadMenu>::~Menu<gui::MenuType::LoadMenu>() {
   }
 };
 
-gui::Menu<gui::MenuType::LoadMenu>::Menu() {
+Menu<MenuType::LoadMenu>::Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
     mOverlay = overlayMgr->create("__LoadMenuOverlay");
     mOverlay->show();
@@ -36,23 +38,25 @@ gui::Menu<gui::MenuType::LoadMenu>::Menu() {
   }
 }
 
-void gui::LoadMenu::set_visible(bool visible) {
+void LoadMenu::set_visible(bool visible) {
   mVisible = visible;
   if (mOverlay) mVisible ? mOverlay->show() : mOverlay->hide();
 }
 
-std::optional<gui::Trait<float>> gui::LoadMenu::make_x() const {
-  return gui::Trait<float>(get_name() + ".x", 0);
+std::optional<Trait<float>> LoadMenu::make_x() const {
+  return Trait<float>(get_name() + ".x", 0);
 }
 
-std::optional<gui::Trait<float>> gui::LoadMenu::make_y() const {
-  return gui::Trait<float>(get_name() + ".y", 0);
+std::optional<Trait<float>> LoadMenu::make_y() const {
+  return Trait<float>(get_name() + ".y", 0);
 }
 
-Ogre::Overlay *gui::LoadMenu::getOverlay() const {
+Ogre::Overlay *LoadMenu::getOverlay() const {
   return mOverlay;
 }
 
-Ogre::OverlayElement *gui::LoadMenu::getOverlayElement() const {
+Ogre::OverlayElement *LoadMenu::getOverlayElement() const {
   return mOverlayContainer;
 }
+
+} // namespace gui
