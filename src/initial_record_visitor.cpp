@@ -19,6 +19,13 @@ namespace oo {
 
 namespace {
 
+template<class R> void readRecordDefault(const oo::BaseResolversRef &baseCtx,
+                                         oo::EspAccessor &accessor) {
+  const auto rec{accessor.readRecord<R>().value};
+  const oo::BaseId baseId{rec.mFormId};
+  oo::getResolver<R>(baseCtx).insertOrAssignEspRecord(baseId, rec);
+}
+
 class PersistentChildrenVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
@@ -130,87 +137,62 @@ void InitialRecordVisitor::readRecord<record::GLOB>(oo::EspAccessor &accessor) {
 
 template<>
 void InitialRecordVisitor::readRecord<record::RACE>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::RACE>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::RACE>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::RACE>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::LTEX>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::LTEX>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::LTEX>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::LTEX>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::ACTI>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::ACTI>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::ACTI>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::DOOR>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::DOOR>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::DOOR>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::DOOR>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::LIGH>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::LIGH>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::LIGH>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::LIGH>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::MISC>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::MISC>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::MISC>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::MISC>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::STAT>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::STAT>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::STAT>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::STAT>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::GRAS>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::GRAS>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::GRAS>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::GRAS>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::TREE>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::TREE>().value};
-
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::TREE>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::TREE>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::NPC_>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::NPC_>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::NPC_>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::NPC_>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::WTHR>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::WTHR>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::WTHR>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::WTHR>(mBaseCtx, accessor);
 }
 
 template<>
 void InitialRecordVisitor::readRecord<record::CLMT>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::CLMT>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::CLMT>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::CLMT>(mBaseCtx, accessor);
 }
 
 template<>
@@ -239,9 +221,7 @@ void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
 
 template<>
 void InitialRecordVisitor::readRecord<record::WATR>(oo::EspAccessor &accessor) {
-  const auto rec{accessor.readRecord<record::WATR>().value};
-  const oo::BaseId baseId{rec.mFormId};
-  oo::getResolver<record::WATR>(mBaseCtx).insertOrAssignEspRecord(baseId, rec);
+  oo::readRecordDefault<record::WATR>(mBaseCtx, accessor);
 }
 
 } // namespace oo
