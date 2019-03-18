@@ -1,3 +1,4 @@
+#include "character_controller/movement.hpp"
 #include "character_controller/player_controller_impl.hpp"
 #include "character_controller/jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
@@ -26,10 +27,10 @@ StandState::update(PlayerControllerImpl &impl, float elapsed) {
 }
 
 void StandState::enter(PlayerControllerImpl &impl) {
-  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
-        * impl.weaponOutModifier(hasWeaponOut);
-  };
+  impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+        * oo::weaponOutModifier(hasWeaponOut);
+  });
 }
 
 } // namespace oo

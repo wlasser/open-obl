@@ -24,15 +24,6 @@ GameMode::GameMode(ApplicationContext &/*ctx*/,
   mInInterior = mExteriorMgr.getNearCells().empty();
 }
 
-void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
-                             oo::PlayerController *playerController) {
-  const auto *rigidBody{playerController->getRigidBody()};
-  if (rigidBody->isInWorld()) {
-    physicsWorld->removeRigidBody(playerController->getRigidBody());
-  }
-  delete playerController;
-}
-
 GameMode::transition_t
 GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
@@ -133,9 +124,8 @@ RefId GameMode::getCrosshairRef() {
 }
 
 void GameMode::addPlayerToScene(ApplicationContext &ctx) {
-  mPlayerController = oo::makePlayerController(getPhysicsWorld(),
-                                               getSceneManager(),
-                                               getPhysicsWorld());
+  mPlayerController = std::make_unique<oo::PlayerController>(
+      getSceneManager(), getPhysicsWorld());
   oo::PlayerController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),

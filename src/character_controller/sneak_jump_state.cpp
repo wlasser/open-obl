@@ -1,3 +1,4 @@
+#include "character_controller/movement.hpp"
 #include "character_controller/player_controller_impl.hpp"
 #include "character_controller/sneak_jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
@@ -15,8 +16,8 @@ SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
 
   // Only apply the spring force if the player is falling, and sufficiently near
   // to the ground.
-  const btVector3 gravityVector{impl.rigidBody->getGravity()};
-  const btVector3 v{impl.rigidBody->getLinearVelocity()};
+  const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
+  const btVector3 v{impl.getRigidBody()->getLinearVelocity()};
   if (v.dot(gravityVector) > 0.0f) {
     const auto displacement{impl.getSpringDisplacement()};
     // As the player is falling, displacement is negative, getting closer to
@@ -32,18 +33,19 @@ SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
 }
 
 void SneakJumpState::enter(PlayerControllerImpl &impl) {
-  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
-        * impl.weaponOutModifier(hasWeaponOut) * impl.sneakModifier();
-  };
+  impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+        * oo::weaponOutModifier(hasWeaponOut) * oo::sneakModifier();
+  });
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
-  const btVector3 gravityVector{impl.rigidBody->getGravity()};
+  const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
   const float g{gravityVector.length()};
-  const float apex{impl.jumpHeight(impl.acrobaticsSkill)};
+  const float apex{oo::jumpHeight(impl.acrobaticsSkill)};
   const float impulse{impl.mass * std::sqrt(2.0f * g * apex)};
-  impl.rigidBody->applyCentralImpulse(-impulse * gravityVector.normalized());
+  impl.getRigidBody()->applyCentralImpulse(
+      -impulse * gravityVector.normalized());
 }
 
 std::optional<SneakStandState>
@@ -53,7 +55,8 @@ SneakJumpState::handleCollision(PlayerControllerImpl &impl,
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
   spdlog::get(oo::LOG)->info("Player received of impulse {} N", impulse);
-  if (r.normalized().dot(impl.rigidBody->getGravity().normalized()) > 0.7) {
+  if (r.normalized().dot(impl.getRigidBody()->getGravity().normalized())
+      > 0.7) {
     return SneakStandState{};
   }
   return std::nullopt;

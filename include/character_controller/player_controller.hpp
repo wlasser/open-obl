@@ -28,8 +28,8 @@ using MovementStateVariant = std::variant<WalkState, RunState>;
 
 class PlayerController {
  public:
-  explicit PlayerController(Ogre::SceneManager *scnMgr,
-                            btDiscreteDynamicsWorld *world);
+  explicit PlayerController(gsl::not_null<Ogre::SceneManager *> scnMgr,
+                            gsl::not_null<btDiscreteDynamicsWorld *> world);
 
   Ogre::Camera *getCamera() const noexcept;
   btRigidBody *getRigidBody() const noexcept;
@@ -47,13 +47,9 @@ class PlayerController {
   Ogre::Vector3 getPosition() const noexcept;
 
  private:
-  PlayerControllerImpl mImpl{};
+  PlayerControllerImpl mImpl;
   StateVariant mState{};
   MovementStateVariant mMovementStateVariant{};
-
-  void attachCamera(gsl::not_null<Ogre::Camera *> camera,
-                    gsl::not_null<Ogre::SceneNode *> node);
-  void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
 
   void enter(StateVariant &state);
   void enter(MovementStateVariant &state);

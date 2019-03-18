@@ -1,101 +1,82 @@
+#include "character_controller/movement.hpp"
 #include "character_controller/player_controller_impl.hpp"
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {
 
-float PlayerControllerImpl::runModifier(float athleticsSkill) const noexcept {
-  return *fMoveRunMult + *fMoveRunAthleticsMult * athleticsSkill * 0.01f;
+PlayerControllerImpl::PlayerControllerImpl(
+    gsl::not_null<Ogre::SceneManager *> scnMgr,
+    gsl::not_null<btDiscreteDynamicsWorld *> world)
+    : mScnMgr(scnMgr), mWorld(world) {
+  mCamera = mScnMgr->createCamera("__PlayerCamera");
+  mBodyNode = mScnMgr->getRootSceneNode()->createChildSceneNode();
+  attachCamera(gsl::make_not_null(mCamera), gsl::make_not_null(mBodyNode));
+  createAndAttachRigidBody(gsl::make_not_null(mBodyNode));
 }
 
-float PlayerControllerImpl::swimWalkModifier(float athleticsSkill) const noexcept {
-  return *fMoveSwimWalkBase
-      + *fMoveSwimWalkAthleticsMult * athleticsSkill * 0.01f;
+PlayerControllerImpl::~PlayerControllerImpl() {
+  if (mWorld && mRigidBody && mRigidBody->isInWorld()) {
+    mWorld->removeRigidBody(mRigidBody.get());
+  }
+
+  if (mScnMgr) {
+    // Destroying a node detaches all its attached objects and removes its
+    // children, though it is not clear whether those children are deleted.
+    if (mPitchNode) mScnMgr->destroySceneNode(mPitchNode);
+    if (mCameraNode) mScnMgr->destroySceneNode(mCameraNode);
+    if (mBodyNode) mScnMgr->destroySceneNode(mBodyNode);
+    if (mCamera) mScnMgr->destroyCamera(mCamera);
+  }
 }
 
-float PlayerControllerImpl::swimRunModifier(float athleticsSkill) const noexcept {
-  return *fMoveSwimRunBase
-      + *fMoveSwimRunAthleticsMult * athleticsSkill * 0.01f;
+void PlayerControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
+                                        gsl::not_null<Ogre::SceneNode *> node) {
+  const auto h{(0.95f - 0.5f) * height - getCapsuleHeight() / 2.0f};
+  const auto camVec{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
+  mCameraNode = node->createChildSceneNode(camVec);
+  mPitchNode = mCameraNode->createChildSceneNode();
+  mPitchNode->attachObject(camera);
 }
 
-float PlayerControllerImpl::sneakModifier() const noexcept {
-  return *fMoveSneakMult;
+void PlayerControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node) {
+  mMotionState = std::make_unique<Ogre::MotionState>(node);
+  mCollisionShape = std::make_unique<btCapsuleShape>(getCapsuleRadius(),
+                                                     getCapsuleHeight());
+  btRigidBody::btRigidBodyConstructionInfo info(mass,
+                                                mMotionState.get(),
+                                                mCollisionShape.get());
+  mRigidBody = std::make_unique<btRigidBody>(info);
+  mRigidBody->setAngularFactor(0.0f);
+  mWorld->addRigidBody(mRigidBody.get());
 }
 
-float PlayerControllerImpl::encumbranceEffectModifier(bool hasWeaponOut) const noexcept {
-  return hasWeaponOut ? *fMoveEncumEffect : *fMoveEncumEffectNoWea;
+gsl::not_null<const btRigidBody *>
+PlayerControllerImpl::getRigidBody() const noexcept {
+  return gsl::make_not_null(mRigidBody.get());
 }
 
-float PlayerControllerImpl::encumbranceModifier(float wornWeight,
-                                                bool hasWeaponOut) const noexcept {
-  const float clampedWornWeight{std::min(wornWeight, *fMoveWeightMax)};
-  const float weightRange{std::max(*fMoveWeightMax - *fMoveWeightMin, 0.1f)};
-  const float effectMod{encumbranceEffectModifier(hasWeaponOut)};
-  const float denominator{*fMoveWeightMin + clampedWornWeight};
-  return 1.0f - effectMod * denominator / weightRange;
+gsl::not_null<btRigidBody *>
+PlayerControllerImpl::getRigidBody() noexcept {
+  return gsl::make_not_null(mRigidBody.get());
 }
 
-float PlayerControllerImpl::weaponOutModifier(bool hasWeaponOut) const noexcept {
-  return hasWeaponOut ? 1.0f : *fMoveNoWeaponMult;
+gsl::not_null<const Ogre::SceneNode *>
+PlayerControllerImpl::getCameraNode() const noexcept {
+  return gsl::make_not_null(mCameraNode);
 }
 
-float PlayerControllerImpl::baseSpeed(float speedAttribute) const noexcept {
-  const float walkRange{*fMoveCharWalkMax - *fMoveCharWalkMin};
-  return *fMoveCharWalkMin + walkRange * speedAttribute * 0.01f;
-}
-
-float PlayerControllerImpl::runSpeed(float speedAttribute,
-                                     float athleticsSkill,
-                                     float wornWeight,
-                                     float height,
-                                     bool hasWeaponOut) const noexcept {
-  return baseSpeed(speedAttribute) * runModifier(athleticsSkill)
-      * encumbranceModifier(wornWeight, hasWeaponOut) * height
-      * oo::metersPerUnit<float>;
-}
-
-float PlayerControllerImpl::walkSpeed(float speedAttribute,
-                                      float /*athleticsSkill*/,
-                                      float wornWeight,
-                                      float height,
-                                      bool hasWeaponOut) const noexcept {
-  return baseSpeed(speedAttribute)
-      * encumbranceModifier(wornWeight, hasWeaponOut)
-      * height * oo::metersPerUnit<float>;
-}
-
-float PlayerControllerImpl::swimRunSpeed(float speedAttribute,
-                                         float athleticsSkill,
-                                         float wornWeight,
-                                         float height,
-                                         bool hasWeaponOut) const noexcept {
-  return baseSpeed(speedAttribute) * swimRunModifier(athleticsSkill)
-      * encumbranceModifier(wornWeight, hasWeaponOut) * height
-      * oo::metersPerUnit<float>;
-}
-
-float PlayerControllerImpl::swimWalkSpeed(float speedAttribute,
-                                          float athleticsSkill,
-                                          float wornWeight,
-                                          float height,
-                                          bool hasWeaponOut) const noexcept {
-  return baseSpeed(speedAttribute) * swimWalkModifier(athleticsSkill)
-      * encumbranceModifier(wornWeight, hasWeaponOut) * height
-      * oo::metersPerUnit<float>;
-}
-
-float PlayerControllerImpl::jumpHeight(float acrobaticsSkill) const noexcept {
-  const float heightRange{*fJumpHeightMax - *fJumpHeightMin};
-  return (*fJumpHeightMin + heightRange * acrobaticsSkill * 0.01f)
-      * oo::metersPerUnit<float>;
+gsl::not_null<Ogre::SceneNode *>
+PlayerControllerImpl::getCameraNode() noexcept {
+  return gsl::make_not_null(mCameraNode);
 }
 
 float PlayerControllerImpl::getMoveSpeed() const noexcept {
-  const float base{baseSpeed(speedAttribute) * raceHeight
+  const float base{oo::baseSpeed(speedAttribute) * raceHeight
                        * oo::metersPerUnit<float>};
-  const float weightMult{encumbranceModifier(wornWeight, hasWeaponOut)};
+  const float weightMult{oo::encumbranceModifier(wornWeight, hasWeaponOut)};
   return base * weightMult
-      * (speedModifier ? speedModifier(hasWeaponOut, isRunning) : 1.0f);
+      * (mSpeedModifier ? mSpeedModifier(hasWeaponOut, isRunning) : 1.0f);
 }
 
 float PlayerControllerImpl::getCapsuleRadius() const noexcept {
@@ -107,49 +88,48 @@ float PlayerControllerImpl::getCapsuleHeight() const noexcept {
 }
 
 void PlayerControllerImpl::reactivatePhysics() noexcept {
-  rigidBody->activate(true);
+  mRigidBody->activate(true);
 }
 
 void PlayerControllerImpl::updateCameraOrientation() noexcept {
-  cameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
+  mCameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
+                                               Ogre::Vector3::UNIT_X));
+  mPitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
                                               Ogre::Vector3::UNIT_X));
-  pitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
-                                             Ogre::Vector3::UNIT_X));
-  pitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
-  cameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
+  mPitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
+  mCameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
 }
 
 void PlayerControllerImpl::move() noexcept {
   const auto speed{getMoveSpeed()};
   // This is a rotation of the standard basis, so is still in SO(3)
-  const auto axes{cameraNode->getLocalAxes()};
+  const auto axes{mCameraNode->getLocalAxes()};
   if (auto len = localVelocity.length(); len > 0.01f) {
-    const auto v{rigidBody->getLinearVelocity()};
+    const auto v{mRigidBody->getLinearVelocity()};
     auto newV{qvm::convert_to<btVector3>(axes * localVelocity / len * speed)};
     newV.setY(v.y());
-    rigidBody->setLinearVelocity(newV);
+    mRigidBody->setLinearVelocity(newV);
   } else {
-    const auto v{rigidBody->getLinearVelocity()};
-    rigidBody->setLinearVelocity({0.0f, v.y(), 0.0f});
+    const auto v{mRigidBody->getLinearVelocity()};
+    mRigidBody->setLinearVelocity({0.0f, v.y(), 0.0f});
   }
 }
 
 float PlayerControllerImpl::getSpringDisplacement() noexcept {
-  if (!world) return 0.0f;
   using namespace qvm;
 
   const auto rayLength{10.0f};
-  auto p0{qvm::convert_to<btVector3>(motionState->getPosition())};
+  auto p0{qvm::convert_to<btVector3>(mMotionState->getPosition())};
   auto p1{qvm::convert_to<btVector3>(p0 + qvm::_0X0(-rayLength))};
   btCollisionWorld::AllHitsRayResultCallback callback(p0, p1);
-  world->rayTest(p0, p1, callback);
+  mWorld->rayTest(p0, p1, callback);
 
   const int numHits{callback.m_collisionObjects.size()};
   auto dist{rayLength};
 
   for (int i = 0; i < numHits; ++i) {
     const btCollisionObject *object{callback.m_collisionObjects[i]};
-    if (object == rigidBody.get()) continue;
+    if (object == mRigidBody.get()) continue;
 
     // No abs needed since p0 is above the collision point by construction.
     const auto distNew{p0.y() - callback.m_hitPointWorld[i].y()};
@@ -172,10 +152,10 @@ void PlayerControllerImpl::applySpringForce(float displacement) noexcept {
 
   const auto k0{4000.0f};
   const auto k1{700.0f};
-  const auto v{rigidBody->getLinearVelocity().y()};
+  const auto v{mRigidBody->getLinearVelocity().y()};
 
   const auto &force{qvm::_0X0(k0 * displacement - k1 * v)};
-  rigidBody->applyCentralForce(qvm::convert_to<btVector3>(force));
+  mRigidBody->applyCentralForce(qvm::convert_to<btVector3>(force));
 }
 
 void PlayerControllerImpl::updatePhysics(float /*elapsed*/) noexcept {

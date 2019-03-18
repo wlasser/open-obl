@@ -1,5 +1,6 @@
 #include "character_controller/player_controller_impl.hpp"
 #include "character_controller/jump_state.hpp"
+#include "character_controller/movement.hpp"
 #include "character_controller/stand_state.hpp"
 #include "settings.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -15,8 +16,8 @@ JumpState::update(PlayerControllerImpl &impl, float elapsed) {
 
   // Only apply the spring force if the player is falling, and sufficiently near
   // to the ground.
-  const btVector3 gravityVector{impl.rigidBody->getGravity()};
-  const btVector3 v{impl.rigidBody->getLinearVelocity()};
+  const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
+  const btVector3 v{impl.getRigidBody()->getLinearVelocity()};
   if (v.dot(gravityVector) > 0.0f) {
     const auto displacement{impl.getSpringDisplacement()};
     // As the player is falling, displacement is negative, getting closer to
@@ -32,21 +33,22 @@ JumpState::update(PlayerControllerImpl &impl, float elapsed) {
 }
 
 void JumpState::enter(PlayerControllerImpl &impl) {
-  impl.speedModifier = [&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? impl.runModifier(impl.athleticsSkill) : 1.0f)
-        * impl.weaponOutModifier(hasWeaponOut);
-  };
+  impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
+    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+        * oo::weaponOutModifier(hasWeaponOut);
+  });
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
   // TODO: The impulse should be calculated for some baseline gravity that the
   //       player is 'used to', so that if the player goes somewhere with a
   //       different amount of gravity then their jump height will change.
-  const btVector3 gravityVector{impl.rigidBody->getGravity()};
+  const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
   const float g{gravityVector.length()};
-  const float apex{impl.jumpHeight(impl.acrobaticsSkill)};
+  const float apex{oo::jumpHeight(impl.acrobaticsSkill)};
   const float impulse{impl.mass * std::sqrt(2.0f * g * apex)};
-  impl.rigidBody->applyCentralImpulse(-impulse * gravityVector.normalized());
+  impl.getRigidBody()->applyCentralImpulse(
+      -impulse * gravityVector.normalized());
 }
 
 std::optional<StandState>
@@ -55,7 +57,7 @@ JumpState::handleCollision(PlayerControllerImpl &impl,
                            const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
-  const auto gravityVector{impl.rigidBody->getGravity()};
+  const auto gravityVector{impl.getRigidBody()->getGravity()};
   spdlog::get(oo::LOG)->info("Player received of impulse {} N", impulse);
   if (r.normalized().dot(gravityVector.normalized()) > std::sqrt(2.0f) / 2.0f) {
     return StandState{};

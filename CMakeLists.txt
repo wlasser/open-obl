@@ -117,6 +117,7 @@ target_sources(OpenOblivion PRIVATE
         src/bsa_archive_factory.cpp
         src/cell_cache.cpp
         src/character_controller/jump_state.cpp
+        src/character_controller/movement.cpp
         src/character_controller/player_controller.cpp
         src/character_controller/player_controller_impl.cpp
         src/character_controller/run_state.cpp
@@ -174,6 +175,7 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/abilities.hpp
         include/character_controller/fallback_state.hpp
         include/character_controller/jump_state.hpp
+        include/character_controller/movement.hpp
         include/character_controller/player_controller.hpp
         include/character_controller/player_controller_impl.hpp
         include/character_controller/run_state.hpp

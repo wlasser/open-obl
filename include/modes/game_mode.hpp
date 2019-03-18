@@ -23,34 +23,6 @@ namespace oo {
 
 class ConsoleMode;
 
-/// \name Custom deleter for the PlayerController.
-/// Unlike the rest of the collision objects in the Cell, which are owned by
-/// the Ogre::SceneManager and hence outlive the physics world, the
-/// PlayerController must live for strictly less time than the physics world.
-/// This is because the PlayerController requires the Ogre::SceneManager
-/// during its construction, and it lives externally to the Cell. Consequently
-/// the PlayerController must remove itself from the physics world during its
-/// destruction so that the physics world doesn't attempt to dereference a
-/// pointer to it during the broadphase cleanup.
-/// \addtogroup OpenOblivionModes
-///@{
-using PlayerControllerDeleter = std::function<void(oo::PlayerController *)>;
-using PlayerControllerPtr = std::unique_ptr<oo::PlayerController,
-                                            oo::PlayerControllerDeleter>;
-
-void releasePlayerController(btDiscreteDynamicsWorld *physicsWorld,
-                             oo::PlayerController *playerController);
-
-template<class ... Args> oo::PlayerControllerPtr
-makePlayerController(btDiscreteDynamicsWorld *physicsWorld, Args &&...args) {
-  return oo::PlayerControllerPtr(
-      new oo::PlayerController(std::forward<Args>(args)...),
-      [physicsWorld](oo::PlayerController *pc) -> void {
-        oo::releasePlayerController(physicsWorld, pc);
-      });
-}
-///@}
-
 /// Mode active while the player is exploring the game world.
 /// \ingroup OpenOblivionModes
 class GameMode {
@@ -67,7 +39,7 @@ class GameMode {
   Ogre::Vector3 mPlayerStartPos{Ogre::Vector3::ZERO};
   Ogre::Quaternion mPlayerStartOrientation{Ogre::Quaternion::IDENTITY};
 
-  oo::PlayerControllerPtr mPlayerController{};
+  std::unique_ptr<oo::PlayerController> mPlayerController{};
 
   bullet::CollisionCaller mCollisionCaller{};
 
