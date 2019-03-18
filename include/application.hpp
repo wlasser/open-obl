@@ -164,8 +164,8 @@ class Application : public Ogre::FrameListener {
   void pushMode(std::variant<Ts...> mode) {
     // First visit moves into a new variant so need a second visit.
     std::visit([this](auto &&state) {
-      modeStack.emplace_back(std::move(state));
-    }, mode);
+      modeStack.emplace_back(std::forward<decltype(state)>(state));
+    }, std::move(mode));
     std::visit([this](auto &&state) { state.enter(ctx); }, modeStack.back());
   }
 
