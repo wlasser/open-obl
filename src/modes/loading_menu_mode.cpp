@@ -304,7 +304,7 @@ LoadingMenuMode::handleEventImpl(ApplicationContext &ctx,
   if (mJc->get() == 0) {
     ctx.getLogger()->info("Loading complete, changing state now");
     getMenuCtx()->getOverlay()->hide();
-    return {false, oo::GameMode(ctx, CellPacket{
+    return {true, oo::GameMode(ctx, CellPacket{
         std::move(mWrld), std::move(mInteriorCell), std::move(mExteriorCells),
         std::move(mRequest.mPlayerPosition),
         std::move(mRequest.mPlayerOrientation)
