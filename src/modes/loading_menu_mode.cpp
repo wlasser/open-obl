@@ -288,7 +288,47 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
 
 MenuMode<gui::MenuType::LoadingMenu>::MenuMode(ApplicationContext &ctx,
                                                oo::CellRequest request)
-    : MenuModeBase<LoadingMenuMode>(ctx), mRequest(std::move(request)) {}
+    : MenuModeBase<LoadingMenuMode>(ctx),
+      mScnMgr{ctx.getRoot().createSceneManager(SCN_MGR_TYPE, SCN_MGR_NAME)},
+      mCamera{mScnMgr->createCamera(CAMERA_NAME)},
+      mRequest(std::move(request)) {
+  mScnMgr->addRenderQueueListener(ctx.getImGuiManager());
+  mScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
+
+  ctx.setCamera(gsl::make_not_null(mCamera));
+}
+
+MenuMode<gui::MenuType::LoadingMenu>::~MenuMode() {
+  auto *root{Ogre::Root::getSingletonPtr()};
+  if (root && mScnMgr) root->destroySceneManager(mScnMgr);
+}
+
+MenuMode<gui::MenuType::LoadingMenu>::MenuMode(MenuMode &&other) noexcept
+    : MenuModeBase<LoadingMenuMode>(std::move(other)),
+      mScnMgr(std::exchange(other.mScnMgr, nullptr)),
+      mCamera(std::exchange(other.mCamera, nullptr)),
+      mWrld(std::move(other.mWrld)),
+      mInteriorCell(std::move(other.mInteriorCell)),
+      mExteriorCells(std::move(other.mExteriorCells)),
+      mRequest(std::move(other.mRequest)),
+      mLoadStarted(other.mLoadStarted),
+      mJc(std::move(other.mJc)) {
+  // TODO: If mLoadStarted == true then this is a really bad idea because the
+  //       launched jobs capture *this*. Do something better than telling the
+  //       user they broke it.
+  if (mLoadStarted && mJc->get() != 0) {
+    spdlog::get(oo::LOG)->critical("Moved LoadingMenuMode while jobs were "
+                                   "running!");
+  }
+}
+
+MenuMode<gui::MenuType::LoadingMenu> &LoadingMenuMode::operator=(MenuMode &&other) noexcept {
+  if (this != &other) {
+    auto tmp{std::move(other)};
+    std::swap(*this, tmp);
+  }
+  return *this;
+}
 
 LoadingMenuMode::transition_t
 LoadingMenuMode::handleEventImpl(ApplicationContext &ctx,

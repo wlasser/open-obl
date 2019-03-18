@@ -34,6 +34,18 @@ template<> struct MenuModeTransition<LoadingMenuMode> {
 template<> class MenuMode<gui::MenuType::LoadingMenu>
     : public MenuModeBase<LoadingMenuMode> {
  private:
+  /// This mode gets its own scene manager as it is used between cell loads,
+  /// when no scene manager is present.
+  Ogre::SceneManager *mScnMgr{};
+  /// Type of the `Ogre::SceneManager` to use for this mode.
+  constexpr static const char *SCN_MGR_TYPE{"DefaultSceneManager"};
+  /// Name of the `Ogre::SceneManager` to use for this mode.
+  constexpr static const char *SCN_MGR_NAME{"__LoadingMenuSceneManager"};
+  /// Camera to use for the scene.
+  Ogre::Camera *mCamera{};
+  /// Name of the `Ogre::Camera` to use for this mode.
+  constexpr static const char *CAMERA_NAME{"__LoadingMenuCamera"};
+
   /// Worldspace owning the exterior cell being loaded, if any. The worldspace
   /// itself may also be being loaded.
   std::shared_ptr<World> mWrld{};
@@ -136,6 +148,13 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
  public:
   explicit MenuMode<gui::MenuType::LoadingMenu>(ApplicationContext &ctx,
                                                 oo::CellRequest request);
+
+  ~MenuMode();
+  MenuMode(const MenuMode &) = delete;
+  LoadingMenuMode &operator=(const MenuMode &) = delete;
+
+  MenuMode(MenuMode &&other) noexcept;
+  MenuMode<gui::MenuType::LoadingMenu> &operator=(MenuMode &&other) noexcept;
 
   std::string getFilenameImpl() const {
     return "menus/loading_menu.xml";
