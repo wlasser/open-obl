@@ -13,10 +13,38 @@
 
 namespace oo {
 
-struct PlayerControllerImpl {
+class PlayerControllerImpl {
+ private:
+  Ogre::SceneManager *mScnMgr;
+  btDiscreteDynamicsWorld *mWorld;
+
+  Ogre::SceneNode *mCameraNode{};
+  Ogre::SceneNode *mPitchNode{};
+  Ogre::Camera *mCamera{};
+
+  Ogre::SceneNode *mBodyNode{};
+  std::unique_ptr<Ogre::MotionState> mMotionState{};
+  std::unique_ptr<btCollisionShape> mCollisionShape{};
+  std::unique_ptr<btRigidBody> mRigidBody{};
+
+  void attachCamera(gsl::not_null<Ogre::Camera *> camera,
+                    gsl::not_null<Ogre::SceneNode *> node);
+  void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
+
+ public:
+  friend class PlayerController;
+
   explicit PlayerControllerImpl(gsl::not_null<Ogre::SceneManager *> scnMgr,
                                 gsl::not_null<btDiscreteDynamicsWorld *> world);
   ~PlayerControllerImpl();
+  PlayerControllerImpl(const PlayerControllerImpl &) = delete;
+  PlayerControllerImpl &operator=(const PlayerControllerImpl &) = delete;
+  /// \remark `mSpeedModifier` is left value-initialized, it is not moved from
+  ///         `other`.
+  PlayerControllerImpl(PlayerControllerImpl &&other) noexcept;
+  /// \remark `mSpeedModifier` is left value-initialized, it is not moved from
+  ///         `other`.
+  PlayerControllerImpl &operator=(PlayerControllerImpl &&other) noexcept;
 
   float speedAttribute{50.0f};
   float athleticsSkill{50.0f};
@@ -36,18 +64,6 @@ struct PlayerControllerImpl {
   Ogre::Radian pitch{0.0f};
   Ogre::Radian yaw{0.0f};
   Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};
-
-  Ogre::SceneNode *mCameraNode{};
-  Ogre::SceneNode *mPitchNode{};
-  Ogre::Camera *mCamera{};
-
-  Ogre::SceneNode *mBodyNode{};
-  std::unique_ptr<Ogre::MotionState> mMotionState{};
-  std::unique_ptr<btCollisionShape> mCollisionShape{};
-  std::unique_ptr<btRigidBody> mRigidBody{};
-
-  Ogre::SceneManager *mScnMgr;
-  btDiscreteDynamicsWorld *mWorld;
 
   gsl::not_null<const btRigidBody *> getRigidBody() const noexcept;
   gsl::not_null<btRigidBody *> getRigidBody() noexcept;
@@ -74,11 +90,6 @@ struct PlayerControllerImpl {
 
   void applySpringForce(float displacement) noexcept;
   void updatePhysics(float /*elapsed*/) noexcept;
-
- private:
-  void attachCamera(gsl::not_null<Ogre::Camera *> camera,
-                    gsl::not_null<Ogre::SceneNode *> node);
-  void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
 };
 
 } // namespace oo

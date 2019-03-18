@@ -30,6 +30,72 @@ PlayerControllerImpl::~PlayerControllerImpl() {
   }
 }
 
+PlayerControllerImpl::PlayerControllerImpl(PlayerControllerImpl &&other) noexcept {
+  mScnMgr = std::exchange(other.mScnMgr, nullptr);
+  mWorld = std::exchange(other.mWorld, nullptr);
+  mCameraNode = std::exchange(other.mCameraNode, nullptr);
+  mPitchNode = std::exchange(other.mPitchNode, nullptr);
+  mCamera = std::exchange(other.mCamera, nullptr);
+  mBodyNode = std::exchange(other.mBodyNode, nullptr);
+  mMotionState = std::exchange(other.mMotionState, nullptr);
+  mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
+  mRigidBody = std::exchange(other.mRigidBody, nullptr);
+
+  speedAttribute = other.speedAttribute;
+  athleticsSkill = other.athleticsSkill;
+  acrobaticsSkill = other.acrobaticsSkill;
+  raceHeight = other.raceHeight;
+  wornWeight = other.wornWeight;
+  hasWeaponOut = other.hasWeaponOut;
+  isRunning = other.isRunning;
+
+  // mSpeedModifier is likely to capture `other` by reference, so we cannot
+  // simply copy it, and since we don't know what state the PlayerController is
+  // in we can't recreate it. It is up to the PlayerController to re-`enter()`
+  // the current state.
+
+  height = other.height;
+  mass = other.mass;
+
+  pitch = std::move(other.pitch);
+  yaw = std::move(other.yaw);
+  localVelocity = std::move(other.localVelocity);
+}
+
+PlayerControllerImpl &
+PlayerControllerImpl::operator=(PlayerControllerImpl &&other) noexcept {
+  if (this != &other) {
+    mScnMgr = std::exchange(other.mScnMgr, nullptr);
+    mWorld = std::exchange(other.mWorld, nullptr);
+    mCameraNode = std::exchange(other.mCameraNode, nullptr);
+    mPitchNode = std::exchange(other.mPitchNode, nullptr);
+    mCamera = std::exchange(other.mCamera, nullptr);
+    mBodyNode = std::exchange(other.mBodyNode, nullptr);
+    mMotionState = std::exchange(other.mMotionState, nullptr);
+    mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
+    mRigidBody = std::exchange(other.mRigidBody, nullptr);
+
+    speedAttribute = other.speedAttribute;
+    athleticsSkill = other.athleticsSkill;
+    acrobaticsSkill = other.acrobaticsSkill;
+    raceHeight = other.raceHeight;
+    wornWeight = other.wornWeight;
+    hasWeaponOut = other.hasWeaponOut;
+    isRunning = other.isRunning;
+
+    // See move constructor for omitted mSpeedModifier
+
+    height = other.height;
+    mass = other.mass;
+
+    pitch = std::move(other.pitch);
+    yaw = std::move(other.yaw);
+    localVelocity = std::move(other.localVelocity);
+  }
+
+  return *this;
+}
+
 void PlayerControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
                                         gsl::not_null<Ogre::SceneNode *> node) {
   const auto h{(0.95f - 0.5f) * height - getCapsuleHeight() / 2.0f};
