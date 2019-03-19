@@ -26,9 +26,11 @@ class ConsoleMode;
 /// Mode active while the player is exploring the game world.
 /// \ingroup OpenOblivionModes
 class GameMode {
+ public:
+  using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
  private:
   ExteriorManager mExteriorMgr;
-  std::shared_ptr<Cell> mCell{};
+  std::shared_ptr<InteriorCell> mCell{};
 
   World::CellIndex mCenterCell{};
   bool mInInterior{true};
@@ -57,6 +59,7 @@ class GameMode {
 
   void addPlayerToScene(ApplicationContext &ctx);
   void registerSceneListeners(ApplicationContext &ctx);
+  void unregisterSceneListeners(ApplicationContext &ctx);
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
   gsl::not_null<btDiscreteDynamicsWorld *> getPhysicsWorld() const;
@@ -77,10 +80,10 @@ class GameMode {
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
 
+  /// Called when the player presses the activate button.
+  transition_t handleActivate(ApplicationContext &ctx);
 
  public:
-  using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
-
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);
 

@@ -46,7 +46,9 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
           return {};
         },
         [](oo::event::Use) -> transition_t { return {}; },
-        [](oo::event::Activate) -> transition_t { return {}; },
+        [&](oo::event::Activate) -> transition_t {
+          return handleActivate(ctx);
+        },
         [](oo::event::Block) -> transition_t { return {}; },
         [](oo::event::Cast) -> transition_t { return {}; },
         [](oo::event::ReadyItem) -> transition_t { return {}; },
@@ -141,6 +143,15 @@ void GameMode::registerSceneListeners(ApplicationContext &ctx) {
   getSceneManager()->addRenderQueueListener(ctx.getOverlaySystem());
 }
 
+void GameMode::unregisterSceneListeners(ApplicationContext &ctx) {
+  // OGRE's documentation makes no guarantees about calling this on a listener
+  // that is not added to the scene manager. Currently the code nops if the
+  // listener is not present, and OGRE does not appear to provide any way of
+  // checking, so fingers crossed that behaviour doesn't change I guess?
+  getSceneManager()->removeRenderQueueListener(ctx.getImGuiManager());
+  getSceneManager()->removeRenderQueueListener(ctx.getOverlaySystem());
+}
+
 gsl::not_null<Ogre::SceneManager *> GameMode::getSceneManager() const {
   if (mInInterior) return mCell->getSceneManager();
   return mExteriorMgr.getWorld().getSceneManager();
@@ -204,6 +215,38 @@ bool GameMode::updateCenterCell(ApplicationContext &) {
   return false;
 }
 
+GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
+  const oo::RefId refId{getCrosshairRef()};
+  auto refrRes{ctx.getRefrResolvers()};
+
+  if (refId != oo::RefId{0}) {
+    if (auto door{oo::getComponent<record::raw::REFRDoor>(refId, refrRes)}) {
+      if (auto teleport{door->teleport}) {
+        const auto &data{teleport->data};
+        const auto &refMap{ctx.getPersistentReferenceMap()};
+        if (refMap.contains(data.destinationId)) {
+          oo::BaseId cellId{refMap.at(data.destinationId)};
+          oo::CellRequest request{
+              cellId,
+              oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y,
+                                                  data.z + 128}),
+              // TODO: Convert rotations into quaternion
+          };
+          if (mInInterior) {
+            mCell->setVisible(false);
+          } else {
+            mExteriorMgr.setVisible(false);
+          }
+          unregisterSceneListeners(ctx);
+          return {true, oo::LoadingMenuMode(ctx, std::move(request))};
+        }
+      }
+    }
+  }
+
+  return {};
+}
+
 void GameMode::update(ApplicationContext &ctx, float delta) {
   updateAnimation(delta);
   mPlayerController->update(delta);
@@ -250,33 +293,6 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   RefId newRefUnderCrosshair = getCrosshairRef();
   if (newRefUnderCrosshair != refUnderCrosshair) {
     refUnderCrosshair = newRefUnderCrosshair;
-
-    auto &refrDoorRes
-        {oo::getRefrResolver<record::REFR_DOOR>(ctx.getRefrResolvers())};
-
-    if (auto doorOpt{oo::getComponent<record::raw::REFRDoor>(refUnderCrosshair,
-                                                             ctx.getRefrResolvers())}) {
-      ctx.getLogger()->info("Looking at the door {}", refUnderCrosshair);
-
-      if (auto teleport{doorOpt->teleport}) {
-        const auto &data{teleport->data};
-        ctx.getLogger()->info(" - Teleports to {}", data.destinationId);
-        ctx.getLogger()->info(" - Position ({}, {}, {})",
-                              data.x, data.y, data.z);
-        if (auto destDoorOpt{refrDoorRes.get(data.destinationId)}) {
-          ctx.getLogger()->info("Found door destination {}",
-                                data.destinationId);
-
-          if (auto destTeleport{destDoorOpt->teleport}) {
-            const auto &destData{destTeleport->data};
-            ctx.getLogger()->info(" - Destination teleports to {}",
-                                  destData.destinationId);
-            ctx.getLogger()->info(" - Destination position ({}, {}, {})",
-                                  destData.x, destData.y, destData.z);
-          }
-        }
-      }
-    }
 
     if (auto baseOpt{oo::getComponent<record::raw::REFRBase>(refUnderCrosshair,
                                                              ctx.getRefrResolvers())}) {
