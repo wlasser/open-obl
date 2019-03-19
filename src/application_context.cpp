@@ -74,6 +74,16 @@ oo::RefrResolversRef ApplicationContext::getRefrResolvers() const {
   return std::make_from_tuple<oo::RefrResolversRef>(*refrResolvers);
 }
 
+absl::flat_hash_map<oo::RefId, oo::BaseId> &
+oo::ApplicationContext::getPersistentReferenceMap() noexcept {
+  return persistentRefMap;
+}
+
+const absl::flat_hash_map<oo::RefId, oo::BaseId> &
+oo::ApplicationContext::getPersistentReferenceMap() const noexcept {
+  return persistentRefMap;
+}
+
 oo::ConsoleEngine &ApplicationContext::getConsoleEngine() {
   return *consoleEngine;
 }

@@ -236,7 +236,8 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobCounter espCounter{1};
   oo::JobManager::runJob([&, &ctx = ctx]() {
     InitialRecordVisitor initialRecordVisitor(ctx.getBaseResolvers(),
-                                              ctx.getRefrResolvers());
+                                              ctx.getRefrResolvers(),
+                                              ctx.getPersistentReferenceMap());
     for (int i = 0; i < static_cast<int>(loadOrder.size()); ++i) {
       oo::readEsp(*ctx.espCoordinator, i, initialRecordVisitor);
     }

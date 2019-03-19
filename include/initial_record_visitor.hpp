@@ -12,10 +12,13 @@ class InitialRecordVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
+  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
+  PersistentRefMap &mRefMap;
 
  public:
   explicit InitialRecordVisitor(oo::BaseResolversRef baseCtx,
-                                oo::RefrResolversRef refrCtx) noexcept;
+                                oo::RefrResolversRef refrCtx,
+                                PersistentRefMap &refMap) noexcept;
 
   template<class R> void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();

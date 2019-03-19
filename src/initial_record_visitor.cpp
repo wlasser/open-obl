@@ -30,10 +30,17 @@ class PersistentChildrenVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
+  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
+  PersistentRefMap &mRefMap;
+  oo::BaseId mCellId;
+
  public:
   explicit PersistentChildrenVisitor(oo::BaseResolversRef baseCtx,
-                                     oo::RefrResolversRef refrCtx) noexcept
-      : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)) {}
+                                     oo::RefrResolversRef refrCtx,
+                                     PersistentRefMap &refMap,
+                                     oo::BaseId cellId) noexcept
+      : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
+        mRefMap(refMap), mCellId(cellId) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor);
 
@@ -61,18 +68,23 @@ PersistentChildrenVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   if (actiRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
     refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
     refrDoorRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else if (lighRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
     refrLighRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else if (miscRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_MISC>().value};
     refrMiscRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
     refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else {
     accessor.skipRecord();
   }
@@ -88,6 +100,7 @@ PersistentChildrenVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
   if (npc_Res.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_NPC_>().value};
     refrNpc_Res.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
   } else {
     accessor.skipRecord();
   }
@@ -97,10 +110,15 @@ class InitialWrldVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
+  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
+  PersistentRefMap &mRefMap;
+
  public:
   explicit InitialWrldVisitor(oo::BaseResolversRef baseCtx,
-                              oo::RefrResolversRef refrCtx) noexcept
-      : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)) {}
+                              oo::RefrResolversRef refrCtx,
+                              PersistentRefMap &refMap) noexcept
+      : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
+        mRefMap(refMap) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor);
 
@@ -110,8 +128,10 @@ class InitialWrldVisitor {
 
 template<> void
 InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
-  (void) accessor.skipRecord();
-  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx);
+  const auto result{accessor.skipRecord()};
+  const oo::BaseId cellId{result.header.id};
+  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx,
+                                                      mRefMap, cellId);
   oo::readCellChildren(accessor, persistentChildrenVisitor,
                        oo::SkipGroupVisitorTag,
                        oo::SkipGroupVisitorTag);
@@ -120,8 +140,10 @@ InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
 } // namespace
 
 InitialRecordVisitor::InitialRecordVisitor(oo::BaseResolversRef baseCtx,
-                                           oo::RefrResolversRef refrCtx) noexcept
-    : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)) {}
+                                           oo::RefrResolversRef refrCtx,
+                                           PersistentRefMap &refMap) noexcept
+    : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
+      mRefMap(refMap) {}
 
 template<>
 void InitialRecordVisitor::readRecord<record::GMST>(oo::EspAccessor &accessor) {
@@ -200,7 +222,8 @@ void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
   oo::getResolver<record::CELL>(mBaseCtx).insertOrAppend(baseId, rec, accessor);
-  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx);
+  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx,
+                                                      mRefMap, baseId);
   oo::readCellChildren(accessor, persistentChildrenVisitor,
                        oo::SkipGroupVisitorTag,
                        oo::SkipGroupVisitorTag);
@@ -211,12 +234,12 @@ void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::WRLD>().value};
   const oo::BaseId baseId{rec.mFormId};
   oo::getResolver<record::WRLD>(mBaseCtx).insertOrAppend(baseId, rec, accessor);
-  InitialWrldVisitor wrldVisitor(mBaseCtx, mRefrCtx);
+  InitialWrldVisitor wrldVisitor(mBaseCtx, mRefrCtx, mRefMap);
   oo::readWrldChildren(accessor, wrldVisitor);
   // TODO: The first cell in a worldspace contains all the persistent references
-  // for that worldspace, so we can do a lot better here by only reading that
-  // dummy cell. This requires modifying readWrldChildren() or inlining part of
-  // it here.
+  //       for that worldspace, so we can do a lot better here by only reading
+  //       that dummy cell. This requires modifying readWrldChildren() or
+  //       inlining part of it here.
 }
 
 template<>
