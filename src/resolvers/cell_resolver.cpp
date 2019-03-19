@@ -212,6 +212,83 @@ void Cell::setName(std::string name) {
   mName = std::move(name);
 }
 
+bool Cell::isVisible() const noexcept {
+  return mIsVisible;
+}
+
+void Cell::setVisibleImpl(bool /*visible*/) {}
+
+void Cell::destroyMovableObjects(Ogre::SceneNode *root) {
+  if (!root) return;
+
+  // Detached objects are notified of their detachment so each object must be
+  // detached before it is destroyed.
+
+  // Repeatedly detach and destroy the last element.
+  auto &objects{root->getAttachedObjects()};
+  while (!objects.empty()) {
+    // Ogre pops and swaps to remove the object and needs an O(n) lookup if
+    // we detach by pointer instead of index.
+    auto *obj{root->detachObject(objects.size() - 1)};
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      getPhysicsWorld()->removeRigidBody(rigidBody->getRigidBody());
+    }
+    getSceneManager()->destroyMovableObject(obj);
+  }
+
+  for (auto *node : root->getChildren()) {
+    destroyMovableObjects(dynamic_cast<Ogre::SceneNode *>(node));
+  }
+};
+
+void Cell::showNode(Ogre::SceneNode *root) {
+  root->setVisible(true, /*cascade=*/false);
+  auto &objects{root->getAttachedObjects()};
+  for (Ogre::MovableObject *obj : objects) {
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      getPhysicsWorld()->addRigidBody(rigidBody->getRigidBody());
+    }
+  }
+}
+
+void Cell::hideNode(Ogre::SceneNode *root) {
+  root->setVisible(false, /*cascade=*/false);
+  auto &objects{root->getAttachedObjects()};
+  for (Ogre::MovableObject *obj : objects) {
+    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
+      getPhysicsWorld()->removeRigidBody(rigidBody->getRigidBody());
+    }
+  }
+}
+
+void Cell::setVisible(bool visible) {
+  if (visible == isVisible()) return;
+
+  std::function<void(Ogre::SceneNode *)> show = [&](Ogre::SceneNode *root) {
+    showNode(root);
+    for (auto *node : root->getChildren()) {
+      show(dynamic_cast<Ogre::SceneNode *>(node));
+    }
+  };
+
+  std::function<void(Ogre::SceneNode *)> hide = [&](Ogre::SceneNode *root) {
+    hideNode(root);
+    for (auto *node : root->getChildren()) {
+      hide(dynamic_cast<Ogre::SceneNode *>(node));
+    }
+  };
+
+  if (visible) {
+    mIsVisible = true;
+    show(getRootSceneNode());
+    setVisibleImpl(true);
+  } else {
+    mIsVisible = false;
+    hide(getRootSceneNode());
+    setVisibleImpl(false);
+  }
+}
+
 InteriorCell::InteriorCell(oo::BaseId baseId, std::string name,
                            std::unique_ptr<PhysicsWorld> physicsWorld)
     : Cell(baseId, std::move(name)),
@@ -255,7 +332,7 @@ ExteriorCell::~ExteriorCell() {
   //       destroyMovableObjects cannot be used; we can improve performance by
   //       changing destroyMovableObjects instead of showing the cell before
   //       destruction then removing its terrain collision object (which is
-  //       readded by setVisible if previously removed).
+  //       re-added by setVisible if previously removed).
   setVisible(true);
   if (mTerrainCollisionObject) {
     mPhysicsWorld->removeCollisionObject(mTerrainCollisionObject.get());
@@ -267,78 +344,11 @@ ExteriorCell::~ExteriorCell() {
   spdlog::get(oo::LOG)->info("Destroying cell {}", this->getBaseId());
 }
 
-void oo::ExteriorCell::destroyMovableObjects(Ogre::SceneNode *root) {
-  if (!root) return;
-
-  // Detached objects are notified of their detachment so each object must be
-  // detached before it is destroyed.
-
-  // Repeatedly detach and destroy the last element.
-  auto &objects{root->getAttachedObjects()};
-  while (!objects.empty()) {
-    // Ogre pops and swaps to remove the object and needs an O(n) lookup if
-    // we detach by pointer instead of index.
-    auto *obj{root->detachObject(objects.size() - 1)};
-    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
-      mPhysicsWorld->removeRigidBody(rigidBody->getRigidBody());
-    }
-    mScnMgr->destroyMovableObject(obj);
-  }
-
-  for (auto *node : root->getChildren()) {
-    destroyMovableObjects(dynamic_cast<Ogre::SceneNode *>(node));
-  }
-};
-
-bool oo::ExteriorCell::isVisible() const noexcept {
-  return mIsVisible;
-}
-
-void oo::ExteriorCell::setVisible(bool visible) {
-  if (visible == isVisible()) return;
-
-  std::function<void(Ogre::SceneNode *)> show = [&](Ogre::SceneNode *root) {
-    showNode(root);
-    for (auto *node : root->getChildren()) {
-      show(dynamic_cast<Ogre::SceneNode *>(node));
-    }
-  };
-
-  std::function<void(Ogre::SceneNode *)> hide = [&](Ogre::SceneNode *root) {
-    hideNode(root);
-    for (auto *node : root->getChildren()) {
-      hide(dynamic_cast<Ogre::SceneNode *>(node));
-    }
-  };
-
+void ExteriorCell::setVisibleImpl(bool visible) {
   if (visible) {
-    mIsVisible = true;
-    show(mRootSceneNode);
     mPhysicsWorld->addCollisionObject(mTerrainCollisionObject.get());
   } else {
-    mIsVisible = false;
-    hide(mRootSceneNode);
     mPhysicsWorld->removeCollisionObject(mTerrainCollisionObject.get());
-  }
-}
-
-void oo::ExteriorCell::showNode(Ogre::SceneNode *root) {
-  root->setVisible(true, /*cascade=*/false);
-  auto &objects{root->getAttachedObjects()};
-  for (Ogre::MovableObject *obj : objects) {
-    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
-      mPhysicsWorld->addRigidBody(rigidBody->getRigidBody());
-    }
-  }
-}
-
-void oo::ExteriorCell::hideNode(Ogre::SceneNode *root) {
-  root->setVisible(false, /*cascade=*/false);
-  auto &objects{root->getAttachedObjects()};
-  for (Ogre::MovableObject *obj : objects) {
-    if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
-      mPhysicsWorld->removeRigidBody(rigidBody->getRigidBody());
-    }
   }
 }
 

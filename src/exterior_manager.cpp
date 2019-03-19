@@ -270,7 +270,7 @@ void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
   // nearCells; this won't unload the terrain since it's still in the cache.
   if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
       cellPtr && !isInterior) {
-    static_cast<oo::ExteriorCell *>(cellPtr.get())->setVisible(false);
+    cellPtr->setVisible(false);
     mNearCells.erase(jt);
     ctx.getLogger()->info("[{}]: Cell is cached, hiding near cell",
                           boost::this_fiber::get_id());
@@ -339,4 +339,8 @@ void oo::ExteriorManager::reifyNeighborhood(World::CellIndex centerCell,
                         boost::this_fiber::get_id());
   reifyNearNeighborhood(centerCell, ctx);
   reifyFarNeighborhood(centerCell, ctx);
+}
+
+void oo::ExteriorManager::setVisible(bool visible) {
+  for (auto &cell : mNearCells) cell->setVisible(visible);
 }

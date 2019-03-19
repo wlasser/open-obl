@@ -138,7 +138,8 @@ LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
 
   if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
-      cellPtr && isInterior) {
+      cellPtr && !isInterior) {
+    cellPtr->setVisible(true);
     auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(cellPtr)};
     mExteriorCells.emplace_back(std::move(extPtr));
     return;
@@ -184,6 +185,7 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::World::CellIndex center,
     for (auto id : row) {
       if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(id)};
           cellPtr && !isInterior) {
+        cellPtr->setVisible(true);
         mExteriorCells.emplace_back(
             std::static_pointer_cast<oo::ExteriorCell>(cellPtr));
       } else {
@@ -224,6 +226,7 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
     // First check cell cache.
     if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)}; cellPtr) {
       // Cell exists in cache, is it interior or exterior?
+      cellPtr->setVisible(true);
       if (isInterior) {
         mInteriorCell = std::dynamic_pointer_cast<oo::InteriorCell>(cellPtr);
         ctx.getLogger()->info("Loaded cell {} from cache", cellId);

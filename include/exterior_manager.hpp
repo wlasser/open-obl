@@ -150,6 +150,10 @@ class ExteriorManager {
   const oo::World &getWorld() const noexcept;
   /// \warning This is not fiber-safe.
   oo::World &getWorld() noexcept;
+
+  /// Set the visibility of all near cells.
+  /// \warning This is not fiber-safe.
+  void setVisible(bool visible);
 };
 
 } // namespace oo

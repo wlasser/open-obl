@@ -196,14 +196,22 @@ class Cell {
   std::string getName() const;
   void setName(std::string name);
 
+  /// Show or hide the contents of this cell.
+  /// Due to the `oo::CellCache`, a `Cell` may still be alive but not in the
+  /// current scene. This method shows/hides the root scene node of this cell
+  /// and all its children, as well as adding/removing all the owned
+  /// physics objects.
+  void setVisible(bool visible);
+  bool isVisible() const noexcept;
+
   explicit Cell(oo::BaseId baseId, std::string name)
       : mBaseId(baseId), mName(std::move(name)) {}
 
   virtual ~Cell() = 0;
   Cell(const Cell &) = delete;
   Cell &operator=(const Cell &) = delete;
-  Cell(Cell &&other) noexcept = default;
-  Cell &operator=(Cell &&) noexcept = default;
+  Cell(Cell &&other) noexcept = delete;
+  Cell &operator=(Cell &&) noexcept = delete;
 
   template<class Refr, class ...Res>
   void attach(Refr ref, std::tuple<const Res &...> resolvers);
@@ -213,9 +221,18 @@ class Cell {
                         const record::raw::REFRTransformation &transform);
   void setNodeScale(Ogre::SceneNode *node,
                     const record::raw::REFRScalable &scalable);
+
+  void destroyMovableObjects(Ogre::SceneNode *root);
+
+  void showNode(Ogre::SceneNode *node);
+  void hideNode(Ogre::SceneNode *node);
+
  private:
   oo::BaseId mBaseId{};
   std::string mName{};
+  bool mIsVisible{true};
+
+  virtual void setVisibleImpl(bool visible);
 };
 
 inline Cell::~Cell() = default;
@@ -255,17 +272,6 @@ class ExteriorCell : public Cell {
   ExteriorCell(ExteriorCell &&) = delete;
   ExteriorCell &operator=(ExteriorCell &&) = delete;
 
-  /// Show or hide the contents of this cell.
-  /// Due to the `oo::CellCache`, an `ExteriorCell` may still be alive but not
-  /// in the current scene. This method shows/hides the root scene node of this
-  /// cell and all its children, as well as adding/removing all the owned
-  /// physics objects, including the terrain's collision object. The terrain
-  /// itself is not unloaded, since that is the responsibility of the `World`.
-  /// \pre The current visibility is `!visible`.
-  void setVisible(bool visible);
-
-  bool isVisible() const noexcept;
-
   void setTerrain(std::array<Ogre::Terrain *, 4> terrain);
  private:
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
@@ -284,12 +290,10 @@ class ExteriorCell : public Cell {
   std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
   std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
 
-  bool mIsVisible{true};
-
-  void destroyMovableObjects(Ogre::SceneNode *root);
-
-  void showNode(Ogre::SceneNode *node);
-  void hideNode(Ogre::SceneNode *node);
+  /// Implementation detail of `setVisible` which adds/removes the terrain's
+  /// collision objects. The terrain itself is not unloaded since that is the
+  /// responsibility of the `World`.
+  void setVisibleImpl(bool visible) override;
 };
 
 template<>
