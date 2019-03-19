@@ -31,7 +31,8 @@ template<> ReifyRecordTrait<record::REFR_NPC_>::type
 reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers) {
+            ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers,
+            Ogre::SceneNode *rootNode) {
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
   const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
@@ -67,7 +68,8 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   using BodyParts = record::raw::INDX_BODY;
   std::map<BodyParts, BodyData> bodyParts{};
 
-  auto *parent{scnMgr->getRootSceneNode()->createChildSceneNode()};
+  auto *parent{(rootNode ? rootNode : scnMgr->getRootSceneNode())
+                   ->createChildSceneNode()};
 
   // Set in loop below.
   Ogre::Entity *upperBody{nullptr};

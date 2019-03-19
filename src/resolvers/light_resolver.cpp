@@ -26,7 +26,8 @@ template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers) {
+            oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers,
+            Ogre::SceneNode *rootNode) {
   const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
   auto baseRec{lighRes.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
@@ -73,8 +74,12 @@ reifyRecord(const record::REFR_LIGH &refRec,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  auto *node{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world)};
-  if (!node) node = scnMgr->getRootSceneNode()->createChildSceneNode();
+  auto *node{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world,
+                           rootNode)};
+  if (!node) {
+    if (rootNode) node = rootNode->createChildSceneNode();
+    else node = scnMgr->getRootSceneNode()->createChildSceneNode();
+  }
 
   node->attachObject(light);
 

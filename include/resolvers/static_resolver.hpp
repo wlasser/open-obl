@@ -29,7 +29,8 @@ ReifyRecordTrait<record::REFR_STAT>::type
 reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers);
+            ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers,
+            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

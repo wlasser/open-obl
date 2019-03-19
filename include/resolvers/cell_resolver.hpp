@@ -320,7 +320,7 @@ template<class Refr, class ...Res>
 void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
   // TODO: Support returning different types
   auto *childNode{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
-                              std::move(resolvers))};
+                              std::move(resolvers), getRootSceneNode())};
   setNodeTransform(childNode, ref);
   setNodeScale(childNode, ref);
 }

@@ -133,7 +133,8 @@ attachAll(gsl::not_null<Ogre::SceneNode *> node,
 template<class T> Ogre::SceneNode *
 insertNif(const T &baseRec, RefId refId,
           gsl::not_null<Ogre::SceneManager *> scnMgr,
-          gsl::not_null<btDiscreteDynamicsWorld *> world) {
+          gsl::not_null<btDiscreteDynamicsWorld *> world,
+          Ogre::SceneNode *rootNode = nullptr) {
   oo::Path baseName;
   using modl_t = decltype(baseRec.modelFilename);
   if constexpr (std::is_same_v<modl_t, std::optional<record::MODL>>) {
@@ -145,7 +146,14 @@ insertNif(const T &baseRec, RefId refId,
     static_assert(false_v<T>, "Missing MODL record");
   }
   oo::Path name{oo::Path{"meshes"} / baseName};
-  auto *node{oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world)};
+  auto *node = [&]() {
+    if (rootNode) {
+      return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world,
+                           gsl::make_not_null(rootNode));
+    } else {
+      return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world);
+    }
+  }();
 
   oo::setRefId(gsl::make_not_null(node), refId);
 

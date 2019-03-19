@@ -22,12 +22,14 @@ template<> oo::ReifyRecordTrait<record::REFR_STAT>::type
 reifyRecord(const record::REFR_STAT &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            oo::ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers) {
+            oo::ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers,
+            Ogre::SceneNode *rootNode) {
   const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
   auto baseRec{statRes.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
 
-  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world);
+  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world,
+                       rootNode);
 }
 
 } // namespace oo

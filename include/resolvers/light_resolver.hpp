@@ -30,7 +30,8 @@ ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers);
+            ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers,
+            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

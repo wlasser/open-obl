@@ -173,11 +173,14 @@ struct ReifyRecordTrait {};
 ///              not the caller's responsibility to do this.
 /// \param resolvers A tuple of references to resolvers specified by
 ///                  `ReifyRecordTrait<R>`.
+/// \param rootNode An optional root node to the attach the object too. If this
+///                 is left as `nullptr` then the root of the `scnMgr` is used.
 template<class R>
 typename ReifyRecordTrait<R>::type
 reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            typename ReifyRecordTrait<R>::resolvers resolvers);
+            typename ReifyRecordTrait<R>::resolvers resolvers,
+            Ogre::SceneNode *rootNode = nullptr);
 
 /// Metafunction mapping `Record` to `oo::Resolver<Record>`.
 /// An optional `Id` can be specified to change the backing id from `oo::BaseId`

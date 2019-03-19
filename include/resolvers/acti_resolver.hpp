@@ -26,7 +26,8 @@ template<> ReifyRecordTrait<record::REFR_ACTI>::type
 reifyRecord(const record::REFR_ACTI &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers);
+            ReifyRecordTrait<record::REFR_ACTI>::resolvers resolvers,
+            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 
