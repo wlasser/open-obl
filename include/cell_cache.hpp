@@ -79,9 +79,9 @@ struct CellPacket {
                       std::vector<std::shared_ptr<ExteriorCell>> exteriorCells,
                       const Ogre::Vector3 &playerPosition = Ogre::Vector3::ZERO,
                       const Ogre::Quaternion &playerOrientation = Ogre::Quaternion::IDENTITY)
-      : mWrld(world),
-        mInteriorCell(interiorCell),
-        mExteriorCells(exteriorCells),
+      : mWrld(std::move(world)),
+        mInteriorCell(std::move(interiorCell)),
+        mExteriorCells(std::move(exteriorCells)),
         mPlayerPosition(playerPosition),
         mPlayerOrientation(playerOrientation) {}
 };
