@@ -116,7 +116,7 @@ void oo::ExteriorManager::unloadFarExteriorCell(oo::BaseId cellId,
   mWrld->unloadTerrain(cellId);
 }
 
-void oo::ExteriorManager::reifyFarNeighborhood(World::CellIndex centerCell,
+void oo::ExteriorManager::reifyFarNeighborhood(oo::CellIndex centerCell,
                                                ApplicationContext &ctx) {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   const auto farDiameter{gameSettings.get<unsigned int>(
@@ -282,7 +282,7 @@ void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
   mNearCells.erase(jt);
 }
 
-void oo::ExteriorManager::reifyNearNeighborhood(World::CellIndex centerCell,
+void oo::ExteriorManager::reifyNearNeighborhood(oo::CellIndex centerCell,
                                                 ApplicationContext &ctx) {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   const auto nearDiameter{gameSettings.get<unsigned int>(
@@ -332,7 +332,7 @@ void oo::ExteriorManager::reifyNearNeighborhood(World::CellIndex centerCell,
   nearUnloadJc.wait();
 }
 
-void oo::ExteriorManager::reifyNeighborhood(World::CellIndex centerCell,
+void oo::ExteriorManager::reifyNeighborhood(oo::CellIndex centerCell,
                                             ApplicationContext &ctx) {
   std::unique_lock lock{mReifyMutex};
   ctx.getLogger()->info("[{}]: reifyNeighborhood()",

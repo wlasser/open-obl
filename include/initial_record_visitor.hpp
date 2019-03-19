@@ -2,6 +2,7 @@
 #define OPENOBLIVION_INITIAL_RECORD_VISITOR_HPP
 
 #include "esp_coordinator.hpp"
+#include "persistent_reference_locator.hpp"
 #include "record/io.hpp"
 #include "record/records.hpp"
 #include "resolvers/resolvers.hpp"
@@ -12,13 +13,12 @@ class InitialRecordVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
-  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
-  PersistentRefMap &mRefMap;
+  PersistentReferenceLocator &mRefMap;
 
  public:
   explicit InitialRecordVisitor(oo::BaseResolversRef baseCtx,
                                 oo::RefrResolversRef refrCtx,
-                                PersistentRefMap &refMap) noexcept;
+                                PersistentReferenceLocator &refMap) noexcept;
 
   template<class R> void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();

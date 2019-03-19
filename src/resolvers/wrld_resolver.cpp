@@ -8,6 +8,13 @@
 #include <spdlog/spdlog.h>
 #include <Terrain/OgreTerrainGroup.h>
 
+oo::CellIndex oo::getCellIndex(float x, float y) noexcept {
+  return {
+      static_cast<int32_t>(std::floor(x / oo::unitsPerCell<float>)),
+      static_cast<int32_t>(std::floor(y / oo::unitsPerCell<float>))
+  };
+}
+
 //===----------------------------------------------------------------------===//
 // WRLD resolver definitions
 //===----------------------------------------------------------------------===//
@@ -37,7 +44,7 @@ oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
                              rec.editorId.data);
 
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
-  Metadata meta{{accessor}, {}};
+  Metadata meta{{accessor}, {}, {}};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
   if (inserted) return {it, inserted};
 
@@ -83,11 +90,12 @@ void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
   if (it == mRecords.end()) return;
   auto &meta{it->second.second};
   meta.mCells.clear();
+  meta.mPersistentReferences.clear();
 
   WrldVisitor visitor(meta, baseCtx);
   // Taking accessors by value so subsequent reads will work
   for (auto accessor : meta.mAccessors) {
-    oo::readWrldChildren(accessor, visitor);
+    oo::readWrldChildren(accessor, visitor, visitor);
   }
 }
 
@@ -144,12 +152,6 @@ gsl::not_null<oo::World::PhysicsWorld *> oo::World::getPhysicsWorld() const {
   return gsl::make_not_null(mPhysicsWorld.get());
 }
 
-oo::World::CellIndex oo::World::getCellIndex(float x, float y) const {
-  return {
-      static_cast<int32_t>(std::floor(x / oo::unitsPerCell<float>)),
-      static_cast<int32_t>(std::floor(y / oo::unitsPerCell<float>))
-  };
-}
 
 oo::World::CellGridView
 oo::World::getNeighbourhood(CellIndex cell, int diameter) const {

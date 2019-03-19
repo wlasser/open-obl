@@ -13,9 +13,9 @@
 #include "ogreimgui/imgui_manager.hpp"
 #include "ogresoloud/sound_manager.hpp"
 #include "ogresoloud/wav_resource_manager.hpp"
+#include "persistent_reference_locator.hpp"
 #include "resolvers/resolvers.hpp"
 #include "sdl/sdl.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <gsl/gsl>
 #include <OgreOverlaySystem.h>
 #include <OgreRoot.h>
@@ -79,10 +79,7 @@ class ApplicationContext {
   std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
   std::unique_ptr<oo::ScriptEngine> scriptEngine{};
 
-  /// Map of persistent references to the cells that contain them.
-  /// This is mostly useful for looking up where doors go, but also necessary
-  /// for implementing the `getParentCell` OBSE function.
-  absl::flat_hash_map<oo::RefId, oo::BaseId> persistentRefMap{};
+  oo::PersistentReferenceLocator persistentRefLocator{};
 
   std::unique_ptr<oo::MeshLoader> nifLoader{};
   std::unique_ptr<oo::CollisionObjectLoader> nifCollisionLoader{};
@@ -123,11 +120,11 @@ class ApplicationContext {
   oo::BaseResolversRef getBaseResolvers() const;
   oo::RefrResolversRef getRefrResolvers() const;
 
-  absl::flat_hash_map<oo::RefId, oo::BaseId> &
-  getPersistentReferenceMap() noexcept;
+  oo::PersistentReferenceLocator &
+  getPersistentReferenceLocator() noexcept;
 
-  const absl::flat_hash_map<oo::RefId, oo::BaseId> &
-  getPersistentReferenceMap() const noexcept;
+  const oo::PersistentReferenceLocator &
+  getPersistentReferenceLocator() const noexcept;
 
   oo::ConsoleEngine &getConsoleEngine();
   oo::ScriptEngine &getScriptEngine();

@@ -151,6 +151,7 @@ target_sources(OpenOblivion PRIVATE
         src/nifloader/scene.cpp
         src/nifloader/skeleton_loader.cpp
         src/nifloader/skeleton_loader_state.cpp
+        src/persistent_reference_locator.cpp
         src/resolvers/acti_resolver.cpp
         src/resolvers/cell_resolver.cpp
         src/resolvers/door_resolver.cpp
@@ -216,6 +217,7 @@ target_sources(OpenOblivion PRIVATE
         include/nifloader/scene.hpp
         include/nifloader/skeleton_loader.hpp
         include/nifloader/skeleton_loader_state.hpp
+        include/persistent_reference_locator.hpp
         include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
         include/resolvers/door_resolver.hpp

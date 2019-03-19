@@ -32,7 +32,7 @@ class GameMode {
   ExteriorManager mExteriorMgr;
   std::shared_ptr<InteriorCell> mCell{};
 
-  World::CellIndex mCenterCell{};
+  oo::CellIndex mCenterCell{};
   bool mInInterior{true};
 
   // TODO: These are only here because they need to be passed from the

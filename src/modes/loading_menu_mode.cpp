@@ -170,7 +170,7 @@ LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   ctx.getLogger()->info("Loaded exterior CELL {}", cellId);
 }
 
-void LoadingMenuMode::reifyNearNeighborhood(oo::World::CellIndex center,
+void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex center,
                                             ApplicationContext &ctx) {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   const auto nearDiameter{gameSettings.get<unsigned int>(
@@ -241,7 +241,7 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
         boost::this_fiber::yield();
 
         const auto cellRec{*cellRes.get(cellId)};
-        const World::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
+        const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
         reifyNearNeighborhood(pos, ctx);
         return;
       }
@@ -260,8 +260,7 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
 
           boost::this_fiber::yield();
 
-          const World::CellIndex
-              pos{cellRec.grid->data.x, cellRec.grid->data.y};
+          const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
           reifyNearNeighborhood(pos, ctx);
           return;
         } else {
@@ -281,7 +280,7 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
 
         // Cell exists and is an exterior cell.
         const auto cellRec{*cellRes.get(cellId)};
-        const World::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
+        const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
         reifyNearNeighborhood(pos, ctx);
         return;
       }

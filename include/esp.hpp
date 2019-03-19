@@ -82,12 +82,15 @@ template<class RecordVisitor>
 void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor);
 
 /// Read the `WorldChildren` subgroup following a `record::WRLD` record.
-/// The reading of the outer `record::ROAD` and `record::CELL` records, as well
-/// as all inner `record::CELL` records, are delegated to the `visitor`. Note
-/// that `record::CELL` records are followed by children, and
-/// `readRecord<record::CELL>` is expected to read the children too.
-template<class Visitor>
-void readWrldChildren(EspAccessor &accessor, Visitor &visitor);
+/// The reading of the outer `record::ROAD` and `record::CELL` records are
+/// delegated to the `OuterVisitor`, and the reading of the inner `record::CELL`
+/// records are delegated to the `InnerVisitor`. Note that `record::CELL`
+/// records are following by children, and `readRecord<record::CELL>` (of both
+/// visitors) is expected to read them too.
+template<class OuterVisitor, class InnerVisitor>
+void readWrldChildren(EspAccessor &accessor,
+                      OuterVisitor &outerVisitor,
+                      InnerVisitor &innerVisitor);
 
 struct SkipGroupVisitorTag_t {};
 constexpr static inline SkipGroupVisitorTag_t SkipGroupVisitorTag{};
@@ -307,8 +310,10 @@ void readCellTerrain(EspAccessor accessor, Visitor &visitor) {
   }
 }
 
-template<class Visitor>
-void readWrldChildren(EspAccessor &accessor, Visitor &visitor) {
+template<class OuterVisitor, class InnerVisitor>
+void readWrldChildren(EspAccessor &accessor,
+                      OuterVisitor &outerVisitor,
+                      InnerVisitor &innerVisitor) {
   using record::operator ""_rec;
   using GroupType = record::Group::GroupType;
 
@@ -325,20 +330,25 @@ void readWrldChildren(EspAccessor &accessor, Visitor &visitor) {
   // Dummy cell containing all the persistent references in the entire
   // worldspace.
   if (accessor.peekRecordType() == "CELL"_rec) {
-    visitor.template readRecord<record::CELL>(accessor);
+    outerVisitor.template readRecord<record::CELL>(accessor);
   }
 
   // Expect a series of ExteriorCellBlock groups
   while (accessor.peekGroupType() == GroupType::ExteriorCellBlock) {
-    (void) accessor.readGroup();
-
-    // Expect a series of ExteriorCellSubblock groups
-    while (accessor.peekGroupType() == GroupType::ExteriorCellSubblock) {
+    if constexpr (std::is_same_v<std::decay_t<InnerVisitor>,
+                                 SkipGroupVisitorTag_t>) {
+      accessor.skipGroup();
+    } else {
       (void) accessor.readGroup();
 
-      // Expect a series of cells
-      while (accessor.peekRecordType() == "CELL"_rec) {
-        visitor.template readRecord<record::CELL>(accessor);
+      // Expect a series of ExteriorCellSubblock groups
+      while (accessor.peekGroupType() == GroupType::ExteriorCellSubblock) {
+        (void) accessor.readGroup();
+
+        // Expect a series of cells
+        while (accessor.peekRecordType() == "CELL"_rec) {
+          innerVisitor.template readRecord<record::CELL>(accessor);
+        }
       }
     }
   }

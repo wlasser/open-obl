@@ -94,7 +94,7 @@ class ExteriorManager {
   boost::fibers::mutex mFarMutex{};
 
   /// \post `mFarLoaded =` \f$F\f$
-  void reifyFarNeighborhood(World::CellIndex centerCell,
+  void reifyFarNeighborhood(oo::CellIndex centerCell,
                             ApplicationContext &ctx);
 
   /// \post `mFarLoaded.contains(cellId)`
@@ -103,7 +103,7 @@ class ExteriorManager {
   void unloadFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
   /// \post `mNearLoaded = ` \f$G\f$
-  void reifyNearNeighborhood(World::CellIndex centerCell,
+  void reifyNearNeighborhood(oo::CellIndex centerCell,
                              ApplicationContext &ctx);
 
   /// \post `mNearLoaded.contains(cellId)`
@@ -143,7 +143,7 @@ class ExteriorManager {
   ExteriorManager(ExteriorManager &&) noexcept;
   ExteriorManager &operator=(ExteriorManager &&) noexcept;
 
-  void reifyNeighborhood(World::CellIndex centerCell, ApplicationContext &ctx);
+  void reifyNeighborhood(oo::CellIndex centerCell, ApplicationContext &ctx);
   /// \warning This is not fiber-safe.
   const std::vector<std::shared_ptr<oo::ExteriorCell>> &getNearCells() const noexcept;
   /// \warning This is not fiber-safe.

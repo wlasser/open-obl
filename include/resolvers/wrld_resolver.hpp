@@ -5,6 +5,7 @@
 #include "esp_coordinator.hpp"
 #include "job/job.hpp"
 #include "resolvers/resolvers.hpp"
+#include "resolvers/cell_resolver.hpp"
 #include "resolvers/wthr_resolver.hpp"
 #include "time_manager.hpp"
 #include <absl/container/flat_hash_map.h>
@@ -21,6 +22,13 @@
 
 namespace oo {
 
+/// Coordinates of an `oo::ExteriorCell` in a `World`.
+using CellIndex = qvm::vec<int32_t, 2>;
+
+/// Get the coordinates of the `oo::ExteriorCell` containing the given position.
+/// \remark `x` and `y` are measured in BS units.
+CellIndex getCellIndex(float x, float y) noexcept;
+
 template<>
 class Resolver<record::WRLD> {
  private:
@@ -29,6 +37,9 @@ class Resolver<record::WRLD> {
     std::vector<oo::EspAccessor> mAccessors{};
     /// All cells in the world.
     absl::flat_hash_set<oo::BaseId> mCells{};
+    /// All the reference records in the world and the indices of the cells they
+    /// are in.
+    absl::flat_hash_map<oo::RefId, oo::CellIndex> mPersistentReferences{};
   };
 
   /// Holds a record with an immutable backup of the original.
@@ -81,6 +92,13 @@ class Resolver<record::WRLD> {
   tl::optional<const absl::flat_hash_set<BaseId> &>
   getCells(oo::BaseId baseId) const;
 
+  /// Return the `RefId`s of all persistent references in the world and the
+  /// `CellIndex` of the cell that they are in.
+  /// \warning This will return an empty optional if the world has not been
+  ///          loaded first with a call to `load`.
+  tl::optional<const absl::flat_hash_map<RefId, CellIndex> &>
+  getPersistentReferences(oo::BaseId baseId) const;
+
   /// Return the `BaseId`s of all worldspaces.
   /// This method should generally be avoided but is necessary when trying to
   /// find which worldspace contains a given cell.
@@ -130,7 +148,6 @@ reifyRecord(const record::WRLD &refRec,
 
 class World {
  public:
-  using CellIndex = qvm::vec<int32_t, 2>;
   using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
   using PhysicsWorld = btDiscreteDynamicsWorld;
   using CellGridView = boost::multi_array<oo::BaseId,
@@ -150,10 +167,6 @@ class World {
   World &operator=(const World &) = delete;
   World(World &&) = delete;
   World &operator=(World &&) = delete;
-
-  /// Get the coordinates of the cell containing the given position.
-  /// \remark `x` and `y` are measured in units.
-  CellIndex getCellIndex(float x, float y) const;
 
   /// Get the oo::BaseId of the cell with the given coordinates.
   oo::BaseId getCell(CellIndex index) const;

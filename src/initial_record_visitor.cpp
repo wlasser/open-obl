@@ -26,31 +26,32 @@ template<class R> void readRecordDefault(const oo::BaseResolversRef &baseCtx,
   oo::getResolver<R>(baseCtx).insertOrAssignEspRecord(baseId, rec);
 }
 
+template<class F>
 class PersistentChildrenVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
-  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
-  PersistentRefMap &mRefMap;
-  oo::BaseId mCellId;
+  F &&mRefAction;
 
+  void readRecordRefr(oo::EspAccessor &accessor);
+  void readRecordAchr(oo::EspAccessor &accessor);
+  // TODO: void readRecordAcre(oo::EspAccessor &accessor);
  public:
   explicit PersistentChildrenVisitor(oo::BaseResolversRef baseCtx,
                                      oo::RefrResolversRef refrCtx,
-                                     PersistentRefMap &refMap,
-                                     oo::BaseId cellId) noexcept
+                                     F &&refAction) noexcept
       : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
-        mRefMap(refMap), mCellId(cellId) {}
+        mRefAction(std::forward<F>(refAction)) {}
 
-  template<class R> void readRecord(oo::EspAccessor &accessor);
-
-  template<> void readRecord<record::REFR>(oo::EspAccessor &accessor);
-  template<> void readRecord<record::ACHR>(oo::EspAccessor &accessor);
-  // TODO: template<> void readRecord<record::ACRE>(oo::EspAccessor &accessor);
+  template<class R> void readRecord(oo::EspAccessor &accessor) {
+    if constexpr (std::is_same_v<R, record::REFR>) readRecordRefr(accessor);
+    else if (std::is_same_v<R, record::ACHR>) readRecordAchr(accessor);
+    else accessor.skipRecord();
+  }
 };
 
-template<> void
-PersistentChildrenVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
+template<class F> void
+PersistentChildrenVisitor<F>::readRecordRefr(oo::EspAccessor &accessor) {
   const oo::BaseId baseId{accessor.peekBaseId()};
 
   const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
@@ -68,30 +69,30 @@ PersistentChildrenVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   if (actiRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
     refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
     refrDoorRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else if (lighRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_LIGH>().value};
     refrLighRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else if (miscRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_MISC>().value};
     refrMiscRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
     refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else {
     accessor.skipRecord();
   }
 }
 
-template<> void
-PersistentChildrenVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
+template<class F> void
+PersistentChildrenVisitor<F>::readRecordAchr(oo::EspAccessor &accessor) {
   const oo::BaseId baseId{accessor.peekBaseId()};
 
   const auto &npc_Res{oo::getResolver<record::NPC_>(mBaseCtx)};
@@ -100,7 +101,7 @@ PersistentChildrenVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
   if (npc_Res.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_NPC_>().value};
     refrNpc_Res.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
-    mRefMap[oo::RefId{ref.mFormId}] = mCellId;
+    mRefAction(ref);
   } else {
     accessor.skipRecord();
   }
@@ -110,15 +111,16 @@ class InitialWrldVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
-  using PersistentRefMap = absl::flat_hash_map<oo::RefId, oo::BaseId>;
-  PersistentRefMap &mRefMap;
+  oo::PersistentReferenceLocator &mRefMap;
+  oo::BaseId mWrldId;
 
  public:
   explicit InitialWrldVisitor(oo::BaseResolversRef baseCtx,
                               oo::RefrResolversRef refrCtx,
-                              PersistentRefMap &refMap) noexcept
+                              oo::PersistentReferenceLocator &refMap,
+                              oo::BaseId wrldId) noexcept
       : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
-        mRefMap(refMap) {}
+        mRefMap(refMap), mWrldId(wrldId) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor);
 
@@ -128,11 +130,15 @@ class InitialWrldVisitor {
 
 template<> void
 InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
-  const auto result{accessor.skipRecord()};
-  const oo::BaseId cellId{result.header.id};
-  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx,
-                                                      mRefMap, cellId);
-  oo::readCellChildren(accessor, persistentChildrenVisitor,
+  // Only reading a dummy cell so we can skip the actual record.
+  (void) accessor.skipRecord();
+  PersistentChildrenVisitor visitor(mBaseCtx, mRefrCtx, [&](const auto &ref) {
+    auto posRot{ref.positionRotation};
+    auto index{oo::getCellIndex(posRot.data.x, posRot.data.y)};
+    mRefMap.insert(oo::RefId{ref.mFormId}, mWrldId, index);
+  });
+
+  oo::readCellChildren(accessor, visitor,
                        oo::SkipGroupVisitorTag,
                        oo::SkipGroupVisitorTag);
 }
@@ -141,7 +147,7 @@ InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
 
 InitialRecordVisitor::InitialRecordVisitor(oo::BaseResolversRef baseCtx,
                                            oo::RefrResolversRef refrCtx,
-                                           PersistentRefMap &refMap) noexcept
+                                           oo::PersistentReferenceLocator &refMap) noexcept
     : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
       mRefMap(refMap) {}
 
@@ -222,9 +228,10 @@ void InitialRecordVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
   oo::getResolver<record::CELL>(mBaseCtx).insertOrAppend(baseId, rec, accessor);
-  PersistentChildrenVisitor persistentChildrenVisitor(mBaseCtx, mRefrCtx,
-                                                      mRefMap, baseId);
-  oo::readCellChildren(accessor, persistentChildrenVisitor,
+  PersistentChildrenVisitor visitor(mBaseCtx, mRefrCtx, [&](const auto &ref) {
+    mRefMap.insert(oo::RefId{ref.mFormId}, baseId);
+  });
+  oo::readCellChildren(accessor, visitor,
                        oo::SkipGroupVisitorTag,
                        oo::SkipGroupVisitorTag);
 }
@@ -234,12 +241,10 @@ void InitialRecordVisitor::readRecord<record::WRLD>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::WRLD>().value};
   const oo::BaseId baseId{rec.mFormId};
   oo::getResolver<record::WRLD>(mBaseCtx).insertOrAppend(baseId, rec, accessor);
-  InitialWrldVisitor wrldVisitor(mBaseCtx, mRefrCtx, mRefMap);
-  oo::readWrldChildren(accessor, wrldVisitor);
-  // TODO: The first cell in a worldspace contains all the persistent references
-  //       for that worldspace, so we can do a lot better here by only reading
-  //       that dummy cell. This requires modifying readWrldChildren() or
-  //       inlining part of it here.
+  InitialWrldVisitor wrldVisitor(mBaseCtx, mRefrCtx, mRefMap, baseId);
+  // All persistent references are in a dummy cell at the start of the
+  // worldspace, so we can skip the inner cells.
+  oo::readWrldChildren(accessor, wrldVisitor, oo::SkipGroupVisitorTag);
 }
 
 template<>

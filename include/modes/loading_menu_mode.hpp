@@ -140,8 +140,7 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
   ///      a reification of its parent worldspace.
   void reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
-  void reifyNearNeighborhood(oo::World::CellIndex center,
-                             ApplicationContext &ctx);
+  void reifyNearNeighborhood(oo::CellIndex center, ApplicationContext &ctx);
 
   void startLoadJob(ApplicationContext &ctx);
 

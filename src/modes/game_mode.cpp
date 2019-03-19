@@ -204,8 +204,8 @@ void GameMode::refocus(ApplicationContext &) {
 bool GameMode::updateCenterCell(ApplicationContext &) {
   // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
   const auto pos{mPlayerController->getPosition()};
-  const auto cellIndex{mExteriorMgr.getWorld().getCellIndex(
-      pos.x * oo::unitsPerMeter<float>, -pos.z * oo::unitsPerMeter<float>)};
+  const auto cellIndex{oo::getCellIndex(pos.x * oo::unitsPerMeter<float>,
+                                        -pos.z * oo::unitsPerMeter<float>)};
 
   if (cellIndex != mCenterCell) {
     mCenterCell = cellIndex;
@@ -223,11 +223,10 @@ GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
     if (auto door{oo::getComponent<record::raw::REFRDoor>(refId, refrRes)}) {
       if (auto teleport{door->teleport}) {
         const auto &data{teleport->data};
-        const auto &refMap{ctx.getPersistentReferenceMap()};
-        if (refMap.contains(data.destinationId)) {
-          oo::BaseId cellId{refMap.at(data.destinationId)};
+        const auto &refMap{ctx.getPersistentReferenceLocator()};
+        if (auto cellOpt{refMap.getCell(data.destinationId)}) {
           oo::CellRequest request{
-              cellId,
+              *cellOpt,
               oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y,
                                                   data.z + 128}),
               // TODO: Convert rotations into quaternion
