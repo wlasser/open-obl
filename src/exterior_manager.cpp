@@ -248,10 +248,14 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
 void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
                                                  ApplicationContext &ctx) {
   std::unique_lock lock{mNearMutex};
+  ctx.getLogger()->info("[{}]: unloadNearExteriorCell({}) started",
+                        boost::this_fiber::get_id(), cellId);
 
   auto _ = gsl::finally([&]() {
     auto it{std::find(mNearLoaded.begin(), mNearLoaded.end(), cellId)};
     mNearLoaded.erase(it);
+    ctx.getLogger()->info("[{}]: unloadNearExteriorCell({}) finished",
+                          boost::this_fiber::get_id(), cellId);
   });
 
   // By construction, this cell is loaded.
@@ -268,6 +272,8 @@ void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
       cellPtr && !isInterior) {
     static_cast<oo::ExteriorCell *>(cellPtr.get())->setVisible(false);
     mNearCells.erase(jt);
+    ctx.getLogger()->info("[{}]: Cell is cached, hiding near cell",
+                          boost::this_fiber::get_id());
     return;
   }
 
