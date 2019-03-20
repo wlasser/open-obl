@@ -212,8 +212,15 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
   }
 
   const auto cellRec{cellRes.get(cellId)};
+  const auto cellGrid{cellRec->grid->data};
+  oo::CellIndex cellIndex{cellGrid.x, cellGrid.y};
 
   cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+  const auto &refLocator{ctx.getPersistentReferenceLocator()};
+  for (auto persistentRef : refLocator.getRecordsInCell(cellIndex)) {
+    cellRes.insertReferenceRecord(cellId, persistentRef);
+  }
+
   boost::this_fiber::yield();
 
   oo::JobCounter reifyDone{1};

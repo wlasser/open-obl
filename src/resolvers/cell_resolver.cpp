@@ -134,6 +134,14 @@ oo::Resolver<record::CELL>::getLandId(oo::BaseId baseId) const {
   return it->second.second.mLandId;
 }
 
+void oo::Resolver<record::CELL>::insertReferenceRecord(oo::BaseId cellId,
+                                                       oo::RefId refId) {
+  std::scoped_lock lock{mMtx};
+  auto it{mRecords.find(cellId)};
+  if (it == mRecords.end()) return;
+  it->second.second.mReferences.insert(refId);
+}
+
 template<> void
 oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};

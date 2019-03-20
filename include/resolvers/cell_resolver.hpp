@@ -138,6 +138,12 @@ class Resolver<record::CELL> {
   /// \warning This will return an empty optional if the cell has not had its
   ///          terrain loaded first with a call to `loadTerrain`.
   tl::optional<oo::BaseId> getLandId(oo::BaseId baseId) const;
+
+  /// Add a reference record to the given cell, if it exists.
+  /// \todo This is needed to add persistent records to exterior cells, which
+  ///       are not saved with the cell itself, but it seems like an inelegant
+  ///       solution.
+  void insertReferenceRecord(oo::BaseId cellId, oo::RefId refId);
 };
 
 class Resolver<record::CELL>::CellVisitor {
