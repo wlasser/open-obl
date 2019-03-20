@@ -1618,9 +1618,16 @@ read(std::istream &is, raw::LAND &t, std::size_t size) {
     if (recType == "BTXT"_rec) {
       readRecord(is, t.quadrantTexture.emplace_back());
     } else if (recType == "ATXT"_rec) {
+      // CheydinhalExterior15 has a blank ATXT record with no VTXT record that
+      // we want to ignore. It happens so rarely it's easier to just read the
+      // ATXT anyway then discard the record.
       auto &p{t.fineTextures.emplace_back()};
       readRecord(is, p.first);
-      readRecord(is, p.second);
+      if (peekRecordType(is) == "VTXT"_rec) {
+        readRecord(is, p.second);
+      } else {
+        t.fineTextures.pop_back();
+      }
     } else {
       break;
     }
