@@ -114,6 +114,7 @@ target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
         src/application.cpp
         src/application_context.cpp
+        src/atmosphere.cpp
         src/bsa_archive_factory.cpp
         src/cell_cache.cpp
         src/character_controller/jump_state.cpp
@@ -168,6 +169,7 @@ target_sources(OpenOblivion PRIVATE
         src/time_manager.cpp
         include/application.hpp
         include/application_context.hpp
+        include/atmosphere.hpp
         include/bitflag.hpp
         include/bsa_archive_factory.hpp
         include/bullet/collision.hpp
