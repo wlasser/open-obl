@@ -7,7 +7,6 @@
 #include "job/job.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/cell_resolver.hpp"
-#include "resolvers/wthr_resolver.hpp"
 #include "time_manager.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
