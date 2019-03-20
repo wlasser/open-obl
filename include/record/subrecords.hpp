@@ -182,7 +182,7 @@ using VCLR = std::array<std::array<uint8_t, 3>, 33u * 33u>;
 using VNML = std::array<std::array<int8_t, 3>, 33u * 33u>;
 // Simplified exterior cell terrain land texture application. Placed every other
 // grid point and used in place of the BTXT, ATXT, VTXT combo.
-using VTEX = std::array<oo::BaseId, 256u>;
+using VTEX = std::array<oo::BaseId, 64u>;
 // Parent worldspace
 using WNAM = oo::BaseId;
 // The climate of a cell, if it is exterior or an interior cell with the
