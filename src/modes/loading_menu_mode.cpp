@@ -63,7 +63,8 @@ LoadingMenuMode::getParentIdFromUnloaded(oo::BaseId cellId,
 
     boost::this_fiber::yield();
 
-    return wrldRes.getCells(wrldId)->contains(cellId);
+    const auto cells{wrldRes.getCells(wrldId)};
+    return cells && cells->contains(cellId);
   })};
 
   return it != worlds.end() ? std::optional{*it} : std::nullopt;
@@ -170,7 +171,7 @@ LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   ctx.getLogger()->info("Loaded exterior CELL {}", cellId);
 }
 
-void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex center,
+void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
                                             ApplicationContext &ctx) {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   const auto nearDiameter{gameSettings.get<unsigned int>(
@@ -180,7 +181,9 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex center,
   // reify the record and add it. Things are a lot simpler than in `GameMode`
   // because we don't have to worry about `mExteriorCells` already having cells
   // in it.
-  auto neighbors{mWrld->getNeighbourhood(center, nearDiameter)};
+  const auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+  auto neighbors{wrldRes.getNeighbourhood(mWrld->getBaseId(), centerCell,
+                                          nearDiameter)};
   for (const auto &row : neighbors) {
     for (auto id : row) {
       if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(id)};

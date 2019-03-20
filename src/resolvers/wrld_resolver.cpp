@@ -44,7 +44,7 @@ oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
                              rec.editorId.data);
 
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
-  Metadata meta{{accessor}, {}, {}};
+  Metadata meta{{accessor}, {}, oo::CellGrid{}, {}};
   auto[it, inserted]{mRecords.try_emplace(baseId, entry, meta)};
   if (inserted) return {it, inserted};
 
@@ -92,11 +92,78 @@ void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
   meta.mCells.clear();
   meta.mPersistentReferences.clear();
 
+  // Get the actual WRLD record
+  auto &entry{it->second.first};
+  const record::WRLD &rec{entry.second ? *entry.second : entry.first};
+
+  // Worldspace bounds, in units.
+  const auto[x0, y0]{rec.bottomLeft.data};
+  const auto[x1, y1]{rec.topRight.data};
+
+  // Worldspace bounds, in cells.
+  const auto p0{oo::getCellIndex(x0, y0)};
+  const auto p1{oo::getCellIndex(x1, y1)};
+
+  meta.mCellGrid.resize(
+      boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
+  meta.mCellGrid.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
+
   WrldVisitor visitor(meta, baseCtx);
   // Taking accessors by value so subsequent reads will work
   for (auto accessor : meta.mAccessors) {
-    oo::readWrldChildren(accessor, visitor, visitor);
+    oo::readWrldChildren(accessor, oo::SkipGroupVisitorTag, visitor);
   }
+}
+
+tl::optional<oo::BaseId>
+oo::Resolver<record::WRLD>::getCell(oo::BaseId baseId,
+                                    oo::CellIndex index) const {
+  std::scoped_lock lock{mMtx};
+  auto it{mRecords.find(baseId)};
+  if (it == mRecords.end()) return tl::nullopt;
+  const auto &grid{it->second.second.mCellGrid};
+  const auto x{qvm::X(index)}, y{qvm::Y(index)};
+
+  // Multiarray has no builtin way to do bounds checking :(
+  // By default it asserts on out-of-bounds, not throws, so we can't even 'try'.
+  if (x < grid.index_bases()[0]
+      || x > grid.index_bases()[0] + static_cast<int>(grid.shape()[0])
+      || y < grid.index_bases()[1]
+      || y > grid.index_bases()[1] + static_cast<int>(grid.shape()[1])) {
+    return tl::nullopt;
+  }
+
+  return grid[x][y];
+}
+
+oo::CellGridView
+oo::Resolver<record::WRLD>::getNeighbourhood(oo::BaseId wrldId,
+                                             CellIndex cell,
+                                             int diameter) const {
+  std::scoped_lock lock{mMtx};
+  auto it{mRecords.find(wrldId)};
+  // We are allowed to UB if the set of cells is empty, so this is fine.
+  const auto &grid{it->second.second.mCellGrid};
+
+  const int x{qvm::X(cell)}, y{qvm::Y(cell)};
+  // Adding 1 maps intervals (a, b] -> [a, b)
+
+  // For integer i and real r,
+  // floor(i - r) = i - ceil(r)
+  const int x0{1 + x - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+  const int y0{1 + y - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
+  // floor(i + r) = i + floor(r)
+  const int x1{1 + x + diameter / 2};
+  const int y1{1 + y + diameter / 2};
+
+  // Keep within bounds.
+  const int X0{std::max<int>(x0, grid.index_bases()[0])};
+  const int Y0{std::max<int>(y0, grid.index_bases()[1])};
+  const int X1{std::min<int>(x1, grid.index_bases()[0] + grid.shape()[0])};
+  const int Y1{std::min<int>(y1, grid.index_bases()[1] + grid.shape()[1])};
+
+  using Range = CellGrid::index_range;
+  return grid[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
 }
 
 tl::optional<const absl::flat_hash_set<oo::BaseId> &>
@@ -122,7 +189,14 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
   cellRes.insertOrAppend(baseId, rec, accessor, /*isExterior=*/true);
+
   mMeta.mCells.emplace(baseId);
+  const auto gridOpt{rec.grid};
+  if (gridOpt) {
+    oo::CellIndex p{gridOpt->data.x, gridOpt->data.y};
+    mMeta.mCellGrid[qvm::X(p)][qvm::Y(p)] = baseId;
+  }
+
   if (accessor.peekGroupType() == record::Group::GroupType::CellChildren) {
     accessor.skipGroup();
   }
@@ -150,29 +224,6 @@ gsl::not_null<Ogre::SceneManager *> oo::World::getSceneManager() const {
 
 gsl::not_null<oo::World::PhysicsWorld *> oo::World::getPhysicsWorld() const {
   return gsl::make_not_null(mPhysicsWorld.get());
-}
-
-oo::World::CellGridView
-oo::World::getNeighbourhood(CellIndex cell, int diameter) const {
-  const int x{qvm::X(cell)}, y{qvm::Y(cell)};
-  // Adding 1 maps intervals (a, b] -> [a, b)
-
-  // For integer i and real r,
-  // floor(i - r) = i - ceil(r)
-  const int x0{1 + x - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
-  const int y0{1 + y - diameter / 2 - (diameter % 2 == 0 ? 0 : 1)};
-  // floor(i + r) = i + floor(r)
-  const int x1{1 + x + diameter / 2};
-  const int y1{1 + y + diameter / 2};
-
-  // Keep within bounds.
-  const int X0{std::max<int>(x0, mCells.index_bases()[0])};
-  const int Y0{std::max<int>(y0, mCells.index_bases()[1])};
-  const int X1{std::min<int>(x1, mCells.index_bases()[0] + mCells.shape()[0])};
-  const int Y1{std::min<int>(y1, mCells.index_bases()[1] + mCells.shape()[1])};
-
-  using Range = CellGrid::index_range;
-  return mCells[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
 }
 
 void oo::World::setDefaultImportData() {
@@ -228,18 +279,6 @@ oo::World::~World() {
 
 void oo::World::makeCellGrid() {
   const auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
-  const record::WRLD &rec{*wrldRes.get(mBaseId)};
-
-  // Worldspace bounds, in units.
-  const auto[x0, y0]{rec.bottomLeft.data};
-  const auto[x1, y1]{rec.topRight.data};
-
-  // Worldspace bounds, in cells.
-  const auto &p0{getCellIndex(x0, y0)};
-  const auto &p1{getCellIndex(x1, y1)};
-
-  mCells.resize(boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
-  mCells.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
 
   // Number of cells to load before yielding this fiber. We have a *lot* of
   // cells to load, and yielding after every cell is slow.
@@ -257,10 +296,6 @@ void oo::World::makeCellGrid() {
 
     const auto gridOpt{cellOpt->grid};
     if (!gridOpt) continue;
-
-    const auto grid{gridOpt->data};
-    CellIndex p{grid.x, grid.y};
-    mCells[qvm::X(p)][qvm::Y(p)] = cellId;
 
     cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
     const auto landId{cellRes.getLandId(cellId)};
@@ -306,8 +341,8 @@ void oo::World::makeCellGrid() {
       }
     }
 
-    const auto x{qvm::X(p)};
-    const auto y{qvm::Y(p)};
+    const auto x{gridOpt->data.x};
+    const auto y{gridOpt->data.y};
     mTerrainGroup.defineTerrain(2 * x + 0, 2 * y + 0, &importData[0]);
     mTerrainGroup.defineTerrain(2 * x + 1, 2 * y + 0, &importData[1]);
     mTerrainGroup.defineTerrain(2 * x + 0, 2 * y + 1, &importData[2]);
@@ -478,10 +513,6 @@ void oo::World::applyFineLayers(LayerOrders &layerOrders,
   }
 }
 
-oo::BaseId oo::World::getCell(CellIndex index) const {
-  return mCells[qvm::X(index)][qvm::Y(index)];
-}
-
 std::shared_ptr<oo::JobCounter>
 oo::World::loadTerrain(CellIndex index, bool async) {
   auto x{qvm::X(index)};
@@ -554,7 +585,13 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
                               normalMapData.data());
 
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
-  record::LAND &landRec{*landRes.get(*cellRes.getLandId(cellId))};
+  auto landOpt{landRes.get(*cellRes.getLandId(cellId))};
+  if (!landOpt) {
+    // TODO: No LAND record means that we are probably in a child worldspace and
+    //       should use the parent worldspace's terrain unmodified.
+    return;
+  }
+  record::LAND &landRec{*landOpt};
 
   if (landRec.normals) {
     for (std::size_t y = 0; y < vpc; ++y) {

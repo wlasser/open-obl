@@ -123,7 +123,9 @@ void oo::ExteriorManager::reifyFarNeighborhood(oo::CellIndex centerCell,
       "General.uGridDistantCount", 5)};
 
   // Get the set of far neighbours that we want to end up being loaded.
-  auto farNbrsArray{mWrld->getNeighbourhood(centerCell, farDiameter)};
+  const auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+  auto farNbrsArray{wrldRes.getNeighbourhood(mWrld->getBaseId(), centerCell,
+                                             farDiameter)};
   std::set<oo::BaseId> farNbrsNew{};
   for (const auto &row : farNbrsArray) {
     for (auto id : row) {
@@ -296,7 +298,9 @@ void oo::ExteriorManager::reifyNearNeighborhood(oo::CellIndex centerCell,
       "General.uGridsToLoad", 3)};
 
   // Get the set of near neighbours that we want to end up being loaded.
-  auto nearNbrsArray{mWrld->getNeighbourhood(centerCell, nearDiameter)};
+  const auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+  auto nearNbrsArray{wrldRes.getNeighbourhood(mWrld->getBaseId(), centerCell,
+                                              nearDiameter)};
   std::set<oo::BaseId> nearNbrsNew{};
   for (const auto &row : nearNbrsArray) {
     for (auto id : row) {

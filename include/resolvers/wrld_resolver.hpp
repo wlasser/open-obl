@@ -29,6 +29,11 @@ using CellIndex = qvm::vec<int32_t, 2>;
 /// \remark `x` and `y` are measured in BS units.
 CellIndex getCellIndex(float x, float y) noexcept;
 
+using CellGrid = boost::multi_array<oo::BaseId, 2>;
+
+using CellGridView = boost::multi_array<oo::BaseId,
+                                        2>::const_array_view<2>::type;
+
 template<>
 class Resolver<record::WRLD> {
  private:
@@ -37,6 +42,11 @@ class Resolver<record::WRLD> {
     std::vector<oo::EspAccessor> mAccessors{};
     /// All cells in the world.
     absl::flat_hash_set<oo::BaseId> mCells{};
+    /// Cells in the world stored in a grid mirroring their actual layout.
+    /// The array base is set such that the cell with coordinates `(X,Y)` is
+    /// located at `[X][Y]`.
+    oo::CellGrid mCellGrid{};
+
     /// All the reference records in the world and the indices of the cells they
     /// are in.
     absl::flat_hash_map<oo::RefId, oo::CellIndex> mPersistentReferences{};
@@ -85,6 +95,28 @@ class Resolver<record::WRLD> {
 
   /// Register all cell children of the world.
   void load(oo::BaseId baseId, BaseResolverContext baseCtx);
+
+  /// Return the `BaseId` of the cell at the given position in the given world.
+  /// \warning This will return an empty optional if the world has not been
+  ///          loaded first with a call to load.
+  tl::optional<oo::BaseId>
+  getCell(oo::BaseId wrldId, oo::CellIndex index) const;
+
+  /// Return a neighbourhood of the cell at the given position.
+  /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
+  /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of
+  /// the worldspace and
+  /// \f[
+  ///     \lfloor x - d/2 \rfloor < X \leq \lfloor x + d/2 \rfloor, \quad
+  ///     \lfloor y - d/2 \rfloor < Y \leq \lfloor y + d/2 \rfloor.
+  /// \f]
+  /// `diameter` must be a non-negative integer. If `diameter` is zero and
+  /// `cell` is within the bounds of the worldspace, then `cell` is returned.
+  /// If the set of cells satisfying the above conditions is empty, the
+  /// behaviour is undefined.
+  // C++20: Codify the preconditions on cell and diameter.
+  oo::CellGridView
+  getNeighbourhood(oo::BaseId wrldId, CellIndex cell, int diameter) const;
 
   /// Return the BaseIds of all cells in the world.
   /// \warning This will return an empty optional if the world has not been
@@ -143,8 +175,6 @@ class World {
  public:
   using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
   using PhysicsWorld = btDiscreteDynamicsWorld;
-  using CellGridView = boost::multi_array<oo::BaseId,
-                                          2>::const_array_view<2>::type;
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const;
@@ -160,9 +190,6 @@ class World {
   World &operator=(const World &) = delete;
   World(World &&) = delete;
   World &operator=(World &&) = delete;
-
-  /// Get the oo::BaseId of the cell with the given coordinates.
-  oo::BaseId getCell(CellIndex index) const;
 
   /// Load the terrain of the cell with the given coordinates.
   /// If `async` is true then returns immediately with a `oo::JobCounter` which
@@ -190,21 +217,6 @@ class World {
 
   void updateAtmosphere(const oo::chrono::minutes &time);
 
-  /// Return a neighbourhood of the cell at the given position.
-  /// Specifically, if \f$d\f$ is the given `diameter`, return the cells with
-  /// coordinates \f$(X, Y)\f$ such that \f$(X, Y)\f$ is within the bounds of
-  /// the worldspace and
-  /// \f[
-  ///     \lfloor x - d/2 \rfloor < X \leq \lfloor x + d/2 \rfloor, \quad
-  ///     \lfloor y - d/2 \rfloor < Y \leq \lfloor y + d/2 \rfloor.
-  /// \f]
-  /// `diameter` must be a non-negative integer. If `diameter` is zero and
-  /// `cell` is within the bounds of the worldspace, then `cell` is returned.
-  /// If the set of cells satisfying the above conditions is empty, the
-  /// behaviour is undefined.
-  // C++20: Codify the preconditions on cell and diameter.
-  CellGridView getNeighbourhood(CellIndex cell, int diameter) const;
-
  private:
   oo::BaseId mBaseId{};
   std::string mName{};
@@ -213,13 +225,6 @@ class World {
   Ogre::TerrainGroup mTerrainGroup;
   Resolvers mResolvers;
   oo::Atmosphere mAtmosphere;
-
-  using CellGrid = boost::multi_array<oo::BaseId, 2>;
-
-  /// Cells in the world stored in a grid mirroring their actual layout.
-  /// The array base is set such that the cell with coordinates `(X,Y)` is
-  /// located at `[X][Y]`.
-  CellGrid mCells{};
 
   /// Set up the default `Ogre::Terrain::ImportData` for our
   /// `Ogre::TerrainGroup`.

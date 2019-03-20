@@ -330,7 +330,14 @@ void readWrldChildren(EspAccessor &accessor,
   // Dummy cell containing all the persistent references in the entire
   // worldspace.
   if (accessor.peekRecordType() == "CELL"_rec) {
-    outerVisitor.template readRecord<record::CELL>(accessor);
+    if constexpr (std::is_same_v<std::decay_t<OuterVisitor>,
+                                 SkipGroupVisitorTag_t>) {
+      accessor.skipRecord();
+      oo::readCellChildren(accessor, SkipGroupVisitorTag,
+                           SkipGroupVisitorTag, SkipGroupVisitorTag);
+    } else {
+      outerVisitor.template readRecord<record::CELL>(accessor);
+    }
   }
 
   // Expect a series of ExteriorCellBlock groups
