@@ -92,13 +92,6 @@ class Resolver<record::WRLD> {
   tl::optional<const absl::flat_hash_set<BaseId> &>
   getCells(oo::BaseId baseId) const;
 
-  /// Return the `RefId`s of all persistent references in the world and the
-  /// `CellIndex` of the cell that they are in.
-  /// \warning This will return an empty optional if the world has not been
-  ///          loaded first with a call to `load`.
-  tl::optional<const absl::flat_hash_map<RefId, CellIndex> &>
-  getPersistentReferences(oo::BaseId baseId) const;
-
   /// Return the `BaseId`s of all worldspaces.
   /// This method should generally be avoided but is necessary when trying to
   /// find which worldspace contains a given cell.
