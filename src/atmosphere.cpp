@@ -90,21 +90,31 @@ void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
 
   if (!mSkyMaterial) {
-    auto matPtr{matMgr.getByName("__skyMaterial", oo::SHADER_GROUP)};
-    mSkyMaterial = matPtr->clone("__skyMaterial" + getBaseId().string(),
-        /*changeGroup=*/true, oo::RESOURCE_GROUP);
+    const auto matName{SKY_BASE_MATERIAL + getBaseId().string()};
+    if (matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
+      mSkyMaterial = matMgr.getByName(matName, oo::RESOURCE_GROUP);
+    } else {
+      auto matPtr{matMgr.getByName(SKY_BASE_MATERIAL, oo::SHADER_GROUP)};
+      mSkyMaterial = matPtr->clone(matName, /*changeGroup=*/true,
+                                   oo::RESOURCE_GROUP);
+    }
   }
 
   if (!mCloudsMaterial) {
-    auto matPtr{matMgr.getByName("__cloudMaterial", oo::SHADER_GROUP)};
-    mCloudsMaterial = matPtr->clone("__cloudMaterial" + getBaseId().string(),
-        /*changeGroup=*/true, oo::RESOURCE_GROUP);
-    if (mLowerCloudsTex && mUpperCloudsTex) {
-      Ogre::AliasTextureNamePairList layers{
-          {"lowerLayer", mLowerCloudsTex->getName()},
-          {"upperLayer", mUpperCloudsTex->getName()}
-      };
-      mCloudsMaterial->applyTextureAliases(layers, true);
+    const auto matName{CLOUD_BASE_MATERIAL + getBaseId().string()};
+    if (matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
+      mCloudsMaterial = matMgr.getByName(oo::RESOURCE_GROUP);
+    } else {
+      auto matPtr{matMgr.getByName(CLOUD_BASE_MATERIAL, oo::SHADER_GROUP)};
+      mCloudsMaterial = matPtr->clone(matName, /*changeGroup=*/true,
+                                      oo::RESOURCE_GROUP);
+      if (mLowerCloudsTex && mUpperCloudsTex) {
+        Ogre::AliasTextureNamePairList layers{
+            {"lowerLayer", mLowerCloudsTex->getName()},
+            {"upperLayer", mUpperCloudsTex->getName()}
+        };
+        mCloudsMaterial->applyTextureAliases(layers, true);
+      }
     }
   }
 

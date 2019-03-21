@@ -98,6 +98,9 @@ class Weather {
   Ogre::MaterialPtr mCloudsMaterial;
   // TODO: Support rain
 
+  constexpr static const char *SKY_BASE_MATERIAL{"__skyMaterial"};
+  constexpr static const char *CLOUD_BASE_MATERIAL{"__cloudMaterial"};
+
   /// Linearly interpolate from the quantity `a` at `t = 0` to the quantity
   /// `b` at `t = 1`.
   /// \tparam T should be an element of a vector space.
