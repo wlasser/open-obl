@@ -156,9 +156,11 @@ class World;
 template<>
 struct ReifyRecordTrait<record::WRLD> {
   using type = std::shared_ptr<World>;
+  // WRLD resolver must be nonconst as World may need to load() a parent
+  // worldspace.
   using resolvers = decltype(std::tuple_cat(
       std::declval<Resolver<record::WRLD>::BaseResolverContext>(),
-      std::declval<std::tuple<const oo::Resolver<record::WRLD> &,
+      std::declval<std::tuple<oo::Resolver<record::WRLD> &,
                               const oo::Resolver<record::LTEX> &,
                               const oo::Resolver<record::WTHR> &,
                               const oo::Resolver<record::CLMT> &,
@@ -233,6 +235,8 @@ class World {
   /// defaults, which should be preferred to default-constructing an
   /// `Ogre::Terrain::ImportData` and populating it manually.
   void setDefaultImportData();
+
+  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId);
 
   void makeCellGrid();
   void makePhysicsWorld();
