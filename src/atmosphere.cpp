@@ -103,7 +103,7 @@ void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
   if (!mCloudsMaterial) {
     const auto matName{CLOUD_BASE_MATERIAL + getBaseId().string()};
     if (matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
-      mCloudsMaterial = matMgr.getByName(oo::RESOURCE_GROUP);
+      mCloudsMaterial = matMgr.getByName(matName, oo::RESOURCE_GROUP);
     } else {
       auto matPtr{matMgr.getByName(CLOUD_BASE_MATERIAL, oo::SHADER_GROUP)};
       mCloudsMaterial = matPtr->clone(matName, /*changeGroup=*/true,
