@@ -217,6 +217,7 @@ bool GameMode::updateCenterCell(ApplicationContext &) {
 
 GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
   const oo::RefId refId{getCrosshairRef()};
+  auto baseRes{ctx.getBaseResolvers()};
   auto refrRes{ctx.getRefrResolvers()};
 
   if (refId != oo::RefId{0}) {
@@ -224,21 +225,47 @@ GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
       if (auto teleport{door->teleport}) {
         const auto &data{teleport->data};
         const auto &refMap{ctx.getPersistentReferenceLocator()};
-        if (auto cellOpt{refMap.getCell(data.destinationId)}) {
-          oo::CellRequest request{
-              *cellOpt,
-              oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y,
-                                                  data.z + 128}),
-              // TODO: Convert rotations into quaternion
-          };
-          if (mInInterior) {
-            mCell->setVisible(false);
-          } else {
-            mExteriorMgr.setVisible(false);
+        // TODO: Loading exterior cells this way is unnecessary work since the
+        //       BaseId gets converted back to a CellIndex and worldspace.
+        //       Allow CellRequests containing a CellIndex.
+        tl::optional<oo::BaseId> dstCell = [&]() -> tl::optional<oo::BaseId> {
+          if (auto cell{refMap.getCell(data.destinationId)}) {
+            // Interior door, we're done.
+            return cell;
+          } else if (auto wrldOpt{refMap.getWorldspace(data.destinationId)}) {
+            // Exterior door, need to find cell with the given index.
+            auto indexOpt{refMap.getCellIndex(data.destinationId)};
+            if (!indexOpt) return tl::nullopt;
+
+            auto &wrldRes{oo::getResolver<record::WRLD>(baseRes)};
+
+            // Target worldspace might not be loaded yet.
+            // TODO: Add a builtin function for testing if a WRLD is loaded.
+            if (!wrldRes.getCells(*wrldOpt)) {
+              wrldRes.load(*wrldOpt, oo::getResolvers<record::CELL>(baseRes));
+            }
+
+            return wrldRes.getCell(*wrldOpt, *indexOpt);
           }
-          unregisterSceneListeners(ctx);
-          return {true, oo::LoadingMenuMode(ctx, std::move(request))};
+          return tl::nullopt;
+        }();
+
+        if (!dstCell) return {};
+
+        oo::CellRequest request{
+            *dstCell,
+            oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z + 128}),
+            // TODO: Convert rotations into quaternion
+        };
+
+        if (mInInterior) {
+          mCell->setVisible(false);
+        } else {
+          mExteriorMgr.setVisible(false);
         }
+
+        unregisterSceneListeners(ctx);
+        return {true, oo::LoadingMenuMode(ctx, std::move(request))};
       }
     }
   }
