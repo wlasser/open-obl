@@ -219,7 +219,7 @@ void oo::World::setName(std::string name) {
 }
 
 gsl::not_null<Ogre::SceneManager *> oo::World::getSceneManager() const {
-  return mScnMgr;
+  return gsl::make_not_null(mScnMgr.get());
 }
 
 gsl::not_null<oo::World::PhysicsWorld *> oo::World::getPhysicsWorld() const {
@@ -242,14 +242,18 @@ void oo::World::setDefaultImportData() {
 
 oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     : mBaseId(baseId), mName(std::move(name)),
-      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
-      mTerrainGroup(mScnMgr, Ogre::Terrain::Alignment::ALIGN_X_Z,
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager(),
+              [](Ogre::SceneManager *p) {
+                auto root{Ogre::Root::getSingletonPtr()};
+                if (root) root->destroySceneManager(p);
+              }),
+      mTerrainGroup(mScnMgr.get(), Ogre::Terrain::Alignment::ALIGN_X_Z,
                     oo::verticesPerQuad<uint16_t>,
                     oo::metersPerUnit<Ogre::Real> * oo::unitsPerQuad<float>),
       mResolvers(std::move(resolvers)),
-      mAtmosphere(baseId, mScnMgr, oo::getResolvers<record::WTHR,
-                                                    record::CLMT,
-                                                    record::WRLD>(mResolvers)) {
+      mAtmosphere(baseId, gsl::make_not_null(mScnMgr.get()),
+                  oo::getResolvers<record::WTHR, record::CLMT, record::WRLD>(
+                      mResolvers)) {
   // Shift origin because cell coordinates give SW corner position but Ogre
   // works with the centre.
   mTerrainGroup.setOrigin(oo::fromBSCoordinates(Ogre::Vector3{
@@ -273,8 +277,6 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
 oo::World::~World() {
   mTerrainGroup.removeAllTerrains();
-  auto root{Ogre::Root::getSingletonPtr()};
-  if (root) root->destroySceneManager(mScnMgr);
 }
 
 tl::optional<oo::BaseId> oo::World::getLandId(oo::BaseId cellId) {

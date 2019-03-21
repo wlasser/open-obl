@@ -222,7 +222,8 @@ class World {
  private:
   oo::BaseId mBaseId{};
   std::string mName{};
-  gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
+  std::unique_ptr<Ogre::SceneManager,
+                  std::function<void(Ogre::SceneManager *)>> mScnMgr;
   std::unique_ptr<PhysicsWorld> mPhysicsWorld;
   Ogre::TerrainGroup mTerrainGroup;
   Resolvers mResolvers;
