@@ -146,7 +146,7 @@ insertNif(const T &baseRec, RefId refId,
     static_assert(false_v<T>, "Missing MODL record");
   }
   oo::Path name{oo::Path{"meshes"} / baseName};
-  auto *node = [&]() {
+  auto *node = [&]() -> Ogre::SceneNode * {
     if (rootNode) {
       return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world,
                            gsl::make_not_null(rootNode));
@@ -154,6 +154,8 @@ insertNif(const T &baseRec, RefId refId,
       return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world);
     }
   }();
+
+  if (!node) return nullptr;
 
   oo::setRefId(gsl::make_not_null(node), refId);
 

@@ -222,9 +222,8 @@ BlockGraph createBlockGraph(std::istream &is) {
       logger->trace("Read block {} (NiNode)", i);
     } else {
       // TODO: Implement the other blocks
-      throw std::runtime_error(boost::str(
-          boost::format("Found unsupported block type %s, cannot continue")
-              % blockType));
+      logger->error("Unsupported block {} ({})", i, blockType);
+      throw std::runtime_error("Unsupported block type");
     }
   }
 

@@ -249,7 +249,7 @@ void Cell::destroyMovableObjects(Ogre::SceneNode *root) {
   }
 };
 
-void Cell::showNode(Ogre::SceneNode *root) {
+void Cell::showNode(gsl::not_null<Ogre::SceneNode *> root) {
   root->setVisible(true, /*cascade=*/false);
   auto &objects{root->getAttachedObjects()};
   for (Ogre::MovableObject *obj : objects) {
@@ -259,7 +259,7 @@ void Cell::showNode(Ogre::SceneNode *root) {
   }
 }
 
-void Cell::hideNode(Ogre::SceneNode *root) {
+void Cell::hideNode(gsl::not_null<Ogre::SceneNode *> root) {
   root->setVisible(false, /*cascade=*/false);
   auto &objects{root->getAttachedObjects()};
   for (Ogre::MovableObject *obj : objects) {
@@ -273,16 +273,16 @@ void Cell::setVisible(bool visible) {
   if (visible == isVisible()) return;
 
   std::function<void(Ogre::SceneNode *)> show = [&](Ogre::SceneNode *root) {
-    showNode(root);
-    for (auto *node : root->getChildren()) {
-      show(dynamic_cast<Ogre::SceneNode *>(node));
+    showNode(gsl::make_not_null(root));
+    for (Ogre::Node *node : root->getChildren()) {
+      show(static_cast<Ogre::SceneNode *>(node));
     }
   };
 
   std::function<void(Ogre::SceneNode *)> hide = [&](Ogre::SceneNode *root) {
-    hideNode(root);
-    for (auto *node : root->getChildren()) {
-      hide(dynamic_cast<Ogre::SceneNode *>(node));
+    hideNode(gsl::make_not_null(root));
+    for (Ogre::Node *node : root->getChildren()) {
+      hide(static_cast<Ogre::SceneNode *>(node));
     }
   };
 
@@ -520,7 +520,7 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
   return cell;
 }
 
-void Cell::setNodeTransform(Ogre::SceneNode *node,
+void Cell::setNodeTransform(gsl::not_null<Ogre::SceneNode *> node,
                             const record::raw::REFRTransformation &transform) {
   const auto &data{transform.positionRotation.data};
 
@@ -559,7 +559,7 @@ void Cell::setNodeTransform(Ogre::SceneNode *node,
   notify(node);
 }
 
-void Cell::setNodeScale(Ogre::SceneNode *node,
+void Cell::setNodeScale(gsl::not_null<Ogre::SceneNode *> node,
                         const record::raw::REFRScalable &scalable) {
   if (scalable.scale) {
     const float scale{scalable.scale->data};

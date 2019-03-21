@@ -335,7 +335,12 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
                            gsl::not_null<Ogre::SceneNode *> parent) {
   auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
   if (!nifPtr) return nullptr;
-  nifPtr->load();
+  try {
+    nifPtr->load();
+  } catch (const std::exception &e) {
+    spdlog::get(oo::LOG)->error("Nif load failed: {}", e.what());
+    return nullptr;
+  }
   auto graph{nifPtr->getBlockGraph()};
 
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));

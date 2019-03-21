@@ -223,15 +223,15 @@ class Cell {
   void attach(Refr ref, std::tuple<const Res &...> resolvers);
 
  protected:
-  void setNodeTransform(Ogre::SceneNode *node,
+  void setNodeTransform(gsl::not_null<Ogre::SceneNode *> node,
                         const record::raw::REFRTransformation &transform);
-  void setNodeScale(Ogre::SceneNode *node,
+  void setNodeScale(gsl::not_null<Ogre::SceneNode *> node,
                     const record::raw::REFRScalable &scalable);
 
   void destroyMovableObjects(Ogre::SceneNode *root);
 
-  void showNode(Ogre::SceneNode *node);
-  void hideNode(Ogre::SceneNode *node);
+  void showNode(gsl::not_null<Ogre::SceneNode *> node);
+  void hideNode(gsl::not_null<Ogre::SceneNode *> node);
 
  private:
   oo::BaseId mBaseId{};
@@ -331,8 +331,10 @@ void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
   // TODO: Support returning different types
   auto *childNode{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
                               std::move(resolvers), getRootSceneNode())};
-  setNodeTransform(childNode, ref);
-  setNodeScale(childNode, ref);
+  if (!childNode) return;
+
+  setNodeTransform(gsl::make_not_null(childNode), ref);
+  setNodeScale(gsl::make_not_null(childNode), ref);
 }
 
 } // namespace oo
