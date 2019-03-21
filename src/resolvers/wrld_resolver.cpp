@@ -652,14 +652,18 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   Ogre::PixelBox normalMapBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                               normalMapData.data());
 
-  auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
-  auto landOpt{landRes.get(*cellRes.getLandId(cellId))};
-  if (!landOpt) {
-    // TODO: No LAND record means that we are probably in a child worldspace and
-    //       should use the parent worldspace's terrain unmodified.
+  const auto landIdOpt{getLandId(cellId)};
+  if (!landIdOpt) {
+    // No LAND for this cell or any of its parents. Wait for the Ogre::Terrain
+    // to finish loading then delete it and return.
+    if (terrainCounter) terrainCounter->wait();
+    unloadTerrain(pos);
+    logger->warn("[{}]: No LAND record for this terrain",
+                 boost::this_fiber::get_id());
     return;
   }
-  record::LAND &landRec{*landOpt};
+  auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
+  record::LAND &landRec{*landRes.get(*landIdOpt)};
 
   if (landRec.normals) {
     for (std::size_t y = 0; y < vpc; ++y) {
