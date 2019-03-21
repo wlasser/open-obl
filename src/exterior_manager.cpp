@@ -187,7 +187,13 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
       cellPtr && !isInterior) {
     ctx.getCellCache()->promote(cellId);
     auto extCellPtr{std::static_pointer_cast<oo::ExteriorCell>(cellPtr)};
-    extCellPtr->setVisible(true);
+
+    oo::JobCounter jc{1};
+    oo::RenderJobManager::runJob([ptr = extCellPtr.get()]() {
+      ptr->setVisible(true);
+    }, &jc);
+    jc.wait();
+
     std::unique_lock lock{mNearMutex};
     mNearCells.emplace_back(std::move(extCellPtr));
     ctx.getLogger()->info("[{}]: Loaded cell {} from cache",
