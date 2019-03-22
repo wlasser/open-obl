@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionBsaTools)
 
 find_package(PkgConfig REQUIRED)
+include(GNUInstallDirs)
 
 if (PkgConfig_FOUND)
     pkg_check_modules(GTKMM gtkmm-3.0)
@@ -61,5 +62,8 @@ if (PkgConfig_FOUND)
                 OpenOblivion::OpenOblivionBsa
                 OpenOblivion::OpenOblivionFS
                 ${FUSE_LIBRARIES})
+
+        install(TARGETS OpenOblivionBsaFuse
+                RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     endif ()
 endif ()
