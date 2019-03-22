@@ -16,7 +16,6 @@
 #include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
-#include "world_cache.hpp"
 
 namespace oo {
 
@@ -98,10 +97,6 @@ Ogre::OverlaySystem *ApplicationContext::getOverlaySystem() {
 
 oo::CellCache *ApplicationContext::getCellCache() {
   return cellCache.get();
-}
-
-oo::WorldCache *ApplicationContext::getWorldCache() {
-  return worldCache.get();
 }
 
 void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {

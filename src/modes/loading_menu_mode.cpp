@@ -5,7 +5,6 @@
 #include "modes/loading_menu_mode.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "world_cache.hpp"
 #include <spdlog/fmt/ostr.h>
 
 namespace oo {
@@ -18,7 +17,7 @@ LoadingMenuMode::getParentIdFromCache(oo::BaseId cellId,
   ctx.getLogger()->info("Looking for parent WRLD of CELL {} in "
                         "the WRLD cache...", cellId);
 
-  const auto &worlds{ctx.getWorldCache()->worlds()};
+  const auto worlds{ctx.getCellCache()->worlds()};
   auto it{std::find_if(worlds.begin(), worlds.end(), [&](const auto &p) {
     boost::this_fiber::yield();
     return wrldRes.getCells(p->getBaseId())->contains(cellId);
@@ -91,12 +90,10 @@ oo::BaseId LoadingMenuMode::getUnloadedParentId(oo::BaseId cellId,
 
 void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
                                       ApplicationContext &ctx) {
-  const auto &worlds{ctx.getWorldCache()->worlds()};
-  auto it{std::find_if(worlds.begin(), worlds.end(), [&](const auto &p) {
-    return p->getBaseId() == wrldId;
-  })};
-
-  if (it != worlds.end()) {
+  const auto worlds{ctx.getCellCache()->worlds()};
+  const auto p = [&](const auto wrld) { return wrld->getBaseId() == wrldId; };
+  if (auto it{std::find_if(worlds.begin(), worlds.end(), p)};
+      it != worlds.end()) {
     mWrld = *it;
     return;
   }
@@ -111,7 +108,7 @@ void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
   ctx.getLogger()->info("Reifying WRLD {}", wrldId);
   const auto wrldRec{*wrldRes.get(wrldId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
-  ctx.getWorldCache()->push_back(mWrld);
+  ctx.getCellCache()->push_back(mWrld);
 }
 
 void LoadingMenuMode::reifyUncachedInteriorCell(oo::BaseId cellId,
@@ -138,7 +135,7 @@ void
 LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
 
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
       cellPtr && !isInterior) {
     cellPtr->setVisible(true);
     auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(cellPtr)};
@@ -186,7 +183,7 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
                                           nearDiameter)};
   for (const auto &row : neighbors) {
     for (auto id : row) {
-      if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(id)};
+      if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(id)};
           cellPtr && !isInterior) {
         cellPtr->setVisible(true);
         mExteriorCells.emplace_back(
@@ -210,7 +207,7 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
     //       currently this does way more searches than it needs to.
     auto begin{exteriors.begin()}, end{exteriors.end()};
     if (std::find(begin, end, cellPtr) != end) {
-      ctx.getCellCache()->promote(cellPtr->getBaseId());
+      ctx.getCellCache()->promoteCell(cellPtr->getBaseId());
     } else {
       ctx.getCellCache()->push_back(cellPtr);
     }
@@ -227,7 +224,8 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
     // TODO: Update detach time of cells
 
     // First check cell cache.
-    if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)}; cellPtr) {
+    if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
+        cellPtr) {
       // Cell exists in cache, is it interior or exterior?
       cellPtr->setVisible(true);
       if (isInterior) {

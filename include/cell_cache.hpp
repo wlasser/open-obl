@@ -20,8 +20,7 @@ class CellCache {
   using InteriorPtr = std::shared_ptr<InteriorCell>;
   using ExteriorPtr = std::shared_ptr<ExteriorCell>;
   using CellPtr = std::shared_ptr<Cell>;
-  using InteriorBuffer = boost::circular_buffer<InteriorPtr>;
-  using ExteriorBuffer = boost::circular_buffer<ExteriorPtr>;
+  using WorldPtr = std::shared_ptr<World>;
 
   struct GetResult {
     CellPtr cell;
@@ -31,24 +30,91 @@ class CellCache {
   };
 
  private:
+  /// Stores an `oo::World` and upon the destruction of the last copy of its
+  /// stored pointer, removes all cached `oo::ExteriorCell`s that belong to the
+  /// world .
+  class InvalidationWrapper {
+   private:
+    /// Pointer to the owning `CellCache`. Is allowed to be null for move
+    /// semantics.
+    CellCache *mCache;
+    /// `oo::World` stored. Is allowed to be null for move semantics.
+    WorldPtr mPtr;
+
+    /// If `mPtr `is non-null then find all `oo::ExteriorCell`s in `mCache`
+    /// that belong to the pointed-to world and remove them. Calling this
+    /// when the `InvalidationWrapper` leaves the cache ensures that---at least
+    /// due to caching---no `oo::ExteriorCell` is left alive without a parent
+    /// `oo::World`.
+    /// \remark This is not fiber-safe, the caller is expected to already be
+    ///         taking a lock. After all, this is only called when the world
+    ///         buffer is being modified.
+    bool invalidate() const noexcept;
+   public:
+    explicit InvalidationWrapper(CellCache *cache, WorldPtr ptr);
+    /// Calls `invalidate()`.
+    ~InvalidationWrapper();
+    /// Any `oo::World` should be stored at most once in a cache, copying is
+    /// not allowed.
+    InvalidationWrapper(const InvalidationWrapper &) = delete;
+    /// \copydoc InvalidationWrapper(const InvalidationWrapper &)
+    InvalidationWrapper &operator=(const InvalidationWrapper &) = delete;
+    /// Move constructing an `InvalidationWrapper` is fine, no additional
+    /// action is required.
+    InvalidationWrapper(InvalidationWrapper &&other) noexcept = default;
+    /// Calls `invalidate()` then move-assigns.
+    /// Each `InvalidationWrapper` is local to a single `CellCache`, so the
+    /// only use of move-assignment would be to replace an existing
+    /// `InvalidationWrapper` with one that owns a different `oo::World`. Since
+    /// that destructs the currently owned `oo::World`, we need to invalidate.
+    InvalidationWrapper &operator=(InvalidationWrapper &&other) noexcept;
+
+    const WorldPtr &get() const noexcept;
+  };
+
+ public:
+  using InteriorBuffer = boost::circular_buffer<InteriorPtr>;
+  using ExteriorBuffer = boost::circular_buffer<ExteriorPtr>;
+  using WorldBuffer = boost::circular_buffer<InvalidationWrapper>;
+
+ private:
   InteriorBuffer mInteriors{};
   ExteriorBuffer mExteriors{};
+  /// \remark The `WorldBuffer` must be destroyed *before* the `ExteriorBuffer`,
+  ///         because when the `InvalidationWrapper`s are destroyed they
+  ///         remove all owned cells in the `ExteriorBuffer`. If the
+  ///         `ExteriorBuffer` has been destroyed then they can't do that. After
+  ///         the `WorldBuffer` is destroyed the only `ExteriorCell`s left in
+  ///         the `ExteriorBuffer` will be those owned by non-cached worlds,
+  ///         which---because the `CellCache` outlasts all `World`s----should
+  ///         all have been destroyed.
+  WorldBuffer mWorlds{};
   mutable boost::fibers::mutex mMutex{};
 
  public:
-  explicit CellCache(std::size_t interiorCapacity, std::size_t exteriorCapacity)
-      : mInteriors(interiorCapacity), mExteriors(exteriorCapacity) {}
+  explicit CellCache(std::size_t interiorCapacity,
+                     std::size_t exteriorCapacity,
+                     std::size_t worldCapacity) :
+      mInteriors(interiorCapacity),
+      mExteriors(exteriorCapacity),
+      mWorlds(worldCapacity) {}
 
   void push_back(const InteriorPtr &interiorCell);
   void push_back(const ExteriorPtr &exteriorCell);
+  void push_back(const WorldPtr &world);
 
   /// Move the given cell to the back of its buffer, if it exists.
-  void promote(oo::BaseId id);
+  void promoteCell(oo::BaseId id);
+
+  /// Move the given worldspace to the back of its buffer, if it exists.
+  void promoteWorld(oo::BaseId id);
 
   const InteriorBuffer &interiors() const;
   const ExteriorBuffer &exteriors() const;
+  std::vector<WorldPtr> worlds() const;
 
-  GetResult get(oo::BaseId id) const;
+  GetResult getCell(oo::BaseId id) const;
+  WorldPtr getWorld(oo::BaseId id) const;
 };
 
 /// Cell to load and where to place the player in it.

@@ -69,10 +69,10 @@ void oo::ExteriorManager::reifyFarExteriorCell(oo::BaseId cellId,
   // By construction, this cell is not already loaded.
 
   // If it's cached, promote it in the cache and show the terrain.
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
       cellPtr && !isInterior) {
     // TODO: Show the terrain
-    ctx.getCellCache()->promote(cellId);
+    ctx.getCellCache()->promoteCell(cellId);
     ctx.getLogger()->info("[{}]: Loaded cell {} terrain from cache",
                           boost::this_fiber::get_id(), cellId);
     return;
@@ -103,7 +103,7 @@ void oo::ExteriorManager::unloadFarExteriorCell(oo::BaseId cellId,
   // By construction, this cell is loaded.
 
   // If it's cached, then no unloading to do.
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
       cellPtr && !isInterior) {
     // TODO: Hide the terrain
     ctx.getLogger()->info("[{}]: Cell is cached, hiding terrain [TODO]",
@@ -183,9 +183,9 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
   // By construction, this cell is not already loaded.
 
   // If it's cached, promote it in the cache and make it visible.
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
       cellPtr && !isInterior) {
-    ctx.getCellCache()->promote(cellId);
+    ctx.getCellCache()->promoteCell(cellId);
     auto extCellPtr{std::static_pointer_cast<oo::ExteriorCell>(cellPtr)};
 
     oo::JobCounter jc{1};
@@ -283,7 +283,7 @@ void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
 
   // If it's cached, then need to hide the scene root and remove it from
   // nearCells; this won't unload the terrain since it's still in the cache.
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->get(cellId)};
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
       cellPtr && !isInterior) {
     cellPtr->setVisible(false);
     mNearCells.erase(jt);

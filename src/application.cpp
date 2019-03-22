@@ -34,7 +34,6 @@
 #include "scripting/script_engine.hpp"
 #include "sdl/sdl.hpp"
 #include "terrain_material_generator.hpp"
-#include "world_cache.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>
@@ -248,10 +247,7 @@ Application::Application(std::string windowName) : FrameListener() {
       gameSettings.get("General.uInterior Cell Buffer", 3u),
       std::max(gameSettings.get("General.uGridsToLoad", 3u)
                    * gameSettings.get("General.uGridsToLoad", 3u),
-               gameSettings.get("General.uExterior Cell Buffer", 36u)));
-
-  // Create the world cache
-  ctx.worldCache = std::make_unique<oo::WorldCache>(
+               gameSettings.get("General.uExterior Cell Buffer", 36u)),
       gameSettings.get("General.uWorld Buffer", 1u));
 
   createDummySceneManager();
