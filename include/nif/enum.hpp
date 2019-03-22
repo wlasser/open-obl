@@ -1,13 +1,12 @@
 #ifndef OPENOBLIVION_NIF_ENUM_HPP
 #define OPENOBLIVION_NIF_ENUM_HPP
 
-namespace nif {
-namespace Enum {
+namespace nif::Enum {
 
 // Material descriptor for a Havok shape
 // This is HNAM_LTEX::MaterialType
 enum class OblivionHavokMaterial : uint32_t {
-  OB_HAV_MAT_STONE = 0, // Stone
+  OB_HAV_MAT_STONE = 0u, // Stone
   OB_HAV_MAT_CLOTH, // Cloth
   OB_HAV_MAT_DIRT, // Dirt
   OB_HAV_MAT_GLASS, // Glass
@@ -43,7 +42,7 @@ enum class OblivionHavokMaterial : uint32_t {
 
 // Collision body layer a body belongs to
 enum class OblivionLayer : uint8_t {
-  OL_UNIDENTIFIED, // Unidentified (white)
+  OL_UNIDENTIFIED = 0u, // Unidentified (white)
   OL_STATIC, // Static (red)
   OL_ANIM_STATIC, // AnimStatic (magenta)
   OL_TRANSPARENT, // Transparent (light pink)
@@ -105,36 +104,36 @@ enum class OblivionLayer : uint8_t {
 
 enum class EndianType : uint8_t {
   ENDIAN_BIG = 0,
-  ENDIAN_LITTLE = 1
+  ENDIAN_LITTLE = 1u
 };
 
 enum class BoundVolumeType : uint32_t {
-  BASE_BV = 0xffffffff,
-  SPHERE_BV = 0,
-  BOX_BV = 1,
-  CAPSULE_BV = 2,
-  UNION_BV = 4,
-  HALFSPACE_BV = 5
+  BASE_BV = 0xffffffffu,
+  SPHERE_BV = 0u,
+  BOX_BV = 1u,
+  CAPSULE_BV = 2u,
+  UNION_BV = 4u,
+  HALFSPACE_BV = 5u
 };
 
 enum class VectorFlags : uint16_t {
-  NONE = 0x0000,
-  VF_UV_1 = 0x0001,
-  VF_UV_2 = 0x0002,
-  VF_UV_4 = 0x0004,
-  VF_UV_8 = 0x0008,
-  VF_UV_16 = 0x0010,
-  VF_UV_32 = 0x0020,
-  VF_Unk64 = 0x0040,
-  VF_Unk128 = 0x0080,
-  VF_Unk256 = 0x0100,
-  VF_Unk512 = 0x0200,
-  VF_Unk1024 = 0x0400,
-  VF_Unk2048 = 0x0800,
-  VF_Has_Tangents = 0x1000,
-  VF_Unk8192 = 0x2000,
-  VF_Unk16384 = 0x4000,
-  VF_Unk32768 = 0x8000,
+  NONE = 0u,
+  VF_UV_1 = 1u << 0u,
+  VF_UV_2 = 1u << 1u,
+  VF_UV_4 = 1u << 2u,
+  VF_UV_8 = 1u << 3u,
+  VF_UV_16 = 1u << 4u,
+  VF_UV_32 = 1u << 5u,
+  VF_Unk64 = 1u << 6u,
+  VF_Unk128 = 1u << 7u,
+  VF_Unk256 = 1u << 8u,
+  VF_Unk512 = 1u << 9u,
+  VF_Unk1024 = 1u << 10u,
+  VF_Unk2048 = 1u << 11u,
+  VF_Has_Tangents = 1u << 12u,
+  VF_Unk8192 = 1u << 13u,
+  VF_Unk16384 = 1u << 14u,
+  VF_Unk32768 = 1u << 15u,
   VF_UV_MASK = VF_UV_1 | VF_UV_2 | VF_UV_4 | VF_UV_8 | VF_UV_16 | VF_UV_32
 };
 inline constexpr VectorFlags operator|(VectorFlags a, VectorFlags b) {
@@ -146,10 +145,10 @@ inline constexpr VectorFlags operator&(VectorFlags a, VectorFlags b) {
 
 // Controls volatility of mesh. Lower 12 bits are used at runtime.
 enum class ConsistencyType : uint16_t {
-  CT_MUTABLE = 0x0000,
-  CT_STATIC = 0x4000,
-  CT_VOLATILE = 0x8000,
-  mask = 0b1111000000000000
+  CT_MUTABLE = 0x0000u,
+  CT_STATIC = 0x4000u,
+  CT_VOLATILE = 0x8000u,
+  mask = 0b1111000000000000u
 };
 inline constexpr ConsistencyType operator|(ConsistencyType a,
                                            ConsistencyType b) {
@@ -162,28 +161,28 @@ inline constexpr ConsistencyType operator&(ConsistencyType a,
 
 // Vertex color blend mode with filtered texture color.
 enum class ApplyMode : uint32_t {
-  APPLY_REPLACE = 0,
-  APPLY_DECAL = 1,
-  APPLY_MODULATE = 2,
-  APPLY_HILIGHT = 3,
-  APPLY_HILIGHT2 = 4
+  APPLY_REPLACE = 0u,
+  APPLY_DECAL = 1u,
+  APPLY_MODULATE = 2u,
+  APPLY_HILIGHT = 3u,
+  APPLY_HILIGHT2 = 4u
 };
 
 enum class TexClampMode : uint32_t {
-  CLAMP_S_CLAMP_T = 0,
-  CLAMP_S_WRAP_T = 1,
-  WRAP_S_CLAMP_T = 2,
-  WRAP_S_WRAP_T = 3
+  CLAMP_S_CLAMP_T = 0u,
+  CLAMP_S_WRAP_T = 1u,
+  WRAP_S_CLAMP_T = 2u,
+  WRAP_S_WRAP_T = 3u
 };
 
 enum class TexFilterMode : uint32_t {
-  FILTER_NEAREST = 0,
-  FILTER_BILERP = 1,
-  FILTER_TRILERP = 2,
-  FILTER_NEAREST_MIPNEAREST = 3,
-  FILTER_NEAREST_MIPLERP = 4,
-  FILTER_BILERP_MIPNEAREST = 5,
-  FILTER_ANISOTROPIC = 6
+  FILTER_NEAREST = 0u,
+  FILTER_BILERP = 1u,
+  FILTER_TRILERP = 2u,
+  FILTER_NEAREST_MIPNEAREST = 3u,
+  FILTER_NEAREST_MIPLERP = 4u,
+  FILTER_BILERP_MIPNEAREST = 5u,
+  FILTER_ANISOTROPIC = 6u
 };
 
 // Order of application of transformation matrices.
@@ -193,56 +192,56 @@ enum class TexFilterMode : uint32_t {
 // F = inverse of v axis with a positive translation of 1 unit along v.
 enum class TransformMethod : uint32_t {
   // C * R * C^(-1) * T * S
-      MayaDeprecated = 0,
+      MayaDeprecated = 0u,
   // C * S * R * T * C^(-1)
-      Max = 1,
+      Max = 1u,
   // C * R * C^(-1) * F * T * S
-      Maya = 2
+      Maya = 2u
 };
 
 enum class PixelLayout : uint32_t {
-  PXLAY_PALETTIZED_8 = 0,
-  PXLAY_HIGH_COLOR_16 = 1,
-  PXLAY_TRUE_COLOR_32 = 2,
-  PXLAY_COMPRESSED = 3,
-  PXLAY_BUMPMAP = 4,
-  PXLAY_PALETTIZED_4 = 5,
-  PXLAY_DEFAULT = 6,
-  PXLAY_SINGLE_COLOR_8 = 7,
-  PXLAY_SINGLE_COLOR_16 = 8,
-  PXLAY_SINGLE_COLOR_32 = 9,
-  PXLAY_DOUBLE_COLOR_32 = 10,
-  PXLAY_DOUBLE_COLOR_64 = 11,
-  PXLAY_FLOAT_COLOR_32 = 12,
-  PXLAY_FLOAT_COLOR_64 = 13,
-  PXLAY_FLOAT_COLOR_128 = 14,
-  PXLAY_SINGLE_COLOR_4 = 15,
-  PXLAY_DEPTH_24_X8 = 16
+  PXLAY_PALETTIZED_8 = 0u,
+  PXLAY_HIGH_COLOR_16 = 1u,
+  PXLAY_TRUE_COLOR_32 = 2u,
+  PXLAY_COMPRESSED = 3u,
+  PXLAY_BUMPMAP = 4u,
+  PXLAY_PALETTIZED_4 = 5u,
+  PXLAY_DEFAULT = 6u,
+  PXLAY_SINGLE_COLOR_8 = 7u,
+  PXLAY_SINGLE_COLOR_16 = 8u,
+  PXLAY_SINGLE_COLOR_32 = 9u,
+  PXLAY_DOUBLE_COLOR_32 = 10u,
+  PXLAY_DOUBLE_COLOR_64 = 11u,
+  PXLAY_FLOAT_COLOR_32 = 12u,
+  PXLAY_FLOAT_COLOR_64 = 13u,
+  PXLAY_FLOAT_COLOR_128 = 14u,
+  PXLAY_SINGLE_COLOR_4 = 15u,
+  PXLAY_DEPTH_24_X8 = 16u
 };
 
 enum class MipMapFormat : uint32_t {
-  MIP_FMT_NO = 0,
-  MIP_FMT_YES = 1,
-  MIP_FMT_DEFAULT = 2
+  MIP_FMT_NO = 0u,
+  MIP_FMT_YES = 1u,
+  MIP_FMT_DEFAULT = 2u
 };
 
 enum class AlphaFormat : uint32_t {
-  ALPHA_NONE,
+  ALPHA_NONE = 0u,
   ALPHA_BINARY,
   ALPHA_SMOOTH,
   ALPHA_DEFAULT
 };
 
 enum class BroadPhaseType : uint8_t {
-  BROAD_PHASE_INVALID = 0,
-  BROAD_PHASE_ENTITY = 1,
-  BROAD_PHASE_PHANTOM = 2,
-  BROAD_PHASE_BORDER = 3
+  BROAD_PHASE_INVALID = 0u,
+  BROAD_PHASE_ENTITY = 1u,
+  BROAD_PHASE_PHANTOM = 2u,
+  BROAD_PHASE_BORDER = 3u
 };
 
 // Test ref op buf with op given by enum code
 enum class StencilCompareMode : uint32_t {
-  TEST_NEVER = 0, // Always test false, ignore ref
+  TEST_NEVER = 0u, // Always test false, ignore ref
   TEST_LESS,
   TEST_EQUAL,
   TEST_LESS_EQUAL,
@@ -253,7 +252,7 @@ enum class StencilCompareMode : uint32_t {
 };
 
 enum class StencilAction : uint32_t {
-  ACTION_KEEP = 0,
+  ACTION_KEEP = 0u,
   ACTION_ZERO,
   ACTION_REPLACE,
   ACTION_INCREMENT,
@@ -262,80 +261,80 @@ enum class StencilAction : uint32_t {
 };
 
 enum class StencilDrawMode : uint32_t {
-  DRAW_CCW_OR_BOTH = 0,
+  DRAW_CCW_OR_BOTH = 0u,
   DRAW_CCW,
   DRAW_CW,
   DRAW_BOTH
 };
 
 enum class VertMode : uint32_t {
-  VERT_MODE_SRC_IGNORE = 0,
-  VERT_MODE_SRC_EMISSIVE = 1,
-  VERT_MODE_SRC_AMB_DIF = 2
+  VERT_MODE_SRC_IGNORE = 0u,
+  VERT_MODE_SRC_EMISSIVE = 1u,
+  VERT_MODE_SRC_AMB_DIF = 2u
 };
 
 enum class LightMode : uint32_t {
-  LIGHT_MODE_EMISSIVE = 0,
-  LIGHT_MODE_EMI_AMB_DIF = 1
+  LIGHT_MODE_EMISSIVE = 0u,
+  LIGHT_MODE_EMI_AMB_DIF = 1u
 };
 
 enum class CycleType : uint32_t {
-  CYCLE_LOOP = 0,
-  CYCLE_REVERSE = 1,
-  CYCLE_CLAMP = 2
+  CYCLE_LOOP = 0u,
+  CYCLE_REVERSE = 1u,
+  CYCLE_CLAMP = 2u
 };
 
 enum class KeyType : uint32_t {
-  NONE = 0,
-  LINEAR_KEY = 1,
-  QUADRATIC_KEY = 2,
-  TBC_KEY = 3,
-  XYZ_ROTATION_KEY = 4,
-  CONST_KEY = 5
+  NONE = 0u,
+  LINEAR_KEY = 1u,
+  QUADRATIC_KEY = 2u,
+  TBC_KEY = 3u,
+  XYZ_ROTATION_KEY = 4u,
+  CONST_KEY = 5u
 };
 
 enum class InterpBlendFlags : uint8_t {
-  NONE = 0,
-  MANAGER_CONTROLLED = 1
+  NONE = 0u,
+  MANAGER_CONTROLLED = 1u
 };
 
 enum class MaterialColor : uint16_t {
-  TC_AMBIENT = 0,
-  TC_DIFFUSE = 1,
-  TC_SPECULAR = 2,
-  TC_SELF_ILLUM = 3
+  TC_AMBIENT = 0u,
+  TC_DIFFUSE = 1u,
+  TC_SPECULAR = 2u,
+  TC_SELF_ILLUM = 3u
 };
 
 namespace hk {
 
 enum class ConstraintType : uint32_t {
-  BallAndSocket = 0,
-  Hinge = 1,
-  LimitedHinge = 2,
-  Prismatic = 6,
-  Ragdoll = 7,
-  StiffSpring = 8,
-  Malleable = 13
+  BallAndSocket = 0u,
+  Hinge = 1u,
+  LimitedHinge = 2u,
+  Prismatic = 6u,
+  Ragdoll = 7u,
+  StiffSpring = 8u,
+  Malleable = 13u
 };
 
 enum class DeactivatorType : uint8_t {
-  DEACTIVATOR_INVALID = 0,
-  DEACTIVATOR_NEVER = 1,
-  DEACTIVATOR_SPATIAL = 2
+  DEACTIVATOR_INVALID = 0u,
+  DEACTIVATOR_NEVER = 1u,
+  DEACTIVATOR_SPATIAL = 2u
 };
 
 enum class MotionType : uint8_t {
-  MO_SYS_INVALID = 0,
-  MO_SYS_DYNAMIC = 1,
-  MO_SYS_SPHERE_INERTIA = 2,
-  MO_SYS_SPHERE_STABILIZED = 3,
-  MO_SYS_BOX_INERTIA = 4,
-  MO_SYS_BOX_STABILIZED = 5,
+  MO_SYS_INVALID = 0u,
+  MO_SYS_DYNAMIC = 1u,
+  MO_SYS_SPHERE_INERTIA = 2u,
+  MO_SYS_SPHERE_STABILIZED = 3u,
+  MO_SYS_BOX_INERTIA = 4u,
+  MO_SYS_BOX_STABILIZED = 5u,
   // Infinite mass when viewed by the rest of the system
-      MO_SYS_KEYFRAMED = 6,
-  MO_SYS_FIXED = 7,
-  MO_SYS_THIN_BOX = 8,
-  MO_SYS_CHARACTER = 9
+      MO_SYS_KEYFRAMED = 6u,
+  MO_SYS_FIXED = 7u,
+  MO_SYS_THIN_BOX = 8u,
+  MO_SYS_CHARACTER = 9u
 };
 
 // MO_QUAL_FIXED and MO_QUAL_KEYFRAMED cannot interact
@@ -343,32 +342,32 @@ enum class MotionType : uint8_t {
 // MO_QUAL_CRITICAL cannot interpenetrate
 // MO_QUAL_MOVING can interpenetrate with MO_QUAL_MOVING and MO_QUAL_DEBRIS
 enum class QualityType : uint8_t {
-  MO_QUAL_INVALID = 0,
-  MO_QUAL_FIXED = 1,
-  MO_QUAL_KEYFRAMED = 2,
-  MO_QUAL_DEBRIS = 3,
-  MO_QUAL_MOVING = 4,
-  MO_QUAL_CRITICAL = 5,
-  MO_QUAL_BULLET = 6,
-  MO_QUAL_USER = 7,
-  MO_QUAL_CHARACTER = 8,
-  MO_QUAL_KEYFRAMED_REPORT = 9
+  MO_QUAL_INVALID = 0u,
+  MO_QUAL_FIXED = 1u,
+  MO_QUAL_KEYFRAMED = 2u,
+  MO_QUAL_DEBRIS = 3u,
+  MO_QUAL_MOVING = 4u,
+  MO_QUAL_CRITICAL = 5u,
+  MO_QUAL_BULLET = 6u,
+  MO_QUAL_USER = 7u,
+  MO_QUAL_CHARACTER = 8u,
+  MO_QUAL_KEYFRAMED_REPORT = 9u
 };
 
 enum class ResponseType : uint8_t {
-  RESPONSE_INVALID = 0,
-  RESPONSE_SIMPLE_CONTACT = 1,
-  RESPONSE_REPORTING = 2,
-  RESPONSE_NONE = 3
+  RESPONSE_INVALID = 0u,
+  RESPONSE_SIMPLE_CONTACT = 1u,
+  RESPONSE_REPORTING = 2u,
+  RESPONSE_NONE = 3u
 };
 
 enum class SolverDeactivation : uint8_t {
-  SOLVER_DEACTIVATION_INVALID = 0,
-  SOLVER_DEACTIVATION_OFF = 1,
-  SOLVER_DEACTIVATION_LOW = 2,
-  SOLVER_DEACTIVATION_MEDIUM = 3,
-  SOLVER_DEACTIVATION_HIGH = 4,
-  SOLVER_DEACTIVATION_MAX = 5
+  SOLVER_DEACTIVATION_INVALID = 0u,
+  SOLVER_DEACTIVATION_OFF = 1u,
+  SOLVER_DEACTIVATION_LOW = 2u,
+  SOLVER_DEACTIVATION_MEDIUM = 3u,
+  SOLVER_DEACTIVATION_HIGH = 4u,
+  SOLVER_DEACTIVATION_MAX = 5u
 };
 
 } // namespace hk
@@ -376,7 +375,7 @@ enum class SolverDeactivation : uint8_t {
 namespace bhk {
 
 enum class COFlags : uint16_t {
-  NONE = 0,
+  NONE = 0u,
   BHKCO_ACTIVE = 1u << 1u,
   BHKCO_NOTIFY = 1u << 2u,
   BHKCO_SET_LOCAL = 1u << 3u,
@@ -396,7 +395,6 @@ inline constexpr COFlags operator&(COFlags a, COFlags b) {
 
 } // namespace bhk
 
-} // namespace Enum
-} // namespace nif
+} // namespace nif::Enum
 
 #endif // OPENOBLIVION_NIF_ENUM_HPP
