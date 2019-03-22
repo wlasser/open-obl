@@ -144,10 +144,16 @@ LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   }
 
   const record::CELL &cellRec{*cellRes.get(cellId)};
+  const auto cellGrid{cellRec.grid->data};
+  oo::CellIndex cellIndex{cellGrid.x, cellGrid.y};
 
   ctx.getLogger()->info("Loading exterior CELL {}", cellId);
 
   cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+  const auto &refLocator{ctx.getPersistentReferenceLocator()};
+  for (auto persistentRef : refLocator.getRecordsInCell(cellIndex)) {
+    cellRes.insertReferenceRecord(cellId, persistentRef);
+  }
 
   boost::this_fiber::yield();
 
