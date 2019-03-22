@@ -280,67 +280,76 @@ oo::World::~World() {
 }
 
 tl::optional<oo::BaseId> oo::World::getLandId(oo::BaseId cellId) {
+  return getLandId(cellId, mBaseId);
+}
+
+tl::optional<oo::BaseId>
+oo::World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
-  cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
-  auto landId{cellRes.getLandId(cellId)};
-  if (landId) return landId;
+  const record::WRLD &wrldRec{*wrldRes.get(wrldId)};
 
-  // No LAND record, if this world has a parent worldspace then look up the
-  // cell with the same index as this and use its LAND record.
-
-  const auto cellOpt{cellRes.get(cellId)};
-  if (!cellOpt) {
-    spdlog::get(oo::LOG)->warn("Cell {} in World {} not found",
-                               cellId, mBaseId);
-    return tl::nullopt;
-  }
-
-  const auto gridOpt{cellOpt->grid};
-  if (!gridOpt) {
-    spdlog::get(oo::LOG)->warn("Cell {} in World {} has no XCLC record",
-                               cellId, mBaseId);
-    return tl::nullopt;
-  }
-  oo::CellIndex pos{gridOpt->data.x, gridOpt->data.y};
-
-  const record::WRLD &wrldRec{*wrldRes.get(mBaseId)};
   if (!wrldRec.parentWorldspace) {
+    // No parent worldspace, just load the cells' terrain and use that its
+    // LAND record.
+    cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
+    auto landId{cellRes.getLandId(cellId)};
+    if (landId) return landId;
+
+    // No LAND record but no parent worldspace to go to.
     spdlog::get(oo::LOG)->warn("Cell {} in World {} has no LAND record and "
-                               "has no parent worldspace", cellId, mBaseId);
+                               "the World has no parent worldspace",
+                               cellId, wrldId);
     return tl::nullopt;
-  }
-  const oo::BaseId parentWrldId{wrldRec.parentWorldspace->data};
+  } else {
+    // Look up the cell with the same index in the parent worldspace and use
+    // its LAND record.
+    const auto cellOpt{cellRes.get(cellId)};
+    if (!cellOpt) {
+      spdlog::get(oo::LOG)->warn("Cell {} in World {} not found",
+                                 cellId, wrldId);
+      return tl::nullopt;
+    }
 
-  if (!wrldRes.contains(parentWrldId)) {
-    spdlog::get(oo::LOG)->warn("Parent World {} of World {} not found",
-                               parentWrldId, mBaseId);
-    return tl::nullopt;
-  }
+    const auto gridOpt{cellOpt->grid};
+    if (!gridOpt) {
+      spdlog::get(oo::LOG)->warn("Cell {} in World {} has no XCLC record",
+                                 cellId, wrldId);
+      return tl::nullopt;
+    }
+    oo::CellIndex pos{gridOpt->data.x, gridOpt->data.y};
 
-  // TODO: Add a builtin function for testing if a WRLD is loaded.
-  if (!wrldRes.getCells(parentWrldId)) {
-    wrldRes.load(parentWrldId, oo::getResolvers<record::CELL>(mResolvers));
-  }
+    const oo::BaseId parentWrldId{wrldRec.parentWorldspace->data};
+    if (!wrldRes.contains(parentWrldId)) {
+      spdlog::get(oo::LOG)->warn("Parent World {} of World {} not found",
+                                 parentWrldId, wrldId);
+      return tl::nullopt;
+    }
 
-  const auto parentCellIdOpt{wrldRes.getCell(parentWrldId, pos)};
-  if (!parentCellIdOpt) {
-    spdlog::get(oo::LOG)->warn("Parent of Cell {} not found", cellId);
-    return tl::nullopt;
-  }
-  const oo::BaseId parentCellId{*parentCellIdOpt};
+    // TODO: Add a builtin function for testing if a WRLD is loaded.
+    if (!wrldRes.getCells(parentWrldId)) {
+      wrldRes.load(parentWrldId, oo::getResolvers<record::CELL>(mResolvers));
+    }
 
-  // Try to load the LAND record of this parent cell, and if that fails keep
-  // going up through parent worldspaces until we succeed or run into an error.
-  landId = getLandId(parentCellId);
-  if (!landId) {
-    spdlog::get(oo::LOG)->warn("Neither Cell {} nor parent Cell {} has a "
-                               "LAND record", cellId, parentCellId);
-    return tl::nullopt;
-  }
+    const auto parentCellIdOpt{wrldRes.getCell(parentWrldId, pos)};
+    if (!parentCellIdOpt) {
+      spdlog::get(oo::LOG)->warn("Parent of Cell {} not found", cellId);
+      return tl::nullopt;
+    }
+    const oo::BaseId parentCellId{*parentCellIdOpt};
 
-  return landId;
+    // Try to load the LAND record of this parent cell, and if that fails keep
+    // going up through parent worldspaces until we succeed or run into an error.
+    auto landId{getLandId(parentCellId, parentWrldId)};
+    if (!landId) {
+      spdlog::get(oo::LOG)->warn("Neither Cell {} nor parent Cell {} has a "
+                                 "LAND record", cellId, parentCellId);
+      return tl::nullopt;
+    }
+
+    return landId;
+  }
 }
 
 void oo::World::makeCellGrid() {

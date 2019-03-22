@@ -238,6 +238,7 @@ class World {
   void setDefaultImportData();
 
   tl::optional<oo::BaseId> getLandId(oo::BaseId cellId);
+  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId, oo::BaseId wrldId);
 
   void makeCellGrid();
   void makePhysicsWorld();
