@@ -63,6 +63,62 @@ parseWorldObject(const oo::BlockGraph &g,
                  const nif::bhk::WorldObject &block,
                  const Ogre::Matrix4 &transform) {
   // TODO: Flags
+  if (dynamic_cast<const nif::bhk::RigidBody *>(&block)) {
+    const auto &body{dynamic_cast<const nif::bhk::RigidBody &>(block)};
+
+    // MotionType does not seem to have an analogue in Bullet, but we can try to
+    // match the (perceived) intent using CollisionFlags. In Bullet, a
+    // `btRigidBody` can be static, kinematic, or dynamic; there is no invalid.
+    // It seems reasonable for keyframed to correspond to kinematic, and fixed
+    // to correspond to static; I'm unsure of the specifics of the other
+    // flags, but they seem to be used for movable objects so default to
+    // dynamic.
+    using MotionType = nif::Enum::hk::MotionType;
+    switch (body.motionSystem) {
+      default: [[fallthrough]];
+      case MotionType::MO_SYS_INVALID: [[fallthrough]];
+      case MotionType::MO_SYS_DYNAMIC: [[fallthrough]];
+      case MotionType::MO_SYS_SPHERE_INERTIA: [[fallthrough]];
+      case MotionType::MO_SYS_SPHERE_STABILIZED: [[fallthrough]];
+      case MotionType::MO_SYS_BOX_INERTIA: [[fallthrough]];
+      case MotionType::MO_SYS_BOX_STABILIZED: [[fallthrough]];
+      case MotionType::MO_SYS_THIN_BOX: [[fallthrough]];
+      case MotionType::MO_SYS_CHARACTER: {
+        rigidBody->setCollisionObjectType(Ogre::CollisionShape::COT_DYNAMIC);
+        break;
+      }
+      case MotionType::MO_SYS_KEYFRAMED: {
+        rigidBody->setCollisionObjectType(Ogre::CollisionShape::COT_KINEMATIC);
+        break;
+      }
+      case MotionType::MO_SYS_FIXED: {
+        rigidBody->setCollisionObjectType(Ogre::CollisionShape::COT_STATIC);
+        break;
+      }
+    }
+
+    // Bullet does not have different deactivators, but we can simulate
+    // DEACTIVATOR_NEVER by disabling deactivation on the given collision shape.
+    // On the other hand, static objects usually have DEACTIVATOR_NEVER. I can't
+    // think of a reason why they should not be deactivated when inactive, since
+    // they never move, so we optimize away and allow static objects to
+    // deactivate regardless of the flag.
+    using DeactivatorType = nif::Enum::hk::DeactivatorType;
+    switch (body.deactivatorType) {
+      default: [[fallthrough]];
+      case DeactivatorType::DEACTIVATOR_INVALID: [[fallthrough]];
+      case DeactivatorType::DEACTIVATOR_SPATIAL: {
+        rigidBody->setAllowDeactivationEnabled(true);
+        break;
+      }
+      case DeactivatorType::DEACTIVATOR_NEVER: {
+        rigidBody->setAllowDeactivationEnabled(
+            rigidBody->getCollisionObjectType()
+                == Ogre::CollisionShape::COT_STATIC);
+        break;
+      }
+    }
+  }
 
   const Ogre::Matrix4 localTrans = [&block, &transform]() {
     // TODO: RigidBody that is not a RigidBodyT

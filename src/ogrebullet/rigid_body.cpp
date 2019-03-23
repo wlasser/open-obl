@@ -5,13 +5,53 @@
 
 namespace Ogre {
 
+void
+RigidBody::setObjectType(CollisionShape::CollisionObjectType type) noexcept {
+  switch (type) {
+    default: [[fallthrough]];
+    case CollisionShape::COT_DYNAMIC:
+      setCollisionFlag(btCollisionObject::CF_STATIC_OBJECT,
+                       false);
+      setCollisionFlag(btCollisionObject::CF_KINEMATIC_OBJECT, false);
+      break;
+    case CollisionShape::COT_STATIC:
+      setCollisionFlag(btCollisionObject::CF_STATIC_OBJECT,
+                       true);
+      setCollisionFlag(btCollisionObject::CF_KINEMATIC_OBJECT, false);
+      break;
+    case CollisionShape::COT_KINEMATIC:
+      setCollisionFlag(btCollisionObject::CF_STATIC_OBJECT,
+                       false);
+      setCollisionFlag(btCollisionObject::CF_KINEMATIC_OBJECT, true);
+      break;
+  }
+}
+
+void RigidBody::setAllowDeactivationEnabled(bool enabled) noexcept {
+  mRigidBody->setActivationState(enabled ? ACTIVE_TAG : DISABLE_DEACTIVATION);
+}
+
+bool RigidBody::getAllowDeactivationEnabled() const noexcept {
+  return mRigidBody->getActivationState() != DISABLE_DEACTIVATION;
+}
+
+CollisionShape::CollisionObjectType RigidBody::getObjectType() const noexcept {
+  if (getCollisionFlag(btCollisionObject::CF_STATIC_OBJECT)) {
+    return CollisionShape::COT_STATIC;
+  } else if (getCollisionFlag(btCollisionObject::CF_KINEMATIC_OBJECT)) {
+    return CollisionShape::COT_KINEMATIC;
+  } else {
+    return CollisionShape::COT_DYNAMIC;
+  }
+}
+
 void RigidBody::_notifyAttached(Node *parent, bool isTagPoint) {
   MovableObject::_notifyAttached(parent, isTagPoint);
+
   if (isTagPoint) {
-    mRigidBody->setCollisionFlags(
-        static_cast<flag_t>(mRigidBody->getCollisionFlags())
-            | static_cast<flag_t>(btCollisionObject::CF_STATIC_OBJECT));
+    setObjectType(CollisionShape::COT_KINEMATIC);
   } else {
+    setObjectType(mCollisionShape->getCollisionObjectType());
     bind(parent);
   }
 }
@@ -64,25 +104,24 @@ btRigidBody *RigidBody::getRigidBody() const {
   return mRigidBody.get();
 }
 
-void RigidBody::setContactResponseEnabled(bool enabled) {
-  constexpr auto NoContactResponse
-      {static_cast<flag_t>(btCollisionObject::CF_NO_CONTACT_RESPONSE)};
-
+void RigidBody::setCollisionFlag(btCollisionObject::CollisionFlags flag,
+                                 bool enabled) noexcept {
   const auto flags{static_cast<flag_t>(mRigidBody->getCollisionFlags())};
-
-  mRigidBody->setCollisionFlags(enabled ? (flags & ~NoContactResponse)
-                                        : (flags | NoContactResponse));
+  const auto f{static_cast<flag_t>(flag)};
+  mRigidBody->setCollisionFlags(enabled ? (flags | f) : (flags & ~f));
 }
 
-bool RigidBody::getContactResponseEnabled() const noexcept {
-  return 0 != (static_cast<flag_t>(mRigidBody->getCollisionFlags())
-      & static_cast<flag_t>(btCollisionObject::CF_NO_CONTACT_RESPONSE));
+bool RigidBody::getCollisionFlag(btCollisionObject::CollisionFlags flag) const noexcept {
+  const auto f{static_cast<flag_t>(flag)};
+  return 0 != (static_cast<flag_t>(mRigidBody->getCollisionFlags()) & f);
 }
 
 RigidBody::RigidBody(const String &name, CollisionShapePtr collisionShape)
     : MovableObject(name), mCollisionShape(std::move(collisionShape)) {
   if (const auto *info{mCollisionShape->getRigidBodyInfo()}) {
     mRigidBody = std::make_unique<btRigidBody>(*info);
+    setObjectType(mCollisionShape->getCollisionObjectType());
+    setAllowDeactivationEnabled(mCollisionShape->getAllowDeactivationEnabled());
   } else {
     OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
                 "getRigidBodyInfo() == nullptr, cannot create RigidBody",

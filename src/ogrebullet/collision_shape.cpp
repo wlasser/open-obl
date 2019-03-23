@@ -13,6 +13,23 @@ CollisionShape::CollisionShape(Ogre::ResourceManager *creator,
                                Ogre::ManualResourceLoader *loader)
     : Resource(creator, name, handle, group, isManual, loader) {}
 
+CollisionShape::CollisionObjectType
+CollisionShape::getCollisionObjectType() const noexcept {
+  return mCollisionObjectType;
+}
+
+void CollisionShape::setCollisionObjectType(CollisionObjectType type) noexcept {
+  mCollisionObjectType = type;
+}
+
+bool CollisionShape::getAllowDeactivationEnabled() const noexcept {
+  return mAllowDeactivation;
+}
+
+void CollisionShape::setAllowDeactivationEnabled(bool enabled) noexcept {
+  mAllowDeactivation = enabled;
+}
+
 const RigidBodyInfo *CollisionShape::getRigidBodyInfo() const noexcept {
   return mInfo.get();
 }

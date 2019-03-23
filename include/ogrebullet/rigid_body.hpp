@@ -44,15 +44,6 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   ///        afterwards, there's no guarantee that you won't upset Bullet.
   void setScale(const Vector3 &scale);
 
-  /// Disable or enable the Bullet `CF_NO_CONTACT_RESPONSE` flag.
-  /// \remark If `enabled` is true then `CF_NO_CONTACT_RESPONSE` will *not* be
-  ///         set.
-  void setContactResponseEnabled(bool enabled);
-
-  /// Return false if the Bullet `CF_NO_CONTACT_RESPONSE` flag is set, and true
-  /// otherwise.
-  bool getContactResponseEnabled() const noexcept;
-
  private:
   using flag_t = std::make_unsigned_t<
       std::underlying_type_t<btCollisionObject::CollisionFlags>>;
@@ -82,6 +73,21 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   /// Calling `bind` a second time will release the previously bound node and,
   /// unless the new node is null, will bind to the new one.
   void bind(Node *node);
+
+  void setObjectType(CollisionShape::CollisionObjectType type) noexcept;
+  CollisionShape::CollisionObjectType getObjectType() const noexcept;
+
+  void setAllowDeactivationEnabled(bool enabled) noexcept;
+  bool getAllowDeactivationEnabled() const noexcept;
+
+  /// Utility method for setting collision flags of the underlying rigid body
+  /// directly.
+  void setCollisionFlag(btCollisionObject::CollisionFlags flag,
+                        bool enabled) noexcept;
+
+  /// Utility method for getting collision flags of the underlying rigid body
+  /// directly.
+  bool getCollisionFlag(btCollisionObject::CollisionFlags flag) const noexcept;
 };
 
 class RigidBodyFactory : public MovableObjectFactory {

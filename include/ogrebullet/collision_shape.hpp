@@ -31,6 +31,40 @@ class CollisionShape : public Ogre::Resource {
     unload();
   }
 
+  /// The possible types of `Ogre::RigidBody` that this `CollisionShape`
+  /// represents.
+  /// <table>
+  /// <tr><th>Type</th><th>Description</th>
+  /// <tr><td>Dynamic</td>
+  ///     <td>A rigid body with positive mass whose dynamics and world transform
+  ///         will be updated every frame, and that can interact with other
+  ///         rigid bodies.</td></tr>
+  /// <tr><td>Static</td>
+  ///     <td>A rigid body with zero mass which cannot move but which can be
+  ///         collided with.</td></tr>
+  /// <tr><td>Kinematic</td>
+  ///     <td>A rigid body that is animated by the user instead of controlled by
+  ///         its dynamics. It can collide with and interact with dynamic rigid
+  ///         bodies, but will not experience the collision itself.</td></tr>
+  /// </table>
+  enum CollisionObjectType : uint32_t {
+    COT_DYNAMIC = 0u,
+    COT_STATIC = 1u,
+    COT_KINEMATIC = 2u
+  };
+
+  /// Get the type of `Ogre::RigidBody` that this `CollisionShape` represents.
+  CollisionObjectType getCollisionObjectType() const noexcept;
+  /// Set the type of `Ogre::RigidBody` that this `CollisionShape` represents.
+  void setCollisionObjectType(CollisionObjectType type) noexcept;
+
+  /// If enabled, Bullet will deactivate the object once it has stopped moving
+  /// for a while.
+  bool getAllowDeactivationEnabled() const noexcept;
+  /// Set whether Bullet will deactivate the object once it has stopped moving
+  /// for a while.
+  void setAllowDeactivationEnabled(bool enabled) noexcept;
+
   const RigidBodyInfo *getRigidBodyInfo() const noexcept;
   const btCollisionShape *getCollisionShape() const noexcept;
 
@@ -47,6 +81,9 @@ class CollisionShape : public Ogre::Resource {
   void unloadImpl() override;
 
  private:
+  CollisionObjectType mCollisionObjectType{COT_DYNAMIC};
+  bool mAllowDeactivation{true};
+
   /// Owning pointer to the underlying rigid body construction info.
   std::unique_ptr<RigidBodyInfo> mInfo{};
 
@@ -69,7 +106,7 @@ class CollisionShape : public Ogre::Resource {
   std::vector<float> mVertexBuffer{};
 
   /// Interface to the `mIndexBuffer` and `mVertexBuffer`, needed for mesh-based
-  /// collision hsapes.
+  /// collision shapes.
   std::unique_ptr<btStridingMeshInterface> mMeshInterface{};
 };
 
