@@ -14,14 +14,14 @@ target_include_directories(OpenOblivionOgreBullet PUBLIC
         ${BULLET_INCLUDE_DIRS})
 
 target_sources(OpenOblivionOgreBullet PRIVATE
-        ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_object.hpp
-        ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_object_manager.hpp
+        ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_shape.hpp
+        ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_shape_manager.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/conversions.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/debug_drawer.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/motion_state.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/rigid_body.hpp
-        collision_object.cpp
-        collision_object_manager.cpp
+        collision_shape.cpp
+        collision_shape_manager.cpp
         debug_drawer.cpp
         motion_state.cpp
         rigid_body.cpp)

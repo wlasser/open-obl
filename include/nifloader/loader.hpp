@@ -22,7 +22,7 @@
 /// represent different facets of a single object, and it is unlikely that one
 /// would exist without all the others. To OGRE, these three things each come
 /// from a different `Ogre::Resource`: an `Ogre::Mesh` for the `Ogre::Entity`,
-/// an `Ogre::CollisionObject` for the `Ogre::RigidBody`, and an
+/// an `Ogre::CollisionShape` for the `Ogre::RigidBody`, and an
 /// `Ogre::Skeleton` for the `Ogre::SkeletonInstance`. To a NIF file however,
 /// they are all part of the same whole and thus are all described by the same
 /// file (with the exception of some skeletons, discussed later).
@@ -41,7 +41,7 @@
 ///
 /// Because NIF file contain descriptions of what are, to OGRE, different
 /// resources, it is tempting to split apart each NIF file into an `Ogre::Mesh`,
-/// an `Ogre::CollisionObject`, and so on. Not only does this present
+/// an `Ogre::CollisionShape`, and so on. Not only does this present
 /// difficulties when multiple different meshes or physics objects are contained
 /// in the same file (consider a falling rockslide trap for instance, which has
 /// many different rocks), the graph structure of the file carries key
@@ -156,10 +156,10 @@
 ///    The resulting `Ogre::Mesh` is used to construct an `Ogre::Entity` which
 ///    is then attached to the current working node.
 ///  - If a `nif::bhk::CollisionObject` is discovered, then an
-///    `Ogre::CollisionObject` is created using that block and its child
+///    `Ogre::CollisionShape` is created using that block and its child
 ///    `nif::bhk::RigidBody` child by delegating to the
 ///    `oo::createCollisionObject()` function, analogous to `oo::createMesh()`.
-///    The `Ogre::CollisionObject` is used to construct an `Ogre::RigidBody`
+///    The `Ogre::CollisionShape` is used to construct an `Ogre::RigidBody`
 ///    which is then attached to the current working node and added to the
 ///    physics world passed to `oo::insertNif`.
 namespace oo {

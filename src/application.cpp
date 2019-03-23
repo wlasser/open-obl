@@ -108,7 +108,7 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobCounter managersAndFactoriesCounter{2};
   oo::JobManager::runJob([&ctx = ctx]() {
     ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
-    ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionObjectManager>();
+    ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionShapeManager>();
     ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
     ctx.wavResourceMgr = std::make_unique<Ogre::WavResourceManager>();
   }, &managersAndFactoriesCounter);
@@ -465,7 +465,7 @@ void Application::declareResource(const oo::Path &path,
     resGrpMgr.declareResource(path.c_str(), "Nif", resourceGroup);
     resGrpMgr.declareResource(path.c_str(), "Mesh",
                               resourceGroup, ctx.nifLoader.get());
-    resGrpMgr.declareResource(path.c_str(), "CollisionObject",
+    resGrpMgr.declareResource(path.c_str(), "CollisionShape",
                               resourceGroup, ctx.nifCollisionLoader.get());
     // TODO: Do all skeletons end with "skeleton.nif"?
     resGrpMgr.declareResource(path.c_str(), "Skeleton",

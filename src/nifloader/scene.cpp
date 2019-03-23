@@ -4,7 +4,7 @@
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include "nifloader/scene.hpp"
-#include "ogrebullet/collision_object_manager.hpp"
+#include "ogrebullet/collision_shape_manager.hpp"
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreTagPoint.h>
 #include <set>
@@ -193,17 +193,17 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
   const vertex_descriptor u{boost::in_edges(v, g).first->m_source};
 
   // We can't create a reloadable resource because the loader requires state.
-  auto &colObjMgr{Ogre::CollisionObjectManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(v) + "CollisionObject"};
+  auto &colObjMgr{Ogre::CollisionShapeManager::getSingleton()};
+  const std::string name{mState->mName + std::to_string(v) + "CollisionShape"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
-  Ogre::CollisionObjectPtr collisionObjectPtr
-      {std::static_pointer_cast<Ogre::CollisionObject>(ptr)};
-  if (created) oo::createCollisionObject(collisionObjectPtr.get(), u, g);
+  Ogre::CollisionShapePtr collisionShapePtr
+      {std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
+  if (created) oo::createCollisionObject(collisionShapePtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
     const std::map<std::string, std::string> params{
-        {"collisionObject", name},
+        {"collisionShape", name},
         {"resourceGroup", mState->mGroup}
     };
 
@@ -265,17 +265,17 @@ void RagdollVisitor::discover_vertex(const nif::bhk::BlendCollisionObject &node,
   const vertex_descriptor u{boost::in_edges(v, g).first->m_source};
 
   // We can't create a reloadable resource because the loader requires state.
-  auto &colObjMgr{Ogre::CollisionObjectManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(v) + "CollisionObject"};
+  auto &colObjMgr{Ogre::CollisionShapeManager::getSingleton()};
+  const std::string name{mState->mName + std::to_string(v) + "CollisionShape"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
-  Ogre::CollisionObjectPtr collisionObjectPtr
-      {std::static_pointer_cast<Ogre::CollisionObject>(ptr)};
-  if (created) oo::createCollisionObject(collisionObjectPtr.get(), u, g);
+  Ogre::CollisionShapePtr collisionShapePtr
+      {std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
+  if (created) oo::createCollisionObject(collisionShapePtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
     const std::map<std::string, std::string> params{
-        {"collisionObject", name},
+        {"collisionShape", name},
         {"resourceGroup", mState->mGroup}
     };
 

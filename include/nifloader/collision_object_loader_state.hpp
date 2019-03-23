@@ -3,7 +3,7 @@
 
 #include "nifloader/loader.hpp"
 #include "nifloader/loader_state.hpp"
-#include "ogrebullet/collision_object.hpp"
+#include "ogrebullet/collision_shape.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "settings.hpp"
 #include <Ogre.h>
@@ -15,15 +15,15 @@ namespace oo {
 /// @{
 
 void parseCollisionObject(const oo::BlockGraph &g,
-                          Ogre::CollisionObject *rigidBody,
+                          Ogre::CollisionShape *rigidBody,
                           const nif::bhk::CollisionObject &block,
                           const Ogre::Matrix4 &transform);
 
-using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
+using CollisionShapeVector = std::vector<Ogre::BulletCollisionShapePtr>;
 
 std::pair<CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
 parseWorldObject(const oo::BlockGraph &g,
-                 Ogre::CollisionObject *rigidBody,
+                 Ogre::CollisionShape *rigidBody,
                  const nif::bhk::WorldObject &block,
                  const Ogre::Matrix4 &transform);
 
@@ -31,13 +31,13 @@ Ogre::RigidBodyInfo generateRigidBodyInfo(const nif::bhk::RigidBody &block);
 
 CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::Shape &block,
            const Ogre::Matrix4 &transform);
 
 CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::TransformShape &block,
            const Ogre::Matrix4 &transform);
 
@@ -48,19 +48,19 @@ parseShape(const oo::BlockGraph &g,
 
 CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::MoppBvTreeShape &shape,
            const Ogre::Matrix4 &transform);
 
 CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::ListShape &shape,
            const Ogre::Matrix4 &transform);
 
 CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::PackedNiTriStripsShape &shape,
            const Ogre::Matrix4 &transform);
 
@@ -76,7 +76,7 @@ parseShape(const oo::BlockGraph &g,
 
 CollisionShapeVector
 parseNiTriStripsData(const oo::BlockGraph &g,
-                     Ogre::CollisionObject *rigidBody,
+                     Ogre::CollisionShape *rigidBody,
                      const nif::hk::PackedNiTriStripsData &block,
                      const Ogre::Matrix4 &transform);
 
@@ -108,13 +108,13 @@ class CollisionObjectLoaderState {
   [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
-  explicit CollisionObjectLoaderState(Ogre::CollisionObject *collisionObject,
+  explicit CollisionObjectLoaderState(Ogre::CollisionShape *collisionObject,
                                       Graph blocks);
 
  private:
-  using CollisionShapeVector = std::vector<Ogre::CollisionShapePtr>;
+  using CollisionShapeVector = std::vector<Ogre::BulletCollisionShapePtr>;
 
-  Ogre::CollisionObject *mRigidBody{};
+  Ogre::CollisionShape *mRigidBody{};
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   bool mHasHavok{false};
   bool mIsSkeleton{false};
@@ -130,7 +130,7 @@ class CollisionObjectLoaderState {
 
 Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
 
-void createCollisionObject(Ogre::CollisionObject *rigidBody,
+void createCollisionObject(Ogre::CollisionShape *rigidBody,
                            oo::BlockGraph::vertex_descriptor start,
                            const oo::BlockGraph &g);
 ///@}

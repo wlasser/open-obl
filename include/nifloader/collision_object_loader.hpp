@@ -6,7 +6,7 @@
 
 namespace oo {
 
-/// Loader for `Ogre::CollisionObject`s defined in NIF files.
+/// Loader for `Ogre::CollisionShape`s defined in NIF files.
 /// \ingroup OpenOblivionNifloader
 class CollisionObjectLoader : public Ogre::ManualResourceLoader {
  private:

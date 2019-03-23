@@ -8,7 +8,7 @@
 #include "ogre/tex_image_codec.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"
-#include "ogrebullet/collision_object_manager.hpp"
+#include "ogrebullet/collision_shape_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "ogreimgui/imgui_manager.hpp"
 #include "ogresoloud/sound_manager.hpp"
@@ -87,7 +87,7 @@ class ApplicationContext {
   oo::FntLoader fntLoader{};
 
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
-  std::unique_ptr<Ogre::CollisionObjectManager> collisionObjectMgr{};
+  std::unique_ptr<Ogre::CollisionShapeManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
   std::unique_ptr<Ogre::WavResourceManager> wavResourceMgr{};
 

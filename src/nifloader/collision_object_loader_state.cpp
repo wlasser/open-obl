@@ -10,13 +10,13 @@
 
 namespace oo {
 
-void createCollisionObject(Ogre::CollisionObject *rigidBody,
+void createCollisionObject(Ogre::CollisionShape *rigidBody,
                            oo::BlockGraph::vertex_descriptor start,
                            const oo::BlockGraph &g) {
   const auto &rootBlock{*g[start]};
   if (!dynamic_cast<const nif::NiNode *>(&rootBlock)) {
     OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
-                "Cannot create a CollisionObject with a root node that is not "
+                "Cannot create a CollisionShape with a root node that is not "
                 "an NiNode",
                 "oo::createCollisionObject");
   }
@@ -38,7 +38,7 @@ void createCollisionObject(Ogre::CollisionObject *rigidBody,
 }
 
 void parseCollisionObject(const oo::BlockGraph &g,
-                          Ogre::CollisionObject *rigidBody,
+                          Ogre::CollisionShape *rigidBody,
                           const nif::bhk::CollisionObject &block,
                           const Ogre::Matrix4 &transform) {
   // TODO: COFlags
@@ -59,7 +59,7 @@ void parseCollisionObject(const oo::BlockGraph &g,
 
 std::pair<oo::CollisionShapeVector, std::unique_ptr<Ogre::RigidBodyInfo>>
 parseWorldObject(const oo::BlockGraph &g,
-                 Ogre::CollisionObject *rigidBody,
+                 Ogre::CollisionShape *rigidBody,
                  const nif::bhk::WorldObject &block,
                  const Ogre::Matrix4 &transform) {
   // TODO: Flags
@@ -140,7 +140,7 @@ Ogre::RigidBodyInfo generateRigidBodyInfo(const nif::bhk::RigidBody &block) {
 //===----------------------------------------------------------------------===//
 
 oo::CollisionShapeVector
-parseShape(const oo::BlockGraph &g, Ogre::CollisionObject *rigidBody,
+parseShape(const oo::BlockGraph &g, Ogre::CollisionShape *rigidBody,
            const nif::bhk::Shape &block, const Ogre::Matrix4 &transform) {
   if (dynamic_cast<const nif::bhk::TransformShape *>(&block)) {
     const auto &b{static_cast<const nif::bhk::TransformShape &>(block)};
@@ -174,7 +174,7 @@ parseShape(const oo::BlockGraph &g, Ogre::CollisionObject *rigidBody,
 
 oo::CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::TransformShape &block,
            const Ogre::Matrix4 &transform) {
   const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, block.shape)};
@@ -229,7 +229,7 @@ parseShape(const oo::BlockGraph &,
 
 oo::CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::MoppBvTreeShape &shape,
            const Ogre::Matrix4 &transform) {
   // TODO: Use material information for collisions and sound
@@ -247,7 +247,7 @@ parseShape(const oo::BlockGraph &g,
 
 oo::CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::ListShape &shape,
            const Ogre::Matrix4 &transform) {
   // TODO: Use material information for collisions and sound
@@ -273,7 +273,7 @@ parseShape(const oo::BlockGraph &g,
 
 oo::CollisionShapeVector
 parseShape(const oo::BlockGraph &g,
-           Ogre::CollisionObject *rigidBody,
+           Ogre::CollisionShape *rigidBody,
            const nif::bhk::PackedNiTriStripsShape &shape,
            const Ogre::Matrix4 &transform) {
   // TODO: Subshapes?
@@ -329,7 +329,7 @@ parseShape(const oo::BlockGraph &, const nif::bhk::BoxShape &shape,
 }
 
 CollisionShapeVector
-parseNiTriStripsData(const oo::BlockGraph &, Ogre::CollisionObject *rigidBody,
+parseNiTriStripsData(const oo::BlockGraph &, Ogre::CollisionShape *rigidBody,
                      const nif::hk::PackedNiTriStripsData &block,
                      const Ogre::Matrix4 &transform) {
   // For static geometry we construct a btBvhTriangleMeshShape using indexed
@@ -411,7 +411,7 @@ Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body) {
 //===----------------------------------------------------------------------===//
 
 CollisionObjectLoaderState::CollisionObjectLoaderState(
-    Ogre::CollisionObject *collisionObject, oo::BlockGraph blocks)
+    Ogre::CollisionShape *collisionObject, oo::BlockGraph blocks)
     : mRigidBody(collisionObject) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(

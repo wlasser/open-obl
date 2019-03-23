@@ -1,5 +1,5 @@
 #include "ogrebullet/conversions.hpp"
-#include "ogrebullet/collision_object_manager.hpp"
+#include "ogrebullet/collision_shape_manager.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include <gsl/gsl>
 
@@ -79,9 +79,9 @@ bool RigidBody::getContactResponseEnabled() const noexcept {
       & static_cast<flag_t>(btCollisionObject::CF_NO_CONTACT_RESPONSE));
 }
 
-RigidBody::RigidBody(const String &name, CollisionObjectPtr collisionObject)
-    : MovableObject(name), mCollisionObject(std::move(collisionObject)) {
-  if (const auto *info{mCollisionObject->getRigidBodyInfo()}) {
+RigidBody::RigidBody(const String &name, CollisionShapePtr collisionShape)
+    : MovableObject(name), mCollisionShape(std::move(collisionShape)) {
+  if (const auto *info{mCollisionShape->getRigidBodyInfo()}) {
     mRigidBody = std::make_unique<btRigidBody>(*info);
   } else {
     OGRE_EXCEPT(Exception::ERR_INTERNAL_ERROR,
@@ -126,7 +126,7 @@ void RigidBody::setScale(const Vector3 &scale) {
     return;
   }
 
-  const btCollisionShape *base{mCollisionObject->getCollisionShape()};
+  const btCollisionShape *base{mCollisionShape->getCollisionShape()};
 
   // We can't copy the base in general
   if (auto *triMesh{dynamic_cast<const btBvhTriangleMeshShape *>(base)}) {
@@ -162,7 +162,7 @@ const String &RigidBodyFactory::getType() const {
 gsl::owner<MovableObject *>
 RigidBodyFactory::createInstanceImpl(const String &name,
                                      const NameValuePairList *params) {
-  CollisionObjectPtr ptr{};
+  CollisionShapePtr ptr{};
   String group{ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME};
 
   if (params) {
@@ -170,26 +170,27 @@ RigidBodyFactory::createInstanceImpl(const String &name,
       group = it->second;
     }
 
-    if (auto it{params->find("collisionObject")}; it != params->end()) {
-      auto &collisionMgr{CollisionObjectManager::getSingleton()};
+    if (auto it{params->find("collisionShape")}; it != params->end()) {
+      auto &collisionMgr{CollisionShapeManager::getSingleton()};
       auto retrieveResult{collisionMgr.createOrRetrieve(it->second, group)};
-      ptr = std::dynamic_pointer_cast<CollisionObject>(retrieveResult.first);
+      ptr = std::dynamic_pointer_cast<CollisionShape>(retrieveResult.first);
       if (ptr) ptr->load();
     }
   }
   if (!ptr) {
     OGRE_EXCEPT(Exception::ERR_INVALIDPARAMS,
-                "'collisionObject' parameter required when constructing a RigidBody",
+                "'collisionShape' parameter required when constructing a "
+                "RigidBody",
                 "RigidBodyFactory::createInstance");
   }
   // It is possible that resource creation succeeded, but resource loading
-  // failed because the CollisionObject could not find any physics data. This is
+  // failed because the CollisionShape could not find any physics data. This is
   // not exceptional behaviour (markers have no physics data, for instance), but
   // it clearly makes no sense to proceed with the construction of a RigidBody.
   // Ogre implicitly assumes that this method never returns nullptr, so we have
   // no choice but to throw an exception.
   if (!ptr->getRigidBodyInfo() || !ptr->getCollisionShape()) {
-    throw PartialCollisionObjectException("CollisionObject has no RigidBodyInfo");
+    throw PartialCollisionObjectException("CollisionShape has no RigidBodyInfo");
   }
   return OGRE_NEW RigidBody(name, std::move(ptr));
 }

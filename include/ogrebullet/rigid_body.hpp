@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
 #define OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
 
-#include "ogrebullet/collision_object.hpp"
+#include "ogrebullet/collision_shape.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include "ogre/spdlog_listener.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -61,9 +61,9 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
 
   /// \remark `Ogre::RigidBody` objects should be created through
   ///         `Ogre::SceneManager::createMovableObject()`.
-  explicit RigidBody(const String &name, CollisionObjectPtr collisionObject);
+  explicit RigidBody(const String &name, CollisionShapePtr collisionShape);
 
-  CollisionObjectPtr mCollisionObject{};
+  CollisionShapePtr mCollisionShape{};
   /// `btRigidBody` cannot be scaled; in order to scale on a per-instance basis,
   /// we use an override shape copied from the main collision shape and scaled.
   /// This does not need to be used if the scale is unity.
@@ -76,7 +76,7 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   const Ogre::String mType = "RigidBody";
 
   /// Binding to a `Ogre::Node` enables automatic synchronization of the
-  /// `CollisionObject` position and orientation with the `Ogre::Node`'s
+  /// `Ogre::RigidBody`'s position and orientation with the `Ogre::Node`'s
   /// position and orientation. Transforming a bound `Ogre::Node` directly
   /// should be avoided, and if necessary then `notify()` should be called.
   /// Calling `bind` a second time will release the previously bound node and,
@@ -102,7 +102,7 @@ class RigidBodyFactory : public MovableObjectFactory {
 };
 
 /// This should only be used by `Ogre::RigidBodyFactory`, and is used to signify
-/// during `Ogre::RigidBody` creation that the `Ogre::CollisionObject` specified
+/// during `Ogre::RigidBody` creation that the `Ogre::CollisionShape` specified
 /// does not contain sufficient physics data to construct a `Ogre::RigidBody`.
 /// \see `RigidBodyFactor::createInstanceImpl()`.
 /// \todo Make this private and give the derived SceneManager friendship.
