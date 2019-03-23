@@ -55,7 +55,6 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
   const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
   auto skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
-  auto *skelBox{oo::loadRigidBody(skelPath, oo::RESOURCE_GROUP, scnMgr)};
   skelPtr->load();
 
   Ogre::Animation *anim = [&]() {

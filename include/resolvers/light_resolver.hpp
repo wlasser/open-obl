@@ -1,7 +1,6 @@
 #ifndef OPENOBLIVION_LIGHT_RESOLVER_HPP
 #define OPENOBLIVION_LIGHT_RESOLVER_HPP
 
-#include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 #include "ogrebullet/rigid_body.hpp"
 

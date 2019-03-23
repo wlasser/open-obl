@@ -222,7 +222,6 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
         include/resolvers/door_resolver.hpp
-        include/resolvers/ecs.hpp
         include/resolvers/helpers.hpp
         include/resolvers/light_resolver.hpp
         include/resolvers/misc_resolver.hpp

@@ -1,7 +1,6 @@
 #ifndef OPENOBLIVION_NPC_RESOLVER_HPP
 #define OPENOBLIVION_NPC_RESOLVER_HPP
 
-#include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 
 namespace oo {

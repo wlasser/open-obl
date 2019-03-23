@@ -1,7 +1,6 @@
 #ifndef OPENOBLIVION_STATIC_RESOLVER_HPP
 #define OPENOBLIVION_STATIC_RESOLVER_HPP
 
-#include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
 
 namespace oo {

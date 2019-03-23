@@ -1,9 +1,7 @@
 #ifndef OPENOBLIVION_DOOR_RESOLVER_HPP
 #define OPENOBLIVION_DOOR_RESOLVER_HPP
 
-#include "resolvers/ecs.hpp"
 #include "resolvers/resolvers.hpp"
-#include "ogrebullet/rigid_body.hpp"
 
 namespace oo {
 
