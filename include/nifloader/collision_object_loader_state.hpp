@@ -133,6 +133,7 @@ Ogre::Matrix4 getRigidBodyTransform(const nif::bhk::RigidBodyT &body);
 void createCollisionObject(Ogre::CollisionShape *rigidBody,
                            oo::BlockGraph::vertex_descriptor start,
                            const oo::BlockGraph &g);
+
 ///@}
 
 } // namespace oo

@@ -1,3 +1,4 @@
+#include "bullet/collision.hpp"
 #include "conversions.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "nifloader/loader.hpp"
@@ -222,7 +223,7 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
 
   mState->mRoot->attachObject(rigidBody);
   // TODO: Replace with rigidBody->attach(world)
-  mState->mWorld->addRigidBody(rigidBody->getRigidBody());
+  bullet::addRigidBody(mState->mWorld, gsl::make_not_null(rigidBody));
 }
 
 void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
@@ -293,7 +294,7 @@ void RagdollVisitor::discover_vertex(const nif::bhk::BlendCollisionObject &node,
   if (!rigidBody) return;
 
   const auto &target{oo::getBlock<nif::NiNode>(g, node.target)};
-  mState->mWorld->addRigidBody(rigidBody->getRigidBody());
+  bullet::addRigidBody(mState->mWorld, gsl::make_not_null(rigidBody));
   auto *tp{mState->mEntity->attachObjectToBone(target.name.str(), rigidBody)};
   tp->setInheritOrientation(true);
 }

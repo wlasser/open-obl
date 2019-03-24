@@ -1,3 +1,4 @@
+#include "bullet/collision.hpp"
 #include "character_controller/movement.hpp"
 #include "character_controller/player_controller_impl.hpp"
 #include "settings.hpp"
@@ -114,7 +115,10 @@ void PlayerControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNod
                                                 mCollisionShape.get());
   mRigidBody = std::make_unique<btRigidBody>(info);
   mRigidBody->setAngularFactor(0.0f);
-  mWorld->addRigidBody(mRigidBody.get());
+
+  const auto collisionLayer{bullet::CollisionLayer::OL_BIPED};
+  const auto[group, mask]{bullet::getCollisionFilter(collisionLayer)};
+  mWorld->addRigidBody(mRigidBody.get(), group, mask);
 }
 
 gsl::not_null<const btRigidBody *>

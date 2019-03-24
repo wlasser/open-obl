@@ -1,6 +1,8 @@
 #ifndef OPENOBLIVION_NIF_ENUM_HPP
 #define OPENOBLIVION_NIF_ENUM_HPP
 
+#include <cstdint>
+
 namespace nif::Enum {
 
 // Material descriptor for a Havok shape

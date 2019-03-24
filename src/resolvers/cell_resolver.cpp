@@ -254,7 +254,7 @@ void Cell::showNode(gsl::not_null<Ogre::SceneNode *> root) {
   auto &objects{root->getAttachedObjects()};
   for (Ogre::MovableObject *obj : objects) {
     if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
-      getPhysicsWorld()->addRigidBody(rigidBody->getRigidBody());
+      bullet::addRigidBody(getPhysicsWorld(), gsl::make_not_null(rigidBody));
     }
   }
 }
@@ -264,7 +264,7 @@ void Cell::hideNode(gsl::not_null<Ogre::SceneNode *> root) {
   auto &objects{root->getAttachedObjects()};
   for (Ogre::MovableObject *obj : objects) {
     if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
-      getPhysicsWorld()->removeRigidBody(rigidBody->getRigidBody());
+      bullet::removeRigidBody(getPhysicsWorld(), gsl::make_not_null(rigidBody));
     }
   }
 }

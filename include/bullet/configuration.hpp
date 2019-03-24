@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_BULLET_CONFIGURATION_HPP
 #define OPENOBLIVION_BULLET_CONFIGURATION_HPP
 
+#include "bullet/collision.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <memory>
 
@@ -26,11 +27,13 @@ class Configuration {
 
  public:
   std::unique_ptr<btDiscreteDynamicsWorld> makeDynamicsWorld() const {
+    static LayeredOverlapFilter filter{};
     auto world = std::make_unique<btDiscreteDynamicsWorld>(
         dispatcher.get(),
         broadphase.get(),
         solver.get(),
         collisionConfiguration.get());
+    world->getPairCache()->setOverlapFilterCallback(&filter);
     world->setGravity({0, -9.81f, 0});
     return world;
   }

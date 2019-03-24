@@ -116,6 +116,7 @@ target_sources(OpenOblivion PRIVATE
         src/application_context.cpp
         src/atmosphere.cpp
         src/bsa_archive_factory.cpp
+        src/bullet/collision.cpp
         src/cell_cache.cpp
         src/character_controller/jump_state.cpp
         src/character_controller/movement.cpp
