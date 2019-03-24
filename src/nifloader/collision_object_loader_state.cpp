@@ -121,8 +121,63 @@ parseWorldObject(const oo::BlockGraph &g,
     }
   }
 
-  bullet::setCollisionLayer(gsl::make_not_null(rigidBody),
-                            block.havokFilter.layer);
+
+  using Layer = nif::Enum::OblivionLayer;
+  Layer collisionLayer{block.havokFilter.layer};
+  if (collisionLayer == Layer::OL_BIPED) {
+    // Individual body parts are saved as biped objects instead of their parts.
+    using Part = nif::compound::HavokFilter::Part;
+    switch (block.havokFilter.part) {
+      default: [[fallthrough]];
+      case Part::OTHER: break;
+      case Part::HEAD: collisionLayer = Layer::OL_HEAD;
+        break;
+      case Part::BODY: collisionLayer = Layer::OL_BODY;
+        break;
+      case Part::SPINE1: collisionLayer = Layer::OL_SPINE1;
+        break;
+      case Part::SPINE2: collisionLayer = Layer::OL_SPINE2;
+        break;
+      case Part::LUPPERARM: collisionLayer = Layer::OL_L_UPPER_ARM;
+        break;
+      case Part::LFOREARM: collisionLayer = Layer::OL_L_FOREARM;
+        break;
+      case Part::LHAND: collisionLayer = Layer::OL_L_HAND;
+        break;
+      case Part::LTHIGH: collisionLayer = Layer::OL_L_THIGH;
+        break;
+      case Part::LCALF: collisionLayer = Layer::OL_L_CALF;
+        break;
+      case Part::LFOOT: collisionLayer = Layer::OL_L_FOOT;
+        break;
+      case Part::RUPPERARM: collisionLayer = Layer::OL_R_UPPER_ARM;
+        break;
+      case Part::RFOREARM: collisionLayer = Layer::OL_R_FOREARM;
+        break;
+      case Part::RHAND: collisionLayer = Layer::OL_R_HAND;
+        break;
+      case Part::RTHIGH: collisionLayer = Layer::OL_R_THIGH;
+        break;
+      case Part::RCALF: collisionLayer = Layer::OL_R_CALF;
+        break;
+      case Part::RFOOT: collisionLayer = Layer::OL_R_FOOT;
+        break;
+      case Part::TAIL: collisionLayer = Layer::OL_TAIL;
+        break;
+      case Part::SHIELD: collisionLayer = Layer::OL_SHIELD;
+        break;
+      case Part::QUIVER: collisionLayer = Layer::OL_QUIVER;
+        break;
+      case Part::WEAPON: collisionLayer = Layer::OL_WEAPON;
+        break;
+      case Part::PONYTAIL: collisionLayer = Layer::OL_PONYTAIL;
+        break;
+      case Part::WING: collisionLayer = Layer::OL_WING;
+        break;
+    }
+  }
+
+  bullet::setCollisionLayer(gsl::make_not_null(rigidBody), collisionLayer);
 
   const Ogre::Matrix4 localTrans = [&block, &transform]() {
     // TODO: RigidBody that is not a RigidBodyT
