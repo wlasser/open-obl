@@ -44,6 +44,12 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
   ///        afterwards, there's no guarantee that you won't upset Bullet.
   void setScale(const Vector3 &scale);
 
+  /// Get the collision filter group.
+  int getCollisionGroup() const noexcept;
+
+  /// Get the collision filter mask.
+  int getCollisionMask() const noexcept;
+
  private:
   using flag_t = std::make_unsigned_t<
       std::underlying_type_t<btCollisionObject::CollisionFlags>>;

@@ -30,6 +30,22 @@ void CollisionShape::setAllowDeactivationEnabled(bool enabled) noexcept {
   mAllowDeactivation = enabled;
 }
 
+int CollisionShape::getCollisionGroup() const noexcept {
+  return mCollisionGroup;
+}
+
+void CollisionShape::setCollisionGroup(int group) noexcept {
+  mCollisionGroup = group;
+}
+
+int CollisionShape::getCollisionMask() const noexcept {
+  return mCollisionMask;
+}
+
+void CollisionShape::setCollisionMask(int mask) noexcept {
+  mCollisionMask = mask;
+}
+
 const RigidBodyInfo *CollisionShape::getRigidBodyInfo() const noexcept {
   return mInfo.get();
 }

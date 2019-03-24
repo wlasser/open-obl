@@ -65,6 +65,22 @@ class CollisionShape : public Ogre::Resource {
   /// for a while.
   void setAllowDeactivationEnabled(bool enabled) noexcept;
 
+  /// Get the collision filter group that this object will be added to.
+  /// \see `btBroadphaseProxy::CollisionFilterGroups`.
+  int getCollisionGroup() const noexcept;
+  /// Set the collision filter group that this object will be added to. The
+  /// default is `btBroadphaseProxy::CollisionFilterGroups::DefaultFilter`.
+  /// \see `btBroadphaseProxy::CollisionFilterGroups`.
+  void setCollisionGroup(int group) noexcept;
+
+  /// Get the collision mask used to determine which collision filter groups
+  /// this object will interact with.
+  int getCollisionMask() const noexcept;
+  /// Set the collision mask used to determine which collision filter groups
+  /// this object will interact with. The default is
+  /// `btBroadphaseProxy::CollisionFilterGroups::AllFilter`.
+  void setCollisionMask(int mask) noexcept;
+
   const RigidBodyInfo *getRigidBodyInfo() const noexcept;
   const btCollisionShape *getCollisionShape() const noexcept;
 
@@ -83,6 +99,8 @@ class CollisionShape : public Ogre::Resource {
  private:
   CollisionObjectType mCollisionObjectType{COT_DYNAMIC};
   bool mAllowDeactivation{true};
+  int mCollisionGroup{btBroadphaseProxy::DefaultFilter};
+  int mCollisionMask{btBroadphaseProxy::AllFilter};
 
   /// Owning pointer to the underlying rigid body construction info.
   std::unique_ptr<RigidBodyInfo> mInfo{};

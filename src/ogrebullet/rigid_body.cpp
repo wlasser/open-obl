@@ -116,6 +116,14 @@ bool RigidBody::getCollisionFlag(btCollisionObject::CollisionFlags flag) const n
   return 0 != (static_cast<flag_t>(mRigidBody->getCollisionFlags()) & f);
 }
 
+int RigidBody::getCollisionGroup() const noexcept {
+  return mCollisionShape->getCollisionGroup();
+}
+
+int RigidBody::getCollisionMask() const noexcept {
+  return mCollisionShape->getCollisionMask();
+}
+
 RigidBody::RigidBody(const String &name, CollisionShapePtr collisionShape)
     : MovableObject(name), mCollisionShape(std::move(collisionShape)) {
   if (const auto *info{mCollisionShape->getRigidBodyInfo()}) {
