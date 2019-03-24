@@ -234,22 +234,22 @@ constexpr uint64_t getCollisionMask(CollisionLayer layer) noexcept {
           Layer::OL_TRIGGER, Layer::OL_TRAP>(),
       0u, // OL_DROPPING_PICK
       0u, // OL_OTHER
-      BodyColliders | BodyMask, // OL_HEAD
-      BodyColliders | BodyMask, // OL_BODY
-      BodyColliders | BodyMask, // OL_SPINE1
-      BodyColliders | BodyMask, // OL_SPINE2
-      BodyColliders | BodyMask, // OL_L_UPPER_ARM
-      BodyColliders | BodyMask, // OL_L_FOREARM
-      BodyColliders | BodyMask, // OL_L_HAND
-      BodyColliders | BodyMask, // OL_L_THIGH
-      BodyColliders | BodyMask, // OL_L_CALF
-      BodyColliders | BodyMask, // OL_L_FOOT
-      BodyColliders | BodyMask, // OL_R_UPPER_ARM
-      BodyColliders | BodyMask, // OL_R_FOREARM
-      BodyColliders | BodyMask, // OL_R_HAND
-      BodyColliders | BodyMask, // OL_R_THIGH
-      BodyColliders | BodyMask, // OL_R_CALF
-      BodyColliders | BodyMask, // OL_R_FOOT
+      BodyColliders, // OL_HEAD
+      BodyColliders, // OL_BODY
+      BodyColliders, // OL_SPINE1
+      BodyColliders, // OL_SPINE2
+      BodyColliders, // OL_L_UPPER_ARM
+      BodyColliders, // OL_L_FOREARM
+      BodyColliders, // OL_L_HAND
+      BodyColliders, // OL_L_THIGH
+      BodyColliders, // OL_L_CALF
+      BodyColliders, // OL_L_FOOT
+      BodyColliders, // OL_R_UPPER_ARM
+      BodyColliders, // OL_R_FOREARM
+      BodyColliders, // OL_R_HAND
+      BodyColliders, // OL_R_THIGH
+      BodyColliders, // OL_R_CALF
+      BodyColliders, // OL_R_FOOT
       0u, // OL_TAIL
       0u, // OL_SIDE_WEAPON
       bullet::getCollisionMaskImpl< // OL_SHIELD
