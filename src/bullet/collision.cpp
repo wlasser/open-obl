@@ -1,4 +1,8 @@
 #include "bullet/collision.hpp"
+#include "record/formid.hpp"
+#include "settings.hpp"
+#include <spdlog/fmt/ostr.h>
+#include <spdlog/spdlog.h>
 
 namespace bullet {
 
@@ -74,6 +78,28 @@ void addRigidBody(gsl::not_null<btDynamicsWorld *> world,
 void removeRigidBody(gsl::not_null<btDynamicsWorld *> world,
                      gsl::not_null<Ogre::RigidBody *> body) {
   world->removeRigidBody(body->getRigidBody());
+}
+
+void reportingNearCallback(btBroadphasePair &collisionPair,
+                           btCollisionDispatcher &dispatcher,
+                           const btDispatcherInfo &dispatchInfo) {
+  auto obj0{static_cast<btCollisionObject *>(
+                collisionPair.m_pProxy0->m_clientObject)};
+  auto obj1{static_cast<btCollisionObject *>(
+                collisionPair.m_pProxy1->m_clientObject)};
+
+  auto group0{collisionPair.m_pProxy0->m_collisionFilterGroup & 0b111111ull};
+  auto group1{collisionPair.m_pProxy1->m_collisionFilterGroup & 0b111111ull};
+
+  oo::FormId refId0{oo::decodeFormId(obj0->getUserPointer())};
+  oo::FormId refId1{oo::decodeFormId(obj1->getUserPointer())};
+
+  spdlog::get(oo::LOG)->trace("Collision Pair 0x{:0>8x} ({}) vs 0x{:0>8x} ({})",
+                              refId0, group0, refId1, group1);
+
+  btCollisionDispatcher::defaultNearCallback(collisionPair,
+                                             dispatcher,
+                                             dispatchInfo);
 }
 
 } // namespace bullet

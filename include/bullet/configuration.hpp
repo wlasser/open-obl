@@ -25,6 +25,10 @@ class Configuration {
       std::make_unique<btSequentialImpulseConstraintSolver>()
   };
 
+//  Configuration() {
+//    dispatcher->setNearCallback(bullet::reportingNearCallback);
+//  }
+
  public:
   std::unique_ptr<btDiscreteDynamicsWorld> makeDynamicsWorld() const {
     static LayeredOverlapFilter filter{};

@@ -112,6 +112,10 @@ void addRigidBody(gsl::not_null<btDynamicsWorld *> world,
 void removeRigidBody(gsl::not_null<btDynamicsWorld *> world,
                      gsl::not_null<Ogre::RigidBody *> body);
 
+void reportingNearCallback(btBroadphasePair &collisionPair,
+                           btCollisionDispatcher &dispatcher,
+                           const btDispatcherInfo &dispatchInfo);
+
 //===----------------------------------------------------------------------===//
 // Constexpr function definitions
 //===----------------------------------------------------------------------===//
