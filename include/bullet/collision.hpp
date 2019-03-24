@@ -112,27 +112,19 @@ class LayeredOverlapFilter : public btOverlapFilterCallback {
 
   /// Take a `group` \f$\in [0, 57]\f$ and a 58-bit `mask` and pack them
   /// into an `int` group and mask suitable for `LayeredOverlapFilter`.
-  /// \returns A packed `{mask, group}` pair.
-  template<class Group = int, class Mask = uint64_t,
-      class = std::enable_if_t<
-          (std::is_integral_v<Group> && std::is_unsigned_v<Mask>) ||
-              (std::is_same_v<Group, Mask> && std::is_enum_v<Mask> &&
-                  std::is_unsigned_v<std::underlying_type_t<Mask>>)>>
+  /// \returns A packed `{group, mask}` pair.
+  template<class Group = int, class Mask = uint64_t>
   static constexpr std::pair<int, int>
   makeFilter(Group group, Mask mask) noexcept {
     return std::pair<int, int>(
-        static_cast<Mask>(group) | (mask & ((1u << 26u) - 1u) << 6u),
-        mask >> 26u
+        static_cast<uint32_t>(static_cast<Mask>(group) | (mask << 6ull)),
+        static_cast<uint32_t>(mask >> 26ull)
     );
   }
 
   /// Wrapper around `btCollisionWorld::addCollisionObject` that calls
   /// `LayeredOverlapFilter::makeFilter` on its `group` and `mask` arguments.
-  template<class Group = int, class Mask = uint64_t,
-      class = std::enable_if_t<
-          (std::is_integral_v<Group> && std::is_unsigned_v<Mask>) ||
-              (std::is_same_v<Group, Mask> && std::is_enum_v<Mask> &&
-                  std::is_unsigned_v<std::underlying_type_t<Mask>>)>>
+  template<class Group = int, class Mask = uint64_t>
   static void addCollisionObject(btCollisionWorld *world,
                                  btCollisionObject *collisionObject,
                                  Group group,
@@ -143,11 +135,7 @@ class LayeredOverlapFilter : public btOverlapFilterCallback {
 
   /// Wrapper around `btDynamicsWorld::addRigidBody` that calls
   /// `LayeredOverlapFilter::makeFilter` on its `group` and `mask` arguments.
-  template<class Group = int, class Mask = uint64_t,
-      class = std::enable_if_t<
-          (std::is_integral_v<Group> && std::is_unsigned_v<Mask>) ||
-              (std::is_same_v<Group, Mask> && std::is_enum_v<Mask> &&
-                  std::is_unsigned_v<std::underlying_type_t<Mask>>)>>
+  template<class Group = int, class Mask = uint64_t>
   static void addRigidBody(btDynamicsWorld *world,
                            btRigidBody *body,
                            Group group,
