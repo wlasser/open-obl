@@ -1676,7 +1676,24 @@ read(std::istream &is, raw::WATR &t, std::size_t /*size*/) {
   readRecord(is, t.flags);
   readRecord(is, t.materialId);
   readRecord(is, t.soundId);
-  readRecord(is, t.data);
+
+  // There are lots of old and unused WATR records that have broken DATA_WATR
+  // subrecords, presumably from previous stages of development. We can detect
+  // these by checking the size of the DATA_WATR subrecord, which should be
+  // constant. Really this should be done in the subrecord itself, but if we
+  // do that then it won't be tuplifiable anymore, and I don't feel like writing
+  // out the huge read and write functions.
+  std::array<char, 4> type{};
+  io::readBytes(is, type);
+  uint16_t size{};
+  io::readBytes(is, size);
+  if (size == 0x66) {
+    is.seekg(-6, std::ios_base::cur);
+    readRecord(is, t.data);
+  } else {
+    is.seekg(size, std::ios_base::cur);
+  }
+
   readRecord(is, t.variants);
 
   return is;

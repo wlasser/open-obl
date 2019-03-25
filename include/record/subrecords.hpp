@@ -738,36 +738,37 @@ struct DATA_WATR : Tuplifiable<float, float, float, float, float, float, float,
                                uint8_t, uint8_t, uint16_t, float, float, float,
                                float, float, float, float, float, float, float,
                                uint16_t> {
-  float windVelocity{};
+  // Defaults taken by creating a new WATR in the construction set.
+  float windVelocity{0.1f};
   // In degrees
-  float windDirection{};
-  float waveAmplitude{};
-  float waveFrequency{};
-  float sunPower{};
-  float reflectivityAmount{};
-  float fresnelAmount{};
-  float scrollXSpeed{};
-  float scrollYSpeed{};
-  float fogDistanceNear{};
-  float fogDistanceFar{};
-  Color shallowColor{};
-  Color deepColor{};
-  Color reflectionColor{};
+  float windDirection{90.0f};
+  float waveAmplitude{0.5f};
+  float waveFrequency{1.0f};
+  float sunPower{50.0f};
+  float reflectivityAmount{0.5f};
+  float fresnelAmount{0.025f};
+  float scrollXSpeed{0.0f};
+  float scrollYSpeed{0.0f};
+  float fogDistanceNear{27852.8f};
+  float fogDistanceFar{16384.0f};
+  Color shallowColor{0x00808000};
+  Color deepColor{0x00190000};
+  Color reflectionColor{0x00ffffff};
   uint8_t unused1{};
   uint8_t textureBlend{};
   uint16_t unused2{};
 
-  float rainForce{};
-  float rainVelocity{};
-  float rainFalloff{};
-  float rainDampner{};
-  float rainStartingSize{};
+  float rainForce{0.1f};
+  float rainVelocity{0.6f};
+  float rainFalloff{0.985f};
+  float rainDampner{2.0f};
+  float rainStartingSize{0.01f};
 
-  float displacementForce{};
-  float displacementVelocity{};
-  float displacementFalloff{};
-  float displacementDampner{};
-  float displacementStartingSize{};
+  float displacementForce{0.4f};
+  float displacementVelocity{0.6f};
+  float displacementFalloff{0.985f};
+  float displacementDampner{10.0f};
+  float displacementStartingSize{0.05f};
 
   uint16_t damagePerSecond{};
 
