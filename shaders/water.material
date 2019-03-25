@@ -1,0 +1,24 @@
+vertex_program water_vs_glsl glsl {
+    source water_vs.glsl
+}
+
+fragment_program water_fs_glsl glsl {
+    source water_fs.glsl
+}
+
+material __WaterMaterial {
+    technique {
+        pass {
+            vertex_program_ref water_vs_glsl {
+                param_named_auto viewProj VIEWPROJ_MATRIX
+                param_named_auto viewPos CAMERA_POSITION
+            }
+
+            fragment_program_ref water_fs_glsl {
+            }
+
+            cull_hardware none
+            cull_software none
+        }
+    }
+}

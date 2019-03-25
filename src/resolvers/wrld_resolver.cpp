@@ -266,6 +266,32 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
   auto logger{spdlog::get(oo::LOG)};
 
+  auto &meshMgr{Ogre::MeshManager::getSingleton()};
+  if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
+    meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
+                        Ogre::Plane(Ogre::Vector3::UNIT_Y, /*height*/0.0f),
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
+                        1, 1, true, 1u, 1.0f, 1.0f,
+                        Ogre::Vector3::UNIT_Z);
+  }
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};
+  if (!matMgr.resourceExists(waterMatName, oo::RESOURCE_GROUP)) {
+    auto matPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
+    auto newMatPtr{matPtr->clone(waterMatName, /*changeGroup=*/true,
+                                 oo::RESOURCE_GROUP)};
+    newMatPtr->load();
+
+    auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+  }
+
+  mScnMgr->createInstanceManager(
+      WATER_MANAGER_BASE_NAME + mBaseId.string(),
+      WATER_MESH_NAME, oo::RESOURCE_GROUP,
+      Ogre::InstanceManager::InstancingTechnique::HWInstancingBasic,
+      /*instancesPerBatch*/32);
+
   logger->info("WRLD {}: Making physics world...", baseId);
   makePhysicsWorld();
   boost::this_fiber::yield();
@@ -818,6 +844,14 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   logger->info("[{}]: Waiting on blitCounter...", boost::this_fiber::get_id());
   blitCounter.wait();
   logger->info("[{}]: blitCounter complete!", boost::this_fiber::get_id());
+
+  logger->info("[{}]: Creating water instance...", boost::this_fiber::get_id());
+  oo::JobCounter waterCounter{1};
+  oo::RenderJobManager::runJob([&]() {
+    this->loadWaterPlane(pos, *cellRec);
+  }, &waterCounter);
+  waterCounter.wait();
+  logger->info("[{}]: Created water instance.", boost::this_fiber::get_id());
 }
 
 void oo::World::loadTerrain(oo::ExteriorCell &cell) {
@@ -871,6 +905,37 @@ void oo::World::unloadTerrain(CellIndex index) {
   mTerrainGroup.unloadTerrain(2 * x + 1, 2 * y + 0);
   mTerrainGroup.unloadTerrain(2 * x + 0, 2 * y + 1);
   mTerrainGroup.unloadTerrain(2 * x + 1, 2 * y + 1);
+  unloadWaterPlane(index);
+}
+
+void oo::World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
+  if (auto it{mWaterPlanes.find(index)}; it != mWaterPlanes.end()) return;
+
+  const float height{cellRec.waterHeight ? cellRec.waterHeight->data : 0.0f};
+  // Position offset compensates for plane origin at its centre, not SW corner.
+  const Ogre::Vector3 pos{(qvm::X(index) + 0.5f) * oo::unitsPerCell<float>,
+                          (qvm::Y(index) + 0.5f) * oo::unitsPerCell<float>,
+                          height};
+  auto *root{mScnMgr->getRootSceneNode()};
+  auto *node{root->createChildSceneNode(oo::fromBSCoordinates(pos))};
+
+  const std::string matName{WATER_BASE_MATERIAL + mBaseId.string()};
+  const std::string mgrName{WATER_MANAGER_BASE_NAME + mBaseId.string()};
+  auto *entity{mScnMgr->createInstancedEntity(matName, mgrName)};
+
+  auto[it, _]{mWaterPlanes.try_emplace(index, node, entity)};
+  const auto &waterEntry{it->second};
+  if (!waterEntry.entity) return;
+  waterEntry.entity->setInUse(true);
+  waterEntry.node->attachObject(waterEntry.entity);
+}
+
+void oo::World::unloadWaterPlane(CellIndex index) {
+  auto it{mWaterPlanes.find(index)};
+  if (it == mWaterPlanes.end()) return;
+  mScnMgr->destroyInstancedEntity(it->second.entity);
+  mScnMgr->destroySceneNode(it->second.node);
+  mWaterPlanes.erase(it);
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type
