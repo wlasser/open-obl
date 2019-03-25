@@ -15,6 +15,11 @@ material __WaterMaterial {
             }
 
             fragment_program_ref water_fs_glsl {
+                param_named diffuse int 0
+            }
+
+            texture_unit diffuse {
+                texture "textures/water/water00.dds"
             }
 
             cull_hardware none

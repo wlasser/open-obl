@@ -164,7 +164,8 @@ struct ReifyRecordTrait<record::WRLD> {
                               const oo::Resolver<record::LTEX> &,
                               const oo::Resolver<record::WTHR> &,
                               const oo::Resolver<record::CLMT> &,
-                              oo::Resolver<record::LAND> &>>()));
+                              oo::Resolver<record::LAND> &,
+                              const oo::Resolver<record::WATR> &>>()));
 };
 
 /// Not a specialization because passing an Ogre::SceneManager doesn't make
@@ -258,6 +259,9 @@ class World {
 
   tl::optional<oo::BaseId> getLandId(oo::BaseId cellId);
   tl::optional<oo::BaseId> getLandId(oo::BaseId cellId, oo::BaseId wrldId);
+
+  tl::optional<oo::BaseId> getWatrId();
+  tl::optional<oo::BaseId> getWatrId(oo::BaseId wrldId);
 
   void loadWaterPlane(CellIndex index, const record::CELL &cellRec);
   void unloadWaterPlane(CellIndex index);

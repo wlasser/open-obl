@@ -103,8 +103,8 @@ void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
   // Worldspace is not in cache, but is guaranteed to be loaded
   auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
   auto resolvers{oo::getResolvers<record::CELL, record::WRLD, record::LTEX,
-                                  record::WTHR, record::CLMT,
-                                  record::LAND>(ctx.getBaseResolvers())};
+                                  record::WTHR, record::CLMT, record::LAND,
+                                  record::WATR>(ctx.getBaseResolvers())};
   ctx.getLogger()->info("Reifying WRLD {}", wrldId);
   const auto wrldRec{*wrldRes.get(wrldId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));

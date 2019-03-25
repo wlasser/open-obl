@@ -281,9 +281,27 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     auto matPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
     auto newMatPtr{matPtr->clone(waterMatName, /*changeGroup=*/true,
                                  oo::RESOURCE_GROUP)};
-    newMatPtr->load();
 
-    auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+    if (const auto watrIdOpt{getWatrId()}) {
+      auto &watrRes{oo::getResolver<record::WATR>(mResolvers)};
+      if (const auto watrOpt{watrRes.get(*watrIdOpt)}) {
+        const auto &texFile{watrOpt->textureFilename};
+        oo::Path watrBasePath{texFile && !texFile->data.empty()
+                              ? texFile->data : "water/water00.dds"};
+        oo::Path watrPath{oo::Path{"textures"} / std::move(watrBasePath)};
+        Ogre::AliasTextureNamePairList layers{
+            {"diffuse", watrPath.c_str()}
+        };
+        newMatPtr->applyTextureAliases(layers, true);
+      } else {
+        logger->warn("WRLD {}: WATR record {} does not exist",
+                     mBaseId, *watrIdOpt);
+      }
+    } else {
+      logger->warn("WRLD {}: No NAM2 record in this or any ancestors", mBaseId);
+    }
+
+    newMatPtr->load();
   }
 
   mScnMgr->createInstanceManager(
@@ -376,6 +394,26 @@ oo::World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
 
     return landId;
   }
+}
+
+tl::optional<oo::BaseId> oo::World::getWatrId() {
+  return getWatrId(mBaseId);
+}
+
+tl::optional<oo::BaseId>
+oo::World::getWatrId(oo::BaseId wrldId) {
+  auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+
+  const record::WRLD &wrldRec{*wrldRes.get(wrldId)};
+
+  if (!wrldRec.parentWorldspace) {
+    // TODO: Use tl::optional everywhere.
+    return wrldRec.water ? tl::optional{wrldRec.water->data} : tl::nullopt;
+  } else {
+    return getWatrId(wrldRec.parentWorldspace->data);
+  }
+
+  return tl::nullopt;
 }
 
 void oo::World::makeCellGrid() {
