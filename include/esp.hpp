@@ -156,8 +156,22 @@ void readEsp(EspCoordinator &coordinator,
         }
         break;
       }
-      case "DIAL"_rec: accessor.skipGroup();
+      case "DIAL"_rec: {
+        using GroupType = record::Group::GroupType;
+        // Expect a series of DIAL records
+        while (accessor.peekRecordType() == "DIAL"_rec) {
+          accessor.skipRecord();
+          // Expect a TopicChildren subgroup
+          if (accessor.peekGroupType() == GroupType::TopicChildren) {
+            (void) accessor.readGroup();
+            // Expect a series of INFO records
+            while (accessor.peekRecordType() == "INFO"_rec) {
+              accessor.skipRecord();
+            }
+          }
+        }
         break;
+      }
       default: {
         // Otherwise we expect a block of records all of the same type
         while (accessor.peekRecordType() == recType) {
