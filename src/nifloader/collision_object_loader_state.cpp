@@ -476,7 +476,7 @@ parseNiTriStripsData(const oo::BlockGraph &, Ogre::CollisionShape *rigidBody,
 
   CollisionShapeVector v;
   v.emplace_back(std::make_unique<btBvhTriangleMeshShape>(collisionMeshPtr,
-                                                          false));
+                                                          true));
   return v;
 
   // TODO: Support dynamic concave geometry
