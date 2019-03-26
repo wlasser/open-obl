@@ -304,11 +304,13 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     newMatPtr->load();
   }
 
-  mScnMgr->createInstanceManager(
+  auto *instMgr{mScnMgr->createInstanceManager(
       WATER_MANAGER_BASE_NAME + mBaseId.string(),
       WATER_MESH_NAME, oo::RESOURCE_GROUP,
       Ogre::InstanceManager::InstancingTechnique::HWInstancingBasic,
-      /*instancesPerBatch*/32);
+      /*instancesPerBatch*/32)};
+  instMgr->setSetting(Ogre::InstanceManager::BatchSettingId::CAST_SHADOWS,
+                      false);
 
   logger->info("WRLD {}: Making physics world...", baseId);
   makePhysicsWorld();
@@ -960,10 +962,12 @@ void oo::World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
   const std::string matName{WATER_BASE_MATERIAL + mBaseId.string()};
   const std::string mgrName{WATER_MANAGER_BASE_NAME + mBaseId.string()};
   auto *entity{mScnMgr->createInstancedEntity(matName, mgrName)};
+  if (!entity) return;
+
+  entity->_getOwner()->setRenderQueueGroup(WATER_RENDER_QUEUE_GROUP);
 
   auto[it, _]{mWaterPlanes.try_emplace(index, node, entity)};
   const auto &waterEntry{it->second};
-  if (!waterEntry.entity) return;
   waterEntry.entity->setInUse(true);
   waterEntry.node->attachObject(waterEntry.entity);
 }

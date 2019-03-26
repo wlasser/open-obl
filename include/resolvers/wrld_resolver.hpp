@@ -233,6 +233,9 @@ class World {
   constexpr static const char *WATER_MESH_NAME{"__WaterMesh"};
   constexpr static const char *WATER_MANAGER_BASE_NAME{"__WaterManager"};
   constexpr static const char *WATER_BASE_MATERIAL{"__WaterMaterial"};
+  constexpr static uint8_t WATER_RENDER_QUEUE_GROUP{
+      Ogre::RenderQueueGroupID::RENDER_QUEUE_9
+  };
   struct WaterEntry {
     Ogre::SceneNode *node;
     Ogre::InstancedEntity *entity;
