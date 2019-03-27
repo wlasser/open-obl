@@ -121,17 +121,14 @@ const AddVertexMap &getAddVertexMap() {
 }
 
 BlockGraph createBlockGraph(std::istream &is) {
-  using namespace nif;
   auto logger{spdlog::get(oo::LOG)};
 
-  const Version nifVersion{peekVersion(is)};
-  compound::Header header{nifVersion};
+  const nif::Version nifVersion{oo::peekVersion(is)};
+  nif::compound::Header header{nifVersion};
   is >> header;
 
-  if (!header.numBlocks || *header.numBlocks == 0) {
-    // File is empty, we can stop
-    return BlockGraph{};
-  }
+  // If the file is empty, we can stop
+  if (!header.numBlocks || *header.numBlocks == 0) return BlockGraph{};
   const auto numBlocks{*header.numBlocks};
 
   // Nif file uses a list of unique block types and pointers from each block
@@ -140,7 +137,7 @@ BlockGraph createBlockGraph(std::istream &is) {
   blockTypes.reserve(numBlocks);
   if (header.numBlockTypes && header.blockTypes && header.blockTypeIndices) {
     for (auto index : *header.blockTypeIndices) {
-      const compound::SizedString &type{(*header.blockTypes)[index]};
+      const nif::compound::SizedString &type{(*header.blockTypes)[index]};
       blockTypes.emplace_back(type.value.begin(), type.value.end());
     }
   } else {
@@ -154,7 +151,7 @@ BlockGraph createBlockGraph(std::istream &is) {
     groups = *header.groups;
   }
 
-  const auto &blockAddVertexMap = getAddVertexMap();
+  const auto &blockAddVertexMap{oo::getAddVertexMap()};
 
   // Helper function used below, checks if a reference points to a valid block.
   // The block still might have an incompatible type though.
@@ -172,10 +169,10 @@ BlockGraph createBlockGraph(std::istream &is) {
   // create (weak) cycles.
   BlockGraph blocks{numBlocks};
   for (unsigned long i = 0; i < numBlocks; ++i) {
-    const auto &blockType = blockTypes[i];
-    auto vertexAdder = blockAddVertexMap.find(blockType);
+    const auto &blockType{blockTypes[i]};
+    const auto vertexAdder{blockAddVertexMap.find(blockType)};
     if (vertexAdder != blockAddVertexMap.end()) {
-      const auto &func = vertexAdder->second;
+      const auto &func{vertexAdder->second};
       std::invoke(func, blocks, i, nifVersion, is);
       logger->trace("Read block {} ({})", i, blockType);
     } else if (blockType == "NiNode") {
@@ -185,40 +182,40 @@ BlockGraph createBlockGraph(std::istream &is) {
       // construct (of blocks[i], implicit when calling the first addEdge) for a
       // copy, so is probably slower.
       const auto block = [&is, nifVersion]() {
-        auto b{jbcoe::make_polymorphic_value<NiNode>(nifVersion)};
+        auto b{jbcoe::make_polymorphic_value<nif::NiNode>(nifVersion)};
         b->read(is);
         return b;
       }();
-      blocks[i] = jbcoe::polymorphic_value<NiObject>(block);
+      blocks[i] = jbcoe::polymorphic_value<nif::NiObject>(block);
 
       // Make an edge to each NiExtraData
       // TODO: Support extra data linked list
       if (block->extraDataArray) {
         for (auto xtra : *(block->extraDataArray)) {
-          if (isRefValid(xtra)) addEdge(blocks, i, xtra);
+          if (isRefValid(xtra)) oo::addEdge(blocks, i, xtra);
         }
       }
 
       // Make an edge to the controller
       if (block->controller) {
         const auto cont{*(block->controller)};
-        if (isRefValid(cont)) addEdge(blocks, i, cont);
+        if (isRefValid(cont)) oo::addEdge(blocks, i, cont);
       }
 
       // Make an edge to each NiProperty
       for (auto prop : block->properties) {
-        if (isRefValid(prop)) addEdge(blocks, i, prop);
+        if (isRefValid(prop)) oo::addEdge(blocks, i, prop);
       }
 
       // Make an edge to the collision object
       if (block->collisionObject) {
         const auto col{*(block->collisionObject)};
-        if (isRefValid(col)) addEdge(blocks, i, col);
+        if (isRefValid(col)) oo::addEdge(blocks, i, col);
       }
 
       // Make an edge to each child
       for (auto child : block->children) {
-        if (isRefValid(child)) addEdge(blocks, i, child);
+        if (isRefValid(child)) oo::addEdge(blocks, i, child);
       }
 
       logger->trace("Read block {} (NiNode)", i);
