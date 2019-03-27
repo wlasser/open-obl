@@ -501,9 +501,7 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
 
   for (auto refId : *refs) {
     if (auto acti{refrActiRes.get(refId)}; acti) {
-      // TODO: Activators include fire, which isn't supported yet. Add this
-      // when NiBillboardNode is implemented.
-//      cell->attach(*acti, std::forward_as_tuple(actiRes));
+      cell->attach(*acti, std::forward_as_tuple(actiRes));
     } else if (auto door{refrDoorRes.get(refId)}; door) {
       cell->attach(*door, std::forward_as_tuple(doorRes));
     } else if (auto ligh{refrLighRes.get(refId)}; ligh) {
