@@ -2,7 +2,6 @@
 #define OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
 
 #include "nifloader/loader.hpp"
-#include "nifloader/loader_state.hpp"
 #include "ogrebullet/collision_shape.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "settings.hpp"

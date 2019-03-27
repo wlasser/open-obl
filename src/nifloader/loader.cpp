@@ -1,3 +1,4 @@
+#include "conversions.hpp"
 #include "nifloader/loader.hpp"
 #include "settings.hpp"
 #include "nif/basic.hpp"
@@ -6,6 +7,7 @@
 #include <boost/format.hpp>
 #include <spdlog/spdlog.h>
 #include <algorithm>
+#include <istream>
 #include <string>
 #include <string_view>
 
@@ -228,6 +230,22 @@ BlockGraph createBlockGraph(std::istream &is) {
   }
 
   return blocks;
+}
+
+Ogre::Matrix4 getTransform(const nif::NiAVObject &block) {
+  const Ogre::Vector3 translation{oo::fromBSCoordinates(block.translation)};
+
+  const Ogre::Quaternion rotation = [&block]() {
+    const auto m{oo::fromBSCoordinates(block.rotation)};
+    return Ogre::Quaternion{m};
+  }();
+
+  const Ogre::Vector3 scale{block.scale, block.scale, block.scale};
+
+  Ogre::Matrix4 trans;
+  trans.makeTransform(translation, scale, rotation);
+
+  return trans;
 }
 
 } // namespace oo

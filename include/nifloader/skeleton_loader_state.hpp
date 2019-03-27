@@ -2,7 +2,6 @@
 #define OPENOBLIVION_NIFLOADER_SKELETON_LOADER_STATE_HPP
 
 #include "nifloader/loader.hpp"
-#include "nifloader/loader_state.hpp"
 #include "settings.hpp"
 #include <Ogre.h>
 #include <spdlog/spdlog.h>

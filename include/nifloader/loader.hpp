@@ -3,9 +3,10 @@
 
 #include "nif/niobject.hpp"
 #include <boost/graph/adjacency_list.hpp>
+#include <OgreMath.h>
 #include <polymorphic_value.h>
 #include <algorithm>
-#include <istream>
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <type_traits>
@@ -279,6 +280,11 @@ template<class T> auto getBlockIndex(const BlockGraph &g, const T &block) {
   };
   return std::find_if(g.vertex_set().begin(), g.vertex_set().end(), comp);
 }
+
+/// Convert the translation, rotation, and scale parameters into Ogre
+/// coordinates and return a combined transformation matrix.
+/// \ingroup OpenOblivionNifloader
+Ogre::Matrix4 getTransform(const nif::NiAVObject &block);
 
 ///@}
 
