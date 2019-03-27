@@ -24,6 +24,9 @@ material __WaterMaterial {
 
             cull_hardware none
             cull_software none
+
+            depth_write off
+            separate_scene_blend src_alpha one_minus_src_alpha zero one
         }
     }
 }
