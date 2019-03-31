@@ -131,7 +131,7 @@ class AstNode {
   void remove_content() noexcept /*C++20: [[ensures: has_content()]]*/;
 
   /// Get the node's additional mutable information.
-  [[nodiscard]] constexpr std::string_view getValue() const noexcept {
+  [[nodiscard]] std::string_view getValue() const noexcept {
     return mValue;
   }
 
