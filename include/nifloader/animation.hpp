@@ -155,7 +155,7 @@
 /// `Ogre::SubMesh` (without copying the data itself) and removes the blend
 /// indices/weights by unbinding the vertex buffers containing them if the
 /// respective constants `Ogre::Root::isBlendIndicesGpuRedundant()` and
-/// `Ogre::Root::isBlendWeights::GpuRedundant()` are true. It then extracts
+/// `Ogre::Root::isBlendWeightsGpuRedundant()` are true. It then extracts
 /// `Ogre::TempBlendedBufferInfo` from the cloned `Ogre::VertexData`, in
 /// particular getting the binding indices for the vertex buffers containing
 /// the vertex positions and normals. This information is used later when the
@@ -251,7 +251,23 @@
 /// Ideally we would be able to use bone names in the bone assignments instead
 /// of handles, until we knew what skeleton to use, but this is incompatible
 /// with the requirement that the skinning information be set up during
-/// `Ogre::SubMesh::load()`.
+/// `Ogre::SubMesh::load()`. On the other hand, if we modify OGRE to allow
+/// specification of the blend indices instead of the bone indices then we can
+/// satsify that requirement, but lose the information necessary to construct
+/// the `blendIndexToBoneIndexMap` and `boneIndexToBlendIndexMap` map. Since
+/// these are only required once the `Ogre::Skeleton` is known, storing both the
+/// bone names and blend indices of each assignment solves the problem.
+///
+/// The next incompatibility is the inevitable call to
+/// `Ogre::SubMesh::_compileBoneAssignments()`. Since we are manually populating
+/// a vertex buffer with the position, normal, tangent, vertex colour etc.
+/// vertex properties during the construction of each `Ogre::SubMesh`, and the
+/// skinning information is already available at that point, it's quite
+/// convenient to simultaneously put the blend indices and weights into the
+/// same vertex buffer. We're prevented from doing this however as
+/// `Ogre::SubMesh::_compileBoneAssignments()` *unbinds any existing buffer that
+/// contains blend indices or blend weights*, then creates a new buffer to put
+/// them in. Skinning data must therefore be stored in a separate vertex buffer.
 ///
 /// \todo There is a lot more to say on this. Figuring out a fix for the above,
 ///       but also documenting how animations themselves work in both OGRE and,
