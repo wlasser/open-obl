@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_CELL_CACHE_HPP
 #define OPENOBLIVION_CELL_CACHE_HPP
 
-#include "record/formid.hpp"
+#include "wrld.hpp"
 #include <boost/circular_buffer.hpp>
 #include <boost/fiber/mutex.hpp>
 #include <OgreQuaternion.h>
@@ -117,17 +117,40 @@ class CellCache {
   WorldPtr getWorld(oo::BaseId id) const;
 };
 
+struct IdCellLocation {
+  oo::BaseId mCellId{};
+  explicit IdCellLocation(oo::BaseId cellId) noexcept : mCellId(cellId) {}
+  IdCellLocation() noexcept = default;
+};
+
+struct PositionCellLocation {
+  oo::BaseId mWrldId{};
+  oo::CellIndex mCellPos{};
+  explicit PositionCellLocation(oo::BaseId wrldId,
+                                oo::CellIndex cellPos) noexcept
+      : mWrldId(wrldId), mCellPos(cellPos) {}
+  explicit PositionCellLocation() noexcept = default;
+};
+
+using CellLocation = std::variant<IdCellLocation, PositionCellLocation>;
+
 /// Cell to load and where to place the player in it.
 /// \todo This is temporary, and needs to be moved/replaced with a better system
 struct CellRequest {
-  oo::BaseId mCellId{};
+  CellLocation mLocation{std::in_place_type<IdCellLocation>};
   Ogre::Vector3 mPlayerPosition{};
   Ogre::Quaternion mPlayerOrientation{};
 
   explicit CellRequest(oo::BaseId cellId,
                        const Ogre::Vector3 &playerPosition = Ogre::Vector3::ZERO,
                        const Ogre::Quaternion &playerOrientation = Ogre::Quaternion::IDENTITY)
-      : mCellId(cellId),
+      : mLocation(std::in_place_type<IdCellLocation>, cellId),
+        mPlayerPosition(playerPosition),
+        mPlayerOrientation(playerOrientation) {}
+  explicit CellRequest(oo::BaseId wrldId, oo::CellIndex cellPos,
+                       const Ogre::Vector3 &playerPosition = Ogre::Vector3::ZERO,
+                       const Ogre::Quaternion &playerOrientation = Ogre::Quaternion::IDENTITY)
+      : mLocation(std::in_place_type<PositionCellLocation>, wrldId, cellPos),
         mPlayerPosition(playerPosition),
         mPlayerOrientation(playerOrientation) {}
 };

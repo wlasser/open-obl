@@ -232,7 +232,8 @@ target_sources(OpenOblivion PRIVATE
         include/script_functions.hpp
         include/settings.hpp
         include/terrain_material_generator.hpp
-        include/time_manager.hpp)
+        include/time_manager.hpp
+        include/wrld.hpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

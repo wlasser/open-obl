@@ -8,6 +8,7 @@
 #include "resolvers/resolvers.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "time_manager.hpp"
+#include "wrld.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
@@ -21,18 +22,6 @@
 #include <utility>
 
 namespace oo {
-
-/// Coordinates of an `oo::ExteriorCell` in a `World`.
-using CellIndex = qvm::vec<int32_t, 2>;
-
-/// Get the coordinates of the `oo::ExteriorCell` containing the given position.
-/// \remark `x` and `y` are measured in BS units.
-CellIndex getCellIndex(float x, float y) noexcept;
-
-using CellGrid = boost::multi_array<oo::BaseId, 2>;
-
-using CellGridView = boost::multi_array<oo::BaseId,
-                                        2>::const_array_view<2>::type;
 
 template<>
 class Resolver<record::WRLD> {

@@ -66,19 +66,44 @@ MainMenuMode::transition_t
 MainMenuMode::handleEventImpl(ApplicationContext &ctx,
                               const sdl::Event &/*event*/) {
   if (btnContinue && btnContinue->is_clicked()) {
-    getMenuCtx()->getOverlay()->hide();
-    mBackgroundMusic->stop();
-    const oo::BaseId cheydinhalCountyHall{0x00'031b59};
-    const oo::BaseId horseWhispererStables{0x00'048706};
+    // TODO: Use EDIDs instead of BaseIds for debug cell lookup
+    const auto &settings{oo::GameSettings::getSingleton()};
+    try {
+      oo::CellRequest request = [&]() -> oo::CellRequest {
+        if (auto cell{settings.get("General.SStartingCell", "")};
+            !cell.empty()) {
+          oo::BaseId id{static_cast<uint32_t>(std::stoul(cell, nullptr, 16))};
+          return oo::CellRequest{
+              id,
+              oo::fromBSCoordinates(Ogre::Vector3{0.0f, 0.0f, -400.0f})
+          };
+        } else if (auto wrld{settings.get("General.SStartingWorld", "")};
+            !wrld.empty()) {
+          auto xOpt{settings.get<int>("General.iStartingCellX")};
+          auto yOpt{settings.get<int>("General.iStartingCellY")};
+          if (xOpt && yOpt) {
+            oo::BaseId id{static_cast<uint32_t>(std::stoul(wrld, nullptr, 16))};
+            return oo::CellRequest{
+                id,
+                oo::CellIndex{*xOpt, *yOpt},
+                oo::fromBSCoordinates(Ogre::Vector3{
+                    *xOpt * oo::unitsPerCell<float>,
+                    *yOpt * oo::unitsPerCell<float>,
+                    oo::unitsPerCell<float> / 2.0f
+                })
+            };
+          }
+        }
+        ctx.getLogger()->error("No starting cell specified, check INI");
+        throw std::runtime_error("No starting cell specified, check INI");
+      }();
 
-    oo::CellRequest request{
-        // {25, -38}
-        oo::BaseId{0x00'00619e},
-        oo::fromBSCoordinates(Ogre::Vector3(103799.0f, -152970.0f, 2575.0f))
-//      oo::BaseId{0x00'031b59},
-//      oo::fromBSCoordinates(Ogre::Vector3(0.0f, 0.0f, -400.0f))
-    };
-    return {false, oo::LoadingMenuMode(ctx, std::move(request))};
+      getMenuCtx()->getOverlay()->hide();
+      mBackgroundMusic->stop();
+      return {false, oo::LoadingMenuMode(ctx, std::move(request))};
+    } catch (const std::exception &) {
+      return {false, std::nullopt};
+    }
   }
 
   if (btnLoad && btnLoad->is_clicked()) {

@@ -8,13 +8,6 @@
 #include <spdlog/spdlog.h>
 #include <Terrain/OgreTerrainGroup.h>
 
-oo::CellIndex oo::getCellIndex(float x, float y) noexcept {
-  return {
-      static_cast<int32_t>(std::floor(x / oo::unitsPerCell<float>)),
-      static_cast<int32_t>(std::floor(y / oo::unitsPerCell<float>))
-  };
-}
-
 //===----------------------------------------------------------------------===//
 // WRLD resolver definitions
 //===----------------------------------------------------------------------===//

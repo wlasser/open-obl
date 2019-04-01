@@ -142,6 +142,9 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
 
   void reifyNearNeighborhood(oo::CellIndex center, ApplicationContext &ctx);
 
+  void idLoadJob(oo::IdCellLocation loc, ApplicationContext &ctx);
+  void positionLoadJob(oo::PositionCellLocation loc, ApplicationContext &ctx);
+
   void startLoadJob(ApplicationContext &ctx);
 
  public:
