@@ -117,12 +117,11 @@ class RagdollVisitor {
 //===----------------------------------------------------------------------===//
 
 void NifVisitor::start_vertex(vertex_descriptor, const Graph &g) {
-  // Look for a BSXFlags
-  auto it{std::find_if(g.vertex_set().begin(), g.vertex_set().end(),
-                       [&g](vertex_descriptor v) -> bool {
-                         return dynamic_cast<const nif::BSXFlags *>(&*g[v]);
-                       })};
-  if (it != g.vertex_set().end()) {
+  const auto &vertices{g.vertex_set()};
+  auto it{std::find_if(vertices.begin(), vertices.end(), [&g](auto v) -> bool {
+    return dynamic_cast<const nif::BSXFlags *>(&*g[v]);
+  })};
+  if (it != vertices.end()) {
     const auto &bsxFlags{static_cast<const nif::BSXFlags &>(*g[*it])};
     using Flags = nif::BSXFlags::Flags;
     const Flags flags{bsxFlags.data};
@@ -133,12 +132,11 @@ void NifVisitor::start_vertex(vertex_descriptor, const Graph &g) {
 
 void RagdollVisitor::start_vertex(vertex_descriptor, const Graph &g) {
   // TODO: Reduce duplication
-  // Look for a BSXFlags
-  auto it{std::find_if(g.vertex_set().begin(), g.vertex_set().end(),
-                       [&g](vertex_descriptor v) -> bool {
-                         return dynamic_cast<const nif::BSXFlags *>(&*g[v]);
-                       })};
-  if (it != g.vertex_set().end()) {
+  const auto &vertices{g.vertex_set()};
+  auto it{std::find_if(vertices.begin(), vertices.end(), [&g](auto v) -> bool {
+    return dynamic_cast<const nif::BSXFlags *>(&*g[v]);
+  })};
+  if (it != vertices.end()) {
     const auto &bsxFlags{static_cast<const nif::BSXFlags &>(*g[*it])};
     using Flags = nif::BSXFlags::Flags;
     const Flags flags{bsxFlags.data};
