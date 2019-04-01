@@ -135,6 +135,8 @@ target_sources(OpenOblivion PRIVATE
         src/globals.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
+        src/mesh.cpp
+        src/mesh_manager.cpp
         src/modes/console_mode.cpp
         src/modes/game_mode.cpp
         src/modes/load_menu_mode.cpp
@@ -164,6 +166,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         src/script_functions.cpp
+        src/submesh.cpp
         src/terrain_material_generator.cpp
         src/time_manager.cpp
         include/application.hpp
@@ -197,6 +200,8 @@ target_sources(OpenOblivion PRIVATE
         include/globals.hpp
         include/initial_record_visitor.hpp
         include/job/job.hpp
+        include/mesh.hpp
+        include/mesh_manager.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
         include/modes/game_mode.hpp
@@ -231,6 +236,7 @@ target_sources(OpenOblivion PRIVATE
         include/save_state.hpp
         include/script_functions.hpp
         include/settings.hpp
+        include/submesh.hpp
         include/terrain_material_generator.hpp
         include/time_manager.hpp
         include/wrld.hpp)
