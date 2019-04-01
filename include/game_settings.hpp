@@ -75,6 +75,26 @@ namespace oo {
 /// <tr><td>General.sMainMenuMusicTrack</td></tr>
 ///     <td>The background music to play on the title menu, relative to
 ///         `General.sLocalMasterPath`.</tr></tr>
+/// <tr><td>General.SStartingCell</td>
+///     <td>The `oo::BaseId`, in hexadecimal (`0x` prefix optional), of the cell
+///         to begin the game in. The cell may be an interior or exterior cell.
+///         This is mainly useful for debugging, and is unused if left
+///         blank.</td></tr>
+/// <tr><td>General.SStartingWorld</td>
+///     <td>The `oo::BaseId`, in hexadecimal (`0x` prefix optional), of the
+///         worldspace to begin the game in. This is only checked if
+///         `General.SStartingCell` is blank. If it is set, then
+///         `General.iStartingCellX` and `General.iStartingCellY` must be set
+///          also, to specify which cell in the worldspace to start
+///          in.</td></tr>
+/// <tr><td>General.iStartingCellX</td>
+///     <td>The `X` coordinate of the exterior cell to begin the game in.
+///         This is only used if `General.SStartingCell` is not set, and must be
+///         set if `General.SStartingWorld` is.</td></tr>
+/// <tr><td>General.iStartingCellY</td>
+///     <td>The `Y` coordinate of the exterior cell to begin the game in.
+///         This is only used if `General.SStartingCell` is not set, and must be
+///         set if `General.SStartingWorld` is.</td></tr>
 /// <tr><td>Archive.sArchiveList</td>
 ///     <td>A comma-separated list of BSA files to load, relative to
 ///         `General.sLocalMasterPath`.</td></tr>
