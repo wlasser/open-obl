@@ -128,6 +128,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/console_functions.cpp
+        src/entity.cpp
         src/esp_coordinator.cpp
         src/exterior_manager.cpp
         src/fnt_loader.cpp
@@ -166,6 +167,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         src/script_functions.cpp
+        src/subentity.cpp
         src/submesh.cpp
         src/terrain_material_generator.cpp
         src/time_manager.cpp
@@ -191,6 +193,7 @@ target_sources(OpenOblivion PRIVATE
         include/console_functions.hpp
         include/controls.hpp
         include/conversions.hpp
+        include/entity.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
@@ -236,6 +239,7 @@ target_sources(OpenOblivion PRIVATE
         include/save_state.hpp
         include/script_functions.hpp
         include/settings.hpp
+        include/subentity.hpp
         include/submesh.hpp
         include/terrain_material_generator.hpp
         include/time_manager.hpp
