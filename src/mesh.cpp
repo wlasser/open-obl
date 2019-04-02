@@ -87,6 +87,10 @@ const Mesh::SubMeshList &Mesh::getSubMeshes() const {
   return mSubMeshList;
 }
 
+const Mesh::SubMeshNameMap &Mesh::getSubMeshNameMap() const {
+  return mSubMeshNameMap;
+}
+
 oo::MeshPtr Mesh::clone(const std::string &newName,
                         const std::string &newGroup) {
   auto &meshMgr{oo::MeshManager::getSingleton()};

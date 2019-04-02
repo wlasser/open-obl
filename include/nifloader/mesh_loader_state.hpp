@@ -1,8 +1,10 @@
 #ifndef OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 #define OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 
+#include "mesh.hpp"
 #include "nifloader/loader.hpp"
 #include "settings.hpp"
+#include "submesh.hpp"
 #include <Ogre.h>
 #include <spdlog/spdlog.h>
 #include <filesystem>
@@ -16,10 +18,10 @@ namespace oo {
 /// \addtogroup OpenOblivionNifloader
 /// @{
 
-/// `Ogre::SubMesh`es do not store bounding box information, only `Ogre::Mesh`es
+/// `oo::SubMesh`es do not store bounding box information, only `oo::Mesh`es
 /// do, but we need it to compute the overall bounding box.
 struct BoundedSubmesh {
-  Ogre::SubMesh *submesh{};
+  oo::SubMesh *submesh{};
   Ogre::AxisAlignedBox bbox{};
 };
 
@@ -69,12 +71,15 @@ struct BoneBinding {
 /// `nif::NiSkinInstance` that owns the `nif::NiSkinPartition`.
 std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin);
 
-/// Dispatch to `oo::getBoneBindings(const nif::NiSkinPartition &)` if `skin`
-/// has a `nif::NiSkinPartition`.
-std::vector<BoneBinding> getBoneBindings(const oo::BlockGraph &g,
-                                         const std::string &meshName,
-                                         const std::string &meshGroup,
-                                         const nif::NiTriBasedGeom &block);
+struct BoneAssignments {
+  std::vector<BoneBinding> bindings;
+  std::vector<std::string> names;
+};
+
+/// Dispatch to `oo::getBoneBindings(const nif::NiSkinPartition &)` if `block`
+/// has a `nif::NiSkinPartition`, and store the names of the used bones.
+BoneAssignments getBoneAssignments(const oo::BlockGraph &g,
+                                   const nif::NiTriBasedGeom &block);
 
 /// Read vertex, normal, and texcoord data from `nif::NiGeometryData` and
 /// prepare it for rendering.
@@ -99,7 +104,7 @@ generateIndexData(const nif::NiTriStripsData &block);
 /// of `block`. Also notify `subMesh` of the index operation type required to
 /// render the generated index data.
 std::unique_ptr<Ogre::IndexData>
-generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh);
+generateIndexData(const nif::NiGeometryData &block, oo::SubMesh *submesh);
 
 /// Set the properties of tex provided by the block. In particular, set the
 /// texture name of `tex` to the source texture in `block`, or `textureOverride`
@@ -156,15 +161,15 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
                         const nif::NiMaterialProperty &block);
 
 bool attachMaterialProperty(const oo::BlockGraph &g,
-                            const Ogre::Mesh *mesh,
+                            const oo::Mesh *mesh,
                             const nif::NiPropertyArray &properties,
                             Ogre::SubMesh *submesh, bool hasSkinning = false);
 
 /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
 ///         with a single material and texture, and so translate to
-///         `Ogre::SubMesh` objects.
+///         `oo::SubMesh` objects.
 BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
-                                   Ogre::Mesh *mesh,
+                                   oo::Mesh *mesh,
                                    const nif::NiTriBasedGeom &block,
                                    const Ogre::Matrix4 &transform);
 
@@ -185,16 +190,16 @@ class MeshLoaderState {
   [[maybe_unused]] void forward_or_cross_edge(edge_descriptor, const Graph &) {}
   [[maybe_unused]] void finish_edge(edge_descriptor, const Graph &) {}
 
-  explicit MeshLoaderState(Ogre::Mesh *mesh, Graph blocks);
+  explicit MeshLoaderState(oo::Mesh *mesh, Graph blocks);
 
  private:
-  Ogre::Mesh *mMesh;
+  oo::Mesh *mMesh;
   BlockGraph mBlocks;
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   std::shared_ptr<spdlog::logger> mLogger{};
 };
 
-void createMesh(Ogre::Mesh *mesh,
+void createMesh(oo::Mesh *mesh,
                 oo::BlockGraph::vertex_descriptor start,
                 const oo::BlockGraph &g);
 

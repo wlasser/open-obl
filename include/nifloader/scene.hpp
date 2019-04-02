@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_NIFLOADER_SCENE_HPP
 #define OPENOBLIVION_NIFLOADER_SCENE_HPP
 
+#include "entity.hpp"
 #include <gsl/gsl>
 #include <Ogre.h>
 #include <btBulletDynamicsCommon.h>
@@ -23,7 +24,7 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
 void attachRagdoll(const std::string &name, const std::string &group,
                    gsl::not_null<Ogre::SceneManager *> scnMgr,
                    gsl::not_null<btDiscreteDynamicsWorld *> world,
-                   gsl::not_null<Ogre::Entity *> entity);
+                   gsl::not_null<oo::Entity *> entity);
 
 /// @}
 

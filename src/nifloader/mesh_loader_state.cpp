@@ -331,7 +331,7 @@ generateIndexData(const nif::NiTriStripsData &block) {
 }
 
 std::unique_ptr<Ogre::IndexData>
-generateIndexData(const nif::NiGeometryData &block, Ogre::SubMesh *submesh) {
+generateIndexData(const nif::NiGeometryData &block, oo::SubMesh *submesh) {
   if (dynamic_cast<const nif::NiTriShapeData *>(&block)) {
     submesh->operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
     const auto &triShape{dynamic_cast<const nif::NiTriShapeData &>(block)};
@@ -401,37 +401,31 @@ std::vector<BoneBinding> getBoneBindings(const nif::NiSkinPartition &skin) {
   return bindings;
 }
 
-std::vector<BoneBinding> getBoneBindings(const oo::BlockGraph &g,
-                                         const std::string &meshName,
-                                         const std::string &meshGroup,
-                                         const nif::NiTriBasedGeom &block) {
+BoneAssignments
+getBoneAssignments(const oo::BlockGraph &g, const nif::NiTriBasedGeom &block) {
   if (auto instRef{block.skinInstance}; instRef && *instRef) {
     const auto &instance{oo::getBlock<nif::NiSkinInstance>(g, *instRef)};
     const auto &bones{instance.bones};
     if (auto partRef{instance.skinPartition}; partRef && *partRef) {
       const auto &partition{oo::getBlock<nif::NiSkinPartition>(g, *partRef)};
-      auto bindings{oo::getBoneBindings(partition)};
+      BoneAssignments boneAssignments;
+      boneAssignments.bindings = oo::getBoneBindings(partition);
 
-      oo::Path meshPath{meshName};
-      oo::Path folderName{std::string{meshPath.folder()}};
-      oo::Path skelName{folderName / oo::Path{"skeleton.nif"}};
-
-      auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
-      // skelName is assume to already have been normalized.
-      auto skelPtr{skelMgr.getByName(skelName.c_str(), meshGroup)};
-      skelPtr->load();
-      // Map the indices in the bindings into the actual bones in the skeleton
-      for (auto &binding : bindings) {
-        std::transform(binding.indices.begin(), binding.indices.end(),
-                       binding.indices.begin(), [&](auto idx) {
-              const auto &node{oo::getBlock<nif::NiNode>(g, bones[idx])};
-              Ogre::Bone *bone{skelPtr->getBone(node.name.str())};
-              return bone->getHandle();
-            });
+      // Get the bone names of the blend indices.
+      for (auto &binding : boneAssignments.bindings) {
+        for (auto idx : binding.indices) {
+          const auto &node{oo::getBlock<nif::NiNode>(g, bones[idx])};
+          if (idx >= boneAssignments.names.size()) {
+            boneAssignments.names.resize(idx + 1u);
+          }
+          boneAssignments.names[idx] = node.name.str();
+        }
       }
-      return bindings;
+
+      return boneAssignments;
     }
   }
+
   return {};
 }
 
@@ -827,9 +821,9 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
 }
 
 bool attachMaterialProperty(const oo::BlockGraph &g,
-                            const Ogre::Mesh *mesh,
+                            const oo::Mesh *mesh,
                             const nif::NiPropertyArray &properties,
-                            Ogre::SubMesh *submesh,
+                            oo::SubMesh *submesh,
                             bool hasSkinning) {
   auto it{std::find_if(properties.begin(), properties.end(), [&g](auto ref) {
     return oo::checkRefType<nif::NiMaterialProperty>(g, ref);
@@ -858,7 +852,7 @@ bool attachMaterialProperty(const oo::BlockGraph &g,
 }
 
 BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
-                                   Ogre::Mesh *mesh,
+                                   oo::Mesh *mesh,
                                    const nif::NiTriBasedGeom &block,
                                    const Ogre::Matrix4 &transform) {
   // If this submesh has already been loaded, return it.
@@ -869,18 +863,16 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
     const auto &nameMap{mesh->getSubMeshNameMap()};
     if (auto it{nameMap.find(block.name.str())}; it != nameMap.end()) {
       // TODO: How to get the bounding box once the submesh has been created?
-      return {mesh->getSubMesh(it->second), {}};
+      return {mesh->getSubMeshes()[it->second].get(), {}};
     }
   }
 
   auto submesh{mesh->createSubMesh(block.name.str())};
-  submesh->useSharedVertices = false;
 
-  auto boneBindings{oo::getBoneBindings(g, mesh->getName(),
-                                        mesh->getGroup(), block)};
+  auto boneAssignments{oo::getBoneAssignments(g, block)};
+  const auto hasBones{!boneAssignments.bindings.empty()};
 
-  oo::attachMaterialProperty(g, mesh, block.properties, submesh,
-                             !boneBindings.empty());
+  oo::attachMaterialProperty(g, mesh, block.properties, submesh, hasBones);
 
   const auto &geomData{oo::getBlock<nif::NiGeometryData>(g, block.data)};
 
@@ -902,24 +894,19 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
   const auto totalTrans{transform * getTransform(block)};
   auto vertexData{oo::generateVertexData(geomData, totalTrans,
                                          &bitangents, &tangents,
-                                         boneBindings.empty() ? nullptr
-                                                              : &boneBindings)};
+                                         hasBones ? nullptr
+                                                  : &boneAssignments.bindings)};
   auto indexData{oo::generateIndexData(geomData, submesh)};
 
-  // Ogre::SubMesh leaves us to heap allocate the Ogre::VertexData but allocates
-  // the Ogre::IndexData itself. Both have deleted copy-constructors so we can't
-  // create index data on the stack and copy it over. Instead we do a Bad Thing,
-  // deleting the submesh's indexData and replacing it with our own.
-  delete submesh->indexData;
-
   // Transfer ownership to Ogre
-  submesh->vertexData = vertexData.release();
-  submesh->indexData = indexData.release();
+  submesh->vertexData = std::move(vertexData);
+  submesh->indexData = std::move(indexData);
+  if (hasBones) submesh->boneNames = std::move(boneAssignments.names);
 
   return {submesh, getBoundingBox(geomData, totalTrans)};
 }
 
-MeshLoaderState::MeshLoaderState(Ogre::Mesh *mesh, Graph blocks)
+MeshLoaderState::MeshLoaderState(oo::Mesh *mesh, Graph blocks)
     : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   const auto propertyMap{boost::make_iterator_property_map(
@@ -963,7 +950,7 @@ void MeshLoaderState::finish_vertex(vertex_descriptor v, const Graph &g) {
   }
 }
 
-void createMesh(Ogre::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
+void createMesh(oo::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
                 const oo::BlockGraph &g) {
   const auto &rootBlock{*g[start]};
   if (!dynamic_cast<const nif::NiNode *>(&rootBlock)) {

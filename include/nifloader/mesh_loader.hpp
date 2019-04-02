@@ -7,7 +7,7 @@
 
 namespace oo {
 
-/// Loader for `Ogre::Mesh`es defined in NIF files.
+/// Loader for `oo::Mesh`es defined in NIF files.
 /// \ingroup OpenOblivionNifloader
 class MeshLoader : public Ogre::ManualResourceLoader {
  private:

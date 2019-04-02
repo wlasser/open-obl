@@ -1,8 +1,10 @@
 #include "application_context.hpp"
 #include "cell_cache.hpp"
 #include "controls.hpp"
+#include "entity.hpp"
 #include "esp_coordinator.hpp"
 #include "game_settings.hpp"
+#include "mesh_manager.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
@@ -24,7 +26,27 @@ ApplicationContext::ApplicationContext()
       nifCollisionLoader{std::make_unique<oo::CollisionObjectLoader>()},
       skeletonLoader{std::make_unique<oo::SkeletonLoader>()} {}
 
-ApplicationContext::~ApplicationContext() = default;
+ApplicationContext::~ApplicationContext() {
+  // It is idiomatic in Ogre for resource managers to register themselves on
+  // construction and deregister themselves on destruction. The hack to
+  // replace Ogre::MeshManager with oo::MeshManager cannot destroy the existing
+  // manager so must deregister it manually. When Ogre::Root is destroyed, the
+  // old mesh manager tries to deregister itself again, causing a crash.
+  // The solution is to manually follow the destruction order up to and
+  // including the oo::MeshManager, then register the Ogre::MeshManager again.
+  auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+  cellCache.reset();
+  espCoordinator.reset();
+  refrResolvers.reset();
+  baseResolvers.reset();
+  wavResourceMgr.reset();
+  textResourceMgr.reset();
+  collisionObjectMgr.reset();
+  nifResourceMgr.reset();
+  meshResourceMgr.reset();
+  resGrpMgr._registerResourceManager("Mesh",
+                                     Ogre::MeshManager::getSingletonPtr());
+}
 
 void ApplicationContext::setCameraAspectRatio(gsl::not_null<Ogre::Camera *> camera) const {
   const auto &settings{GameSettings::getSingleton()};

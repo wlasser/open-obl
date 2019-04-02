@@ -1,5 +1,7 @@
 #include "bullet/collision.hpp"
 #include "conversions.hpp"
+#include "entity.hpp"
+#include "mesh_manager.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "nifloader/loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
@@ -75,12 +77,12 @@ struct RagdollVisitorState {
 
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<btDiscreteDynamicsWorld *> mWorld;
-  gsl::not_null<Ogre::Entity *> mEntity;
+  gsl::not_null<oo::Entity *> mEntity;
 
   explicit RagdollVisitorState(std::string name, std::string group,
                                gsl::not_null<Ogre::SceneManager *> scnMgr,
                                gsl::not_null<btDiscreteDynamicsWorld *> world,
-                               gsl::not_null<Ogre::Entity *> entity)
+                               gsl::not_null<oo::Entity *> entity)
       : mName(std::move(name)), mGroup(std::move(group)),
         mScnMgr(scnMgr), mWorld(world), mEntity(entity) {}
 };
@@ -233,16 +235,19 @@ void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
   //C++20: if (mState->mVisitedGeometry.contains(u)) return;
   if (mState->mVisitedGeometry.count(u) > 0) return;
 
-  auto &meshMgr{Ogre::MeshManager::getSingleton()};
+  auto &meshMgr{oo::MeshManager::getSingleton()};
   const std::string name{mState->mName + std::to_string(u) + "Mesh"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{meshMgr.createOrRetrieve(name, group, true, nullptr)};
-  Ogre::MeshPtr meshPtr{std::static_pointer_cast<Ogre::Mesh>(ptr)};
+  oo::MeshPtr meshPtr{std::static_pointer_cast<oo::Mesh>(ptr)};
   if (created) oo::createMesh(meshPtr.get(), u, g);
   // Record that this node and its siblings have been visited.
   mState->mVisitedGeometry.emplace(u);
 
-  Ogre::Entity *entity{mState->mScnMgr->createEntity(meshPtr)};
+  Ogre::NameValuePairList params{{"mesh", meshPtr->getName()},
+                                 {"resourceGroup", meshPtr->getGroup()}};
+  auto *entity{dynamic_cast<oo::Entity *>(
+                   mState->mScnMgr->createMovableObject("Entity", &params))};
   if (!entity) return;
 
   mState->mRoot->attachObject(entity);
@@ -361,7 +366,7 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
 void attachRagdoll(const std::string &name, const std::string &group,
                    gsl::not_null<Ogre::SceneManager *> scnMgr,
                    gsl::not_null<btDiscreteDynamicsWorld *> world,
-                   gsl::not_null<Ogre::Entity *> entity) {
+                   gsl::not_null<oo::Entity *> entity) {
   auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
   if (!nifPtr) return;
   auto graph{nifPtr->getBlockGraph()};

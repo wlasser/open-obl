@@ -33,6 +33,7 @@ class Mesh : public Ogre::Resource {
   void destroySubMesh(const std::string &name);
 
   const SubMeshList &getSubMeshes() const;
+  const SubMeshNameMap &getSubMeshNameMap() const;
 
   oo::MeshPtr clone(const std::string &newName,
                     const std::string &newGroup = Ogre::BLANKSTRING);

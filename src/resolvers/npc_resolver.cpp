@@ -1,3 +1,4 @@
+#include "entity.hpp"
 #include "fs/path.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
@@ -22,7 +23,7 @@ citeRecord(const record::NPC_ &baseRec, tl::optional<RefId> refId) {
 }
 
 struct BodyData {
-  Ogre::Entity *entity{};
+  oo::Entity *entity{};
   Ogre::RigidBody *rigidBody{};
   Ogre::TexturePtr texture{};
 };
@@ -47,7 +48,6 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   const bool female{acbs.flags & ACBSFlags::Female};
 
   auto &texMgr{Ogre::TextureManager::getSingleton()};
-  auto &meshMgr{Ogre::MeshManager::getSingleton()};
   auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
 
   if (!baseRec->skeletonFilename) return nullptr;
@@ -71,7 +71,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
                    ->createChildSceneNode()};
 
   // Set in loop below.
-  Ogre::Entity *upperBody{nullptr};
+  oo::Entity *upperBody{nullptr};
 
   const auto &bodyData{female ? raceRec->femaleBodyData
                               : raceRec->maleBodyData};
@@ -105,16 +105,15 @@ reifyRecord(const record::REFR_NPC_ &refRec,
                              world,
                              gsl::make_not_null(parent))};
 
-    Ogre::Entity *entity = [&]() -> Ogre::Entity * {
+    oo::Entity *entity = [&]() -> oo::Entity * {
       for (auto obj : node->getAttachedObjects()) {
-        if (auto *e{dynamic_cast<Ogre::Entity *>(obj)}) return e;
+        if (auto *e{dynamic_cast<oo::Entity *>(obj)}) return e;
       }
       return nullptr;
     }();
     if (!entity) continue;
 
-    entity->getMesh()->setSkeletonName(skelPtr->getName());
-    entity->_initialise(true);
+    entity->setSkeleton(skelPtr);
 
     if (type == BodyParts::UpperBody) upperBody = entity;
 

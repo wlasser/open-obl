@@ -340,6 +340,8 @@ void Entity::setSkeleton(const Ogre::SkeletonPtr &skeletonPtr) {
   mSkeleton->load();
   mBoneMatrices.resize(mSkeleton->getNumBones(), Ogre::Affine3::IDENTITY);
   mBoneWorldMatrices.resize(mSkeleton->getNumBones(), Ogre::Affine3::IDENTITY);
+  mAnimationStateSet = std::make_unique<Ogre::AnimationStateSet>();
+  mSkeleton->_initAnimationState(mAnimationStateSet.get());
 
   // If getBone() fails to find a bone it will throw, but will never return a
   // nullptr. Trying to attach a skeleton that is not compatible with the mesh

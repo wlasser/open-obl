@@ -176,7 +176,7 @@ void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
 void GameMode::updateAnimation(float delta) {
   for (auto it{getSceneManager()->getMovableObjectIterator("Entity")};
        it.hasMoreElements();) {
-    const auto *entity{static_cast<const Ogre::Entity *>(it.getNext())};
+    const auto *entity{static_cast<const oo::Entity *>(it.getNext())};
 
     const auto *anims{entity->getAllAnimationStates()};
     if (!anims) continue;
@@ -303,7 +303,7 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
 
     auto it{getSceneManager()->getMovableObjectIterator("Entity")};
     while (it.hasMoreElements()) {
-      auto *entity{static_cast<Ogre::Entity *>(it.getNext())};
+      auto *entity{static_cast<oo::Entity *>(it.getNext())};
       if (!entity->hasSkeleton()) continue;
       auto *node{entity->getParentSceneNode()};
       auto *skel{entity->getSkeleton()};

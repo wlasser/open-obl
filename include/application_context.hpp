@@ -38,6 +38,8 @@ class CollisionObjectLoader;
 class ScriptEngine;
 class SkeletonLoader;
 class CellCache;
+class MeshManager;
+class EntityFactory;
 
 namespace event {
 
@@ -51,6 +53,7 @@ class ApplicationContext {
 
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
+  std::unique_ptr<oo::EntityFactory> entityFactory{};
 
   std::unique_ptr<Ogre::TexImageCodec> texImageCodec{};
 
@@ -86,6 +89,7 @@ class ApplicationContext {
 
   oo::FntLoader fntLoader{};
 
+  std::unique_ptr<oo::MeshManager> meshResourceMgr{};
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionShapeManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};

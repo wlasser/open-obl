@@ -23,6 +23,20 @@ class MeshManager : public Ogre::ResourceManager,
                        const std::string &group,
                        Ogre::ManualResourceLoader *loader = nullptr);
 
+  /// \remark Fewer parameters are supported than in OGRE.
+  MeshPtr createPlane(const std::string &name,
+                      const std::string &group,
+                      const Ogre::Plane &plane,
+                      float width,
+                      float height,
+                      int xSegments = 1,
+                      int ySegments = 1,
+                      bool normals = true,
+                      uint16_t uvSets = 1u,
+                      float uTile = 1.0f,
+                      float vTile = 1.0f,
+                      const Ogre::Vector3 &upVector = Ogre::Vector3::UNIT_Z);
+
   // OGRE_RESOURCE_GROUP_INIT only works in the Ogre namespace
   MeshPtr getByName(const std::string &name, const std::string &group);
 

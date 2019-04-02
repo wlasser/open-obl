@@ -11,6 +11,7 @@ namespace oo {
 
 class Mesh;
 
+/// \todo Store bounding boxes to get rid of oo::BoundedSubmesh.
 class SubMesh {
  private:
   using VertexDataDeleter = std::function<void(Ogre::VertexData *)>;

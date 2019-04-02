@@ -1,5 +1,6 @@
 #include "esp.hpp"
 #include "job/job.hpp"
+#include "mesh_manager.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
@@ -259,14 +260,12 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
   auto logger{spdlog::get(oo::LOG)};
 
-  auto &meshMgr{Ogre::MeshManager::getSingleton()};
+  auto &meshMgr{oo::MeshManager::getSingleton()};
   if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
     meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
                         Ogre::Plane(Ogre::Vector3::UNIT_Y, /*height*/0.0f),
                         oo::unitsPerCell<float> * oo::metersPerUnit<float>,
-                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
-                        1, 1, true, 1u, 1.0f, 1.0f,
-                        Ogre::Vector3::UNIT_Z);
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>);
   }
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};

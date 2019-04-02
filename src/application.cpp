@@ -3,6 +3,7 @@
 #include "cell_cache.hpp"
 #include "conversions.hpp"
 #include "console_functions.hpp"
+#include "entity.hpp"
 #include "settings.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
@@ -12,6 +13,7 @@
 #include "gui/menu.hpp"
 #include "initial_record_visitor.hpp"
 #include "job/job.hpp"
+#include "mesh_manager.hpp"
 #include "meta.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
@@ -107,6 +109,9 @@ Application::Application(std::string windowName) : FrameListener() {
   // Add the resource managers
   oo::JobCounter managersAndFactoriesCounter{2};
   oo::JobManager::runJob([&ctx = ctx]() {
+    auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+    resGrpMgr._unregisterResourceManager("Mesh");
+    ctx.meshResourceMgr = std::make_unique<oo::MeshManager>();
     ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
     ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionShapeManager>();
     ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
@@ -117,6 +122,11 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobManager::runJob([&ctx = ctx]() {
     ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
     ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
+
+    auto *oldEntityFactory{ctx.ogreRoot->getMovableObjectFactory("Entity")};
+    ctx.ogreRoot->removeMovableObjectFactory(oldEntityFactory);
+    ctx.entityFactory = std::make_unique<oo::EntityFactory>();
+    ctx.ogreRoot->addMovableObjectFactory(ctx.entityFactory.get());
 
     boost::this_fiber::yield();
 
