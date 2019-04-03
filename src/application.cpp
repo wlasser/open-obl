@@ -109,9 +109,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // Add the resource managers
   oo::JobCounter managersAndFactoriesCounter{2};
   oo::JobManager::runJob([&ctx = ctx]() {
-    auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
-    resGrpMgr._unregisterResourceManager("Mesh");
-    ctx.meshResourceMgr = std::make_unique<oo::MeshManager>();
+    ctx.meshMgr = std::make_unique<oo::MeshManager>();
     ctx.nifResourceMgr = std::make_unique<Ogre::NifResourceManager>();
     ctx.collisionObjectMgr = std::make_unique<Ogre::CollisionShapeManager>();
     ctx.textResourceMgr = std::make_unique<Ogre::TextResourceManager>();
@@ -123,8 +121,6 @@ Application::Application(std::string windowName) : FrameListener() {
     ctx.rigidBodyFactory = std::make_unique<Ogre::RigidBodyFactory>();
     ctx.ogreRoot->addMovableObjectFactory(ctx.rigidBodyFactory.get());
 
-    auto *oldEntityFactory{ctx.ogreRoot->getMovableObjectFactory("Entity")};
-    ctx.ogreRoot->removeMovableObjectFactory(oldEntityFactory);
     ctx.entityFactory = std::make_unique<oo::EntityFactory>();
     ctx.ogreRoot->addMovableObjectFactory(ctx.entityFactory.get());
 
@@ -473,7 +469,7 @@ void Application::declareResource(const oo::Path &path,
 
   if (ext == "nif"sv) {
     resGrpMgr.declareResource(path.c_str(), "Nif", resourceGroup);
-    resGrpMgr.declareResource(path.c_str(), "Mesh",
+    resGrpMgr.declareResource(path.c_str(), "oo::Mesh",
                               resourceGroup, ctx.nifLoader.get());
     resGrpMgr.declareResource(path.c_str(), "CollisionShape",
                               resourceGroup, ctx.nifCollisionLoader.get());

@@ -89,7 +89,7 @@ class ApplicationContext {
 
   oo::FntLoader fntLoader{};
 
-  std::unique_ptr<oo::MeshManager> meshResourceMgr{};
+  std::unique_ptr<oo::MeshManager> meshMgr{};
   std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
   std::unique_ptr<Ogre::CollisionShapeManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};

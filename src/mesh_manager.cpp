@@ -20,9 +20,9 @@ MeshManager *MeshManager::getSingletonPtr() {
 }
 
 MeshManager::MeshManager() {
-  // This is intended to completely replace Ogre::MeshManager.
-  mLoadOrder = 350.0f;
-  mResourceType = "Mesh";
+  // Load order just before Ogre::MeshManager.
+  mLoadOrder = 349.0f;
+  mResourceType = "oo::Mesh";
   Ogre::ResourceGroupManager::getSingleton()
       ._registerResourceManager(mResourceType, this);
 }

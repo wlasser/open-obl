@@ -260,12 +260,14 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
   auto logger{spdlog::get(oo::LOG)};
 
-  auto &meshMgr{oo::MeshManager::getSingleton()};
+  auto &meshMgr{Ogre::MeshManager::getSingleton()};
   if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
     meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
                         Ogre::Plane(Ogre::Vector3::UNIT_Y, /*height*/0.0f),
                         oo::unitsPerCell<float> * oo::metersPerUnit<float>,
-                        oo::unitsPerCell<float> * oo::metersPerUnit<float>);
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
+                        1, 1, true, 1u, 1.0f, 1.0f,
+                        Ogre::Vector3::UNIT_Z);
   }
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};

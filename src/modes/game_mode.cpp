@@ -177,7 +177,7 @@ void GameMode::updateAnimation(float delta) {
   // Can't naively update the animation of every single entity since if two
   // entities share a skeleton then the update will be applied twice.
   std::set<const Ogre::AnimationStateSet *> animSets;
-  for (auto it{getSceneManager()->getMovableObjectIterator("Entity")};
+  for (auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
        it.hasMoreElements();) {
     const auto *entity{static_cast<const oo::Entity *>(it.getNext())};
 
@@ -306,7 +306,7 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
     mDebugDrawer->clearLines();
     getPhysicsWorld()->debugDrawWorld();
 
-    auto it{getSceneManager()->getMovableObjectIterator("Entity")};
+    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
     while (it.hasMoreElements()) {
       auto *entity{static_cast<oo::Entity *>(it.getNext())};
       if (!entity->hasSkeleton()) continue;

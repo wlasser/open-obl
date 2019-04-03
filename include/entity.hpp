@@ -143,7 +143,7 @@ class EntityFactory : public Ogre::MovableObjectFactory {
                      const Ogre::NameValuePairList *params) override;
 
  private:
-  constexpr static const char *FACTORY_TYPE_NAME{"Entity"};
+  constexpr static const char *FACTORY_TYPE_NAME{"oo::Entity"};
 };
 
 } // namespace oo
