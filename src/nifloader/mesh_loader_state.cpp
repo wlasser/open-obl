@@ -414,11 +414,12 @@ getBoneAssignments(const oo::BlockGraph &g, const nif::NiTriBasedGeom &block) {
       // Get the bone names of the blend indices.
       for (auto &binding : boneAssignments.bindings) {
         for (auto idx : binding.indices) {
-          const auto &node{oo::getBlock<nif::NiNode>(g, bones[idx])};
           if (idx >= boneAssignments.names.size()) {
             boneAssignments.names.resize(idx + 1u);
+          } else if (boneAssignments.names[idx].empty()) {
+            const auto &node{oo::getBlock<nif::NiNode>(g, bones[idx])};
+            boneAssignments.names[idx] = node.name.str();
           }
-          boneAssignments.names[idx] = node.name.str();
         }
       }
 
@@ -894,8 +895,8 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
   const auto totalTrans{transform * getTransform(block)};
   auto vertexData{oo::generateVertexData(geomData, totalTrans,
                                          &bitangents, &tangents,
-                                         hasBones ? nullptr
-                                                  : &boneAssignments.bindings)};
+                                         hasBones ? &boneAssignments.bindings
+                                                  : nullptr)};
   auto indexData{oo::generateIndexData(geomData, submesh)};
 
   // Transfer ownership to Ogre
