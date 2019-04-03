@@ -22,12 +22,6 @@ citeRecord(const record::NPC_ &baseRec, tl::optional<RefId> refId) {
   return refRec;
 }
 
-struct BodyData {
-  oo::Entity *entity{};
-  Ogre::RigidBody *rigidBody{};
-  Ogre::TexturePtr texture{};
-};
-
 template<> ReifyRecordTrait<record::REFR_NPC_>::type
 reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
@@ -37,49 +31,52 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
   const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
 
-  auto baseRec{npc_Res.get(refRec.baseId.data)};
+  const auto baseRec{npc_Res.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
 
-  auto raceRec{raceRes.get(baseRec->race.data)};
+  const auto raceRec{raceRes.get(baseRec->race.data)};
   if (!raceRec) return nullptr;
 
   const auto &acbs{baseRec->baseConfig.data};
   using ACBSFlags = record::raw::ACBS::Flag;
   const bool female{acbs.flags & ACBSFlags::Female};
 
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
+  Ogre::SkeletonPtr baseSkel = [&baseRec]() -> Ogre::SkeletonPtr {
+    auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
+    if (!baseRec->skeletonFilename) return nullptr;
 
-  if (!baseRec->skeletonFilename) return nullptr;
+    const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
+    const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
+    return skelMgr.getByName(skelPath, oo::RESOURCE_GROUP);
+  }();
+  if (!baseSkel) return nullptr;
+  baseSkel->load();
 
-  const oo::Path rawSkelPath{baseRec->skeletonFilename->data};
-  const std::string skelPath{(oo::Path{"meshes"} / rawSkelPath).c_str()};
-  auto skelPtr{skelMgr.getByName(skelPath, oo::RESOURCE_GROUP)};
-  skelPtr->load();
-
-  Ogre::Animation *anim = [&]() {
-    if (skelPtr->hasAnimation("Idle")) return skelPtr->getAnimation("Idle");
-    return oo::createAnimation(skelPtr.get(),
+  Ogre::Animation *anim = [&baseSkel]() {
+    if (baseSkel->hasAnimation("Idle")) return baseSkel->getAnimation("Idle");
+    return oo::createAnimation(baseSkel.get(),
                                "meshes/characters/_male/idle.kf",
                                oo::RESOURCE_GROUP);
   }();
 
+  auto *parent{(rootNode ? rootNode
+                         : scnMgr->getRootSceneNode())->createChildSceneNode()};
+
+  // Only one entity should have a skeleton constructed explicitly, the rest
+  // should share. It doesn't matter which is entity is created first, we just
+  // need one.
+  oo::Entity *firstAdded{};
+  // There needs to be a dedicated entity to attach the rigid bodies to though.
+  oo::Entity *upperBody{};
+
   using BodyParts = record::raw::INDX_BODY;
-  std::map<BodyParts, BodyData> bodyParts{};
-
-  auto *parent{(rootNode ? rootNode : scnMgr->getRootSceneNode())
-                   ->createChildSceneNode()};
-
-  // Set in loop below.
-  oo::Entity *upperBody{nullptr};
-
   const auto &bodyData{female ? raceRec->femaleBodyData
                               : raceRec->maleBodyData};
   for (const auto &[typeRec, textureRec] : bodyData) {
     if (!textureRec) continue;
     const auto type{typeRec.data};
     const oo::Path texPath{oo::Path{"textures"} / oo::Path{textureRec->data}};
-    const oo::Path meshPath = [&]() {
+    const oo::Path meshPath = [female, type]() {
       switch (type) {
         case BodyParts::UpperBody:
           return oo::Path{female ? "meshes/characters/_male/femaleupperbody.nif"
@@ -96,16 +93,13 @@ reifyRecord(const record::REFR_NPC_ &refRec,
         default: return oo::Path{""};
       }
     }();
-    auto &part{bodyParts[type]};
     const std::string meshName{meshPath.c_str()};
     if (meshName.empty()) continue;
-    auto *node{oo::insertNif(meshName,
-                             oo::RESOURCE_GROUP,
-                             scnMgr,
-                             world,
+    auto *node{oo::insertNif(meshName, oo::RESOURCE_GROUP,
+                             scnMgr, world,
                              gsl::make_not_null(parent))};
 
-    oo::Entity *entity = [&]() -> oo::Entity * {
+    oo::Entity *entity = [&node]() -> oo::Entity * {
       for (auto obj : node->getAttachedObjects()) {
         if (auto *e{dynamic_cast<oo::Entity *>(obj)}) return e;
       }
@@ -113,23 +107,20 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     }();
     if (!entity) continue;
 
-    if (upperBody) {
-      entity->shareSkeleton(upperBody);
+    if (!firstAdded) {
+      firstAdded = entity;
+      entity->setSkeleton(baseSkel);
+      auto *animState{entity->getAnimationState(anim->getName())};
+      animState->setEnabled(true);
+      animState->setTimePosition(0.0f);
     } else {
-      entity->setSkeleton(skelPtr);
+      entity->shareSkeleton(firstAdded);
     }
-
     if (type == BodyParts::UpperBody) upperBody = entity;
-
-    auto *animState{entity->getAnimationState(anim->getName())};
-    animState->setEnabled(true);
-    animState->setTimePosition(0.0f);
-
-//    auto texture{texMgr.load(texPath.c_str(), oo::RESOURCE_GROUP)};
   }
 
   if (upperBody) {
-    oo::attachRagdoll(skelPath, oo::RESOURCE_GROUP, scnMgr, world,
+    oo::attachRagdoll(baseSkel->getName(), oo::RESOURCE_GROUP, scnMgr, world,
                       gsl::make_not_null(upperBody));
   }
 
