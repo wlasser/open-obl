@@ -174,14 +174,19 @@ void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
 }
 
 void GameMode::updateAnimation(float delta) {
+  // Can't naively update the animation of every single entity since if two
+  // entities share a skeleton then the update will be applied twice.
+  std::set<const Ogre::AnimationStateSet *> animSets;
   for (auto it{getSceneManager()->getMovableObjectIterator("Entity")};
        it.hasMoreElements();) {
     const auto *entity{static_cast<const oo::Entity *>(it.getNext())};
 
     const auto *anims{entity->getAllAnimationStates()};
-    if (!anims) continue;
+    if (anims) animSets.insert(anims);
+  }
 
-    const auto &animStates{anims->getEnabledAnimationStates()};
+  for (const auto *animSet : animSets) {
+    const auto &animStates{animSet->getEnabledAnimationStates()};
     for (auto state : animStates) state->addTime(delta);
   }
 }

@@ -14,6 +14,69 @@
 
 namespace oo {
 
+class SkeletonState {
+ private:
+  friend class Entity;
+
+  /// Skeleton to use for animation.
+  Ogre::SkeletonInstance mSkeleton;
+  /// The states of all animations available for this entity, based on its
+  /// current skeleton.
+  Ogre::AnimationStateSet mAnimationStateSet{};
+  /// Cached bone matrices of the skeleton.
+  std::vector<Ogre::Affine3, oo::Affine3Allocator> mBoneMatrices{};
+  /// The frame that animations were last updated.
+  uint64_t mFrameLastUpdated{};
+
+  /// Utility method to copy a SkeletonInstance. Have to go the long way round
+  /// as SkeletonInstance doesn't have a copy constructor.
+  static Ogre::SkeletonPtr getSkeletonByHandle(Ogre::ResourceHandle hnd) {
+    auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
+    return std::static_pointer_cast<Ogre::Skeleton>(skelMgr.getByHandle(hnd));
+  }
+
+ public:
+  explicit SkeletonState(const Ogre::SkeletonPtr &masterSkeleton)
+      : mSkeleton(masterSkeleton) {
+    mSkeleton.load();
+    mBoneMatrices.resize(mSkeleton.getNumBones(), Ogre::Affine3::IDENTITY);
+    mSkeleton._initAnimationState(&mAnimationStateSet);
+  }
+
+  ~SkeletonState() = default;
+  SkeletonState(const SkeletonState &other)
+      : mSkeleton(getSkeletonByHandle(other.mSkeleton.getHandle())),
+        mAnimationStateSet(other.mAnimationStateSet),
+        mBoneMatrices(other.mBoneMatrices),
+        mFrameLastUpdated(other.mFrameLastUpdated) {
+    mSkeleton.load();
+    mSkeleton._initAnimationState(&mAnimationStateSet);
+  }
+
+  SkeletonState &operator=(const SkeletonState &) = delete;
+  SkeletonState(SkeletonState &&) = delete;
+  SkeletonState &operator=(SkeletonState &&) = delete;
+
+  uint16_t getNumBones() const {
+    return mSkeleton.getNumBones();
+  }
+
+  Ogre::Bone *getBone(const std::string &name) const {
+    return mSkeleton.getBone(name);
+  }
+
+  bool isAnimationDirty() const {
+    return mSkeleton.getManualBonesDirty() ||
+        mFrameLastUpdated != mAnimationStateSet.getDirtyFrameNumber();
+  }
+
+  void updateBoneMatrices() {
+    mSkeleton.setAnimationState(mAnimationStateSet);
+    mSkeleton._getBoneMatrices(mBoneMatrices.data());
+    mFrameLastUpdated = mAnimationStateSet.getDirtyFrameNumber();
+  }
+};
+
 Entity::Entity(const std::string &name, oo::MeshPtr mesh)
     : MovableObject(name), mMesh(std::move(mesh)) {
   _initialise();
@@ -75,27 +138,11 @@ oo::Entity *Entity::clone(const std::string &name) {
     entity->getSubEntities()[elem.index()]->setMaterial(matPtr);
   }
 
-  if (mAnimationStateSet) {
-    // Note entity->mAnimationStateSet might be nullptr.
-    // *entity->mAnimationStateSet = *mAnimationStateSet;
-    entity->mAnimationStateSet =
-        std::make_unique<Ogre::AnimationStateSet>(*mAnimationStateSet);
-  }
-
-  if (mSkeleton) {
-    // SkeletonInstance's constructor takes a shared pointer to the Skeleton,
-    // whereas we have unique_Ptr to a SkeletonInstance. SkeletonInstance
-    // doesn't provide access to its Skeleton directly, but does delegate its
-    // name, group, and handle to its Skeleton so we can go the long way round.
-    auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
-    auto baseSkel{std::static_pointer_cast<Ogre::Skeleton>(
-        skelMgr.getByHandle(mSkeleton->getHandle()))};
-    entity->mSkeleton = std::make_unique<Ogre::SkeletonInstance>(baseSkel);
-    entity->mSkeleton->load();
-
-    entity->mFrameAnimationLastUpdated = mFrameAnimationLastUpdated;
-    entity->mBoneWorldMatrices = mBoneWorldMatrices;
-    entity->mBoneMatrices = mBoneMatrices;
+  // Make a copy of our skeleton state, do not share it with the original.
+  if (mSkeletonState) {
+    entity->mSkeletonState =
+        std::make_shared<oo::SkeletonState>(*mSkeletonState);
+    entity->mFrameLastUpdated = mFrameLastUpdated;
   }
 
   return entity;
@@ -131,14 +178,10 @@ void Entity::_deinitialise() {
   mSubEntityList.shrink_to_fit();
   detachAllObjectsImpl();
 
-  if (mSkeleton) {
+  if (mSkeletonState) {
     mBoneWorldMatrices.clear();
     mBoneWorldMatrices.shrink_to_fit();
-
-    mBoneMatrices.clear();
-    mBoneMatrices.shrink_to_fit();
-
-    mAnimationStateSet.reset();
+    mSkeletonState.reset();
   }
 
   mIsInitialised = false;
@@ -257,17 +300,21 @@ void Entity::visitRenderables(Ogre::Renderable::Visitor *visitor, bool) {
 
 void Entity::updateAnimation() {
   if (!mIsInitialised) return;
-  const bool isAnimationDirty{(mSkeleton && mSkeleton->getManualBonesDirty()) ||
-      mFrameAnimationLastUpdated != mAnimationStateSet->getDirtyFrameNumber()};
+  bool isAnimationDirty{mSkeletonState && mSkeletonState->isAnimationDirty()};
 
-  if (mSkeleton && isAnimationDirty) {
-    cacheBoneMatrices();
+  if (isAnimationDirty) {
+    mSkeletonState->updateBoneMatrices();
     if (!mChildObjectList.empty()) mParentNode->needUpdate();
-    mFrameAnimationLastUpdated = mAnimationStateSet->getDirtyFrameNumber();
   }
 
+  // If this entity shares its skeleton then it another entity might have
+  // updated the animation so isAnimationDirty is false, but this entity still
+  // needs to be updated itself.
+  bool isBonesDirty{isAnimationDirty || (mSkeletonState &&
+      mFrameLastUpdated != mSkeletonState->mFrameLastUpdated)};
+
   const auto &fullTrans{_getParentNodeFullTransform()};
-  if (mSkeleton && (isAnimationDirty || mLastParentXform != fullTrans)) {
+  if (mSkeletonState && (isBonesDirty || mLastParentXform != fullTrans)) {
     mLastParentXform = fullTrans;
 
     for (auto &[_, child] : mChildObjectList) {
@@ -276,71 +323,73 @@ void Entity::updateAnimation() {
 
     auto *optUtil{Ogre::OptimisedUtil::getImplementation()};
     optUtil->concatenateAffineMatrices(mLastParentXform,
-                                       mBoneMatrices.data(),
+                                       mSkeletonState->mBoneMatrices.data(),
                                        mBoneWorldMatrices.data(),
-                                       mBoneMatrices.size());
+                                       mSkeletonState->mBoneMatrices.size());
+    mFrameLastUpdated = mSkeletonState->mFrameLastUpdated;
   }
-}
-
-bool Entity::cacheBoneMatrices() {
-  // This is only called when we know the animation is dirty, so there's no
-  // point checking, unlike in OGRE.
-  mSkeleton->setAnimationState(*mAnimationStateSet);
-  mSkeleton->_getBoneMatrices(mBoneMatrices.data());
-  return true;
 }
 
 Ogre::AnimationState *Entity::getAnimationState(const std::string &name) const {
-  if (!mAnimationStateSet) {
+  if (!mSkeletonState) {
     OGRE_EXCEPT(Ogre::Exception::ERR_ITEM_NOT_FOUND, "Entity is not animated.",
                 "Entity::getAnimationState");
   }
-  return mAnimationStateSet->getAnimationState(name);
+  return mSkeletonState->mAnimationStateSet.getAnimationState(name);
 }
 
 bool Entity::hasAnimationState(const std::string &name) const {
-  return mAnimationStateSet && mAnimationStateSet->hasAnimationState(name);
+  return mSkeletonState
+      && mSkeletonState->mAnimationStateSet.hasAnimationState(name);
 }
 
 Ogre::AnimationStateSet *Entity::getAllAnimationStates() const {
-  return mAnimationStateSet.get();
+  return mSkeletonState ? &mSkeletonState->mAnimationStateSet
+                        : nullptr;
 }
 
 void Entity::refreshAvailableAnimationState() {
-  if (mSkeleton) mSkeleton->_refreshAnimationState(mAnimationStateSet.get());
+  if (mSkeletonState) {
+    mSkeletonState->mSkeleton._refreshAnimationState(
+        &mSkeletonState->mAnimationStateSet);
+  }
 }
 
 void Entity::_updateAnimation() {
-  if (mSkeleton) updateAnimation();
+  if (mSkeletonState) updateAnimation();
 }
 
 bool Entity::_isAnimated() const {
-  return (mAnimationStateSet && mAnimationStateSet->hasEnabledAnimationState())
-      || (mSkeleton && mSkeleton->hasManualBones());
+  return mSkeletonState && (mSkeletonState->mSkeleton.hasManualBones()
+      || mSkeletonState->mAnimationStateSet.hasEnabledAnimationState());
 }
 
 bool Entity::_isSkeletonAnimated() const {
-  return mSkeleton && (mAnimationStateSet->hasEnabledAnimationState()
-      || mSkeleton->hasManualBones());
+  // Only skeletal animation is supported.
+  return _isAnimated();
 }
 
 bool Entity::hasSkeleton() const {
-  return mSkeleton.get();
+  return mSkeletonState != nullptr;
 }
 
 Ogre::SkeletonInstance *Entity::getSkeleton() const {
-  return mSkeleton.get();
+  return &mSkeletonState->mSkeleton;
 }
 
 void Entity::setSkeleton(const Ogre::SkeletonPtr &skeletonPtr) {
-  mSkeleton = std::make_unique<Ogre::SkeletonInstance>(skeletonPtr);
-  mSkeleton->load();
-  mBoneMatrices.resize(mSkeleton->getNumBones(), Ogre::Affine3::IDENTITY);
-  mBoneWorldMatrices.resize(mSkeleton->getNumBones(), mLastParentXform);
-  mAnimationStateSet = std::make_unique<Ogre::AnimationStateSet>();
-  mSkeleton->_initAnimationState(mAnimationStateSet.get());
+  mSkeletonState = std::make_shared<oo::SkeletonState>(skeletonPtr);
+  setSkeletonImpl();
+}
 
-  // If getBone() fails to find a bone it will throw, but will never return a
+void Entity::shareSkeleton(oo::Entity *other) {
+  mSkeletonState = other->mSkeletonState;
+  setSkeletonImpl();
+}
+
+void Entity::setSkeletonImpl() {
+  mBoneWorldMatrices.resize(mSkeletonState->getNumBones(), mLastParentXform);
+  // If getBone() fails to find a bone it will throw, but will never return
   // nullptr. Trying to attach a skeleton that is not compatible with the mesh
   // is not an error, but does not attach the skeleton.
   try {
@@ -351,16 +400,13 @@ void Entity::setSkeleton(const Ogre::SkeletonPtr &skeletonPtr) {
 
       std::transform(bones.begin(), bones.end(), std::back_inserter(indexMap),
                      [&](const std::string &name) {
-                       return mSkeleton->getBone(name)->getHandle();
+                       return mSkeletonState->getBone(name)->getHandle();
                      });
     }
   } catch (const Ogre::Exception &e) {
     spdlog::get(oo::LOG)->error(e.getFullDescription());
-    mSkeleton.reset();
-    mBoneMatrices.clear();
+    mSkeletonState.reset();
     mBoneWorldMatrices.clear();
-    mAnimationStateSet.reset();
-    return;
   }
 }
 
@@ -387,22 +433,21 @@ Entity::attachObjectToBone(const std::string &boneName,
                 "Entity::attachObjectToBone");
   }
 
-  if (!mSkeleton) {
+  if (!mSkeletonState) {
     OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
                 "Entity has no Skeleton to attach an object to.",
                 "Entity::attachObjectToBone");
   }
 
-  auto *bone{mSkeleton->getBone(boneName)};
+  auto *bone{mSkeletonState->getBone(boneName)};
   if (!bone) {
     OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
                 "Cannot locate Bone named " + boneName + ".",
                 "Entity::attachObjectToBone");
   }
 
-  auto *tagPoint{mSkeleton->createTagPointOnBone(bone,
-                                                 offsetOrientation,
-                                                 offsetPosition)};
+  auto *tagPoint{mSkeletonState->mSkeleton.createTagPointOnBone(
+      bone, offsetOrientation, offsetPosition)};
   tagPoint->setParentEntity(this);
   tagPoint->setChildObject(movable);
 
@@ -453,7 +498,7 @@ void Entity::attachObjectImpl(Ogre::MovableObject *movable,
 
 void Entity::detachObjectImpl(Ogre::MovableObject *movable) {
   auto *tagPoint{static_cast<Ogre::TagPoint *>(movable->getParentNode())};
-  mSkeleton->freeTagPoint(tagPoint);
+  mSkeletonState->mSkeleton.freeTagPoint(tagPoint);
   movable->_notifyAttached(nullptr, true);
 }
 

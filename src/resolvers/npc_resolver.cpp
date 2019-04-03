@@ -113,7 +113,11 @@ reifyRecord(const record::REFR_NPC_ &refRec,
     }();
     if (!entity) continue;
 
-    entity->setSkeleton(skelPtr);
+    if (upperBody) {
+      entity->shareSkeleton(upperBody);
+    } else {
+      entity->setSkeleton(skelPtr);
+    }
 
     if (type == BodyParts::UpperBody) upperBody = entity;
 

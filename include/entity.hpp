@@ -6,8 +6,11 @@
 
 namespace oo {
 
+using Affine3Allocator = Ogre::AlignedAllocator<Ogre::Affine3,
+                                                OGRE_SIMD_ALIGNMENT>;
 class EntityFactory;
 class SubEntity;
+class SkeletonState;
 
 class Entity : public Ogre::MovableObject {
  public:
@@ -29,22 +32,14 @@ class Entity : public Ogre::MovableObject {
   SubEntityList mSubEntityList{};
   /// Child objects attached to bones of this entity's skeleton.
   ChildObjectList mChildObjectList{};
-  /// The states of all animations available for this entity, based on its
-  /// current skeleton.
-  std::unique_ptr<Ogre::AnimationStateSet> mAnimationStateSet{};
-  /// Skeleton to use for animation.
-  std::unique_ptr<Ogre::SkeletonInstance> mSkeleton{};
+  /// Skeleton and animation state, possibly shared with other entities.
+  std::shared_ptr<oo::SkeletonState> mSkeletonState{};
 
+  uint64_t mFrameLastUpdated{};
   bool mIsInitialised{false};
 
-  using Affine3Allocator = Ogre::AlignedAllocator<Ogre::Affine3,
-                                                  OGRE_SIMD_ALIGNMENT>;
   /// Cached bone matrices of the skeleton, including the world transform.
   std::vector<Ogre::Affine3, Affine3Allocator> mBoneWorldMatrices{};
-  /// Cached bone matrices of the skeleton.
-  std::vector<Ogre::Affine3, Affine3Allocator> mBoneMatrices{};
-  /// The frame that animations were last updated.
-  uint64_t mFrameAnimationLastUpdated{};
   /// Cached world transform of the parent node.
   Ogre::Affine3 mLastParentXform{Ogre::Affine3::IDENTITY};
   /// State count of the mesh, so that the entity can tell if the mesh changes.
@@ -57,7 +52,7 @@ class Entity : public Ogre::MovableObject {
   void buildSubEntityList(const oo::MeshPtr &mesh, SubEntityList &list);
 
   void updateAnimation();
-  bool cacheBoneMatrices();
+  void setSkeletonImpl();
 
   /// \pre `movable` is not attached to this entity
   /// \pre Nothing is attached to the `tagPoint`.
@@ -129,6 +124,7 @@ class Entity : public Ogre::MovableObject {
   bool hasSkeleton() const;
   Ogre::SkeletonInstance *getSkeleton() const;
   void setSkeleton(const Ogre::SkeletonPtr &skeletonPtr);
+  void shareSkeleton(oo::Entity *other);
 };
 
 class EntityFactory : public Ogre::MovableObjectFactory {

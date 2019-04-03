@@ -105,7 +105,7 @@ void SubEntity::getRenderOperation(Ogre::RenderOperation &op) {
 }
 
 void SubEntity::getWorldTransforms(Ogre::Matrix4 *xform) const {
-  if (mParent->mBoneMatrices.empty()) {
+  if (!mParent->mSkeletonState) {
     *xform = mParent->_getParentNodeFullTransform();
   } else if (mParent->_isSkeletonAnimated()) {
     for (auto index : mBlendIndexToBoneIndexMap) {
