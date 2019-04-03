@@ -274,9 +274,6 @@ void Entity::updateAnimation() {
       child->getParentNode()->_update(true, true);
     }
 
-    std::fill(mBoneWorldMatrices.begin(), mBoneWorldMatrices.end(),
-              Ogre::Affine3::IDENTITY);
-
     auto *optUtil{Ogre::OptimisedUtil::getImplementation()};
     optUtil->concatenateAffineMatrices(mLastParentXform,
                                        mBoneMatrices.data(),
@@ -339,7 +336,7 @@ void Entity::setSkeleton(const Ogre::SkeletonPtr &skeletonPtr) {
   mSkeleton = std::make_unique<Ogre::SkeletonInstance>(skeletonPtr);
   mSkeleton->load();
   mBoneMatrices.resize(mSkeleton->getNumBones(), Ogre::Affine3::IDENTITY);
-  mBoneWorldMatrices.resize(mSkeleton->getNumBones(), Ogre::Affine3::IDENTITY);
+  mBoneWorldMatrices.resize(mSkeleton->getNumBones(), mLastParentXform);
   mAnimationStateSet = std::make_unique<Ogre::AnimationStateSet>();
   mSkeleton->_initAnimationState(mAnimationStateSet.get());
 
@@ -362,6 +359,7 @@ void Entity::setSkeleton(const Ogre::SkeletonPtr &skeletonPtr) {
     mSkeleton.reset();
     mBoneMatrices.clear();
     mBoneWorldMatrices.clear();
+    mAnimationStateSet.reset();
     return;
   }
 }
