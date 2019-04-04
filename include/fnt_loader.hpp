@@ -2,8 +2,10 @@
 #define OPENOBLIVION_FNT_LOADER_HPP
 
 #include "fs/path.hpp"
-#include <Ogre.h>
 #include <OgreFont.h>
+#include <OgreImage.h>
+#include <OgreResource.h>
+#include <OgreVector.h>
 #include <array>
 
 namespace oo {

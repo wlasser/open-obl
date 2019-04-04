@@ -7,7 +7,11 @@
 #include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
-#include <Ogre.h>
+#include <OgreMath.h>
+#include <OgreCamera.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
+#include <OgreVector.h>
 #include <memory>
 #include <optional>
 

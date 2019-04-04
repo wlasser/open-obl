@@ -2,7 +2,9 @@
 #define OPENOBLIVION_OGREBULLET_CONVERSIONS_HPP
 
 #include <btBulletDynamicsCommon.h>
-#include <Ogre.h>
+#include <OgreMatrix3.h>
+#include <OgreQuaternion.h>
+#include <OgreVector.h>
 
 namespace Ogre {
 

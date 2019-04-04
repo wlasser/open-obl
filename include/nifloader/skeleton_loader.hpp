@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_NIFLOADER_SKELETON_LOADER_HPP
 #define OPENOBLIVION_NIFLOADER_SKELETON_LOADER_HPP
 
-#include <Ogre.h>
+#include <OgreResource.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 

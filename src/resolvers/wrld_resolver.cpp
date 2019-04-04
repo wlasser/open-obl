@@ -4,7 +4,16 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
+#include <OgreHardwarePixelBuffer.h>
+#include <OgreInstanceBatch.h>
+#include <OgreInstanceManager.h>
+#include <OgreInstancedEntity.h>
+#include <OgreMaterialManager.h>
+#include <OgreMeshManager.h>
+#include <OgreMovableObject.h>
 #include <OgrePixelFormat.h>
+#include <OgreRoot.h>
+#include <OgreTextureManager.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 #include <Terrain/OgreTerrainGroup.h>

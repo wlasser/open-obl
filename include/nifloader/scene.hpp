@@ -3,7 +3,7 @@
 
 #include "entity.hpp"
 #include <gsl/gsl>
-#include <Ogre.h>
+#include <OgrePrerequisites.h>
 #include <btBulletDynamicsCommon.h>
 
 namespace oo {

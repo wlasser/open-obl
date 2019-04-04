@@ -2,6 +2,7 @@
 #include "settings.hpp"
 #include <gsl/gsl>
 #include <OgreMath.h>
+#include <OgreSceneNode.h>
 #include <spdlog/spdlog.h>
 #include <cmath>
 #include <optional>

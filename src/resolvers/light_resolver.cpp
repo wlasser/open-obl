@@ -6,6 +6,7 @@
 #include "resolvers/light_resolver.hpp"
 #include <OgreColourValue.h>
 #include <OgreLight.h>
+#include <OgreSceneNode.h>
 
 namespace oo {
 

@@ -4,9 +4,6 @@
 #include "nifloader/loader.hpp"
 #include "ogrebullet/collision_shape.hpp"
 #include "ogrebullet/rigid_body.hpp"
-#include "settings.hpp"
-#include <Ogre.h>
-#include <spdlog/spdlog.h>
 
 namespace oo {
 

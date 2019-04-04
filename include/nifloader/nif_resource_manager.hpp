@@ -2,7 +2,7 @@
 #define OPENOBLIVION_NIF_RESOURCE_MANAGER_HPP
 
 #include "nifloader/nif_resource.hpp"
-#include <Ogre.h>
+#include <OgreResourceManager.h>
 
 namespace Ogre {
 

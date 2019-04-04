@@ -2,7 +2,9 @@
 #define OPENOBLIVION_OGREBULLET_DEBUG_DRAWER_HPP
 
 #include <btBulletDynamicsCommon.h>
-#include <Ogre.h>
+#include <OgreColourValue.h>
+#include <OgrePrerequisites.h>
+#include <OgreVector3.h>
 
 namespace Ogre {
 

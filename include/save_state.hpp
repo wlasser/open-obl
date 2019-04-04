@@ -3,7 +3,7 @@
 
 #include "io/io.hpp"
 #include "record/formid.hpp"
-#include <Ogre.h>
+#include <OgreImage.h>
 #include <cctype>
 #include <memory>
 #include <string>

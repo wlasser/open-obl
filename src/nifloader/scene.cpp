@@ -9,6 +9,9 @@
 #include "nifloader/scene.hpp"
 #include "ogrebullet/collision_shape_manager.hpp"
 #include <boost/graph/depth_first_search.hpp>
+#include <OgreMaterialManager.h>
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
 #include <OgreTagPoint.h>
 #include <set>
 

@@ -1,5 +1,5 @@
 #include "ogre/text_resource.hpp"
-#include <Ogre.h>
+#include <OgreResourceGroupManager.h>
 #include <istream>
 
 namespace Ogre {

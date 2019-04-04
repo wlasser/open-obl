@@ -2,7 +2,7 @@
 #include "conversions.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "ogrebullet/conversions.hpp"
-#include <Ogre.h>
+#include "settings.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <spdlog/spdlog.h>

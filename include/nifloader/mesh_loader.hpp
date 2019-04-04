@@ -2,7 +2,7 @@
 #define OPENOBLIVION_NIFLOADER_MESH_LOADER_HPP
 
 #include "nifloader/loader.hpp"
-#include <Ogre.h>
+#include <OgreResource.h>
 #include <spdlog/spdlog.h>
 
 namespace oo {

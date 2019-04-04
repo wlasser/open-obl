@@ -8,6 +8,8 @@
 #include "record/formid.hpp"
 #include "record/records.hpp"
 #include "settings.hpp"
+#include <OgreSceneManager.h>
+#include <OgreSceneNode.h>
 #include <gsl/gsl>
 #include <type_traits>
 

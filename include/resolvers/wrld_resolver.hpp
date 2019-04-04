@@ -13,9 +13,8 @@
 #include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
 #include <boost/multi_array.hpp>
-#include <OgreRoot.h>
 #include <OgreSceneManager.h>
-#include <OGRE/Terrain/OgreTerrainGroup.h>
+#include <Terrain/OgreTerrainGroup.h>
 #include <tl/optional.hpp>
 #include <mutex>
 #include <random>

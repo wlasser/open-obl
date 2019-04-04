@@ -4,7 +4,7 @@
 #include "settings.hpp"
 #include <OgreMaterialManager.h>
 #include <OgreTextureManager.h>
-#include <OGRE/Terrain/OgreTerrainMaterialGenerator.h>
+#include <Terrain/OgreTerrainMaterialGenerator.h>
 #include <spdlog/spdlog.h>
 
 namespace oo {

@@ -15,7 +15,6 @@
 #include "game_settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
-#include <Ogre.h>
 #include <variant>
 
 namespace oo {

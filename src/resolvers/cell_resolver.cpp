@@ -3,8 +3,10 @@
 #include "nifloader/animation.hpp"
 #include "nifloader/scene.hpp"
 #include "resolvers/cell_resolver.hpp"
-#include <Ogre.h>
+#include <OgreRoot.h>
+#include <OgreSceneNode.h>
 #include <spdlog/fmt/ostr.h>
+#include <mutex>
 
 namespace oo {
 

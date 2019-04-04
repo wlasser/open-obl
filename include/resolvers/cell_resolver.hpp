@@ -14,14 +14,11 @@
 #include <absl/container/flat_hash_map.h>
 #include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
-#include <btBulletDynamicsCommon.h>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <tl/optional.hpp>
-#include <OgreRoot.h>
 #include <OgreSceneManager.h>
-#include <OGRE/Terrain/OgreTerrain.h>
+#include <Terrain/OgreTerrain.h>
 #include <memory>
-#include <mutex>
 #include <utility>
 #include <vector>
 

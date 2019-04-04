@@ -18,6 +18,9 @@
 #include "resolvers/wrld_resolver.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
+#include <OgreCamera.h>
+#include <OgreCompositorInstance.h>
+#include <OgreCompositorManager.h>
 
 namespace oo {
 

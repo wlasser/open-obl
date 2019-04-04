@@ -1,6 +1,9 @@
 #include "conversions.hpp"
 #include "nifloader/animation.hpp"
 #include "nifloader/nif_resource_manager.hpp"
+#include <OgreAnimation.h>
+#include <OgreKeyFrame.h>
+#include <OgreBone.h>
 #include <algorithm>
 #include <set>
 #include <utility>

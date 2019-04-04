@@ -1,9 +1,8 @@
 #include "nifloader/nif_resource.hpp"
 #include "settings.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
-#include <Ogre.h>
+#include <OgreResourceGroupManager.h>
 #include <spdlog/spdlog.h>
-#include <istream>
 
 namespace Ogre {
 

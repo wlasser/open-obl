@@ -4,9 +4,11 @@
 #include <OgreDataStream.h>
 #include <OgreFont.h>
 #include <OgreImage.h>
+#include <OgreMaterial.h>
 #include <OgreMaterialManager.h>
 #include <OgrePixelFormat.h>
 #include <OgreResourceGroupManager.h>
+#include <OgreTechnique.h>
 #include <OgreTextureManager.h>
 #include <array>
 #include <cmath>

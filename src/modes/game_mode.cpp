@@ -10,6 +10,8 @@
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
 #include <absl/container/flat_hash_set.h>
+#include <OgreBone.h>
+#include <OgreSkeletonInstance.h>
 #include <spdlog/fmt/ostr.h>
 
 namespace oo {

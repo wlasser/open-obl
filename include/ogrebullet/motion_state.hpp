@@ -2,7 +2,7 @@
 #define OPENOBLIVION_OGREBULLET_MOTION_STATE_HPP
 
 #include <btBulletDynamicsCommon.h>
-#include <Ogre.h>
+#include <OgreNode.h>
 
 namespace Ogre {
 

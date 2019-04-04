@@ -5,7 +5,8 @@
 #include "nifloader/loader.hpp"
 #include "settings.hpp"
 #include "submesh.hpp"
-#include <Ogre.h>
+#include <OgreEntity.h>
+#include <OgreMesh.h>
 #include <spdlog/spdlog.h>
 #include <filesystem>
 #include <memory>

@@ -1,6 +1,5 @@
 #include "ogrebullet/collision_shape.hpp"
 #include <btBulletDynamicsCommon.h>
-#include <Ogre.h>
 #include <OgreResourceGroupManager.h>
 
 namespace Ogre {

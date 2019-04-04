@@ -1,6 +1,8 @@
 #include "conversions.hpp"
 #include "nifloader/skeleton_loader_state.hpp"
 #include <boost/graph/depth_first_search.hpp>
+#include <OgreBone.h>
+#include <OgreSkeleton.h>
 #include <vector>
 
 namespace oo {

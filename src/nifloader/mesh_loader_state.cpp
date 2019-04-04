@@ -3,7 +3,11 @@
 #include "nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <OgreMaterialManager.h>
+#include <OgrePass.h>
 #include <OgreSkeletonManager.h>
+#include <OgreTechnique.h>
+#include <OgreTextureManager.h>
 #include <algorithm>
 #include <numeric>
 

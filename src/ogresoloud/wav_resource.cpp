@@ -1,6 +1,6 @@
 #include "ogresoloud/sound_manager.hpp"
 #include "ogresoloud/wav_resource.hpp"
-#include <Ogre.h>
+#include <OgreResourceGroupManager.h>
 
 namespace Ogre {
 

@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
 #define OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
 
-#include <Ogre.h>
+#include <OgreResource.h>
 #include <spdlog/spdlog.h>
 
 namespace oo {

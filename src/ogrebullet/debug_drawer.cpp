@@ -1,4 +1,6 @@
 #include "ogrebullet/debug_drawer.hpp"
+#include <OgreManualObject.h>
+#include <OgreSceneManager.h>
 
 namespace Ogre {
 
