@@ -58,7 +58,7 @@ Path::Path(const std::string &path) {
   }
 }
 
-Path::Path(std::string &&path) : mPath(path) {
+Path::Path(std::string &&path) : mPath(std::move(path)) {
   if (mPath.empty()) return;
   trim_inplace(mPath, [](char c) { return c == '\\' || c == '/' || c == '.'; });
   std::transform(mPath.begin(), mPath.end(), mPath.begin(),
@@ -156,7 +156,10 @@ bool Path::match(const oo::Path &pattern) const {
 }
 
 Path operator/(const Path &lhs, const Path &rhs) {
-  return Path{lhs.mPath + '/' + rhs.mPath};
+  std::string tmp{};
+  tmp.reserve(lhs.mPath.size() + rhs.mPath.size() + 1u);
+  tmp.append(lhs.mPath).append(1u, '/').append(rhs.mPath);
+  return Path{std::move(tmp)};
 };
 
 bool operator==(const Path &lhs, const Path &rhs) {
