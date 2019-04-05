@@ -1,8 +1,7 @@
-#include "mesh.hpp"
-#include "mesh_manager.hpp"
+#include "mesh/mesh.hpp"
+#include "mesh/mesh_manager.hpp"
 #include <OgreResourceManager.h>
 #include <OgreHardwareBufferManager.h>
-#include <mesh.hpp>
 
 namespace oo {
 

@@ -1,5 +1,5 @@
-#include "mesh.hpp"
-#include "submesh.hpp"
+#include "mesh/mesh.hpp"
+#include "mesh/submesh.hpp"
 
 namespace oo {
 

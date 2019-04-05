@@ -1,11 +1,14 @@
 #ifndef OPENOBLIVION_MESH_MANAGER_HPP
 #define OPENOBLIVION_MESH_MANAGER_HPP
 
-#include "mesh.hpp"
+#include "mesh/mesh.hpp"
 #include <OgreResourceManager.h>
 #include <OgreSingleton.h>
 
 namespace oo {
+
+/// \addtogroup OpenOblivionMesh
+/// @{
 
 class MeshManager : public Ogre::ResourceManager,
                     public Ogre::Singleton<oo::MeshManager> {
@@ -57,6 +60,8 @@ class MeshManager : public Ogre::ResourceManager,
  private:
   float mBoundsPaddingFactor{0.01f};
 };
+
+/// @}
 
 } // namespace oo
 

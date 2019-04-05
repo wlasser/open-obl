@@ -6,6 +6,9 @@
 
 namespace oo {
 
+/// \addtogroup OpenOblivionMesh
+/// @{
+
 class Entity;
 class SubMesh;
 
@@ -75,6 +78,8 @@ class SubEntity : public Ogre::Renderable {
   /// names of the submesh.
   std::vector<uint16_t> mBlendIndexToBoneIndexMap{};
 };
+
+/// @}
 
 } // namespace oo
 

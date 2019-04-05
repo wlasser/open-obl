@@ -1,8 +1,8 @@
-#include "entity.hpp"
-#include "mesh_manager.hpp"
-#include "settings.hpp"
-#include "subentity.hpp"
+#include "mesh/entity.hpp"
+#include "mesh/mesh_manager.hpp"
+#include "mesh/subentity.hpp"
 #include <boost/range/adaptor/indexed.hpp>
+#include <OgreLogManager.h>
 #include <OgreOptimisedUtil.h>
 #include <OgreRoot.h>
 #include <OgreSceneManager.h>
@@ -10,7 +10,6 @@
 #include <OgreSkeletonManager.h>
 #include <OgreTagPoint.h>
 #include <OgreSkeletonInstance.h>
-#include <spdlog/spdlog.h>
 
 namespace oo {
 
@@ -404,7 +403,7 @@ void Entity::setSkeletonImpl() {
                      });
     }
   } catch (const Ogre::Exception &e) {
-    spdlog::get(oo::LOG)->error(e.getFullDescription());
+    Ogre::LogManager::getSingleton().logError(e.getFullDescription());
     mSkeletonState.reset();
     mBoneWorldMatrices.clear();
   }

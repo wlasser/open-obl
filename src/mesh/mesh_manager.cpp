@@ -1,4 +1,4 @@
-#include "mesh_manager.hpp"
+#include "mesh/mesh_manager.hpp"
 #include <OgrePlane.h>
 #include <OgreHardwareBufferManager.h>
 

@@ -1,4 +1,4 @@
-#include "mesh.hpp"
+#include "mesh/mesh.hpp"
 #include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/mesh_loader_state.hpp"

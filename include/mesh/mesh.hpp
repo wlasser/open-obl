@@ -1,14 +1,28 @@
 #ifndef OPENOBLIVION_MESH_HPP
 #define OPENOBLIVION_MESH_HPP
 
-#include "submesh.hpp"
+#include "mesh/submesh.hpp"
 #include <absl/container/flat_hash_map.h>
 #include <gsl/gsl>
 #include <OgreAnimation.h>
 #include <OgreAxisAlignedBox.h>
 #include <OgreResource.h>
 
+/// \defgroup OpenOblivionMesh OGRE Mesh Replacement Library
+/// Provides similar but API-incompatible alternatives to mesh-related
+/// functionality in OGRE.
+///
+/// The classes in this library offer alternative implementations of
+/// `Ogre::Entity`, `Ogre::Mesh`, and so on, but with a more limited feature-set
+/// and occasional API-breaking changes compared to OGRE. While OGRE is very
+/// powerful, it is not possible to implement some required features under its
+/// design, such as two entities based on the same mesh having different
+/// skeletons, not just different skeleton instances.
+
 namespace oo {
+
+/// \addtogroup OpenOblivionMesh
+/// @{
 
 using MeshPtr = std::shared_ptr<oo::Mesh>;
 
@@ -62,6 +76,8 @@ class Mesh : public Ogre::Resource {
   void loadImpl() override;
   void unloadImpl() override;
 };
+
+/// @}
 
 } // namespace oo
 

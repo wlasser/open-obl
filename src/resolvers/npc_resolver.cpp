@@ -1,5 +1,5 @@
-#include "entity.hpp"
 #include "fs/path.hpp"
+#include "mesh/entity.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
 #include "resolvers/npc_resolver.hpp"

@@ -1,8 +1,8 @@
-#include "subentity.hpp"
-#include "submesh.hpp"
+#include "mesh/entity.hpp"
+#include "mesh/subentity.hpp"
+#include "mesh/submesh.hpp"
 #include <OgreMaterialManager.h>
 #include <OgreSceneNode.h>
-#include <entity.hpp>
 
 namespace oo {
 

@@ -1,10 +1,10 @@
 #ifndef OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 #define OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
 
-#include "mesh.hpp"
+#include "mesh/mesh.hpp"
 #include "nifloader/loader.hpp"
 #include "settings.hpp"
-#include "submesh.hpp"
+#include "mesh/submesh.hpp"
 #include <OgreEntity.h>
 #include <OgreMesh.h>
 #include <filesystem>

@@ -93,8 +93,9 @@ add_subdirectory(src/bsa)
 add_subdirectory(src/fs)
 add_subdirectory(src/gui)
 add_subdirectory(src/io)
-add_subdirectory(src/nif)
 add_subdirectory(src/math)
+add_subdirectory(src/mesh)
+add_subdirectory(src/nif)
 add_subdirectory(src/record)
 add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
@@ -129,15 +130,12 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/console_functions.cpp
-        src/entity.cpp
         src/esp_coordinator.cpp
         src/exterior_manager.cpp
         src/game_settings.cpp
         src/globals.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
-        src/mesh.cpp
-        src/mesh_manager.cpp
         src/modes/console_mode.cpp
         src/modes/game_mode.cpp
         src/modes/load_menu_mode.cpp
@@ -167,8 +165,6 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         src/script_functions.cpp
-        src/subentity.cpp
-        src/submesh.cpp
         src/terrain_material_generator.cpp
         src/time_manager.cpp
         include/application.hpp
@@ -192,7 +188,6 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/walk_state.hpp
         include/console_functions.hpp
         include/controls.hpp
-        include/entity.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
@@ -201,8 +196,6 @@ target_sources(OpenOblivion PRIVATE
         include/globals.hpp
         include/initial_record_visitor.hpp
         include/job/job.hpp
-        include/mesh.hpp
-        include/mesh_manager.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
         include/modes/game_mode.hpp
@@ -237,8 +230,6 @@ target_sources(OpenOblivion PRIVATE
         include/save_state.hpp
         include/script_functions.hpp
         include/settings.hpp
-        include/subentity.hpp
-        include/submesh.hpp
         include/terrain_material_generator.hpp
         include/time_manager.hpp
         include/wrld.hpp)
@@ -252,6 +243,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionGui
         OpenOblivion::OpenOblivionIO
         OpenOblivion::OpenOblivionMath
+        OpenOblivion::OpenOblivionMesh
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
