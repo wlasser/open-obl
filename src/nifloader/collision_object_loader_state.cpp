@@ -1,5 +1,5 @@
 #include "bullet/collision.hpp"
-#include "conversions.hpp"
+#include "math/conversions.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "settings.hpp"

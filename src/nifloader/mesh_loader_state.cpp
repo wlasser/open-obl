@@ -1,5 +1,5 @@
-#include "conversions.hpp"
 #include "fs/path.hpp"
+#include "math/conversions.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>

@@ -9,7 +9,12 @@
 #include <OgreMatrix4.h>
 #include <OgreVector.h>
 
+/// \defgroup OpenOblivionMath Math Compatibility Library
+/// Provides additional math functions and conversions between different
+/// components' linear algebra types.
+
 /// \file
+/// \ingroup OpenOblivionMath
 /// Functions to convert between different coordinate systems and linear
 /// algebra types.
 ///
@@ -20,7 +25,7 @@
 /// linear algebra types; and function templates, for changing coordinate
 /// systems.
 ///
-/// The preferrred coordinate system used by the engine is called the *Ogre* or
+/// The preferred coordinate system used by the engine is called the *Ogre* or
 /// *Bullet* coordinate system. (Not because those engines force it upon us,
 /// just because it's what we use with those engines). SI units are used to
 /// measure masses, distances, velocities and so on; a mass of `1.0f`

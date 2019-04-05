@@ -1,6 +1,6 @@
 #include "character_controller/movement.hpp"
-#include "conversions.hpp"
 #include "game_settings.hpp"
+#include "math/conversions.hpp"
 
 namespace oo {
 

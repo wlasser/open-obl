@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
 #define OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
 
-#include "conversions.hpp"
 #include "game_settings.hpp"
+#include "math/conversions.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>

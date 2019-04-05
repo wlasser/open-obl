@@ -94,6 +94,7 @@ add_subdirectory(src/fs)
 add_subdirectory(src/gui)
 add_subdirectory(src/io)
 add_subdirectory(src/nif)
+add_subdirectory(src/math)
 add_subdirectory(src/record)
 add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
@@ -191,7 +192,6 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/walk_state.hpp
         include/console_functions.hpp
         include/controls.hpp
-        include/conversions.hpp
         include/entity.hpp
         include/enum_template.hpp
         include/esp.hpp
@@ -251,6 +251,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionFS
         OpenOblivion::OpenOblivionGui
         OpenOblivion::OpenOblivionIO
+        OpenOblivion::OpenOblivionMath
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre

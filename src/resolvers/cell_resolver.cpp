@@ -1,5 +1,5 @@
 #include "esp.hpp"
-#include "conversions.hpp"
+#include "math/conversions.hpp"
 #include "nifloader/animation.hpp"
 #include "nifloader/scene.hpp"
 #include "resolvers/cell_resolver.hpp"

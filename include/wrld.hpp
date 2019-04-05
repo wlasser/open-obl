@@ -1,7 +1,7 @@
 #ifndef OPENOBLIVION_WRLD_HPP
 #define OPENOBLIVION_WRLD_HPP
 
-#include "conversions.hpp"
+#include "math/conversions.hpp"
 #include "record/formid.hpp"
 #include <boost/multi_array.hpp>
 

@@ -1,9 +1,9 @@
-#include "conversions.hpp"
-#include "nifloader/loader.hpp"
-#include "settings.hpp"
+#include "math/conversions.hpp"
 #include "nif/basic.hpp"
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
+#include "nifloader/loader.hpp"
+#include "settings.hpp"
 #include <boost/format.hpp>
 #include <spdlog/spdlog.h>
 #include <algorithm>

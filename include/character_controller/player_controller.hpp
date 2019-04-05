@@ -2,7 +2,6 @@
 #define OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
 
 #include "controls.hpp"
-#include "conversions.hpp"
 #include "character_controller/player_controller_impl.hpp"
 #include "character_controller/fallback_state.hpp"
 #include "character_controller/jump_state.hpp"
@@ -11,8 +10,9 @@
 #include "character_controller/sneak_stand_state.hpp"
 #include "character_controller/stand_state.hpp"
 #include "character_controller/walk_state.hpp"
-#include "ogrebullet/motion_state.hpp"
 #include "game_settings.hpp"
+#include "math/conversions.hpp"
+#include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
 #include <variant>

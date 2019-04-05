@@ -1,4 +1,4 @@
-#include "conversions.hpp"
+#include "math/conversions.hpp"
 #include "nifloader/animation.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include <OgreAnimation.h>
