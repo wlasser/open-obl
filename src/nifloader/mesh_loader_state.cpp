@@ -4,6 +4,7 @@
 #include "nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#include <OgreHardwareBufferManager.h>
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreSkeletonManager.h>

@@ -96,6 +96,7 @@ add_subdirectory(src/io)
 add_subdirectory(src/math)
 add_subdirectory(src/mesh)
 add_subdirectory(src/nif)
+add_subdirectory(src/nifloader)
 add_subdirectory(src/record)
 add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
@@ -142,17 +143,6 @@ target_sources(OpenOblivion PRIVATE
         src/modes/loading_menu_mode.cpp
         src/modes/main_menu_mode.cpp
         src/modes/menu_mode_base.cpp
-        src/nifloader/animation.cpp
-        src/nifloader/loader.cpp
-        src/nifloader/collision_object_loader.cpp
-        src/nifloader/collision_object_loader_state.cpp
-        src/nifloader/mesh_loader.cpp
-        src/nifloader/mesh_loader_state.cpp
-        src/nifloader/nif_resource.cpp
-        src/nifloader/nif_resource_manager.cpp
-        src/nifloader/scene.cpp
-        src/nifloader/skeleton_loader.cpp
-        src/nifloader/skeleton_loader_state.cpp
         src/persistent_reference_locator.cpp
         src/resolvers/acti_resolver.cpp
         src/resolvers/cell_resolver.cpp
@@ -205,17 +195,6 @@ target_sources(OpenOblivion PRIVATE
         include/modes/menu_mode.hpp
         include/modes/menu_mode_base.hpp
         include/modes/mode.hpp
-        include/nifloader/animation.hpp
-        include/nifloader/loader.hpp
-        include/nifloader/collision_object_loader.hpp
-        include/nifloader/collision_object_loader_state.hpp
-        include/nifloader/mesh_loader.hpp
-        include/nifloader/mesh_loader_state.hpp
-        include/nifloader/nif_resource.hpp
-        include/nifloader/nif_resource_manager.hpp
-        include/nifloader/scene.hpp
-        include/nifloader/skeleton_loader.hpp
-        include/nifloader/skeleton_loader_state.hpp
         include/persistent_reference_locator.hpp
         include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
@@ -245,6 +224,7 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionMath
         OpenOblivion::OpenOblivionMesh
         OpenOblivion::OpenOblivionNif
+        OpenOblivion::OpenOblivionNifloader
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
