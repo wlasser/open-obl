@@ -15,6 +15,7 @@
 #include "mesh_manager.hpp"
 #include "meta.hpp"
 #include "nifloader/collision_object_loader.hpp"
+#include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/skeleton_loader.hpp"
@@ -300,6 +301,7 @@ void Application::createLoggers() {
 
   // Set the library loggers
   gui::guiLogger(oo::LOG);
+  oo::nifloaderLogger(oo::LOG);
 }
 
 void Application::loadIniConfiguration() {

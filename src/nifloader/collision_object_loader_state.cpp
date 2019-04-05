@@ -1,11 +1,10 @@
 #include "bullet/collision.hpp"
 #include "math/conversions.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
+#include "nifloader/logging.hpp"
 #include "ogrebullet/conversions.hpp"
-#include "settings.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
-#include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
 namespace oo {
@@ -21,7 +20,8 @@ void createCollisionObject(Ogre::CollisionShape *rigidBody,
                 "oo::createCollisionObject");
   }
 
-  spdlog::get(oo::LOG)->info("createCollisionObject({})", rigidBody->getName());
+  oo::nifloaderLogger()
+      ->info("createCollisionObject({})", rigidBody->getName());
 
   // It is assumed that the transformation of the root node will be applied via
   // its Ogre::Node transformation, and thus we do not need to bake it in.
@@ -278,7 +278,7 @@ parseShape(const oo::BlockGraph &g, Ogre::CollisionShape *rigidBody,
     const auto &b{static_cast<const nif::bhk::BoxShape &>(block)};
     return oo::parseShape(g, b, transform);
   } else {
-    spdlog::get(oo::LOG)->warn("Parsing unknown bhkShape");
+    oo::nifloaderLogger()->warn("Parsing unknown bhkShape");
     return {};
     //OGRE_EXCEPT(Ogre::Exception::ERR_NOT_IMPLEMENTED,
     //            "Unknown collision shape",

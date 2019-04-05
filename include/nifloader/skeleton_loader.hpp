@@ -2,8 +2,6 @@
 #define OPENOBLIVION_NIFLOADER_SKELETON_LOADER_HPP
 
 #include <OgreResource.h>
-#include <memory>
-#include <spdlog/spdlog.h>
 
 namespace oo {
 
@@ -12,8 +10,6 @@ namespace oo {
 class SkeletonLoader : public Ogre::ManualResourceLoader {
  private:
   friend class SkeletonLoaderState;
-
-  std::shared_ptr<spdlog::logger> logger{};
 
  public:
   void loadResource(Ogre::Resource *resource) override;

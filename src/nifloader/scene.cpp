@@ -4,6 +4,7 @@
 #include "mesh_manager.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "nifloader/loader.hpp"
+#include "nifloader/logging.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include "nifloader/scene.hpp"
@@ -346,7 +347,7 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
   try {
     nifPtr->load();
   } catch (const std::exception &e) {
-    spdlog::get(oo::LOG)->error("Nif load failed: {}", e.what());
+    oo::nifloaderLogger()->error("Nif load failed: {}", e.what());
     return nullptr;
   }
   auto graph{nifPtr->getBlockGraph()};

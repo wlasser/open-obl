@@ -1,5 +1,6 @@
 #include "fs/path.hpp"
 #include "math/conversions.hpp"
+#include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -912,7 +913,7 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
 }
 
 MeshLoaderState::MeshLoaderState(oo::Mesh *mesh, Graph blocks)
-    : mMesh(mesh), mBlocks(blocks), mLogger(spdlog::get(oo::LOG)) {
+    : mMesh(mesh), mBlocks(blocks) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
@@ -964,7 +965,7 @@ void createMesh(oo::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
                 "oo::createMesh");
   }
 
-  spdlog::get(oo::LOG)->info("createMesh({})", mesh->getName());
+  oo::nifloaderLogger()->info("createMesh({})", mesh->getName());
 
   // It is assumed that the transformation of the root node will be applied via
   // it's Ogre::Node transformation, and thus we do not need to bake it in.

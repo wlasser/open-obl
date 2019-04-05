@@ -2,10 +2,8 @@
 #define OPENOBLIVION_NIFLOADER_SKELETON_LOADER_STATE_HPP
 
 #include "nifloader/loader.hpp"
-#include "settings.hpp"
 #include <OgreMatrix4.h>
 #include <OgrePrerequisites.h>
-#include <spdlog/spdlog.h>
 
 namespace oo {
 
@@ -40,7 +38,6 @@ class SkeletonLoaderState {
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
   Ogre::Bone *mParentBone{};
   bool mIsSkeleton{false};
-  std::shared_ptr<spdlog::logger> mLogger{};
 
   void discover_vertex(const nif::NiNode &node, const Graph &g);
   void discover_vertex(const nif::BSXFlags &bsxFlags, const Graph &g);

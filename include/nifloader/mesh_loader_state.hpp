@@ -7,7 +7,6 @@
 #include "submesh.hpp"
 #include <OgreEntity.h>
 #include <OgreMesh.h>
-#include <spdlog/spdlog.h>
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -197,7 +196,6 @@ class MeshLoaderState {
   oo::Mesh *mMesh;
   BlockGraph mBlocks;
   Ogre::Matrix4 mTransform{Ogre::Matrix4::IDENTITY};
-  std::shared_ptr<spdlog::logger> mLogger{};
 };
 
 void createMesh(oo::Mesh *mesh,

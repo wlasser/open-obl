@@ -1,14 +1,13 @@
 #include "nifloader/collision_object_loader.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
+#include "nifloader/logging.hpp"
 #include "nifloader/nif_resource_manager.hpp"
-#include "settings.hpp"
 #include "ogrebullet/collision_shape.hpp"
 #include <OgreException.h>
 
 namespace oo {
 
 void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
-  if (!logger) logger = spdlog::get(oo::OGRE_LOG);
   auto collisionObject = dynamic_cast<Ogre::CollisionShape *>(resource);
   // TODO: Handle this properly
   assert (collisionObject != nullptr);
@@ -22,7 +21,7 @@ void CollisionObjectLoader::loadResource(Ogre::Resource *resource) {
                 "CollisionObjectLoader::loadResource()");
   }
 
-  logger->info("CollisionShape: {}", resource->getName());
+  oo::nifloaderLogger()->info("CollisionShape: {}", resource->getName());
   CollisionObjectLoaderState instance(collisionObject, nifPtr->getBlockGraph());
 }
 

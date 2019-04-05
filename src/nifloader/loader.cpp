@@ -3,9 +3,7 @@
 #include "nif/compound.hpp"
 #include "nif/niobject.hpp"
 #include "nifloader/loader.hpp"
-#include "settings.hpp"
-#include <boost/format.hpp>
-#include <spdlog/spdlog.h>
+#include "nifloader/logging.hpp"
 #include <algorithm>
 #include <istream>
 #include <string>
@@ -23,14 +21,14 @@ nif::Version peekVersion(std::istream &is) {
   const auto firstWordPos{headerStr.find_first_of(' ')};
   if (firstWordPos == std::string_view::npos || firstWordPos == 0) {
     is.seekg(0);
-    throw std::runtime_error("Invalid nif header");
+    throw std::runtime_error("Invalid NIF header");
   }
   const auto formatName{headerStr.substr(0, firstWordPos)};
   if (formatName != "Gamebryo" && formatName != "NetImmerse") {
     is.seekg(0);
-    throw std::runtime_error(boost::str(boost::format(
-        "Invalid nif header. Expected 'NetImmerse' or 'Gamebryo', found %s")
-                                            % formatName));
+    oo::nifloaderLogger()->error("Invalid NIF header. Expected 'NetImmerse' or "
+                                 "'Gamebryo', found '{}'.", formatName);
+    throw std::runtime_error("Invalid NIF header");
   }
 
   // Now proceed with finding the version
@@ -121,8 +119,6 @@ const AddVertexMap &getAddVertexMap() {
 }
 
 BlockGraph createBlockGraph(std::istream &is) {
-  auto logger{spdlog::get(oo::LOG)};
-
   const nif::Version nifVersion{oo::peekVersion(is)};
   nif::compound::Header header{nifVersion};
   is >> header;
@@ -174,7 +170,7 @@ BlockGraph createBlockGraph(std::istream &is) {
     if (vertexAdder != blockAddVertexMap.end()) {
       const auto &func{vertexAdder->second};
       std::invoke(func, blocks, i, nifVersion, is);
-      logger->trace("Read block {} ({})", i, blockType);
+      oo::nifloaderLogger()->trace("Read block {} ({})", i, blockType);
     } else if (blockType == "NiNode") {
       // An alternative to the make-do-move idiom (whatever it's called) used
       // with unique_ptr. This gains const, looks cleaner for polymorphic_value,
@@ -218,10 +214,10 @@ BlockGraph createBlockGraph(std::istream &is) {
         if (isRefValid(child)) oo::addEdge(blocks, i, child);
       }
 
-      logger->trace("Read block {} (NiNode)", i);
+      oo::nifloaderLogger()->trace("Read block {} (NiNode)", i);
     } else {
       // TODO: Implement the other blocks
-      logger->error("Unsupported block {} ({})", i, blockType);
+      oo::nifloaderLogger()->error("Unsupported block {} ({})", i, blockType);
       throw std::runtime_error("Unsupported block type");
     }
   }

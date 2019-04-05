@@ -2,7 +2,6 @@
 #define OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
 
 #include <OgreResource.h>
-#include <spdlog/spdlog.h>
 
 namespace oo {
 
@@ -11,8 +10,6 @@ namespace oo {
 class CollisionObjectLoader : public Ogre::ManualResourceLoader {
  private:
   friend class CollisionObjectLoaderState;
-
-  std::shared_ptr<spdlog::logger> logger{};
 
  public:
   void loadResource(Ogre::Resource *resource) override;

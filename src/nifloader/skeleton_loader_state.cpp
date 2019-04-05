@@ -8,7 +8,7 @@
 namespace oo {
 
 SkeletonLoaderState::SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks)
-    : mSkeleton(skeleton), mLogger(spdlog::get(oo::LOG)) {
+    : mSkeleton(skeleton) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};
@@ -19,8 +19,7 @@ SkeletonLoaderState::SkeletonLoaderState(Ogre::Skeleton *skeleton, Graph blocks)
 SkeletonLoaderState::SkeletonLoaderState(
     Ogre::Skeleton *skeleton, Graph blocks, vertex_descriptor start,
     bool isSkeleton) : mSkeleton(skeleton),
-                       mIsSkeleton(isSkeleton),
-                       mLogger(spdlog::get(oo::LOG)) {
+                       mIsSkeleton(isSkeleton) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(blocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, blocks))};

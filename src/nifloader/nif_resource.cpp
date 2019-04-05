@@ -1,8 +1,7 @@
+#include "nifloader/logging.hpp"
 #include "nifloader/nif_resource.hpp"
-#include "settings.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include <OgreResourceGroupManager.h>
-#include <spdlog/spdlog.h>
 
 namespace Ogre {
 
@@ -19,10 +18,9 @@ NifResource::BlockGraph NifResource::getBlockGraph() const {
 }
 
 void NifResource::loadImpl() {
-  auto logger{spdlog::get(oo::OGRE_LOG)};
   auto &resGrpMgr{ResourceGroupManager::getSingleton()};
 
-  logger->info("Nif: {}", getName());
+  oo::nifloaderLogger()->info("Nif: {}", getName());
 
   auto dataStream{resGrpMgr.openResource(mName, mGroup, this)};
   auto dataStreamBuf{OgreDataStreambuf{dataStream}};

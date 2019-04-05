@@ -1,14 +1,13 @@
 #include "mesh.hpp"
+#include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/mesh_loader_state.hpp"
 #include "nifloader/nif_resource_manager.hpp"
-#include "settings.hpp"
 #include <OgreException.h>
 
 namespace oo {
 
 void MeshLoader::loadResource(Ogre::Resource *resource) {
-  if (!logger) logger = spdlog::get(oo::OGRE_LOG);
   auto mesh = dynamic_cast<oo::Mesh *>(resource);
   // TODO: Handle this properly
   assert(mesh != nullptr);
@@ -23,7 +22,7 @@ void MeshLoader::loadResource(Ogre::Resource *resource) {
   }
   nifPtr->load();
 
-  logger->info("Mesh: {}", resource->getName());
+  oo::nifloaderLogger()->info("Mesh: {}", resource->getName());
   MeshLoaderState instance(mesh, nifPtr->getBlockGraph());
 }
 
