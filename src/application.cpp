@@ -581,6 +581,7 @@ void Application::registerConsoleFunctions() {
   rcf("ShowMap", &console::ShowMap);
   rcf("ShowRaceMenu", &console::ShowRaceMenu);
   rcf("ShowSpellmaking", &console::ShowSpellmaking);
+  rcf("print", &console::print);
   rcf("GetCurrentTime", &script::GetCurrentTime);
 }
 

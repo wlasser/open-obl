@@ -34,8 +34,13 @@ class ConsoleMode {
 
   constexpr static inline std::size_t BufferSize{256};
   std::array<char, BufferSize> mBuffer{};
-  std::vector<std::string> mHistory{};
   bool mNeedToScrollHistoryToBottom{false};
+
+  /// Static function storing the history buffer so it can be modified by
+  /// console commands without a pointer to the particular `ConsoleMode`.
+  /// This has the added bonus that the history is saved when reopening the
+  /// console.
+  static std::vector<std::string> &getHistory();
 
  public:
   using transition_t = ModeTransition<ConsoleMode>;
@@ -62,6 +67,10 @@ class ConsoleMode {
   /// Display and update the developer console.
   /// \see Mode::update()
   void update(ApplicationContext &ctx, float);
+
+  /// Print a message to the console by writing it into the end of the
+  /// history buffer.
+  static void print(std::string msg);
 };
 
 } // namespace oo

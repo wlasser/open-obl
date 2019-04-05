@@ -44,6 +44,10 @@ extern "C" int ShowRaceMenu();
 /// Open the SpellMakingMenu, closing the current console window.
 extern "C" int ShowSpellmaking();
 
+/// Print a `float` to the console.
+/// \todo Implement name mangling to support overloaded functions.
+extern "C" int print(float value);
+
 } // namespace console
 ///@}
 

@@ -6,6 +6,15 @@
 
 namespace oo {
 
+std::vector<std::string> &ConsoleMode::getHistory() {
+  static std::vector<std::string> history{};
+  return history;
+}
+
+void ConsoleMode::print(std::string msg) {
+  ConsoleMode::getHistory().emplace_back(std::move(msg));
+}
+
 int ConsoleMode::textEditCallback(gsl::not_null<ImGuiInputTextCallbackData *> data) {
   switch (data->EventFlag) {
     case ImGuiInputTextFlags_CallbackCompletion: {
@@ -49,7 +58,7 @@ void ConsoleMode::displayHistory() {
                     {0.0f, -footerHeight},
                     false, // no border
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-  for (const auto &s : mHistory) {
+  for (const auto &s : ConsoleMode::getHistory()) {
     ImGui::Text("%s", s.c_str());
   }
   if (mNeedToScrollHistoryToBottom) {
@@ -81,14 +90,14 @@ void ConsoleMode::displayPrompt() {
                        inputCallback,
                        static_cast<void *>(this))) {
     std::string buffer(mBuffer.data());
-    std::string output;
+    auto &history{ConsoleMode::getHistory()};
     try {
-      output = executeCommand(buffer);
-      mHistory.push_back(mPrompt + buffer);
-      mHistory.push_back(output);
+      auto output{executeCommand(buffer)};
+      history.push_back(mPrompt + buffer);
+      history.push_back(output);
     } catch (const std::exception &e) {
-      mHistory.push_back(mPrompt + buffer);
-      mHistory.emplace_back(e.what());
+      history.push_back(mPrompt + buffer);
+      history.emplace_back(e.what());
     }
     mBuffer[0] = '\0';
     refocusInput = true;

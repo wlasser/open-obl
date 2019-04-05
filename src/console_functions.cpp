@@ -51,3 +51,8 @@ int console::ShowSpellmaking() {
 //  oo::getApplication()->openMenu<gui::MenuType::SpellMakingMenu>();
   return 0;
 }
+
+int console::print(float value) {
+  oo::ConsoleMode::print(std::to_string(value));
+  return 0;
+}
