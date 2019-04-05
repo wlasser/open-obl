@@ -847,8 +847,6 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       logger->info("[{}]: Blit layer 0", boost::this_fiber::get_id());
     }
 
-    boost::this_fiber::yield();
-
     {
       const Ogre::Box box(vpq - 1u, 0u, vpc, vpq);
       blitBoxes(terrain[1]->getMaterialName(), box);
@@ -859,8 +857,6 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       logger->info("[{}]: Blit layer 1", boost::this_fiber::get_id());
     }
 
-    boost::this_fiber::yield();
-
     {
       const Ogre::Box box(0u, vpq - 1u, vpq, vpc);
       blitBoxes(terrain[2]->getMaterialName(), box);
@@ -870,8 +866,6 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       terrain[2]->_setCompositeMapRequired(true);
       logger->info("[{}]: Blit layer 2", boost::this_fiber::get_id());
     }
-
-    boost::this_fiber::yield();
 
     {
       const Ogre::Box box(vpq - 1u, vpq - 1u, vpc, vpc);
