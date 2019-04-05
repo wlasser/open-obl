@@ -1,7 +1,6 @@
 #ifndef OPENOBLIVION_FNT_LOADER_HPP
 #define OPENOBLIVION_FNT_LOADER_HPP
 
-#include "fs/path.hpp"
 #include <OgreFont.h>
 #include <OgreImage.h>
 #include <OgreResource.h>
@@ -9,6 +8,8 @@
 #include <array>
 
 namespace oo {
+
+class Path;
 
 /// Ogre::ManualResourceLoader for `fnt`/`tex` bitmap font file pairs.
 ///

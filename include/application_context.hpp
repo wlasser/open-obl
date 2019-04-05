@@ -4,7 +4,7 @@
 #include "bullet/collision.hpp"
 #include "bullet/configuration.hpp"
 #include "bsa_archive_factory.hpp"
-#include "fnt_loader.hpp"
+#include "ogre/fnt_loader.hpp"
 #include "ogre/tex_image_codec.hpp"
 #include "ogre/text_resource_manager.hpp"
 #include "ogre/window.hpp"

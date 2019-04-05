@@ -131,7 +131,6 @@ target_sources(OpenOblivion PRIVATE
         src/entity.cpp
         src/esp_coordinator.cpp
         src/exterior_manager.cpp
-        src/fnt_loader.cpp
         src/game_settings.cpp
         src/globals.cpp
         src/initial_record_visitor.cpp
@@ -198,7 +197,6 @@ target_sources(OpenOblivion PRIVATE
         include/esp.hpp
         include/esp_coordinator.hpp
         include/exterior_manager.hpp
-        include/fnt_loader.hpp
         include/game_settings.hpp
         include/globals.hpp
         include/initial_record_visitor.hpp

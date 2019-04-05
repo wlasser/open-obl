@@ -1,6 +1,5 @@
-#include "fnt_loader.hpp"
+#include "ogre/fnt_loader.hpp"
 #include "fs/path.hpp"
-#include "settings.hpp"
 #include <OgreDataStream.h>
 #include <OgreFont.h>
 #include <OgreImage.h>
