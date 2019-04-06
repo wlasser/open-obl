@@ -10,6 +10,8 @@
 #include <tuple>
 #include <vector>
 
+namespace oo {
+
 struct SystemTime : io::byte_direct_ioable_tag {
   uint16_t year;
   uint16_t month;
@@ -26,15 +28,6 @@ static_assert(sizeof(SystemTime) == 16u);
 
 class SaveState {
  private:
-  struct PCLocation {
-    oo::FormId cell{};
-    // Position in cell in world units
-    float x{};
-    float y{};
-    float z{};
-  };
-  static_assert(sizeof(PCLocation) == 16u);
-
   struct Global : io::byte_direct_ioable_tag {
     oo::IRef iref{};
     /// This is broken in the same way as record::GLOB.
@@ -72,17 +65,17 @@ class SaveState {
   uint32_t mHeaderVersion{};
 
   /// Number of save games for the character prior to this save.
-  uint32_t mSaveNumber;
+  uint32_t mSaveNumber{};
 
   /// Player character's name.
-  std::string mPCName{};
+  std::string mPlayerName{};
 
   /// Player character's level.
-  uint16_t mPCLevel{};
+  uint16_t mPlayerLevel{};
 
   /// Name of the cell the player character is currently in.
   /// Specifically, the record::FULL of the current record::CELL.
-  std::string mPCCellName{};
+  std::string mPlayerCellName{};
 
   /// Number of days that have passed in game.
   /// According to UESP this begins at 1.042, as the start time of the game is
@@ -139,11 +132,11 @@ class SaveState {
   std::tuple<uint32_t, uint32_t> mWorldPos{};
 
   /// oo::FormId of the record::CELL the player is currently in.
-  oo::FormId mPCCellId{};
+  oo::FormId mPlayerCellId{};
 
   /// $(x,y,z)$ coordinates, in world units, of the player in the current
   /// record::CELL.
-  std::tuple<float, float, float> mPCPosition{};
+  std::tuple<float, float, float> mPlayerPosition{};
 
   /// Array of global variables.
   std::vector<Global> mGlobals{};
@@ -173,8 +166,11 @@ class SaveState {
   uint32_t mNumCreatedRecords{};
 
   ///@}
-
-  explicit SaveState(std::istream &is);
 };
+
+std::ostream &operator<<(std::ostream &os, const SaveState &sv);
+std::istream &operator>>(std::istream &is, SaveState &sv);
+
+} // namespace oo
 
 #endif // OPENOBLIVION_SAVE_STATE_HPP
