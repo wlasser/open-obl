@@ -19,6 +19,17 @@ std::string readBzString(std::istream &);
 /// length.
 std::string readBString(std::istream &);
 
+/// Write a null-terminated string prefixed with a single byte for the length.
+/// \see `io::readBzString`
+/// \deprecated This function is included for use in existing esp and bsa format
+///             code only, it should not be used when you have freedom over the
+///             serialization format.
+std::ostream &writeBzString(std::ostream &, const std::string &);
+
+/// Write a non-null-terminated string prefixed with a single byte for the
+/// length.
+std::ostream &writeBString(std::ostream &, const std::string &);
+
 } // namespace io
 
 #endif //OPENOBLIVION_IO_STRING_HPP

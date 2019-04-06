@@ -23,3 +23,16 @@ std::string io::readBString(std::istream &s) {
   s.read(str.data(), len);
   return str;
 }
+
+std::ostream &io::writeBzString(std::ostream &os, const std::string &s) {
+  os.put(static_cast<uint8_t>(s.length()));
+  os.write(s.data(), s.length());
+  os.put('\0');
+  return os;
+}
+
+std::ostream &io::writeBString(std::ostream &os, const std::string &s) {
+  os.put(static_cast<uint8_t>(s.length()));
+  os.write(s.data(), s.length());
+  return os;
+}
