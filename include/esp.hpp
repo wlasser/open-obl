@@ -95,6 +95,12 @@ void readWrldChildren(EspAccessor &accessor,
 struct SkipGroupVisitorTag_t {};
 constexpr static inline SkipGroupVisitorTag_t SkipGroupVisitorTag{};
 
+/// Read the requested record type and visit the result with the given visitor.
+template<class EsxAccessor, class RecordVisitor>
+void readRecord(EsxAccessor &accessor,
+                uint32_t recType,
+                RecordVisitor &visitor);
+
 //===----------------------------------------------------------------------===//
 // Function template definitions
 //===----------------------------------------------------------------------===//
@@ -175,62 +181,7 @@ void readEsp(EspCoordinator &coordinator,
       default: {
         // Otherwise we expect a block of records all of the same type
         while (accessor.peekRecordType() == recType) {
-          switch (recType) {
-            case "GMST"_rec:visitor.template readRecord<record::GMST>(accessor);
-              break;
-            case "GLOB"_rec:visitor.template readRecord<record::GLOB>(accessor);
-              break;
-            case "CLAS"_rec:visitor.template readRecord<record::CLAS>(accessor);
-              break;
-            case "FACT"_rec:visitor.template readRecord<record::FACT>(accessor);
-              break;
-            case "HAIR"_rec:visitor.template readRecord<record::HAIR>(accessor);
-              break;
-            case "EYES"_rec:visitor.template readRecord<record::EYES>(accessor);
-              break;
-            case "RACE"_rec:visitor.template readRecord<record::RACE>(accessor);
-              break;
-            case "SOUN"_rec:visitor.template readRecord<record::SOUN>(accessor);
-              break;
-            case "SKIL"_rec:visitor.template readRecord<record::SKIL>(accessor);
-              break;
-            case "MGEF"_rec:visitor.template readRecord<record::MGEF>(accessor);
-              break;
-            case "LTEX"_rec:visitor.template readRecord<record::LTEX>(accessor);
-              break;
-            case "ENCH"_rec:visitor.template readRecord<record::ENCH>(accessor);
-              break;
-            case "SPEL"_rec:visitor.template readRecord<record::SPEL>(accessor);
-              break;
-            case "BSGN"_rec:visitor.template readRecord<record::BSGN>(accessor);
-              break;
-            case "ACTI"_rec:visitor.template readRecord<record::ACTI>(accessor);
-              break;
-            case "DOOR"_rec:visitor.template readRecord<record::DOOR>(accessor);
-              break;
-            case "LIGH"_rec:visitor.template readRecord<record::LIGH>(accessor);
-              break;
-            case "MISC"_rec:visitor.template readRecord<record::MISC>(accessor);
-              break;
-            case "STAT"_rec:visitor.template readRecord<record::STAT>(accessor);
-              break;
-            case "GRAS"_rec:visitor.template readRecord<record::GRAS>(accessor);
-              break;
-            case "TREE"_rec:visitor.template readRecord<record::TREE>(accessor);
-              break;
-            case "NPC_"_rec:visitor.template readRecord<record::NPC_>(accessor);
-              break;
-            case "ALCH"_rec:visitor.template readRecord<record::ALCH>(accessor);
-              break;
-            case "WTHR"_rec:visitor.template readRecord<record::WTHR>(accessor);
-              break;
-            case "CLMT"_rec:visitor.template readRecord<record::CLMT>(accessor);
-              break;
-            case "WATR"_rec:visitor.template readRecord<record::WATR>(accessor);
-              break;
-            default: accessor.skipRecord();
-              break;
-          }
+          readRecord(accessor, recType, visitor);
         }
       }
     }
@@ -388,6 +339,43 @@ void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
         break;
       default: return;
     }
+  }
+}
+
+template<class EsxAccessor, class RecordVisitor>
+void readRecord(EsxAccessor &accessor,
+                uint32_t recType,
+                RecordVisitor &visitor) {
+  using record::operator ""_rec;
+  switch (recType) {
+    case "GMST"_rec:return visitor.template readRecord<record::GMST>(accessor);
+    case "GLOB"_rec:return visitor.template readRecord<record::GLOB>(accessor);
+    case "CLAS"_rec:return visitor.template readRecord<record::CLAS>(accessor);
+    case "FACT"_rec:return visitor.template readRecord<record::FACT>(accessor);
+    case "HAIR"_rec:return visitor.template readRecord<record::HAIR>(accessor);
+    case "EYES"_rec:return visitor.template readRecord<record::EYES>(accessor);
+    case "RACE"_rec:return visitor.template readRecord<record::RACE>(accessor);
+    case "SOUN"_rec:return visitor.template readRecord<record::SOUN>(accessor);
+    case "SKIL"_rec:return visitor.template readRecord<record::SKIL>(accessor);
+    case "MGEF"_rec:return visitor.template readRecord<record::MGEF>(accessor);
+    case "LTEX"_rec:return visitor.template readRecord<record::LTEX>(accessor);
+    case "ENCH"_rec:return visitor.template readRecord<record::ENCH>(accessor);
+    case "SPEL"_rec:return visitor.template readRecord<record::SPEL>(accessor);
+    case "BSGN"_rec:return visitor.template readRecord<record::BSGN>(accessor);
+    case "ACTI"_rec:return visitor.template readRecord<record::ACTI>(accessor);
+    case "DOOR"_rec:return visitor.template readRecord<record::DOOR>(accessor);
+    case "LIGH"_rec:return visitor.template readRecord<record::LIGH>(accessor);
+    case "MISC"_rec:return visitor.template readRecord<record::MISC>(accessor);
+    case "STAT"_rec:return visitor.template readRecord<record::STAT>(accessor);
+    case "GRAS"_rec:return visitor.template readRecord<record::GRAS>(accessor);
+    case "TREE"_rec:return visitor.template readRecord<record::TREE>(accessor);
+    case "NPC_"_rec:return visitor.template readRecord<record::NPC_>(accessor);
+    case "ALCH"_rec:return visitor.template readRecord<record::ALCH>(accessor);
+    case "WTHR"_rec:return visitor.template readRecord<record::WTHR>(accessor);
+    case "CLMT"_rec:return visitor.template readRecord<record::CLMT>(accessor);
+    case "WATR"_rec:return visitor.template readRecord<record::WATR>(accessor);
+    default: accessor.skipRecord();
+      break;
   }
 }
 
