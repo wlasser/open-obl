@@ -116,6 +116,49 @@ std::istream &operator>>(std::istream &is, oo::SaveState sv) {
 
   io::readBytes(is, sv.mNumCreatedRecords);
 
+  // Following is a list of base records, but they are ungrouped. Records
+  // that can appear include
+  // - ALCH
+  // - SPEL
+  // - ARMO
+  // - WEAP
+  // - ENCH
+  // - NPC_ (including the player character?)
+  // - BOOK
+  // - INGR
+  // - MISC
+  // - KEYM
+  // - LIGH (e.g. torches)
+  // TODO: Read the save state created records
+
+  uint16_t quickKeysSize{};
+  io::readBytes(is, quickKeysSize);
+  for (std::size_t i = 0; quickKeysSize != 0; ++i) {
+    uint8_t isSet{0};
+    io::readBytes(is, isSet);
+    if (isSet != 0) {
+      io::readBytes(is, sv.mQuickKeys[i]);
+      quickKeysSize -= 5u;
+    } else {
+      sv.mQuickKeys[i] = 0u;
+      quickKeysSize -= 1u;
+    }
+  }
+
+  uint16_t reticuleSize{};
+  io::readBytes(is, reticuleSize);
+  io::readBytes(is, sv.mReticuleData, reticuleSize);
+
+  uint16_t interfaceSize{};
+  io::readBytes(is, interfaceSize);
+  io::readBytes(is, sv.mInterfaceData, interfaceSize);
+
+  uint16_t regionSize{};
+  io::readBytes(is, regionSize);
+  uint16_t numRegions{};
+  io::readBytes(is, numRegions);
+  io::readBytes(is, sv.mRegions, numRegions);
+
   return is;
 }
 
@@ -190,6 +233,37 @@ std::ostream &operator<<(std::ostream &os, const oo::SaveState &sv) {
   io::writeBytes(os, sv.mPlayerCombatCount);
 
   io::writeBytes(os, sv.mNumCreatedRecords);
+
+  // TODO: Write the save state created records.
+
+  const auto quickKeysSize{std::accumulate(
+      sv.mQuickKeys.begin(), sv.mQuickKeys.end(), 0u,
+      [](std::size_t s, uint32_t qk) -> std::size_t {
+        return s + (qk == 0u ? 1u : 5u);
+      })};
+  io::writeBytes(os, static_cast<uint16_t>(quickKeysSize));
+
+  for (auto quickKey : sv.mQuickKeys) {
+    if (quickKey == 0) {
+      io::writeBytes(os, static_cast<uint8_t>(0u));
+    } else {
+      io::writeBytes(os, static_cast<uint8_t>(1u));
+      io::writeBytes(os, quickKey);
+    }
+  }
+
+  io::writeBytes(os, static_cast<uint16_t>(sv.mReticuleData.size()));
+  os.write(reinterpret_cast<const char *>(sv.mReticuleData.data()),
+           sv.mReticuleData.size());
+
+  io::writeBytes(os, static_cast<uint16_t>(sv.mInterfaceData.size()));
+  os.write(reinterpret_cast<const char *>(sv.mInterfaceData.data()),
+           sv.mInterfaceData.size());
+
+  io::writeBytes(os, static_cast<uint16_t>(4u + 8u * sv.mRegions.size()));
+  io::writeBytes(os, static_cast<uint16_t>(sv.mRegions.size()));
+
+  for (const auto &region : sv.mRegions) io::writeBytes(os, region);
 
   return os;
 }

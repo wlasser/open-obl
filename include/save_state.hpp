@@ -43,6 +43,12 @@ class SaveState {
     // uint16_t padding;
   };
 
+  struct Region : io::byte_direct_ioable_tag {
+    oo::IRef iref{};
+    uint32_t flags{};
+  };
+  static_assert(sizeof(Region) == 8u);
+
  public:
 
   /// \name File Header
@@ -164,6 +170,26 @@ class SaveState {
 
   /// Number of created records.
   uint32_t mNumCreatedRecords{};
+
+  /// List of created base records. Includes spells, enchantments etc.
+  /// explicitly created by the player as well as cloned objects, placeAtMe, and
+  /// so on.
+  // \todo Choose a record storage datatype
+
+  /// Settings for the eight quick keys.
+  /// \todo What is the meaning of the quick key data, are they formids?
+  std::array<uint32_t, 8u> mQuickKeys{};
+
+  /// Reticule data.
+  /// \todo This needs to be decoded
+  std::vector<uint8_t> mReticuleData{};
+
+  /// Interface data.
+  /// \todo This needs to be decoded.
+  std::vector<uint8_t> mInterfaceData{};
+
+  /// Region data.
+  std::vector<Region> mRegions{};
 
   ///@}
 };
