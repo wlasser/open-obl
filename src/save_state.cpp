@@ -10,7 +10,9 @@
 #include <istream>
 #include <string>
 
-std::string oo::SystemTime::toISO8601() const {
+namespace oo {
+
+std::string SystemTime::toISO8601() const {
   std::stringstream s;
   s << year << '-'
     << std::setfill('0') << std::setw(2) << month << '-'
@@ -21,7 +23,72 @@ std::string oo::SystemTime::toISO8601() const {
   return s.str();
 }
 
-std::istream &operator>>(std::istream &is, oo::SaveState sv) {
+//===----------------------------------------------------------------------===//
+// EssAccessor implementations
+//===----------------------------------------------------------------------===//
+
+EssAccessor::ReadHeaderResult EssAccessor::readRecordHeader() {
+  return {record::readRecordHeader(mIs), mIs.tellg()};
+}
+
+EssAccessor::ReadHeaderResult EssAccessor::skipRecord() {
+  return {record::skipRecord(mIs), mIs.tellg()};
+}
+
+uint32_t EssAccessor::peekRecordType() {
+  return record::peekRecordType(mIs);
+}
+
+oo::BaseId EssAccessor::peekBaseId() {
+  return record::peekBaseOfReference(mIs);
+}
+
+//===----------------------------------------------------------------------===//
+// EssVisitor
+//===----------------------------------------------------------------------===//
+namespace {
+
+class EssVisitor {
+ private:
+  oo::BaseResolversRef mBaseCtx;
+  std::vector<oo::BaseId> &mCreatedRecords;
+
+  template<class R> void readRecordDefault(oo::EssAccessor &accessor) {
+    const auto rec{accessor.readRecord<R>().value};
+    const oo::BaseId baseId{rec.mFormId};
+    oo::getResolver<R>(mBaseCtx).insertOrAssign(baseId, rec);
+    mCreatedRecords.push_back(baseId);
+  }
+
+ public:
+  explicit EssVisitor(std::vector<oo::BaseId> &createdRecords,
+                      oo::BaseResolversRef baseCtx) noexcept
+      : mBaseCtx(std::move(baseCtx)), mCreatedRecords(createdRecords) {}
+
+  template<class R> void readRecord(oo::EssAccessor &accessor) {
+    accessor.skipRecord();
+  }
+
+  template<> void readRecord<record::LIGH>(oo::EssAccessor &accessor) {
+    readRecordDefault<record::LIGH>(accessor);
+  }
+
+  template<> void readRecord<record::MISC>(oo::EssAccessor &accessor) {
+    readRecordDefault<record::MISC>(accessor);
+  }
+
+  template<> void readRecord<record::NPC_>(oo::EssAccessor &accessor) {
+    readRecordDefault<record::NPC_>(accessor);
+  }
+};
+
+} // namespace
+
+//===----------------------------------------------------------------------===//
+// SaveState implementations
+//===----------------------------------------------------------------------===//
+
+std::istream &operator>>(std::istream &is, oo::SaveState &sv) {
   // UESP says this is a 12 byte string without a null-terminator, followed by
   // a major version number byte, which is conveniently always zero. Might it
   // simply be a null-terminator? It is safe to assume so regardless.
@@ -129,7 +196,13 @@ std::istream &operator>>(std::istream &is, oo::SaveState sv) {
   // - MISC
   // - KEYM
   // - LIGH (e.g. torches)
-  // TODO: Read the save state created records
+  sv.mCreatedRecords.reserve(sv.mNumCreatedRecords);
+  EssVisitor visitor(sv.mCreatedRecords, sv.mBaseCtx);
+  EssAccessor accessor(is);
+  for (std::size_t i = 0; i < sv.mNumCreatedRecords; ++i) {
+    const auto recType{accessor.peekRecordType()};
+    oo::readRecord(accessor, recType, visitor);
+  }
 
   uint16_t quickKeysSize{};
   io::readBytes(is, quickKeysSize);
@@ -232,9 +305,10 @@ std::ostream &operator<<(std::ostream &os, const oo::SaveState &sv) {
 
   io::writeBytes(os, sv.mPlayerCombatCount);
 
-  io::writeBytes(os, sv.mNumCreatedRecords);
 
   // TODO: Write the save state created records.
+  //io::writeBytes(os, sv.mNumCreatedRecords);
+  io::writeBytes(os, static_cast<uint32_t>(0u));
 
   const auto quickKeysSize{std::accumulate(
       sv.mQuickKeys.begin(), sv.mQuickKeys.end(), 0u,
@@ -268,3 +342,4 @@ std::ostream &operator<<(std::ostream &os, const oo::SaveState &sv) {
   return os;
 }
 
+} // namespace oo

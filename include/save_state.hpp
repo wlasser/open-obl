@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_SAVE_STATE_HPP
 #define OPENOBLIVION_SAVE_STATE_HPP
 
+#include "esp.hpp"
 #include "io/io.hpp"
 #include "record/formid.hpp"
 #include <OgreImage.h>
@@ -9,6 +10,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <resolvers/resolvers.hpp>
 
 namespace oo {
 
@@ -25,6 +27,40 @@ struct SystemTime : io::byte_direct_ioable_tag {
   std::string toISO8601() const;
 };
 static_assert(sizeof(SystemTime) == 16u);
+
+class EssAccessor {
+ private:
+  friend class SaveState;
+
+  std::istream &mIs;
+
+ public:
+  explicit EssAccessor(std::istream &is) : mIs(is) {}
+
+  template<class T> using ReadResult = EspCoordinator::ReadResult<T>;
+  using ReadHeaderResult = EspCoordinator::ReadHeaderResult;
+
+  /// \name Read Operations
+  /// @{
+  template<class T> ReadResult<T> readRecord() {
+    return {record::readRecord<T>(mIs), mIs.tellg()};
+  }
+
+  ReadHeaderResult readRecordHeader();
+
+  ReadHeaderResult skipRecord();
+
+  uint32_t peekRecordType();
+
+  BaseId peekBaseId();
+
+  ReadResult<record::Group> readGroup() = delete;
+
+  void skipGroup() = delete;
+
+  std::optional<record::Group::GroupType> peekGroupType() = delete;
+  /// @}
+};
 
 class SaveState {
  private:
@@ -49,7 +85,15 @@ class SaveState {
   };
   static_assert(sizeof(Region) == 8u);
 
+  /// Base resolvers to looup `oo::BaseId`s in and insert base records into.
+  oo::BaseResolversRef mBaseCtx;
+
  public:
+  explicit SaveState(oo::BaseResolversRef baseCtx)
+      : mBaseCtx(std::move(baseCtx)) {}
+
+  friend std::ostream &operator<<(std::ostream &os, const SaveState &sv);
+  friend std::istream &operator>>(std::istream &is, SaveState &sv);
 
   /// \name File Header
   ///@{
@@ -172,9 +216,8 @@ class SaveState {
   uint32_t mNumCreatedRecords{};
 
   /// List of created base records. Includes spells, enchantments etc.
-  /// explicitly created by the player as well as cloned objects, placeAtMe, and
-  /// so on.
-  // \todo Choose a record storage datatype
+  /// explicitly created by the player as well as cloned objects.
+  std::vector<oo::BaseId> mCreatedRecords{};
 
   /// Settings for the eight quick keys.
   /// \todo What is the meaning of the quick key data, are they formids?
@@ -193,9 +236,6 @@ class SaveState {
 
   ///@}
 };
-
-std::ostream &operator<<(std::ostream &os, const SaveState &sv);
-std::istream &operator>>(std::istream &is, SaveState &sv);
 
 } // namespace oo
 
