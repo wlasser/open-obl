@@ -18,12 +18,12 @@ class Text : public InteractableMixin {
 
   Ogre::MaterialPtr createOrRetrieveMaterial() const;
 
-  void updateFont(std::string fontName);
+  void updateFont(const std::string &fontName);
 
  public:
-  Text(std::string name);
+  explicit Text(std::string name);
 
-  ~Text();
+  ~Text() override;
 
   void set_alpha(float alpha) override;
   void set_red(float red) override;

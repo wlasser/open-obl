@@ -69,19 +69,19 @@ struct push_t {
   ArgumentType arg_t;
   void operator()(Stack &stack) const;
 
-  constexpr push_t(int i) noexcept : arg_t{i} {}
-  constexpr push_t(float f) noexcept : arg_t{f} {}
-  constexpr push_t(bool b) noexcept : arg_t{b} {}
+  constexpr explicit push_t(int i) noexcept : arg_t{i} {}
+  constexpr explicit push_t(float f) noexcept : arg_t{f} {}
+  constexpr explicit push_t(bool b) noexcept : arg_t{b} {}
 
-  push_t(const char *s) : arg_t{std::string{s}} {}
-  push_t(std::string &&s) noexcept : arg_t{std::move(s)} {}
-  push_t(const std::string &s) : arg_t{std::move(s)} {}
+  explicit push_t(const char *s) : arg_t{std::string{s}} {}
+  explicit push_t(std::string &&s) noexcept : arg_t{std::move(s)} {}
+  explicit push_t(const std::string &s) : arg_t{s} {}
 
-  push_t(TraitName &&s) noexcept : arg_t{std::move(s)} {}
-  push_t(const TraitName &s) : arg_t{s} {}
+  explicit push_t(TraitName &&s) noexcept : arg_t{std::move(s)} {}
+  explicit push_t(const TraitName &s) : arg_t{s} {}
 
-  push_t(ArgumentType &&a) : arg_t{std::move(a)} {}
-  push_t(const ArgumentType &a) : arg_t{a} {}
+  explicit push_t(ArgumentType &&a) : arg_t{std::move(a)} {}
+  explicit push_t(const ArgumentType &a) : arg_t{a} {}
 };
 
 struct add_t {

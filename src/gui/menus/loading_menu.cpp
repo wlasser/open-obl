@@ -16,7 +16,7 @@ Menu<MenuType::LoadingMenu>::~Menu() {
       overlayMgr->destroy(mOverlay);
     }
   }
-};
+}
 
 Menu<MenuType::LoadingMenu>::Menu() {
   if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {

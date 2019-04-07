@@ -42,6 +42,6 @@ Trait<std::string> StringsElement::makeTrait(const std::string &name) const {
   }
   const std::string value{it->second};
   return Trait<std::string>(name, value);
-};
+}
 
 } // namespace gui

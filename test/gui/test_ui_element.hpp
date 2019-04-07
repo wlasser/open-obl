@@ -23,7 +23,7 @@ class TestUiElement : public gui::UiElement {
   }
 
   int getArea() {
-    return mWidth * mHeight * mScale;
+    return static_cast<int>(mWidth * mHeight * mScale);
   }
 
   gui::TraitTypeId userTraitType(int index) const override {

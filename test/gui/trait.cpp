@@ -170,7 +170,7 @@ TEST_CASE("can use StringsElement", "[gui]") {
     )xml"};
   pugi::xml_document doc{};
   REQUIRE(doc.load(is));
-  gui::StringsElement strings(doc);
+  gui::StringsElement strings(doc.root());
 
   auto traitExit{strings.makeTrait(prefix + "_exit")};
   REQUIRE(traitExit.invoke() == "Exit");
@@ -189,7 +189,7 @@ TEST_CASE("StringsElement accepts documents without any strings", "[gui]") {
     )xml"};
   pugi::xml_document doc{};
   REQUIRE(doc.load(is));
-  gui::StringsElement strings(doc);
+  gui::StringsElement strings(doc.root());
 
   auto traitEmpty{strings.makeTrait(prefix + "_empty")};
   REQUIRE(traitEmpty.invoke().empty());
@@ -211,7 +211,7 @@ TEST_CASE("StringsElement ignores irrelevant nodes", "[gui]") {
     )xml"};
   pugi::xml_document doc{};
   REQUIRE(doc.load(is));
-  gui::StringsElement strings(doc);
+  gui::StringsElement strings(doc.root());
 
   auto traitTest{strings.makeTrait(prefix + "_test")};
   REQUIRE(traitTest.invoke() == "Second");
@@ -275,9 +275,10 @@ TEST_CASE("can use trait selectors", "[gui]") {
   }
 
   SECTION("can use the child() selector", "[gui]") {
-    REQUIRE(gui::invokeChildSelector(doc, {}) == "Example");
-    REQUIRE(gui::invokeChildSelector(doc, "bar") == "Example.bar");
-    REQUIRE(gui::invokeChildSelector(doc, "foo") == "Example.foo");
+    auto docElement{doc.root()};
+    REQUIRE(gui::invokeChildSelector(docElement, {}) == "Example");
+    REQUIRE(gui::invokeChildSelector(docElement, "bar") == "Example.bar");
+    REQUIRE(gui::invokeChildSelector(docElement, "foo") == "Example.foo");
     REQUIRE(gui::invokeChildSelector(doc.first_child(), {}) == "Example.baz");
   }
 
@@ -299,7 +300,7 @@ TEST_CASE("can use trait selectors", "[gui]") {
     const auto barNode{doc.select_node("/menu/rect[2]").node()};
     REQUIRE(barNode);
 
-    REQUIRE(gui::invokeParentSelector(doc).empty());
+    REQUIRE(gui::invokeParentSelector(doc.root()).empty());
     REQUIRE(gui::invokeParentSelector(doc.first_child()).empty());
     REQUIRE(gui::invokeParentSelector(barNode) == "Example");
     // Unintended use, but allowed under the documentation.

@@ -28,7 +28,7 @@ class Image : public InteractableMixin, public PanelMixin {
   /*C++20: [[expects: mOverlay != nullptr]]*/;
 
  public:
-  Image(std::string name);
+  explicit Image(std::string name);
 
   void set_width(float width) override;
   void set_height(float height) override;

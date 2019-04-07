@@ -228,10 +228,11 @@ class MenuContext {
   const gui::UiElement *getElementWithId(int id) const;
 };
 
-std::optional<MenuContext> loadMenu(pugi::xml_node doc,
-                                    std::optional<pugi::xml_node> stringsDoc);
-std::optional<MenuContext> loadMenu(const std::string &filename,
-                                    const std::string &stringsFilename);
+std::optional<MenuContext>
+loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc);
+
+std::optional<MenuContext>
+loadMenu(const std::string &filename, const std::string &stringsFilename);
 
 /// \name MenuType specializations
 ///@{

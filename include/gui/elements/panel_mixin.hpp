@@ -14,9 +14,9 @@ class PanelMixin : public virtual UiElement {
   Ogre::PanelOverlayElement *getPanelOverlayElement();
 
  public:
-  PanelMixin(const std::string &name);
+  explicit PanelMixin(const std::string &name);
 
-  ~PanelMixin();
+  ~PanelMixin() override;
 
   void set_x(float x) override;
   void set_y(float y) override;

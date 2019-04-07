@@ -40,7 +40,7 @@ class Button : public Image {
 
  public:
 
-  Button(std::string name) : Image(std::move(name)) {}
+  explicit Button(std::string name) : Image(std::move(name)) {}
 
   auto getUserOutputTraitInterface() const {
     return std::make_tuple(

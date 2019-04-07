@@ -7,7 +7,7 @@
 namespace gui::stack {
 
 TraitName::TraitName(std::string name, const gui::Traits *traits)
-    : str(name), traits(traits) {}
+    : str(std::move(name)), traits(traits) {}
 
 ValueType parseValueType(std::string_view str) {
   gui::XmlEntityConverter conv{};

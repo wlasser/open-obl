@@ -17,7 +17,7 @@ class GenericBackground : public Rect {
       mInterface{std::make_tuple(&mWidth, &mHeight)};
 
  public:
-  GenericBackground(std::string name) : Rect(std::move(name)) {}
+  explicit GenericBackground(std::string name) : Rect(std::move(name)) {}
 
   auto getUserOutputTraitInterface() const {
     return std::tuple<float *, float *>{nullptr, nullptr};

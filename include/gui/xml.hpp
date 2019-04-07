@@ -121,8 +121,8 @@ pugi::xml_node findClosestNode(pugi::xml_node node, Predicate &&p) {
 template<class F>
 void preOrderDFS(pugi::xml_node &node, F &&visitor) {
   if (!visitor(node)) return;
-  for (auto &node : node.children()) {
-    gui::preOrderDFS(node, std::forward<F>(visitor));
+  for (auto &child : node.children()) {
+    gui::preOrderDFS(child, std::forward<F>(visitor));
   }
 }
 

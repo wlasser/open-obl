@@ -43,7 +43,7 @@ class VerticalScroll : public Image {
       &mScrollNumVisibleItems, &mScrollScrStep, &mUser10)};
 
  public:
-  VerticalScroll(std::string name) : Image(std::move(name)) {}
+  explicit VerticalScroll(std::string name) : Image(std::move(name)) {}
 
   auto getUserOutputTraitInterface() const {
     float *const fnull{nullptr};
@@ -73,7 +73,7 @@ class VerticalScrollMarker : public Image {
       &mUser10)};
 
  public:
-  VerticalScrollMarker(std::string name) : Image(std::move(name)) {}
+  explicit VerticalScrollMarker(std::string name) : Image(std::move(name)) {}
 
   auto getUserOutputTraitInterface() const {
     float *const fnull{nullptr};

@@ -276,7 +276,7 @@ Traits::binUserTraits() const {
     const std::optional<int> userIndex{gui::getUserTraitIndex(name)};
     if (!userIndex) continue;
 
-    const std::string uiElementName{name.substr(0, name.rfind("."))};
+    const std::string uiElementName{name.substr(0, name.rfind('.'))};
 
     auto &vec{map[uiElementName]};
     if (vec.size() <= *userIndex) {
@@ -374,7 +374,7 @@ class VertexWriter {
   const Graph &mGraph;
 
  public:
-  VertexWriter(const Graph &g) : mGraph(g) {}
+  explicit VertexWriter(const Graph &g) : mGraph(g) {}
 
   template<class VertexDesc>
   void operator()(std::ostream &os, VertexDesc desc) {

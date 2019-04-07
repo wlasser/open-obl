@@ -161,9 +161,9 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   return accum;
 }
 
-std::optional<MenuContext> loadMenu(pugi::xml_node doc,
-                                    std::optional<pugi::xml_node> stringsDoc) {
-  const auto[menuNode, menuType]{gui::getMenuNode(doc)};
+std::optional<MenuContext>
+loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc) {
+  const auto[menuNode, menuType]{gui::getMenuNode(doc.root())};
 
   auto menu{std::make_unique<MenuVariant>()};
   enumvar::defaultConstruct(menuType, *menu);
@@ -177,7 +177,7 @@ std::optional<MenuContext> loadMenu(pugi::xml_node doc,
 
   // Construct the dependency graph of the dynamic representation
   auto menuTraits{std::make_unique<Traits>()};
-  if (stringsDoc) menuTraits->loadStrings(*stringsDoc);
+  if (stringsDoc) menuTraits->loadStrings(stringsDoc->root());
   auto uiElements = gui::addDescendants(*menuTraits, menuElement, menuNode);
   menuTraits->addImplementationElementTraits();
   menuTraits->addProvidedTraits(menuElement);
@@ -207,7 +207,7 @@ std::optional<MenuContext> loadMenu(const std::string &filename,
   auto doc{gui::readXmlDocument(filename)};
   auto stringsDoc{gui::readXmlDocument(stringsFilename)};
   doc.save_file("out.xml", "  ");
-  return loadMenu(doc, stringsDoc);
+  return gui::loadMenu(std::move(doc), std::move(stringsDoc));
 }
 
 MenuContext::MenuContext(std::unique_ptr<Traits> traits,

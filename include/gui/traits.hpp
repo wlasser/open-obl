@@ -35,9 +35,10 @@ class Traits {
     /// The last value is cached so avoid updating every concrete representative
     /// every time update() is called.
     std::optional<std::variant<float, std::string, bool>> cache{};
-    /*explicit*/ TraitVertexBase(TraitVariant v) : var(v) {}
+    /*explicit*/ explicit TraitVertexBase(TraitVariant v) : var(std::move(v)) {}
     template<class ...Args>
-    TraitVertexBase(Args &&... args) : var(std::forward<Args>(args)...) {}
+    explicit TraitVertexBase(Args &&... args)
+        : var(std::forward<Args>(args)...) {}
   };
 
   /// Vertex properties are required to be default constructible and copy
@@ -52,9 +53,9 @@ class Traits {
   /// This is necessary because the return type of a custom trait can only be
   /// deduced later, once all user and implementation traits have been added.
   struct DeferredTrait {
-    std::string name;
-    gui::stack::Program program;
-    gui::TraitTypeId returnType;
+    std::string name{};
+    gui::stack::Program program{};
+    gui::TraitTypeId returnType{};
     DeferredTrait(std::string name,
                   gui::stack::Program program,
                   gui::TraitTypeId returnType) : name(std::move(name)),

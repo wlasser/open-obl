@@ -19,7 +19,7 @@ struct TraitSelector {
 };
 
 /// Attempt to read the selector string as a `TraitSelector`.
-std::optional<TraitSelector> tokenizeTraitSelector(std::string selector);
+std::optional<TraitSelector> tokenizeTraitSelector(const std::string &selector);
 
 /// Ascend back up the tree, building the fully-qualified name of the `node`.
 /// Joins the `name` attributes of each of `node`'s ancestors separating them

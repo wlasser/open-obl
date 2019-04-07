@@ -10,7 +10,7 @@
 namespace gui {
 
 // TODO: Use std::string_view and a faster regex
-std::optional<TraitSelector> tokenizeTraitSelector(std::string src) {
+std::optional<TraitSelector> tokenizeTraitSelector(const std::string &src) {
   const std::regex selectorRegex{"(.+?)\\((.*?)\\)"};
   std::smatch selectorMatch{};
   std::regex_match(src, selectorMatch, selectorRegex);
@@ -53,7 +53,7 @@ std::string fullyQualifyName(pugi::xml_node node) {
   // Can't just use node.path as that uses tag names, not name attributes.
   std::vector<std::string> ancestors;
   for (; node.attribute("name"); node = node.parent()) {
-    ancestors.push_back(node.attribute("name").value());
+    ancestors.emplace_back(node.attribute("name").value());
   }
   return boost::algorithm::join(ancestors | boost::adaptors::reversed, ".");
 }

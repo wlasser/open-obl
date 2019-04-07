@@ -122,7 +122,7 @@ TEST_CASE("can push values onto the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   auto ret{program()};
@@ -161,7 +161,7 @@ TEST_CASE("can perform integer arithmetic on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
 
     auto ret{program()};
     REQUIRE(std::holds_alternative<float>(ret));
@@ -195,7 +195,7 @@ TEST_CASE("can perform floating point arithmetic on the stack",
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   auto ret{program()};
@@ -266,7 +266,7 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      p_not_coprime = stack::compile(doc);
+      p_not_coprime = stack::compile(doc.root());
     }
 
     {
@@ -276,7 +276,7 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      p_coprime = stack::compile(doc);
+      p_coprime = stack::compile(doc.root());
     }
 
     {
@@ -286,7 +286,7 @@ TEST_CASE("can compute gcd and lcm on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      p_lcm = stack::compile(doc);
+      p_lcm = stack::compile(doc.root());
     }
 
     auto r_not_coprime{p_not_coprime()};
@@ -325,7 +325,7 @@ TEST_CASE("can compute floor and ceiling on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   auto ret{program()};
@@ -360,7 +360,7 @@ TEST_CASE("can compute min and max on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      p_min = stack::compile(doc);
+      p_min = stack::compile(doc.root());
     }
 
     {
@@ -371,7 +371,7 @@ TEST_CASE("can compute min and max on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      p_max = stack::compile(doc);
+      p_max = stack::compile(doc.root());
     }
   }
 
@@ -402,7 +402,7 @@ TEST_CASE("can compute abs on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   auto ret{program()};
@@ -453,7 +453,7 @@ TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   SECTION("from nested XML") {
@@ -481,7 +481,7 @@ TEST_CASE("can do comparisons on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
   }
 
   auto ret{program()};
@@ -512,7 +512,7 @@ TEST_CASE("can perform logical operations on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      program = stack::compile(doc);
+      program = stack::compile(doc.root());
     }
 
     auto ret{program()};
@@ -536,7 +536,7 @@ TEST_CASE("can perform logical operations on the stack", "[gui][gui/stack]") {
       )xml"};
       pugi::xml_document doc{};
       REQUIRE(doc.load(is));
-      program = stack::compile(doc);
+      program = stack::compile(doc.root());
     }
 
     auto ret{program()};
@@ -589,7 +589,7 @@ TEST_CASE("can branch on the stack", "[gui][gui/stack]") {
     )xml"};
     pugi::xml_document doc{};
     REQUIRE(doc.load(is));
-    program = stack::compile(doc);
+    program = stack::compile(doc.root());
 
     auto ret{program()};
     REQUIRE(std::holds_alternative<float>(ret));

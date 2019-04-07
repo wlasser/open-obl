@@ -152,7 +152,7 @@ TEST_CASE("user traits should not be reset to 0 on second update()",
   )xml"};
   pugi::xml_document doc{};
   REQUIRE(doc.load(is));
-  auto ctx{gui::loadMenu(doc, {})};
+  auto ctx{gui::loadMenu(std::move(doc), {})};
   REQUIRE(ctx.has_value());
   REQUIRE_NOTHROW(ctx->update());
 }

@@ -79,7 +79,7 @@ Ogre::MaterialPtr gui::Text::createOrRetrieveMaterial() const {
   }
 }
 
-void gui::Text::updateFont(std::string fontName) {
+void gui::Text::updateFont(const std::string &fontName) {
   // Update the overlay font, forcing an update of its material
   // Fonts without file extensions are named fonts defined in fontdef files,
   // such as the fallback font.
@@ -92,7 +92,7 @@ void gui::Text::updateFont(std::string fontName) {
   // Grab texture from overlay material, which is the same as the font material
   auto *fontPass{mOverlay->getMaterial()->getTechnique(0)->getPass(0)};
   auto *fontState{fontPass->getTextureUnitStates().front()};
-  auto texPtr{fontState->_getTexturePtr()};
+  const auto &texPtr{fontState->_getTexturePtr()};
 
   // Set current material's texture to the font texture
   auto *pass{mMatPtr->getTechnique(0)->getPass(0)};

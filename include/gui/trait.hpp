@@ -158,14 +158,14 @@ class UserTraitInterface {
 /// does not derived from `UiElement`. \see `UserTraitInterface`
 #define BUILD_USER_TRAIT_INTERFACE(interface) \
 TraitTypeId userTraitType(int index) const override { \
-  return interface.userTraitType(index); \
+  return (interface).userTraitType((index)); \
 } \
 void set_user(int index, gui::UiElement::UserValue value) override { \
   return std::visit([this, index](auto value) { \
-    interface.set_user(index, value); }, value); \
+    (interface).set_user(index, value); }, value); \
 } \
 gui::UiElement::UserValue get_user(int index) override { \
-  return interface.get_user(index); \
+  return (interface).get_user(index); \
 } \
 void setOutputUserTraitSources(std::vector<TraitVariant *> traits) const override { \
   for (auto *p : traits) { \
@@ -281,8 +281,7 @@ class Trait {
   void setSource(const std::tuple<Ts *...> &userInterface) {
     const int idx = [this]() {
       const auto opt{getUserTraitIndex(mName)};
-      if (opt) return *opt;
-      else throw std::runtime_error("Not a user trait");
+      return opt ? *opt : throw std::runtime_error("Not a user trait");
     }();
     if (!setSourceImpl(idx, userInterface, std::index_sequence_for<Ts...>{})) {
       throw std::runtime_error("Incompatible interface");
