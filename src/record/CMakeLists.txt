@@ -14,6 +14,7 @@ target_include_directories(OpenOblivionRecord PUBLIC
 target_sources(OpenOblivionRecord PRIVATE
         ${CMAKE_SOURCE_DIR}/include/record/actor_value.hpp
         ${CMAKE_SOURCE_DIR}/include/record/attribute.hpp
+        ${CMAKE_SOURCE_DIR}/include/record/change_record.hpp
         ${CMAKE_SOURCE_DIR}/include/record/definition_helpers.hpp
         ${CMAKE_SOURCE_DIR}/include/record/exceptions.hpp
         ${CMAKE_SOURCE_DIR}/include/record/formid.hpp
