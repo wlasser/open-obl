@@ -9,15 +9,10 @@ std::optional<MenuContext> loadMenu(const std::string &filename,
   auto doc{gui::readXmlDocument(filename)};
   auto stringsDoc{gui::readXmlDocument(stringsFilename)};
   doc.save_file("out.xml", "  ");
-  return gui::loadMenu(std::move(doc), std::move(stringsDoc));
+  return MenuContext::Impl::loadMenu(std::move(doc), std::move(stringsDoc));
 }
 
-MenuContext::MenuContext(std::unique_ptr<Traits> traits,
-                         std::unique_ptr<MenuVariant> menu,
-                         std::vector<UiElementPtr> uiElements)
-    : mImpl(std::make_unique<Impl>(std::move(traits),
-                                   std::move(menu),
-                                   std::move(uiElements))) {}
+MenuContext::MenuContext(std::unique_ptr<Impl> impl) : mImpl(std::move(impl)) {}
 
 MenuContext::~MenuContext() = default;
 

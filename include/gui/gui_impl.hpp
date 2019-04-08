@@ -37,13 +37,11 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node);
 
 /// Bind all of `node`'s traits to `uiElement`, then recurse through its child
 /// `UiElement`s and do the same.
-/// \returns All the descendant `UiElement`s of `uiElement`, **not** including
-///          `uiElement` itself.
-std::vector<std::unique_ptr<UiElement>>
+/// \returns All the descendant `UiElementNode`s of `uiElement`, **not**
+///          including `uiElement` itself.
+/// \remark The nodes are arranged in depth-first order.
+std::vector<UiElementNode>
 addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
-
-std::optional<MenuContext>
-loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc);
 
 /// \name MenuType specializations
 ///@{
@@ -57,16 +55,20 @@ void XmlEntityConverter::operator()(std::string_view entity,
 
 class MenuContext::Impl {
  private:
-  using UiElementPtr = MenuContext::UiElementPtr;
-
   std::unique_ptr<Traits> mTraits;
   std::unique_ptr<MenuVariant> mMenu;
-  std::vector<UiElementPtr> mUiElements;
+  std::vector<UiElementNode> mUiElements;
+  pugi::xml_document mDocument;
 
  public:
   Impl(std::unique_ptr<Traits> traits,
        std::unique_ptr<MenuVariant> menu,
-       std::vector<UiElementPtr> uiElements);
+       std::vector<UiElementNode> uiElements,
+       pugi::xml_document document);
+
+  static std::optional<MenuContext>
+  loadMenu(pugi::xml_document doc,
+           std::optional<pugi::xml_document> stringsDoc);
 
   /// \copydoc MenuContext::update()
   void update();

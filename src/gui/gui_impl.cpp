@@ -17,17 +17,19 @@ namespace gui {
 
 MenuContext::Impl::Impl(std::unique_ptr<Traits> traits,
                         std::unique_ptr<MenuVariant> menu,
-                        std::vector<UiElementPtr> uiElements)
+                        std::vector<UiElementNode> uiElements,
+                        pugi::xml_document document)
     : mTraits(std::move(traits)),
       mMenu(std::move(menu)),
-      mUiElements(std::move(uiElements)) {}
+      mUiElements(std::move(uiElements)),
+      mDocument(std::move(document)) {}
 
 void MenuContext::Impl::update() {
   mTraits->update();
 }
 
 void MenuContext::Impl::clearEvents() {
-  for (const auto &uiElement : mUiElements) {
+  for (const auto &[uiElement, _] : mUiElements) {
     uiElement->clearEvents();
   }
 }
@@ -55,10 +57,10 @@ gui::UiElement::UserValue MenuContext::Impl::get_user(int index) {
 const gui::UiElement *MenuContext::Impl::getElementWithId(int id) const {
   if (id < 0) return nullptr;
   auto it{std::find_if(mUiElements.begin(), mUiElements.end(),
-                       [id](const UiElementPtr &ptr) {
-                         return ptr->get_id() == id;
+                       [id](const UiElementNode &pair) {
+                         return pair.first->get_id() == id;
                        })};
-  return it == mUiElements.end() ? nullptr : it->get();
+  return it == mUiElements.end() ? nullptr : it->first.get();
 }
 
 UiElement *extractUiElement(MenuVariant &menu) {
@@ -172,10 +174,9 @@ std::vector<UiElementNode> getChildElements(pugi::xml_node node) {
   return uiElements;
 }
 
-std::vector<std::unique_ptr<UiElement>>
+std::vector<UiElementNode>
 addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   gui::addTraits(traits, uiElement, node);
-  std::vector<std::unique_ptr<UiElement>> accum{};
 
   auto *parentOverlay{uiElement->getOverlayElement()};
   auto *parentContainer{dynamic_cast<Ogre::OverlayContainer *>(parentOverlay)};
@@ -183,17 +184,18 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
   auto children{gui::getChildElements(node)};
   uiElement->setChildCount(children.size());
 
-  for (auto &child : children) {
-    UiElement *childPtr{child.first.get()};
+  std::vector<UiElementNode> accum{};
+  for (auto &[childElem, childNode] : children) {
+    UiElement *childPtr{childElem.get()};
     if (parentContainer) {
-      if (auto *childOverlay{childPtr->getOverlayElement()}) {
-        parentContainer->addChild(childOverlay);
+      if (auto *childOverlayElem{childPtr->getOverlayElement()}) {
+        parentContainer->addChild(childOverlayElem);
       }
     }
 
-    auto descendants{addDescendants(traits, childPtr, child.second)};
+    auto descendants{gui::addDescendants(traits, childPtr, childNode)};
     accum.reserve(accum.size() + 1u + descendants.size());
-    accum.emplace_back(std::move(child.first));
+    accum.emplace_back(std::move(childElem), childNode);
     accum.insert(accum.end(),
                  std::make_move_iterator(descendants.begin()),
                  std::make_move_iterator(descendants.end()));
@@ -203,26 +205,25 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
 }
 
 std::optional<MenuContext>
-loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc) {
+MenuContext::Impl::loadMenu(pugi::xml_document doc,
+                            std::optional<pugi::xml_document> stringsDoc) {
   const auto[menuNode, menuType]{gui::getMenuNode(doc.root())};
 
   auto menu{std::make_unique<MenuVariant>()};
   enumvar::defaultConstruct(menuType, *menu);
   auto *menuElement{gui::extractUiElement(*menu)};
 
-  const std::string menuName{menuNode.attribute("name").value()};
-  if (menuName.empty()) {
-    return std::nullopt;
-  }
-  menuElement->set_name(menuName);
+  if (std::string name{menuNode.attribute("name").value()}; !name.empty()) {
+    menuElement->set_name(std::move(name));
+  } else return std::nullopt;
 
   // Construct the dependency graph of the dynamic representation
   auto menuTraits{std::make_unique<Traits>()};
   if (stringsDoc) menuTraits->loadStrings(stringsDoc->root());
-  auto uiElements = gui::addDescendants(*menuTraits, menuElement, menuNode);
+  auto uiElements{gui::addDescendants(*menuTraits, menuElement, menuNode)};
   menuTraits->addImplementationElementTraits();
   menuTraits->addProvidedTraits(menuElement);
-  for (const auto &uiElement : uiElements) {
+  for (const auto &[uiElement, _] : uiElements) {
     menuTraits->addProvidedTraits(uiElement.get());
   }
   menuTraits->addQueuedCustomTraits();
@@ -233,14 +234,16 @@ loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc) {
   // parent element's user interface buffer.
   auto binnedTraits{menuTraits->binUserTraits()};
   menuElement->setOutputUserTraitSources(binnedTraits[menuElement->get_name()]);
-  for (const auto &uiElement : uiElements) {
+  for (const auto &[uiElement, _] : uiElements) {
     uiElement->setOutputUserTraitSources(binnedTraits[uiElement->get_name()]);
   }
 
-  return std::optional<MenuContext>(std::in_place,
-                                    std::move(menuTraits),
-                                    std::move(menu),
-                                    std::move(uiElements));
+  return MenuContext(std::make_unique<Impl>(
+      std::move(menuTraits),
+      std::move(menu),
+      std::move(uiElements),
+      std::move(doc)
+  ));
 }
 
 template<>

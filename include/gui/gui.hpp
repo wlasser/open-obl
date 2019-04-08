@@ -146,11 +146,9 @@ class MenuContext {
   using UiElementPtr = std::unique_ptr<UiElement>;
   std::experimental::propagate_const<std::unique_ptr<Impl>> mImpl;
 
- public:
-  MenuContext(std::unique_ptr<Traits> traits,
-              std::unique_ptr<MenuVariant> menu,
-              std::vector<UiElementPtr> uiElements);
+  explicit MenuContext(std::unique_ptr<Impl> impl);
 
+ public:
   ~MenuContext();
 
   MenuContext(const MenuContext &) = delete;
@@ -183,6 +181,9 @@ class MenuContext {
   /// element exists.
   /// This is only guaranteed to be `O(n)` or better.
   const gui::UiElement *getElementWithId(int id) const;
+
+  friend std::optional<MenuContext>
+  loadMenu(const std::string &filename, const std::string &stringsFilename);
 };
 
 std::optional<MenuContext>
