@@ -32,15 +32,34 @@ void addTraits(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 /// Owned `UiElement` and the XML node which represents it.
 using UiElementNode = std::pair<std::unique_ptr<UiElement>, pugi::xml_node>;
 
+/// A ordered list of `UiElementNode`s.
+using UiElementNodeList = std::vector<UiElementNode>;
+
+/// Return the fully-qualified name of `node`, ensuring that it is unique among
+/// all the other `uiElements`.
+/// \remark If the fully-qualified name of `node` is shared by an already
+///         existing node, then an underscore is appended to the end of the name
+///         until the name is unique. This scheme is subject to change.
+/// \remark The explicit uniquing is only required when siblings have the same
+///         name; this is deprecated, and should be avoided as supporting it
+///         causes node insertion to be `O(n)` in time instead of `O(1)`.
+std::string
+getFullyQualifiedName(pugi::xml_node node, const UiElementNodeList &uiElements);
+
+/// Use the name of the `node` to deduce the type of `UiElement` that it
+/// represents, constructing one with given unique fully-qualified `name`.
+std::unique_ptr<UiElement>
+makeUiElement(pugi::xml_node node, std::string name);
+
 /// Return pointers to the child `UiElement`s of the given `node`.
-std::vector<UiElementNode> getChildElements(pugi::xml_node node);
+UiElementNodeList getChildElements(pugi::xml_node node);
 
 /// Bind all of `node`'s traits to `uiElement`, then recurse through its child
 /// `UiElement`s and do the same.
 /// \returns All the descendant `UiElementNode`s of `uiElement`, **not**
 ///          including `uiElement` itself.
 /// \remark The nodes are arranged in depth-first order.
-std::vector<UiElementNode>
+UiElementNodeList
 addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
 /// \name MenuType specializations
@@ -57,13 +76,13 @@ class MenuContext::Impl {
  private:
   std::unique_ptr<Traits> mTraits;
   std::unique_ptr<MenuVariant> mMenu;
-  std::vector<UiElementNode> mUiElements;
+  UiElementNodeList mUiElements;
   pugi::xml_document mDocument;
 
  public:
   Impl(std::unique_ptr<Traits> traits,
        std::unique_ptr<MenuVariant> menu,
-       std::vector<UiElementNode> uiElements,
+       UiElementNodeList uiElements,
        pugi::xml_document document);
 
   static std::optional<MenuContext>
