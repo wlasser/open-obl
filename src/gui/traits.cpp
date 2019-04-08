@@ -251,7 +251,8 @@ void Traits::addQueuedCustomTraits() {
 
   // Any traits that are left depend on other custom traits. Topologically sort
   // them so they can be added in the correct order.
-  auto g{makeDeferredTraitGraph(tBegin, mDeferredTraits.end())};
+  auto g{makeDeferredTraitGraph(std::move_iterator(tBegin),
+                                std::move_iterator(mDeferredTraits.end()))};
   std::vector<typename decltype(g)::vertex_descriptor>
       order(boost::num_vertices(g));
   boost::topological_sort(g, order.begin());
@@ -290,42 +291,47 @@ Traits::binUserTraits() const {
   return map;
 }
 
+void Traits::addTraitDependencies(TraitGraph::vertex_descriptor vIndex) {
+  const TraitVertex &vPtr{mGraph[vIndex]};
+  const auto deps{getDependencies(vPtr)};
+
+  for (const auto &dep : deps) {
+    // Switch statements (selected traits with trailing underscores) can
+    // depend on all possible cases.
+    if (dep.back() == '_') {
+      for (auto uIndex : mGraph.vertex_set()) {
+        const TraitVertex &uPtr{mGraph[uIndex]};
+        if (!uPtr) continue;
+        const bool match = std::visit([&dep](const auto &v) {
+          //C++20: return v.getName().starts_with(dep);
+          return boost::algorithm::starts_with(v.getName(), dep);
+        }, uPtr->var);
+        if (match) {
+          boost::remove_edge(uIndex, vIndex, mGraph);
+          boost::add_edge(uIndex, vIndex, mGraph);
+        }
+      }
+    } else {
+      const auto uIndexIt{mIndices.find(dep)};
+      if (uIndexIt == mIndices.end()) {
+        const std::string dependee{std::visit([](const auto &trait) {
+          return trait.getName();
+        }, vPtr->var)};
+        gui::guiLogger()->error("Dependency {} of {} does not exist",
+                                dep, dependee);
+        throw std::runtime_error("Nonexistent dependency");
+      }
+      const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
+      boost::remove_edge(uIndex, vIndex, mGraph);
+      boost::add_edge(uIndex, vIndex, mGraph);
+    }
+  }
+
+}
+
 void Traits::addTraitDependencies() {
   for (TraitGraph::vertex_descriptor vIndex : mGraph.vertex_set()) {
-    const TraitVertex &vPtr{mGraph[vIndex]};
-    const auto deps{getDependencies(vPtr)};
-
-    for (const auto &dep : deps) {
-      // Switch statements (selected traits with trailing underscores) can
-      // depend on all possible cases.
-      if (dep.back() == '_') {
-        for (auto uIndex : mGraph.vertex_set()) {
-          const TraitVertex &uPtr{mGraph[uIndex]};
-          if (!uPtr) continue;
-          const bool match = std::visit([&dep](const auto &v) {
-            //C++20: return v.getName().starts_with(dep);
-            return boost::algorithm::starts_with(v.getName(), dep);
-          }, uPtr->var);
-          if (match) {
-            boost::remove_edge(uIndex, vIndex, mGraph);
-            boost::add_edge(uIndex, vIndex, mGraph);
-          }
-        }
-      } else {
-        const auto uIndexIt{mIndices.find(dep)};
-        if (uIndexIt == mIndices.end()) {
-          const std::string dependee{std::visit([](const auto &trait) {
-            return trait.getName();
-          }, vPtr->var)};
-          gui::guiLogger()->error("Dependency {} of {} does not exist",
-                                  dep, dependee);
-          throw std::runtime_error("Nonexistent dependency");
-        }
-        const TraitGraph::vertex_descriptor uIndex{uIndexIt->second};
-        boost::remove_edge(uIndex, vIndex, mGraph);
-        boost::add_edge(uIndex, vIndex, mGraph);
-      }
-    }
+    addTraitDependencies(vIndex);
   }
 }
 

@@ -122,9 +122,24 @@ class Traits {
   /// vector if the `vertex` is null.
   std::vector<std::string> getDependencies(const TraitVertex &vertex) const;
 
-  template<class ForwardIt>
-  auto makeDeferredTraitGraph(ForwardIt first, ForwardIt last);
+  /// For each dependency `u` of `v`, make an edge from `u` to `v`.
+  /// \param vIndex The vertex descriptor of the vertex `v`.
+  void addTraitDependencies(TraitGraph::vertex_descriptor vIndex);
 
+  /// Construct a directed graph from the given iterator range of
+  /// `DeferredTrait` vertices, with an edge from `u` to `v` iff `u` is a
+  /// dependency of `v`.
+  //C++20: Use the std::InputIterator concept.
+  template<class InputIt, class = std::enable_if_t<
+      std::is_base_of_v<std::input_iterator_tag,
+                        typename std::iterator_traits<InputIt>::iterator_category>
+          && std::is_convertible_v<DeferredTrait,
+                                   typename std::iterator_traits<InputIt>::value_type>>>
+  auto makeDeferredTraitGraph(InputIt first, InputIt last);
+
+  /// If `dep` is the name of an implementation-defined trait then construct
+  /// that trait and add it to the trait graph.
+  /// \pre There is no trait called `dep` in the trait graph.
   void addImplementationElementTrait(const std::string &dep);
 
  public:
@@ -331,14 +346,12 @@ void Traits::setOutputUserTraitSources(const std::tuple<Ts *...> &outTraits) {
   }
 }
 
-template<class ForwardIt>
-auto Traits::makeDeferredTraitGraph(ForwardIt first, ForwardIt last) {
+template<class InputIt, class>
+auto Traits::makeDeferredTraitGraph(InputIt first, InputIt last) {
   boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
                         DeferredTrait> g;
   // Add deferred traits as vertices
-  for (auto &trait : boost::make_iterator_range(first, last)) {
-    boost::add_vertex(std::move(trait), g);
-  }
+  for (auto it{first}; it != last; ++it) boost::add_vertex(*it, g);
 
   // Add an edge from u to v if v depends on u
   auto[vBegin, vEnd]{boost::vertices(g)};
