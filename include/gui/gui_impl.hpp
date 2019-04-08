@@ -62,6 +62,9 @@ UiElementNodeList getChildElements(pugi::xml_node node);
 UiElementNodeList
 addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
 
+std::optional<MenuContext>
+loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc);
+
 /// \name MenuType specializations
 ///@{
 template<> MenuType getXmlValue(pugi::xml_node node);
@@ -71,6 +74,26 @@ template<>
 void XmlEntityConverter::operator()(std::string_view entity,
                                     boost::optional<MenuType> &out) const;
 ///@}
+
+/// Used to construct a `MenuContext` within the library without exposing
+/// `pugi::xml_document` to the user of `MenuContext`.
+///
+/// The problem is that `MenuContext` needs to be constructed with a
+/// `pugi::xml_document`, but we don't want to expose that type to a user of the
+/// library. Since we're already using PImpl with `MenuContext`, we can make
+/// `MenuContext` constructable from a pointer to its implementation
+/// `MenuContext::Impl`, then give `MenuContext::Impl` the necessary
+/// constructor. Nobody can construct the implementation though because it's
+/// a private member of `MenuContext`, so we grant friend access to this proxy
+/// class that has a static member function forwarding its arguments to the
+/// constructor. The implementation's constructor is public so that we can use
+/// `std::make_unique`.
+struct MenuContextProxy {
+  static MenuContext makeMenuContext(std::unique_ptr<Traits> traits,
+                                     std::unique_ptr<MenuVariant> menu,
+                                     UiElementNodeList uiElements,
+                                     pugi::xml_document document);
+};
 
 class MenuContext::Impl {
  private:
@@ -84,10 +107,6 @@ class MenuContext::Impl {
        std::unique_ptr<MenuVariant> menu,
        UiElementNodeList uiElements,
        pugi::xml_document document);
-
-  static std::optional<MenuContext>
-  loadMenu(pugi::xml_document doc,
-           std::optional<pugi::xml_document> stringsDoc);
 
   /// \copydoc MenuContext::update()
   void update();

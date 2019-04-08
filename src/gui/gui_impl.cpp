@@ -63,6 +63,17 @@ const gui::UiElement *MenuContext::Impl::getElementWithId(int id) const {
   return it == mUiElements.end() ? nullptr : it->first.get();
 }
 
+MenuContext MenuContextProxy::makeMenuContext(std::unique_ptr<Traits> traits,
+                                              std::unique_ptr<MenuVariant> menu,
+                                              UiElementNodeList uiElements,
+                                              pugi::xml_document document) {
+  return MenuContext(std::make_unique<MenuContext::Impl>(
+      std::move(traits),
+      std::move(menu),
+      std::move(uiElements),
+      std::move(document)));
+}
+
 UiElement *extractUiElement(MenuVariant &menu) {
   return std::visit([](auto &&arg) -> UiElement * {
     return static_cast<UiElement *>(&arg);
@@ -217,8 +228,7 @@ addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node) {
 }
 
 std::optional<MenuContext>
-MenuContext::Impl::loadMenu(pugi::xml_document doc,
-                            std::optional<pugi::xml_document> stringsDoc) {
+loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc) {
   const auto[menuNode, menuType]{gui::getMenuNode(doc.root())};
 
   auto menu{std::make_unique<MenuVariant>()};
@@ -250,12 +260,12 @@ MenuContext::Impl::loadMenu(pugi::xml_document doc,
     uiElement->setOutputUserTraitSources(binnedTraits[uiElement->get_name()]);
   }
 
-  return MenuContext(std::make_unique<Impl>(
+  return MenuContextProxy::makeMenuContext(
       std::move(menuTraits),
       std::move(menu),
       std::move(uiElements),
       std::move(doc)
-  ));
+  );
 }
 
 template<>

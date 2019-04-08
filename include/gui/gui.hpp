@@ -130,6 +130,7 @@
 namespace gui {
 
 class Traits;
+struct MenuContextProxy;
 
 /// Lift of `MenuType` from value space to type space.
 /// The base `UiElement` of each `Menu` lets us do a lot with virtual dispatch,
@@ -143,6 +144,7 @@ using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 class MenuContext {
  private:
   class Impl;
+  friend MenuContextProxy;
   using UiElementPtr = std::unique_ptr<UiElement>;
   std::experimental::propagate_const<std::unique_ptr<Impl>> mImpl;
 

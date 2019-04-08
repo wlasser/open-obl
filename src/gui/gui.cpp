@@ -9,7 +9,7 @@ std::optional<MenuContext> loadMenu(const std::string &filename,
   auto doc{gui::readXmlDocument(filename)};
   auto stringsDoc{gui::readXmlDocument(stringsFilename)};
   doc.save_file("out.xml", "  ");
-  return MenuContext::Impl::loadMenu(std::move(doc), std::move(stringsDoc));
+  return gui::loadMenu(std::move(doc), std::move(stringsDoc));
 }
 
 MenuContext::MenuContext(std::unique_ptr<Impl> impl) : mImpl(std::move(impl)) {}
