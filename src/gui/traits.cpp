@@ -282,13 +282,30 @@ Traits::binUserTraits() const {
     const std::string uiElementName{name.substr(0, name.rfind('.'))};
 
     auto &vec{map[uiElementName]};
-    if (vec.size() <= *userIndex) {
-      vec.insert(vec.end(), *userIndex - vec.size() + 1, nullptr);
-    }
+    if (vec.size() <= *userIndex) vec.resize(*userIndex + 1u, nullptr);
     vec[*userIndex] = trait;
   }
 
   return map;
+}
+
+std::vector<Traits::TraitVariant *>
+Traits::binUserTraits(std::string_view traitName) const {
+  std::vector<TraitVariant *> traits;
+
+  for (const auto&[name, index] : mIndices) {
+    std::string_view nameSv{name};
+    std::string_view uiElementName{nameSv.substr(0, name.rfind('.'))};
+    if (uiElementName != traitName) continue;
+
+    const TraitVertex &vPtr{mGraph[index]};
+    if (!vPtr) throw std::runtime_error("nullptr vertex");
+
+    if (traits.size() <= index) traits.resize(index + 1u, nullptr);
+    traits[index] = &mGraph[index]->var;
+  }
+
+  return traits;
 }
 
 void Traits::addTraitDependencies(TraitGraph::vertex_descriptor vIndex) {

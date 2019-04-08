@@ -217,6 +217,12 @@ class Traits {
   std::unordered_map<std::string, std::vector<TraitVariant *>>
   binUserTraits() const;
 
+  /// Find all the user traits of a given `uiElement`.
+  /// \returns `binUserTraits()[traitName]`, but without creating the
+  ///          intermediate map.
+  /// \remark The time complexity remains `O(|V|)` however.
+  std::vector<TraitVariant *> binUserTraits(std::string_view traitName) const;
+
   /// For each trait `v`, make an edge from `u` to `v` iff `u` is a dependency
   /// of `v`.
   /// Try to delay calling this until all traits have been added, as it
