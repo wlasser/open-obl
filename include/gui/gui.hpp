@@ -2,22 +2,10 @@
 #define OPENOBLIVION_GUI_GUI_HPP
 
 #include "enum_template.hpp"
-#include "gui/menu.hpp"
 #include "gui/menus/load_menu.hpp"
 #include "gui/menus/loading_menu.hpp"
 #include "gui/menus/main_menu.hpp"
-#include "gui/trait.hpp"
-#include "gui/traits.hpp"
-#include "gui/trait_selector.hpp"
-#include "gui/ui_element.hpp"
-#include "gui/xml.hpp"
-#include <boost/graph/adjacency_list.hpp>
-#include <functional>
-#include <regex>
-#include <stdexcept>
-#include <tuple>
-#include <type_traits>
-#include <variant>
+#include <experimental/propagate_const>
 
 /// \file gui.hpp
 /// \defgroup OpenOblivionGui Gui Library
@@ -141,6 +129,8 @@
 /// \ingroup OpenOblivionGui
 namespace gui {
 
+class Traits;
+
 /// Lift of `MenuType` from value space to type space.
 /// The base `UiElement` of each `Menu` lets us do a lot with virtual dispatch,
 /// but it does not help when *constructing* a menu. By using an `enumvar` we
@@ -149,58 +139,25 @@ namespace gui {
 /// doing a large switch statement.
 using MenuVariant = enumvar::sequential_variant<MenuType, Menu, MenuType::N>;
 
-/// Return a base pointer to the current menu.
-/// `MenuVariant` is useful for construction, but once the menu has been
-/// constructed it is convenient to drop back to runtime polymorphism.
-UiElement *extractUiElement(MenuVariant &menu);
-
-/// \overload extractUiElement(MenuVariant &)
-const UiElement *extractUiElement(const MenuVariant &menu);
-
-/// Return the first `<menu>` child of the `doc`, and the `MenuType` represented
-/// by its `<class>` child.
-/// \throws std::runtime_error if `doc` does not have a `<menu>` child.
-/// \throws std::runtime_error if the first `<menu>` does not have a `<class>`
-///                            child.
-std::pair<pugi::xml_node, MenuType> getMenuNode(pugi::xml_node doc);
-
-/// Given XML and concrete representations of a `uiElement`, add all its child
-/// traits and bind them to the `uiElement`.
-void addTraits(Traits &traits, UiElement *uiElement, pugi::xml_node node);
-
-/// Owned `UiElement` and the XML node which represents it.
-using UiElementNode = std::pair<std::unique_ptr<UiElement>, pugi::xml_node>;
-
-/// Return pointers to the child `UiElement`s of the given `node`.
-std::vector<UiElementNode> getChildElements(pugi::xml_node node);
-
-/// Bind all of `node`'s traits to `uiElement`, then recurse through its child
-/// `UiElement`s and do the same.
-/// \returns All the descendant `UiElement`s of `uiElement`, **not** including
-///          `uiElement` itself.
-std::vector<std::unique_ptr<UiElement>>
-addDescendants(Traits &traits, UiElement *uiElement, pugi::xml_node node);
-
 /// Container class for all the components necessary for a menu to work.
 class MenuContext {
- public:
-  using UiElementPtr = std::unique_ptr<UiElement>;
-
  private:
-  std::unique_ptr<Traits> mTraits;
-  std::unique_ptr<MenuVariant> mMenu;
-  std::vector<UiElementPtr> mUiElements;
+  class Impl;
+  using UiElementPtr = std::unique_ptr<UiElement>;
+  std::experimental::propagate_const<std::unique_ptr<Impl>> mImpl;
 
  public:
   MenuContext(std::unique_ptr<Traits> traits,
               std::unique_ptr<MenuVariant> menu,
               std::vector<UiElementPtr> uiElements);
 
+  ~MenuContext();
+
   MenuContext(const MenuContext &) = delete;
   MenuContext &operator=(const MenuContext &) = delete;
 
-  MenuContext(MenuContext &&) noexcept = default;
-  MenuContext &operator=(MenuContext &&) noexcept = default;
+  MenuContext(MenuContext &&) noexcept;
+  MenuContext &operator=(MenuContext &&) noexcept;
 
   /// Update the underlying `gui::Traits` graph.
   void update();
@@ -229,20 +186,7 @@ class MenuContext {
 };
 
 std::optional<MenuContext>
-loadMenu(pugi::xml_document doc, std::optional<pugi::xml_document> stringsDoc);
-
-std::optional<MenuContext>
 loadMenu(const std::string &filename, const std::string &stringsFilename);
-
-/// \name MenuType specializations
-///@{
-template<> MenuType getXmlValue(pugi::xml_node node);
-template<> MenuType getXmlChildValue(pugi::xml_node node, const char *name);
-template<> MenuType getXmlChildValue(pugi::xml_node node);
-template<>
-void XmlEntityConverter::operator()(std::string_view entity,
-                                    boost::optional<MenuType> &out) const;
-///@}
 
 } // namespace gui
 

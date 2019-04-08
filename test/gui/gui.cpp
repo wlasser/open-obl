@@ -1,4 +1,4 @@
-#include "gui/gui.hpp"
+#include "gui/gui_impl.hpp"
 #include "gui/stack/program.hpp"
 #include "gui/traits.hpp"
 #include "test_ui_element.hpp"

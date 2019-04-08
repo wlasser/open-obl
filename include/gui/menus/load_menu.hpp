@@ -2,9 +2,6 @@
 #define OPENOBLIVION_GUI_LOAD_MENU_HPP
 
 #include "gui/menu.hpp"
-#include "gui/trait.hpp"
-#include <OgreOverlay.h>
-#include <OgreOverlayElement.h>
 
 namespace gui {
 

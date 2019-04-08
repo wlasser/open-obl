@@ -1,4 +1,3 @@
-#include "gui/gui.hpp"
 #include "gui/logging.hpp"
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"

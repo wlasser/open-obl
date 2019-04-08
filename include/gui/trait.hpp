@@ -2,13 +2,11 @@
 #define OPENOBLIVION_GUI_TRAIT_HPP
 
 #include "meta.hpp"
-#include <boost/algorithm/string/predicate.hpp>
 #include <functional>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
-#include <utility>
 #include <vector>
 
 namespace gui {

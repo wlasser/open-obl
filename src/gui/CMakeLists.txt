@@ -20,6 +20,7 @@ target_sources(OpenOblivionGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/elements/text.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/vertical_scroll.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/gui.hpp
+        ${CMAKE_SOURCE_DIR}/include/gui/gui_impl.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/logging.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/load_menu.hpp
@@ -42,6 +43,7 @@ target_sources(OpenOblivionGui PRIVATE
         elements/rect.cpp
         elements/text.cpp
         gui.cpp
+        gui_impl.cpp
         menus/load_menu.cpp
         menus/loading_menu.cpp
         menus/main_menu.cpp
