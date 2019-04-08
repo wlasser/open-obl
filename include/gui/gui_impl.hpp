@@ -56,18 +56,18 @@ void XmlEntityConverter::operator()(std::string_view entity,
 ///@}
 
 class MenuContext::Impl {
- public:
+ private:
   using UiElementPtr = MenuContext::UiElementPtr;
 
   std::unique_ptr<Traits> mTraits;
   std::unique_ptr<MenuVariant> mMenu;
   std::vector<UiElementPtr> mUiElements;
 
+ public:
   Impl(std::unique_ptr<Traits> traits,
        std::unique_ptr<MenuVariant> menu,
        std::vector<UiElementPtr> uiElements);
 
- public:
   /// \copydoc MenuContext::update()
   void update();
   /// \copydoc MenuContext::clearEvents()
