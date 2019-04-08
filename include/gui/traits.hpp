@@ -180,6 +180,13 @@ class Traits {
   /// the same name.
   void addProvidedTraits(const UiElement *uiElement);
 
+  /// Deduce the return types of any queued custom traits and add them to the
+  /// trait graph.
+  /// \throws std::runtime_error if it is not possible to deduce the return type
+  ///                            of a trait.
+  /// \post There are no queued custom traits.
+  // C++20: Express the postcondition using contracts and a public
+  //        hasQueuedCustomTraits() function.
   void addQueuedCustomTraits();
 
   /// Set all the user traits to point to the given output interface buffer.

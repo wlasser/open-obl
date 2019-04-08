@@ -243,20 +243,23 @@ void Traits::addQueuedCustomTraits() {
     if (hasNoCustomDeps(trait)) deduceAndAddTrait(std::move(trait));
   }
 
-  mDeferredTraits.erase(std::remove_if(tBegin, tEnd, hasNoCustomDeps), tEnd);
+  // Note: tEnd is invalidated if any erasure takes place. tBegin is either
+  // still valid, or we erased it and emptied the vector meaning we're done.
+  tEnd = mDeferredTraits.erase(std::remove_if(tBegin, tEnd, hasNoCustomDeps),
+                               tEnd);
   if (mDeferredTraits.empty()) return;
 
   // Any traits that are left depend on other custom traits. Topologically sort
   // them so they can be added in the correct order.
-  auto g{makeDeferredTraitGraph(tBegin, tEnd)};
+  auto g{makeDeferredTraitGraph(tBegin, mDeferredTraits.end())};
   std::vector<typename decltype(g)::vertex_descriptor>
       order(boost::num_vertices(g));
   boost::topological_sort(g, order.begin());
   std::reverse(order.begin(), order.end());
 
-  for (auto desc : order) {
-    deduceAndAddTrait(std::move(g[desc]));
-  }
+  for (auto desc : order) deduceAndAddTrait(std::move(g[desc]));
+
+  mDeferredTraits.clear();
 }
 
 std::unordered_map<std::string, std::vector<Traits::TraitVariant *>>
