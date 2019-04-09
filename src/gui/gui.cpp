@@ -41,4 +41,8 @@ const gui::UiElement *MenuContext::getElementWithId(int id) const {
   return mImpl->getElementWithId(id);
 }
 
+std::size_t MenuContext::registerTemplates() {
+  return mImpl->registerTemplates();
+}
+
 } // namespace gui

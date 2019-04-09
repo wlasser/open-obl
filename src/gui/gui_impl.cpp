@@ -63,6 +63,23 @@ const gui::UiElement *MenuContext::Impl::getElementWithId(int id) const {
   return it == mUiElements.end() ? nullptr : it->first.get();
 }
 
+bool MenuContext::Impl::insertTemplate(std::string name, pugi::xml_node node) {
+  return mTemplates.try_emplace(std::move(name), node).second;
+}
+
+std::size_t MenuContext::Impl::registerTemplates() {
+  auto root{mDocument.root()};
+  gui::preOrderDFS(root, [&](pugi::xml_node &node) {
+    if (node.name() == std::string_view{"template"}) {
+      insertTemplate(node.attribute("name").value(), node);
+      return false;
+    }
+    return true;
+  });
+
+  return mTemplates.size();
+}
+
 MenuContext MenuContextProxy::makeMenuContext(std::unique_ptr<Traits> traits,
                                               std::unique_ptr<MenuVariant> menu,
                                               UiElementNodeList uiElements,

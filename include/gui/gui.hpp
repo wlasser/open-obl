@@ -184,6 +184,11 @@ class MenuContext {
   /// This is only guaranteed to be `O(n)` or better.
   const gui::UiElement *getElementWithId(int id) const;
 
+  /// Find all `<template>` nodes in the document and make them available as
+  /// templates.
+  /// \returns The number of templates available in the document.
+  std::size_t registerTemplates();
+
   friend std::optional<MenuContext>
   loadMenu(const std::string &filename, const std::string &stringsFilename);
 };
