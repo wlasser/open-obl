@@ -102,6 +102,7 @@ class MenuContext::Impl {
   UiElementNodeList mUiElements;
   pugi::xml_document mDocument;
   std::unordered_map<std::string, pugi::xml_node> mTemplates;
+  uint32_t mNumInstantiations{};
 
  public:
   Impl(std::unique_ptr<Traits> traits,
@@ -126,8 +127,15 @@ class MenuContext::Impl {
   /// \copydoc MenuContext::getElementWithId()
   const gui::UiElement *getElementWithId(int id) const;
 
+  /// \copydoc MenuContext::getElementWithId()
+  gui::UiElement *getElementWithId(int id);
+
   /// \copydoc MenuContext::registerTemplates()
   std::size_t registerTemplates();
+
+  /// \copydoc MenuContext::appendTemplate()
+  gui::UiElement *appendTemplate(gui::UiElement *parent,
+                                 const std::string &templateName);
 
   /// Insert a template node if one with the given `name` doesn't already exist,
   /// returning `true` if an insertion took place.

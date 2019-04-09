@@ -17,9 +17,34 @@ template<> struct MenuModeTransition<LoadMenuMode> {
 /// \ingroup OpenOblivionModes
 template<> class MenuMode<gui::MenuType::LoadMenu>
     : public MenuModeBase<LoadMenuMode> {
+ private:
+  /// `<id> 1 </id>`
+  gui::UiElement *btnReturn{};
+
+  /// `<id> 2 </id>`
+  gui::UiElement *focusBoxSave{};
+
+  /// `<id> 3 </id>`
+  gui::UiElement *listScrollLoad{};
+
+  /// `<id> 5 </id>`
+  gui::UiElement *listLoad{};
+
+  /// `<id> 6 </id>`
+  // TODO: Two elements with the same id, what to do?
+  gui::UiElement *imgLoadPictureBackground{};
+  gui::UiElement *imgLoadPicture{};
+
+  /// `<id> 7 </id>`
+  gui::UiElement *loadText{};
+
+  /// `<id> 9 </id>`
+  gui::UiElement *listPane{};
+
+  std::vector<gui::UiElement *> mLoadEntries{};
+
  public:
-  explicit MenuMode<gui::MenuType::LoadMenu>(ApplicationContext &ctx)
-      : MenuModeBase<LoadMenuMode>(ctx) {}
+  explicit MenuMode<gui::MenuType::LoadMenu>(ApplicationContext &ctx);
 
   std::string getFilenameImpl() const {
     return "menus/options/load_menu.xml";

@@ -184,10 +184,23 @@ class MenuContext {
   /// This is only guaranteed to be `O(n)` or better.
   const gui::UiElement *getElementWithId(int id) const;
 
+  /// \copydoc getElementWithId()
+  gui::UiElement *getElementWithId(int id);
+
   /// Find all `<template>` nodes in the document and make them available as
   /// templates.
   /// \returns The number of templates available in the document.
   std::size_t registerTemplates();
+
+  /// Append the named template to the children of `parent`, returning a
+  /// pointer to the added `uiElement`.
+  /// Templates may only contain a single uiElement; if they have more, then
+  /// only the first element will be added.
+  /// \returns a pointer to the `uiElement` representing the instantiation of
+  ///          the named template, or `nullptr` if the instantiation failed
+  ///          somehow.
+  gui::UiElement *appendTemplate(gui::UiElement *parent,
+                                 const std::string &templateName);
 
   friend std::optional<MenuContext>
   loadMenu(const std::string &filename, const std::string &stringsFilename);

@@ -1,12 +1,14 @@
 #include "gui/elements/button.hpp"
 #include "gui/elements/generic_background.hpp"
 #include "gui/elements/image.hpp"
+#include "gui/elements/load_game_entry.hpp"
 #include "gui/elements/rect.hpp"
 #include "gui/elements/text.hpp"
 #include "gui/elements/vertical_scroll.hpp"
 #include "gui/gui_impl.hpp"
 #include "gui/logging.hpp"
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/range/adaptors.hpp>
 #include <boost/convert.hpp>
 #include <OgreOverlay.h>
 #include <OgreOverlayManager.h>
@@ -63,6 +65,15 @@ const gui::UiElement *MenuContext::Impl::getElementWithId(int id) const {
   return it == mUiElements.end() ? nullptr : it->first.get();
 }
 
+gui::UiElement *MenuContext::Impl::getElementWithId(int id) {
+  if (id < 0) return nullptr;
+  auto it{std::find_if(mUiElements.begin(), mUiElements.end(),
+                       [id](const UiElementNode &pair) {
+                         return pair.first->get_id() == id;
+                       })};
+  return it == mUiElements.end() ? nullptr : it->first.get();
+}
+
 bool MenuContext::Impl::insertTemplate(std::string name, pugi::xml_node node) {
   return mTemplates.try_emplace(std::move(name), node).second;
 }
@@ -78,6 +89,98 @@ std::size_t MenuContext::Impl::registerTemplates() {
   });
 
   return mTemplates.size();
+}
+
+gui::UiElement *MenuContext::Impl::appendTemplate(gui::UiElement *parent,
+                                                  const std::string &templateName) {
+  auto templateIt{mTemplates.find(templateName)};
+  if (templateIt == mTemplates.end()) {
+    gui::guiLogger()->warn("Template {} not found", templateName);
+    return nullptr;
+  }
+  pugi::xml_node templateNode{templateIt->second};
+
+  auto parentIt{std::find_if(mUiElements.begin(), mUiElements.end(),
+                             [parent](const auto &elem) {
+                               return elem.first.get() == parent;
+                             })};
+  if (parentIt == mUiElements.end()) return nullptr;
+  pugi::xml_node parentNode{parentIt->second};
+
+  if (templateNode.children().begin() == templateNode.children().end()) {
+    return nullptr;
+  }
+
+  // Templates may only have a single child.
+  auto baseChild{*templateNode.children().begin()};
+  auto child{parentNode.append_copy(baseChild)};
+  // Make sure children are named uniquely
+  std::string childName{child.attribute("name").value()};
+  childName += std::to_string(mNumInstantiations++);
+  child.attribute("name").set_value(childName.c_str());
+
+  // First construct the root node of the instantiation, namely the uiElement
+  // corresponding to `child`.
+  UiElementNodeList uiElements;
+  std::string childFullName{gui::getFullyQualifiedName(child, uiElements)};
+  auto childElement{gui::makeUiElement(child, std::move(childFullName))};
+  if (!childElement) {
+    // Child could not be fully added so it shouldn't be in the document.
+    parentNode.remove_child(child);
+    return nullptr;
+  }
+
+  // Add the root node to the Ogre overlay tree.
+  auto *parentOverlay{parent->getOverlayElement()};
+  auto *parentContainer{dynamic_cast<Ogre::OverlayContainer *>(parentOverlay)};
+  if (parentContainer) {
+    if (auto *childOverlayElement{childElement->getOverlayElement()}) {
+      parentContainer->addChild(childOverlayElement);
+    }
+  }
+
+  // Now add the root node's traits and do the rest of its subtree.
+  uiElements = gui::addDescendants(*mTraits, childElement.get(), child);
+  for (const auto &[uiElement, _] : uiElements) {
+    mTraits->addProvidedTraits(uiElement.get());
+  }
+  mTraits->addQueuedCustomTraits();
+  mTraits->addTraitDependencies();
+  auto binnedTraits{mTraits->binUserTraits()};
+  childElement
+      ->setOutputUserTraitSources(binnedTraits[childElement->get_name()]);
+  for (const auto &[uiElement, _] : uiElements) {
+    uiElement->setOutputUserTraitSources(binnedTraits[uiElement->get_name()]);
+  }
+
+  auto *childPtr{childElement.get()};
+
+  // To preserve the order in `mUiElements`, the new child must be inserted
+  // after the last descendant of the last child of the `parent`, or just before
+  // the `parent`'s next youngest sibling.
+  // Outline of why the below loop does what we want:
+  // it = 0,   A = 1
+  // it = 1,   A = 1 + c_0 - 1 = c_0
+  // it = 2,   A = c_0 + c_1 - 1
+  // ...
+  // it = n+1, A = (c_0 + ... + c_n) - n
+  // so loop terminates after (1 + c_0 + ... + c_n) iterations, i.e. one plus
+  // the total number of children, which is one plus the number of descendants.
+  auto siblingIt{parentIt};
+  for (int acc{1}; acc > 0; acc += (siblingIt++)->first->getChildCount() - 1) {}
+
+  siblingIt = std::next(mUiElements.emplace(siblingIt, std::move(childElement),
+                                            child));
+  mUiElements.insert(siblingIt,
+                     std::make_move_iterator(uiElements.begin()),
+                     std::make_move_iterator(uiElements.end()));
+
+  // Notify the parent that we've added a child.
+  parent->setChildCount(parent->getChildCount() + 1);
+
+  mTraits->update();
+
+  return childPtr;
 }
 
 MenuContext MenuContextProxy::makeMenuContext(std::unique_ptr<Traits> traits,
@@ -188,6 +291,8 @@ makeUiElement(pugi::xml_node node, std::string name) {
     return std::make_unique<Button>(std::move(name));
   } else if (shortName == "save_FocusBox"s) {
     return nullptr;
+  } else if (boost::algorithm::starts_with(shortName, "LOADS"s)) {
+    return std::make_unique<LoadGameEntry>(std::move(name));
   }
 
   if (node.name() == "image"s) {

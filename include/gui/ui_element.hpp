@@ -22,6 +22,11 @@ class UiElement {
     mChildCount = childCount;
   }
 
+  /// Get the number of children uiElements that this element has.
+  int getChildCount() {
+    return mChildCount;
+  }
+
   /// \name Trait Setter Functions
   /// These are used to set observable properties of the concrete
   /// representative, usually using values from the dynamic representative.

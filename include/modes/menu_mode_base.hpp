@@ -94,6 +94,11 @@ template<class Self> class MenuModeBase {
     return mMenuCtx->getElementWithId(id);
   }
 
+  /// \copydoc getElementWithId()
+  gui::UiElement *getElementWithId(int id) {
+    return mMenuCtx->getElementWithId(id);
+  }
+
  public:
   using transition_t = MenuModeTransition_t<Self>;
 
