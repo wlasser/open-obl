@@ -14,7 +14,8 @@
 void gui::Image::updateUVs(const Ogre::Vector2 &dims) {
   auto *overlay{getPanelOverlayElement()};
   if (mZoom > 0.0f) {
-    const float zoom{mZoom / 100.0f};
+    // Need reciprocal as uv coordinates transform contravariantly.
+    const float zoom{100.0f / mZoom};
     overlay->setUV(0.0f, 0.0f,
                    zoom * overlay->getWidth() * dims.x / mTexWidth,
                    zoom * overlay->getHeight() * dims.y / mTexHeight);
