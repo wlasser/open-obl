@@ -3,6 +3,7 @@
 
 #include "modes/menu_mode.hpp"
 #include "modes/menu_mode_base.hpp"
+#include "save_state.hpp"
 
 namespace oo {
 
@@ -43,6 +44,13 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
   gui::UiElement *listPane{};
 
   std::vector<gui::UiElement *> mLoadEntries{};
+
+  using SaveEntry = std::filesystem::directory_entry;
+  /// Find all the save games and sort them by access time, most recent first.
+  std::vector<SaveEntry> getSaveEntries() const;
+
+  std::string getSaveName(const SaveState &saveState) const;
+  std::string getSaveDescription(const SaveState &saveState) const;
 
  public:
   explicit MenuMode<gui::MenuType::LoadMenu>(ApplicationContext &ctx);

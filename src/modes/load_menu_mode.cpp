@@ -6,6 +6,54 @@
 
 namespace oo {
 
+std::vector<LoadMenuMode::SaveEntry>
+LoadMenuMode::getSaveEntries() const {
+  namespace fs = std::filesystem;
+  auto saveDir{oo::getSaveDirectory()};
+  std::vector<fs::directory_entry> saves{};
+
+  fs::directory_iterator begin(saveDir), end{};
+  std::copy_if(begin, end, std::back_inserter(saves), [](const auto &entry) {
+    return entry.path().extension() == ".ess";
+  });
+
+  std::sort(saves.begin(), saves.end(), [](const auto &a, const auto &b) {
+    return a.last_write_time() > b.last_write_time();
+  });
+
+  return saves;
+}
+
+std::string LoadMenuMode::getSaveName(const SaveState &saveState) const {
+  // Number of real-world milliseconds the player has played for.
+  chrono::milliseconds playDuration{saveState.mGameTicksPassed};
+
+  // C++20: Use <format> instead of {fmt}.
+  return fmt::format("Save {} - Level {}\n"
+                     "Play Time: {:%T}",
+                     saveState.mSaveNumber, saveState.mPlayerLevel,
+                     playDuration);
+}
+
+std::string LoadMenuMode::getSaveDescription(const SaveState &saveState) const {
+  // Number of in-game days that have passed.
+  auto gameDaysPassed{static_cast<long>(saveState.mGameDaysPassed)};
+
+  // C++20: Convert the SystemTime date with <chrono> to get localised output.
+  // C++20: Use <format> instead of {fmt}.
+  const auto date{saveState.mSaveTime};
+  return fmt::format("{}\n"
+                     "Level {}\n"
+                     "{}\n"
+                     "Day {}\n"
+                     "{}/{}/{} {}:{}",
+                     saveState.mPlayerName,
+                     saveState.mPlayerLevel,
+                     saveState.mPlayerCellName,
+                     gameDaysPassed,
+                     date.month, date.day, date.year, date.hour, date.minute);
+}
+
 MenuMode<gui::MenuType::LoadMenu>::MenuMode(ApplicationContext &ctx)
     : MenuModeBase<LoadMenuMode>(ctx),
       btnReturn{getElementWithId(1)},
@@ -15,52 +63,23 @@ MenuMode<gui::MenuType::LoadMenu>::MenuMode(ApplicationContext &ctx)
       imgLoadPictureBackground{getElementWithId(6)},
       loadText{getElementWithId(7)},
       listPane{getElementWithId(9)} {
-  ctx.getLogger()->info("Registered {} templates",
-                        getMenuCtx()->registerTemplates());
-  auto saveDir{oo::getSaveDirectory()};
-  ctx.getLogger()->info("Save game path is {}", saveDir.c_str());
-
-  // TODO: Save games should be sorted in date order.
-  float index{0.0f};
-  for (const auto &saveFile : std::filesystem::directory_iterator(saveDir)) {
-    const auto &savePath{saveFile.path()};
-    if (savePath.extension() != ".ess") continue;
+  getMenuCtx()->registerTemplates();
+  auto entries{getSaveEntries()};
+  for (const auto &entry : entries | boost::adaptors::indexed()) {
     // Get the required metadata from the save game header.
     oo::SaveState saveState(ctx.getBaseResolvers());
-    std::ifstream saveStream(savePath, std::ios_base::binary);
+    std::ifstream saveStream(entry.value().path(), std::ios_base::binary);
     oo::readSaveHeader(saveStream, saveState);
 
-    // Number of real-world milliseconds the player has played for.
-    chrono::milliseconds playDuration{saveState.mGameTicksPassed};
-    // Number of in-game days that have passed.
-    auto gameDaysPassed{static_cast<long>(saveState.mGameDaysPassed)};
+    auto name{getSaveName(saveState)};
+    auto desc{getSaveDescription(saveState)};
 
-    // C++20: Use <format> instead of relying on spdlog's copy of {fmt}.
-    // C++20: Convert the SystemTime date with <chrono> to get localised output.
-    auto name{fmt::format("Save {} - Level {}\n"
-                          "Play Time: {:%T}",
-                          saveState.mSaveNumber,
-                          saveState.mPlayerLevel,
-                          playDuration)};
-    const auto date{saveState.mSaveTime};
-    auto description{fmt::format("{}\n"
-                                 "Level {}\n"
-                                 "{}\n"
-                                 "Day {}\n"
-                                 "{}/{}/{} {}:{}",
-                                 saveState.mPlayerName,
-                                 saveState.mPlayerLevel,
-                                 saveState.mPlayerCellName,
-                                 gameDaysPassed,
-                                 date.month, date.day, date.year,
-                                 date.hour, date.minute)};
-
-    auto *entry{getMenuCtx()->appendTemplate(listPane, "load_game_template")};
-    entry->set_user(0, index++);
-    entry->set_user(3, name);
+    auto *templ{getMenuCtx()->appendTemplate(listPane, "load_game_template")};
+    templ->set_user(0, static_cast<float>(entry.index()));
+    templ->set_user(3, std::move(name));
 
     // TODO: This should be set to the selected entry, not the last one.
-    loadText->set_string(description);
+    loadText->set_string(std::move(desc));
   }
 
   getMenuCtx()->update();
