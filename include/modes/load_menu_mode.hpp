@@ -36,6 +36,7 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
   gui::UiElement *imgLoadPicture{};
 
   /// `<id> 7 </id>`
+  /// This displays metadata about the currently selected save.
   gui::UiElement *loadText{};
 
   /// `<id> 9 </id>`

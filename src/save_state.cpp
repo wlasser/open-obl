@@ -1,3 +1,4 @@
+#include "game_settings.hpp"
 #include "io/io.hpp"
 #include "io/memstream.hpp"
 #include "io/string.hpp"
@@ -6,8 +7,12 @@
 #include "record/records.hpp"
 #include "save_state.hpp"
 #include <OgreDataStream.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+#include <ShlObj.h>
+#endif
+
 #include <fstream>
-#include <istream>
 #include <string>
 
 namespace oo {
@@ -21,6 +26,45 @@ std::string SystemTime::toISO8601() const {
     << std::setfill('0') << std::setw(2) << minute << ':'
     << std::setfill('0') << std::setw(2) << second;
   return s.str();
+}
+
+namespace {
+
+/// Platform-dependent implementation function of `getSaveDirectory()`, returns
+/// the 'My Games' folder or equivalent.
+std::filesystem::path getGamesDirectory() {
+#if defined(_WIN32) || defined(_WIN64)
+  const char *gamesFolderName{"My Games"};
+  const auto docsId{FOLDERID_Documents};
+  PWSTR docsFolder{};
+  if (auto result{::SHGetKnownFolderPath(docsId, 0, nullptr, &docsFolder)};
+      result != S_OK) {
+    throw std::runtime_error("Failed to get save location");
+  }
+  std::filesystem::Path docsPath{docsFolder};
+  ::CoTaskMemFree(docsFolder);
+  return docsPath / gamesFolderName;
+#else
+  char *xdgEnv{std::getenv("XDG_DATA_HOME")};
+  if (xdgEnv) return xdgEnv;
+
+  char *homeEnv{std::getenv("HOME")};
+  return (homeEnv ? std::filesystem::path{homeEnv} : "") / ".local/share";
+#endif
+}
+
+} // namespace
+
+std::filesystem::path getSaveDirectory() {
+  const auto &settings{oo::GameSettings::getSingleton()};
+  std::filesystem::path
+      saveDir{settings.get("General.sLocalSavePath", "saves")};
+  saveDir.make_preferred();
+
+  if (settings.get("General.bUseMyGamesDirectory", false)) {
+    return oo::getGamesDirectory() / oo::APPLICATION_NAME / saveDir;
+  }
+  return saveDir;
 }
 
 //===----------------------------------------------------------------------===//
@@ -89,51 +133,7 @@ class EssVisitor {
 //===----------------------------------------------------------------------===//
 
 std::istream &operator>>(std::istream &is, oo::SaveState &sv) {
-  // UESP says this is a 12 byte string without a null-terminator, followed by
-  // a major version number byte, which is conveniently always zero. Might it
-  // simply be a null-terminator? It is safe to assume so regardless.
-  std::string headerStr{};
-  io::readBytes(is, headerStr);
-  if (headerStr != "TES4SAVEGAME") {
-    throw std::runtime_error("Invalid file signature");
-  }
-  io::readBytes(is, sv.mVersion);
-  io::readBytes(is, sv.mExeTime);
-
-  io::readBytes(is, sv.mHeaderVersion);
-
-  // Size in bytes of the remaining save game header. This is not needed.
-  uint32_t headerSize{};
-  io::readBytes(is, headerSize);
-
-  io::readBytes(is, sv.mSaveNumber);
-
-  sv.mPlayerName = io::readBzString(is);
-  io::readBytes(is, sv.mPlayerLevel);
-  sv.mPlayerCellName = io::readBzString(is);
-
-  io::readBytes(is, sv.mGameDaysPassed);
-  io::readBytes(is, sv.mGameTicksPassed);
-  io::readBytes(is, sv.mSaveTime);
-
-  // Entire size of the screenshot, *including* the width and height.
-  uint32_t screenshotSize{0};
-  io::readBytes(is, screenshotSize);
-
-  uint32_t screenshotWidth{0};
-  io::readBytes(is, screenshotWidth);
-
-  uint32_t screenshotHeight{0};
-  io::readBytes(is, screenshotHeight);
-
-  std::vector<uint8_t> pixels(screenshotSize - 8u);
-  is.read(reinterpret_cast<char *>(pixels.data()), pixels.size());
-  auto stream{std::make_shared<Ogre::MemoryDataStream>(
-      pixels.data(), pixels.size())};
-
-  const uint32_t screenshotDepth{1u};
-  sv.mScreenshot.loadRawData(stream, screenshotWidth, screenshotHeight,
-                             screenshotDepth, Ogre::PixelFormat::PF_BYTE_RGB);
+  oo::readSaveHeader(is, sv);
 
   io::readBytes(is, sv.mNumPlugins);
   for (uint8_t i = 0; i < sv.mNumPlugins; ++i) {
@@ -340,6 +340,60 @@ std::ostream &operator<<(std::ostream &os, const oo::SaveState &sv) {
   for (const auto &region : sv.mRegions) io::writeBytes(os, region);
 
   return os;
+}
+
+//===----------------------------------------------------------------------===//
+// Other functions
+//===----------------------------------------------------------------------===//
+
+std::istream &readSaveHeader(std::istream &is, SaveState &sv) {
+  // UESP says this is a 12 byte string without a null-terminator, followed by
+  // a major version number byte, which is conveniently always zero. Might it
+  // simply be a null-terminator? It is safe to assume so regardless.
+  std::string headerStr{};
+  io::readBytes(is, headerStr);
+  if (headerStr != "TES4SAVEGAME") {
+    throw std::runtime_error("Invalid file signature");
+  }
+  io::readBytes(is, sv.mVersion);
+  io::readBytes(is, sv.mExeTime);
+
+  io::readBytes(is, sv.mHeaderVersion);
+
+  // Size in bytes of the remaining save game header. This is not needed.
+  uint32_t headerSize{};
+  io::readBytes(is, headerSize);
+
+  io::readBytes(is, sv.mSaveNumber);
+
+  sv.mPlayerName = io::readBzString(is);
+  io::readBytes(is, sv.mPlayerLevel);
+  sv.mPlayerCellName = io::readBzString(is);
+
+  io::readBytes(is, sv.mGameDaysPassed);
+  io::readBytes(is, sv.mGameTicksPassed);
+  io::readBytes(is, sv.mSaveTime);
+
+  // Entire size of the screenshot, *including* the width and height.
+  uint32_t screenshotSize{0};
+  io::readBytes(is, screenshotSize);
+
+  uint32_t screenshotWidth{0};
+  io::readBytes(is, screenshotWidth);
+
+  uint32_t screenshotHeight{0};
+  io::readBytes(is, screenshotHeight);
+
+  std::vector<uint8_t> pixels(screenshotSize - 8u);
+  is.read(reinterpret_cast<char *>(pixels.data()), pixels.size());
+  auto stream{std::make_shared<Ogre::MemoryDataStream>(
+      pixels.data(), pixels.size())};
+
+  const uint32_t screenshotDepth{1u};
+  sv.mScreenshot.loadRawData(stream, screenshotWidth, screenshotHeight,
+                             screenshotDepth, Ogre::PixelFormat::PF_BYTE_RGB);
+
+  return is;
 }
 
 } // namespace oo

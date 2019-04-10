@@ -17,6 +17,7 @@ const char *const LOG{"OO"};
 const char *const OGRE_LOG{"Ogre"};
 const char *const DEFAULT_INI{"Oblivion_default.ini"};
 const char *const USER_INI{"Oblivion.ini"};
+const char *const APPLICATION_NAME{"OpenOblivion"};
 
 } // namespace oo
 

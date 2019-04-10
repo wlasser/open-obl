@@ -45,6 +45,39 @@ namespace oo {
 /// <tr><td>General.sLocalMasterPath</td>
 ///     <td>The name of the directory containing the BSA and esp/esm files,
 ///         relative to the location of the executable.</td></tr>
+/// <tr><td>General.sLocalSavePath</td>
+///     <td>The name of the directory containing save games, relative to the
+///         location of the executable, if `General.bUseMyGamesDirectory` is
+///         false, and relative to a system-dependent directory otherwise.
+///         See `General.bUseMyGamesDirectory` for more information.</td></tr>
+/// <tr><td>General.bUseMyGamesDirectory</td>
+///     <td>Whether to use a system-dependent directory to store save games.
+///         If false, save games will be stored in the `General.sLocalSavePath`
+///         directory, relative to the location of the executable. Otherwise,
+///         the location depends on the system.
+///         - If running on Windows, then `General.sLocalSavePath` will be
+///           relative to `DOCUMENTS/My Games/oo::APPLICATION_NAME`, where
+///           `DOCUMENTS` is the full path to the [Known Folder]
+///           (https://docs.microsoft.com/en-us/windows/desktop/shell/knownfolderid)
+///           `FOLDERID_Documents` (usually
+///           <code>\%USERPROFILE%\\Documents</code>) and `APPLICATION_NAME` is
+///           the value of the compile-time constant of the same name.
+/// <!--Using backquotes before the first percent sign causes Doxygen to
+///     silently ignore the percent. If it is escaped with a backslash, then
+///     Doxygen prints the backslash and silently ignores the percent. Using
+///     HTML tags instead of backquotes and escaping the percent gives the
+///     desired output.-->
+///           Note that Known Folders are supported in Windows Vista and above,
+///           but since Oblivion was written for Windows XP it cannot do this,
+///           and presumably uses [CSIDL]
+///           (https://docs.microsoft.com/en-us/windows/desktop/shell/csidl)
+///           values.
+///         - Otherwise, if the `$XDG_DATA_HOME` environment variable is set,
+///           then `General.sLocalSavePath` will be relative to
+///           `$XDG_DATA_HOME/oo::APPLICATION_NAME`, where
+///           `oo::APPLICATION_NAME` is the value of the compile-time constant
+///           of the same name. If `$XDG_DATA_HOME` is not set, then it is
+///           treated as being set to the value `$HOME/.local/share`.</td></tr>
 /// <tr><td>General.uGridsToLoad</td>
 ///     <td>The diameter of cells to load at full detail around the player.
 ///         Defines the size of the player's *near neighbourhood*.

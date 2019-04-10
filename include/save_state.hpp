@@ -6,6 +6,7 @@
 #include "record/formid.hpp"
 #include <OgreImage.h>
 #include <cctype>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -27,6 +28,10 @@ struct SystemTime : io::byte_direct_ioable_tag {
   std::string toISO8601() const;
 };
 static_assert(sizeof(SystemTime) == 16u);
+
+/// Return a path (either fully-qualified or relative to the executable) to the
+/// directory containing save games.
+std::filesystem::path getSaveDirectory();
 
 class EssAccessor {
  private:
@@ -236,6 +241,8 @@ class SaveState {
 
   ///@}
 };
+
+std::istream &readSaveHeader(std::istream &is, SaveState &sv);
 
 } // namespace oo
 
