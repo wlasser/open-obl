@@ -1,4 +1,5 @@
 #include "modes/load_menu_mode.hpp"
+#include "modes/loading_menu_mode.hpp"
 #include "modes/game_mode.hpp"
 #include "save_state.hpp"
 #include <boost/range/adaptor/indexed.hpp>
@@ -116,17 +117,15 @@ LoadMenuMode::handleEventImpl(ApplicationContext &ctx,
           std::ifstream saveStream(saveGame.entry.path(),
                                    std::ios_base::binary);
           saveStream >> saveGame.state;
+
           std::vector<oo::Path> plugins(saveGame.state.mPlugins.begin(),
                                         saveGame.state.mPlugins.end());
-          ctx.getLogger()->info("Save game uses plugins:");
-          for (const auto &plugin : plugins) {
-            ctx.getLogger()->info(" - {}", plugin.c_str());
-          }
-          if (ctx.getCoordinator().contains(plugins.begin(), plugins.end())) {
-            ctx.getLogger()->info("Plugins are compatible");
-          } else {
+          if (!ctx.getCoordinator().contains(plugins.begin(), plugins.end())) {
             ctx.getLogger()->warn("Plugins are not compatible");
+            return {};
           }
+          auto request{saveGame.state.makeCellRequest()};
+          return {true, oo::LoadingMenuMode(ctx, std::move(request))};
         }
 
         return {};

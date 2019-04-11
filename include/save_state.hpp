@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_SAVE_STATE_HPP
 #define OPENOBLIVION_SAVE_STATE_HPP
 
+#include "cell_cache.hpp"
 #include "esp.hpp"
 #include "io/io.hpp"
 #include "record/formid.hpp"
@@ -100,6 +101,9 @@ class SaveState {
   friend std::ostream &operator<<(std::ostream &os, const SaveState &sv);
   friend std::istream &operator>>(std::istream &is, SaveState &sv);
 
+  /// Construct an `oo::CellRequest` to load the cell the player is in.
+  oo::CellRequest makeCellRequest() const;
+
   /// \name File Header
   ///@{
 
@@ -184,7 +188,7 @@ class SaveState {
   /// Specifically, the $(x,y)$ components of the record::XCLC of the current
   /// exterior record::CELL. This is present but meaningless if the player is
   /// not in an exterior cell.
-  std::tuple<uint32_t, uint32_t> mWorldPos{};
+  std::tuple<int32_t, int32_t> mWorldPos{};
 
   /// oo::FormId of the record::CELL the player is currently in.
   oo::FormId mPlayerCellId{};

@@ -132,6 +132,32 @@ class EssVisitor {
 // SaveState implementations
 //===----------------------------------------------------------------------===//
 
+oo::CellRequest SaveState::makeCellRequest() const {
+  // Exterior cell information is present even if the player is in an interior
+  // cell, so we can only find out whether the cell is an interior or exterior
+  // by looking for it in the interior cell resolver.
+  auto &cellRes{oo::getResolver<record::CELL>(mBaseCtx)};
+  oo::BaseId cellId{mPlayerCellId};
+  auto playerPos{oo::fromBSCoordinates(Ogre::Vector3{
+      std::get<0>(mPlayerPosition),
+      std::get<1>(mPlayerPosition),
+      std::get<2>(mPlayerPosition) + 128.0f
+  })};
+  if (cellRes.contains(cellId)) {
+    const record::CELL &cellRec{*cellRes.get(cellId)};
+    if (!cellRec.grid) {
+      // Interior cell
+      return oo::CellRequest{cellId, playerPos};
+    }
+  }
+  // Either cell was not found (unloaded exterior) or was explicitly exterior.
+  return oo::CellRequest{
+      oo::BaseId{mWorldspaceId},
+      oo::CellIndex{std::get<0>(mWorldPos), std::get<1>(mWorldPos)},
+      playerPos
+  };
+}
+
 std::istream &operator>>(std::istream &is, oo::SaveState &sv) {
   oo::readSaveHeader(is, sv);
 

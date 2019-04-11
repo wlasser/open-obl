@@ -7,11 +7,9 @@
 
 namespace oo {
 
-class GameMode;
-
 /// \ingroup OpenOblivionModes
 template<> struct MenuModeTransition<LoadMenuMode> {
-  using type = ModeTransition<LoadMenuMode, GameMode>;
+  using type = ModeTransition<LoadMenuMode, LoadingMenuMode>;
 };
 
 /// Specialization of `oo::MenuMode` for the Load Game Menu.
