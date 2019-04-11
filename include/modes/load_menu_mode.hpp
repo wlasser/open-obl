@@ -43,14 +43,28 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
   /// `<id> 9 </id>`
   gui::UiElement *listPane{};
 
-  std::vector<gui::UiElement *> mLoadEntries{};
-
   using SaveEntry = std::filesystem::directory_entry;
+
+  struct SaveGame {
+    gui::UiElement *element;
+    SaveState state;
+    SaveEntry entry;
+    explicit SaveGame(gui::UiElement *element,
+                      SaveState state,
+                      SaveEntry entry)
+        : element(element), state(std::move(state)), entry(std::move(entry)) {}
+  };
+
+  std::vector<SaveGame> mSaveGames{};
+  std::size_t mSaveIndex{};
+
   /// Find all the save games and sort them by access time, most recent first.
   std::vector<SaveEntry> getSaveEntries() const;
 
   std::string getSaveName(const SaveState &saveState) const;
   std::string getSaveDescription(const SaveState &saveState) const;
+
+  void setCurrentSave(std::size_t index);
 
  public:
   explicit MenuMode<gui::MenuType::LoadMenu>(ApplicationContext &ctx);

@@ -72,23 +72,59 @@ MenuMode<gui::MenuType::LoadMenu>::MenuMode(ApplicationContext &ctx)
     oo::readSaveHeader(saveStream, saveState);
 
     auto name{getSaveName(saveState)};
-    auto desc{getSaveDescription(saveState)};
 
     auto *templ{getMenuCtx()->appendTemplate(listPane, "load_game_template")};
     templ->set_user(0, static_cast<float>(entry.index()));
     templ->set_user(3, std::move(name));
 
-    // TODO: This should be set to the selected entry, not the last one.
-    loadText->set_string(std::move(desc));
+    mSaveGames.emplace_back(templ, std::move(saveState),
+                            std::move(entry.value()));
   }
+
+  setCurrentSave(0u);
 
   getMenuCtx()->update();
 }
 
+void LoadMenuMode::setCurrentSave(std::size_t index) {
+  if (mSaveGames.empty()) return;
+  mSaveIndex = index % mSaveGames.size();
+
+  const auto &saveGame{mSaveGames[mSaveIndex]};
+  auto desc{getSaveDescription(saveGame.state)};
+  loadText->set_string(std::move(desc));
+}
+
 LoadMenuMode::transition_t
-LoadMenuMode::handleEventImpl(ApplicationContext &/*ctx*/,
-                              const sdl::Event &/*event*/) {
-  return {false, std::nullopt};
+LoadMenuMode::handleEventImpl(ApplicationContext &ctx,
+                              const sdl::Event &event) {
+  auto keyEvent{ctx.getKeyMap().translateKey(event)};
+  if (!keyEvent) return {false, std::nullopt};
+
+  return std::visit(overloaded{
+      [this](oo::event::Forward e) -> transition_t {
+        if (e.down) setCurrentSave(mSaveIndex - 1u);
+        return {};
+      },
+      [this](oo::event::Backward e) -> transition_t {
+        if (e.down) setCurrentSave(mSaveIndex + 1u);
+        return {};
+      },
+      [&](oo::event::SlideRight e) -> transition_t {
+        if (e.down) {
+          auto &saveGame{mSaveGames[mSaveIndex]};
+          std::ifstream saveStream(saveGame.entry.path(),
+                                   std::ios_base::binary);
+          saveStream >> saveGame.state;
+          ctx.getLogger()->info("Save game uses plugins:");
+          for (const auto &plugin : saveGame.state.mPlugins) {
+            ctx.getLogger()->info(" - {}", plugin);
+          }
+        }
+        return {};
+      },
+      [](auto) -> transition_t { return {}; }
+  }, *keyEvent);
 }
 
 void LoadMenuMode::updateImpl(ApplicationContext &/*ctx*/, float /*delta*/) {}
