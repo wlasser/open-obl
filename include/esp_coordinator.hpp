@@ -114,8 +114,12 @@ class EspCoordinator {
  public:
   /// `first` and `last` are iterators to a collection of `oo::Path`s equal to
   /// the mod filenames sorted in load order from 'load first' to 'load last'.
-  template<class InputIt>
-  EspCoordinator(InputIt first, InputIt last);
+  template<class ForwardIt, class = std::enable_if_t<
+      std::is_base_of_v<std::forward_iterator_tag,
+                        typename std::iterator_traits<ForwardIt>::iterator_category>
+          && std::is_convertible_v<const oo::Path &,
+                                   typename std::iterator_traits<ForwardIt>::reference>>>
+  EspCoordinator(ForwardIt first, ForwardIt last);
 
   EspCoordinator(const EspCoordinator &) = delete;
   EspCoordinator &operator=(const EspCoordinator &) = delete;
@@ -389,8 +393,8 @@ std::vector<oo::Path> getMasters(const oo::Path &espFilename);
 // EspCoordinator template implementations
 //===----------------------------------------------------------------------===//
 
-template<class InputIt>
-EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
+template<class ForwardIt, class>
+EspCoordinator::EspCoordinator(ForwardIt first, ForwardIt last) {
   auto out{std::back_inserter(mLoadOrder)};
   std::transform(first, last, out, [&](const oo::Path &childPath) {
     // Putting the child esp at the end of its own master list ensures that
@@ -402,7 +406,7 @@ EspCoordinator::EspCoordinator(InputIt first, InputIt last) {
 
     for (const auto &master : masters) {
       if (const auto it{std::find(first, last, master)}; it != last) {
-        loadOrder.push_back(it - first);
+        loadOrder.push_back(std::distance(first, it));
       } else {
         spdlog::get(oo::LOG)->critical(
             "{} depends on master {} which is not loaded",
