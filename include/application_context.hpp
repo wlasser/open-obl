@@ -133,6 +133,7 @@ class ApplicationContext {
 
   Ogre::OverlaySystem *getOverlaySystem();
 
+  const oo::EspCoordinator &getCoordinator() const;
   oo::CellCache *getCellCache();
 
   void setCamera(gsl::not_null<Ogre::Camera *> camera);

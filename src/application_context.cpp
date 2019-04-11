@@ -100,6 +100,10 @@ Ogre::OverlaySystem *ApplicationContext::getOverlaySystem() {
   return overlaySys.get();
 }
 
+const oo::EspCoordinator &ApplicationContext::getCoordinator() const {
+  return *espCoordinator.get();
+}
+
 oo::CellCache *ApplicationContext::getCellCache() {
   return cellCache.get();
 }

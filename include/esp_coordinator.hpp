@@ -139,6 +139,16 @@ class EspCoordinator {
   /// Returns the number of mods in the load order
   int getNumMods() const;
 
+  /// Return whether the given load order of `oo::Path`s is a subsequence of the
+  /// actual load order. This can be used to determine if the current set of
+  /// mods satisfy the requirements of a save game.
+  template<class InputIt, class = std::enable_if_t<
+      std::is_base_of_v<std::input_iterator_tag,
+                        typename std::iterator_traits<InputIt>::iterator_category>
+          && std::is_convertible_v<typename std::iterator_traits<InputIt>::value_type,
+                                   oo::Path>>>
+  bool contains(InputIt first, InputIt last) const;
+
   /// If the given mod has an open stream, close it and invalidate its iterator
   /// to make the stream available for another mod. If the mod does not have an
   /// open stream, do nothing. Calling this method is never required, but it is
@@ -418,6 +428,25 @@ EspCoordinator::EspCoordinator(ForwardIt first, ForwardIt last) {
     return EspEntry(childPath, mStreams.end(),
                     loadOrder.begin(), loadOrder.end());
   });
+}
+
+template<class InputIt, class>
+bool EspCoordinator::contains(InputIt first, InputIt last) const {
+  // Check that [first, last) is a subsequence of mLoadOrder. If
+  // seq: x_0, x_1, x_2, ..., x_n
+  // sub: y_0, y_1, y_2, ..., y_m
+  // then this finds
+  // - x_{i_0} == y_0 in [x_0, x_n] (terminate if none exists)
+  // - x_{i_1} == y_1 in [x_{i_1}, x_n] (terminate if none exists)
+  // ...
+  // - x_{i_m} == y_m in [x_{i_{m-1}}, x_n] (terminate if none exists)
+  // until all of y_0, ..., y_m have been found and subIt == last.
+  auto seqIt{mLoadOrder.begin()};
+  auto subIt{first};
+  for (; subIt != last && seqIt != mLoadOrder.end(); ++subIt) {
+    while (seqIt != mLoadOrder.end() && (seqIt++)->filename != *subIt) {}
+  }
+  return subIt == last;
 }
 
 template<class T>
