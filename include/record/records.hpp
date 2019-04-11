@@ -231,14 +231,14 @@ struct LTEX {
 };
 
 struct ENCH {
-  record::EDID editorId{};
+  std::optional<record::EDID> editorId{};
   std::optional<record::FULL> name{};
   record::ENIT_ENCH enchantmentData{};
   std::vector<Effect> effects{};
 };
 
 struct SPEL {
-  record::EDID editorId{};
+  std::optional<record::EDID> editorId{};
   record::FULL name{};
   record::SPIT data{};
   std::vector<Effect> effects{};
@@ -277,7 +277,7 @@ struct DOOR {
 };
 
 struct LIGH {
-  record::EDID editorId{};
+  std::optional<record::EDID> editorId{};
   std::optional<record::MODL> modelFilename{};
   std::optional<record::MODB> boundRadius{};
   std::optional<record::MODT> textureHash{};
@@ -290,7 +290,7 @@ struct LIGH {
 };
 
 struct MISC {
-  record::EDID editorId{};
+  std::optional<record::EDID> editorId{};
   std::optional<record::FULL> name{};
   std::optional<record::MODL> modelFilename{};
   std::optional<record::MODB> boundRadius{};
@@ -327,7 +327,7 @@ struct TREE {
 };
 
 struct NPC_ {
-  record::EDID editorId{};
+  std::optional<record::EDID> editorId{};
   std::optional<record::FULL> name{};
   std::optional<record::MODL> skeletonFilename{};
   std::optional<record::MODB> boundRadius{};
@@ -355,7 +355,6 @@ struct NPC_ {
 
 // Potion
 struct ALCH {
-  // Not present in save games for player-made potions and poisons
   std::optional<record::EDID> editorId{};
   record::FULL itemName{};
   record::MODL modelFilename{};
