@@ -807,6 +807,36 @@ bool attachTextureProperty(const oo::BlockGraph &g,
   return true;
 }
 
+bool attachStencilProperty(const oo::BlockGraph &g,
+                           const nif::NiPropertyArray &properties,
+                           Ogre::Pass *pass) {
+  auto it{std::find_if(properties.begin(), properties.end(), [&](auto ref) {
+    return oo::checkRefType<nif::NiStencilProperty>(g, ref);
+  })};
+  if (it == properties.end()) return false;
+
+  const auto &stencilBlock{oo::getBlock<nif::NiStencilProperty>(g, *it)};
+
+  auto parseCullMode = [](nif::Enum::StencilDrawMode mode) {
+    switch (mode) {
+      case nif::Enum::StencilDrawMode::DRAW_CCW: return Ogre::CULL_CLOCKWISE;
+      case nif::Enum::StencilDrawMode::DRAW_CW: return Ogre::CULL_ANTICLOCKWISE;
+      default: [[fallthrough]];
+      case nif::Enum::StencilDrawMode::DRAW_CCW_OR_BOTH: [[fallthrough]];
+      case nif::Enum::StencilDrawMode::DRAW_BOTH: return Ogre::CULL_NONE;
+    }
+  };
+  pass->setCullingMode(parseCullMode(stencilBlock.drawMode));
+
+  // Stenciling needs the cooperation of the compositor, and is unsupported.
+  if (stencilBlock.stencilEnabled) {
+    oo::nifloaderLogger()->warn("NiStencilProperty uses stencil, this is "
+                                "unsupported");
+  }
+
+  return true;
+}
+
 bool attachAlphaProperty(const oo::BlockGraph &g,
                          const nif::NiPropertyArray &properties,
                          Ogre::Pass *pass) {
@@ -954,6 +984,7 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
 
     oo::attachTextureProperty(g, block.properties, pass);
     oo::attachAlphaProperty(g, block.properties, pass);
+    oo::attachStencilProperty(g, block.properties, pass);
   }
 
   const auto &geomData{oo::getBlock<nif::NiGeometryData>(g, block.data)};

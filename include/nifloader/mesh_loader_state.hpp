@@ -151,6 +151,10 @@ bool attachTextureProperty(const oo::BlockGraph &g,
                            const nif::NiPropertyArray &properties,
                            Ogre::Pass *pass);
 
+bool attachStencilProperty(const oo::BlockGraph &g,
+                           const nif::NiPropertyArray &properties,
+                           Ogre::Pass *pass);
+
 bool attachAlphaProperty(const oo::BlockGraph &g,
                          const nif::NiPropertyArray &properties,
                          Ogre::Pass *pass);
