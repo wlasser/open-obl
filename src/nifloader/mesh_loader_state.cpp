@@ -807,6 +807,77 @@ bool attachTextureProperty(const oo::BlockGraph &g,
   return true;
 }
 
+bool attachAlphaProperty(const oo::BlockGraph &g,
+                         const nif::NiPropertyArray &properties,
+                         Ogre::Pass *pass) {
+  auto it{std::find_if(properties.begin(), properties.end(), [&](auto ref) {
+    return oo::checkRefType<nif::NiAlphaProperty>(g, ref);
+  })};
+  if (it == properties.end()) return false;
+
+  const auto &alphaBlock{oo::getBlock<nif::NiAlphaProperty>(g, *it)};
+
+  // OGRE's defaults are ok in this case but we'll be explicit.
+  if (!alphaBlock.alphaBlendingEnabled) {
+    pass->setSceneBlendingOperation(Ogre::SceneBlendOperation::SBO_ADD);
+    pass->setSceneBlending(Ogre::SceneBlendFactor::SBF_ONE,
+                           Ogre::SceneBlendFactor::SBF_ZERO);
+    return true;
+  }
+
+  using NifMode = nif::NiAlphaProperty::BlendMode;
+  using OgreMode = Ogre::SceneBlendFactor;
+  auto parseBlendMode = [](NifMode mode) -> OgreMode {
+    switch (mode) {
+      case NifMode::GL_ONE: return OgreMode::SBF_ONE;
+      case NifMode::GL_ZERO: return OgreMode::SBF_ZERO;
+      case NifMode::GL_SRC_COLOR: return OgreMode::SBF_SOURCE_COLOUR;
+      case NifMode::GL_ONE_MINUS_SRC_COLOR: return OgreMode::SBF_ONE_MINUS_SOURCE_COLOUR;
+      case NifMode::GL_DST_COLOR: return OgreMode::SBF_DEST_COLOUR;
+      case NifMode::GL_ONE_MINUS_DST_COLOR: return OgreMode::SBF_ONE_MINUS_DEST_COLOUR;
+      case NifMode::GL_SRC_ALPHA: return OgreMode::SBF_SOURCE_ALPHA;
+      case NifMode::GL_ONE_MINUS_SRC_ALPHA: return OgreMode::SBF_ONE_MINUS_SOURCE_ALPHA;
+      case NifMode::GL_DST_ALPHA: return OgreMode::SBF_DEST_ALPHA;
+      case NifMode::GL_ONE_MINUS_DST_ALPHA: return OgreMode::SBF_ONE_MINUS_DEST_ALPHA;
+        // Presumably source alpha with a saturate/clamp, unsupported.
+      case NifMode::GL_SRC_ALPHA_SATURATE:[[fallthrough]];
+      default: return OgreMode::SBF_SOURCE_ALPHA;
+    }
+  };
+
+  const auto srcFactor{parseBlendMode(alphaBlock.sourceBlendMode)};
+  const auto dstFactor{parseBlendMode(alphaBlock.destinationBlendMode)};
+
+  pass->setSceneBlendingOperation(Ogre::SceneBlendOperation::SBO_ADD);
+  pass->setSceneBlending(srcFactor, dstFactor);
+
+  using NifComp = nif::NiAlphaProperty::TestMode;
+  using OgreComp = Ogre::CompareFunction;
+  auto parseAlphaComp = [](NifComp comp) -> OgreComp {
+    switch (comp) {
+      case NifComp::GL_ALWAYS: return OgreComp::CMPF_ALWAYS_PASS;
+      case NifComp::GL_LESS: return OgreComp::CMPF_LESS;
+      case NifComp::GL_EQUAL: return OgreComp::CMPF_EQUAL;
+      case NifComp::GL_LEQUAL: return OgreComp::CMPF_LESS_EQUAL;
+      case NifComp::GL_GREATER: return OgreComp::CMPF_GREATER;
+      case NifComp::GL_NOTEQUAL: return OgreComp::CMPF_NOT_EQUAL;
+      case NifComp::GL_GEQUAL: return OgreComp::CMPF_GREATER_EQUAL;
+      case NifComp::GL_NEVER: return OgreComp::CMPF_ALWAYS_FAIL;
+      default: return OgreComp::CMPF_ALWAYS_PASS;
+    }
+  };
+
+  if (alphaBlock.alphaTestEnabled) {
+    pass->setAlphaRejectFunction(parseAlphaComp(alphaBlock.alphaTestMode));
+    pass->setAlphaRejectValue(alphaBlock.threshold);
+  }
+
+  pass->setTransparentSortingEnabled(!alphaBlock.disableTriangleSorting);
+  pass->setDepthWriteEnabled(false);
+
+  return true;
+}
+
 std::shared_ptr<Ogre::Material>
 parseNiMaterialProperty(const oo::BlockGraph &g,
                         const std::string &meshName,
@@ -833,10 +904,8 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
 }
 
 bool attachMaterialProperty(const oo::BlockGraph &g,
-                            const oo::Mesh *mesh,
                             const nif::NiPropertyArray &properties,
-                            oo::SubMesh *submesh,
-                            bool hasSkinning) {
+                            oo::SubMesh *submesh) {
   auto it{std::find_if(properties.begin(), properties.end(), [&g](auto ref) {
     return oo::checkRefType<nif::NiMaterialProperty>(g, ref);
   })};
@@ -844,21 +913,10 @@ bool attachMaterialProperty(const oo::BlockGraph &g,
 
   const auto &matBlock{oo::getBlock<nif::NiMaterialProperty>(g, *it)};
 
-  const auto material{oo::parseNiMaterialProperty(g, mesh->getName(),
-                                                  mesh->getGroup(), matBlock)};
+  const std::string &name{submesh->parent->getName()};
+  const std::string &group{submesh->parent->getGroup()};
+  const auto material{oo::parseNiMaterialProperty(g, name, group, matBlock)};
   submesh->setMaterialName(material->getName(), material->getGroup());
-  auto *pass{material->getTechnique(0)->getPass(0)};
-
-  if (hasSkinning) {
-    oo::addGenericSkinnedVertexShader(pass);
-  } else {
-    oo::addGenericVertexShader(pass);
-  }
-  oo::addGenericFragmentShader(pass);
-
-  if (pass->getNumTextureUnitStates() == 0) {
-    oo::attachTextureProperty(g, properties, pass);
-  }
 
   return true;
 }
@@ -884,7 +942,19 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
   auto boneAssignments{oo::getBoneAssignments(g, block)};
   const auto hasBones{!boneAssignments.bindings.empty()};
 
-  oo::attachMaterialProperty(g, mesh, block.properties, submesh, hasBones);
+  if (oo::attachMaterialProperty(g, block.properties, submesh)) {
+    auto &matMgr{Ogre::MaterialManager::getSingleton()};
+    auto matPtr{matMgr.getByName(submesh->getMaterialName(),
+                                 submesh->getMaterialGroup())};
+    auto *pass{matPtr->getTechnique(0)->getPass(0)};
+
+    hasBones ? oo::addGenericSkinnedVertexShader(pass)
+             : oo::addGenericVertexShader(pass);
+    oo::addGenericFragmentShader(pass);
+
+    oo::attachTextureProperty(g, block.properties, pass);
+    oo::attachAlphaProperty(g, block.properties, pass);
+  }
 
   const auto &geomData{oo::getBlock<nif::NiGeometryData>(g, block.data)};
 

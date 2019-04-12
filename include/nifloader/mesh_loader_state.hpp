@@ -151,6 +151,10 @@ bool attachTextureProperty(const oo::BlockGraph &g,
                            const nif::NiPropertyArray &properties,
                            Ogre::Pass *pass);
 
+bool attachAlphaProperty(const oo::BlockGraph &g,
+                         const nif::NiPropertyArray &properties,
+                         Ogre::Pass *pass);
+
 std::shared_ptr<Ogre::Material>
 parseNiMaterialProperty(const oo::BlockGraph &g,
                         const std::string &meshName,
@@ -158,9 +162,8 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
                         const nif::NiMaterialProperty &block);
 
 bool attachMaterialProperty(const oo::BlockGraph &g,
-                            const oo::Mesh *mesh,
                             const nif::NiPropertyArray &properties,
-                            Ogre::SubMesh *submesh, bool hasSkinning = false);
+                            Ogre::SubMesh *submesh);
 
 /// \remark `nif::NiTriBasedGeom` blocks determine discrete pieces of geometry
 ///         with a single material and texture, and so translate to

@@ -29,6 +29,7 @@ void main() {
 
     // Undo gamma correction of texture so it is correct later
     vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
+    float alpha = texture(diffuseMap, TexCoord).a;
 
     vec3 normal = texture(normalMap, TexCoord).xyz;
     // Convert from dx to gl by flipping the green channel
@@ -86,5 +87,5 @@ void main() {
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
     fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
 
-    FragColor = vec4(fragColor, 1.0f);
+    FragColor = vec4(fragColor, alpha);
 }
