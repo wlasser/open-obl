@@ -22,6 +22,9 @@ template<> struct MenuModeTransition<LoadingMenuMode> {
   using type = ModeTransition<LoadingMenuMode, GameMode>;
 };
 
+/// \ingroup OpenOblivionModes
+template<> struct HideOverlayOnTransition<LoadingMenuMode> : std::true_type {};
+
 /// Specialization of `oo::MenuMode` for the Loading Menu.
 /// Load screens occur when moving from the title menu into a cell, or from one
 /// cell into another. In general, the caller will not have any more information

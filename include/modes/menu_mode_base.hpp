@@ -128,6 +128,10 @@ template<class Self> class MenuModeBase {
     return self().getFilenameImpl();
   }
 
+  void hideOverlay() {
+    if (mMenuCtx) mMenuCtx->getOverlay()->hide();
+  }
+
 };
 
 template<class Self> template<class F> void

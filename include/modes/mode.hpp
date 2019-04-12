@@ -71,6 +71,23 @@ namespace oo {
 template<class ...States>
 using ModeTransition = std::tuple<bool, std::optional<std::variant<States...>>>;
 
+/// Type trait representing whether the `Mode` at the top of the stack should
+/// hide its overlay (if any) when the given `Mode` is being pushed.
+/// The motivation for this comes from the
+/// `MainMenuMode -> LoadMenuMode -> LoadingMenuMode -> GameMode` transitions.
+/// In the first transition `MainMenuMode` should not hide its overlay, because
+/// `LoadMenuMode` does not fill the screen. In the second transition
+/// `LoadMenuMode` pops itself from the stack and pushes `LoadingMenuMode`,
+/// which fills the screen and therefore doesn't care that `MainMenuMode` is
+/// still showing. In the third transition `LoadingMenuMode` pops itself and
+/// pushes `GameMode`, but now `MainMenuMode`'s overlay is still visible. This
+/// can be avoided if in the second transition `LoadingMenuMode` can tell
+/// `MainMenuMode` to hide its overlay. In some sense the transition to
+/// `LoadingMenuMode` then comes from `MainMenuMode`, even though `refocus` is
+/// never called.
+template<class Mode>
+struct HideOverlayOnTransition : std::false_type {};
+
 } // namespace oo
 
 #endif // OPENOBLIVION_MODE_HPP

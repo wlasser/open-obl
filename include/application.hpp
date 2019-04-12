@@ -162,10 +162,23 @@ class Application : public Ogre::FrameListener {
   /// \tparam Ts Should model the Mode concept, see GameMode and ConsoleMode.
   template<class ...Ts>
   void pushMode(std::variant<Ts...> mode) {
+    if (!modeStack.empty()) {
+      std::visit([this](auto &&newState, auto &oldState) {
+        using NewStateType = std::decay_t<decltype(newState)>;
+        using OldStateType = std::decay_t<decltype(oldState)>;
+        if constexpr (std::is_base_of_v<MenuModeBase<OldStateType>,
+                                        OldStateType>
+            && HideOverlayOnTransition<NewStateType>::value) {
+          oldState.hideOverlay();
+        }
+        modeStack.emplace_back(std::forward<decltype(newState)>(newState));
+      }, std::move(mode), modeStack.back());
+    } else {
+      std::visit([this](auto &&state) {
+        modeStack.emplace_back(std::forward<decltype(state)>(state));
+      }, std::move(mode));
+    }
     // First visit moves into a new variant so need a second visit.
-    std::visit([this](auto &&state) {
-      modeStack.emplace_back(std::forward<decltype(state)>(state));
-    }, std::move(mode));
     std::visit([this](auto &&state) { state.enter(ctx); }, modeStack.back());
   }
 
