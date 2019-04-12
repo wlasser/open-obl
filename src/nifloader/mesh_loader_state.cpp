@@ -2,6 +2,7 @@
 #include "math/conversions.hpp"
 #include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader_state.hpp"
+#include <absl/strings/match.h>
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreHardwareBufferManager.h>
@@ -675,19 +676,22 @@ void addGenericFragmentShader(Ogre::Pass *pass) {
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
   TangentData out{};
-  if (extraData.name && extraData.name->str().find("Tangent space") == 0) {
-    // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
-    const std::size_t bytesPerList{extraData.data.dataSize / 2};
-    const std::size_t bytesPerVert{3u * sizeof(float)};
-    const std::size_t vertsPerList{bytesPerList / bytesPerVert};
-    out.bitangents.resize(vertsPerList);
-    out.tangents.resize(vertsPerList);
+  if (!extraData.name) return out;
+  //C++20: if (!extraData.name->str()->starts_with("Tangent space")) return out;
+  if (!absl::StartsWith(extraData.name->str(), "Tangent space")) return out;
 
-    // Poor naming choices, maybe?
-    const nif::basic::Byte *bytes{extraData.data.data.data()};
-    std::memcpy(out.tangents.data(), bytes, bytesPerList);
-    std::memcpy(out.bitangents.data(), bytes + bytesPerList, bytesPerList);
-  }
+  // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
+  const std::size_t bytesPerList{extraData.data.dataSize / 2};
+  const std::size_t bytesPerVert{3u * sizeof(float)};
+  const std::size_t vertsPerList{bytesPerList / bytesPerVert};
+  out.bitangents.resize(vertsPerList);
+  out.tangents.resize(vertsPerList);
+
+  // Poor naming choices, maybe?
+  const nif::basic::Byte *bytes{extraData.data.data.data()};
+  std::memcpy(out.tangents.data(), bytes, bytesPerList);
+  std::memcpy(out.bitangents.data(), bytes + bytesPerList, bytesPerList);
+
   return out;
 }
 
@@ -695,7 +699,8 @@ TangentData parseTangentData(const oo::BlockGraph &g,
                              const nif::NiExtraDataArray &dataArray) {
   const auto pred = [&g](auto ref) {
     const auto &data{oo::getBlock<nif::NiExtraData>(g, ref)};
-    return (data.name && data.name->str().find("Tangent space") == 0);
+    //C++20: return data.name && data.name->str()->starts_with("Tangent space");
+    return data.name && absl::StartsWith(data.name->str(), "Tangent space");
   };
   const auto begin{dataArray.begin()}, end{dataArray.end()};
   const auto it{std::find_if(begin, end, pred)};
@@ -887,12 +892,9 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
   // an NiBinaryExtraData block. For low versions, the extra data is arranged
   // like a linked list, and for high versions it's an array.
   auto[bitangents, tangents] = [&g, &block]() {
-    if (block.extraDataArray) {
-      return oo::parseTangentData(g, *block.extraDataArray);
-    } else {
-      // TODO: Support the linked list version
-      return TangentData{};
-    }
+    // TODO: Support the linked list version
+    return block.extraDataArray ? oo::parseTangentData(g, *block.extraDataArray)
+                                : TangentData{};
   }();
 
   // Ogre::SubMeshes cannot have transformations applied to them (that is
@@ -914,7 +916,7 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
 }
 
 MeshLoaderState::MeshLoaderState(oo::Mesh *mesh, Graph blocks)
-    : mMesh(mesh), mBlocks(blocks) {
+    : mMesh(mesh), mBlocks(std::move(blocks)) {
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(mBlocks));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, mBlocks))};
