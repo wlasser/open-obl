@@ -342,6 +342,7 @@ void Atmosphere::makeSun(const record::CLMT &rec) {
   sunBillboards->setMaterial(matPtr);
   sunBillboards->setPointRenderingEnabled(false);
   sunBillboards->setVisible(true);
+  sunBillboards->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
 }
 
 std::pair<oo::chrono::QualitativeTimeOfDay, float>

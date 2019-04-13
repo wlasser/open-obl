@@ -1,6 +1,7 @@
 #include "application_context.hpp"
 #include "cell_cache.hpp"
 #include "controls.hpp"
+#include "deferred_light_pass.hpp"
 #include "esp_coordinator.hpp"
 #include "game_settings.hpp"
 #include "mesh/entity.hpp"
@@ -25,7 +26,8 @@
 namespace oo {
 
 ApplicationContext::ApplicationContext()
-    : nifLoader{std::make_unique<oo::MeshLoader>()},
+    : deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
+      nifLoader{std::make_unique<oo::MeshLoader>()},
       nifCollisionLoader{std::make_unique<oo::CollisionObjectLoader>()},
       skeletonLoader{std::make_unique<oo::SkeletonLoader>()} {}
 
@@ -117,8 +119,16 @@ void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {
   std::get<Ogre::RenderWindowPtr>(windows)->addViewport(camera);
   ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
   auto &compMgr{Ogre::CompositorManager::getSingleton()};
-  auto *compInstance{compMgr.addCompositor(camera->getViewport(), "Post")};
-  compInstance->setEnabled(true);
+  auto *gBufferInstance{compMgr.addCompositor(camera->getViewport(),
+                                              "DeferredGBuffer")};
+  gBufferInstance->setEnabled(true);
+
+  auto *showNormals{compMgr.addCompositor(camera->getViewport(),
+                                          "DeferredShading")};
+  showNormals->setEnabled(true);
+
+//  auto *compInstance{compMgr.addCompositor(camera->getViewport(), "Post")};
+//  compInstance->setEnabled(true);
 }
 
 } // namespace oo

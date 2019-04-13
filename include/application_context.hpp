@@ -40,6 +40,7 @@ class SkeletonLoader;
 class CellCache;
 class MeshManager;
 class EntityFactory;
+class DeferredLightPass;
 
 namespace event {
 
@@ -72,6 +73,8 @@ class ApplicationContext {
   std::unique_ptr<bullet::Configuration> bulletConf{};
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
+
+  std::unique_ptr<oo::DeferredLightPass> deferredLightPass{};
 
   std::unique_ptr<Ogre::SoundManager> soundMgr{};
 

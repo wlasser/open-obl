@@ -131,6 +131,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
         src/console_functions.cpp
+        src/deferred_light_pass.cpp
         src/esp_coordinator.cpp
         src/exterior_manager.cpp
         src/game_settings.cpp
@@ -178,6 +179,7 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/walk_state.hpp
         include/console_functions.hpp
         include/controls.hpp
+        include/deferred_light_pass.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp

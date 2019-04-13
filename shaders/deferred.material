@@ -1,0 +1,92 @@
+vertex_program deferred_post_vs_glsl glsl {
+    source deferred_post_vs.glsl
+    default_params {
+        param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+    }
+}
+
+fragment_program deferred_post_normals_fs_glsl glsl {
+    source deferred_post_normals_fs.glsl
+    default_params {
+        param_named Tex0 int 0
+        param_named Tex1 int 1
+        param_named Tex2 int 2
+    }
+}
+
+vertex_program deferred_post_ambient_vs_glsl glsl {
+    source deferred_post_ambient_vs.glsl
+}
+
+fragment_program deferred_post_ambient_fs_glsl glsl {
+    source deferred_post_ambient_fs.glsl
+    default_params {
+        param_named Tex0 int 0
+        param_named Tex1 int 1
+        param_named Tex2 int 2
+    }
+}
+
+material DeferredAmbient {
+    technique {
+        pass {
+            lighting off
+            depth_write on
+            depth_check on
+
+            vertex_program_ref deferred_post_ambient_vs_glsl {}
+
+            fragment_program_ref deferred_post_ambient_fs_glsl {
+                param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 0
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 1
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 2
+                tex_address_mode clamp
+                filtering none
+            }
+        }
+    }
+}
+
+material DeferredShadingNormals {
+    technique {
+        pass {
+            cull_hardware none
+            cull_software none
+            depth_func always_pass
+            polygon_mode_overrideable false
+
+            vertex_program_ref deferred_post_vs_glsl {}
+
+            fragment_program_ref deferred_post_normals_fs_glsl {}
+
+            texture_unit {
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                tex_address_mode clamp
+                filtering none
+            }
+        }
+    }
+}

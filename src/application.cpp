@@ -2,6 +2,7 @@
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "console_functions.hpp"
+#include "deferred_light_pass.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
@@ -84,6 +85,11 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobManager::runJob([&ctx = ctx]() {
     ctx.bulletConf = std::make_unique<bullet::Configuration>();
   });
+
+  // Set up the deferred rendering
+  auto &compMgr{Ogre::CompositorManager::getSingleton()};
+  compMgr.registerCustomCompositionPass("DeferredLight",
+                                        ctx.deferredLightPass.get());
 
   // Construct the global terrain options
   oo::JobManager::runJob([this]() {

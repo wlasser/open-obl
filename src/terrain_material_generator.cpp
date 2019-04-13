@@ -115,16 +115,12 @@ void TerrainMaterialProfile::makeHighLodTechnique(const Ogre::Terrain *terrain,
   auto globalNormalName{createGlobalNormalMap(matName)};
   auto vertexColorName{createVertexColorMap(matName)};
 
-  // WTF C++, why is this cast even necessary? You can *see* 1 and 2 fit in
-  // a short, the standard requires it! Using = just changes the error to a
-  // warning BTW.
-  // TODO: Make a short integer UDL.
-  const uint8_t numPasses{static_cast<uint8_t>(numLayers <= 5 ? 1u : 2u)};
+  constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
+  constexpr auto WRAP{Ogre::TextureAddressingMode::TAM_WRAP};
 
-  for (uint8_t passNumber = 0; passNumber < numPasses; ++passNumber) {
-    constexpr auto CLAMP{Ogre::TextureAddressingMode::TAM_CLAMP};
-    constexpr auto WRAP{Ogre::TextureAddressingMode::TAM_WRAP};
-    auto *pass{technique->getPass(passNumber)};
+  if (numLayers <= 5) {
+    // Only one pass required.
+    auto *pass{technique->getPass(0)};
     pass->removeAllTextureUnitStates();
 
     auto *globalNormal{pass->createTextureUnitState(globalNormalName)};
@@ -133,29 +129,15 @@ void TerrainMaterialProfile::makeHighLodTechnique(const Ogre::Terrain *terrain,
     auto *vertexColor{pass->createTextureUnitState(vertexColorName)};
     vertexColor->setTextureAddressingMode(CLAMP);
 
-    const auto &blendName{terrain->getBlendTextureName(passNumber)};
+    const auto &blendName{terrain->getBlendTextureName(0)};
     auto *blend{pass->createTextureUnitState(blendName)};
     blend->setTextureAddressingMode(CLAMP);
 
-    if (numLayers == 0) break;
+    if (numLayers == 0) return;
 
-    // Base texture
-    if (passNumber == 0) {
-      const std::string &diffuseName{terrain->getLayerTextureName(0, 0)};
-      auto *diffuse{pass->createTextureUnitState(diffuseName)};
-      diffuse->setTextureAddressingMode(WRAP);
-
-      const std::string &normalName{terrain->getLayerTextureName(0, 1)};
-      auto *normal{pass->createTextureUnitState(normalName)};
-      normal->setTextureAddressingMode(WRAP);
-    }
-
-    constexpr uint8_t MAX_LAYERS{4u};
-    for (uint8_t i = 0; i < MAX_LAYERS; ++i) {
+    for (uint8_t i = 0; i < 5; ++i) {
       // Compute layer number
-      const auto n{static_cast<uint8_t>(std::min(
-          MAX_LAYERS * passNumber + i + 1u,
-          numLayers - 1u))};
+      const auto n{std::min<uint8_t>(i, numLayers - 1u)};
 
       const std::string &diffuseName{terrain->getLayerTextureName(n, 0)};
       auto *diffuse{pass->createTextureUnitState(diffuseName)};
@@ -165,6 +147,36 @@ void TerrainMaterialProfile::makeHighLodTechnique(const Ogre::Terrain *terrain,
       auto *normal{pass->createTextureUnitState(normalName)};
       normal->setTextureAddressingMode(WRAP);
     }
+  } else {
+    // Two passes required, one pass for the diffuse and one for the normals.
+    std::array<std::string, 2u> baseMapNames{
+        vertexColorName,
+        globalNormalName
+    };
+    for (uint8_t passIndex = 0; passIndex < 2; ++passIndex) {
+      auto *pass{technique->getPass(passIndex)};
+      pass->removeAllTextureUnitStates();
+
+      auto *baseMap{pass->createTextureUnitState(baseMapNames[passIndex])};
+      baseMap->setTextureAddressingMode(CLAMP);
+
+      const auto &blend0Name{terrain->getBlendTextureName(0)};
+      auto *blend0{pass->createTextureUnitState(blend0Name)};
+      blend0->setTextureAddressingMode(CLAMP);
+
+      const auto &blend1Name{terrain->getBlendTextureName(1)};
+      auto *blend1{pass->createTextureUnitState(blend1Name)};
+      blend1->setTextureAddressingMode(CLAMP);
+
+      for (uint8_t i = 0; i < 9; ++i) {
+        const auto n{std::min<uint8_t>(i, numLayers - 1u)};
+
+        const auto &layerName{terrain->getLayerTextureName(n, passIndex)};
+        auto *layer{pass->createTextureUnitState(layerName)};
+        layer->setTextureAddressingMode(WRAP);
+      }
+    }
+
   }
 }
 
