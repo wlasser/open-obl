@@ -81,6 +81,7 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
                                            Ogre::RenderSystem *rs) {
   Ogre::Camera *camera{mViewport->getCamera()};
   auto *technique{mAmbientLight->getMaterial()->getBestTechnique()};
+  if (!technique) return;
 
   for (auto *pass : technique->getPasses()) {
     scnMgr->_injectRenderWithPass(pass, mAmbientLight.get(), false);

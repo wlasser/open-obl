@@ -616,7 +616,7 @@ setMaterialProperties(const nif::NiMaterialProperty &block, Ogre::Pass *pass) {
   pass->setShininess(block.glossiness);
 }
 
-void addGenericVertexShader(Ogre::Pass *pass) {
+void addStaticVertexShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setVertexProgram("genericMaterial_vs_glsl", true);
   auto vsParams{pass->getVertexProgramParameters()};
@@ -630,7 +630,7 @@ void addGenericVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_CAMERA_POSITION);
 }
 
-void addGenericSkinnedVertexShader(Ogre::Pass *pass) {
+void addSkinnedVertexShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setVertexProgram("genericSkinnedMaterial_vs_glsl", true);
   auto vsParams{pass->getVertexProgramParameters()};
@@ -644,7 +644,7 @@ void addGenericSkinnedVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_WORLD_MATRIX_ARRAY_3x4);
 }
 
-void addGenericFragmentShader(Ogre::Pass *pass) {
+void addDeferredFragmentShader(Ogre::Pass *pass) {
   using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
   pass->setFragmentProgram("genericMaterial_fs_glsl", true);
   auto fsParams{pass->getFragmentProgramParameters()};
@@ -672,6 +672,36 @@ void addGenericFragmentShader(Ogre::Pass *pass) {
 //                                 AutoConst::ACT_FOG_COLOUR);
 //  fsParams->setNamedAutoConstant("fogParams",
 //                                 AutoConst::ACT_FOG_PARAMS);
+}
+
+void addForwardFragmentShader(Ogre::Pass *pass) {
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
+  pass->setFragmentProgram("genericMaterial_forward_fs_glsl", true);
+  auto fsParams{pass->getFragmentProgramParameters()};
+  const int numLights{8};
+  fsParams->setNamedConstant("diffuseMap", 0);
+  fsParams->setNamedConstant("normalMap", 1);
+  fsParams->setNamedAutoConstant("lightPositionArray",
+                                 AutoConst::ACT_LIGHT_POSITION_ARRAY,
+                                 numLights);
+  fsParams->setNamedAutoConstant("lightDiffuseArray",
+                                 AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
+                                 numLights);
+  fsParams->setNamedAutoConstant("lightAttenuationArray",
+                                 AutoConst::ACT_LIGHT_ATTENUATION_ARRAY,
+                                 numLights);
+  fsParams->setNamedAutoConstant("ambientLightColor",
+                                 AutoConst::ACT_AMBIENT_LIGHT_COLOUR);
+  fsParams->setNamedAutoConstant("matShininess",
+                                 AutoConst::ACT_SURFACE_SHININESS);
+  fsParams->setNamedAutoConstant("matDiffuse",
+                                 AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
+  fsParams->setNamedAutoConstant("matSpecular",
+                                 AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
+  fsParams->setNamedAutoConstant("fogColor",
+                                 AutoConst::ACT_FOG_COLOUR);
+  fsParams->setNamedAutoConstant("fogParams",
+                                 AutoConst::ACT_FOG_PARAMS);
 }
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
@@ -978,12 +1008,16 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
                                  submesh->getMaterialGroup())};
     auto *pass{matPtr->getTechnique(0)->getPass(0)};
 
-    hasBones ? oo::addGenericSkinnedVertexShader(pass)
-             : oo::addGenericVertexShader(pass);
-    oo::addGenericFragmentShader(pass);
+    hasBones ? oo::addSkinnedVertexShader(pass)
+             : oo::addStaticVertexShader(pass);
 
     oo::attachTextureProperty(g, block.properties, pass);
-    oo::attachAlphaProperty(g, block.properties, pass);
+    if (oo::attachAlphaProperty(g, block.properties, pass)) {
+      oo::addForwardFragmentShader(pass);
+      pass->getParent()->setSchemeName("NoGBuffer");
+    } else {
+      oo::addDeferredFragmentShader(pass);
+    }
     oo::attachStencilProperty(g, block.properties, pass);
   }
 

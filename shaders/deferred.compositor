@@ -23,6 +23,7 @@ compositor DeferredShading {
         target_output {
             input none
             shadows off
+            material_scheme Default
 
             pass clear {}
 
@@ -37,11 +38,11 @@ compositor DeferredShading {
                 input 2 mrt_output 2
             }
 
-//            pass render_scene {
-//                material_scheme NoGBuffer
-//                first_render_queue 10
-//                last_render_queue 79
-//            }
+            pass render_scene {
+                material_scheme NoGBuffer
+                first_render_queue 10
+                last_render_queue 79
+            }
 
             pass render_scene {
                 first_render_queue 80

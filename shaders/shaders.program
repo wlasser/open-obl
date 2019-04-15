@@ -13,3 +13,8 @@ fragment_program genericMaterial_fs_glsl glsl
 {
     source genericMaterial_fs.glsl
 }
+
+fragment_program genericMaterial_forward_fs_glsl glsl
+{
+    source genericMaterial_forward_fs.glsl
+}

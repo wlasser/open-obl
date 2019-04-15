@@ -118,9 +118,10 @@ void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
 void
 setMaterialProperties(const nif::NiMaterialProperty &block, Ogre::Pass *pass);
 
-void addGenericVertexShader(Ogre::Pass *pass);
-void addGenericSkinnedVertexShader(Ogre::Pass *pass);
-void addGenericFragmentShader(Ogre::Pass *pass);
+void addStaticVertexShader(Ogre::Pass *pass);
+void addSkinnedVertexShader(Ogre::Pass *pass);
+void addDeferredFragmentShader(Ogre::Pass *pass);
+void addForwardFragmentShader(Ogre::Pass *pass);
 
 struct TangentData {
   std::vector<nif::compound::Vector3> bitangents{};
