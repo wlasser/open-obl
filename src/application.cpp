@@ -32,6 +32,7 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
+#include "scene_manager.hpp"
 #include "script_functions.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
@@ -130,6 +131,9 @@ Application::Application(std::string windowName) : FrameListener() {
 
     ctx.entityFactory = std::make_unique<oo::EntityFactory>();
     ctx.ogreRoot->addMovableObjectFactory(ctx.entityFactory.get());
+
+    ctx.scnMgrFactory = std::make_unique<oo::DeferredSceneManagerFactory>();
+    ctx.ogreRoot->addSceneManagerFactory(ctx.scnMgrFactory.get());
 
     boost::this_fiber::yield();
 

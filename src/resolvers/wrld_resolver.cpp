@@ -245,7 +245,8 @@ void oo::World::setDefaultImportData() {
 
 oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     : mBaseId(baseId), mName(std::move(name)),
-      mScnMgr(Ogre::Root::getSingleton().createSceneManager(),
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager(
+          "oo::DeferredSceneManager"),
               [](Ogre::SceneManager *p) {
                 auto root{Ogre::Root::getSingletonPtr()};
                 if (root) root->destroySceneManager(p);

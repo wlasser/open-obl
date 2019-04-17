@@ -17,6 +17,7 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
+#include "scene_manager.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
 #include <OgreCamera.h>
@@ -123,9 +124,9 @@ void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {
                                               "DeferredGBuffer")};
   gBufferInstance->setEnabled(true);
 
-  auto *showNormals{compMgr.addCompositor(camera->getViewport(),
-                                          "DeferredShading")};
-  showNormals->setEnabled(true);
+  auto *deferred{compMgr.addCompositor(camera->getViewport(),
+                                       "DeferredShading")};
+  deferred->setEnabled(true);
 
 //  auto *compInstance{compMgr.addCompositor(camera->getViewport(), "Post")};
 //  compInstance->setEnabled(true);

@@ -302,7 +302,8 @@ void Cell::setVisible(bool visible) {
 InteriorCell::InteriorCell(oo::BaseId baseId, std::string name,
                            std::unique_ptr<PhysicsWorld> physicsWorld)
     : Cell(baseId, std::move(name)),
-      mScnMgr(Ogre::Root::getSingleton().createSceneManager()),
+      mScnMgr(Ogre::Root::getSingleton().createSceneManager(
+          "oo::DeferredSceneManager")),
       mPhysicsWorld(std::move(physicsWorld)) {}
 
 gsl::not_null<Ogre::SceneManager *> InteriorCell::getSceneManager() const {

@@ -19,9 +19,9 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
 
 void main() {
-    float gamma = 2.2f;
+    float gamma = 1.0f;
 
-    // Undo gamma correction of texture so it is correct later
+    // Convert texture to linear space
     vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).rgb, vec3(gamma)) * VertexCol;
 
     vec3 normal = texture(normalMap, TexCoord).xyz;

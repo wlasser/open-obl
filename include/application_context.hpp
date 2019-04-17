@@ -41,6 +41,8 @@ class CellCache;
 class MeshManager;
 class EntityFactory;
 class DeferredLightPass;
+class DeferredSceneManager;
+class DeferredSceneManagerFactory;
 
 namespace event {
 
@@ -55,6 +57,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
   std::unique_ptr<oo::EntityFactory> entityFactory{};
+  std::unique_ptr<oo::DeferredSceneManagerFactory> scnMgrFactory{};
 
   std::unique_ptr<Ogre::TexImageCodec> texImageCodec{};
 

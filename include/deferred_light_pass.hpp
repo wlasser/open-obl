@@ -9,6 +9,24 @@ namespace oo {
 
 using RenderOperation = Ogre::CompositorInstance::RenderSystemOperation;
 
+class DeferredLight : public Ogre::SimpleRenderable {
+ public:
+  explicit DeferredLight(Ogre::Light *parent);
+  ~DeferredLight() override;
+
+  Ogre::Real getBoundingRadius() const override;
+  Ogre::Real getSquaredViewDepth(const Ogre::Camera *camera) const override;
+  void getWorldTransforms(Ogre::Matrix4 *xform) const override;
+
+  Ogre::Light *getParent() const;
+
+ private:
+  void createPointLight();
+
+  Ogre::Light *mParent{};
+  Ogre::Real mRadius{};
+};
+
 class AmbientLight : public Ogre::SimpleRenderable {
  public:
   AmbientLight();

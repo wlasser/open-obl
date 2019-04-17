@@ -20,11 +20,14 @@ vertex_program deferred_post_ambient_vs_glsl glsl {
 
 fragment_program deferred_post_ambient_fs_glsl glsl {
     source deferred_post_ambient_fs.glsl
-    default_params {
-        param_named Tex0 int 0
-        param_named Tex1 int 1
-        param_named Tex2 int 2
-    }
+}
+
+vertex_program deferred_light_vs_glsl glsl {
+    source deferred_light_vs.glsl
+}
+
+fragment_program deferred_light_fs_glsl glsl {
+    source deferred_light_fs.glsl
 }
 
 material DeferredAmbient {
@@ -38,6 +41,9 @@ material DeferredAmbient {
 
             fragment_program_ref deferred_post_ambient_fs_glsl {
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+                param_named Tex0 int 0
+                param_named Tex1 int 1
+                param_named Tex2 int 2
             }
 
             texture_unit {
@@ -57,6 +63,47 @@ material DeferredAmbient {
                 tex_address_mode clamp
                 filtering none
             }
+        }
+    }
+}
+
+material DeferredLight {
+    technique {
+        pass {
+            lighting off
+            depth_write off
+            depth_check on
+            scene_blend add
+
+            vertex_program_ref deferred_light_vs_glsl {
+                param_named_auto world WORLD_MATRIX
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+            }
+
+            fragment_program_ref deferred_light_fs_glsl {
+                param_named Tex0 int 0
+                param_named Tex1 int 1
+                param_named Tex2 int 2
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 0
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 1
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 2
+                tex_address_mode clamp
+                filtering none
+            }
+
         }
     }
 }

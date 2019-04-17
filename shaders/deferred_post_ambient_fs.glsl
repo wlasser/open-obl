@@ -19,9 +19,8 @@ void main() {
 
     vec3 a2 = texture(Tex2, TexCoord).rgb;
 
-    vec3 diffuseColor = a2 * ambientLightColor.rgb;
+    vec3 diffuseColor = a2 * 0.5f;//* ambientLightColor.rgb;
 
-    vec3 col = pow(diffuseColor, 1.0f / vec3(gamma));
-    FragColor = vec4(col, 1.0f);
+    FragColor = vec4(diffuseColor, 1.0f);
     gl_FragDepth = depth;
 }
