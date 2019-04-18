@@ -19,11 +19,14 @@ compositor DeferredGBuffer {
 compositor DeferredShading {
     technique {
         texture_ref mrt_output DeferredGBuffer mrt_output
+        texture rt0 target_width target_height PF_BYTE_RGBA
 
-        target_output {
+        target rt0 {
             input none
             shadows off
             material_scheme Default
+
+            pass clear {}
 
             pass render_scene {
                 first_render_queue 1
@@ -44,6 +47,17 @@ compositor DeferredShading {
 
             pass render_scene {
                 first_render_queue 80
+            }
+        }
+
+        target_output {
+            input none
+
+            pass clear {}
+
+            pass render_quad {
+                material PostMaterial
+                input 0 rt0
             }
         }
     }

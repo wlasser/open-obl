@@ -8,7 +8,8 @@ uniform sampler2D sunTexture;
 out vec4 FragColor;
 
 void main() {
+    float gamma = 2.2f;
     vec4 sunColor = texture(sunTexture, TexCoord).rgba;
 
-    FragColor = vec4(sunColor.rgb * VertexCol.rgb * sunColor.a, sunColor.a);
+    FragColor = vec4(pow(sunColor.rgb * VertexCol.rgb, vec3(gamma)) * sunColor.a, sunColor.a);
 }

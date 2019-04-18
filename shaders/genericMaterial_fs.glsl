@@ -19,7 +19,7 @@ layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec4 gAlbedoSpec;
 
 void main() {
-    float gamma = 1.0f;
+    float gamma = 2.2f;
 
     // Convert texture to linear space
     vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).rgb, vec3(gamma)) * VertexCol;

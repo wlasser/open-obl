@@ -162,10 +162,10 @@ AmbientLight::AmbientLight() {
                                           Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY)};
   vertBind->setBinding(0, bufPtr);
   std::array<float, 4u * 2u> vertices{
-      -1, 1,
       -1, -1,
-      1, 1,
       1, -1,
+      -1, 1,
+      1, 1,
   };
   bufPtr->writeData(0, vertices.size() * sizeof(float), vertices.data(), true);
 
@@ -179,12 +179,6 @@ AmbientLight::AmbientLight() {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   mMaterial = matMgr.getByName("DeferredAmbient");
   mMaterial->load();
-
-  auto *pass{mMaterial->getTechnique(0)->getPass(0)};
-  const auto &params{pass->getFragmentProgramParameters()};
-//  params->setNamedConstant("Tex0", 0);
-//  params->setNamedConstant("Tex1", 1);
-//  params->setNamedConstant("Tex2", 2);
 }
 
 AmbientLight::~AmbientLight() {

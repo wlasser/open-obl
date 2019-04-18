@@ -10,10 +10,11 @@ uniform vec3 upperCloudColor;
 out vec4 FragColor;
 
 void main() {
+    float gamma = 2.2f;
     float lcAlpha = texture(lowerLayer, TexCoord).a;
     float ucAlpha = texture(upperLayer, TexCoord).a;
-    vec3 lowerCloud = vec3(texture(lowerLayer, TexCoord).rgb * lowerCloudColor);
-    vec3 upperCloud = vec3(texture(upperLayer, TexCoord).rgb * upperCloudColor);
+    vec3 lowerCloud = pow(texture(lowerLayer, TexCoord).rgb * lowerCloudColor, vec3(gamma));
+    vec3 upperCloud = pow(texture(upperLayer, TexCoord).rgb * upperCloudColor, vec3(gamma));
 
     float cloudAlpha;
     vec3 cloudColor;

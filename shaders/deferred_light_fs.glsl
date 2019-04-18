@@ -10,22 +10,22 @@ uniform vec4 lightAttenuation;
 
 uniform vec3 ViewPos;
 
-in vec3 FragPos;
 in vec4 ScreenPos;
 
 out vec4 FragColor;
 
 void main() {
     vec4 homScreenPos = (ScreenPos / ScreenPos.w);
-    vec2 uv = vec2(homScreenPos.x, -homScreenPos.y) * 0.5f + 0.5f;
+    vec2 uv = vec2(homScreenPos.x, homScreenPos.y) * 0.5f + 0.5f;
 
+    vec3 worldPos = texture(Tex0, uv).xyz;
     vec3 normal = texture(Tex1, uv).xyz;
     vec4 albedoSpec = texture(Tex2, uv).rgba;
 
-    vec3 viewDir = normalize(ViewPos - FragPos);
+    vec3 viewDir = normalize(ViewPos - worldPos);
 
-    float lightDist = length(lightPosition.xyz - FragPos);
-    vec3 lightDir = (lightPosition.xyz - FragPos) / lightDist;
+    float lightDist = length(lightPosition.xyz - worldPos);
+    vec3 lightDir = (lightPosition.xyz - worldPos) / lightDist;
     vec3 reflectDir = reflect(-lightDir, normal);
     float atten = 1.0f / (lightAttenuation.y
     + lightAttenuation.z * lightDist
@@ -41,6 +41,5 @@ void main() {
     vec3 specCol = 0.25f * spec * lightCol;
 
     vec3 finalCol = (specCol + diffCol) * atten;
-    finalCol = albedoSpec.rgb;
     FragColor = vec4(finalCol, 0.0f);
 }

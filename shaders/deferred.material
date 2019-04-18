@@ -36,24 +36,19 @@ material DeferredAmbient {
             lighting off
             depth_write on
             depth_check on
+            cull_hardware none
+            cull_software none
 
             vertex_program_ref deferred_post_ambient_vs_glsl {}
 
             fragment_program_ref deferred_post_ambient_fs_glsl {
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
                 param_named Tex0 int 0
-                param_named Tex1 int 1
-                param_named Tex2 int 2
+                param_named Tex2 int 1
             }
 
             texture_unit {
                 content_type compositor DeferredGBuffer mrt_output 0
-                tex_address_mode clamp
-                filtering none
-            }
-
-            texture_unit {
-                content_type compositor DeferredGBuffer mrt_output 1
                 tex_address_mode clamp
                 filtering none
             }

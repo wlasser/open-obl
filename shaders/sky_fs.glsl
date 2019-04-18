@@ -9,6 +9,7 @@ uniform vec3 horizonColor;
 out vec4 FragColor;
 
 void main() {
+    float gamma = 2.2f;
     vec3 pos = FragPos / 4000.0f;
     float r = length(pos);
     // 0 at the horizon, +1 at the upper pole, -1 at the lower pole
@@ -24,6 +25,8 @@ void main() {
         float di = (inclination - lowerInclination) / (1 - lowerInclination);
         skyColor = (1 - di) * lowerSkyColor + di * upperSkyColor;
     }
+
+    skyColor = pow(skyColor, vec3(gamma));
 
     // Premultiply alpha to allow blending with the clouds
     FragColor = vec4(skyColor * skyAlpha, skyAlpha);
