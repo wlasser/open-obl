@@ -54,6 +54,6 @@ void main() {
 
     dc[8] *= texture(vertexColor, texCoord).rgb;
 
-    gAlbedoSpec.rgb = dc[8];
-    gAlbedoSpec.a = 0.0f;
+    // TODO: Use LTEX specular. All of them seem to use 30.0f though.
+    gAlbedoSpec = vec4(dc[8], 30.0f);
 }

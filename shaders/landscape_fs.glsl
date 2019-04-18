@@ -99,5 +99,6 @@ void main() {
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;
 
-    gAlbedoSpec = vec4(diffuseColor, 0.0f);
+    // TODO: Use LTEX specular. All of them seem to use 30.0f though.
+    gAlbedoSpec = vec4(diffuseColor, 30.0f);
 }

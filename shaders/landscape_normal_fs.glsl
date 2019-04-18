@@ -55,7 +55,7 @@ void main() {
         n[i + 1] = mix(f[i] * n[i], n[i + 1], fOld) / f[i + 1];
     }
 
-    gNormal.xyz = n[8];
+    gNormal.xyz = normalize(TBN * n[8]);
 
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;
