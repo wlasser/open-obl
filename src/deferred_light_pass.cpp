@@ -11,22 +11,15 @@
 
 namespace oo {
 
-DeferredLight::DeferredLight(Ogre::Light *parent) : mParent(parent) {
+DeferredLight::DeferredLight(Ogre::Light *parent)
+    : mParent(parent),
+      mLightType(parent->getType()),
+      mRadius(parent->getAttenuationRange()),
+      mAttenConstant(parent->getAttenuationConstant()),
+      mAttenLinear(parent->getAttenuationLinear()),
+      mAttenQuadratic(parent->getAttenuationQuadric()) {
   mRenderOp.vertexData = nullptr;
   mRenderOp.indexData = nullptr;
-
-  switch (parent->getType()) {
-    case Ogre::Light::LightTypes::LT_POINT: {
-      mRadius = parent->getAttenuationRange();
-      setBoundingBox(Ogre::AxisAlignedBox(mRadius, mRadius, mRadius,
-                                          -mRadius, -mRadius, -mRadius));
-      createPointLight();
-      break;
-    }
-    case Ogre::Light::LightTypes::LT_DIRECTIONAL: return;
-    case Ogre::Light::LightTypes::LT_SPOTLIGHT: return;
-    default: return;
-  }
 
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   mMaterial = matMgr.getByName("DeferredLight");
@@ -71,6 +64,47 @@ void DeferredLight::getWorldTransforms(Ogre::Matrix4 *xform) const {
 
 Ogre::Light *DeferredLight::getParent() const {
   return mParent;
+}
+
+bool DeferredLight::isInsideLight(Ogre::Camera *camera) const {
+  switch (mParent->getType()) {
+    case LightTypes::LT_POINT: {
+      const auto &p1{camera->getDerivedPosition()};
+      const auto &p2{mParent->getDerivedPosition()};
+      return p1.squaredDistance(p2) <= mRadius * mRadius;
+    }
+    case LightTypes::LT_DIRECTIONAL:return false;
+    case LightTypes::LT_SPOTLIGHT:return false;
+    default:return false;
+  }
+}
+
+void DeferredLight::rebuildLightGeometry() {
+  const auto lightType{mParent->getType()};
+  const auto radius{mParent->getAttenuationRange()};
+  if (mLightType != lightType
+      || (radius != mRadius && lightType != LightTypes::LT_DIRECTIONAL)) {
+    OGRE_DELETE mRenderOp.vertexData;
+    OGRE_DELETE mRenderOp.indexData;
+
+    // For exception safety these should really be set after the light has been
+    // rebuilt, but they need to be correct for createPointLight to work.
+    mLightType = lightType;
+    mRadius = radius;
+
+    switch (lightType) {
+      case LightTypes::LT_POINT: {
+        const auto radius{mParent->getAttenuationRange()};
+        setBoundingBox(Ogre::AxisAlignedBox(radius, radius, radius,
+                                            -radius, -radius, -radius));
+        createPointLight();
+        break;
+      }
+      case LightTypes::LT_DIRECTIONAL: return;
+      case LightTypes::LT_SPOTLIGHT: return;
+      default: return;
+    }
+  }
 }
 
 void DeferredLight::createPointLight() {
@@ -131,8 +165,7 @@ void DeferredLight::createPointLight() {
                                            12u,
                                            Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY)};
   vertBind->setBinding(0, vertBuf);
-//  const float sf{mRadius / (Ogre::Math::Sqrt(2.0 + phi))};
-  const float sf{1.0f / (Ogre::Math::Sqrt(2.0f + phi))};
+  const float sf{mRadius / (Ogre::Math::Sqrt(2.0f + phi))};
   for (auto &v : vertices) v *= sf;
   vertBuf->writeData(0u, vertices.size() * 4u, vertices.data(), true);
 
@@ -208,21 +241,26 @@ DeferredLightRenderOperation::DeferredLightRenderOperation(Ogre::CompositorInsta
   }
 }
 
-void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
-                                           Ogre::RenderSystem *rs) {
-  Ogre::Camera *camera{mViewport->getCamera()};
+void DeferredLightRenderOperation::executeAmbientLight(Ogre::SceneManager *scnMgr) {
   auto *technique{mAmbientLight->getMaterial()->getBestTechnique()};
   if (!technique) return;
 
   for (auto *pass : technique->getPasses()) {
     scnMgr->_injectRenderWithPass(pass, mAmbientLight.get(), false);
   }
+}
+
+void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
+                                           Ogre::RenderSystem *rs) {
+  executeAmbientLight(scnMgr);
 
   auto *dScnMgr{dynamic_cast<oo::DeferredSceneManager *>(scnMgr)};
   if (!dScnMgr) return;
 
+  Ogre::Camera *camera{mViewport->getCamera()};
   const auto dLights{dScnMgr->getLights()};
   const Ogre::LightList &lights{dScnMgr->_getLightsAffectingFrustum()};
+
   for (auto *light : lights) {
     auto it{std::find_if(dLights.begin(), dLights.end(), [light](auto *l) {
       return l->getParent() == light;
@@ -231,12 +269,26 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
 
     Ogre::LightList dLightList;
     dLightList.push_back(light);
-    technique = (*it)->getMaterial()->getBestTechnique();
+    auto *technique = (*it)->getMaterial()->getBestTechnique();
     if (!technique) return;
 
+    (*it)->rebuildLightGeometry();
+
     for (auto *pass : technique->getPasses()) {
+      if (light->getType() != Ogre::Light::LightTypes::LT_DIRECTIONAL) {
+        bool isInside{(*it)->isInsideLight(camera)};
+        if (isInside) {
+          pass->setCullingMode(Ogre::CullingMode::CULL_ANTICLOCKWISE);
+          pass->setDepthFunction(Ogre::CompareFunction::CMPF_GREATER_EQUAL);
+        } else {
+          pass->setCullingMode(Ogre::CullingMode::CULL_CLOCKWISE);
+          pass->setDepthFunction(Ogre::CompareFunction::CMPF_LESS_EQUAL);
+        }
+      }
+
       dScnMgr->_injectRenderWithPass(pass, *it, false, false, &dLightList);
     }
+
   }
 }
 

@@ -3,6 +3,7 @@
 
 #include <OgreCompositorInstance.h>
 #include <OgreCustomCompositionPass.h>
+#include <OgreLight.h>
 #include <OgreSimpleRenderable.h>
 
 namespace oo {
@@ -20,11 +21,34 @@ class DeferredLight : public Ogre::SimpleRenderable {
 
   Ogre::Light *getParent() const;
 
+  bool isInsideLight(Ogre::Camera *camera) const;
+
+  using LightTypes = Ogre::Light::LightTypes;
+
+  void rebuildLightGeometry();
+
  private:
   void createPointLight();
 
   Ogre::Light *mParent{};
-  Ogre::Real mRadius{};
+
+  /// \name Cached Light Parameters
+  /// Several properties of an `Ogre::Light` influence the geometry of the
+  /// light mesh, meaning that the geometry must be regenerated when those
+  /// properties change. The relevant properties are therefore cached here and
+  /// compared against `mParent`'s actual values when the light is to be
+  /// rendered, and the geometry updated if they are out of date.
+  ///
+  /// Deriving from `Ogre::Light` would also work here, but since the property
+  /// setters are not virtual a new `update` method (or similar) would need to
+  /// added and manually called by the user.
+  /// @{
+  LightTypes mLightType;
+  Ogre::Real mRadius;
+  Ogre::Real mAttenConstant;
+  Ogre::Real mAttenLinear;
+  Ogre::Real mAttenQuadratic;
+  /// @}
 };
 
 class AmbientLight : public Ogre::SimpleRenderable {
@@ -53,6 +77,8 @@ class DeferredLightRenderOperation : public RenderOperation {
   std::array<std::string, 3u> mTexNames{};
   Ogre::Viewport *mViewport;
   std::unique_ptr<AmbientLight> mAmbientLight{};
+
+  void executeAmbientLight(Ogre::SceneManager *scnMgr);
 };
 
 class DeferredLightPass : public Ogre::CustomCompositionPass {

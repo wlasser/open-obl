@@ -46,18 +46,18 @@ reifyRecord(const record::REFR_LIGH &refRec,
 
   {
     const auto &gs{oo::GameSettings::getSingleton()};
-    const float s{oo::unitsPerMeter<float>};
+    const float s{oo::metersPerUnit<float>};
     const float s1{gs.get("bLightAttenuation.fLinearRadiusMult", 1.0f)};
     const float s2{gs.get("bLightAttenuation.fQuadraticRadiusMult", 1.0f)};
     const float c0{gs.get("bLightAttenuation.fConstantValue", 1.0f)};
     const float c1{gs.get("bLightAttenuation.fLinearValue", 3.0f)};
     const float c2{gs.get("bLightAttenuation.fQuadraticValue", 16.0f)};
 
-    const auto r{std::max(gsl::narrow_cast<float>(data.radius), 0.01f)};
+    const auto r{std::max(gsl::narrow_cast<float>(data.radius) * s, 0.01f)};
 
     light->setAttenuation(r, c0,
-                          s * c1 / (s1 * r),
-                          s * s * c2 / (s2 * r * s2 * r));
+                          c1 / (s1 * r),
+                          c2 / (s2 * r * s2 * r));
     light->setPowerScale(baseRec->fadeValue ? baseRec->fadeValue->data : 1.0f);
   }
 

@@ -15,6 +15,8 @@ in vec4 ScreenPos;
 out vec4 FragColor;
 
 void main() {
+    float gamma = 2.2f;
+
     vec4 homScreenPos = (ScreenPos / ScreenPos.w);
     vec2 uv = vec2(homScreenPos.x, homScreenPos.y) * 0.5f + 0.5f;
 
@@ -31,7 +33,7 @@ void main() {
     + lightAttenuation.z * lightDist
     + lightAttenuation.w * lightDist * lightDist);
 
-    vec3 lightCol = lightDiffuseCol.rgb;
+    vec3 lightCol = pow(lightDiffuseCol.rgb, vec3(gamma));
 
     float diff = max(dot(normal, lightDir), 0.0f);
     vec3 diffCol = diff * lightCol * albedoSpec.rgb;
