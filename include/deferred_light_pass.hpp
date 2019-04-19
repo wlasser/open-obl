@@ -29,6 +29,10 @@ class DeferredLight : public Ogre::SimpleRenderable {
 
  private:
   void createPointLight();
+  void createDirectionalLight();
+
+  void setPointLightMaterial();
+  void setDirectionalLightMaterial();
 
   Ogre::Light *mParent{};
 

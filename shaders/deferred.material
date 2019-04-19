@@ -22,12 +22,22 @@ fragment_program deferred_post_ambient_fs_glsl glsl {
     source deferred_post_ambient_fs.glsl
 }
 
-vertex_program deferred_light_vs_glsl glsl {
+vertex_program deferred_point_light_vs_glsl glsl {
     source deferred_light_vs.glsl
 }
 
-fragment_program deferred_light_fs_glsl glsl {
+fragment_program deferred_point_light_fs_glsl glsl {
     source deferred_light_fs.glsl
+    preprocessor_defines LIGHT_TYPE=0
+}
+
+vertex_program deferred_directional_light_vs_glsl glsl {
+    source deferred_post_ambient_vs.glsl
+}
+
+fragment_program deferred_directional_light_fs_glsl glsl {
+    source deferred_light_fs.glsl
+    preprocessor_defines LIGHT_TYPE=1
 }
 
 material DeferredAmbient {
@@ -62,7 +72,7 @@ material DeferredAmbient {
     }
 }
 
-material DeferredLight {
+material DeferredPointLight {
     technique {
         pass {
             lighting off
@@ -70,12 +80,12 @@ material DeferredLight {
             depth_check on
             scene_blend add
 
-            vertex_program_ref deferred_light_vs_glsl {
+            vertex_program_ref deferred_point_light_vs_glsl {
                 param_named_auto world WORLD_MATRIX
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
             }
 
-            fragment_program_ref deferred_light_fs_glsl {
+            fragment_program_ref deferred_point_light_fs_glsl {
                 param_named Tex0 int 0
                 param_named Tex1 int 1
                 param_named Tex2 int 2
@@ -98,7 +108,45 @@ material DeferredLight {
                 tex_address_mode clamp
                 filtering none
             }
+        }
+    }
+}
 
+material DeferredDirectionalLight {
+    technique {
+        pass {
+            lighting off
+            depth_write off
+            depth_check off
+            scene_blend add
+            cull_hardware none
+            cull_software none
+
+            vertex_program_ref deferred_directional_light_vs_glsl {}
+
+            fragment_program_ref deferred_directional_light_fs_glsl {
+                param_named Tex0 int 0
+                param_named Tex1 int 1
+                param_named Tex2 int 2
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 0
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 1
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 2
+                tex_address_mode clamp
+                filtering none
+            }
         }
     }
 }

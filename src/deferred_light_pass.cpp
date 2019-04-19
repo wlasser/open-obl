@@ -20,26 +20,6 @@ DeferredLight::DeferredLight(Ogre::Light *parent)
       mAttenQuadratic(parent->getAttenuationQuadric()) {
   mRenderOp.vertexData = nullptr;
   mRenderOp.indexData = nullptr;
-
-  auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  mMaterial = matMgr.getByName("DeferredLight");
-  mMaterial->load();
-
-  auto *pass{mMaterial->getTechnique(0)->getPass(0)};
-  const auto &params{pass->getFragmentProgramParameters()};
-  params->setNamedConstant("Tex0", 0);
-  params->setNamedConstant("Tex1", 1);
-  params->setNamedConstant("Tex2", 2);
-
-  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
-  params->setNamedAutoConstant("ViewPos",
-                               AutoConst::ACT_CAMERA_POSITION);
-  params->setNamedAutoConstant("lightPosition",
-                               AutoConst::ACT_LIGHT_POSITION);
-  params->setNamedAutoConstant("lightDiffuseCol",
-                               AutoConst::ACT_LIGHT_DIFFUSE_COLOUR);
-  params->setNamedAutoConstant("lightAttenuation",
-                               AutoConst::ACT_LIGHT_ATTENUATION);
 }
 
 DeferredLight::~DeferredLight() {
@@ -82,6 +62,7 @@ bool DeferredLight::isInsideLight(Ogre::Camera *camera) const {
 void DeferredLight::rebuildLightGeometry() {
   const auto lightType{mParent->getType()};
   const auto radius{mParent->getAttenuationRange()};
+
   if (mLightType != lightType
       || (radius != mRadius && lightType != LightTypes::LT_DIRECTIONAL)) {
     OGRE_DELETE mRenderOp.vertexData;
@@ -94,13 +75,20 @@ void DeferredLight::rebuildLightGeometry() {
 
     switch (lightType) {
       case LightTypes::LT_POINT: {
-        const auto radius{mParent->getAttenuationRange()};
         setBoundingBox(Ogre::AxisAlignedBox(radius, radius, radius,
                                             -radius, -radius, -radius));
         createPointLight();
+        setPointLightMaterial();
         break;
       }
-      case LightTypes::LT_DIRECTIONAL: return;
+      case LightTypes::LT_DIRECTIONAL: {
+        setBoundingBox(Ogre::AxisAlignedBox(-5000.0f, -5000.0f, -5000.0f,
+                                            5000.0f, 5000.0f, 5000.0f));
+        mRadius = 8000.0f;
+        createDirectionalLight();
+        setDirectionalLightMaterial();
+        break;
+      }
       case LightTypes::LT_SPOTLIGHT: return;
       default: return;
     }
@@ -176,6 +164,78 @@ void DeferredLight::createPointLight() {
       Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
   auto &idxBuf{mRenderOp.indexData->indexBuffer};
   idxBuf->writeData(0u, indices.size() * 2u, indices.data(), true);
+}
+
+void DeferredLight::createDirectionalLight() {
+  mRenderOp.vertexData = OGRE_NEW Ogre::VertexData();
+  mRenderOp.vertexData->vertexCount = 4u;
+  mRenderOp.vertexData->vertexStart = 0u;
+  mRenderOp.indexData = nullptr;
+
+  auto *vertDecl{mRenderOp.vertexData->vertexDeclaration};
+  auto *vertBind{mRenderOp.vertexData->vertexBufferBinding};
+
+  vertDecl->addElement(0, 0, Ogre::VET_FLOAT2, Ogre::VES_POSITION);
+
+  auto &hwBufMgr{Ogre::HardwareBufferManager::getSingleton()};
+  auto bufPtr{hwBufMgr.createVertexBuffer(vertDecl->getVertexSize(0), 4u,
+                                          Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY)};
+  vertBind->setBinding(0, bufPtr);
+  std::array<float, 4u * 2u> vertices{
+      -1, -1,
+      1, -1,
+      -1, 1,
+      1, 1,
+  };
+  bufPtr->writeData(0, vertices.size() * sizeof(float), vertices.data(), true);
+
+  mRenderOp.operationType = Ogre::RenderOperation::OT_TRIANGLE_STRIP;
+  mRenderOp.useIndexes = false;
+}
+
+void DeferredLight::setPointLightMaterial() {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  mMaterial = matMgr.getByName("DeferredPointLight");
+  mMaterial->load();
+
+  auto *pass{mMaterial->getTechnique(0)->getPass(0)};
+  const auto &params{pass->getFragmentProgramParameters()};
+  params->setNamedConstant("Tex0", 0);
+  params->setNamedConstant("Tex1", 1);
+  params->setNamedConstant("Tex2", 2);
+
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
+  params->setNamedAutoConstant("ViewPos",
+                               AutoConst::ACT_CAMERA_POSITION);
+  params->setNamedAutoConstant("lightPosition",
+                               AutoConst::ACT_LIGHT_POSITION);
+  params->setNamedAutoConstant("lightDiffuseCol",
+                               AutoConst::ACT_LIGHT_DIFFUSE_COLOUR);
+  params->setNamedAutoConstant("lightAttenuation",
+                               AutoConst::ACT_LIGHT_ATTENUATION);
+}
+
+void DeferredLight::setDirectionalLightMaterial() {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  mMaterial = matMgr.getByName("DeferredDirectionalLight");
+  mMaterial->load();
+
+  auto *pass{mMaterial->getTechnique(0)->getPass(0)};
+  const auto &params{pass->getFragmentProgramParameters()};
+  params->setNamedConstant("Tex0", 0);
+  params->setNamedConstant("Tex1", 1);
+  params->setNamedConstant("Tex2", 2);
+
+  using AutoConst = Ogre::GpuProgramParameters::AutoConstantType;
+  params->setNamedAutoConstant("ViewPos",
+                               AutoConst::ACT_CAMERA_POSITION);
+  params->setNamedAutoConstant("lightDirection",
+                               AutoConst::ACT_LIGHT_POSITION);
+  params->setNamedAutoConstant("lightDiffuseCol",
+                               AutoConst::ACT_LIGHT_DIFFUSE_COLOUR);
+  params->setNamedAutoConstant("lightAttenuation",
+                               AutoConst::ACT_LIGHT_ATTENUATION);
+
 }
 
 AmbientLight::AmbientLight() {
@@ -268,14 +328,14 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
     if (it == dLights.end()) continue;
     auto *dLight{*it};
 
-    if (light->getType() != Ogre::Light::LightTypes::LT_POINT) continue;
+    if (light->getType() == Ogre::Light::LightTypes::LT_SPOTLIGHT) continue;
+
+    dLight->rebuildLightGeometry();
 
     Ogre::LightList dLightList;
     dLightList.push_back(light);
     auto *technique = dLight->getMaterial()->getBestTechnique();
     if (!technique) return;
-
-    dLight->rebuildLightGeometry();
 
     for (auto *pass : technique->getPasses()) {
       if (light->getType() != Ogre::Light::LightTypes::LT_DIRECTIONAL) {
