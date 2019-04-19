@@ -22,6 +22,12 @@ void main() {
 
     vec3 worldPos = texture(Tex0, uv).xyz;
     vec3 normal = texture(Tex1, uv).xyz;
+
+    // Don't try to light things without normals, like the sky.
+    if (length(normal) < 0.9f) {
+        FragColor = vec4(0.0f);
+        return;
+    }
     vec4 albedoSpec = texture(Tex2, uv).rgba;
 
     vec3 viewDir = normalize(ViewPos - worldPos);
