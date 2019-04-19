@@ -266,17 +266,20 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
       return l->getParent() == light;
     })};
     if (it == dLights.end()) continue;
+    auto *dLight{*it};
+
+    if (light->getType() != Ogre::Light::LightTypes::LT_POINT) continue;
 
     Ogre::LightList dLightList;
     dLightList.push_back(light);
-    auto *technique = (*it)->getMaterial()->getBestTechnique();
+    auto *technique = dLight->getMaterial()->getBestTechnique();
     if (!technique) return;
 
-    (*it)->rebuildLightGeometry();
+    dLight->rebuildLightGeometry();
 
     for (auto *pass : technique->getPasses()) {
       if (light->getType() != Ogre::Light::LightTypes::LT_DIRECTIONAL) {
-        bool isInside{(*it)->isInsideLight(camera)};
+        bool isInside{dLight->isInsideLight(camera)};
         if (isInside) {
           pass->setCullingMode(Ogre::CullingMode::CULL_ANTICLOCKWISE);
           pass->setDepthFunction(Ogre::CompareFunction::CMPF_GREATER_EQUAL);
