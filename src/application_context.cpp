@@ -43,7 +43,8 @@ void ApplicationContext::setCameraAspectRatio(gsl::not_null<Ogre::Camera *> came
 
   const float aspectRatio{screenWidth / screenHeight};
   camera->setAspectRatio(aspectRatio);
-  camera->setNearClipDistance(0.1f);
+  camera->setNearClipDistance(0.2f);
+  camera->setFarClipDistance(30000.0f);
 
   // We are given the horizontal fov, but can only set the vertical fov.
   // Internally Ogre probably undoes this operation so this is inefficient and
