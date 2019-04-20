@@ -38,12 +38,23 @@ compositor DeferredShading {
                 input 1 mrt_output 1
                 input 2 mrt_output 2
             }
+        }
+
+        target rt0 {
+            input none
+            shadows off
+            material_scheme NoGBuffer
 
             pass render_scene {
-                material_scheme NoGBuffer
                 first_render_queue 10
                 last_render_queue 79
             }
+        }
+
+        target rt0 {
+            input none
+            shadows off
+            material_scheme Default
 
             pass render_scene {
                 first_render_queue 80

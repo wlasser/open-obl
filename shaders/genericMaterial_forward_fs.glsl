@@ -81,7 +81,7 @@ void main() {
         }
     }
 
-    vec3 fragColor = pow(min(ambient + lighting, 1.0f), vec3(1.0f / gamma));
+    vec3 fragColor = ambient + lighting;
 
     float distance = length(FragPos.xyz - ViewPos.xyz);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
