@@ -11,12 +11,10 @@ in vec3 binormal;
 out mat3 TBN;
 out vec2 TexCoord;
 out vec3 FragPos;
-out vec3 ViewPos;
 out vec3 VertexCol;
 
 uniform mat4 viewProj;
 uniform mat4 worldInverseTranspose;
-uniform vec4 viewPos;
 uniform mat4x3 worldMatrixArray[100];
 
 void main() {
@@ -47,6 +45,5 @@ void main() {
 
     TexCoord = uv0.xy;
     FragPos = blendVertex;
-    ViewPos = viewPos.xyz;
     VertexCol = colour.rgb;
 }

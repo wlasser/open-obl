@@ -9,13 +9,11 @@ in vec3 binormal;
 out mat3 TBN;
 out vec2 TexCoord;
 out vec3 FragPos;
-out vec3 ViewPos;
 out vec3 VertexCol;
 
 uniform mat4 worldViewProj;
 uniform mat4 worldInverseTranspose;
 uniform mat4 world;
-uniform vec4 viewPos;
 
 void main() {
     gl_Position = worldViewProj * vertex;
@@ -25,6 +23,5 @@ void main() {
     TBN = mat3(T, B, N);
     TexCoord = uv0.xy;
     FragPos = vec3(world * vertex);
-    ViewPos = viewPos.xyz;
     VertexCol = colour.rgb;
 }

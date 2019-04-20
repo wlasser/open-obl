@@ -2,7 +2,6 @@
 in mat3 TBN;
 in vec2 TexCoord;
 in vec3 FragPos;
-in vec3 ViewPos;
 in vec3 VertexCol;
 
 #define MAX_LIGHTS 8
@@ -13,6 +12,7 @@ uniform vec4 lightPositionArray[MAX_LIGHTS];
 uniform vec4 lightDiffuseArray[MAX_LIGHTS];
 uniform vec4 lightAttenuationArray[MAX_LIGHTS];
 uniform vec4 ambientLightColor;
+uniform vec3 viewPos;
 
 uniform float matShininess;
 uniform vec3 matDiffuse;
@@ -40,7 +40,7 @@ void main() {
     normal = normalize(TBN * normal);
 
     vec3 lighting = vec3(0.0f, 0.0f, 0.0f);
-    vec3 viewDir = normalize(ViewPos - FragPos);
+    vec3 viewDir = normalize(viewPos - FragPos);
 
     vec3 ambient = diffuseColor * ambientLightColor.rgb;
 
@@ -83,7 +83,7 @@ void main() {
 
     vec3 fragColor = ambient + lighting;
 
-    float distance = length(FragPos.xyz - ViewPos.xyz);
+    float distance = length(FragPos - viewPos);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
     fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
 

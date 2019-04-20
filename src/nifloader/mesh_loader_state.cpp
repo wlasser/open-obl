@@ -626,8 +626,6 @@ void addStaticVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("worldViewProj",
                                  AutoConst::ACT_WORLDVIEWPROJ_MATRIX);
-  vsParams->setNamedAutoConstant("viewPos",
-                                 AutoConst::ACT_CAMERA_POSITION);
 }
 
 void addSkinnedVertexShader(Ogre::Pass *pass) {
@@ -638,8 +636,6 @@ void addSkinnedVertexShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_INVERSE_TRANSPOSE_WORLD_MATRIX);
   vsParams->setNamedAutoConstant("viewProj",
                                  AutoConst::ACT_VIEWPROJ_MATRIX);
-  vsParams->setNamedAutoConstant("viewPos",
-                                 AutoConst::ACT_CAMERA_POSITION);
   vsParams->setNamedAutoConstant("worldMatrixArray",
                                  AutoConst::ACT_WORLD_MATRIX_ARRAY_3x4);
 }
@@ -690,6 +686,8 @@ void addForwardFragmentShader(Ogre::Pass *pass) {
   fsParams->setNamedAutoConstant("lightAttenuationArray",
                                  AutoConst::ACT_LIGHT_ATTENUATION_ARRAY,
                                  numLights);
+  fsParams->setNamedAutoConstant("viewPos",
+                                 AutoConst::ACT_CAMERA_POSITION);
   fsParams->setNamedAutoConstant("ambientLightColor",
                                  AutoConst::ACT_AMBIENT_LIGHT_COLOUR);
   fsParams->setNamedAutoConstant("matShininess",

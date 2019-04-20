@@ -3,7 +3,6 @@
 in mat3 TBN;
 in vec2 TexCoord;
 in vec3 FragPos;
-in vec3 ViewPos;
 in vec3 VertexCol;
 
 uniform float farDistance;
