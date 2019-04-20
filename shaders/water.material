@@ -15,18 +15,40 @@ material __WaterMaterial {
             }
 
             fragment_program_ref water_fs_glsl {
+                param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
                 param_named diffuse int 0
+                param_named Tex0 int 1
+                param_named Tex1 int 2
+                param_named Tex2 int 3
             }
 
             texture_unit diffuse {
                 texture "textures/water/water00.dds"
             }
 
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 0
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 1
+                tex_address_mode clamp
+                filtering none
+            }
+
+            texture_unit {
+                content_type compositor DeferredGBuffer mrt_output 2
+                tex_address_mode clamp
+                filtering none
+            }
+
             cull_hardware none
             cull_software none
 
             depth_write off
-            separate_scene_blend src_alpha one_minus_src_alpha zero one
+            depth_check on
         }
     }
 }

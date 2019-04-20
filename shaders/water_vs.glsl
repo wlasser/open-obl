@@ -9,6 +9,7 @@ in vec4 uv3;// world[2]
 out vec2 TexCoord;
 out vec3 FragPos;
 out vec3 ViewPos;
+out vec4 ScreenPos;
 
 uniform mat4 viewProj;
 uniform vec4 viewPos;
@@ -22,10 +23,12 @@ void main() {
     world[3] = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
     vec4 worldPos = vertex * world;
-    //    vec3 worldNorm = normal * mat3(world);
+    //vec3 worldNorm = normal * mat3(world);
 
-    gl_Position = viewProj * worldPos;
+    vec4 screenPos = viewProj * worldPos;
+    gl_Position = screenPos;
     TexCoord = uv0.xy;
     FragPos = vec3(worldPos);
     ViewPos = viewPos.xyz;
+    ScreenPos = screenPos;
 }
