@@ -38,9 +38,9 @@ void main() {
 
     gl_Position = viewProj * vec4(blendVertex, 1.0f);
 
-    vec3 N = vec3(worldInverseTranspose * vec4(blendNormal, 0.0f));
-    vec3 B = vec3(worldInverseTranspose * vec4(blendBinormal, 0.0f));
-    vec3 T = vec3(worldInverseTranspose * vec4(blendTangent, 0.0f));
+    vec3 T = normalize(vec3(worldInverseTranspose * vec4(blendTangent, 0.0f)));
+    vec3 B = normalize(vec3(worldInverseTranspose * vec4(blendBinormal, 0.0f)));
+    vec3 N = normalize(vec3(worldInverseTranspose * vec4(blendNormal, 0.0f)));
     TBN = mat3(T, B, N);
 
     TexCoord = uv0.xy;

@@ -15,7 +15,7 @@ out vec4 FragColor;
 
 void main() {
     vec4 homScreenPos = ScreenPos / ScreenPos.w;
-    vec2 uv = vec2(homScreenPos.x, homScreenPos.y) * 0.5f + 0.5f;
+    vec2 uv = homScreenPos.xy * 0.5f + 0.5f;
 
     vec3 bump = texture(diffuse, TexCoord).xyz;
 

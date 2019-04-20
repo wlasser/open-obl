@@ -33,17 +33,18 @@ void main() {
     vec2 uv = TexCoord;
     #else
     vec4 homScreenPos = (ScreenPos / ScreenPos.w);
-    vec2 uv = vec2(homScreenPos.x, homScreenPos.y) * 0.5f + 0.5f;
+    vec2 uv = homScreenPos.xy * 0.5f + 0.5f;
     #endif
 
-    vec3 worldPos = texture(Tex0, uv).xyz;
     vec3 normal = texture(Tex1, uv).xyz;
 
     // Don't try to light things without normals, like the sky.
-    if (length(normal) < 0.9f) {
+    if (dot(normal, normal) < 0.4f) {
         FragColor = vec4(0.0f);
         return;
     }
+
+    vec3 worldPos = texture(Tex0, uv).xyz;
     vec4 albedoSpec = texture(Tex2, uv).rgba;
 
     vec3 viewDir = normalize(ViewPos - worldPos);

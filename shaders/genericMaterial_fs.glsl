@@ -29,7 +29,7 @@ void main() {
     // Transform normal from [0, 1] -> [-1, 1]
     normal = normalize(normal * 2.0f - 1.0f);
     // Transform normal into world space
-    gNormal = normalize(TBN * normal);
+    gNormal = TBN * normal;
 
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;

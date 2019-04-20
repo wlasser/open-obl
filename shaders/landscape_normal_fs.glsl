@@ -46,8 +46,10 @@ void main() {
 
     float f[9];
     f[0] = 1.0f;
-    for (int i = 0; i < 4; ++i) f[1 + i] = texture(blendMap0, texCoord)[i];
-    for (int i = 0; i < 4; ++i) f[5 + i] = texture(blendMap1, texCoord)[i];
+    vec4 blend0 = texture(blendMap0, texCoord);
+    vec4 blend1 = texture(blendMap1, texCoord);
+    for (int i = 0; i < 4; ++i) f[1 + i] = blend0[i];
+    for (int i = 0; i < 4; ++i) f[5 + i] = blend1[i];
 
     for (int i = 0; i < 8; ++i) {
         float fOld = f[i + 1];

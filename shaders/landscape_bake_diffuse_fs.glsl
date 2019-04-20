@@ -42,9 +42,12 @@ void main () {
     // Blend factors
     float f[9];
     f[0] = 1.0f;
-    for (int i = 0; i < 4; ++i) f[1 + i] = texture(blendMap0, texCoord)[i];
+    vec4 blend0 = texture(blendMap0, texCoord);
+    vec4 blend1 = texture(blendMap1, texCoord);
+
+    for (int i = 0; i < 4; ++i) f[1 + i] = blend0[i];
     if (numBlendMaps > 1) {
-        for (int i = 0; i < 4; ++i) f[5 + i] = texture(blendMap1, texCoord)[i];
+        for (int i = 0; i < 4; ++i) f[5 + i] = blend1[i];
     } else {
         for (int i = 0; i < 4; ++i) f[5 + i] = 0.0f;
     }

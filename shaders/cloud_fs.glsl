@@ -11,10 +11,12 @@ out vec4 FragColor;
 
 void main() {
     float gamma = 2.2f;
-    float lcAlpha = texture(lowerLayer, TexCoord).a;
-    float ucAlpha = texture(upperLayer, TexCoord).a;
-    vec3 lowerCloud = pow(texture(lowerLayer, TexCoord).rgb * lowerCloudColor, vec3(gamma));
-    vec3 upperCloud = pow(texture(upperLayer, TexCoord).rgb * upperCloudColor, vec3(gamma));
+    vec4 lowerCloud = texture(lowerLayer, TexCoord);
+    vec4 upperCloud = texture(upperLayer, TexCoord);
+    float lcAlpha = lowerCloud.a;
+    float ucAlpha = upperCloud.a;
+    vec3 lcDiffuse = pow(lowerCloud.rgb * lowerCloudColor, vec3(gamma));
+    vec3 ucDiffuse = pow(upperCloud.rgb * upperCloudColor, vec3(gamma));
 
     float cloudAlpha;
     vec3 cloudColor;
@@ -22,10 +24,10 @@ void main() {
         cloudAlpha = 0.0f;
         cloudColor = vec3(0.0f);
     } else {
-        cloudAlpha = lcAlpha + ucAlpha * (1 - lcAlpha);
-        cloudColor = (lcAlpha * lowerCloud + ucAlpha * upperCloud * (1 - lcAlpha)) / cloudAlpha;
+        cloudAlpha = mix(ucAlpha, 1.0f, lcAlpha);
+        // Premultiply alpha to allow blending with the sky
+        cloudColor = mix(ucDiffuse * ucAlpha, lcDiffuse, lcAlpha);
     }
 
-    // Premultiply alpha to allow belding with the sky
-    FragColor = vec4(cloudColor * cloudAlpha, cloudAlpha);
+    FragColor = vec4(cloudColor, cloudAlpha);
 }

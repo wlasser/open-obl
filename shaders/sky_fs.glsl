@@ -13,17 +13,20 @@ void main() {
     vec3 pos = FragPos / 4000.0f;
     float r = length(pos);
     // 0 at the horizon, +1 at the upper pole, -1 at the lower pole
-    float inclination = abs(1 - acos(pos.y / r) / (3.14159 / 2));
+    float inclination = abs(1.0f - acos(pos.y / r) / (3.14159f * 0.5f));
 
-    float lowerInclination = 0.2f;
+    // Reciprocal of lower inclination, the inclination of the lower sky color.
+    const float rli = 1.0f / 0.2f;
+
     vec3 skyColor;
-    float skyAlpha = 1.0f;
-    if (inclination <= lowerInclination) {
-        float di = inclination / lowerInclination;
-        skyColor = (1 - di) * horizonColor + di * lowerSkyColor;
+    const float skyAlpha = 1.0f;
+    if (inclination <= 1.0f / rli) {
+        float di = inclination * rli;
+        skyColor = mix(horizonColor, lowerSkyColor, di);
     } else {
-        float di = (inclination - lowerInclination) / (1 - lowerInclination);
-        skyColor = (1 - di) * lowerSkyColor + di * upperSkyColor;
+        //float di = (inclination - lowerInclination) / (1 - lowerInclination);
+        float di = (inclination * rli - 1.0f) / (rli - 1.0f);
+        skyColor = mix(lowerSkyColor, upperSkyColor, di);
     }
 
     skyColor = pow(skyColor, vec3(gamma));
