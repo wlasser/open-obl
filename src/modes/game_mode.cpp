@@ -208,10 +208,8 @@ void GameMode::refocus(ApplicationContext &) {
 }
 
 bool GameMode::updateCenterCell(ApplicationContext &) {
-  // TODO: Write a toBSCoordinates inverse of fromBSCoordinates
-  const auto pos{mPlayerController->getPosition()};
-  const auto cellIndex{oo::getCellIndex(pos.x * oo::unitsPerMeter<float>,
-                                        -pos.z * oo::unitsPerMeter<float>)};
+  const auto pos{oo::toBSCoordinates(mPlayerController->getPosition())};
+  const auto cellIndex{oo::getCellIndex(qvm::X(pos), qvm::Y(pos))};
 
   if (cellIndex != mCenterCell) {
     mCenterCell = cellIndex;

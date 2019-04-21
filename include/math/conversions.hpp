@@ -389,6 +389,8 @@ namespace oo {
 
 namespace qvm = boost::qvm;
 
+using namespace qvm::sfinae;
+
 //===----------------------------------------------------------------------===//
 // Conversion factors
 //===----------------------------------------------------------------------===//
@@ -438,9 +440,16 @@ inline Ogre::ColourValue fromNif(const nif::compound::Color4 &c) {
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
 Ogre::Vector3 fromBSCoordinates(const Vec &v) {
-  using namespace qvm;
   return Ogre::Vector3{qvm::X(v), qvm::Z(v), -qvm::Y(v)} *
       oo::metersPerUnit<typename qvm::vec_traits<Vec>::scalar_type>;
+}
+
+/// Convert a QVM-comaptible vector from Ogre coordinates into BS coordinates.
+template<class Vec, typename = std::enable_if_t<
+    qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
+Ogre::Vector3 toBSCoordinates(const Vec &v) {
+  return Ogre::Vector3{qvm::X(v), -qvm::Z(v), qvm::Y(v)} *
+      oo::unitsPerMeter<typename qvm::vec_traits<Vec>::scalar_type>;
 }
 
 /// Convert a QVM-compatible vector from BS coordinates into Ogre coordinates.
@@ -450,6 +459,13 @@ Ogre::Vector4 fromBSCoordinates(const Vec &v) {
   return Ogre::Vector4(oo::fromBSCoordinates(qvm::XYZ(v)), qvm::W(v));
 }
 
+/// Convert a QVM-compatible vector from Ogre coordinates into BS coordinates.
+template<class Vec, typename = std::enable_if_t<
+    qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 4>>
+Ogre::Vector4 toBSCoordinates(const Vec &v) {
+  return Ogre::Vector4(oo::toBSCoordinates(qvm::XYZ(v)), qvm::W(v));
+}
+
 /// Convert a QVM-compatible transformation matrix from BS coordinates into
 /// Ogre coordinates.
 template<class Mat, typename = std::enable_if_t<
@@ -457,10 +473,21 @@ template<class Mat, typename = std::enable_if_t<
         && qvm::mat_traits<Mat>::rows == 3
         && qvm::mat_traits<Mat>::cols == 3>>
 Ogre::Matrix3 fromBSCoordinates(const Mat &m) {
-  using namespace qvm;
   const auto &C{qvm::rotx_mat<3>(-Ogre::Math::HALF_PI)};
   const auto &CInv{qvm::transposed(C)};
   return C * m * CInv;
+}
+
+/// Convert a QVM-compatible transformation matrix from Ogre coordinates into
+/// BS coordinates.
+template<class Mat, typename = std::enable_if_t<
+    qvm::is_mat<Mat>::value
+        && qvm::mat_traits<Mat>::rows == 3
+        && qvm::mat_traits<Mat>::cols == 3>>
+Ogre::Matrix3 toBSCoordinates(const Mat &m) {
+  const auto &C{qvm::rotx_mat<3>(-Ogre::Math::HALF_PI)};
+  const auto &CInv{qvm::transposed(C)};
+  return CInv * m * C;
 }
 
 /// Convert a QVM-compatible transformation matrix from BS coordinates into
@@ -470,7 +497,6 @@ template<class Mat, typename = std::enable_if_t<
         && qvm::mat_traits<Mat>::rows == 4
         && qvm::mat_traits<Mat>::cols == 4>>
 Ogre::Matrix4 fromBSCoordinates(const Mat &m) {
-  using namespace qvm;
   const auto k{oo::metersPerUnit<typename qvm::mat_traits<Mat>::scalar_type>};
   const auto &S{qvm::diag_mat(qvm::XXX1(k))};
   const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
@@ -481,21 +507,44 @@ Ogre::Matrix4 fromBSCoordinates(const Mat &m) {
   return C * m * CInv;
 }
 
+/// Convert a QVM-compatible transformation matrix from Ogre coordinates into
+/// BS coordinates.
+template<class Mat, typename = std::enable_if_t<
+    qvm::is_mat<Mat>::value
+        && qvm::mat_traits<Mat>::rows == 4
+        && qvm::mat_traits<Mat>::cols == 4>>
+Ogre::Matrix4 toBSCoordinates(const Mat &m) {
+  const auto k{oo::metersPerUnit<typename qvm::mat_traits<Mat>::scalar_type>};
+  const auto &S{qvm::diag_mat(qvm::XXX1(k))};
+  const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
+
+  const auto &SInv{qvm::diag_mat(qvm::XXX1(1.0 / k))};
+  const auto &CInv{qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv};
+
+  return CInv * m * C;
+}
+
 /// Convert a QVM-compatible quaternion from BS coordinates to Ogre
 /// coordinates.
 template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
 Ogre::Quaternion fromBSCoordinates(const Quat &q) {
-  using namespace qvm;
   const auto &p{qvm::rotx_quat(-Ogre::Math::HALF_PI)};
   const auto &pInv{qvm::rotx_quat(Ogre::Math::HALF_PI)};
   return p * q * pInv;
+}
+
+/// Convert a QVM-compatible quaternion from Ogre coordinates to BS coordinates.
+template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
+Ogre::Quaternion toBSCoordinates(const Quat &q) {
+  const auto &p{qvm::rotx_quat(-Ogre::Math::HALF_PI)};
+  const auto &pInv{qvm::rotx_quat(Ogre::Math::HALF_PI)};
+  return pInv * q * p;
 }
 
 /// Convert a QVM-compatible vector from Havok coordinates to Ogre coordinates.
 template<class Vec, typename = std::enable_if_t<
     qvm::is_vec<Vec>::value && qvm::vec_traits<Vec>::dim == 3>>
 Ogre::Vector3 fromHavokCoordinates(const Vec &v) {
-  using namespace qvm;
   using scalar_type = typename qvm::vec_traits<Vec>::scalar_type;
   return Ogre::Vector3{qvm::X(v), qvm::Z(v), -qvm::Y(v)} *
       oo::metersPerUnit<scalar_type> * oo::unitsPerHavokUnit<scalar_type>;
@@ -525,7 +574,6 @@ template<class Mat, typename = std::enable_if_t<
         && qvm::mat_traits<Mat>::rows == 4
         && qvm::mat_traits<Mat>::cols == 4>>
 Ogre::Matrix4 fromHavokCoordinates(const Mat &m) {
-  using namespace qvm;
   using scalar_type = typename qvm::mat_traits<Mat>::scalar_type;
   const auto k{oo::metersPerUnit<scalar_type> *
       oo::unitsPerHavokUnit<scalar_type>};
