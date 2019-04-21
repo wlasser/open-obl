@@ -557,10 +557,10 @@ void setTransform(const nif::compound::TexDesc::NiTextureTransform &transform,
 
   // TODO: Is transform.rotation really an anti-clockwise rotation in radians?
   const Ogre::Matrix4 rotation = [&transform]() {
-    using namespace Ogre;
-    Matrix4 r{Ogre::Matrix4::IDENTITY};
-    r.makeTransform(Vector3::ZERO, Vector3::UNIT_SCALE,
-                    Quaternion{Radian{transform.rotation}, Vector3::UNIT_Z});
+    Ogre::Matrix4 r{Ogre::Matrix4::IDENTITY};
+    r.makeTransform(Ogre::Vector3::ZERO, Ogre::Vector3::UNIT_SCALE,
+                    Ogre::Quaternion{Ogre::Radian{transform.rotation},
+                                     Ogre::Vector3::UNIT_Z});
     return r;
   }();
 

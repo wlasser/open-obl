@@ -353,7 +353,6 @@ parseShape(const oo::BlockGraph &g,
   const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shape.shape)};
 
   // Apply the scale and recurse into the linked shape
-  using namespace qvm::sfinae;
   const auto &scaleMat{qvm::diag_mat(qvm::XXX1(shape.shapeScale))};
 
   return oo::parseShape(g, rigidBody, childShape, transform * scaleMat);
@@ -394,7 +393,6 @@ parseShape(const oo::BlockGraph &g,
 
   const auto &data{oo::getBlock<nif::hk::PackedNiTriStripsData>(g, shape.data)};
 
-  using namespace qvm::sfinae;
   const auto &havokScaleMat{qvm::diag_mat(qvm::XYZ1(shape.scale))};
   const Ogre::Matrix4 scaleMat{oo::fromHavokCoordinates(havokScaleMat)};
 
@@ -433,7 +431,6 @@ parseShape(const oo::BlockGraph &, const nif::bhk::BoxShape &shape,
   const auto halfExtents{qvm::convert_to<Ogre::Vector3>(qvmHalfExtents)};
   const Ogre::AxisAlignedBox box{-halfExtents, halfExtents};
   for (const auto &corner : box.getAllCorners()) {
-    using namespace qvm::sfinae;
     const auto v{transform * qvm::XYZ1(oo::fromHavokCoordinates(corner))};
     collisionShape->addPoint(qvm::convert_to<btVector3>(qvm::XYZ(v)));
   }
@@ -503,7 +500,6 @@ unsigned char *fillVertexBuffer(std::vector<float> &vertexBuf,
   vertexBuf.assign(block.numVertices * 3u, 0.0f);
   auto it{vertexBuf.begin()};
   for (const auto &vertex : block.vertices) {
-    using namespace oo;
     const auto v{transform * oo::fromHavokCoordinates(vertex)};
     *it++ = v.x;
     *it++ = v.y;

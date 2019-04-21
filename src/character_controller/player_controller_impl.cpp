@@ -193,8 +193,6 @@ void PlayerControllerImpl::setOrientation(Ogre::Radian pPitch,
 }
 
 float PlayerControllerImpl::getSpringDisplacement() noexcept {
-  using namespace qvm;
-
   const auto rayLength{10.0f};
   auto p0{qvm::convert_to<btVector3>(mMotionState->getPosition())};
   auto p1{qvm::convert_to<btVector3>(p0 + qvm::_0X0(-rayLength))};
