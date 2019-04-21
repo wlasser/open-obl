@@ -530,17 +530,9 @@ void Cell::setNodeTransform(gsl::not_null<Ogre::SceneNode *> node,
   node->setPosition(oo::fromBSCoordinates(
       Ogre::Vector3{data.x, data.y, data.z}));
 
-  // Rotations are extrinsic rotations about the z, y, then x axes.
-  // Positive rotations refer to clockwise rotations, not anticlockwise.
-  // This can no doubt be optimized by constructing a quaternion directly from
-  // the angle data, building in the coordinate change, but building a rotation
-  // matrix and changing coordinates was conceptually simpler.
-  Ogre::Matrix3 rotX, rotY, rotZ;
-  rotX.FromAngleAxis(Ogre::Vector3::UNIT_X, Ogre::Radian(-data.aX));
-  rotY.FromAngleAxis(Ogre::Vector3::UNIT_Y, Ogre::Radian(-data.aY));
-  rotZ.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-data.aZ));
-  const auto rotMat{oo::fromBSCoordinates(rotX * rotY * rotZ)};
-  const Ogre::Quaternion rotation{rotMat};
+  const auto rotation{oo::fromBSTaitBryan(Ogre::Radian(data.aX),
+                                          Ogre::Radian(data.aY),
+                                          Ogre::Radian(data.aZ))};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
   std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *node) {

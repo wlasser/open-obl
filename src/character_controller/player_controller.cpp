@@ -99,6 +99,15 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   mImpl.mRigidBody->setWorldTransform(trans);
 }
 
+void PlayerController::setOrientation(const Ogre::Quaternion &orientation) {
+  mImpl.setOrientation(orientation.getPitch(), orientation.getYaw());
+  mImpl.mMotionState->notify();
+  // see moveTo()
+  btTransform trans{};
+  mImpl.mMotionState->getWorldTransform(trans);
+  mImpl.mRigidBody->setWorldTransform(trans);
+}
+
 Ogre::Vector3 PlayerController::getPosition() const noexcept {
   return mImpl.mBodyNode->getPosition();
 }

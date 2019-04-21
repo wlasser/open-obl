@@ -185,6 +185,13 @@ void PlayerControllerImpl::move() noexcept {
   }
 }
 
+void PlayerControllerImpl::setOrientation(Ogre::Radian pPitch,
+                                          Ogre::Radian pYaw) noexcept {
+  pitch = pPitch;
+  yaw = pYaw;
+  updateCameraOrientation();
+}
+
 float PlayerControllerImpl::getSpringDisplacement() noexcept {
   using namespace qvm;
 

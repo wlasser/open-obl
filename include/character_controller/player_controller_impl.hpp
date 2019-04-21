@@ -89,6 +89,8 @@ class PlayerControllerImpl {
   void updateCameraOrientation() noexcept;
   void move() noexcept;
 
+  void setOrientation(Ogre::Radian pPitch, Ogre::Radian pYaw) noexcept;
+
   float getSpringDisplacement() noexcept;
   float getMaxSpringDisplacement() noexcept;
 

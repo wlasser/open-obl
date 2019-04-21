@@ -196,8 +196,7 @@ void GameMode::updateAnimation(float delta) {
 void GameMode::enter(ApplicationContext &ctx) {
   addPlayerToScene(ctx);
   mPlayerController->moveTo(mPlayerStartPos);
-  // TODO: Set the player's orientation, this needs a new method on the
-  //       PlayerController.
+  mPlayerController->setOrientation(mPlayerStartOrientation);
 
   registerSceneListeners(ctx);
 
@@ -232,9 +231,6 @@ GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
       if (auto teleport{door->teleport}) {
         const auto &data{teleport->data};
         const auto &refMap{ctx.getPersistentReferenceLocator()};
-        // TODO: Loading exterior cells this way is unnecessary work since the
-        //       BaseId gets converted back to a CellIndex and worldspace.
-        //       Allow CellRequests containing a CellIndex.
         tl::optional<oo::BaseId> dstCell = [&]() -> tl::optional<oo::BaseId> {
           if (auto cell{refMap.getCell(data.destinationId)}) {
             // Interior door, we're done.
@@ -262,7 +258,9 @@ GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
         oo::CellRequest request{
             *dstCell,
             oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z + 128}),
-            // TODO: Convert rotations into quaternion
+            oo::fromBSTaitBryan(Ogre::Radian(data.aX),
+                                Ogre::Radian(data.aY),
+                                Ogre::Radian(data.aZ))
         };
 
         if (mInInterior) {

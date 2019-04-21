@@ -545,6 +545,23 @@ Ogre::Quaternion fromHavokCoordinates(const Quat &q) {
   return oo::fromBSCoordinates(q);
 }
 
+/// Convert a `z-y-x` Tait-Bryan angle rotation into a quaternion.
+/// The rotations are extrinsic rotations in the BS coordinate system, with
+/// position rotations referring to *clockwise* rotations, not anticlockwise.
+/// This is to be consistent with `record::raw::REFRTransformation`.
+inline Ogre::Quaternion
+fromBSTaitBryan(Ogre::Radian aX, Ogre::Radian aY, Ogre::Radian aZ) {
+  // This can no doubt be optimized by constructing a quaternion directly from
+  // the angle data, building in the coordinate change, but building a rotation
+  // matrix and changing coordinates was conceptually simpler.
+  Ogre::Matrix3 rotX, rotY, rotZ;
+  rotX.FromAngleAxis(Ogre::Vector3::UNIT_X, Ogre::Radian(-aX));
+  rotY.FromAngleAxis(Ogre::Vector3::UNIT_Y, Ogre::Radian(-aY));
+  rotZ.FromAngleAxis(Ogre::Vector3::UNIT_Z, Ogre::Radian(-aZ));
+  const auto rotMat{oo::fromBSCoordinates(rotX * rotY * rotZ)};
+  return Ogre::Quaternion(rotMat);
+}
+
 } // namespace oo
 
 #endif // OPENOBLIVION_CONVERSIONS_HPP

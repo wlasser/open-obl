@@ -39,6 +39,7 @@ class PlayerController {
   void update(float elapsed);
 
   void moveTo(const Ogre::Vector3 &position);
+  void setOrientation(const Ogre::Quaternion &orientation);
 
   void handleCollision(const btCollisionObject *other,
                        const btManifoldPoint &contact);
