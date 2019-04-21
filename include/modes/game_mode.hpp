@@ -83,6 +83,13 @@ class GameMode {
   /// Called when the player presses the activate button.
   transition_t handleActivate(ApplicationContext &ctx);
 
+  transition_t handleActivate(ApplicationContext &ctx,
+                              const record::raw::REFRDoor &door);
+
+  tl::optional<oo::BaseId>
+  getDoorDestinationCell(ApplicationContext &ctx,
+                         const record::XTEL &teleport) const;
+
  public:
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);

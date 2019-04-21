@@ -221,59 +221,72 @@ bool GameMode::updateCenterCell(ApplicationContext &) {
 
 GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
   const oo::RefId refId{getCrosshairRef()};
-  auto baseRes{ctx.getBaseResolvers()};
   auto refrRes{ctx.getRefrResolvers()};
 
-  if (refId != oo::RefId{0}) {
-    if (auto door{oo::getComponent<record::raw::REFRDoor>(refId, refrRes)}) {
-      if (auto teleport{door->teleport}) {
-        const auto &data{teleport->data};
-        const auto &refMap{ctx.getPersistentReferenceLocator()};
-        tl::optional<oo::BaseId> dstCell = [&]() -> tl::optional<oo::BaseId> {
-          if (auto cell{refMap.getCell(data.destinationId)}) {
-            // Interior door, we're done.
-            return cell;
-          } else if (auto wrldOpt{refMap.getWorldspace(data.destinationId)}) {
-            // Exterior door, need to find cell with the given index.
-            auto indexOpt{refMap.getCellIndex(data.destinationId)};
-            if (!indexOpt) return tl::nullopt;
+  if (refId == oo::RefId{0}) return {};
 
-            auto &wrldRes{oo::getResolver<record::WRLD>(baseRes)};
-
-            // Target worldspace might not be loaded yet.
-            // TODO: Add a builtin function for testing if a WRLD is loaded.
-            if (!wrldRes.getCells(*wrldOpt)) {
-              wrldRes.load(*wrldOpt, oo::getResolvers<record::CELL>(baseRes));
-            }
-
-            return wrldRes.getCell(*wrldOpt, *indexOpt);
-          }
-          return tl::nullopt;
-        }();
-
-        if (!dstCell) return {};
-
-        oo::CellRequest request{
-            *dstCell,
-            oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z + 128}),
-            oo::fromBSTaitBryan(Ogre::Radian(data.aX),
-                                Ogre::Radian(data.aY),
-                                Ogre::Radian(data.aZ))
-        };
-
-        if (mInInterior) {
-          mCell->setVisible(false);
-        } else {
-          mExteriorMgr.setVisible(false);
-        }
-
-        unregisterSceneListeners(ctx);
-        return {true, oo::LoadingMenuMode(ctx, std::move(request))};
-      }
-    }
+  if (auto door{oo::getComponent<record::raw::REFRDoor>(refId, refrRes)}) {
+    return handleActivate(ctx, *door);
   }
 
   return {};
+}
+
+GameMode::transition_t
+GameMode::handleActivate(ApplicationContext &ctx,
+                         const record::raw::REFRDoor &door) {
+  // TODO: Handle animable interior doors
+  if (!door.teleport) return {};
+
+  const auto &data{door.teleport->data};
+  auto dstCell{getDoorDestinationCell(ctx, *door.teleport)};
+  if (!dstCell) return {};
+
+  oo::CellRequest request{
+      *dstCell,
+      oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z + 128}),
+      oo::fromBSTaitBryan(Ogre::Radian(data.aX),
+                          Ogre::Radian(data.aY),
+                          Ogre::Radian(data.aZ))
+  };
+
+  if (mInInterior) {
+    mCell->setVisible(false);
+  } else {
+    mExteriorMgr.setVisible(false);
+  }
+
+  unregisterSceneListeners(ctx);
+  return {true, oo::LoadingMenuMode(ctx, std::move(request))};
+}
+
+tl::optional<oo::BaseId>
+GameMode::getDoorDestinationCell(ApplicationContext &ctx,
+                                 const record::XTEL &teleport) const {
+  const auto &refMap{ctx.getPersistentReferenceLocator()};
+  auto baseRes{ctx.getBaseResolvers()};
+  const auto &data{teleport.data};
+
+  if (auto cell{refMap.getCell(data.destinationId)}) {
+    // Interior door, we're done.
+    return cell;
+  } else if (auto wrldOpt{refMap.getWorldspace(data.destinationId)}) {
+    // Exterior door, need to find cell with the given index.
+    auto indexOpt{refMap.getCellIndex(data.destinationId)};
+    if (!indexOpt) return tl::nullopt;
+
+    auto &wrldRes{oo::getResolver<record::WRLD>(baseRes)};
+
+    // Target worldspace might not be loaded yet.
+    // TODO: Add a builtin function for testing if a WRLD is loaded.
+    if (!wrldRes.getCells(*wrldOpt)) {
+      wrldRes.load(*wrldOpt, oo::getResolvers<record::CELL>(baseRes));
+    }
+
+    return wrldRes.getCell(*wrldOpt, *indexOpt);
+  }
+
+  return tl::nullopt;
 }
 
 void GameMode::update(ApplicationContext &ctx, float delta) {
