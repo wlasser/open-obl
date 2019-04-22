@@ -1077,6 +1077,7 @@ void MeshLoaderState::discover_vertex(vertex_descriptor v, const Graph &g) {
     auto bbox{mMesh->getBounds()};
     bbox.merge(subBbox);
     mMesh->_setBounds(bbox);
+    mMesh->_setBoundingSphereRadius(Ogre::Math::boundingRadiusFromAABB(bbox));
   } else if (dynamic_cast<const nif::NiNode *>(&niObject)) {
     auto &niNode{dynamic_cast<const nif::NiNode &>(niObject)};
     mTransform = mTransform * getTransform(niNode);
@@ -1117,6 +1118,7 @@ void createMesh(oo::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
     auto bounds{mesh->getBounds()};
     bounds.merge(subBounds);
     mesh->_setBounds(bounds);
+    mesh->_setBoundingSphereRadius(Ogre::Math::boundingRadiusFromAABB(bounds));
   }
 }
 
