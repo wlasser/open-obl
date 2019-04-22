@@ -65,7 +65,7 @@ class QualitativeTimeOfDay {
  private:
   uint8_t mTime;
  public:
-  explicit constexpr QualitativeTimeOfDay(unsigned t)
+  explicit constexpr QualitativeTimeOfDay(unsigned t) noexcept
       : mTime(static_cast<uint8_t>(t)) {}
   explicit constexpr operator unsigned() const noexcept { return mTime; }
 };
