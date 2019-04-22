@@ -747,7 +747,7 @@ class year_month_day {
     else if ((d -= 31) < 30) mM = chrono::Midyear;
     else if ((d -= 30) < 31) mM = chrono::SunsHeight;
     else if ((d -= 31) < 31) mM = chrono::LastSeed;
-    else if ((d -= 30) < 30) mM = chrono::Heartfire;
+    else if ((d -= 31) < 30) mM = chrono::Heartfire;
     else if ((d -= 30) < 31) mM = chrono::Frostfall;
     else if ((d -= 31) < 30) mM = chrono::SunsDusk;
     else {
