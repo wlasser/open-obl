@@ -107,7 +107,7 @@ void GameMode::dispatchCollisions() {
   mCollisionCaller.runCallbacks(dispatcher);
 }
 
-RefId GameMode::getCrosshairRef() {
+RefId GameMode::getCrosshairRef() const {
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
   auto *const camera{mPlayerController->getCamera()};
@@ -164,14 +164,51 @@ gsl::not_null<btDiscreteDynamicsWorld *> GameMode::getPhysicsWorld() const {
   return mExteriorMgr.getWorld().getPhysicsWorld();
 }
 
-void GameMode::drawNodeChildren(Ogre::Node *node, const Ogre::Affine3 &t) {
-  if (!mDebugDrawer) return;
-
+void GameMode::drawNodeChildren(gsl::not_null<Ogre::Node *> node,
+                                const Ogre::Affine3 &t) {
   const auto p{qvm::convert_to<btVector3>(t * node->_getDerivedPosition())};
   for (auto *child : node->getChildren()) {
     const auto q{qvm::convert_to<btVector3>(t * child->_getDerivedPosition())};
     mDebugDrawer->drawLine(p, q, {1.0f, 0.0f, 0.0f});
-    drawNodeChildren(child, t);
+    drawNodeChildren(gsl::make_not_null(child), t);
+  }
+}
+
+void GameMode::drawSkeleton(gsl::not_null<oo::Entity *> entity) {
+  if (!entity->hasSkeleton()) return;
+  auto *node{entity->getParentSceneNode()};
+  auto *skel{entity->getSkeleton()};
+  for (auto *root : skel->getRootBones()) {
+    drawNodeChildren(gsl::make_not_null(root), node->_getFullTransform());
+  }
+}
+
+void GameMode::drawDebug() {
+  if (!mDebugDrawer) return;
+  mDebugDrawer->clearLines();
+  getPhysicsWorld()->debugDrawWorld();
+
+  auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
+  while (it.hasMoreElements()) {
+    drawSkeleton(gsl::make_not_null(static_cast<oo::Entity *>(it.getNext())));
+  }
+
+  mDebugDrawer->build();
+}
+
+void GameMode::logRefUnderCursor(ApplicationContext &ctx) const {
+  static oo::RefId refUnderCrosshair{0};
+  oo::RefId newRefUnderCrosshair = getCrosshairRef();
+  if (newRefUnderCrosshair != refUnderCrosshair) {
+    refUnderCrosshair = newRefUnderCrosshair;
+
+    if (auto baseOpt{oo::getComponent<record::raw::REFRBase>(refUnderCrosshair,
+                                                             ctx.getRefrResolvers())}) {
+      ctx.getLogger()->info("Looking at RefId {} with BaseId {}",
+                            refUnderCrosshair, baseOpt->baseId.data);
+    } else {
+      ctx.getLogger()->info("Looking at RefId {}", refUnderCrosshair);
+    }
   }
 }
 
@@ -217,6 +254,21 @@ bool GameMode::updateCenterCell(ApplicationContext &) {
   }
 
   return false;
+}
+
+void GameMode::advanceGameClock(float delta) {
+  chrono::GameClock::advance(delta * 60.0f);
+  chrono::GameClock::updateGlobals();
+
+  const chrono::game_days today(chrono::GameClock::getDate());
+  const auto now{chrono::GameClock::now()};
+
+  if (mInInterior) return;
+
+  oo::RenderJobManager::runJob([&]() {
+    mExteriorMgr.getWorld().updateAtmosphere(
+        chrono::duration_cast<chrono::minutes>(now - today));
+  });
 }
 
 GameMode::transition_t GameMode::handleActivate(ApplicationContext &ctx) {
@@ -294,56 +346,16 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   mPlayerController->update(delta);
   getPhysicsWorld()->stepSimulation(delta, 4);
   dispatchCollisions();
-  chrono::GameClock::advance(delta * 60.0f);
-  chrono::GameClock::updateGlobals();
+  advanceGameClock(delta);
 
-  const auto date{chrono::GameClock::getDate()};
-  const auto today{chrono::game_days(date).time_since_epoch()};
-  const auto now{chrono::GameClock::now().time_since_epoch()};
-
-  if (!mInInterior) {
-    if (updateCenterCell(ctx)) {
-      oo::JobManager::runJob([&]() {
-        mExteriorMgr.reifyNeighborhood(mCenterCell, ctx);
-      });
-    }
-    oo::RenderJobManager::runJob([&]() {
-      mExteriorMgr.getWorld().updateAtmosphere(
-          chrono::duration_cast<chrono::minutes>(now - today));
+  if (!mInInterior && updateCenterCell(ctx)) {
+    oo::JobManager::runJob([&]() {
+      mExteriorMgr.reifyNeighborhood(mCenterCell, ctx);
     });
   }
 
-  if (mDebugDrawer) {
-    mDebugDrawer->clearLines();
-    getPhysicsWorld()->debugDrawWorld();
-
-    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
-    while (it.hasMoreElements()) {
-      auto *entity{static_cast<oo::Entity *>(it.getNext())};
-      if (!entity->hasSkeleton()) continue;
-      auto *node{entity->getParentSceneNode()};
-      auto *skel{entity->getSkeleton()};
-      for (auto *root : skel->getRootBones()) {
-        drawNodeChildren(root, node->_getFullTransform());
-      }
-    }
-
-    mDebugDrawer->build();
-  }
-
-  static RefId refUnderCrosshair{0};
-  RefId newRefUnderCrosshair = getCrosshairRef();
-  if (newRefUnderCrosshair != refUnderCrosshair) {
-    refUnderCrosshair = newRefUnderCrosshair;
-
-    if (auto baseOpt{oo::getComponent<record::raw::REFRBase>(refUnderCrosshair,
-                                                             ctx.getRefrResolvers())}) {
-      ctx.getLogger()->info("Looking at RefId {} with BaseId {}",
-                            refUnderCrosshair, baseOpt->baseId.data);
-    } else {
-      ctx.getLogger()->info("Looking at RefId {}", refUnderCrosshair);
-    }
-  }
+  drawDebug();
+  logRefUnderCursor(ctx);
 }
 
 void GameMode::toggleCollisionGeometry() {

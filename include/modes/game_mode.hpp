@@ -55,7 +55,7 @@ class GameMode {
   /// cell within `iActivatePickLength` units. If no object is found, return the
   /// null reference `0`.
   /// TODO: Move this to scripting
-  oo::RefId getCrosshairRef();
+  oo::RefId getCrosshairRef() const;
 
   void addPlayerToScene(ApplicationContext &ctx);
   void registerSceneListeners(ApplicationContext &ctx);
@@ -66,9 +66,20 @@ class GameMode {
 
   /// Use the debug drawer to draw a line from the given `node` to each of its
   /// children, then from each each child to their children, and so on.
+  void drawNodeChildren(gsl::not_null<Ogre::Node *> node,
+                        const Ogre::Affine3 &t = Ogre::Affine3::IDENTITY)
+  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
+  /// Use the debug drawer to draw the skeleton of the given `entity`.
+  void drawSkeleton(gsl::not_null<oo::Entity *> entity)
+  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
+  /// Draw all enabled debug information, if any.
   /// Does nothing if the debug drawer is inactive.
-  void drawNodeChildren(Ogre::Node *node,
-                        const Ogre::Affine3 &t = Ogre::Affine3::IDENTITY);
+  void drawDebug();
+
+  /// Print information about the reference under the cursor, if it has changed.
+  void logRefUnderCursor(ApplicationContext &ctx) const;
 
   /// Update the enabled animation states of all entities in the scene.
   void updateAnimation(float delta);
@@ -79,6 +90,10 @@ class GameMode {
   /// load all unloaded cells in the neighbourhood of the player and unload the
   /// loaded cells outside of the neighbourhood.
   bool updateCenterCell(ApplicationContext &ctx);
+
+  /// Advance time forward by `delta` milliseconds, updating the globals and
+  /// atmosphere appropriately.
+  void advanceGameClock(float delta);
 
   /// Called when the player presses the activate button.
   transition_t handleActivate(ApplicationContext &ctx);
