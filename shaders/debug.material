@@ -8,16 +8,16 @@ fragment_program debug_fs_glsl glsl {
 
 material DebugDrawer {
     technique {
+        scheme NoGBuffer
+
         pass {
             vertex_program_ref debug_vs_glsl {
                 param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
             }
 
-            fragment_program_ref debug_fs_glsl {
-            }
+            fragment_program_ref debug_fs_glsl {}
 
             lighting off
-            ambient vertexcolour
         }
     }
 }
