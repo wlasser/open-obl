@@ -27,7 +27,7 @@ class Bitflag : public BitflagMarker {
  private:
   bitset_t mBits{};
 
-  static auto constexpr underlying_type_helper() {
+  static auto constexpr underlying_type_helper() noexcept {
     if constexpr (N <= 8) return uint8_t{0};
     else if constexpr (8 < N && N <= 16) return uint16_t{0};
     else if constexpr (16 < N && N <= 32) return uint32_t{0};
@@ -55,17 +55,21 @@ class Bitflag : public BitflagMarker {
     constexpr operator Self() const noexcept {
       return Self::make(*this);
     }
+
+    constexpr enum_t operator~() const noexcept {
+      return enum_t{~mBits};
+    }
   };
 
  public:
 
-  static auto make(underlying_t val) {
+  static auto make(underlying_t val) noexcept {
     Self tmp{};
     tmp.mBits = bitset_t{val};
     return tmp;
   }
 
-  static auto make(enum_t bits) {
+  static auto make(enum_t bits) noexcept {
     Self tmp{};
     tmp.mBits = bitset_t{bits.mBits};
     return tmp;
@@ -79,24 +83,43 @@ class Bitflag : public BitflagMarker {
     return static_cast<underlying_t>(mBits.to_ullong());
   }
 
-  friend constexpr Self operator&(const Self &lhs, const Self &rhs) {
+  friend constexpr Self operator&(const Self &lhs, const Self &rhs) noexcept {
     return enum_t{lhs.mBits & rhs.mBits};
   }
 
-  friend constexpr Self operator|(const Self &lhs, const Self &rhs) {
+  friend constexpr Self operator|(const Self &lhs, const Self &rhs) noexcept {
     return enum_t{lhs.mBits | rhs.mBits};
   }
 
-  friend constexpr Self operator^(const Self &lhs, const Self &rhs) {
+  friend constexpr Self operator^(const Self &lhs, const Self &rhs) noexcept {
     return enum_t{lhs.mBits ^ rhs.mBits};
   }
 
-  friend constexpr bool operator==(const Self &lhs, const Self &rhs) {
+  constexpr Self operator~() const noexcept {
+    return enum_t{~mBits};
+  }
+
+  friend constexpr bool operator==(const Self &lhs, const Self &rhs) noexcept {
     return lhs.mBits == rhs.mBits;
   }
 
-  friend constexpr bool operator!=(const Self &lhs, const Self &rhs) {
+  friend constexpr bool operator!=(const Self &lhs, const Self &rhs) noexcept {
     return lhs.mBits != rhs.mBits;
+  }
+
+  constexpr Self &operator&=(const Self &rhs) noexcept {
+    mBits &= rhs.mBits;
+    return static_cast<Self &>(*this);
+  }
+
+  constexpr Self &operator|=(const Self &rhs) noexcept {
+    mBits |= rhs.mBits;
+    return static_cast<Self &>(*this);
+  }
+
+  constexpr Self &operator^=(const Self &rhs) noexcept {
+    mBits ^= rhs.mBits;
+    return static_cast<Self &>(*this);
   }
 };
 
