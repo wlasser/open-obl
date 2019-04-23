@@ -6,6 +6,8 @@
 #include "modes/game_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/menu_mode.hpp"
+#include "resolvers/cell_resolver.hpp"
+#include "resolvers/wrld_resolver.hpp"
 #include "settings.hpp"
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
@@ -183,15 +185,34 @@ void GameMode::drawSkeleton(gsl::not_null<oo::Entity *> entity) {
   }
 }
 
+void GameMode::drawBoundingBox(gsl::not_null<oo::Entity *> entity) {
+  const auto &bbox{entity->getWorldBoundingBox()};
+  const auto min{qvm::convert_to<btVector3>(bbox.getMinimum())};
+  const auto max{qvm::convert_to<btVector3>(bbox.getMaximum())};
+  mDebugDrawer->drawBox(min, max, {0.0f, 1.0f, 0.0f});
+}
+
 void GameMode::drawDebug() {
   if (!mDebugDrawer) return;
   mDebugDrawer->clearLines();
-  getPhysicsWorld()->debugDrawWorld();
+  if (getDrawCollisionGeometryEnabled()) {
+    getPhysicsWorld()->debugDrawWorld();
 
-  auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
-  while (it.hasMoreElements()) {
-    drawSkeleton(gsl::make_not_null(static_cast<oo::Entity *>(it.getNext())));
+    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
+    while (it.hasMoreElements()) {
+      auto entity{gsl::make_not_null(static_cast<oo::Entity *>(it.getNext()))};
+      drawSkeleton(entity);
+    }
   }
+
+  if (getDrawOcclusionGeometryEnabled()) {
+    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
+    while (it.hasMoreElements()) {
+      auto entity{gsl::make_not_null(static_cast<oo::Entity *>(it.getNext()))};
+      drawBoundingBox(entity);
+    }
+  }
+
 
   mDebugDrawer->build();
 }
@@ -358,19 +379,53 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   logRefUnderCursor(ctx);
 }
 
-void GameMode::toggleCollisionGeometry() {
-  if (mDebugDrawer) {
-    getSceneManager()->destroySceneNode("__DebugDrawerNode");
-    getPhysicsWorld()->setDebugDrawer(nullptr);
-    mDebugDrawer.reset();
-  } else {
+void GameMode::setDebugDrawerEnabled(bool enable) {
+  constexpr static const char *DEBUG_NODE_NAME{"__DebugDrawerNode"};
+  if (enable && !mDebugDrawer) {
     mDebugDrawer = std::make_unique<Ogre::DebugDrawer>(getSceneManager(),
                                                        oo::SHADER_GROUP);
     auto *root{getSceneManager()->getRootSceneNode()};
-    auto *node{root->createChildSceneNode("__DebugDrawerNode")};
+    auto *node{root->createChildSceneNode(DEBUG_NODE_NAME)};
     node->attachObject(mDebugDrawer->getObject());
-    getPhysicsWorld()->setDebugDrawer(mDebugDrawer.get());
+    setDrawCollisionGeometryEnabled(getDrawCollisionGeometryEnabled());
+    setDrawOcclusionGeometryEnabled(getDrawOcclusionGeometryEnabled());
+  } else if (!enable && mDebugDrawer) {
+    getSceneManager()->destroySceneNode(DEBUG_NODE_NAME);
+    setDrawOcclusionGeometryEnabled(false);
+    setDrawCollisionGeometryEnabled(false);
+    mDebugDrawer.reset();
   }
+}
+
+void GameMode::setDrawCollisionGeometryEnabled(bool enabled) {
+  if (enabled) mDebugDrawFlags |= DebugDrawFlags::Collision;
+  else mDebugDrawFlags &= ~DebugDrawFlags::Collision;
+
+  if (enabled) getPhysicsWorld()->setDebugDrawer(mDebugDrawer.get());
+  else getPhysicsWorld()->setDebugDrawer(nullptr);
+}
+
+void GameMode::setDrawOcclusionGeometryEnabled(bool enabled) {
+  if (enabled) mDebugDrawFlags |= DebugDrawFlags::Occlusion;
+  else mDebugDrawFlags &= ~DebugDrawFlags::Occlusion;
+}
+
+bool GameMode::getDrawCollisionGeometryEnabled() const noexcept {
+  return static_cast<bool>(mDebugDrawFlags & DebugDrawFlags::Collision);
+}
+
+bool GameMode::getDrawOcclusionGeometryEnabled() const noexcept {
+  return static_cast<bool>(mDebugDrawFlags & DebugDrawFlags::Occlusion);
+}
+
+void GameMode::toggleCollisionGeometry() {
+  setDrawCollisionGeometryEnabled(!getDrawCollisionGeometryEnabled());
+  setDebugDrawerEnabled(mDebugDrawFlags != DebugDrawFlags::None);
+}
+
+void GameMode::toggleOcclusionGeometry() {
+  setDrawOcclusionGeometryEnabled(!getDrawOcclusionGeometryEnabled());
+  setDebugDrawerEnabled(mDebugDrawFlags != DebugDrawFlags::None);
 }
 
 } // namespace oo

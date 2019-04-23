@@ -22,6 +22,18 @@ int console::tcg() {
   return console::ToggleCollisionGeometry();
 }
 
+int console::ToggleOcclusionGeometry() {
+  if (oo::getApplication()->isGameModeInStack()) {
+    oo::getApplication()->getGameModeInStack().toggleOcclusionGeometry();
+  }
+
+  return 0;
+}
+
+int console::tog() {
+  return console::ToggleOcclusionGeometry();
+}
+
 int console::ShowMainMenu() {
   oo::getApplication()->openMenu<gui::MenuType::MainMenu>();
   return 0;

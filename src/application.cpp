@@ -585,6 +585,8 @@ void Application::registerConsoleFunctions() {
   rcf("qqq", &console::qqq);
   rcf("ToggleCollisionGeometry", &console::ToggleCollisionGeometry);
   rcf("tcg", &console::tcg);
+  rcf("ToggleOcclusionGeometry", &console::ToggleOcclusionGeometry);
+  rcf("tog", &console::tog);
   rcf("ShowMainMenu", &console::ShowMainMenu);
   rcf("ShowClassMenu", &console::ShowClassMenu);
   rcf("ShowEnchantmentMenu", &console::ShowEnchantmentMenu);

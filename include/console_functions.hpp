@@ -26,6 +26,14 @@ extern "C" int ToggleCollisionGeometry();
 /// \see console::ToggleCollisionGeometry()
 extern "C" int tcg();
 
+/// Toggle the display of a wireframe bounding box for all the objects in the
+/// scene.
+extern "C" int ToggleOcclusionGeometry();
+
+/// Shorthand for ToggleOcclusionGeometry()
+/// \see console::ToggleOcclusionGeometry()
+extern "C" int tog();
+
 /// Open the MainMenu, closing the current console window.
 extern "C" int ShowMainMenu();
 

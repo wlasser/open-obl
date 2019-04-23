@@ -2,6 +2,7 @@
 #define OPENOBLIVION_GAME_MODE_HPP
 
 #include "application_context.hpp"
+#include "bitflag.hpp"
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "character_controller/player_controller.hpp"
@@ -10,14 +11,8 @@
 #include "modes/menu_mode.hpp"
 #include "ogrebullet/debug_drawer.hpp"
 #include "record/formid.hpp"
-#include "resolvers/cell_resolver.hpp"
-#include "resolvers/wrld_resolver.hpp"
 #include "sdl/sdl.hpp"
 #include <memory>
-#include <optional>
-#include <set>
-#include <tuple>
-#include <variant>
 
 namespace oo {
 
@@ -45,6 +40,13 @@ class GameMode {
 
   bullet::CollisionCaller mCollisionCaller{};
 
+  struct DebugDrawFlags : Bitflag<8u, DebugDrawFlags> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Collision{1u << 0u};
+    static constexpr enum_t Occlusion{1u << 1u};
+  };
+
+  DebugDrawFlags mDebugDrawFlags{DebugDrawFlags::make(DebugDrawFlags::None)};
   std::unique_ptr<Ogre::DebugDrawer> mDebugDrawer{};
 
   /// Run all registered collision callbacks with the collisions for this frame.
@@ -74,9 +76,19 @@ class GameMode {
   void drawSkeleton(gsl::not_null<oo::Entity *> entity)
   /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
 
+  /// Use the debug drawer to draw the bounding box of the given `entity`.
+  void drawBoundingBox(gsl::not_null<oo::Entity *> entity)
+  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
   /// Draw all enabled debug information, if any.
   /// Does nothing if the debug drawer is inactive.
   void drawDebug();
+
+  void setDebugDrawerEnabled(bool enable);
+  void setDrawCollisionGeometryEnabled(bool enabled);
+  void setDrawOcclusionGeometryEnabled(bool enabled);
+  bool getDrawCollisionGeometryEnabled() const noexcept;
+  bool getDrawOcclusionGeometryEnabled() const noexcept;
 
   /// Print information about the reference under the cursor, if it has changed.
   void logRefUnderCursor(ApplicationContext &ctx) const;
@@ -123,6 +135,10 @@ class GameMode {
 
   /// Toggle a wireframe display of all collision objects in the scene.
   void toggleCollisionGeometry();
+
+  /// Toggle a wireframe display of the bounding boxes of all objects in the
+  /// scene.
+  void toggleOcclusionGeometry();
 };
 
 } // namespace oo
