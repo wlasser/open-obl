@@ -8,6 +8,7 @@
 #include "modes/menu_mode.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
+#include "scene_manager.hpp"
 #include "settings.hpp"
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
@@ -206,13 +207,27 @@ void GameMode::drawDebug() {
   }
 
   if (getDrawOcclusionGeometryEnabled()) {
+    auto *scnMgr
+        {dynamic_cast<oo::InteriorSceneManager *>(getSceneManager().get())};
+    if (scnMgr) {
+      oo::preOrderDFS(scnMgr->_getOctree(), [&](oo::OctreeNode *node) {
+        if (!node) return false;
+        const auto bbox{node->getBoundingBox()};
+        const btVector3 min(bbox.min[0], bbox.min[1], bbox.min[2]);
+        const btVector3 max(bbox.max[0], bbox.max[1], bbox.max[2]);
+        mDebugDrawer->drawBox(min * oo::OctreeNode::UNIT_SIZE,
+                              max * oo::OctreeNode::UNIT_SIZE,
+                              {1.0f, 1.0f, 0.0f});
+        return true;
+      });
+    }
+
     auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
     while (it.hasMoreElements()) {
       auto entity{gsl::make_not_null(static_cast<oo::Entity *>(it.getNext()))};
       drawBoundingBox(entity);
     }
   }
-
 
   mDebugDrawer->build();
 }

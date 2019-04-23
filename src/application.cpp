@@ -135,6 +135,9 @@ Application::Application(std::string windowName) : FrameListener() {
     ctx.scnMgrFactory = std::make_unique<oo::DeferredSceneManagerFactory>();
     ctx.ogreRoot->addSceneManagerFactory(ctx.scnMgrFactory.get());
 
+    ctx.intScnMgrFactory = std::make_unique<oo::InteriorSceneManagerFactory>();
+    ctx.ogreRoot->addSceneManagerFactory(ctx.intScnMgrFactory.get());
+
     boost::this_fiber::yield();
 
     ctx.texImageCodec = std::make_unique<Ogre::TexImageCodec>();
