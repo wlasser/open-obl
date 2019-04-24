@@ -826,9 +826,11 @@ bool attachTextureProperty(const oo::BlockGraph &g,
   auto family{oo::parseNiTexturingProperty(g, texBlock, pass)};
 
   if (!family.base) return true;
+  family.base->setName("diffuse");
   pass->addTextureUnitState(family.base.release());
 
   if (!family.normal) return true;
+  family.normal->setName("normal");
   pass->addTextureUnitState(family.normal.release());
 
   // TODO: Support more than base textures
@@ -955,6 +957,11 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
 
   auto material{matMgr.create(materialName, meshGroup)};
   auto pass{material->getTechnique(0)->getPass(0)};
+  // Sometimes the original material name is needed in another part of the
+  // engine. Store the relevant ones in the pass.
+  if (absl::EqualsIgnoreCase(block.name.str(), "skin")) {
+    pass->setName("skin");
+  }
 
   oo::setMaterialProperties(block, pass);
 
