@@ -24,6 +24,10 @@ class RigidBody : public MovableObject, public MovableObject::Listener {
 
   Real getBoundingRadius() const override;
 
+  const AxisAlignedBox &getWorldBoundingBox(bool derive = false) const override;
+
+  const Sphere &getWorldBoundingSphere(bool derive = false) const override;
+
   const String &getMovableType() const override;
 
   void visitRenderables(Renderable::Visitor *visitor,

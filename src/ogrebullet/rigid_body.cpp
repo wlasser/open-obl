@@ -74,21 +74,43 @@ void RigidBody::_updateRenderQueue(RenderQueue */*queue*/) {
 }
 
 const AxisAlignedBox &RigidBody::getBoundingBox() const {
-  btVector3 min{};
-  btVector3 max{};
-  mRigidBody->getAabb(min, max);
-  mBox.setExtents(Ogre::fromBullet(min),
-                  Ogre::fromBullet(max));
+  // Bullet gives the world transformed bounding box, so have to invert the
+  // world transform.
+  mBox = getWorldBoundingBox(true);
+  mBox.transform(mParentNode->_getFullTransform().inverse());
   return mBox;
 }
 
 Real RigidBody::getBoundingRadius() const {
+  // Rigid bodies cannot have a scaling world transform without being scaled
+  // locally, so use the transformed sphere to save an inverse transform.
+  const auto bbox{getWorldBoundingBox(true)};
+  const auto center{bbox.getCenter()};
+  return (bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - center).length();
+}
+
+const AxisAlignedBox &
+RigidBody::getWorldBoundingBox(bool derive) const {
+  btVector3 min{};
+  btVector3 max{};
+  mRigidBody->getAabb(min, max);
+  mWorldAABB.setExtents(Ogre::fromBullet(min), Ogre::fromBullet(max));
+
+  return mWorldAABB;
+}
+
+const Sphere &
+RigidBody::getWorldBoundingSphere(bool derive) const {
   // If we take a sphere centered at the bounding box center, then by symmetry
   // the distance from the center to any corner point is constant, and moreover
   // is the largest distance from the center to any point.
-  const auto bbox{getBoundingBox()};
+  const auto bbox{getWorldBoundingBox()};
   const auto center{bbox.getCenter()};
-  return (bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - center).length();
+  const auto vec{bbox.getCorner(AxisAlignedBox::FAR_LEFT_BOTTOM) - center};
+  mWorldBoundingSphere.setRadius(vec.length());
+  mWorldBoundingSphere.setCenter(center);
+
+  return mWorldBoundingSphere;
 }
 
 const String &RigidBody::getMovableType() const {
