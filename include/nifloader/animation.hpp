@@ -281,7 +281,8 @@ namespace oo {
 /// Load an animation from the given `nif` resource and attach it to the
 /// `skeleton`.
 Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
-                                 Ogre::NifResource *nif);
+                                 Ogre::NifResource *nif,
+                                 const std::string &animationName);
 
 /// Load an animation from the given nif file and attach it to the `skeleton`.
 Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,

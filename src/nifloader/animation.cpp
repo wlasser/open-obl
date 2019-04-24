@@ -160,11 +160,10 @@ getTransformData(const BlockGraph &graph,
 } // namespace
 
 Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
-                                 Ogre::NifResource *nif) {
+                                 Ogre::NifResource *nif,
+                                 const std::string &animationName) {
   auto blockGraph{nif->getBlockGraph()};
   const auto &controller{oo::getRoot(blockGraph)};
-
-  const std::string animationName{controller.name.str()};
 
   const auto[startTime, stopTime] = getStartStopTime(blockGraph, controller);
   const float length{stopTime - startTime};
@@ -261,7 +260,7 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
   }
   nifPtr->load();
 
-  return oo::createAnimation(skeleton, nifPtr.get());
+  return oo::createAnimation(skeleton, nifPtr.get(), nifName);
 }
 
 } // namespace oo
