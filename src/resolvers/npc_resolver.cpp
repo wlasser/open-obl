@@ -1,12 +1,16 @@
 #include "fs/path.hpp"
 #include "mesh/entity.hpp"
+#include "mesh/subentity.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/helpers.hpp"
 #include "settings.hpp"
+#include <OgreMaterialManager.h>
+#include <OgrePass.h>
 #include <OgreSkeletonManager.h>
 #include <OgreSkeletonInstance.h>
+#include <OgreTechnique.h>
 #include <map>
 
 namespace oo {
@@ -109,6 +113,94 @@ Ogre::AnimationState *pickIdle(oo::Entity *npc) {
   return animState;
 }
 
+using BodyParts = record::raw::INDX_BODY;
+
+/// Get the path to the mesh file describing the given `bodyPart`, relative to
+/// `sMasterPath`.
+oo::Path getBodyPartPath(BodyParts bodyPart, bool isFemale) {
+  switch (bodyPart) {
+    case BodyParts::UpperBody:
+      return oo::Path{isFemale ? "meshes/characters/_male/femaleupperbody.nif"
+                               : "meshes/characters/_male/upperbody.nif"};
+    case BodyParts::LowerBody:
+      return oo::Path{isFemale ? "meshes/characters/_male/femalelowerbody.nif"
+                               : "meshes/characters/_male/lowerbody.nif"};
+    case BodyParts::Hand:
+      return oo::Path{isFemale ? "meshes/characters/_male/femalehand.nif"
+                               : "meshes/characters/_male/hand.nif"};
+    case BodyParts::Foot:
+      return oo::Path{isFemale ? "meshes/characters/_male/femalefoot.nif"
+                               : "meshes/characters/_male/foot.nif"};
+    default: return oo::Path{""};
+  }
+}
+
+/// Given a filename to a diffuse texture, return the filename of the
+/// corresponding normal texture.
+/// For example, given `foo/bar.dds` this returns `foo/bar_n.dds`.
+std::string makeNormalPath(std::string diffusePath) {
+  auto dotIndex{diffusePath.rfind('.')};
+  if (dotIndex == std::string::npos) return diffusePath;
+  return diffusePath.insert(dotIndex, "_n");
+}
+
+/// Return whether the given material represents skin.
+/// Specifically, return true iff `mat` has at least one technique that has a
+/// pass called 'skin'.
+bool isSkinMaterial(const Ogre::MaterialPtr &mat) {
+  for (auto *technique : mat->getTechniques()) {
+    if (technique->getPass("skin")) return true;
+  }
+
+  return false;
+}
+
+/// Set the diffuse and normal textures of each 'skin' pass in the material to
+/// those given.
+void setSkinTextures(const Ogre::MaterialPtr &mat,
+                     const std::string &diffuseName,
+                     const std::string &normalName) {
+  for (auto *technique : mat->getTechniques()) {
+    auto *pass{technique->getPass("skin")};
+    if (!pass) continue;
+    for (auto *texState : pass->getTextureUnitStates()) {
+      if (texState->getName() == "normal") {
+        texState->setTextureName(normalName);
+      } else {
+        texState->setTextureName(diffuseName);
+      }
+    }
+  }
+}
+
+/// Change any skin materials to ones specific to the race, creating those
+/// materials and setting their textures if they don't already exist.
+void setSkinTextures(oo::Entity *bodyPart, oo::BaseId raceId,
+                     const record::ICON &textureRec) {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  const auto raceIdString{"/" + raceId.string()};
+
+  const oo::Path texPath{oo::Path{"textures"} / oo::Path{textureRec.data}};
+  const std::string diffuseName{texPath.c_str()};
+  const std::string normalName{oo::makeNormalPath(diffuseName)};
+
+  for (const auto &subEntity : bodyPart->getSubEntities()) {
+    const auto &baseMat{subEntity->getMaterial()};
+
+    if (oo::isSkinMaterial(baseMat)) {
+      const std::string matName{baseMat->getName() + raceIdString};
+      if (matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
+        subEntity->setMaterial(matMgr.getByName(matName, oo::RESOURCE_GROUP));
+      } else {
+        const auto &matPtr{baseMat->clone(matName)};
+        subEntity->setMaterial(matPtr);
+        oo::setSkinTextures(matPtr, diffuseName, normalName);
+      }
+    }
+  }
+
+}
+
 } // namespace
 
 template<> ReifyRecordTrait<record::REFR_NPC_>::type
@@ -144,31 +236,12 @@ reifyRecord(const record::REFR_NPC_ &refRec,
   // There needs to be a dedicated entity to attach the rigid bodies to though.
   oo::Entity *upperBody{};
 
-  using BodyParts = record::raw::INDX_BODY;
   const auto &bodyData{female ? raceRec->femaleBodyData
                               : raceRec->maleBodyData};
   for (const auto &[typeRec, textureRec] : bodyData) {
     if (!textureRec) continue;
     const auto type{typeRec.data};
-    const oo::Path texPath{oo::Path{"textures"} / oo::Path{textureRec->data}};
-    const oo::Path meshPath = [female, type]() {
-      switch (type) {
-        case BodyParts::UpperBody:
-          return oo::Path{female ? "meshes/characters/_male/femaleupperbody.nif"
-                                 : "meshes/characters/_male/upperbody.nif"};
-        case BodyParts::LowerBody:
-          return oo::Path{female ? "meshes/characters/_male/femalelowerbody.nif"
-                                 : "meshes/characters/_male/lowerbody.nif"};
-        case BodyParts::Hand:
-          return oo::Path{female ? "meshes/characters/_male/femalehand.nif"
-                                 : "meshes/characters/_male/hand.nif"};
-        case BodyParts::Foot:
-          return oo::Path{female ? "meshes/characters/_male/femalefoot.nif"
-                                 : "meshes/characters/_male/foot.nif"};
-        default: return oo::Path{""};
-      }
-    }();
-    const std::string meshName{meshPath.c_str()};
+    const std::string meshName{oo::getBodyPartPath(type, female).c_str()};
     if (meshName.empty()) continue;
     auto *node{oo::insertNif(meshName, oo::RESOURCE_GROUP,
                              scnMgr, world,
@@ -181,6 +254,8 @@ reifyRecord(const record::REFR_NPC_ &refRec,
       return nullptr;
     }();
     if (!entity) continue;
+
+    oo::setSkinTextures(entity, oo::BaseId{raceRec->mFormId}, *textureRec);
 
     if (!firstAdded) {
       firstAdded = entity;
