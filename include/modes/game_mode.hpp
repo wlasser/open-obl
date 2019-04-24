@@ -16,6 +16,8 @@
 
 namespace oo {
 
+class OctreeNode;
+
 class ConsoleMode;
 
 /// Mode active while the player is exploring the game world.
@@ -78,6 +80,14 @@ class GameMode {
 
   /// Use the debug drawer to draw the bounding box of the given `entity`.
   void drawBoundingBox(gsl::not_null<oo::Entity *> entity)
+  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
+  /// Use the debug drawer to draw the bounding box of the given scene node.
+  void drawBoundingBox(gsl::not_null<Ogre::SceneNode *> node)
+  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
+  /// Use the debug drawer to draw the bounding box of the given octree node.
+  void drawBoundingBox(gsl::not_null<oo::OctreeNode *> node)
   /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
 
   /// Draw all enabled debug information, if any.

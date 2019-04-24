@@ -193,39 +193,48 @@ void GameMode::drawBoundingBox(gsl::not_null<oo::Entity *> entity) {
   mDebugDrawer->drawBox(min, max, {0.0f, 1.0f, 0.0f});
 }
 
+void GameMode::drawBoundingBox(gsl::not_null<Ogre::SceneNode *> node) {
+  const auto bbox{node->_getWorldAABB()};
+  const auto min{qvm::convert_to<btVector3>(bbox.getMinimum())};
+  const auto max{qvm::convert_to<btVector3>(bbox.getMaximum())};
+  mDebugDrawer->drawBox(min, max, {1.0f, 0.0f, 0.0f});
+}
+
+void GameMode::drawBoundingBox(gsl::not_null<oo::OctreeNode *> node) {
+  const auto bbox{node->getBoundingBox()};
+  const btVector3 min(bbox.min[0], bbox.min[1], bbox.min[2]);
+  const btVector3 max(bbox.max[0], bbox.max[1], bbox.max[2]);
+  mDebugDrawer->drawBox(min * oo::OctreeNode::UNIT_SIZE,
+                        max * oo::OctreeNode::UNIT_SIZE,
+                        {1.0f, 1.0f, 0.0f});
+}
+
 void GameMode::drawDebug() {
   if (!mDebugDrawer) return;
   mDebugDrawer->clearLines();
+
   if (getDrawCollisionGeometryEnabled()) {
     getPhysicsWorld()->debugDrawWorld();
 
-    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
-    while (it.hasMoreElements()) {
-      auto entity{gsl::make_not_null(static_cast<oo::Entity *>(it.getNext()))};
-      drawSkeleton(entity);
+    auto entities{getSceneManager()->getMovableObjectIterator("oo::Entity")};
+    for (const auto&[_, entity] : entities) {
+      drawSkeleton(gsl::make_not_null(static_cast<oo::Entity *>(entity)));
     }
   }
 
   if (getDrawOcclusionGeometryEnabled()) {
-    auto *scnMgr
-        {dynamic_cast<oo::InteriorSceneManager *>(getSceneManager().get())};
-    if (scnMgr) {
+    if (auto *scnMgr{dynamic_cast<oo::InteriorSceneManager *>(
+                         getSceneManager().get())}) {
       oo::preOrderDFS(scnMgr->_getOctree(), [&](oo::OctreeNode *node) {
         if (!node) return false;
-        const auto bbox{node->getBoundingBox()};
-        const btVector3 min(bbox.min[0], bbox.min[1], bbox.min[2]);
-        const btVector3 max(bbox.max[0], bbox.max[1], bbox.max[2]);
-        mDebugDrawer->drawBox(min * oo::OctreeNode::UNIT_SIZE,
-                              max * oo::OctreeNode::UNIT_SIZE,
-                              {1.0f, 1.0f, 0.0f});
+        drawBoundingBox(gsl::make_not_null(node));
         return true;
       });
     }
 
-    auto it{getSceneManager()->getMovableObjectIterator("oo::Entity")};
-    while (it.hasMoreElements()) {
-      auto entity{gsl::make_not_null(static_cast<oo::Entity *>(it.getNext()))};
-      drawBoundingBox(entity);
+    auto entities{getSceneManager()->getMovableObjectIterator("oo::Entity")};
+    for (const auto &[_, entity] : entities) {
+      drawBoundingBox(gsl::make_not_null(entity->getParentSceneNode()));
     }
   }
 
