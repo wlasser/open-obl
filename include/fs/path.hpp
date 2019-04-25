@@ -121,7 +121,7 @@ class Path {
     return filename().empty();
   }
 
-  inline bool hash_extension() const {
+  inline bool has_extension() const {
     return extension().empty();
   }
 
