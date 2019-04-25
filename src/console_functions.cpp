@@ -34,6 +34,18 @@ int console::tog() {
   return console::ToggleOcclusionGeometry();
 }
 
+int console::ToggleFps() {
+  if (oo::getApplication()->isGameModeInStack()) {
+    oo::getApplication()->getGameModeInStack().toggleFps();
+  }
+
+  return 0;
+}
+
+int console::tfps() {
+  return console::ToggleFps();
+}
+
 int console::ShowMainMenu() {
   oo::getApplication()->openMenu<gui::MenuType::MainMenu>();
   return 0;

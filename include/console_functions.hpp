@@ -34,6 +34,13 @@ extern "C" int ToggleOcclusionGeometry();
 /// \see console::ToggleOcclusionGeometry()
 extern "C" int tog();
 
+/// Toggle the display of a window showing the current fps.
+extern "C" int ToggleFps();
+
+/// Shorthand for ToggleFps()
+/// \see console::ToggleFps()
+extern "C" int tfps();
+
 /// Open the MainMenu, closing the current console window.
 extern "C" int ShowMainMenu();
 

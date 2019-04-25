@@ -590,6 +590,8 @@ void Application::registerConsoleFunctions() {
   rcf("tcg", &console::tcg);
   rcf("ToggleOcclusionGeometry", &console::ToggleOcclusionGeometry);
   rcf("tog", &console::tog);
+  rcf("ToggleFps", &console::ToggleFps);
+  rcf("tfps", &console::tfps);
   rcf("ShowMainMenu", &console::ShowMainMenu);
   rcf("ShowClassMenu", &console::ShowClassMenu);
   rcf("ShowEnchantmentMenu", &console::ShowEnchantmentMenu);

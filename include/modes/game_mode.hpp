@@ -12,6 +12,7 @@
 #include "ogrebullet/debug_drawer.hpp"
 #include "record/formid.hpp"
 #include "sdl/sdl.hpp"
+#include <boost/circular_buffer.hpp>
 #include <memory>
 
 namespace oo {
@@ -51,6 +52,10 @@ class GameMode {
   DebugDrawFlags mDebugDrawFlags{DebugDrawFlags::make(DebugDrawFlags::None)};
   std::unique_ptr<Ogre::DebugDrawer> mDebugDrawer{};
 
+  constexpr static std::size_t NUM_FPS_SAMPLES{64u};
+  boost::circular_buffer<float> mFrameTimes;
+  bool mFpsDisplayEnabled{false};
+
   /// Run all registered collision callbacks with the collisions for this frame.
   void dispatchCollisions();
 
@@ -89,6 +94,9 @@ class GameMode {
   /// Use the debug drawer to draw the bounding box of the given octree node.
   void drawBoundingBox(gsl::not_null<oo::OctreeNode *> node)
   /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
+
+  /// Draw a window displaying the current fps and other timing information.
+  void drawFpsDisplay(float delta);
 
   /// Draw all enabled debug information, if any.
   /// Does nothing if the debug drawer is inactive.
@@ -149,6 +157,9 @@ class GameMode {
   /// Toggle a wireframe display of the bounding boxes of all objects in the
   /// scene.
   void toggleOcclusionGeometry();
+
+  /// Toggle a fps display window.
+  void toggleFps();
 };
 
 } // namespace oo

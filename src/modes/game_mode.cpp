@@ -13,6 +13,7 @@
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
 #include <absl/container/flat_hash_set.h>
+#include <imgui/imgui.h>
 #include <OgreBone.h>
 #include <OgreSkeletonInstance.h>
 #include <spdlog/fmt/ostr.h>
@@ -20,7 +21,8 @@
 namespace oo {
 
 GameMode::GameMode(ApplicationContext &/*ctx*/,
-                   oo::CellPacket cellPacket) : mExteriorMgr(cellPacket) {
+                   oo::CellPacket cellPacket) : mExteriorMgr(cellPacket),
+                                                mFrameTimes(NUM_FPS_SAMPLES) {
   mCell = std::move(cellPacket.mInteriorCell);
 
   mPlayerStartPos = std::move(cellPacket.mPlayerPosition);
@@ -207,6 +209,17 @@ void GameMode::drawBoundingBox(gsl::not_null<oo::OctreeNode *> node) {
   mDebugDrawer->drawBox(min * oo::OctreeNode::UNIT_SIZE,
                         max * oo::OctreeNode::UNIT_SIZE,
                         {1.0f, 1.0f, 0.0f});
+}
+
+void GameMode::drawFpsDisplay(float delta) {
+  mFrameTimes.push_back(delta);
+
+  ImGui::Begin("Debug Display", nullptr, ImGuiWindowFlags_None);
+  ImGui::Text("FPS: %f", 1.0f / delta);
+  std::array<float, NUM_FPS_SAMPLES> frameTimes;
+  std::copy(mFrameTimes.begin(), mFrameTimes.end(), frameTimes.begin());
+  ImGui::PlotLines("Frame times", frameTimes.data(), mFrameTimes.size());
+  ImGui::End();
 }
 
 void GameMode::drawDebug() {
@@ -400,6 +413,8 @@ void GameMode::update(ApplicationContext &ctx, float delta) {
   }
 
   drawDebug();
+  if (mFpsDisplayEnabled) drawFpsDisplay(delta);
+
   logRefUnderCursor(ctx);
 }
 
@@ -450,6 +465,10 @@ void GameMode::toggleCollisionGeometry() {
 void GameMode::toggleOcclusionGeometry() {
   setDrawOcclusionGeometryEnabled(!getDrawOcclusionGeometryEnabled());
   setDebugDrawerEnabled(mDebugDrawFlags != DebugDrawFlags::None);
+}
+
+void GameMode::toggleFps() {
+  mFpsDisplayEnabled = !mFpsDisplayEnabled;
 }
 
 } // namespace oo
