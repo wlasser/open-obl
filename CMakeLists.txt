@@ -139,6 +139,7 @@ target_sources(OpenOblivion PRIVATE
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
+        src/modes/debug_draw_impl.cpp
         src/modes/game_mode.cpp
         src/modes/load_menu_mode.cpp
         src/modes/loading_menu_mode.cpp
@@ -191,6 +192,7 @@ target_sources(OpenOblivion PRIVATE
         include/job/job.hpp
         include/meta.hpp
         include/modes/console_mode.hpp
+        include/modes/debug_draw_impl.hpp
         include/modes/game_mode.hpp
         include/modes/load_menu_mode.hpp
         include/modes/loading_menu_mode.hpp

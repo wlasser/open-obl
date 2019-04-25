@@ -2,22 +2,20 @@
 #define OPENOBLIVION_GAME_MODE_HPP
 
 #include "application_context.hpp"
-#include "bitflag.hpp"
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "character_controller/player_controller.hpp"
 #include "exterior_manager.hpp"
 #include "modes/mode.hpp"
 #include "modes/menu_mode.hpp"
-#include "ogrebullet/debug_drawer.hpp"
 #include "record/formid.hpp"
 #include "sdl/sdl.hpp"
-#include <boost/circular_buffer.hpp>
 #include <memory>
 
 namespace oo {
 
 class OctreeNode;
+class DebugDrawImpl;
 
 class ConsoleMode;
 
@@ -43,18 +41,8 @@ class GameMode {
 
   bullet::CollisionCaller mCollisionCaller{};
 
-  struct DebugDrawFlags : Bitflag<8u, DebugDrawFlags> {
-    static constexpr enum_t None{0u};
-    static constexpr enum_t Collision{1u << 0u};
-    static constexpr enum_t Occlusion{1u << 1u};
-  };
-
-  DebugDrawFlags mDebugDrawFlags{DebugDrawFlags::make(DebugDrawFlags::None)};
-  std::unique_ptr<Ogre::DebugDrawer> mDebugDrawer{};
-
-  constexpr static std::size_t NUM_FPS_SAMPLES{64u};
-  boost::circular_buffer<float> mFrameTimes;
-  bool mFpsDisplayEnabled{false};
+  friend oo::DebugDrawImpl;
+  std::unique_ptr<oo::DebugDrawImpl> mDebugDrawImpl;
 
   /// Run all registered collision callbacks with the collisions for this frame.
   void dispatchCollisions();
@@ -72,41 +60,6 @@ class GameMode {
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;
   gsl::not_null<btDiscreteDynamicsWorld *> getPhysicsWorld() const;
-
-  /// Use the debug drawer to draw a line from the given `node` to each of its
-  /// children, then from each each child to their children, and so on.
-  void drawNodeChildren(gsl::not_null<Ogre::Node *> node,
-                        const Ogre::Affine3 &t = Ogre::Affine3::IDENTITY)
-  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
-
-  /// Use the debug drawer to draw the skeleton of the given `entity`.
-  void drawSkeleton(gsl::not_null<oo::Entity *> entity)
-  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
-
-  /// Use the debug drawer to draw the bounding box of the given `entity`.
-  void drawBoundingBox(gsl::not_null<oo::Entity *> entity)
-  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
-
-  /// Use the debug drawer to draw the bounding box of the given scene node.
-  void drawBoundingBox(gsl::not_null<Ogre::SceneNode *> node)
-  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
-
-  /// Use the debug drawer to draw the bounding box of the given octree node.
-  void drawBoundingBox(gsl::not_null<oo::OctreeNode *> node)
-  /*C++20: [[expects : mDebugDrawer != nullptr]]*/;
-
-  /// Draw a window displaying the current fps and other timing information.
-  void drawFpsDisplay(float delta);
-
-  /// Draw all enabled debug information, if any.
-  /// Does nothing if the debug drawer is inactive.
-  void drawDebug();
-
-  void setDebugDrawerEnabled(bool enable);
-  void setDrawCollisionGeometryEnabled(bool enabled);
-  void setDrawOcclusionGeometryEnabled(bool enabled);
-  bool getDrawCollisionGeometryEnabled() const noexcept;
-  bool getDrawOcclusionGeometryEnabled() const noexcept;
 
   /// Print information about the reference under the cursor, if it has changed.
   void logRefUnderCursor(ApplicationContext &ctx) const;
@@ -138,6 +91,12 @@ class GameMode {
  public:
   /// \see Mode::Mode()
   explicit GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket);
+
+  ~GameMode();
+  GameMode(const GameMode &) = delete;
+  GameMode &operator=(const GameMode &) = delete;
+  GameMode(GameMode &&) noexcept;
+  GameMode &operator=(GameMode &&) noexcept;
 
   /// \see Mode::enter()
   void enter(ApplicationContext &ctx);
