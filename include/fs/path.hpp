@@ -125,6 +125,8 @@ class Path {
     return extension().empty();
   }
 
+  Path &operator/=(const Path &rhs);
+
   friend Path operator/(const Path &lhs, const Path &rhs);
 
   friend bool operator==(const Path &lhs, const Path &rhs);

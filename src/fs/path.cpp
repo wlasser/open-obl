@@ -155,11 +155,27 @@ bool Path::match(const oo::Path &pattern) const {
   return srcIt == srcEnd && patIt == patEnd;
 }
 
+Path &Path::operator/=(const Path &rhs) {
+  // By construction, both this and rhs are normalized and have no trailing
+  // slashes. Unless rhs or this are empty, joining the two with a / keeps
+  // normalization.
+  if (empty()) {
+    *this = rhs;
+  } else if (!rhs.empty()) {
+    mPath.reserve(mPath.size() + rhs.mPath.size() + 1u);
+    mPath.append(1u, '/').append(rhs.mPath);
+  }
+
+  return *this;
+}
+
 Path operator/(const Path &lhs, const Path &rhs) {
-  std::string tmp{};
-  tmp.reserve(lhs.mPath.size() + rhs.mPath.size() + 1u);
-  tmp.append(lhs.mPath).append(1u, '/').append(rhs.mPath);
-  return Path{std::move(tmp)};
+  // The naive `Path tmp{lhs}; tmp /= rhs; return tmp;` allocates twice when
+  // only one allocation is actually necessary.
+  Path tmp{};
+  tmp.mPath.reserve(lhs.mPath.size() + 1u + rhs.mPath.size());
+  tmp.mPath.append(lhs.mPath).append(1u, '/').append(rhs.mPath);
+  return tmp;
 };
 
 bool operator==(const Path &lhs, const Path &rhs) {
