@@ -4,7 +4,6 @@
 #include "mesh/mesh.hpp"
 #include "mesh/submesh.hpp"
 #include "nifloader/loader.hpp"
-#include <filesystem>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -53,9 +52,6 @@ bool isWindingOrderCCW(Ogre::Vector3 v1, Ogre::Vector3 n1,
 /// Return the number of triangles with a counterclockwise winding order.
 /// The mesh should have normals.
 long numCCWTriangles(const nif::NiTriShapeData &block);
-
-/// Append '_n' to the filename, preserving the extension.
-std::filesystem::path toNormalMap(std::filesystem::path texFile);
 
 struct BoneBinding {
   std::array<unsigned short, 4> indices{};

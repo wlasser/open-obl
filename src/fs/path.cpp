@@ -69,6 +69,11 @@ Path::Path(std::string &&path) : mPath(std::move(path)) {
                  });
 }
 
+Path::Path(const std::string &path, prenormalized_path_tag_t) : mPath(path) {}
+
+Path::Path(std::string &&path, prenormalized_path_tag_t)
+    : mPath(std::move(path)) {}
+
 std::string_view Path::filename() const {
   const std::string_view sv{mPath};
   // mPath does not end with a '/', but it might not have any at all
@@ -184,6 +189,21 @@ bool operator==(const Path &lhs, const Path &rhs) {
 
 bool operator!=(const Path &lhs, const Path &rhs) {
   return !(lhs == rhs);
+}
+
+oo::Path makeNormalPath(const oo::Path &diffusePath) {
+  auto dotIndex{diffusePath.view().rfind('.')};
+  if (dotIndex == std::string_view::npos) return diffusePath;
+
+  std::string normalPath;
+  normalPath.reserve(diffusePath.view().size() + 2u);
+  normalPath.append(diffusePath.view());
+  normalPath.insert(dotIndex, "_n");
+  return oo::Path(std::move(normalPath), oo::prenormalized_path_tag);
+}
+
+std::string makeNormalPath(const std::string &diffusePath) {
+  return oo::makeNormalPath(oo::Path{diffusePath}).c_str();
 }
 
 } // namespace oo

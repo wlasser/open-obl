@@ -62,14 +62,6 @@ long numCCWTriangles(const nif::NiTriShapeData &block) {
   });
 }
 
-std::filesystem::path toNormalMap(std::filesystem::path texFile) {
-  auto extension = texFile.extension();
-  texFile.replace_extension("");
-  texFile += "_n";
-  texFile += extension;
-  return texFile;
-}
-
 std::unique_ptr<Ogre::VertexData>
 generateVertexData(const nif::NiGeometryData &block,
                    Ogre::Matrix4 transformation,
@@ -773,7 +765,7 @@ TextureFamily parseNiTexturingProperty(const oo::BlockGraph &g,
     // Normal mapping is automatically turned on if a normal map exists. If one
     // doesn't exist, then we use a flat normal map.
     auto &texMgr{Ogre::TextureManager::getSingleton()};
-    if (auto normalMap = oo::toNormalMap(family.base->getTextureName());
+    if (auto normalMap = oo::makeNormalPath(family.base->getTextureName());
         texMgr.resourceExists(normalMap, pass->getResourceGroup())) {
       family.normal = oo::parseTexDesc(g, &block.baseTexture, pass, normalMap);
     } else {

@@ -135,15 +135,6 @@ oo::Path getBodyPartPath(BodyParts bodyPart, bool isFemale) {
   }
 }
 
-/// Given a filename to a diffuse texture, return the filename of the
-/// corresponding normal texture.
-/// For example, given `foo/bar.dds` this returns `foo/bar_n.dds`.
-std::string makeNormalPath(std::string diffusePath) {
-  auto dotIndex{diffusePath.rfind('.')};
-  if (dotIndex == std::string::npos) return diffusePath;
-  return diffusePath.insert(dotIndex, "_n");
-}
-
 /// Return whether the given material represents skin.
 /// Specifically, return true iff `mat` has at least one technique that has a
 /// pass called 'skin'.
@@ -180,9 +171,10 @@ void setSkinTextures(oo::Entity *bodyPart, oo::BaseId raceId,
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   const auto raceIdString{"/" + raceId.string()};
 
-  const oo::Path texPath{oo::Path{"textures"} / oo::Path{textureRec.data}};
-  const std::string diffuseName{texPath.c_str()};
-  const std::string normalName{oo::makeNormalPath(diffuseName)};
+  const oo::Path diffPath{oo::Path{"textures"} / oo::Path{textureRec.data}};
+  const oo::Path normPath{oo::makeNormalPath(diffPath)};
+  const std::string diffName{diffPath.c_str()};
+  const std::string normName{normPath.c_str()};
 
   for (const auto &subEntity : bodyPart->getSubEntities()) {
     const auto &baseMat{subEntity->getMaterial()};
@@ -194,7 +186,7 @@ void setSkinTextures(oo::Entity *bodyPart, oo::BaseId raceId,
       } else {
         const auto &matPtr{baseMat->clone(matName)};
         subEntity->setMaterial(matPtr);
-        oo::setSkinTextures(matPtr, diffuseName, normalName);
+        oo::setSkinTextures(matPtr, diffName, normName);
       }
     }
   }

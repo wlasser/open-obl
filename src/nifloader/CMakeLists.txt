@@ -47,8 +47,7 @@ target_link_libraries(OpenOblivionNifloader
         Boost::boost
         GSL
         polymorphic_value
-        spdlog::spdlog
-        stdc++fs)
+        spdlog::spdlog)
 
 install(TARGETS OpenOblivionNifloader EXPORT OpenOblivionNifloaderTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -575,12 +575,11 @@ void
 oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   std::string fullName{"textures/landscape/" + std::move(texName)};
   list.emplace_back(fullName);
-  fullName.replace(fullName.begin() + fullName.find_last_of('.'),
-                   fullName.end(), "_n.dds");
+  std::string normalName{oo::makeNormalPath(fullName)};
 
   auto &texMgr{Ogre::TextureManager::getSingleton()};
   if (texMgr.resourceExists(fullName, oo::RESOURCE_GROUP)) {
-    list.emplace_back(std::move(fullName));
+    list.emplace_back(std::move(normalName));
   } else {
     list.emplace_back("textures/flat_n.dds");
   }

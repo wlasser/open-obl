@@ -10,6 +10,9 @@
 
 namespace oo {
 
+struct prenormalized_path_tag_t {};
+inline constexpr prenormalized_path_tag_t prenormalized_path_tag{};
+
 /// Lightweight alternative to dealing with std::filesystem::path when paths are
 /// very simple. This class represents a case-insensitive file or directory path
 /// inside some unknown directory, with `/` and `\\` as the directory
@@ -67,6 +70,13 @@ class Path {
 
   /// \overload Path(const std::string&)
   explicit Path(std::string &&path);
+
+  /// Construct a `Path` form an already normalized string.
+  /// \pre `path` is actually normalized.
+  explicit Path(const std::string &path, prenormalized_path_tag_t);
+
+  /// \overload Path(const std::string &, prenormalized_path_tag_t)
+  explicit Path(std::string &&path, prenormalized_path_tag_t);
 
   /// Return the part of the path after the last `/`, not including the `/`.
   /// This may not return an actual file, for example if the path points to a
@@ -134,6 +144,12 @@ class Path {
   friend bool operator!=(const Path &lhs, const Path &rhs);
 };
 
+/// Given a path to a diffuse texture, return a path to the corresponding
+/// normal texture. Specifically, append '_n' just before the `.` of the file
+/// extension. For example, return `foo/bar_n.dds` given `foo/bar.dds`.
+oo::Path makeNormalPath(const oo::Path &diffusePath);
+
+std::string makeNormalPath(const std::string &diffusePath);
 } // namespace oo
 
 #endif // OPENOBLIVION_FS_PATH_HPP
