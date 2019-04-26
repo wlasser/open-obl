@@ -10,7 +10,10 @@ CharacterControllerImpl::CharacterControllerImpl(
     gsl::not_null<Ogre::SceneManager *> scnMgr,
     gsl::not_null<btDiscreteDynamicsWorld *> world)
     : mScnMgr(scnMgr), mWorld(world) {
-  mCamera = mScnMgr->createCamera("__PlayerCamera");
+  // TODO: Remove the camera from the implementation since it should be attached
+  //       to the skeleton and only used for the player.
+  static int counter{0};
+  mCamera = mScnMgr->createCamera("__Camera" + std::to_string(counter++));
   mBodyNode = mScnMgr->getRootSceneNode()->createChildSceneNode();
   attachCamera(gsl::make_not_null(mCamera), gsl::make_not_null(mBodyNode));
   createAndAttachRigidBody(gsl::make_not_null(mBodyNode));
@@ -140,6 +143,16 @@ CharacterControllerImpl::getCameraNode() const noexcept {
 gsl::not_null<Ogre::SceneNode *>
 CharacterControllerImpl::getCameraNode() noexcept {
   return gsl::make_not_null(mCameraNode);
+}
+
+gsl::not_null<const Ogre::SceneNode *>
+CharacterControllerImpl::getBodyNode() const noexcept {
+  return gsl::make_not_null(mBodyNode);
+}
+
+gsl::not_null<Ogre::SceneNode *>
+CharacterControllerImpl::getBodyNode() noexcept {
+  return gsl::make_not_null(mBodyNode);
 }
 
 float CharacterControllerImpl::getMoveSpeed() const noexcept {

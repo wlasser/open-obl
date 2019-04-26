@@ -28,6 +28,14 @@ btRigidBody *CharacterController::getRigidBody() const noexcept {
   return mImpl.mRigidBody.get();
 }
 
+const Ogre::SceneNode *CharacterController::getBodyNode() const noexcept {
+  return mImpl.getBodyNode().get();
+}
+
+Ogre::SceneNode *CharacterController::getBodyNode() noexcept {
+  return mImpl.getBodyNode().get();
+}
+
 void CharacterController::handleEvent(const KeyVariant &event) {
   auto newState{std::visit([this, &event](auto &&s) {
     return std::visit([this, &s](auto &&e) -> std::optional<StateVariant> {

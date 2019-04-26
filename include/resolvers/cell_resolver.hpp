@@ -194,6 +194,7 @@ class Cell {
   virtual gsl::not_null<Ogre::SceneManager *> getSceneManager() const = 0;
   virtual gsl::not_null<PhysicsWorld *> getPhysicsWorld() const = 0;
   virtual gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const = 0;
+  virtual std::vector<std::unique_ptr<oo::Character>> &getCharacters() = 0;
 
   oo::BaseId getBaseId() const;
   std::string getName() const;
@@ -234,6 +235,7 @@ class Cell {
   oo::BaseId mBaseId{};
   std::string mName{};
   bool mIsVisible{true};
+  std::vector<std::unique_ptr<oo::Character>> mCharacters{};
 
   virtual void setVisibleImpl(bool visible);
 };
@@ -245,6 +247,7 @@ class InteriorCell : public Cell {
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
   gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const override;
+  std::vector<std::unique_ptr<oo::Character>> &getCharacters() override;
 
   explicit InteriorCell(oo::BaseId baseId, std::string name,
                         std::unique_ptr<PhysicsWorld> physicsWorld);
@@ -257,6 +260,7 @@ class InteriorCell : public Cell {
  private:
   gsl::not_null<gsl::owner<Ogre::SceneManager *>> mScnMgr;
   std::unique_ptr<PhysicsWorld> mPhysicsWorld;
+  std::vector<std::unique_ptr<oo::Character>> mCharacters{};
 };
 
 class ExteriorCell : public Cell {
@@ -264,6 +268,7 @@ class ExteriorCell : public Cell {
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const override;
   gsl::not_null<PhysicsWorld *> getPhysicsWorld() const override;
   gsl::not_null<Ogre::SceneNode *> getRootSceneNode() const override;
+  std::vector<std::unique_ptr<oo::Character>> &getCharacters() override;
   btCollisionObject *getCollisionObject() const;
 
   explicit ExteriorCell(oo::BaseId baseId, std::string name,
@@ -292,6 +297,8 @@ class ExteriorCell : public Cell {
   std::array<float, 33u * 33u> mTerrainHeights{};
   std::unique_ptr<btCollisionObject> mTerrainCollisionObject;
   std::unique_ptr<btHeightfieldTerrainShape> mTerrainCollisionShape;
+
+  std::vector<std::unique_ptr<oo::Character>> mCharacters{};
 
   /// Implementation detail of `setVisible` which adds/removes the terrain's
   /// collision objects. The terrain itself is not unloaded since that is the
@@ -325,13 +332,29 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
 
 template<class Refr, class ...Res>
 void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
-  // TODO: Support returning different types
-  auto *childNode{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
-                              std::move(resolvers), getRootSceneNode())};
-  if (!childNode) return;
+  // TODO: Abstract away the type difference
+  if constexpr (std::is_same_v<std::decay_t<Refr>, record::REFR_NPC_>) {
+    auto charPtr{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
+                             std::move(resolvers), getRootSceneNode())};
+    if (!charPtr) return;
 
-  setNodeTransform(gsl::make_not_null(childNode), ref);
-  setNodeScale(gsl::make_not_null(childNode), ref);
+    const auto &data{ref.positionRotation.data};
+    charPtr->getController().moveTo(oo::fromBSCoordinates(
+        Ogre::Vector3{data.x, data.y, data.z + 256.0f}));
+    charPtr->getController().setOrientation(oo::fromBSTaitBryan(
+        Ogre::Radian(data.aX),
+        Ogre::Radian(data.aY),
+        Ogre::Radian(data.aZ)));
+    getCharacters().emplace_back(std::move(charPtr));
+  } else {
+    // TODO: Support returning different types
+    auto childNode{reifyRecord(ref, getSceneManager(), getPhysicsWorld(),
+                               std::move(resolvers), getRootSceneNode())};
+    if (!childNode) return;
+
+    setNodeTransform(gsl::make_not_null(childNode), ref);
+    setNodeScale(gsl::make_not_null(childNode), ref);
+  }
 }
 
 } // namespace oo

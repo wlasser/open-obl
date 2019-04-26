@@ -318,7 +318,12 @@ gsl::not_null<Ogre::SceneNode *> InteriorCell::getRootSceneNode() const {
   return gsl::make_not_null(mScnMgr->getRootSceneNode());
 }
 
+std::vector<std::unique_ptr<oo::Character>> &InteriorCell::getCharacters() {
+  return mCharacters;
+}
+
 InteriorCell::~InteriorCell() {
+  mCharacters.clear();
   // Destruct physics world to unregister all existing rigid bodies and free
   // their broadphase proxies, while they are still alive.
   mPhysicsWorld.reset();
@@ -349,6 +354,7 @@ ExteriorCell::~ExteriorCell() {
     mPhysicsWorld->removeCollisionObject(mTerrainCollisionObject.get());
   }
 
+  mCharacters.clear();
   destroyMovableObjects(mRootSceneNode);
   mRootSceneNode->removeAndDestroyAllChildren();
   mScnMgr->destroySceneNode(mRootSceneNode);
@@ -373,6 +379,10 @@ gsl::not_null<Cell::PhysicsWorld *> ExteriorCell::getPhysicsWorld() const {
 
 gsl::not_null<Ogre::SceneNode *> ExteriorCell::getRootSceneNode() const {
   return mRootSceneNode;
+}
+
+std::vector<std::unique_ptr<oo::Character>> &ExteriorCell::getCharacters() {
+  return mCharacters;
 }
 
 btCollisionObject *ExteriorCell::getCollisionObject() const {

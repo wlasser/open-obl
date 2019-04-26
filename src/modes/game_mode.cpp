@@ -41,7 +41,7 @@ GameMode::GameMode(GameMode &&other) noexcept
       mInInterior(other.mInInterior),
       mPlayerStartPos(other.mPlayerStartPos),
       mPlayerStartOrientation(other.mPlayerStartOrientation),
-      mPlayerController(std::move(other.mPlayerController)),
+      mPlayer(std::move(other.mPlayer)),
       mCollisionCaller(std::move(other.mCollisionCaller)),
       mDebugDrawImpl(std::make_unique<oo::DebugDrawImpl>(this)) {}
 
@@ -52,7 +52,7 @@ GameMode &GameMode::operator=(GameMode &&other) noexcept {
   mInInterior = other.mInInterior;
   mPlayerStartPos = other.mPlayerStartPos;
   mPlayerStartOrientation = other.mPlayerStartOrientation;
-  mPlayerController = std::move(other.mPlayerController);
+  mPlayer = std::move(other.mPlayer);
   mCollisionCaller = std::move(other.mCollisionCaller);
   mDebugDrawImpl = std::make_unique<oo::DebugDrawImpl>(this);
 
@@ -62,22 +62,23 @@ GameMode &GameMode::operator=(GameMode &&other) noexcept {
 GameMode::transition_t
 GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
+  auto &playerController{mPlayer->getController()};
   if (keyEvent) {
     return std::visit(overloaded{
-        [this](oo::event::Forward e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::Forward e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
-        [this](oo::event::Backward e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::Backward e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
-        [this](oo::event::SlideLeft e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::SlideLeft e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
-        [this](oo::event::SlideRight e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::SlideRight e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
         [](oo::event::Use) -> transition_t { return {}; },
@@ -87,21 +88,21 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
         [](oo::event::Block) -> transition_t { return {}; },
         [](oo::event::Cast) -> transition_t { return {}; },
         [](oo::event::ReadyItem) -> transition_t { return {}; },
-        [this](oo::event::Sneak e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::Sneak e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
-        [this](oo::event::Run e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::Run e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
-        [this](oo::event::AlwaysRun e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::AlwaysRun e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
         [](oo::event::AutoMove) -> transition_t { return {}; },
-        [this](oo::event::Jump e) -> transition_t {
-          mPlayerController->handleEvent(e);
+        [&](oo::event::Jump e) -> transition_t {
+          playerController.handleEvent(e);
           return {};
         },
         [](oo::event::TogglePov) -> transition_t { return {}; },
@@ -128,8 +129,8 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
     const float sensitivity{settings.fGet("Controls.fMouseSensitivity")};
     const oo::event::Pitch pitch{{event.motion.yrel * sensitivity}};
     const oo::event::Yaw yaw{{event.motion.xrel * sensitivity}};
-    mPlayerController->handleEvent(pitch);
-    mPlayerController->handleEvent(yaw);
+    playerController.handleEvent(pitch);
+    playerController.handleEvent(yaw);
   }
   return {false, std::nullopt};
 }
@@ -143,7 +144,7 @@ void GameMode::dispatchCollisions() {
 RefId GameMode::getCrosshairRef() const {
   GameSetting<int> iActivatePickLength{"iActivatePickLength", 150};
 
-  auto *const camera{mPlayerController->getCamera()};
+  auto *const camera{mPlayer->getController().getCamera()};
   const auto camPos{qvm::convert_to<btVector3>(camera->getDerivedPosition())};
   const auto camDir{qvm::convert_to<btVector3>(camera->getDerivedDirection())};
   const auto rayStart{camPos + 0.5L * camDir};
@@ -161,16 +162,37 @@ RefId GameMode::getCrosshairRef() const {
 }
 
 void GameMode::addPlayerToScene(ApplicationContext &ctx) {
-  mPlayerController = std::make_unique<oo::CharacterController>(
-      getSceneManager(), getPhysicsWorld());
-  oo::CharacterController *controller{mPlayerController.get()};
+  auto baseCtx{ctx.getBaseResolvers()};
+  auto refrCtx{ctx.getRefrResolvers()};
+  const auto &npc_Res{oo::getResolver<record::NPC_>(baseCtx)};
+  const auto &npc_RefrRes{oo::getRefrResolver<record::REFR_NPC_>(refrCtx)};
+
+  oo::BaseId playerNpcId{0x00'000007};
+  oo::RefId playerId{0xff'000000};
+
+  const auto &playerBaseRec{npc_Res.get(playerNpcId)};
+  if (!playerBaseRec) {
+    spdlog::get(oo::LOG)->error("Player NPC_ record does not exist");
+    throw std::runtime_error("Player NPC_ record does not exist");
+  }
+
+  const auto playerRefRec{oo::citeRecord(*playerBaseRec, playerId)};
+
+  auto resolvers{oo::getResolvers<record::NPC_, record::RACE>(baseCtx)};
+
+  mPlayer = std::make_unique<oo::Character>(playerRefRec,
+                                            getSceneManager(),
+                                            getPhysicsWorld(),
+                                            resolvers);
+
+  auto &controller{mPlayer->getController()};
   mCollisionCaller.addCallback(
-      mPlayerController->getRigidBody(),
-      [controller](const auto *other, const auto &contact) {
-        controller->handleCollision(other, contact);
+      controller.getRigidBody(),
+      [&controller](const auto *other, const auto &contact) {
+        controller.handleCollision(other, contact);
       });
 
-  ctx.setCamera(gsl::make_not_null(mPlayerController->getCamera()));
+  ctx.setCamera(gsl::make_not_null(controller.getCamera()));
 }
 
 void GameMode::registerSceneListeners(ApplicationContext &ctx) {
@@ -233,8 +255,8 @@ void GameMode::updateAnimation(float delta) {
 
 void GameMode::enter(ApplicationContext &ctx) {
   addPlayerToScene(ctx);
-  mPlayerController->moveTo(mPlayerStartPos);
-  mPlayerController->setOrientation(mPlayerStartOrientation);
+  mPlayer->getController().moveTo(mPlayerStartPos);
+  mPlayer->getController().setOrientation(mPlayerStartOrientation);
 
   registerSceneListeners(ctx);
 
@@ -246,7 +268,7 @@ void GameMode::refocus(ApplicationContext &) {
 }
 
 bool GameMode::updateCenterCell(ApplicationContext &) {
-  const auto pos{oo::toBSCoordinates(mPlayerController->getPosition())};
+  const auto pos{oo::toBSCoordinates(mPlayer->getController().getPosition())};
   const auto cellIndex{oo::getCellIndex(qvm::X(pos), qvm::Y(pos))};
 
   if (cellIndex != mCenterCell) {
@@ -344,7 +366,19 @@ GameMode::getDoorDestinationCell(ApplicationContext &ctx,
 
 void GameMode::update(ApplicationContext &ctx, float delta) {
   updateAnimation(delta);
-  mPlayerController->update(delta);
+  mPlayer->getController().update(delta);
+  if (mInInterior) {
+    for (const auto &npc : mCell->getCharacters()) {
+      npc->getController().update(delta);
+    }
+  } else {
+    for (const auto &cell : mExteriorMgr.getNearCells()) {
+      for (const auto &npc : cell->getCharacters()) {
+        npc->getController().update(delta);
+      }
+    }
+  }
+
   getPhysicsWorld()->stepSimulation(delta, 4);
   dispatchCollisions();
   advanceGameClock(delta);

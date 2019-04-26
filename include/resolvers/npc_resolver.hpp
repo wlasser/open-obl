@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_NPC_RESOLVER_HPP
 #define OPENOBLIVION_NPC_RESOLVER_HPP
 
+#include "character_controller/character.hpp"
 #include "resolvers/resolvers.hpp"
 
 namespace oo {
@@ -13,7 +14,7 @@ template<> struct CiteRecordTrait<record::NPC_> {
 };
 
 template<> struct ReifyRecordTrait<record::REFR_NPC_> {
-  using type = Ogre::SceneNode *;
+  using type = std::unique_ptr<oo::Character>;
   using resolvers = ResolverTuple<record::NPC_, record::RACE>;
 };
 

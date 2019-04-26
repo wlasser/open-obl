@@ -4,7 +4,7 @@
 #include "application_context.hpp"
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
-#include "character_controller/character_controller.hpp"
+#include "character_controller/character.hpp"
 #include "exterior_manager.hpp"
 #include "modes/mode.hpp"
 #include "modes/menu_mode.hpp"
@@ -37,7 +37,7 @@ class GameMode {
   Ogre::Vector3 mPlayerStartPos{Ogre::Vector3::ZERO};
   Ogre::Quaternion mPlayerStartOrientation{Ogre::Quaternion::IDENTITY};
 
-  std::unique_ptr<oo::CharacterController> mPlayerController{};
+  std::unique_ptr<oo::Character> mPlayer{};
 
   bullet::CollisionCaller mCollisionCaller{};
 

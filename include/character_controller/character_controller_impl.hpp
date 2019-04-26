@@ -75,6 +75,9 @@ class CharacterControllerImpl {
   gsl::not_null<const Ogre::SceneNode *> getCameraNode() const noexcept;
   gsl::not_null<Ogre::SceneNode *> getCameraNode() noexcept;
 
+  gsl::not_null<const Ogre::SceneNode *> getBodyNode() const noexcept;
+  gsl::not_null<Ogre::SceneNode *> getBodyNode() noexcept;
+
   template<class F>
   void setSpeedModifier(F &&f) {
     mSpeedModifier = std::forward<F>(f);
