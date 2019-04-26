@@ -1,5 +1,5 @@
+#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/movement.hpp"
-#include "character_controller/player_controller_impl.hpp"
 #include "character_controller/sneak_jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
 #include "settings.hpp"
@@ -11,7 +11,7 @@
 namespace oo {
 
 std::optional<SneakStandState>
-SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
+SneakJumpState::update(CharacterControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
 
   // Only apply the spring force if the player is falling, and sufficiently near
@@ -32,7 +32,7 @@ SneakJumpState::update(PlayerControllerImpl &impl, float elapsed) {
   return std::nullopt;
 }
 
-void SneakJumpState::enter(PlayerControllerImpl &impl) {
+void SneakJumpState::enter(CharacterControllerImpl &impl) {
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
     return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
         * oo::weaponOutModifier(hasWeaponOut) * oo::sneakModifier();
@@ -49,7 +49,7 @@ void SneakJumpState::enter(PlayerControllerImpl &impl) {
 }
 
 std::optional<SneakStandState>
-SneakJumpState::handleCollision(PlayerControllerImpl &impl,
+SneakJumpState::handleCollision(CharacterControllerImpl &impl,
                                 const btCollisionObject */*other*/,
                                 const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};

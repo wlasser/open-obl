@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
-#define OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
+#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_IMPL_HPP
+#define OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_IMPL_HPP
 
 #include "game_settings.hpp"
 #include "math/conversions.hpp"
@@ -17,7 +17,7 @@
 
 namespace oo {
 
-class PlayerControllerImpl {
+class CharacterControllerImpl {
  private:
   Ogre::SceneManager *mScnMgr;
   btDiscreteDynamicsWorld *mWorld;
@@ -36,19 +36,19 @@ class PlayerControllerImpl {
   void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
 
  public:
-  friend class PlayerController;
+  friend class CharacterController;
 
-  explicit PlayerControllerImpl(gsl::not_null<Ogre::SceneManager *> scnMgr,
+  explicit CharacterControllerImpl(gsl::not_null<Ogre::SceneManager *> scnMgr,
                                 gsl::not_null<btDiscreteDynamicsWorld *> world);
-  ~PlayerControllerImpl();
-  PlayerControllerImpl(const PlayerControllerImpl &) = delete;
-  PlayerControllerImpl &operator=(const PlayerControllerImpl &) = delete;
+  ~CharacterControllerImpl();
+  CharacterControllerImpl(const CharacterControllerImpl &) = delete;
+  CharacterControllerImpl &operator=(const CharacterControllerImpl &) = delete;
   /// \remark `mSpeedModifier` is left value-initialized, it is not moved from
   ///         `other`.
-  PlayerControllerImpl(PlayerControllerImpl &&other) noexcept;
+  CharacterControllerImpl(CharacterControllerImpl &&other) noexcept;
   /// \remark `mSpeedModifier` is left value-initialized, it is not moved from
   ///         `other`.
-  PlayerControllerImpl &operator=(PlayerControllerImpl &&other) noexcept;
+  CharacterControllerImpl &operator=(CharacterControllerImpl &&other) noexcept;
 
   float speedAttribute{50.0f};
   float athleticsSkill{50.0f};
@@ -100,4 +100,4 @@ class PlayerControllerImpl {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_IMPL_HPP
+#endif // OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_IMPL_HPP

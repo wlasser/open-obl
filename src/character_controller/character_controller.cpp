@@ -1,4 +1,4 @@
-#include "character_controller/player_controller.hpp"
+#include "character_controller/character_controller.hpp"
 #include "settings.hpp"
 #include <gsl/gsl>
 #include <OgreMath.h>
@@ -10,8 +10,8 @@
 
 namespace oo {
 
-PlayerController::PlayerController(gsl::not_null<Ogre::SceneManager *> scnMgr,
-                                   gsl::not_null<btDiscreteDynamicsWorld *> world)
+CharacterController::CharacterController(gsl::not_null<Ogre::SceneManager *> scnMgr,
+                                         gsl::not_null<btDiscreteDynamicsWorld *> world)
     : mImpl(scnMgr, world) {
   mState = StandState{};
   enter(mState);
@@ -20,15 +20,15 @@ PlayerController::PlayerController(gsl::not_null<Ogre::SceneManager *> scnMgr,
   enter(mMovementStateVariant);
 }
 
-Ogre::Camera *PlayerController::getCamera() const noexcept {
+Ogre::Camera *CharacterController::getCamera() const noexcept {
   return mImpl.mCamera;
 }
 
-btRigidBody *PlayerController::getRigidBody() const noexcept {
+btRigidBody *CharacterController::getRigidBody() const noexcept {
   return mImpl.mRigidBody.get();
 }
 
-void PlayerController::handleEvent(const KeyVariant &event) {
+void CharacterController::handleEvent(const KeyVariant &event) {
   auto newState{std::visit([this, &event](auto &&s) {
     return std::visit([this, &s](auto &&e) -> std::optional<StateVariant> {
       return s.handleEvent(mImpl, e);
@@ -46,7 +46,7 @@ void PlayerController::handleEvent(const KeyVariant &event) {
   if (newMovementState) changeState(*newMovementState);
 }
 
-void PlayerController::handleEvent(const MouseVariant &event) {
+void CharacterController::handleEvent(const MouseVariant &event) {
   std::visit([this, &event](auto &&s) {
     std::visit([this, &s](auto &&e) { s.handleEvent(mImpl, e); }, event);
   }, mState);
@@ -56,7 +56,7 @@ void PlayerController::handleEvent(const MouseVariant &event) {
   }, mMovementStateVariant);
 }
 
-void PlayerController::update(float elapsed) {
+void CharacterController::update(float elapsed) {
   auto newState{std::visit(
       [this, elapsed](auto &&s) -> std::optional<StateVariant> {
         return s.update(mImpl, elapsed);
@@ -72,8 +72,8 @@ void PlayerController::update(float elapsed) {
   if (newMovementState) changeState(*newMovementState);
 }
 
-void PlayerController::handleCollision(const btCollisionObject *other,
-                                       const btManifoldPoint &contact) {
+void CharacterController::handleCollision(const btCollisionObject *other,
+                                          const btManifoldPoint &contact) {
   auto newState{std::visit(
       [this, other, &contact](auto &&s) -> std::optional<StateVariant> {
         return s.handleCollision(mImpl, other, contact);
@@ -89,7 +89,7 @@ void PlayerController::handleCollision(const btCollisionObject *other,
   if (newMovementState) changeState(*newMovementState);
 }
 
-void PlayerController::moveTo(const Ogre::Vector3 &position) {
+void CharacterController::moveTo(const Ogre::Vector3 &position) {
   mImpl.mBodyNode->setPosition(position);
   mImpl.mMotionState->notify();
   // Notifying the motionState is insufficient. We cannot force the
@@ -99,7 +99,7 @@ void PlayerController::moveTo(const Ogre::Vector3 &position) {
   mImpl.mRigidBody->setWorldTransform(trans);
 }
 
-void PlayerController::setOrientation(const Ogre::Quaternion &orientation) {
+void CharacterController::setOrientation(const Ogre::Quaternion &orientation) {
   mImpl.setOrientation(orientation.getPitch(), orientation.getYaw());
   mImpl.mMotionState->notify();
   // see moveTo()
@@ -108,35 +108,35 @@ void PlayerController::setOrientation(const Ogre::Quaternion &orientation) {
   mImpl.mRigidBody->setWorldTransform(trans);
 }
 
-Ogre::Vector3 PlayerController::getPosition() const noexcept {
+Ogre::Vector3 CharacterController::getPosition() const noexcept {
   return mImpl.mBodyNode->getPosition();
 }
 
-void PlayerController::enter(StateVariant &state) {
+void CharacterController::enter(StateVariant &state) {
   std::visit([this](auto &&s) { s.enter(this->mImpl); }, state);
 }
 
-void PlayerController::enter(MovementStateVariant &state) {
+void CharacterController::enter(MovementStateVariant &state) {
   std::visit([this](auto &&s) {
     s.enter(this->mImpl);
   }, state);
 };
 
-void PlayerController::exit(StateVariant &state) {
+void CharacterController::exit(StateVariant &state) {
   std::visit([this](auto &&s) { s.exit(this->mImpl); }, state);
 }
 
-void PlayerController::exit(MovementStateVariant &state) {
+void CharacterController::exit(MovementStateVariant &state) {
   std::visit([this](auto &&s) { s.exit(this->mImpl); }, state);
 }
 
-void PlayerController::changeState(StateVariant newState) {
+void CharacterController::changeState(StateVariant newState) {
   exit(mState);
   mState = newState;
   enter(mState);
 }
 
-void PlayerController::changeState(MovementStateVariant newState) {
+void CharacterController::changeState(MovementStateVariant newState) {
   exit(mMovementStateVariant);
   mMovementStateVariant = newState;
   enter(mMovementStateVariant);

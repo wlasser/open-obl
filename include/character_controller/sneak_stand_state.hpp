@@ -2,8 +2,8 @@
 #define OPENOBLIVION_CHARACTER_CONTROLLER_SNEAK_STAND_STATE_HPP
 
 #include "character_controller/abilities.hpp"
+#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/fallback_state.hpp"
-#include "character_controller/player_controller_impl.hpp"
 #include <optional>
 #include <memory>
 
@@ -23,16 +23,16 @@ class SneakStandState : public FallbackState<SneakStandState>,
   using FallbackState::handleEvent;
 
   std::optional<SneakJumpState>
-  handleEvent(PlayerControllerImpl &impl, const event::Jump &event);
+  handleEvent(CharacterControllerImpl &impl, const event::Jump &event);
 
   std::optional<StandState>
-  handleEvent(PlayerControllerImpl &impl, const event::Sneak &event);
+  handleEvent(CharacterControllerImpl &impl, const event::Sneak &event);
 
-  std::optional<SneakStandState> update(PlayerControllerImpl &impl,
+  std::optional<SneakStandState> update(CharacterControllerImpl &impl,
                                         float elapsed);
 
-  void enter(PlayerControllerImpl &impl);
-  void exit(PlayerControllerImpl &impl);
+  void enter(CharacterControllerImpl &impl);
+  void exit(CharacterControllerImpl &impl);
 };
 
 } // namespace oo

@@ -1,12 +1,12 @@
 #include "bullet/collision.hpp"
+#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/movement.hpp"
-#include "character_controller/player_controller_impl.hpp"
 #include "settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {
 
-PlayerControllerImpl::PlayerControllerImpl(
+CharacterControllerImpl::CharacterControllerImpl(
     gsl::not_null<Ogre::SceneManager *> scnMgr,
     gsl::not_null<btDiscreteDynamicsWorld *> world)
     : mScnMgr(scnMgr), mWorld(world) {
@@ -16,7 +16,7 @@ PlayerControllerImpl::PlayerControllerImpl(
   createAndAttachRigidBody(gsl::make_not_null(mBodyNode));
 }
 
-PlayerControllerImpl::~PlayerControllerImpl() {
+CharacterControllerImpl::~CharacterControllerImpl() {
   if (mWorld && mRigidBody && mRigidBody->isInWorld()) {
     mWorld->removeRigidBody(mRigidBody.get());
   }
@@ -31,7 +31,7 @@ PlayerControllerImpl::~PlayerControllerImpl() {
   }
 }
 
-PlayerControllerImpl::PlayerControllerImpl(PlayerControllerImpl &&other) noexcept {
+CharacterControllerImpl::CharacterControllerImpl(CharacterControllerImpl &&other) noexcept {
   mScnMgr = std::exchange(other.mScnMgr, nullptr);
   mWorld = std::exchange(other.mWorld, nullptr);
   mCameraNode = std::exchange(other.mCameraNode, nullptr);
@@ -51,8 +51,8 @@ PlayerControllerImpl::PlayerControllerImpl(PlayerControllerImpl &&other) noexcep
   isRunning = other.isRunning;
 
   // mSpeedModifier is likely to capture `other` by reference, so we cannot
-  // simply copy it, and since we don't know what state the PlayerController is
-  // in we can't recreate it. It is up to the PlayerController to re-`enter()`
+  // simply copy it, and since we don't know what state the CharacterController is
+  // in we can't recreate it. It is up to the CharacterController to re-`enter()`
   // the current state.
 
   height = other.height;
@@ -63,8 +63,8 @@ PlayerControllerImpl::PlayerControllerImpl(PlayerControllerImpl &&other) noexcep
   localVelocity = std::move(other.localVelocity);
 }
 
-PlayerControllerImpl &
-PlayerControllerImpl::operator=(PlayerControllerImpl &&other) noexcept {
+CharacterControllerImpl &
+CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
   if (this != &other) {
     mScnMgr = std::exchange(other.mScnMgr, nullptr);
     mWorld = std::exchange(other.mWorld, nullptr);
@@ -97,16 +97,17 @@ PlayerControllerImpl::operator=(PlayerControllerImpl &&other) noexcept {
   return *this;
 }
 
-void PlayerControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
-                                        gsl::not_null<Ogre::SceneNode *> node) {
+void CharacterControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
+                                           gsl::not_null<Ogre::SceneNode *> node) {
   const auto h{(0.95f - 0.5f) * height - getCapsuleHeight() / 2.0f};
   const auto camVec{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
   mCameraNode = node->createChildSceneNode(camVec);
   mPitchNode = mCameraNode->createChildSceneNode();
   mPitchNode->attachObject(camera);
+  camera->setPosition(Ogre::Vector3{0.0f, 1.0f, 3.0f});
 }
 
-void PlayerControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node) {
+void CharacterControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node) {
   mMotionState = std::make_unique<Ogre::MotionState>(node);
   mCollisionShape = std::make_unique<btCapsuleShape>(getCapsuleRadius(),
                                                      getCapsuleHeight());
@@ -122,26 +123,26 @@ void PlayerControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNod
 }
 
 gsl::not_null<const btRigidBody *>
-PlayerControllerImpl::getRigidBody() const noexcept {
+CharacterControllerImpl::getRigidBody() const noexcept {
   return gsl::make_not_null(mRigidBody.get());
 }
 
 gsl::not_null<btRigidBody *>
-PlayerControllerImpl::getRigidBody() noexcept {
+CharacterControllerImpl::getRigidBody() noexcept {
   return gsl::make_not_null(mRigidBody.get());
 }
 
 gsl::not_null<const Ogre::SceneNode *>
-PlayerControllerImpl::getCameraNode() const noexcept {
+CharacterControllerImpl::getCameraNode() const noexcept {
   return gsl::make_not_null(mCameraNode);
 }
 
 gsl::not_null<Ogre::SceneNode *>
-PlayerControllerImpl::getCameraNode() noexcept {
+CharacterControllerImpl::getCameraNode() noexcept {
   return gsl::make_not_null(mCameraNode);
 }
 
-float PlayerControllerImpl::getMoveSpeed() const noexcept {
+float CharacterControllerImpl::getMoveSpeed() const noexcept {
   const float base{oo::baseSpeed(speedAttribute) * raceHeight
                        * oo::metersPerUnit<float>};
   const float weightMult{oo::encumbranceModifier(wornWeight, hasWeaponOut)};
@@ -149,19 +150,19 @@ float PlayerControllerImpl::getMoveSpeed() const noexcept {
       * (mSpeedModifier ? mSpeedModifier(hasWeaponOut, isRunning) : 1.0f);
 }
 
-float PlayerControllerImpl::getCapsuleRadius() const noexcept {
+float CharacterControllerImpl::getCapsuleRadius() const noexcept {
   return 0.3f;
 }
 
-float PlayerControllerImpl::getCapsuleHeight() const noexcept {
+float CharacterControllerImpl::getCapsuleHeight() const noexcept {
   return height * 0.5f - getCapsuleRadius();
 }
 
-void PlayerControllerImpl::reactivatePhysics() noexcept {
+void CharacterControllerImpl::reactivatePhysics() noexcept {
   mRigidBody->activate(true);
 }
 
-void PlayerControllerImpl::updateCameraOrientation() noexcept {
+void CharacterControllerImpl::updateCameraOrientation() noexcept {
   mCameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
                                                Ogre::Vector3::UNIT_X));
   mPitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
@@ -170,7 +171,7 @@ void PlayerControllerImpl::updateCameraOrientation() noexcept {
   mCameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
 }
 
-void PlayerControllerImpl::move() noexcept {
+void CharacterControllerImpl::move() noexcept {
   const auto speed{getMoveSpeed()};
   // This is a rotation of the standard basis, so is still in SO(3)
   const auto axes{mCameraNode->getLocalAxes()};
@@ -185,14 +186,14 @@ void PlayerControllerImpl::move() noexcept {
   }
 }
 
-void PlayerControllerImpl::setOrientation(Ogre::Radian pPitch,
-                                          Ogre::Radian pYaw) noexcept {
+void CharacterControllerImpl::setOrientation(Ogre::Radian pPitch,
+                                             Ogre::Radian pYaw) noexcept {
   pitch = pPitch;
   yaw = pYaw;
   updateCameraOrientation();
 }
 
-float PlayerControllerImpl::getSpringDisplacement() noexcept {
+float CharacterControllerImpl::getSpringDisplacement() noexcept {
   const auto rayLength{10.0f};
   auto p0{qvm::convert_to<btVector3>(mMotionState->getPosition())};
   auto p1{qvm::convert_to<btVector3>(p0 + qvm::_0X0(-rayLength))};
@@ -217,11 +218,11 @@ float PlayerControllerImpl::getSpringDisplacement() noexcept {
   return length - dist;
 }
 
-float PlayerControllerImpl::getMaxSpringDisplacement() noexcept {
+float CharacterControllerImpl::getMaxSpringDisplacement() noexcept {
   return 0.5f * height - getCapsuleRadius();
 }
 
-void PlayerControllerImpl::applySpringForce(float displacement) noexcept {
+void CharacterControllerImpl::applySpringForce(float displacement) noexcept {
   const float deltaMax{getMaxSpringDisplacement()};
   if (displacement < -deltaMax) return;
 
@@ -233,7 +234,7 @@ void PlayerControllerImpl::applySpringForce(float displacement) noexcept {
   mRigidBody->applyCentralForce(qvm::convert_to<btVector3>(force));
 }
 
-void PlayerControllerImpl::updatePhysics(float /*elapsed*/) noexcept {
+void CharacterControllerImpl::updatePhysics(float /*elapsed*/) noexcept {
   reactivatePhysics();
   updateCameraOrientation();
   move();

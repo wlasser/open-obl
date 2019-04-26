@@ -161,9 +161,9 @@ RefId GameMode::getCrosshairRef() const {
 }
 
 void GameMode::addPlayerToScene(ApplicationContext &ctx) {
-  mPlayerController = std::make_unique<oo::PlayerController>(
+  mPlayerController = std::make_unique<oo::CharacterController>(
       getSceneManager(), getPhysicsWorld());
-  oo::PlayerController *controller{mPlayerController.get()};
+  oo::CharacterController *controller{mPlayerController.get()};
   mCollisionCaller.addCallback(
       mPlayerController->getRigidBody(),
       [controller](const auto *other, const auto &contact) {

@@ -1,8 +1,8 @@
-#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
-#define OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
+#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP
+#define OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP
 
 #include "controls.hpp"
-#include "character_controller/player_controller_impl.hpp"
+#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/fallback_state.hpp"
 #include "character_controller/jump_state.hpp"
 #include "character_controller/run_state.hpp"
@@ -25,10 +25,10 @@ using StateVariant = std::variant<StandState,
                                   SneakJumpState>;
 using MovementStateVariant = std::variant<WalkState, RunState>;
 
-class PlayerController {
+class CharacterController {
  public:
-  explicit PlayerController(gsl::not_null<Ogre::SceneManager *> scnMgr,
-                            gsl::not_null<btDiscreteDynamicsWorld *> world);
+  explicit CharacterController(gsl::not_null<Ogre::SceneManager *> scnMgr,
+                               gsl::not_null<btDiscreteDynamicsWorld *> world);
 
   Ogre::Camera *getCamera() const noexcept;
   btRigidBody *getRigidBody() const noexcept;
@@ -47,7 +47,7 @@ class PlayerController {
   Ogre::Vector3 getPosition() const noexcept;
 
  private:
-  PlayerControllerImpl mImpl;
+  CharacterControllerImpl mImpl;
   StateVariant mState{};
   MovementStateVariant mMovementStateVariant{};
 
@@ -61,4 +61,4 @@ class PlayerController {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CHARACTER_CONTROLLER_PLAYER_CONTROLLER_HPP
+#endif // OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP

@@ -3,22 +3,22 @@
 
 namespace oo {
 
-std::optional<WalkState> RunState::handleEvent(PlayerControllerImpl &/*impl*/,
+std::optional<WalkState> RunState::handleEvent(CharacterControllerImpl &/*impl*/,
                                                const event::Run &/*event*/) {
   return std::make_optional<WalkState>();
 }
 
-std::optional<WalkState> RunState::handleEvent(PlayerControllerImpl &/*impl*/,
+std::optional<WalkState> RunState::handleEvent(CharacterControllerImpl &/*impl*/,
                                                const event::AlwaysRun &event) {
   return event.down ? std::make_optional<WalkState>() : std::nullopt;
 }
 
 std::optional<RunState>
-RunState::update(PlayerControllerImpl &/*impl*/, float /*elapsed*/) {
+RunState::update(CharacterControllerImpl &/*impl*/, float /*elapsed*/) {
   return std::nullopt;
 }
 
-void RunState::enter(PlayerControllerImpl &impl) {
+void RunState::enter(CharacterControllerImpl &impl) {
   impl.isRunning = true;
 }
 

@@ -1,4 +1,4 @@
-#include "character_controller/player_controller_impl.hpp"
+#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/jump_state.hpp"
 #include "character_controller/movement.hpp"
 #include "character_controller/stand_state.hpp"
@@ -11,7 +11,7 @@
 namespace oo {
 
 std::optional<StandState>
-JumpState::update(PlayerControllerImpl &impl, float elapsed) {
+JumpState::update(CharacterControllerImpl &impl, float elapsed) {
   impl.updatePhysics(elapsed);
 
   // Only apply the spring force if the player is falling, and sufficiently near
@@ -32,7 +32,7 @@ JumpState::update(PlayerControllerImpl &impl, float elapsed) {
   return std::nullopt;
 }
 
-void JumpState::enter(PlayerControllerImpl &impl) {
+void JumpState::enter(CharacterControllerImpl &impl) {
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
     return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
         * oo::weaponOutModifier(hasWeaponOut);
@@ -52,7 +52,7 @@ void JumpState::enter(PlayerControllerImpl &impl) {
 }
 
 std::optional<StandState>
-JumpState::handleCollision(PlayerControllerImpl &impl,
+JumpState::handleCollision(CharacterControllerImpl &impl,
                            const btCollisionObject *,
                            const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};

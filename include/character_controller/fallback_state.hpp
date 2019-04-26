@@ -2,7 +2,7 @@
 #define OPENOBLIVION_CHARACTER_CONTROLLER_FALLBACK_STATE_HPP
 
 #include "controls.hpp"
-#include "character_controller/player_controller_impl.hpp"
+#include "character_controller/character_controller_impl.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <memory>
 #include <optional>
@@ -21,13 +21,13 @@ class FallbackState {
   // Fallback for unhandled KeyEvents. Derived classes can write
   // `using FallbackState::handleEvent` to get this automatically.
   std::optional<State>
-  handleEvent(PlayerControllerImpl &, const event::KeyEvent &) {
+  handleEvent(CharacterControllerImpl &, const event::KeyEvent &) {
     return std::nullopt;
   }
 
   // Fallback for unhandled MouseEvents. Derived classes can write
   // `using FallbackState::handleEvent` to get this automatically.
-  void handleEvent(PlayerControllerImpl &, const event::MouseEvent &) {}
+  void handleEvent(CharacterControllerImpl &, const event::MouseEvent &) {}
 };
 
 } // namespace oo
