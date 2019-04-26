@@ -28,12 +28,12 @@ btRigidBody *CharacterController::getRigidBody() const noexcept {
   return mImpl.mRigidBody.get();
 }
 
-const Ogre::SceneNode *CharacterController::getBodyNode() const noexcept {
-  return mImpl.getBodyNode().get();
+const Ogre::SceneNode *CharacterController::getRootNode() const noexcept {
+  return mImpl.getRootNode().get();
 }
 
-Ogre::SceneNode *CharacterController::getBodyNode() noexcept {
-  return mImpl.getBodyNode().get();
+Ogre::SceneNode *CharacterController::getRootNode() noexcept {
+  return mImpl.getRootNode().get();
 }
 
 void CharacterController::handleEvent(const KeyVariant &event) {
@@ -98,7 +98,9 @@ void CharacterController::handleCollision(const btCollisionObject *other,
 }
 
 void CharacterController::moveTo(const Ogre::Vector3 &position) {
-  mImpl.mBodyNode->setPosition(position);
+  // Compensate for the difference between the body and root positions.
+  auto offset{mImpl.mBodyNode->getPosition() - mImpl.mRootNode->getPosition()};
+  mImpl.mBodyNode->setPosition(position + offset);
   mImpl.mMotionState->notify();
   // Notifying the motionState is insufficient. We cannot force the
   // btRigidBody to update its transform, and must do it manually.

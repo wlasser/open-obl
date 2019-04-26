@@ -42,8 +42,7 @@ Character::Character(const record::REFR_NPC_ &refRec,
   }
   baseSkel->load();
 
-  auto *parent{mController.getBodyNode()->createChildSceneNode(
-      Ogre::Vector3{0.0f, -64 * oo::metersPerUnit<float>, 0.0f})};
+  auto *parent{mController.getRootNode()->createChildSceneNode()};
 
   // Only one entity should have a skeleton constructed explicitly, the rest
   // should share. It doesn't matter which is entity is created first, we just

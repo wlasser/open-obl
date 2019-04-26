@@ -26,6 +26,7 @@ class CharacterControllerImpl {
   Ogre::SceneNode *mPitchNode{};
   Ogre::Camera *mCamera{};
 
+  Ogre::SceneNode *mRootNode{};
   Ogre::SceneNode *mBodyNode{};
   std::unique_ptr<Ogre::MotionState> mMotionState{};
   std::unique_ptr<btCollisionShape> mCollisionShape{};
@@ -75,8 +76,8 @@ class CharacterControllerImpl {
   gsl::not_null<const Ogre::SceneNode *> getCameraNode() const noexcept;
   gsl::not_null<Ogre::SceneNode *> getCameraNode() noexcept;
 
-  gsl::not_null<const Ogre::SceneNode *> getBodyNode() const noexcept;
-  gsl::not_null<Ogre::SceneNode *> getBodyNode() noexcept;
+  gsl::not_null<const Ogre::SceneNode *> getRootNode() const noexcept;
+  gsl::not_null<Ogre::SceneNode *> getRootNode() noexcept;
 
   template<class F>
   void setSpeedModifier(F &&f) {

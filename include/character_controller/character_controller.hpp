@@ -32,8 +32,8 @@ class CharacterController {
 
   Ogre::Camera *getCamera() const noexcept;
   btRigidBody *getRigidBody() const noexcept;
-  const Ogre::SceneNode *getBodyNode() const noexcept;
-  Ogre::SceneNode *getBodyNode() noexcept;
+  const Ogre::SceneNode *getRootNode() const noexcept;
+  Ogre::SceneNode *getRootNode() noexcept;
 
   void handleEvent(const KeyVariant &event);
   void handleEvent(const MouseVariant &event);

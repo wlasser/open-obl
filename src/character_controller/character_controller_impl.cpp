@@ -14,8 +14,13 @@ CharacterControllerImpl::CharacterControllerImpl(
   //       to the skeleton and only used for the player.
   static int counter{0};
   mCamera = mScnMgr->createCamera("__Camera" + std::to_string(counter++));
+
   mBodyNode = mScnMgr->getRootSceneNode()->createChildSceneNode();
-  attachCamera(gsl::make_not_null(mCamera), gsl::make_not_null(mBodyNode));
+  const auto bodyVec{qvm::convert_to<Ogre::Vector3>(
+      qvm::_0X0(height * 0.5f + getCapsuleRadius() * 0.5f))};
+  mRootNode = mBodyNode->createChildSceneNode(-bodyVec);
+
+  attachCamera(gsl::make_not_null(mCamera), gsl::make_not_null(mRootNode));
   createAndAttachRigidBody(gsl::make_not_null(mBodyNode));
 }
 
@@ -30,6 +35,7 @@ CharacterControllerImpl::~CharacterControllerImpl() {
     if (mPitchNode) mScnMgr->destroySceneNode(mPitchNode);
     if (mCameraNode) mScnMgr->destroySceneNode(mCameraNode);
     if (mBodyNode) mScnMgr->destroySceneNode(mBodyNode);
+    if (mRootNode) mScnMgr->destroySceneNode(mRootNode);
     if (mCamera) mScnMgr->destroyCamera(mCamera);
   }
 }
@@ -40,6 +46,7 @@ CharacterControllerImpl::CharacterControllerImpl(CharacterControllerImpl &&other
   mCameraNode = std::exchange(other.mCameraNode, nullptr);
   mPitchNode = std::exchange(other.mPitchNode, nullptr);
   mCamera = std::exchange(other.mCamera, nullptr);
+  mRootNode = std::exchange(other.mRootNode, nullptr);
   mBodyNode = std::exchange(other.mBodyNode, nullptr);
   mMotionState = std::exchange(other.mMotionState, nullptr);
   mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
@@ -74,6 +81,7 @@ CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
     mCameraNode = std::exchange(other.mCameraNode, nullptr);
     mPitchNode = std::exchange(other.mPitchNode, nullptr);
     mCamera = std::exchange(other.mCamera, nullptr);
+    mRootNode = std::exchange(other.mRootNode, nullptr);
     mBodyNode = std::exchange(other.mBodyNode, nullptr);
     mMotionState = std::exchange(other.mMotionState, nullptr);
     mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
@@ -102,12 +110,14 @@ CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
 
 void CharacterControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
                                            gsl::not_null<Ogre::SceneNode *> node) {
-  const auto h{(0.95f - 0.5f) * height - getCapsuleHeight() / 2.0f};
+  const auto h{0.95f * height};
   const auto camVec{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
   mCameraNode = node->createChildSceneNode(camVec);
   mPitchNode = mCameraNode->createChildSceneNode();
   mPitchNode->attachObject(camera);
-  camera->setPosition(Ogre::Vector3{0.0f, 1.0f, 3.0f});
+  // TODO: This does the right thing but is deprecated, use a base node to
+  //       anchor the camera node to instead.
+  camera->setPosition(Ogre::Vector3{0.0f, 0.2f, 0.2f});
 }
 
 void CharacterControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node) {
@@ -146,13 +156,13 @@ CharacterControllerImpl::getCameraNode() noexcept {
 }
 
 gsl::not_null<const Ogre::SceneNode *>
-CharacterControllerImpl::getBodyNode() const noexcept {
-  return gsl::make_not_null(mBodyNode);
+CharacterControllerImpl::getRootNode() const noexcept {
+  return gsl::make_not_null(mRootNode);
 }
 
 gsl::not_null<Ogre::SceneNode *>
-CharacterControllerImpl::getBodyNode() noexcept {
-  return gsl::make_not_null(mBodyNode);
+CharacterControllerImpl::getRootNode() noexcept {
+  return gsl::make_not_null(mRootNode);
 }
 
 float CharacterControllerImpl::getMoveSpeed() const noexcept {

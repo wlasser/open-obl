@@ -340,7 +340,7 @@ void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
 
     const auto &data{ref.positionRotation.data};
     charPtr->getController().moveTo(oo::fromBSCoordinates(
-        Ogre::Vector3{data.x, data.y, data.z + 256.0f}));
+        Ogre::Vector3{data.x, data.y, data.z}));
     charPtr->getController().setOrientation(oo::fromBSTaitBryan(
         Ogre::Radian(data.aX),
         Ogre::Radian(data.aY),
