@@ -5,8 +5,8 @@ in vec3 FragPos;
 in vec3 ViewPos;
 
 layout (location = 0) out vec4 gPosition;
-layout (location = 1) out vec3 gNormal;
-layout (location = 2) out vec4 gAlbedoSpec;
+layout (location = 1) out vec4 gNormalSpec;
+layout (location = 2) out vec4 gAlbedo;
 
 uniform sampler2D globalNormal;
 uniform sampler2D vertexColor;
@@ -81,24 +81,33 @@ void main() {
     vec3 diffuseColor = dc_4 * vertexCol;
 
     // Blend normal layers
-    vec3 n_0 = texture(normal0, uv).xyz;
-    vec3 n_1 = mix(f_0 * n_0, texture(normal1, uv).xyz, f.x) / f_1;
-    vec3 n_2 = mix(f_1 * n_1, texture(normal2, uv).xyz, f.y) / f_2;
-    vec3 n_3 = mix(f_2 * n_2, texture(normal3, uv).xyz, f.z) / f_3;
-    vec3 n_4 = mix(f_3 * n_3, texture(normal4, uv).xyz, f.w) / f_4;
+    vec4 n[5];
+    n[0] = texture(normal0, uv);
+    n[1] = texture(normal1, uv);
+    n[2] = texture(normal2, uv);
+    n[3] = texture(normal3, uv);
+    n[4] = texture(normal4, uv);
+    for (int i = 0; i < 5; ++i) {
+        n[i].w = (floor(n[i].w * 255.0) == 255 ? 0.0f : n[i].w);
+    }
 
-    vec3 n = n_4;
+    vec4 n_0 = n[0];
+    vec4 n_1 = mix(f_0 * n_0, n[1], f.x) / f_1;
+    vec4 n_2 = mix(f_1 * n_1, n[2], f.y) / f_2;
+    vec4 n_3 = mix(f_2 * n_2, n[3], f.z) / f_3;
+    vec4 n_4 = mix(f_3 * n_3, n[4], f.w) / f_4;
 
     // Convert from dx to gl by flipping the green channel
-    n.y = 1.0f - n.y;
+    n_4.y = 1.0f - n_4.y;
     // Transform normal from [0, 1] -> [-1, 1]
-    n = normalize(n * 2.0f - 1.0f);
+    n_4.xyz = normalize(n_4.xyz * 2.0f - 1.0f);
     // Transform normal into world space
-    gNormal = normalize(TBN * n);
+    gNormalSpec.xyz = normalize(TBN * n_4.xyz);
+    gNormalSpec.w = n_4.w;
 
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;
 
     // TODO: Use LTEX specular. All of them seem to use 30.0f though.
-    gAlbedoSpec = vec4(diffuseColor, 30.0f);
+    gAlbedo = vec4(diffuseColor, 30.0f);
 }

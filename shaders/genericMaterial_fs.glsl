@@ -14,8 +14,8 @@ uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 
 layout (location = 0) out vec4 gPosition;
-layout (location = 1) out vec3 gNormal;
-layout (location = 2) out vec4 gAlbedoSpec;
+layout (location = 1) out vec4 gNormalSpec;
+layout (location = 2) out vec4 gAlbedo;
 
 void main() {
     float gamma = 2.2f;
@@ -23,16 +23,18 @@ void main() {
     // Convert texture to linear space
     vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).rgb, vec3(gamma)) * VertexCol;
 
-    vec3 normal = texture(normalMap, TexCoord).xyz;
+    vec4 normalSpec = texture(normalMap, TexCoord);
+    vec3 normal = normalSpec.xyz;
     // Convert from dx to gl by flipping the green channel
     normal.y = 1.0f - normal.y;
     // Transform normal from [0, 1] -> [-1, 1]
     normal = normalize(normal * 2.0f - 1.0f);
     // Transform normal into world space
-    gNormal = TBN * normal;
+    gNormalSpec.xyz = TBN * normal;
+    gNormalSpec.w = floor(normalSpec.w * 255.0f) == 255 ? 0.0f : normalSpec.w;
 
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;
 
-    gAlbedoSpec = vec4(diffuseColor * matDiffuse, matShininess);
+    gAlbedo = vec4(diffuseColor * matDiffuse, matShininess);
 }

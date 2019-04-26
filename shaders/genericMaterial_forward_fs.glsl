@@ -28,10 +28,13 @@ void main() {
     float gamma = 2.2f;
 
     // Undo gamma correction of texture so it is correct later
-    vec3 diffuseColor = pow(texture(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
+    vec3 albedo = pow(texture(diffuseMap, TexCoord).xyz, vec3(gamma)) * VertexCol;
     float alpha = texture(diffuseMap, TexCoord).a;
 
-    vec3 normal = texture(normalMap, TexCoord).xyz;
+    vec4 normalSpec = texture(normalMap, TexCoord);
+    vec3 normal = normalSpec.xyz;
+    float specular = floor(normalSpec.w * 255.0) == 255 ? 0.0f : normalSpec.w;
+
     // Convert from dx to gl by flipping the green channel
     normal.y = 1.0f - normal.y;
     // Transform normal from [0, 1] -> [-1, 1]
@@ -42,23 +45,23 @@ void main() {
     vec3 lighting = vec3(0.0f, 0.0f, 0.0f);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    vec3 ambient = diffuseColor * ambientLightColor.rgb;
+    vec3 ambientCol = albedo * ambientLightColor.rgb;
 
     for (int i = 0; i < MAX_LIGHTS; ++i) {
         if (lightPositionArray[i].w < 0.5f) {
             // Directional light
             vec3 lightDir = normalize(lightPositionArray[i].xyz);
             vec3 reflectDir = reflect(-lightDir, normal);
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+            vec3 lightCol = pow(lightDiffuseArray[i].rgb, vec3(gamma));
 
             float diff = max(dot(normal, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor * matDiffuse;
+            vec3 diffCol = diff * albedo * matDiffuse;
 
             vec3 halfwayDir = normalize(lightDir + viewDir);
             float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
-            vec3 specular = 0.25f * spec * matSpecular;
+            vec3 specCol = spec * specular * matSpecular;
 
-            lighting += (specular + diffuse) * lightDiffuse * VertexCol;
+            lighting += (specCol + diffCol) * lightCol * VertexCol;
         } else {
             // Point light
             vec3 lightDir = normalize(lightPositionArray[i].xyz - FragPos);
@@ -68,20 +71,20 @@ void main() {
             + lightAttenuationArray[i].z * lightDistance
             + lightAttenuationArray[i].w * lightDistance * lightDistance);
 
-            vec3 lightDiffuse = pow(lightDiffuseArray[i].rgb, vec3(gamma));
+            vec3 lightCol = pow(lightDiffuseArray[i].rgb, vec3(gamma));
 
             float diff = max(dot(normal, lightDir), 0.0f);
-            vec3 diffuse = diff * diffuseColor * matDiffuse;
+            vec3 diffCol = diff * albedo * matDiffuse;
 
             vec3 halfwayDir = normalize(lightDir + viewDir);
             float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * matShininess);
-            vec3 specular = 0.25f * spec * matSpecular;
+            vec3 specCol = spec * specular * matSpecular;
 
-            lighting += (specular + diffuse) * lightDiffuse * VertexCol * attenuation;
+            lighting += (specCol + diffCol) * lightCol * VertexCol * attenuation;
         }
     }
 
-    vec3 fragColor = ambient + lighting;
+    vec3 fragColor = ambientCol + lighting;
 
     float distance = length(FragPos - viewPos);
     float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);

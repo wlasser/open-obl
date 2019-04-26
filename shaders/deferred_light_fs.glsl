@@ -36,7 +36,9 @@ void main() {
     vec2 uv = homScreenPos.xy * 0.5f + 0.5f;
     #endif
 
-    vec3 normal = texture(Tex1, uv).xyz;
+    vec4 normalSpec = texture(Tex1, uv);
+    vec3 normal = normalSpec.xyz;
+    float specular = normalSpec.w;
 
     // Don't try to light things without normals, like the sky.
     if (dot(normal, normal) < 0.4f) {
@@ -45,7 +47,8 @@ void main() {
     }
 
     vec3 worldPos = texture(Tex0, uv).xyz;
-    vec4 albedoSpec = texture(Tex2, uv).rgba;
+    vec4 albedo = texture(Tex2, uv).rgba;
+    float shininess = albedo.a;
 
     vec3 viewDir = normalize(ViewPos - worldPos);
 
@@ -65,11 +68,11 @@ void main() {
     vec3 lightCol = pow(lightDiffuseCol.rgb, vec3(gamma));
 
     float diff = max(dot(normal, lightDir), 0.0f);
-    vec3 diffCol = diff * lightCol * albedoSpec.rgb;
+    vec3 diffCol = diff * lightCol * albedo.rgb;
 
     vec3 halfwayDir = normalize(lightDir + viewDir);
-    float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * albedoSpec.a);
-    vec3 specCol = 0.25f * spec * lightCol;
+    float spec = pow(max(dot(normal, halfwayDir), 0.0f), 8 * shininess);
+    vec3 specCol = specular * spec * lightCol;
 
     vec3 finalCol = (specCol + diffCol) * atten;
     FragColor = vec4(finalCol, 0.0f);

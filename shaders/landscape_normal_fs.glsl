@@ -18,8 +18,8 @@ uniform sampler2D normal7;
 uniform sampler2D normal8;
 
 layout (location = 0) out vec4 gPosition;
-layout (location = 1) out vec3 gNormal;
-//layout (location = 2) out vec4 gAlbedoSpec;
+layout (location = 1) out vec4 gNormalSpec;
+//layout (location = 2) out vec4 gAlbedo;
 
 // See landscape_fs and landscape_bake_diffuse_fs for explanatory comments.
 
@@ -33,16 +33,19 @@ void main() {
 
     vec2 uv = texCoord * 17.0f;
 
-    vec3 n[9];
-    n[0] = texture(normal0, uv).xyz;
-    n[1] = texture(normal1, uv).xyz;
-    n[2] = texture(normal2, uv).xyz;
-    n[3] = texture(normal3, uv).xyz;
-    n[4] = texture(normal4, uv).xyz;
-    n[5] = texture(normal5, uv).xyz;
-    n[6] = texture(normal6, uv).xyz;
-    n[7] = texture(normal7, uv).xyz;
-    n[8] = texture(normal8, uv).xyz;
+    vec4 n[9];
+    n[0] = texture(normal0, uv);
+    n[1] = texture(normal1, uv);
+    n[2] = texture(normal2, uv);
+    n[3] = texture(normal3, uv);
+    n[4] = texture(normal4, uv);
+    n[5] = texture(normal5, uv);
+    n[6] = texture(normal6, uv);
+    n[7] = texture(normal7, uv);
+    n[8] = texture(normal8, uv);
+    for (int i = 0; i < 9; ++i) {
+        n[i].w = (floor(n[i].w * 255.0f) == 255 ? 0.0f : n[i].w);
+    }
 
     float f[9];
     f[0] = 1.0f;
@@ -57,7 +60,8 @@ void main() {
         n[i + 1] = mix(f[i] * n[i], n[i + 1], fOld) / f[i + 1];
     }
 
-    gNormal.xyz = normalize(TBN * n[8]);
+    gNormalSpec.xyz = normalize(TBN * n[8].xyz);
+    gNormalSpec.w = n[8].w;
 
     gPosition.xyz = FragPos;
     gPosition.w = gl_FragCoord.z;

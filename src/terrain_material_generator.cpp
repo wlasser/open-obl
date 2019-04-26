@@ -304,11 +304,11 @@ TerrainMaterialGenerator::TerrainMaterialGenerator() {
 
   auto &elems{mDecl.elements};
   elems.emplace_back(0, Ogre::TerrainLayerSamplerSemantic::TLSS_ALBEDO, 0, 3);
-  elems.emplace_back(1, Ogre::TerrainLayerSamplerSemantic::TLSS_NORMAL, 0, 3);
+  elems.emplace_back(1, Ogre::TerrainLayerSamplerSemantic::TLSS_NORMAL, 0, 4);
 
   auto &samplers{mDecl.samplers};
   samplers.emplace_back("diffuse", Ogre::PixelFormat::PF_BYTE_RGB);
-  samplers.emplace_back("normal", Ogre::PixelFormat::PF_BYTE_RGB);
+  samplers.emplace_back("normal", Ogre::PixelFormat::PF_BYTE_RGBA);
 }
 
 const Ogre::TerrainLayerDeclaration &

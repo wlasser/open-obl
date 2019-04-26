@@ -18,8 +18,8 @@ uniform sampler2D diffuse7;
 uniform sampler2D diffuse8;
 
 //layout (location = 0) out vec4 gPosition;
-//layout (location = 1) out vec3 gNormal;
-layout (location = 2) out vec4 gAlbedoSpec;
+//layout (location = 1) out vec4 gNormalSpec;
+layout (location = 2) out vec4 gAlbedo;
 
 // See landscape_fs and landscape_bake_diffuse_fs for explanatory comments.
 
@@ -57,5 +57,5 @@ void main() {
     dc[8] *= texture(vertexColor, texCoord).rgb;
 
     // TODO: Use LTEX specular. All of them seem to use 30.0f though.
-    gAlbedoSpec = vec4(dc[8], 30.0f);
+    gAlbedo = vec4(dc[8], 30.0f);
 }
