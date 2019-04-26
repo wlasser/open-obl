@@ -3,7 +3,7 @@
 
 #include "fs/path.hpp"
 #include "mesh/entity.hpp"
-#include "record/records.hpp"
+#include "record/subrecords.hpp"
 #include <OgreMaterial.h>
 
 namespace oo {
