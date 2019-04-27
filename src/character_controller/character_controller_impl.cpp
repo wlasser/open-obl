@@ -188,17 +188,34 @@ void CharacterControllerImpl::reactivatePhysics() noexcept {
 void CharacterControllerImpl::updateCameraOrientation() noexcept {
   mCameraNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
                                                Ogre::Vector3::UNIT_X));
+  mRootNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
+                                             Ogre::Vector3::UNIT_X));
   mPitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
                                               Ogre::Vector3::UNIT_X));
+
   mPitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
   mCameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
+  mRootNode->yaw(rootYaw, Ogre::SceneNode::TS_LOCAL);
 }
 
 void CharacterControllerImpl::move() noexcept {
-  const auto speed{getMoveSpeed()};
-  // This is a rotation of the standard basis, so is still in SO(3)
-  const auto axes{mCameraNode->getLocalAxes()};
   if (auto len = localVelocity.length(); len > 0.01f) {
+    // Camera and root yaw may not be aligned currently, but they should be when
+    // the player is moving. Need to smooth camera yaw to zero while keeping the
+    // absolute camera orientation and movement direction the same.
+    // twistMultiplier should be in the range [0, 1), with higher values giving
+    // slower body rotation times.
+    // TODO: Make body twist time framerate independent.
+    constexpr float twistMultiplier{0.75f};
+    rootYaw += yaw * (1.0f - twistMultiplier);
+    yaw *= twistMultiplier;
+    updateCameraOrientation();
+
+    const auto speed{getMoveSpeed()};
+    const auto rootAxes{mRootNode->getLocalAxes()};
+    const auto cameraAxes{mCameraNode->getLocalAxes()};
+    const auto axes{cameraAxes * rootAxes};
+
     const auto v{mRigidBody->getLinearVelocity()};
     auto newV{qvm::convert_to<btVector3>(axes * localVelocity / len * speed)};
     newV.setY(v.y());
@@ -212,7 +229,8 @@ void CharacterControllerImpl::move() noexcept {
 void CharacterControllerImpl::setOrientation(Ogre::Radian pPitch,
                                              Ogre::Radian pYaw) noexcept {
   pitch = pPitch;
-  yaw = pYaw;
+  rootYaw = pYaw;
+  yaw = Ogre::Radian{0.0f};
   updateCameraOrientation();
 }
 

@@ -44,7 +44,13 @@ struct LookAbility {
   }
 
   void handleEvent(CharacterControllerImpl &impl, const event::Yaw &event) {
-    impl.yaw += -Ogre::Radian(event.delta);
+    const Ogre::Radian delta{-event.delta};
+    // Clamp camera yaw between [-b, b] and use the excess to move the body.
+    const Ogre::Radian bound{Ogre::Math::HALF_PI * 0.5f};
+    const Ogre::Radian clampedYaw
+        {Ogre::Math::Clamp(delta + impl.yaw, -bound, bound)};
+    impl.rootYaw += delta + impl.yaw - clampedYaw;
+    impl.yaw = clampedYaw;
   }
 };
 

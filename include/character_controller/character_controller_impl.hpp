@@ -67,6 +67,7 @@ class CharacterControllerImpl {
   float mass{80.0f};
 
   Ogre::Radian pitch{0.0f};
+  Ogre::Radian rootYaw{0.0f};
   Ogre::Radian yaw{0.0f};
   Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};
 
