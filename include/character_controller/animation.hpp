@@ -41,7 +41,7 @@ Ogre::AnimationState *pickIdle(oo::Character *character);
 Ogre::AnimationState *
 playGroup(oo::Character *character, const std::string &animGroup);
 
-/// Get the bone instance of the skeleton used by the `record::NPC_`.
+/// Get the base instance of the skeleton used by the `record::NPC_`.
 Ogre::SkeletonPtr getSkeleton(const record::NPC_ &rec);
 
 } // namespace oo

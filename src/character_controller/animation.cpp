@@ -88,7 +88,6 @@ playGroup(oo::Character *character, const std::string &animGroup) {
   return animState;
 }
 
-/// Get the base instance of the skeleton used by the `record::NPC_`.
 Ogre::SkeletonPtr getSkeleton(const record::NPC_ &rec) {
   auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
   if (!rec.skeletonFilename) return nullptr;
