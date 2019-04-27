@@ -288,9 +288,9 @@ void GameMode::advanceGameClock(float delta) {
 
   if (mInInterior) return;
 
-  oo::RenderJobManager::runJob([&]() {
-    mExteriorMgr.getWorld().updateAtmosphere(
-        chrono::duration_cast<chrono::minutes>(now - today));
+  oo::RenderJobManager::runJob([this, today, now]() {
+    auto duration{chrono::duration_cast<chrono::minutes>(now - today)};
+    mExteriorMgr.getWorld().updateAtmosphere(duration);
   });
 }
 
