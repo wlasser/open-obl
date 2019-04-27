@@ -1,3 +1,4 @@
+#include "character_controller/character.hpp"
 #include "character_controller/animation.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
@@ -56,14 +57,15 @@ createOrRetrieveAnimation(Ogre::Skeleton *skeleton,
   return {oo::createAnimation(skeleton, animPath, oo::RESOURCE_GROUP), true};
 }
 
-Ogre::AnimationState *pickIdle(oo::Entity *npc) {
+Ogre::AnimationState *pickIdle(oo::Character *character) {
+  const auto upperBody{character->getBodyPart(oo::BodyParts::UpperBody)};
   const auto filename{oo::getAnimFromGroup("Idle")};
   const auto path{oo::getAnimPath(filename, false)};
-  auto[anim, created]{oo::createOrRetrieveAnimation(npc->getSkeleton(),
+  auto[anim, created]{oo::createOrRetrieveAnimation(character->getSkeleton(),
                                                     path.c_str())};
-  if (created) npc->refreshAvailableAnimationState();
+  if (created) upperBody->refreshAvailableAnimationState();
 
-  auto *animState{npc->getAnimationState(anim->getName())};
+  auto *animState{upperBody->getAnimationState(anim->getName())};
   animState->setEnabled(true);
   animState->setTimePosition(0.0f);
 

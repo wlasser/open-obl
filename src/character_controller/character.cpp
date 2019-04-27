@@ -3,6 +3,7 @@
 #include "character_controller/character.hpp"
 #include "resolvers/helpers.hpp"
 #include "settings.hpp"
+#include <OgreSkeletonInstance.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
@@ -45,11 +46,9 @@ Character::Character(const record::REFR_NPC_ &refRec,
   auto *parent{mController.getRootNode()->createChildSceneNode()};
 
   // Only one entity should have a skeleton constructed explicitly, the rest
-  // should share. It doesn't matter which is entity is created first, we just
-  // need one.
+  // should share. It doesn't matter which is entity is created first, since
+  // they all share with each other, we just need one.
   oo::Entity *firstAdded{};
-  // There needs to be a dedicated entity to attach the rigid bodies to though.
-  oo::Entity *upperBody{};
 
   const auto &bodyData{female ? raceRec->femaleBodyData
                               : raceRec->maleBodyData};
@@ -69,23 +68,26 @@ Character::Character(const record::REFR_NPC_ &refRec,
       return nullptr;
     }();
     if (!entity) continue;
+    setBodyPart(type, entity);
 
     oo::setSkinTextures(entity, oo::BaseId{raceRec->mFormId}, *textureRec);
 
     if (!firstAdded) {
       firstAdded = entity;
       entity->setSkeleton(baseSkel);
-      oo::pickIdle(entity);
     } else {
       entity->shareSkeleton(firstAdded);
     }
-    if (type == BodyParts::UpperBody) upperBody = entity;
   }
 
-  if (upperBody) {
-    oo::attachRagdoll(baseSkel->getName(), oo::RESOURCE_GROUP, scnMgr, world,
-                      gsl::make_not_null(upperBody));
-  }
+  oo::attachRagdoll(getSkeleton()->getName(), oo::RESOURCE_GROUP, scnMgr, world,
+                    gsl::make_not_null(mBodyParts[0]));
+  oo::pickIdle(this);
+}
+
+void Character::setBodyPart(oo::BodyParts part, oo::Entity *entity) noexcept {
+  auto index{static_cast<std::underlying_type_t<oo::BodyParts>>(part)};
+  mBodyParts[index] = entity;
 }
 
 oo::CharacterController &Character::getController() noexcept {
@@ -94,6 +96,15 @@ oo::CharacterController &Character::getController() noexcept {
 
 const oo::CharacterController &Character::getController() const noexcept {
   return mController;
+}
+
+Ogre::SkeletonInstance *Character::getSkeleton() noexcept {
+  return mBodyParts[0] ? mBodyParts[0]->getSkeleton() : nullptr;
+}
+
+oo::Entity *Character::getBodyPart(oo::BodyParts part) noexcept {
+  auto index{static_cast<std::underlying_type_t<oo::BodyParts>>(part)};
+  return mBodyParts[index];
 }
 
 } // namespace oo

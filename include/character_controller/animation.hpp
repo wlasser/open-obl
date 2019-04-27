@@ -10,6 +10,8 @@
 
 namespace oo {
 
+class Character;
+
 /// Return a path to the animation file for the given animation group.
 /// \todo Animation groups are supposed to contain many different animations for
 ///       different situations. There are 'Forward' animations for when the
@@ -29,8 +31,8 @@ std::pair<Ogre::Animation *, bool>
 createOrRetrieveAnimation(Ogre::Skeleton *skeleton,
                           const std::string &animPath);
 
-/// Pick an idle animation for the `npc` and play it.
-Ogre::AnimationState *pickIdle(oo::Entity *character);
+/// Pick an idle animation for the `character` and play it.
+Ogre::AnimationState *pickIdle(oo::Character *character);
 
 /// Get the bone instance of the skeleton used by the `record::NPC_`.
 Ogre::SkeletonPtr getSkeleton(const record::NPC_ &rec);
