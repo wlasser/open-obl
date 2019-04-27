@@ -34,6 +34,13 @@ createOrRetrieveAnimation(Ogre::Skeleton *skeleton,
 /// Pick an idle animation for the `character` and play it.
 Ogre::AnimationState *pickIdle(oo::Character *character);
 
+/// Pick the appropriate animation from the given AnimGroup and play it.
+/// \todo This should have an additional flag parameter controlling how any
+///       existing animation is replaced. See
+///       [PlayGroup](https://cs.elderscrolls.com/index.php?title=PlayGroup).
+Ogre::AnimationState *
+playGroup(oo::Character *character, const std::string &animGroup);
+
 /// Get the bone instance of the skeleton used by the `record::NPC_`.
 Ogre::SkeletonPtr getSkeleton(const record::NPC_ &rec);
 

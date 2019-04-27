@@ -72,6 +72,22 @@ Ogre::AnimationState *pickIdle(oo::Character *character) {
   return animState;
 }
 
+Ogre::AnimationState *
+playGroup(oo::Character *character, const std::string &animGroup) {
+  const auto upperBody{character->getBodyPart(oo::BodyParts::UpperBody)};
+  const auto filename{oo::getAnimFromGroup(animGroup)};
+  const auto path{oo::getAnimPath(filename, false)};
+  auto[anim, created]{oo::createOrRetrieveAnimation(character->getSkeleton(),
+                                                    path.c_str())};
+  if (created) upperBody->refreshAvailableAnimationState();
+
+  auto *animState{upperBody->getAnimationState(anim->getName())};
+  animState->setEnabled(true);
+  animState->setTimePosition(0.0f);
+
+  return animState;
+}
+
 /// Get the base instance of the skeleton used by the `record::NPC_`.
 Ogre::SkeletonPtr getSkeleton(const record::NPC_ &rec) {
   auto &skelMgr{Ogre::SkeletonManager::getSingleton()};
