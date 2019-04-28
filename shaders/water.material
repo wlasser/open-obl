@@ -16,6 +16,8 @@ material __WaterMaterial {
 
             fragment_program_ref water_fs_glsl {
                 param_named_auto ambientLightColor AMBIENT_LIGHT_COLOUR
+                param_named_auto sunlightColor LIGHT_DIFFUSE_COLOUR 0
+                param_named_auto sunlightDirection LIGHT_POSITION 0
                 param_named diffuse int 0
                 param_named Tex0 int 1
                 param_named Tex1 int 2
