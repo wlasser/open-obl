@@ -169,12 +169,12 @@ void NifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
+  const std::string name{node.name.str()};
   // If we are not in a skeleton then skeletal nodes do not need to be added
   // as scene nodes, they only need to present in the nif file when processing
   // the mesh. This is purely an optimization, and there is no way for sure to
   // know if a node is skeletal or not.
   if (!mState->mIsSkeleton) {
-    const std::string name{node.name.str()};
     //C++20: if (name.starts_with("Bip01")
     if (name.substr(0, 5u) == "Bip01") return;
   }
@@ -183,7 +183,12 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
   const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
   if (mState->mIsSkeleton) {
   }
-  mState->mRoot = gsl::make_not_null(mState->mRoot->createChildSceneNode());
+  static uint64_t nodeIndex{0u};
+  const std::string fullName{mState->mRoot->getName()
+                                 + '/' + std::to_string(nodeIndex++)
+                                 + '/' + name};
+  mState->mRoot =
+      gsl::make_not_null(mState->mRoot->createChildSceneNode(fullName));
   mState->mRoot->setPosition(tra);
   // TODO: I don't know why this needs to be inverted, I can only imagine
   //       somewhere there is a bug, but I cannot find it. If you can work it

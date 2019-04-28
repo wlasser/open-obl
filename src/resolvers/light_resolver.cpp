@@ -4,6 +4,7 @@
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
+#include <absl/strings/match.h>
 #include <OgreColourValue.h>
 #include <OgreLight.h>
 #include <OgreSceneNode.h>
@@ -22,6 +23,21 @@ citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId) {
                                  0);
   return refRec;
 }
+
+namespace {
+
+template<class F> Ogre::SceneNode *findChild(Ogre::SceneNode *parent, F &&f) {
+  if (f(parent)) return parent;
+  for (Ogre::Node *childNode : parent->getChildren()) {
+    auto *childSceneNode{static_cast<Ogre::SceneNode *>(childNode)};
+    if (auto *foundNode{oo::findChild(childSceneNode,
+                                      std::forward<F>(f))})
+      return foundNode;
+  }
+  return nullptr;
+}
+
+} // namespace oo
 
 template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
 reifyRecord(const record::REFR_LIGH &refRec,
@@ -75,16 +91,23 @@ reifyRecord(const record::REFR_LIGH &refRec,
     light->setType(Ogre::Light::LightTypes::LT_POINT);
   }
 
-  auto *node{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world,
-                           rootNode)};
-  if (!node) {
-    if (rootNode) node = rootNode->createChildSceneNode();
-    else node = scnMgr->getRootSceneNode()->createChildSceneNode();
+  auto *baseNode{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId},
+                               scnMgr, world, rootNode)};
+  if (!baseNode) {
+    baseNode = rootNode ? rootNode->createChildSceneNode()
+                        : scnMgr->getRootSceneNode()->createChildSceneNode();
   }
 
-  node->attachObject(light);
+  auto *lightNode = [&]() {
+    auto *lightNode{oo::findChild(baseNode, [](Ogre::SceneNode *child) {
+      return absl::EndsWithIgnoreCase(child->getName(), "AttachLight");
+    })};
+    return lightNode ? lightNode : baseNode;
+  }();
 
-  return node;
+  lightNode->attachObject(light);
+
+  return baseNode;
 }
 
 } // namespace oo
