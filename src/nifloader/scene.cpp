@@ -9,6 +9,7 @@
 #include "nifloader/mesh_loader_state.hpp"
 #include "nifloader/scene.hpp"
 #include "ogrebullet/collision_shape_manager.hpp"
+#include <absl/strings/match.h>
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreMaterialManager.h>
 #include <OgreSceneManager.h>
@@ -31,15 +32,14 @@ struct NifVisitorState {
 
   gsl::not_null<Ogre::SceneManager *> mScnMgr;
   gsl::not_null<btDiscreteDynamicsWorld *> mWorld;
-  gsl::not_null<Ogre::SceneNode *> mRoot;
-  gsl::not_null<Ogre::SceneNode *> mParent;
+  gsl::not_null<Ogre::SceneNode *> mCurrentNode;
 
   explicit NifVisitorState(std::string name, std::string group,
                            gsl::not_null<Ogre::SceneManager *> scnMgr,
                            gsl::not_null<btDiscreteDynamicsWorld *> world,
-                           gsl::not_null<Ogre::SceneNode *> root)
+                           gsl::not_null<Ogre::SceneNode *> nifRoot)
       : mName(std::move(name)), mGroup(std::move(group)),
-        mScnMgr(scnMgr), mWorld(world), mRoot(root), mParent(root) {}
+        mScnMgr(scnMgr), mWorld(world), mCurrentNode(nifRoot) {}
 };
 
 class NifVisitor {
@@ -134,6 +134,7 @@ void NifVisitor::start_vertex(vertex_descriptor, const Graph &g) {
     if ((flags & Flags::bHavok) != Flags::bNone) mState->mHasHavok = true;
     if ((flags & Flags::bRagdoll) != Flags::bNone) mState->mIsSkeleton = true;
   }
+  // TODO: Check that the first vertex is an NiNode called 'Scene Root'.
 }
 
 void RagdollVisitor::start_vertex(vertex_descriptor, const Graph &g) {
@@ -169,32 +170,32 @@ void NifVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
-  const std::string name{node.name.str()};
+  const std::string blockName{node.name.str()};
+
   // If we are not in a skeleton then skeletal nodes do not need to be added
-  // as scene nodes, they only need to present in the nif file when processing
-  // the mesh. This is purely an optimization, and there is no way for sure to
-  // know if a node is skeletal or not.
+  // as scene nodes, they only need to be present in the nif file when
+  // processing the mesh. This is purely an optimization, and there is no way
+  // for sure to know if a node is skeletal or not.
   if (!mState->mIsSkeleton) {
     //C++20: if (name.starts_with("Bip01")
-    if (name.substr(0, 5u) == "Bip01") return;
+    if (absl::StartsWith(blockName, "Bip01")) return;
+  }
+
+  if (blockName != "Scene Root") {
+    const std::string nodeName{mState->mCurrentNode->getName()
+                                   + '/' + blockName};
+    auto *newNode{mState->mCurrentNode->createChildSceneNode(nodeName)};
+    mState->mCurrentNode = gsl::make_not_null(newNode);
   }
 
   const Ogre::Vector3 tra{oo::fromBSCoordinates(node.translation)};
   const Ogre::Quaternion rot{oo::fromBSCoordinates(node.rotation)};
-  if (mState->mIsSkeleton) {
-  }
-  static uint64_t nodeIndex{0u};
-  const std::string fullName{mState->mRoot->getName()
-                                 + '/' + std::to_string(nodeIndex++)
-                                 + '/' + name};
-  mState->mRoot =
-      gsl::make_not_null(mState->mRoot->createChildSceneNode(fullName));
-  mState->mRoot->setPosition(tra);
+  mState->mCurrentNode->setPosition(tra);
   // TODO: I don't know why this needs to be inverted, I can only imagine
   //       somewhere there is a bug, but I cannot find it. If you can work it
   //       out, dear reader, please tell me...
-  mState->mRoot->rotate(rot.Inverse(), Ogre::SceneNode::TS_WORLD);
-  mState->mRoot->setInitialState();
+  mState->mCurrentNode->rotate(rot.Inverse(), Ogre::SceneNode::TS_WORLD);
+  mState->mCurrentNode->setInitialState();
 }
 
 void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
@@ -204,11 +205,11 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
 
   // We can't create a reloadable resource because the loader requires state.
   auto &colObjMgr{Ogre::CollisionShapeManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(v) + "CollisionShape"};
+  const std::string name{mState->mName + '/' + std::to_string(v)
+                             + "/CollisionShape"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
-  Ogre::CollisionShapePtr collisionShapePtr
-      {std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
+  auto collisionShapePtr{std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
   if (created) oo::createCollisionObject(collisionShapePtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
@@ -230,7 +231,7 @@ void NifVisitor::discover_vertex(const nif::bhk::CollisionObject &,
 
   if (!rigidBody) return;
 
-  mState->mRoot->attachObject(rigidBody);
+  mState->mCurrentNode->attachObject(rigidBody);
   // TODO: Replace with rigidBody->attach(world)
   bullet::addRigidBody(mState->mWorld, gsl::make_not_null(rigidBody));
 }
@@ -245,22 +246,24 @@ void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
   if (mState->mVisitedGeometry.count(u) > 0) return;
 
   auto &meshMgr{oo::MeshManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(u) + "Mesh"};
+  const std::string name{mState->mName + '/' + std::to_string(u) + "/Mesh"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{meshMgr.createOrRetrieve(name, group, true, nullptr)};
-  oo::MeshPtr meshPtr{std::static_pointer_cast<oo::Mesh>(ptr)};
+  auto meshPtr{std::static_pointer_cast<oo::Mesh>(ptr)};
   if (created) oo::createMesh(meshPtr.get(), u, g);
   // Record that this node and its siblings have been visited.
   mState->mVisitedGeometry.emplace(u);
 
-  Ogre::NameValuePairList params{{"mesh", meshPtr->getName()},
-                                 {"resourceGroup", meshPtr->getGroup()}};
+  Ogre::NameValuePairList params{
+      {"mesh", meshPtr->getName()},
+      {"resourceGroup", meshPtr->getGroup()}
+  };
   auto *entity{dynamic_cast<oo::Entity *>(
                    mState->mScnMgr->createMovableObject("oo::Entity",
                                                         &params))};
   if (!entity) return;
 
-  mState->mRoot->attachObject(entity);
+  mState->mCurrentNode->attachObject(entity);
 }
 
 void RagdollVisitor::discover_vertex(vertex_descriptor v, const Graph &g) {
@@ -280,11 +283,11 @@ void RagdollVisitor::discover_vertex(const nif::bhk::BlendCollisionObject &node,
 
   // We can't create a reloadable resource because the loader requires state.
   auto &colObjMgr{Ogre::CollisionShapeManager::getSingleton()};
-  const std::string name{mState->mName + std::to_string(v) + "CollisionShape"};
+  const std::string name{mState->mName + '/' + std::to_string(v)
+                             + "/CollisionShape"};
   const std::string &group{mState->mGroup};
   auto[ptr, created]{colObjMgr.createOrRetrieve(name, group, true, nullptr)};
-  Ogre::CollisionShapePtr collisionShapePtr
-      {std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
+  auto collisionShapePtr{std::static_pointer_cast<Ogre::CollisionShape>(ptr)};
   if (created) oo::createCollisionObject(collisionShapePtr.get(), u, g);
 
   Ogre::RigidBody *rigidBody = [&]() -> Ogre::RigidBody * {
@@ -325,16 +328,18 @@ void NifVisitor::finish_vertex(vertex_descriptor v, const Graph &g) {
 }
 
 void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &) {
+  const std::string name{node.name.str()};
+
   if (!mState->mIsSkeleton) {
-    const std::string name{node.name.str()};
+    // Bones were skipped for skeletons.
+    // Don't go up a level for a node that wasn't added.
     //C++20: if (name.starts_with("Bip01")
-    if (name.substr(0, 5u) == "Bip01") return;
+    if (absl::StartsWith(name, "Bip01")) return;
   }
 
-  if (auto *parent{mState->mRoot->getParentSceneNode()};
-      parent && parent != mState->mParent) {
-    mState->mRoot = gsl::make_not_null(parent);
-  }
+  if (name == "Scene Root") return;
+  auto *parent{mState->mCurrentNode->getParentSceneNode()};
+  mState->mCurrentNode = gsl::make_not_null(parent);
 }
 
 } // namespace
@@ -346,7 +351,7 @@ void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &) {
 Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
                            gsl::not_null<Ogre::SceneManager *> scnMgr,
                            gsl::not_null<btDiscreteDynamicsWorld *> world,
-                           gsl::not_null<Ogre::SceneNode *> parent) {
+                           gsl::not_null<Ogre::SceneNode *> nifRoot) {
   auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
   if (!nifPtr) return nullptr;
   try {
@@ -360,17 +365,10 @@ Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
   std::vector<boost::default_color_type> colorMap(boost::num_vertices(graph));
   const auto propertyMap{boost::make_iterator_property_map(
       colorMap.begin(), boost::get(boost::vertex_index, graph))};
-  NifVisitorState state(name, group, scnMgr, world, parent);
+  NifVisitorState state(name, group, scnMgr, world, nifRoot);
   boost::depth_first_search(graph, NifVisitor(&state), propertyMap);
 
-  return state.mRoot;
-}
-
-Ogre::SceneNode *insertNif(const std::string &name, const std::string &group,
-                           gsl::not_null<Ogre::SceneManager *> scnMgr,
-                           gsl::not_null<btDiscreteDynamicsWorld *> world) {
-  return oo::insertNif(name, group, scnMgr, world,
-                       gsl::make_not_null(scnMgr->getRootSceneNode()));
+  return state.mCurrentNode;
 }
 
 void attachRagdoll(const std::string &name, const std::string &group,

@@ -61,15 +61,15 @@ Character::Character(const record::REFR_NPC_ &refRec,
                              scnMgr, world,
                              gsl::make_not_null(parent))};
 
-    oo::Entity *entity = [&node]() -> oo::Entity * {
-      for (auto obj : node->getAttachedObjects()) {
-        if (auto *e{dynamic_cast<oo::Entity *>(obj)}) return e;
-      }
-      return nullptr;
-    }();
+    auto &entities{node->getAttachedObjects()};
+    auto it{std::find_if(entities.rbegin(), entities.rend(), [](auto *ent) {
+      return dynamic_cast<oo::Entity *>(ent) != nullptr;
+    })};
+    auto *entity{it != entities.rend() ? static_cast<oo::Entity *>(*it)
+                                       : nullptr};
     if (!entity) continue;
-    setBodyPart(type, entity);
 
+    setBodyPart(type, entity);
     oo::setSkinTextures(entity, oo::BaseId{raceRec->mFormId}, *textureRec);
 
     if (!firstAdded) {

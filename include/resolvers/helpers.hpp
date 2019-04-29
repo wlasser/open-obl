@@ -15,18 +15,22 @@
 
 namespace oo {
 
-// Set the bullet user data in the RigidBody to the given RefId.
+/// Set the bullet user data in the `Ogre::RigidBody` to the given `refId`.
 void setRefId(gsl::not_null<Ogre::RigidBody *> rigidBody, RefId refId);
 
-// Set the bullet user data in the attached RigidBody to the given RefId.
-// TODO: Support rigid bodies anywhere down the hierarchy
+/// Set the bullet user data in the attached `Ogre::RigidBody`s of `node` or any
+/// of its children to the given `refId`.
 void setRefId(gsl::not_null<Ogre::SceneNode *> node, RefId refId);
 
+/// Given a base record with a `modelFilename` member of type `record::MODL`,
+/// construct a child node of the given `parentNode` (or the scene root if none
+/// is given) and use insert the record's model into the scene graph.
+/// The child node will be named equal to the result of `refId.string()`.
 template<class T> Ogre::SceneNode *
 insertNif(const T &baseRec, RefId refId,
           gsl::not_null<Ogre::SceneManager *> scnMgr,
           gsl::not_null<btDiscreteDynamicsWorld *> world,
-          Ogre::SceneNode *rootNode = nullptr) {
+          Ogre::SceneNode *parentNode = nullptr) {
   oo::Path baseName;
   using modl_t = decltype(baseRec.modelFilename);
   if constexpr (std::is_same_v<modl_t, std::optional<record::MODL>>) {
@@ -38,18 +42,12 @@ insertNif(const T &baseRec, RefId refId,
     static_assert(false_v<T>, "Missing MODL record");
   }
   oo::Path name{oo::Path{"meshes"} / baseName};
-  auto *node = [&]() -> Ogre::SceneNode * {
-    if (rootNode) {
-      return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world,
-                           gsl::make_not_null(rootNode));
-    } else {
-      return oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world);
-    }
-  }();
 
-  if (!node) return nullptr;
-
-  oo::setRefId(gsl::make_not_null(node), refId);
+  auto *parent{parentNode ? parentNode : scnMgr->getRootSceneNode()};
+  auto *root{parent->createChildSceneNode(refId.string())};
+  auto *node{oo::insertNif(name.c_str(), oo::RESOURCE_GROUP, scnMgr, world,
+                           gsl::make_not_null(root))};
+  if (node) oo::setRefId(gsl::make_not_null(root), refId);
 
   return node;
 }
