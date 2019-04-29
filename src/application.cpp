@@ -48,6 +48,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <map>
@@ -684,6 +685,11 @@ oo::GameMode &Application::getGameModeInStack() {
 }
 
 bool Application::frameStarted(const Ogre::FrameEvent &event) {
+  using Clock = std::chrono::high_resolution_clock;
+  using fSecond = chrono::duration<float, chrono::seconds::period>;
+
+  auto startTime{Clock::now()};
+
   pollEvents();
   if (modeStack.empty()) {
     quit();
@@ -702,7 +708,17 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
     deferredMode.reset();
   }
 
-  boost::this_fiber::yield();
+  // Keep yielding to other render fibers until we run out of time or exceed
+  // some number of yields. This allows jobs that yield multiple times during
+  // their execution to complete within a single frame, instead of having only
+  // a subset between two adjacent yields be run each frame.
+  float delta{0.0f};
+  constexpr std::size_t MAX_YIELDS{20u};
+  for (std::size_t i = 0; i < MAX_YIELDS && delta < event.timeSinceLastFrame;
+       ++i) {
+    boost::this_fiber::yield();
+    delta += fSecond(Clock::now() - startTime).count();
+  };
 
   return true;
 }
