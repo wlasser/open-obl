@@ -34,9 +34,11 @@ JumpState::update(CharacterControllerImpl &impl, float elapsed) {
 
 void JumpState::enter(CharacterControllerImpl &impl) {
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
-        * oo::weaponOutModifier(hasWeaponOut);
+    const auto athleticsSkill{impl.getSkill(SkillIndex::Athletics)};
+    const auto weaponMod{oo::weaponOutModifier(hasWeaponOut)};
+    return weaponMod * (isRunning ? oo::runModifier(athleticsSkill) : 1.0f);
   });
+
   // Player jumps in the opposite direction of gravity, with an impulse chosen
   // to give the desired jump height. To find the impulse, use v^2 = u^2 + 2as
   // along with the fact that the impulse is the change in momentum.
@@ -45,8 +47,8 @@ void JumpState::enter(CharacterControllerImpl &impl) {
   //       different amount of gravity then their jump height will change.
   const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
   const float g{gravityVector.length()};
-  const float apex{oo::jumpHeight(impl.acrobaticsSkill)};
-  const float impulse{impl.mass * std::sqrt(2.0f * g * apex)};
+  const float apex{oo::jumpHeight(impl.getSkill(SkillIndex::Acrobatics))};
+  const float impulse{impl.getMass() * std::sqrt(2.0f * g * apex)};
   impl.getRigidBody()->applyCentralImpulse(
       -impulse * gravityVector.normalized());
 }

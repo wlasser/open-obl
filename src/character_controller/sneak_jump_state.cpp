@@ -34,7 +34,8 @@ SneakJumpState::update(CharacterControllerImpl &impl, float elapsed) {
 
 void SneakJumpState::enter(CharacterControllerImpl &impl) {
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+    const auto athleticsSkill{impl.getSkill(SkillIndex::Athletics)};
+    return (isRunning ? oo::runModifier(athleticsSkill) : 1.0f)
         * oo::weaponOutModifier(hasWeaponOut) * oo::sneakModifier();
   });
   // Player jumps in the opposite direction of gravity, with an impulse chosen
@@ -42,8 +43,8 @@ void SneakJumpState::enter(CharacterControllerImpl &impl) {
   // along with the fact that the impulse is the change in momentum.
   const btVector3 gravityVector{impl.getRigidBody()->getGravity()};
   const float g{gravityVector.length()};
-  const float apex{oo::jumpHeight(impl.acrobaticsSkill)};
-  const float impulse{impl.mass * std::sqrt(2.0f * g * apex)};
+  const float apex{oo::jumpHeight(impl.getSkill(SkillIndex::Acrobatics))};
+  const float impulse{impl.getMass() * std::sqrt(2.0f * g * apex)};
   impl.getRigidBody()->applyCentralImpulse(
       -impulse * gravityVector.normalized());
 }
@@ -54,9 +55,9 @@ SneakJumpState::handleCollision(CharacterControllerImpl &impl,
                                 const btManifoldPoint &contact) {
   const auto impulse{contact.getAppliedImpulse()};
   const auto r{contact.getPositionWorldOnA() - contact.getPositionWorldOnB()};
+  const auto gravityVector{impl.getRigidBody()->getGravity()};
   spdlog::get(oo::LOG)->info("Player received of impulse {} N", impulse);
-  if (r.normalized().dot(impl.getRigidBody()->getGravity().normalized())
-      > 0.7) {
+  if (r.normalized().dot(gravityVector.normalized()) > std::sqrt(2.0f) / 2.0f) {
     return SneakStandState{};
   }
   return std::nullopt;

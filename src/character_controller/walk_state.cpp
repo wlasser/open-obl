@@ -19,7 +19,7 @@ WalkState::update(CharacterControllerImpl &/*impl*/, float /*elapsed*/) {
 }
 
 void WalkState::enter(CharacterControllerImpl &impl) {
-  impl.isRunning = false;
+  impl.setIsRunning(false);
 }
 
 } // namespace oo

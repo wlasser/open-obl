@@ -28,7 +28,8 @@ StandState::update(CharacterControllerImpl &impl, float elapsed) {
 
 void StandState::enter(CharacterControllerImpl &impl) {
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+    const auto athleticsSkill{impl.getSkill(SkillIndex::Athletics)};
+    return (isRunning ? oo::runModifier(athleticsSkill) : 1.0f)
         * oo::weaponOutModifier(hasWeaponOut);
   });
 }

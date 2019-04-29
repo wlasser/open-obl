@@ -17,7 +17,7 @@ CharacterControllerImpl::CharacterControllerImpl(
 
   mBodyNode = mScnMgr->getRootSceneNode()->createChildSceneNode();
   const auto bodyVec{qvm::convert_to<Ogre::Vector3>(
-      qvm::_0X0(height * 0.5f + getCapsuleRadius() * 0.5f))};
+      qvm::_0X0(mHeight * 0.5f + getCapsuleRadius() * 0.5f))};
   mRootNode = mBodyNode->createChildSceneNode(-bodyVec);
 
   attachCamera(gsl::make_not_null(mCamera), gsl::make_not_null(mRootNode));
@@ -52,25 +52,25 @@ CharacterControllerImpl::CharacterControllerImpl(CharacterControllerImpl &&other
   mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
   mRigidBody = std::exchange(other.mRigidBody, nullptr);
 
-  speedAttribute = other.speedAttribute;
-  athleticsSkill = other.athleticsSkill;
-  acrobaticsSkill = other.acrobaticsSkill;
-  raceHeight = other.raceHeight;
-  wornWeight = other.wornWeight;
-  hasWeaponOut = other.hasWeaponOut;
-  isRunning = other.isRunning;
+  mSpeedAttribute = other.mSpeedAttribute;
+  mAthleticsSkill = other.mAthleticsSkill;
+  mAcrobaticsSkill = other.mAcrobaticsSkill;
+  mRaceHeight = other.mRaceHeight;
+  mWornWeight = other.mWornWeight;
+  mHasWeaponOut = other.mHasWeaponOut;
+  mIsRunning = other.mIsRunning;
 
   // mSpeedModifier is likely to capture `other` by reference, so we cannot
   // simply copy it, and since we don't know what state the CharacterController is
   // in we can't recreate it. It is up to the CharacterController to re-`enter()`
   // the current state.
 
-  height = other.height;
-  mass = other.mass;
+  mHeight = other.mHeight;
+  mMass = other.mMass;
 
-  pitch = std::move(other.pitch);
-  yaw = std::move(other.yaw);
-  localVelocity = std::move(other.localVelocity);
+  mPitch = std::move(other.mPitch);
+  mYaw = std::move(other.mYaw);
+  mLocalVelocity = std::move(other.mLocalVelocity);
 }
 
 CharacterControllerImpl &
@@ -87,22 +87,22 @@ CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
     mCollisionShape = std::exchange(other.mCollisionShape, nullptr);
     mRigidBody = std::exchange(other.mRigidBody, nullptr);
 
-    speedAttribute = other.speedAttribute;
-    athleticsSkill = other.athleticsSkill;
-    acrobaticsSkill = other.acrobaticsSkill;
-    raceHeight = other.raceHeight;
-    wornWeight = other.wornWeight;
-    hasWeaponOut = other.hasWeaponOut;
-    isRunning = other.isRunning;
+    mSpeedAttribute = other.mSpeedAttribute;
+    mAthleticsSkill = other.mAthleticsSkill;
+    mAcrobaticsSkill = other.mAcrobaticsSkill;
+    mRaceHeight = other.mRaceHeight;
+    mWornWeight = other.mWornWeight;
+    mHasWeaponOut = other.mHasWeaponOut;
+    mIsRunning = other.mIsRunning;
 
     // See move constructor for omitted mSpeedModifier
 
-    height = other.height;
-    mass = other.mass;
+    mHeight = other.mHeight;
+    mMass = other.mMass;
 
-    pitch = std::move(other.pitch);
-    yaw = std::move(other.yaw);
-    localVelocity = std::move(other.localVelocity);
+    mPitch = std::move(other.mPitch);
+    mYaw = std::move(other.mYaw);
+    mLocalVelocity = std::move(other.mLocalVelocity);
   }
 
   return *this;
@@ -110,7 +110,7 @@ CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
 
 void CharacterControllerImpl::attachCamera(gsl::not_null<Ogre::Camera *> camera,
                                            gsl::not_null<Ogre::SceneNode *> node) {
-  const auto h{0.95f * height};
+  const auto h{0.95f * mHeight};
   const auto camVec{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
   mCameraNode = node->createChildSceneNode(camVec);
   mPitchNode = mCameraNode->createChildSceneNode();
@@ -124,7 +124,7 @@ void CharacterControllerImpl::createAndAttachRigidBody(gsl::not_null<Ogre::Scene
   mMotionState = std::make_unique<Ogre::MotionState>(node);
   mCollisionShape = std::make_unique<btCapsuleShape>(getCapsuleRadius(),
                                                      getCapsuleHeight());
-  btRigidBody::btRigidBodyConstructionInfo info(mass,
+  btRigidBody::btRigidBodyConstructionInfo info(mMass,
                                                 mMotionState.get(),
                                                 mCollisionShape.get());
   mRigidBody = std::make_unique<btRigidBody>(info);
@@ -165,12 +165,68 @@ CharacterControllerImpl::getRootNode() noexcept {
   return gsl::make_not_null(mRootNode);
 }
 
+Ogre::Radian CharacterControllerImpl::getPitch() const noexcept {
+  return mPitch;
+}
+
+Ogre::Radian &CharacterControllerImpl::getPitch() noexcept {
+  return mPitch;
+}
+
+Ogre::Radian CharacterControllerImpl::getYaw() const noexcept {
+  return mYaw;
+}
+
+Ogre::Radian &CharacterControllerImpl::getYaw() noexcept {
+  return mYaw;
+}
+
+Ogre::Radian CharacterControllerImpl::getRootYaw() const noexcept {
+  return mRootYaw;
+}
+
+Ogre::Radian &CharacterControllerImpl::getRootYaw() noexcept {
+  return mRootYaw;
+}
+
+Ogre::Vector3 &CharacterControllerImpl::getLocalVelocity() noexcept {
+  return mLocalVelocity;
+}
+
+Ogre::Vector3 CharacterControllerImpl::getLocalVelocity() const noexcept {
+  return mLocalVelocity;
+}
+
+float CharacterControllerImpl::getSkill(oo::SkillIndex skill) const noexcept {
+  switch (skill) {
+    case SkillIndex::Athletics: return mAthleticsSkill;
+    case SkillIndex::Acrobatics: return mAcrobaticsSkill;
+    default: return 0.0f;
+  }
+}
+
+float CharacterControllerImpl::getMass() const noexcept {
+  return mMass;
+}
+
+bool CharacterControllerImpl::getIsRunning() const noexcept {
+  return mIsRunning;
+}
+
+void CharacterControllerImpl::setIsRunning(bool isRunning) noexcept {
+  mIsRunning = isRunning;
+}
+
+float CharacterControllerImpl::getHeight() const noexcept {
+  return mHeight;
+}
+
 float CharacterControllerImpl::getMoveSpeed() const noexcept {
-  const float base{oo::baseSpeed(speedAttribute) * raceHeight
+  const float base{oo::baseSpeed(mSpeedAttribute) * mRaceHeight
                        * oo::metersPerUnit<float>};
-  const float weightMult{oo::encumbranceModifier(wornWeight, hasWeaponOut)};
+  const float weightMult{oo::encumbranceModifier(mWornWeight, mHasWeaponOut)};
   return base * weightMult
-      * (mSpeedModifier ? mSpeedModifier(hasWeaponOut, isRunning) : 1.0f);
+      * (mSpeedModifier ? mSpeedModifier(mHasWeaponOut, mIsRunning) : 1.0f);
 }
 
 float CharacterControllerImpl::getCapsuleRadius() const noexcept {
@@ -178,7 +234,7 @@ float CharacterControllerImpl::getCapsuleRadius() const noexcept {
 }
 
 float CharacterControllerImpl::getCapsuleHeight() const noexcept {
-  return height * 0.5f - getCapsuleRadius();
+  return mHeight * 0.5f - getCapsuleRadius();
 }
 
 void CharacterControllerImpl::reactivatePhysics() noexcept {
@@ -193,13 +249,13 @@ void CharacterControllerImpl::updateCameraOrientation() noexcept {
   mPitchNode->setOrientation(Ogre::Quaternion(Ogre::Radian(0),
                                               Ogre::Vector3::UNIT_X));
 
-  mPitchNode->pitch(pitch, Ogre::SceneNode::TS_LOCAL);
-  mCameraNode->yaw(yaw, Ogre::SceneNode::TS_LOCAL);
-  mRootNode->yaw(rootYaw, Ogre::SceneNode::TS_LOCAL);
+  mPitchNode->pitch(mPitch, Ogre::SceneNode::TS_LOCAL);
+  mCameraNode->yaw(mYaw, Ogre::SceneNode::TS_LOCAL);
+  mRootNode->yaw(mRootYaw, Ogre::SceneNode::TS_LOCAL);
 }
 
 void CharacterControllerImpl::move() noexcept {
-  if (auto len = localVelocity.length(); len > 0.01f) {
+  if (auto len = mLocalVelocity.length(); len > 0.01f) {
     // Camera and root yaw may not be aligned currently, but they should be when
     // the player is moving. Need to smooth camera yaw to zero while keeping the
     // absolute camera orientation and movement direction the same.
@@ -207,8 +263,8 @@ void CharacterControllerImpl::move() noexcept {
     // slower body rotation times.
     // TODO: Make body twist time framerate independent.
     constexpr float twistMultiplier{0.75f};
-    rootYaw += yaw * (1.0f - twistMultiplier);
-    yaw *= twistMultiplier;
+    mRootYaw += mYaw * (1.0f - twistMultiplier);
+    mYaw *= twistMultiplier;
     updateCameraOrientation();
 
     const auto speed{getMoveSpeed()};
@@ -217,7 +273,7 @@ void CharacterControllerImpl::move() noexcept {
     const auto axes{cameraAxes * rootAxes};
 
     const auto v{mRigidBody->getLinearVelocity()};
-    auto newV{qvm::convert_to<btVector3>(axes * localVelocity / len * speed)};
+    auto newV{qvm::convert_to<btVector3>(axes * mLocalVelocity / len * speed)};
     newV.setY(v.y());
     mRigidBody->setLinearVelocity(newV);
   } else {
@@ -228,9 +284,9 @@ void CharacterControllerImpl::move() noexcept {
 
 void CharacterControllerImpl::setOrientation(Ogre::Radian pPitch,
                                              Ogre::Radian pYaw) noexcept {
-  pitch = pPitch;
-  rootYaw = pYaw;
-  yaw = Ogre::Radian{0.0f};
+  mPitch = pPitch;
+  mRootYaw = pYaw;
+  mYaw = Ogre::Radian{0.0f};
   updateCameraOrientation();
 }
 
@@ -254,13 +310,13 @@ float CharacterControllerImpl::getSpringDisplacement() noexcept {
   }
 
   // Natural length of the spring
-  const auto length{0.5f * height + getCapsuleHeight() / 2.0f};
+  const auto length{0.5f * mHeight + getCapsuleHeight() / 2.0f};
 
   return length - dist;
 }
 
 float CharacterControllerImpl::getMaxSpringDisplacement() noexcept {
-  return 0.5f * height - getCapsuleRadius();
+  return 0.5f * mHeight - getCapsuleRadius();
 }
 
 void CharacterControllerImpl::applySpringForce(float displacement) noexcept {

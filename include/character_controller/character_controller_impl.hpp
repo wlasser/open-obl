@@ -5,6 +5,7 @@
 #include "math/conversions.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"
+#include "record/actor_value.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
 #include <OgreMath.h>
@@ -32,6 +33,26 @@ class CharacterControllerImpl {
   std::unique_ptr<btCollisionShape> mCollisionShape{};
   std::unique_ptr<btRigidBody> mRigidBody{};
 
+  float mSpeedAttribute{50.0f};
+  float mAthleticsSkill{50.0f};
+  float mAcrobaticsSkill{50.0f};
+  float mRaceHeight{1.0f};
+  float mWornWeight{0.0f};
+
+  bool mHasWeaponOut{false};
+  bool mIsRunning{false};
+  // speedModifier(mHasWeaponOut, mIsRunning) gives runModifier, swimWalkModifier,
+  // or swimRunModifier, multiplied by fMoveNoWeaponMult if appropriate.
+  std::function<float(bool, bool)> mSpeedModifier{};
+
+  float mHeight{mRaceHeight * 128 * oo::metersPerUnit<float>};
+  float mMass{80.0f};
+
+  Ogre::Radian mPitch{0.0f};
+  Ogre::Radian mRootYaw{0.0f};
+  Ogre::Radian mYaw{0.0f};
+  Ogre::Vector3 mLocalVelocity{Ogre::Vector3::ZERO};
+
   void attachCamera(gsl::not_null<Ogre::Camera *> camera,
                     gsl::not_null<Ogre::SceneNode *> node);
   void createAndAttachRigidBody(gsl::not_null<Ogre::SceneNode *> node);
@@ -51,26 +72,6 @@ class CharacterControllerImpl {
   ///         `other`.
   CharacterControllerImpl &operator=(CharacterControllerImpl &&other) noexcept;
 
-  float speedAttribute{50.0f};
-  float athleticsSkill{50.0f};
-  float acrobaticsSkill{50.0f};
-  float raceHeight{1.0f};
-  float wornWeight{0.0f};
-
-  bool hasWeaponOut{false};
-  bool isRunning{false};
-  // speedModifier(hasWeaponOut, isRunning) gives runModifier, swimWalkModifier,
-  // or swimRunModifier, multiplied by fMoveNoWeaponMult if appropriate.
-  std::function<float(bool, bool)> mSpeedModifier{};
-
-  float height{raceHeight * 128 * oo::metersPerUnit<float>};
-  float mass{80.0f};
-
-  Ogre::Radian pitch{0.0f};
-  Ogre::Radian rootYaw{0.0f};
-  Ogre::Radian yaw{0.0f};
-  Ogre::Vector3 localVelocity{Ogre::Vector3::ZERO};
-
   gsl::not_null<const btRigidBody *> getRigidBody() const noexcept;
   gsl::not_null<btRigidBody *> getRigidBody() noexcept;
 
@@ -79,6 +80,26 @@ class CharacterControllerImpl {
 
   gsl::not_null<const Ogre::SceneNode *> getRootNode() const noexcept;
   gsl::not_null<Ogre::SceneNode *> getRootNode() noexcept;
+
+  Ogre::Radian getPitch() const noexcept;
+  Ogre::Radian &getPitch() noexcept;
+
+  Ogre::Radian getYaw() const noexcept;
+  Ogre::Radian &getYaw() noexcept;
+
+  Ogre::Radian getRootYaw() const noexcept;
+  Ogre::Radian &getRootYaw() noexcept;
+
+  Ogre::Vector3 &getLocalVelocity() noexcept;
+  Ogre::Vector3 getLocalVelocity() const noexcept;
+
+  float getSkill(oo::SkillIndex skill) const noexcept;
+  float getMass() const noexcept;
+
+  bool getIsRunning() const noexcept;
+  void setIsRunning(bool isRunning) noexcept;
+
+  float getHeight() const noexcept;
 
   template<class F>
   void setSpeedModifier(F &&f) {

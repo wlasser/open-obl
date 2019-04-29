@@ -28,13 +28,15 @@ SneakStandState::update(CharacterControllerImpl &impl, float elapsed) {
 void SneakStandState::enter(CharacterControllerImpl &impl) {
   impl.getCameraNode()->setPosition(Ogre::Vector3::ZERO);
   impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
-    return (isRunning ? oo::runModifier(impl.athleticsSkill) : 1.0f)
+    const auto athleticsSkill{impl.getSkill(SkillIndex::Athletics)};
+    return (isRunning ? oo::runModifier(athleticsSkill) : 1.0f)
         * oo::weaponOutModifier(hasWeaponOut) * oo::sneakModifier();
   });
 }
 
 void SneakStandState::exit(CharacterControllerImpl &impl) {
-  const auto h{(0.95f - 0.5f) * impl.height - impl.getCapsuleHeight() / 2.0f};
+  const auto h{(0.95f - 0.5f) * impl.getHeight()
+                   - impl.getCapsuleHeight() / 2.0f};
   const auto camVector{qvm::convert_to<Ogre::Vector3>(qvm::_0X0(h))};
   impl.getCameraNode()->setPosition(camVector);
 }

@@ -19,7 +19,7 @@ RunState::update(CharacterControllerImpl &/*impl*/, float /*elapsed*/) {
 }
 
 void RunState::enter(CharacterControllerImpl &impl) {
-  impl.isRunning = true;
+  impl.setIsRunning(true);
 }
 
 } // namespace oo
