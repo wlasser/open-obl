@@ -60,6 +60,9 @@ void main() {
         n[i + 1] = mix(f[i] * n[i], n[i + 1], fOld) / f[i + 1];
     }
 
+    n[8].y = 1.0f - n[8].y;
+    n[8].xyz = normalize(n[8].xyz * 2.0f - 1.0f);
+
     gNormalSpec.xyz = normalize(TBN * n[8].xyz);
     gNormalSpec.w = n[8].w;
 
