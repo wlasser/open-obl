@@ -20,6 +20,10 @@ material __WaterMaterial {
                 param_named_auto sunlightDirection LIGHT_POSITION 0
                 param_named_auto view VIEW_MATRIX
                 param_named_auto proj PROJECTION_MATRIX
+                param_named_auto nearClipDist NEAR_CLIP_DISTANCE
+                param_named_auto farClipDist FAR_CLIP_DISTANCE
+                param_named_auto viewportSize VIEWPORT_SIZE
+                param_named_auto time TIME_0_1 40.0f
                 param_named diffuse int 0
                 param_named Tex0 int 1
                 param_named Tex1 int 2

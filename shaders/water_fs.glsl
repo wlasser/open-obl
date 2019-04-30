@@ -9,6 +9,10 @@ uniform vec4 sunlightColor;
 uniform vec4 sunlightDirection;
 uniform mat4 view;
 uniform mat4 proj;
+uniform float nearClipDist;
+uniform float farClipDist;
+uniform vec4 viewportSize;
+uniform float time;
 
 uniform sampler2D diffuse;
 uniform sampler2D Tex0;
@@ -31,8 +35,17 @@ void main() {
     float fresnelAmount = 0.15f;
     float reflectivityAmount = 0.9f;
 
-    // Swizzle to make blue component the up component.
-    vec3 normal = normalize(texture(diffuse, TexCoord).xzy);
+    vec2 texCoord = TexCoord + vec2(time);
+
+    // Compute normal map using the water diffuse as a height map.
+    const ivec3 offset = ivec3(-1, 0, 1);
+    float n01 = textureOffset(diffuse, texCoord, offset.xy).r;
+    float n10 = textureOffset(diffuse, texCoord, offset.yx).r;
+    float n21 = textureOffset(diffuse, texCoord, offset.zy).r;
+    float n12 = textureOffset(diffuse, texCoord, offset.yz).r;
+    vec3 nU = normalize(vec3(2.0f, n21 - n01, 0.0f));
+    vec3 nV = normalize(vec3(0.0f, n12 - n10, 2.0f));
+    vec3 normal = cross(nV, nU).xyz;
 
     vec2 refractedUv = uv + normal.xz * 0.01f;
 
@@ -108,14 +121,23 @@ void main() {
     //    IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
     //    THE POSSIBILITY OF SUCH DAMAGE.
 
-    vec4 startPosVS = view * vec4(FragPos, 1.0f);
-    vec4 reflectDirVS = view * vec4(-viewDir.x, viewDir.y, -viewDir.z, 0.0f);
     const float maxDistance = 100.0f;
-    const float nearClipPlane = -0.2f;
-    const float farClipPlane = -30000.0f;
+    const float maxSteps = 60.0f;
+    const float jitter = 0.5f;
+    const float stride = 6.0f;
+    const float zThickness = 10.0f;
+
+    // @formatter:off
+    vec4 startPosVS = view * vec4(FragPos, 1.0f);
+    vec3 reflectDir = -viewDir - 2.0f * dot(normal, -viewDir) * normal;
+    vec4 reflectDirVS = view * vec4(reflectDir, 0.0f);
     // Clip view space reflect ray to the near clip plane.
+    // Note: Negative clip distances are needed, but nearClipDist and
+    //       farClipDist are postive.
     float maxDistZ = startPosVS.z + maxDistance * reflectDirVS.z;
-    float rayLength = maxDistZ > nearClipPlane ? (nearClipPlane - startPosVS.z) / reflectDirVS.z : maxDistance;
+    float rayLength = maxDistZ > -nearClipDist
+        ? -(nearClipDist + startPosVS.z) / reflectDirVS.z
+        : maxDistance;
     vec4 endPosVS = startPosVS + rayLength * reflectDirVS;
 
     // Project reflected ray into clip space.
@@ -130,76 +152,71 @@ void main() {
 
     // Transform clip space ray (NDC) into screen space.
     h0.xy = 0.5f * h0.xy + vec2(0.5f);
-    h0.xy *= vec2(1024.0f, 768.0f);
+    h0.xy *= viewportSize.xy;
 
     h1.xy = 0.5f * h1.xy + vec2(0.5f);
-    h1.xy *= vec2(1024.0f, 768.0f);
+    h1.xy *= viewportSize.xy;
 
     vec2 p0 = h0.xy;
     vec2 p1 = h1.xy;
 
-    // Project reflected ray into clip space(?)
-    // TODO: Is this just h0 because our projection matrix maps into clip space
-    //       in NDC, whereas theirs maps to clip space in pixels?
+    // View space endpoints that transform linearly.
     vec3 q0 = k0 * startPosVS.xyz;
     vec3 q1 = k1 * endPosVS.xyz;
 
-    vec2 pxMax = vec2(1024.0f - 0.5f, 768.0f - 0.5f);
-    vec2 pxMin = vec2(0.5f, 0.5f);
-    float alpha = 0.0f;
+    // Screen bounds in pixels. Pixel centers are at half coordinates.
+    vec2 pxMin = vec2(0.5f);
+    vec2 pxMax = viewportSize.xy - pxMin;
+    float pxAlpha = 0.0f;
 
+    // Clip p1, k1, q1 to the viewport. The ternary operators select which of
+    // the arguments to the || is true, cutting a branch each.
+    // e.g. if p1.y > pxMax.y then pxAlpha = (p1.y - pxMax.y) / (p1.y - p0.y)
+    // so p1 = (1 - pxAlpha) * p1 + pxAlpha * p0 = pxMax.y.
     if (p1.y > pxMax.y || p1.y < pxMin.y) {
-        alpha = (p1.y - (p1.y > pxMax.y ? pxMax.y : pxMin.y)) / (p1.y - p0.y);
+        pxAlpha = (p1.y - (p1.y > pxMax.y ? pxMax.y : pxMin.y)) / (p1.y - p0.y);
     }
     if (p1.x > pxMax.x || p1.x < pxMin.x) {
-        alpha = max(alpha, (p1.x - (p1.x > pxMax.x ? pxMax.x : pxMin.x)) / (p1.x - p0.x));
+        pxAlpha = max(pxAlpha, (p1.x - (p1.x > pxMax.x ? pxMax.x : pxMin.x)) / (p1.x - p0.x));
     }
 
-    p1 = mix(p1, p0, alpha);
-    k1 = mix(k1, k0, alpha);
-    q1 = mix(q1, q0, alpha);
+    p1 = mix(p1, p0, pxAlpha);
+    k1 = mix(k1, k0, pxAlpha);
+    q1 = mix(q1, q0, pxAlpha);
 
     // Ensure line is nondegenerate so we don't get division by zero.
     p1 += vec2((dot(p1 - p0, p1 - p0) < 0.0001f) ? 0.01f : 0.0f);
     vec2 delta = p1 - p0;
 
     // Permute coordinates to remove quadrant checking in later DDA.
+    // If the line is more vertical than horizontal (between top and bottom
+    // wedge of 'X') then swap x and y so that only the horizontal case has to
+    // be dealt with.
     bool permute = false;
     if (abs(delta.x) < abs(delta.y)) {
-        // Line lies between two lines of 'X' so is more vertical than
-        // horizontal. Swap x and y so that we only have to deal with the
-        // horizontal case.
         permute = true;
         delta = delta.yx;
         p0 = p0.yx;
         p1 = p1.yx;
     }
     float stepDir = sign(delta.x);
-    // invDx = abs(1.0f / delta.x);
+    //    invDx = abs(1.0f / delta.x);
     float invDx = stepDir / delta.x;
 
     // Differentiate wrt p. These are constant because q and k interpolate
     // linearly, and thus we don't have to worry about delta being tiny.
     vec3 dq = (q1 - q0) * invDx;
     float dk = (k1 - k0) * invDx;
-    // dp = (p1 - p0) * invDx;
-    //    = stepDir * (p1 - p0) / (p1 - p0).x
-    //    = vec2(stepDir, stepDir * delta.y / delta.x);
+    //   dp = (p1 - p0) * invDx;
+    //      = stepDir * (p1 - p0) / (p1 - p0).x
+    //      = vec2(stepDir, stepDir * delta.y / delta.x);
     vec2 dp = vec2(stepDir, delta.y * invDx);
 
     // Scale derivatives by given pixel stride and add jitter.
-    const float jitter = 0.5f;
-    const float stride = 6.0f;
-    dq *= stride;
-    dk *= stride;
-    dp *= stride;
-    q0 += jitter * dq;
-    k0 += jitter * dk;
-    p0 += jitter * dp;
+    dq *= stride; dk *= stride; dp *= stride;
+    q0 += jitter * dq; k0 += jitter * dk; p0 += jitter * dp;
 
-    const float zThickness = 10.0f;
-    const float maxSteps = 60.0f;
-
+    vec2 p = p0;
     vec3 q = q0;
     float k = k0;
     float stepCount = 0.0f;
@@ -210,13 +227,18 @@ void main() {
     float rayZMax = prevZMaxEstimate;
     float sceneZMax = rayZMax + 100.0f;
 
+    // Pixel coordinates of ray.
     vec2 hitPixel = vec2(-1.0f, -1.0f);
 
-    for (vec2 p = p0; (p.x * stepDir) <= end
-    && stepCount < maxSteps
-    && (rayZMax < sceneZMax - zThickness || rayZMin > sceneZMax)
-    && sceneZMax != 0;
-    p += dp, q.z += dq.z, k += dk, ++stepCount) {
+    // TODO: Compute this on the cpu and pass it as a uniform.
+    float clipDistRatio = farClipDist / nearClipDist;
+    float clipDistRatio_1 = clipDistRatio - 1.0f;
+
+    // Perform the actual ray marching, checking the depth value on pixel
+    // midpoints and exiting when a collision is found.
+    for (; (p.x * stepDir) <= end && stepCount < maxSteps && sceneZMax != 0
+        && (rayZMax < sceneZMax - zThickness || rayZMin > sceneZMax);
+        p += dp, q.z += dq.z, k += dk, ++stepCount) {
 
         rayZMin = prevZMaxEstimate;
         rayZMax = (q.z + dq.z * 0.5f) / (k + dk * 0.5f);
@@ -233,26 +255,32 @@ void main() {
         sceneZMax = texelFetch(Tex0, ivec2(hitPixel), 0).w;
 
         // Convert [0, 1] depth buffer into camera space depth.
-        sceneZMax = farClipPlane * nearClipPlane / ((nearClipPlane - farClipPlane) * sceneZMax + farClipPlane);
+        //   ZMax = farClipDist * nearClipDist / ((farClipDist - nearClipDist) * sceneZMax - farClipDist);
+        sceneZMax = farClipDist / (clipDistRatio_1 * sceneZMax - clipDistRatio);
     }
 
-    //    q.xy += stepCount * dq.xy;
-    //    vec3 hitPointVs = q / k;
-    //    vec2 reflectedUv = hitPointVs.xy * 0.5f + 0.5f;
+    // Find homogeneous coordinates of hit, convert to view space, project
+    // into clip space, then finally convert to texture coordinates.
+    q.xy += stepCount * dq.xy;
+    vec4 hitPoint = proj * vec4(q / k, 1.0f);
+    hitPoint /= hitPoint.w;
+    vec2 reflectedUv = hitPoint.xy * 0.5f + 0.5f;
 
     vec3 reflectedCol = vec3(0.0f);
     float reflectedAlpha = 0.0f;
     if (rayZMax >= sceneZMax - zThickness && rayZMin <= sceneZMax) {
         reflectedAlpha = 1.0f - stepCount / maxSteps;
-        reflectedCol = texelFetch(Tex2, ivec2(hitPixel), 0).rgb;
+        reflectedCol = texture(Tex2, reflectedUv).rgb;
     }
+
+    // @formatter:on
 
     //===------------------------------------------------------------------===//
     // End of raymarching implementation
     //===------------------------------------------------------------------===//
 
-    // Apply sunlight diffues to reflected objects.
-    vec3 reflectedNormal = texelFetch(Tex1, ivec2(hitPixel), 0).xyz;
+    // Apply sunlight diffuse to reflected objects.
+    vec3 reflectedNormal = texture(Tex1, reflectedUv).xyz;
     diff = max(dot(reflectedNormal, lightDir), 0.0f);
     reflectedCol = reflectedCol.rgb * (ambientLightColor.rgb + diff * lightCol.rgb);
 
