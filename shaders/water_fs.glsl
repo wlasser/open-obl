@@ -7,6 +7,8 @@ in vec4 ScreenPos;
 uniform vec4 ambientLightColor;
 uniform vec4 sunlightColor;
 uniform vec4 sunlightDirection;
+uniform mat4 view;
+uniform mat4 proj;
 
 uniform sampler2D diffuse;
 uniform sampler2D Tex0;
@@ -67,6 +69,196 @@ void main() {
     //    vec3 waterCol = mix(deepWaterCol, shallowCol, nDotH);
     //    vec3 depthAdjustedCol = mix(waterCol, bedCol, distScale);
 
-    vec3 finalCol = deepWaterCol + specCol;
+    //===------------------------------------------------------------------===//
+    // Raymarching implementation modified from work by
+    // Morgan McGuire and Michael Mara, used under the following license.
+    //===------------------------------------------------------------------===//
+    // Copyright (c) 2014, Morgan McGuire and Michael Mara
+    // All rights reserved.
+    //
+    // From McGuire and Mara, Efficient GPU Screen-Space Ray Tracing,
+    // Journal of Computer Graphics Techniques, 2014
+    //
+    // This software is open source under the "BSD 2-clause license":
+    //
+    //    Redistribution and use in source and binary forms, with or
+    //    without modification, are permitted provided that the following
+    //    conditions are met:
+    //
+    //    1. Redistributions of source code must retain the above
+    //    copyright notice, this list of conditions and the following
+    //    disclaimer.
+    //
+    //    2. Redistributions in binary form must reproduce the above
+    //    copyright notice, this list of conditions and the following
+    //    disclaimer in the documentation and/or other materials provided
+    //    with the distribution.
+    //
+    //    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+    //    CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+    //    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+    //    MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+    //    DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+    //    CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    //    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    //    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+    //    USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+    //    AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+    //    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+    //    IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+    //    THE POSSIBILITY OF SUCH DAMAGE.
+
+    vec4 startPosVS = view * vec4(FragPos, 1.0f);
+    vec4 reflectDirVS = view * vec4(-viewDir.x, viewDir.y, -viewDir.z, 0.0f);
+    const float maxDistance = 100.0f;
+    const float nearClipPlane = -0.2f;
+    const float farClipPlane = -30000.0f;
+    // Clip view space reflect ray to the near clip plane.
+    float maxDistZ = startPosVS.z + maxDistance * reflectDirVS.z;
+    float rayLength = maxDistZ > nearClipPlane ? (nearClipPlane - startPosVS.z) / reflectDirVS.z : maxDistance;
+    vec4 endPosVS = startPosVS + rayLength * reflectDirVS;
+
+    // Project reflected ray into clip space.
+    // Note h0.w is the (positive) view space depth of startPosVS.
+    vec4 h0 = proj * startPosVS;
+    float k0 = 1.0f / h0.w;
+    h0 *= k0;
+
+    vec4 h1 = proj * endPosVS;
+    float k1 = 1.0f / h1.w;
+    h1 *= k1;
+
+    // Transform clip space ray (NDC) into screen space.
+    h0.xy = 0.5f * h0.xy + vec2(0.5f);
+    h0.xy *= vec2(1024.0f, 768.0f);
+
+    h1.xy = 0.5f * h1.xy + vec2(0.5f);
+    h1.xy *= vec2(1024.0f, 768.0f);
+
+    vec2 p0 = h0.xy;
+    vec2 p1 = h1.xy;
+
+    // Project reflected ray into clip space(?)
+    // TODO: Is this just h0 because our projection matrix maps into clip space
+    //       in NDC, whereas theirs maps to clip space in pixels?
+    vec3 q0 = k0 * startPosVS.xyz;
+    vec3 q1 = k1 * endPosVS.xyz;
+
+    vec2 pxMax = vec2(1024.0f - 0.5f, 768.0f - 0.5f);
+    vec2 pxMin = vec2(0.5f, 0.5f);
+    float alpha = 0.0f;
+
+    if (p1.y > pxMax.y || p1.y < pxMin.y) {
+        alpha = (p1.y - (p1.y > pxMax.y ? pxMax.y : pxMin.y)) / (p1.y - p0.y);
+    }
+    if (p1.x > pxMax.x || p1.x < pxMin.x) {
+        alpha = max(alpha, (p1.x - (p1.x > pxMax.x ? pxMax.x : pxMin.x)) / (p1.x - p0.x));
+    }
+
+    p1 = mix(p1, p0, alpha);
+    k1 = mix(k1, k0, alpha);
+    q1 = mix(q1, q0, alpha);
+
+    // Ensure line is nondegenerate so we don't get division by zero.
+    p1 += vec2((dot(p1 - p0, p1 - p0) < 0.0001f) ? 0.01f : 0.0f);
+    vec2 delta = p1 - p0;
+
+    // Permute coordinates to remove quadrant checking in later DDA.
+    bool permute = false;
+    if (abs(delta.x) < abs(delta.y)) {
+        // Line lies between two lines of 'X' so is more vertical than
+        // horizontal. Swap x and y so that we only have to deal with the
+        // horizontal case.
+        permute = true;
+        delta = delta.yx;
+        p0 = p0.yx;
+        p1 = p1.yx;
+    }
+    float stepDir = sign(delta.x);
+    // invDx = abs(1.0f / delta.x);
+    float invDx = stepDir / delta.x;
+
+    // Differentiate wrt p. These are constant because q and k interpolate
+    // linearly, and thus we don't have to worry about delta being tiny.
+    vec3 dq = (q1 - q0) * invDx;
+    float dk = (k1 - k0) * invDx;
+    // dp = (p1 - p0) * invDx;
+    //    = stepDir * (p1 - p0) / (p1 - p0).x
+    //    = vec2(stepDir, stepDir * delta.y / delta.x);
+    vec2 dp = vec2(stepDir, delta.y * invDx);
+
+    // Scale derivatives by given pixel stride and add jitter.
+    const float jitter = 0.5f;
+    const float stride = 6.0f;
+    dq *= stride;
+    dk *= stride;
+    dp *= stride;
+    q0 += jitter * dq;
+    k0 += jitter * dk;
+    p0 += jitter * dp;
+
+    const float zThickness = 10.0f;
+    const float maxSteps = 60.0f;
+
+    vec3 q = q0;
+    float k = k0;
+    float stepCount = 0.0f;
+    float end = p1.x * stepDir;
+
+    float prevZMaxEstimate = startPosVS.z;
+    float rayZMin = prevZMaxEstimate;
+    float rayZMax = prevZMaxEstimate;
+    float sceneZMax = rayZMax + 100.0f;
+
+    vec2 hitPixel = vec2(-1.0f, -1.0f);
+
+    for (vec2 p = p0; (p.x * stepDir) <= end
+    && stepCount < maxSteps
+    && (rayZMax < sceneZMax - zThickness || rayZMin > sceneZMax)
+    && sceneZMax != 0;
+    p += dp, q.z += dq.z, k += dk, ++stepCount) {
+
+        rayZMin = prevZMaxEstimate;
+        rayZMax = (q.z + dq.z * 0.5f) / (k + dk * 0.5f);
+        prevZMaxEstimate = rayZMax;
+        if (rayZMin > rayZMax) {
+            // swap(rayZMin, rayZMax)
+            float t = rayZMin;
+            rayZMin = rayZMax;
+            rayZMax = t;
+        }
+
+        hitPixel = permute ? p.yx : p;
+        // Get view space depth at current ray point.
+        sceneZMax = texelFetch(Tex0, ivec2(hitPixel), 0).w;
+
+        // Convert [0, 1] depth buffer into camera space depth.
+        sceneZMax = farClipPlane * nearClipPlane / ((nearClipPlane - farClipPlane) * sceneZMax + farClipPlane);
+    }
+
+    //    q.xy += stepCount * dq.xy;
+    //    vec3 hitPointVs = q / k;
+    //    vec2 reflectedUv = hitPointVs.xy * 0.5f + 0.5f;
+
+    vec3 reflectedCol = vec3(0.0f);
+    float reflectedAlpha = 0.0f;
+    if (rayZMax >= sceneZMax - zThickness && rayZMin <= sceneZMax) {
+        reflectedAlpha = 1.0f - stepCount / maxSteps;
+        reflectedCol = texelFetch(Tex2, ivec2(hitPixel), 0).rgb;
+    }
+
+    //===------------------------------------------------------------------===//
+    // End of raymarching implementation
+    //===------------------------------------------------------------------===//
+
+    // Apply sunlight diffues to reflected objects.
+    vec3 reflectedNormal = texelFetch(Tex1, ivec2(hitPixel), 0).xyz;
+    diff = max(dot(reflectedNormal, lightDir), 0.0f);
+    reflectedCol = reflectedCol.rgb * (ambientLightColor.rgb + diff * lightCol.rgb);
+
+    // Fade out reflection before it disappears completely.
+    reflectedCol = mix(vec3(0.0f), reflectedCol, reflectedAlpha);
+
+    vec3 finalCol = deepWaterCol + specCol + reflectivityAmount * R * reflectedCol;
     FragColor = vec4(finalCol, 1.0f);
 }
