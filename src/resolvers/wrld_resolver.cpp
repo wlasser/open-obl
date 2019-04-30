@@ -578,7 +578,7 @@ oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   std::string normalName{oo::makeNormalPath(fullName)};
 
   auto &texMgr{Ogre::TextureManager::getSingleton()};
-  if (texMgr.resourceExists(fullName, oo::RESOURCE_GROUP)) {
+  if (texMgr.resourceExists(normalName, oo::RESOURCE_GROUP)) {
     list.emplace_back(std::move(normalName));
   } else {
     list.emplace_back("textures/flat_n.dds");
