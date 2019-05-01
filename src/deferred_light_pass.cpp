@@ -75,8 +75,8 @@ void DeferredLight::rebuildLightGeometry() {
 
     switch (lightType) {
       case LightTypes::LT_POINT: {
-        setBoundingBox(Ogre::AxisAlignedBox(radius, radius, radius,
-                                            -radius, -radius, -radius));
+        setBoundingBox(Ogre::AxisAlignedBox(-radius, -radius, -radius,
+                                            radius, radius, radius));
         createPointLight();
         setPointLightMaterial();
         break;
