@@ -47,7 +47,7 @@ void main() {
     vec3 nV = normalize(vec3(0.0f, n12 - n10, 2.0f));
     vec3 normal = cross(nV, nU).xyz;
 
-    vec2 refractedUv = uv + normal.xz * 0.01f;
+    vec2 refractedUv = uv + normal.xz * 0.05f;
 
     vec4 bedPos = texture(Tex0, refractedUv);
     vec3 bedNormal = texture(Tex1, refractedUv).xyz;
@@ -80,8 +80,9 @@ void main() {
 
     float distScale = clamp(2.0f / depth, 0.0f, 1.0f);
     vec3 deepWaterCol = mix(deepCol, bedCol, distScale);
-    //    vec3 waterCol = mix(deepWaterCol, shallowCol, nDotH);
-    //    vec3 depthAdjustedCol = mix(waterCol, bedCol, distScale);
+    vec3 waterCol = mix(deepWaterCol, shallowCol, nDotL);
+    // Adjust for depth again to get nice soft edges regardless of fresnel.
+    waterCol = mix(waterCol, bedCol, distScale);
 
     //===------------------------------------------------------------------===//
     // Raymarching implementation modified from work by
@@ -288,6 +289,6 @@ void main() {
     // Fade out reflection before it disappears completely.
     reflectedCol = mix(vec3(0.0f), reflectedCol, reflectedAlpha);
 
-    vec3 finalCol = deepWaterCol + specCol + reflectivityAmount * R * reflectedCol;
+    vec3 finalCol = waterCol + specCol + reflectivityAmount * R * reflectedCol;
     FragColor = vec4(finalCol, 1.0f);
 }
