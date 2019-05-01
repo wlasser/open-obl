@@ -73,7 +73,11 @@ oo::Weather::Weather(const record::WTHR &rec) {
   mColors[nighttime].horizon = makeColor(skyColors.horizon.night);
   mColors[nighttime].ambient = makeColor(skyColors.ambient.night);
   mColors[nighttime].sun = makeColor(skyColors.sun.night);
-  mColors[nighttime].sunlight = makeColor(skyColors.sunlight.night);
+  // TODO: Weathers use the nighttime sunlight as a moonlight colour, but due
+  //       to the discontinuity in the sun and moon directions, interpreting it
+  //       as such requires separate directional lights.
+  //  mColors[nighttime].sunlight = makeColor(skyColors.sunlight.night);
+  mColors[nighttime].sunlight = Ogre::ColourValue{0.0f, 0.0f, 0.0f, 1.0f};
   mColors[nighttime].stars = makeColor(skyColors.stars.night);
 
   if (rec.fogDistances) {

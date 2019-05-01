@@ -71,7 +71,8 @@ void main() {
     vec3 viewDir = normalize(ViewPos - FragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
     float nDotH = max(dot(normal, halfwayDir), 0.0f);
-    float R = mix(pow(1.0f - nDotH, 5.0f), 1.0f, R0);
+    float nDotL = max(dot(normal, viewDir), 0.0f);
+    float R = mix(pow(1.0f - nDotL, 5.0f), 1.0f, R0);
 
     float spec = pow(nDotH, 80.0f);
     vec3 specCol = fresnelAmount * R * reflectCol
