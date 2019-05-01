@@ -4,6 +4,7 @@
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
+#include <OgreTextureManager.h>
 #include <OgreTextureUnitState.h>
 
 namespace oo {
@@ -42,7 +43,33 @@ void setSkinTextures(const Ogre::MaterialPtr &mat,
     if (!pass) continue;
     for (auto *texState : pass->getTextureUnitStates()) {
       if (texState->getName() == "normal") {
-        texState->setTextureName(normalName);
+        // Many races use the Imperial normal maps implicitly, so the normal map
+        // might not actually exist.
+        auto &texMgr{Ogre::TextureManager::getSingleton()};
+        if (texMgr.resourceExists(normalName)) {
+          texState->setTextureName(normalName);
+          continue;
+        }
+
+        // The user is using an implicit fallback so they shouldn't expect
+        // anything clever here. Drop back two directories, hopefully the one
+        // named according to their race, and substitute the race name.
+        auto fileBegin{normalName.rfind('/')};
+        auto sexBegin{normalName.rfind('/', fileBegin)};
+        if (sexBegin == std::string::npos) {
+          // Not enough folders, we can still use the flat normal though.
+          texState->setTextureName("textures/flat_n.dds");
+          continue;
+        }
+
+        std::string fallbackNormal{"textures/characters/imperial"
+                                       + normalName.substr(sexBegin)};
+        if (texMgr.resourceExists(fallbackNormal)) {
+          texState->setTextureName(fallbackNormal);
+        } else {
+          // Well we tried.
+          texState->setTextureName("textures/flat_n.dds");
+        }
       } else {
         texState->setTextureName(diffuseName);
       }
