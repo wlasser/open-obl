@@ -107,8 +107,7 @@ void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
   const auto p0{oo::getCellIndex(x0, y0)};
   const auto p1{oo::getCellIndex(x1, y1)};
 
-  meta.mCellGrid.resize(
-      boost::extents[qvm::X(p1 - p0) + 1u][qvm::Y(p1 - p0) + 1u]);
+  meta.mCellGrid.resize(boost::extents[qvm::X(p1 - p0)][qvm::Y(p1 - p0)]);
   meta.mCellGrid.reindex(std::array{qvm::X(p0), qvm::Y(p0)});
 
   WrldVisitor visitor(meta, baseCtx);
