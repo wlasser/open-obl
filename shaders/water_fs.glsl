@@ -9,6 +9,7 @@ uniform vec4 sunlightColor;
 uniform vec4 sunlightDirection;
 uniform mat4 view;
 uniform mat4 proj;
+uniform mat4 viewProjInv;
 uniform float nearClipDist;
 uniform float farClipDist;
 uniform vec4 viewportSize;
@@ -49,15 +50,24 @@ void main() {
 
     vec2 refractedUv = uv + normal.xz * 0.05f;
 
-    vec4 bedPos = texture(Tex0, refractedUv);
+    // Get the view space depth of the ground beneath the water (usually a
+    // river or lake bed, giving the name) and change the uv coordinates if
+    // needed so as to not sample objects above the water.
+    float bedDepth = texture(Tex0, refractedUv).w;
+    if (bedDepth < homScreenPos.z) {
+        refractedUv = uv;
+        bedDepth = texture(Tex0, refractedUv).w;
+    }
+
     vec3 bedNormal = texture(Tex1, refractedUv).xyz;
     vec3 bedAlbedo = texture(Tex2, refractedUv).rgb;
 
-    if (bedPos.w < homScreenPos.z) {
-        bedPos = texture(Tex0, uv);
-        bedNormal = texture(Tex1, uv).xyz;
-        bedAlbedo = texture(Tex2, uv).rgb;
-    }
+    // Compute the bed position from its depth.
+    vec3 bedNdc = vec3(homScreenPos.xy, 2.0f * bedDepth - 1.0f);
+    vec4 bedClipPos;
+    bedClipPos.w = proj[3][2] / (bedNdc.z - (proj[2][2] / proj[2][3]));
+    bedClipPos.xyz = bedNdc * bedClipPos.w;
+    vec4 bedPos = viewProjInv * bedClipPos;
 
     // Apply sunlight diffuse to underwater objects.
     float diff = max(dot(bedNormal, lightDir), 0.0f);

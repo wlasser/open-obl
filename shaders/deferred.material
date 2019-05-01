@@ -86,6 +86,8 @@ material DeferredPointLight {
             }
 
             fragment_program_ref deferred_point_light_fs_glsl {
+                param_named_auto viewProjInv INVERSE_VIEWPROJ_MATRIX
+                param_named_auto proj PROJECTION_MATRIX
                 param_named Tex0 int 0
                 param_named Tex1 int 1
                 param_named Tex2 int 2

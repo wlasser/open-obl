@@ -4,6 +4,8 @@
 #define DIRECTIONAL_LIGHT 1
 #define SPOT_LIGHT 2
 
+uniform mat4 viewProjInv;
+uniform mat4 proj;
 uniform sampler2D Tex0;
 uniform sampler2D Tex1;
 uniform sampler2D Tex2;
@@ -46,7 +48,21 @@ void main() {
         return;
     }
 
-    vec3 worldPos = texture(Tex0, uv).xyz;
+    // Recreate world position from depth. Thanks OpenGL wiki!
+    float depth = texture(Tex0, uv).w;
+    vec3 ndc;
+    #if LIGHT_TYPE == DIRECTIONAL_LIGHT
+    ndc.xy = 2.0f * uv - 1.0f;
+    #else
+    ndc.xy = homScreenPos.xy;
+    #endif
+    ndc.z = 2.0f * depth - 1.0f;
+
+    vec4 clipPos;
+    clipPos.w = proj[3][2] / (ndc.z - (proj[2][2] / proj[2][3]));
+    clipPos.xyz = ndc * clipPos.w;
+    vec3 worldPos = (viewProjInv * clipPos).xyz;
+
     vec4 albedo = texture(Tex2, uv).rgba;
     float shininess = albedo.a;
 
