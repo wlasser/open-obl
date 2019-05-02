@@ -34,6 +34,7 @@ void DebugDrawImpl::drawSkeleton(gsl::not_null<oo::Entity *> entity) {
 
 void DebugDrawImpl::drawBoundingBox(gsl::not_null<oo::Entity *> entity) {
   const auto &bbox{entity->getWorldBoundingBox()};
+  if (bbox.isNull() || bbox.isInfinite()) return;
   const auto min{qvm::convert_to<btVector3>(bbox.getMinimum())};
   const auto max{qvm::convert_to<btVector3>(bbox.getMaximum())};
   mDebugDrawer->drawBox(min, max, {0.0f, 1.0f, 0.0f});
@@ -41,6 +42,7 @@ void DebugDrawImpl::drawBoundingBox(gsl::not_null<oo::Entity *> entity) {
 
 void DebugDrawImpl::drawBoundingBox(gsl::not_null<Ogre::SceneNode *> node) {
   const auto bbox{node->_getWorldAABB()};
+  if (bbox.isNull() || bbox.isInfinite()) return;
   const auto min{qvm::convert_to<btVector3>(bbox.getMinimum())};
   const auto max{qvm::convert_to<btVector3>(bbox.getMaximum())};
   mDebugDrawer->drawBox(min, max, {1.0f, 0.0f, 0.0f});
