@@ -639,27 +639,10 @@ void addDeferredFragmentShader(Ogre::Pass *pass) {
 //  const int numLights{8};
   fsParams->setNamedConstant("diffuseMap", 0);
   fsParams->setNamedConstant("normalMap", 1);
-//  fsParams->setNamedAutoConstant("lightPositionArray",
-//                                 AutoConst::ACT_LIGHT_POSITION_ARRAY,
-//                                 numLights);
-//  fsParams->setNamedAutoConstant("lightDiffuseArray",
-//                                 AutoConst::ACT_LIGHT_DIFFUSE_COLOUR_ARRAY,
-//                                 numLights);
-//  fsParams->setNamedAutoConstant("lightAttenuationArray",
-//                                 AutoConst::ACT_LIGHT_ATTENUATION_ARRAY,
-//                                 numLights);
-//  fsParams->setNamedAutoConstant("ambientLightColor",
-//                                 AutoConst::ACT_AMBIENT_LIGHT_COLOUR);
   fsParams->setNamedAutoConstant("matShininess",
                                  AutoConst::ACT_SURFACE_SHININESS);
   fsParams->setNamedAutoConstant("matDiffuse",
                                  AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
-//  fsParams->setNamedAutoConstant("matSpecular",
-//                                 AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
-//  fsParams->setNamedAutoConstant("fogColor",
-//                                 AutoConst::ACT_FOG_COLOUR);
-//  fsParams->setNamedAutoConstant("fogParams",
-//                                 AutoConst::ACT_FOG_PARAMS);
 }
 
 void addForwardFragmentShader(Ogre::Pass *pass) {
@@ -688,10 +671,6 @@ void addForwardFragmentShader(Ogre::Pass *pass) {
                                  AutoConst::ACT_SURFACE_DIFFUSE_COLOUR);
   fsParams->setNamedAutoConstant("matSpecular",
                                  AutoConst::ACT_SURFACE_SPECULAR_COLOUR);
-  fsParams->setNamedAutoConstant("fogColor",
-                                 AutoConst::ACT_FOG_COLOUR);
-  fsParams->setNamedAutoConstant("fogParams",
-                                 AutoConst::ACT_FOG_PARAMS);
 }
 
 TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {

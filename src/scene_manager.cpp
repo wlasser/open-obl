@@ -10,7 +10,7 @@ namespace oo {
 // Deferred Lighting Base Scene Manager
 //===----------------------------------------------------------------------===//
 DeferredSceneManager::DeferredSceneManager(const Ogre::String &name)
-    : Ogre::SceneManager(name) {}
+    : Ogre::SceneManager(name), mFogListener(this) {}
 
 const Ogre::String &DeferredSceneManager::getTypeName() const {
   static Ogre::String typeName{DeferredSceneManagerFactory::FACTORY_TYPE_NAME};
@@ -58,6 +58,10 @@ std::vector<oo::DeferredLight *> DeferredSceneManager::getLights() const {
   std::transform(mLights.begin(), mLights.end(), lights.begin(),
                  [](const auto &info) { return info.geometry.get(); });
   return lights;
+}
+
+oo::DeferredFogListener *DeferredSceneManager::getFogListener() noexcept {
+  return &mFogListener;
 }
 
 DeferredSceneManager::LightInfo::LightInfo(Ogre::Light *light,

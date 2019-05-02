@@ -1,5 +1,6 @@
 #include "deferred_light_pass.hpp"
 #include "scene_manager.hpp"
+#include "settings.hpp"
 
 #include <OgreCamera.h>
 #include <OgreCompositorChain.h>
@@ -322,20 +323,19 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
   const Ogre::LightList &lights{dScnMgr->_getLightsAffectingFrustum()};
 
   for (auto *light : lights) {
-    auto it{std::find_if(dLights.begin(), dLights.end(), [light](auto *l) {
-      return l->getParent() == light;
-    })};
+    auto pred = [light](auto *l) { return l->getParent() == light; };
+    auto it{std::find_if(dLights.begin(), dLights.end(), pred)};
     if (it == dLights.end()) continue;
     auto *dLight{*it};
 
     if (light->getType() == Ogre::Light::LightTypes::LT_SPOTLIGHT) continue;
 
+    // rebuildLightGeometry() may update material params so must do that before
+    // getting the technique.
     dLight->rebuildLightGeometry();
 
-    Ogre::LightList dLightList;
-    dLightList.push_back(light);
-    auto *technique = dLight->getMaterial()->getBestTechnique();
-    if (!technique) return;
+    auto *technique{dLight->getMaterial()->getBestTechnique()};
+    if (!technique) continue;
 
     for (auto *pass : technique->getPasses()) {
       if (light->getType() != Ogre::Light::LightTypes::LT_DIRECTIONAL) {
@@ -349,10 +349,28 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
         }
       }
 
+      // LightList does not support construction from std::initializer_list :(
+      Ogre::LightList dLightList(1, light);
       dScnMgr->_injectRenderWithPass(pass, *it, false, false, &dLightList);
     }
 
   }
+}
+
+DeferredFogListener::DeferredFogListener(Ogre::SceneManager *scnMgr) noexcept
+    : mScnMgr(scnMgr) {}
+
+void
+DeferredFogListener::notifyMaterialRender(uint32_t, Ogre::MaterialPtr &matPtr) {
+  auto *postPass{matPtr->getTechnique(0)->getPass(0)};
+  auto postParams{postPass->getFragmentProgramParameters()};
+  postParams->setNamedConstant("fogColor", mScnMgr->getFogColour());
+  postParams->setNamedConstant("fogParams", Ogre::Vector4{
+      mScnMgr->getFogDensity(),
+      mScnMgr->getFogStart(),
+      mScnMgr->getFogEnd(),
+      1.0f / (mScnMgr->getFogEnd() - mScnMgr->getFogStart())
+  });
 }
 
 } // namespace oo

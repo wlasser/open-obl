@@ -69,6 +69,7 @@ compositor DeferredShading {
             pass render_quad {
                 material PostMaterial
                 input 0 rt0
+                input 1 mrt_output 0
             }
         }
     }

@@ -95,6 +95,22 @@ class DeferredLightPass : public Ogre::CustomCompositionPass {
   }
 };
 
+/// Attach this to a post-processing `Ogre::CompositorInstance` to notify it of
+/// the scene manager's fog colour and parameters.
+/// Fog is rendered as a post-processing effect so does not have access to the
+/// scene manager's auto constants and hence needs to be given the fog
+/// parameters manually.
+class DeferredFogListener : public Ogre::CompositorInstance::Listener {
+ public:
+  void
+  notifyMaterialRender(uint32_t passId, Ogre::MaterialPtr &matPtr) override;
+
+  explicit DeferredFogListener(Ogre::SceneManager *scnMgr) noexcept;
+
+ private:
+  Ogre::SceneManager *mScnMgr;
+};
+
 } // namespace oo
 
 #endif // OPENOBLIVION_DEFERRED_LIGHT_PASS_HPP

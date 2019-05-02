@@ -18,12 +18,23 @@ material PostMaterial {
 			    param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
 			}
 
-			fragment_program_ref post_fs_glsl { }
+			fragment_program_ref post_fs_glsl  {
+			    param_named RT int 0
+			    param_named Tex0 int 1
+			    param_named_auto nearClipDist NEAR_CLIP_DISTANCE
+			    param_named_auto farClipDist FAR_CLIP_DISTANCE
+			}
 
 			texture_unit RT {
                 tex_coord_set 0
 				tex_address_mode clamp
 				filtering trilinear
+			}
+
+			texture_unit Tex0 {
+			    content_type compositor DeferredGBuffer mrt_output 0
+			    tex_address_mode clamp
+			    filtering none
 			}
 		}
     }

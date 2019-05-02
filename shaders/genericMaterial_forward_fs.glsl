@@ -18,10 +18,6 @@ uniform float matShininess;
 uniform vec3 matDiffuse;
 uniform vec3 matSpecular;
 
-uniform vec4 fogColor;
-// x = density, y = start, z = end, w = 1 / (end - start)
-uniform vec4 fogParams;
-
 out vec4 FragColor;
 
 void main() {
@@ -85,10 +81,6 @@ void main() {
     }
 
     vec3 fragColor = ambientCol + lighting;
-
-    float distance = length(FragPos - viewPos);
-    float fog = clamp((fogParams.z - distance) * fogParams.w, 0.0f, 1.0f);
-    fragColor = fog * fragColor + (1.0f - fog) * fogColor.rgb;
 
     FragColor = vec4(fragColor, alpha);
 }

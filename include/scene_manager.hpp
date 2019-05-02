@@ -35,6 +35,8 @@ class DeferredSceneManager : public Ogre::SceneManager {
   void destroyAllMovableObjects() override;
 
   std::vector<oo::DeferredLight *> getLights() const;
+  DeferredFogListener *getFogListener() noexcept;
+
  private:
   struct LightInfo {
     Ogre::Light *light{};
@@ -42,6 +44,8 @@ class DeferredSceneManager : public Ogre::SceneManager {
     LightInfo(Ogre::Light *light, std::unique_ptr<oo::DeferredLight> geometry);
   };
   std::vector<LightInfo> mLights{};
+
+  DeferredFogListener mFogListener;
 };
 
 class DeferredSceneManagerFactory : public Ogre::SceneManagerFactory {

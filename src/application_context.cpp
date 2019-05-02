@@ -127,10 +127,11 @@ void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {
 
   auto *deferred{compMgr.addCompositor(camera->getViewport(),
                                        "DeferredShading")};
+  auto *scnMgr{camera->getSceneManager()};
+  if (auto *dScnMgr{dynamic_cast<oo::DeferredSceneManager *>(scnMgr)}) {
+    deferred->addListener(dScnMgr->getFogListener());
+  }
   deferred->setEnabled(true);
-
-//  auto *compInstance{compMgr.addCompositor(camera->getViewport(), "Post")};
-//  compInstance->setEnabled(true);
 }
 
 } // namespace oo
