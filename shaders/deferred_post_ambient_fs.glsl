@@ -9,7 +9,7 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 void main() {
-    float depth = texture(Tex0, TexCoord).w;
+    float depth = texture(Tex0, TexCoord).x;
     // Sufficiently small depth buffer mean unwritten, so must be sky, which
     // we shouldn't write over.
     if (depth < 1e-4f) discard;

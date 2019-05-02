@@ -17,7 +17,7 @@ uniform sampler2D normal6;
 uniform sampler2D normal7;
 uniform sampler2D normal8;
 
-layout (location = 0) out vec4 gPosition;
+layout (location = 0) out vec2 gDepth;
 layout (location = 1) out vec4 gNormalSpec;
 //layout (location = 2) out vec4 gAlbedo;
 
@@ -66,6 +66,6 @@ void main() {
     gNormalSpec.xyz = normalize(TBN * n[8].xyz);
     gNormalSpec.w = n[8].w;
 
-    gPosition.xyz = FragPos;
-    gPosition.w = gl_FragCoord.z;
+    gDepth.x = gl_FragCoord.z;
+    gDepth.y = 0.0f;
 }

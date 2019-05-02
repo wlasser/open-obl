@@ -49,7 +49,7 @@ void main() {
     }
 
     // Recreate world position from depth. Thanks OpenGL wiki!
-    float depth = texture(Tex0, uv).w;
+    float depth = texture(Tex0, uv).x;
     vec3 ndc;
     #if LIGHT_TYPE == DIRECTIONAL_LIGHT
     ndc.xy = 2.0f * uv - 1.0f;

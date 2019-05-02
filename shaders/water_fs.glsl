@@ -53,10 +53,10 @@ void main() {
     // Get the view space depth of the ground beneath the water (usually a
     // river or lake bed, giving the name) and change the uv coordinates if
     // needed so as to not sample objects above the water.
-    float bedDepth = texture(Tex0, refractedUv).w;
+    float bedDepth = texture(Tex0, refractedUv).x;
     if (bedDepth < homScreenPos.z) {
         refractedUv = uv;
-        bedDepth = texture(Tex0, refractedUv).w;
+        bedDepth = texture(Tex0, refractedUv).x;
     }
 
     vec3 bedNormal = texture(Tex1, refractedUv).xyz;
@@ -264,7 +264,7 @@ void main() {
 
         hitPixel = permute ? p.yx : p;
         // Get view space depth at current ray point.
-        sceneZMax = texelFetch(Tex0, ivec2(hitPixel), 0).w;
+        sceneZMax = texelFetch(Tex0, ivec2(hitPixel), 0).x;
 
         // Convert [0, 1] depth buffer into camera space depth.
         //   ZMax = farClipDist * nearClipDist / ((farClipDist - nearClipDist) * sceneZMax - farClipDist);

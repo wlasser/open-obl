@@ -13,7 +13,7 @@ uniform vec3 matDiffuse;
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 
-layout (location = 0) out vec4 gPosition;
+layout (location = 0) out vec2 gDepth;
 layout (location = 1) out vec4 gNormalSpec;
 layout (location = 2) out vec4 gAlbedo;
 
@@ -33,8 +33,8 @@ void main() {
     gNormalSpec.xyz = TBN * normal;
     gNormalSpec.w = floor(normalSpec.w * 255.0f) == 255 ? 0.0f : normalSpec.w;
 
-    gPosition.xyz = FragPos;
-    gPosition.w = gl_FragCoord.z;
+    gDepth.x = gl_FragCoord.z;
+    gDepth.y = 0.0f;
 
     gAlbedo = vec4(diffuseColor * matDiffuse, matShininess);
 }

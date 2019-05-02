@@ -4,7 +4,7 @@ in vec2 TexCoord;
 in vec3 FragPos;
 in vec3 ViewPos;
 
-layout (location = 0) out vec4 gPosition;
+layout (location = 0) out vec2 gDepth;
 layout (location = 1) out vec4 gNormalSpec;
 layout (location = 2) out vec4 gAlbedo;
 
@@ -105,8 +105,8 @@ void main() {
     gNormalSpec.xyz = normalize(TBN * n_4.xyz);
     gNormalSpec.w = n_4.w;
 
-    gPosition.xyz = FragPos;
-    gPosition.w = gl_FragCoord.z;
+    gDepth.x = gl_FragCoord.z;
+    gDepth.y = 0.0f;
 
     // TODO: Use LTEX specular. All of them seem to use 30.0f though.
     gAlbedo = vec4(diffuseColor, 30.0f);

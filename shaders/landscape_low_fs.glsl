@@ -6,7 +6,7 @@ in vec3 ViewPos;
 uniform sampler2D diffuseMap;
 uniform sampler2D normalMap;
 
-layout (location = 0) out vec4 gPosition;
+layout (location = 0) out vec2 gDepth;
 layout (location = 1) out vec4 gNormalSpec;
 layout (location = 2) out vec4 gAlbedo;
 
@@ -25,8 +25,8 @@ void main() {
     gNormalSpec.xyz = normalize(texture(normalMap, vec2(TexCoord.x, 1.0f - TexCoord.y)).xyz);
     gNormalSpec.w = 0.0f;
 
-    gPosition.xyz = FragPos;
-    gPosition.w = gl_FragCoord.z;
+    gDepth.x = gl_FragCoord.z;
+    gDepth.y = 0.0f;
 
     // TODO: Use LTEX specular. All of them seem to use 30.0f though.
     gAlbedo = vec4(diffuseColor, 30.0f);

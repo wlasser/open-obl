@@ -17,7 +17,7 @@ uniform sampler2D diffuse6;
 uniform sampler2D diffuse7;
 uniform sampler2D diffuse8;
 
-//layout (location = 0) out vec4 gPosition;
+//layout (location = 0) out vec2 gDepth;
 //layout (location = 1) out vec4 gNormalSpec;
 layout (location = 2) out vec4 gAlbedo;
 
