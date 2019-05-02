@@ -19,6 +19,11 @@ class DeferredLight : public Ogre::SimpleRenderable {
   Ogre::Real getSquaredViewDepth(const Ogre::Camera *camera) const override;
   void getWorldTransforms(Ogre::Matrix4 *xform) const override;
 
+  const Ogre::AxisAlignedBox &
+  getWorldBoundingBox(bool derive = false) const override;
+  const Ogre::Sphere &
+  getWorldBoundingSphere(bool derive = false) const override;
+
   Ogre::Light *getParent() const;
 
   bool isInsideLight(Ogre::Camera *camera) const;

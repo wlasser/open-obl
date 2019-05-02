@@ -1,4 +1,5 @@
 #include "deferred_light_pass.hpp"
+#include "math/conversions.hpp"
 #include "scene_manager.hpp"
 #include "settings.hpp"
 
@@ -94,6 +95,29 @@ void DeferredLight::rebuildLightGeometry() {
       default: return;
     }
   }
+}
+
+const Ogre::AxisAlignedBox &
+DeferredLight::getWorldBoundingBox(bool derive) const {
+  if (derive) {
+    mWorldAABB = getBoundingBox();
+    mWorldAABB.transform(mParent->_getParentNodeFullTransform());
+  }
+
+  return mWorldAABB;
+}
+
+const Ogre::Sphere &
+DeferredLight::getWorldBoundingSphere(bool derive) const {
+  if (derive) {
+    auto scale{mParent->getParentNode()->_getDerivedScale()};
+    auto max{std::max(qvm::X(scale), std::max(qvm::Y(scale), qvm::Z(scale)))};
+    auto pos{mParent->getParentNode()->_getDerivedPosition()};
+    mWorldBoundingSphere.setRadius(max * getBoundingRadius());
+    mWorldBoundingSphere.setCenter(pos);
+  }
+
+  return mWorldBoundingSphere;
 }
 
 void DeferredLight::createPointLight() {
