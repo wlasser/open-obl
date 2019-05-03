@@ -246,7 +246,7 @@ using REFR_STAT = raw::REFR<"STAT"_rec, REFRParentable, REFRScalable,
                             REFRTargetable, REFROwnable, REFRMarker,
                             REFRLod, REFRUnused>;
 using REFR_FLOR = raw::REFR<"FLOR"_rec, REFRParentable, REFRScalable,
-                            REFROwnable>;
+                            REFROwnable, REFRTree, REFRLod>;
 using REFR_FURN = raw::REFR<"FURN"_rec, REFRParentable, REFRScalable,
                             REFROwnable>;
 // REFRUnused is required due to an XPCI record in the Toddland worldspace.
