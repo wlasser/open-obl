@@ -363,12 +363,15 @@ void readRecord(EsxAccessor &accessor,
     case "SPEL"_rec:return visitor.template readRecord<record::SPEL>(accessor);
     case "BSGN"_rec:return visitor.template readRecord<record::BSGN>(accessor);
     case "ACTI"_rec:return visitor.template readRecord<record::ACTI>(accessor);
+    case "CONT"_rec:return visitor.template readRecord<record::CONT>(accessor);
     case "DOOR"_rec:return visitor.template readRecord<record::DOOR>(accessor);
     case "LIGH"_rec:return visitor.template readRecord<record::LIGH>(accessor);
     case "MISC"_rec:return visitor.template readRecord<record::MISC>(accessor);
     case "STAT"_rec:return visitor.template readRecord<record::STAT>(accessor);
     case "GRAS"_rec:return visitor.template readRecord<record::GRAS>(accessor);
     case "TREE"_rec:return visitor.template readRecord<record::TREE>(accessor);
+    case "FLOR"_rec:return visitor.template readRecord<record::FLOR>(accessor);
+    case "FURN"_rec:return visitor.template readRecord<record::FURN>(accessor);
     case "NPC_"_rec:return visitor.template readRecord<record::NPC_>(accessor);
     case "ALCH"_rec:return visitor.template readRecord<record::ALCH>(accessor);
     case "WTHR"_rec:return visitor.template readRecord<record::WTHR>(accessor);

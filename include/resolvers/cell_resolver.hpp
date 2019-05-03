@@ -4,7 +4,10 @@
 #include "bullet/configuration.hpp"
 #include "esp_coordinator.hpp"
 #include "resolvers/acti_resolver.hpp"
+#include "resolvers/cont_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
+#include "resolvers/flor_resolver.hpp"
+#include "resolvers/furn_resolver.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/misc_resolver.hpp"
@@ -107,12 +110,13 @@ class Resolver<record::CELL> {
   bool contains(oo::BaseId baseId) const;
 
   using RefrResolverContext = RefrResolverTuple<
-      record::REFR_ACTI, record::REFR_DOOR, record::REFR_LIGH,
-      record::REFR_MISC, record::REFR_STAT, record::REFR_NPC_>;
+      record::REFR_ACTI, record::REFR_CONT, record::REFR_DOOR,
+      record::REFR_LIGH, record::REFR_MISC, record::REFR_STAT,
+      record::REFR_FLOR, record::REFR_FURN, record::REFR_NPC_>;
 
   using BaseResolverContext = ResolverTuple<
-      record::RACE, record::ACTI, record::DOOR, record::LIGH, record::MISC,
-      record::STAT, record::NPC_>;
+      record::RACE, record::ACTI, record::CONT, record::DOOR, record::LIGH,
+      record::MISC, record::STAT, record::FLOR, record::FURN, record::NPC_>;
 
   using MoreResolverContext = std::tuple<oo::Resolver<record::LAND> &>;
 

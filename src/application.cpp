@@ -27,7 +27,10 @@
 #include "ogreimgui/imgui_manager.hpp"
 #include "resolvers/acti_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
+#include "resolvers/cont_resolver.hpp"
 #include "resolvers/door_resolver.hpp"
+#include "resolvers/flor_resolver.hpp"
+#include "resolvers/furn_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
@@ -152,12 +155,15 @@ Application::Application(std::string windowName) : FrameListener() {
         std::make_tuple(oo::add_resolver_t<record::RACE>{},
                         oo::add_resolver_t<record::LTEX>{},
                         oo::add_resolver_t<record::ACTI>{},
+                        oo::add_resolver_t<record::CONT>{},
                         oo::add_resolver_t<record::DOOR>{},
                         oo::add_resolver_t<record::LIGH>{},
                         oo::add_resolver_t<record::MISC>{},
                         oo::add_resolver_t<record::STAT>{},
                         oo::add_resolver_t<record::GRAS>{},
                         oo::add_resolver_t<record::TREE>{},
+                        oo::add_resolver_t<record::FLOR>{},
+                        oo::add_resolver_t<record::FURN>{},
                         oo::add_resolver_t<record::NPC_>{},
                         oo::add_resolver_t<record::WTHR>{},
                         oo::add_resolver_t<record::CLMT>{},
@@ -168,10 +174,13 @@ Application::Application(std::string windowName) : FrameListener() {
 
     ctx.refrResolvers = std::make_unique<oo::RefrResolvers>(
         std::make_tuple(oo::add_refr_resolver_t<record::REFR_ACTI>{},
+                        oo::add_refr_resolver_t<record::REFR_CONT>{},
                         oo::add_refr_resolver_t<record::REFR_DOOR>{},
                         oo::add_refr_resolver_t<record::REFR_LIGH>{},
                         oo::add_refr_resolver_t<record::REFR_MISC>{},
                         oo::add_refr_resolver_t<record::REFR_STAT>{},
+                        oo::add_refr_resolver_t<record::REFR_FLOR>{},
+                        oo::add_refr_resolver_t<record::REFR_FURN>{},
                         oo::add_refr_resolver_t<record::REFR_NPC_>{}));
   }, &resolversCounter);
 

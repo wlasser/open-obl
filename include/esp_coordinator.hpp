@@ -294,12 +294,18 @@ class EspCoordinator {
   translateFormIds(record::raw::BSGN rec, int modIndex) const;
   template<> record::raw::ACTI
   translateFormIds(record::raw::ACTI rec, int modIndex) const;
+  template<> record::raw::CONT
+  translateFormIds(record::raw::CONT rec, int modIndex) const;
   template<> record::raw::DOOR
   translateFormIds(record::raw::DOOR rec, int modIndex) const;
   template<> record::raw::LIGH
   translateFormIds(record::raw::LIGH rec, int modIndex) const;
   template<> record::raw::MISC
   translateFormIds(record::raw::MISC rec, int modIndex) const;
+  template<> record::raw::FLOR
+  translateFormIds(record::raw::FLOR rec, int modIndex) const;
+  template<> record::raw::FURN
+  translateFormIds(record::raw::FURN rec, int modIndex) const;
   template<> record::raw::NPC_
   translateFormIds(record::raw::NPC_ rec, int modIndex) const;
   template<> record::raw::ALCH
@@ -319,6 +325,8 @@ class EspCoordinator {
 
   template<> record::raw::REFR_ACTI
   translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;
+  template<> record::raw::REFR_CONT
+  translateFormIds(record::raw::REFR_CONT rec, int modIndex) const;
   template<> record::raw::REFR_DOOR
   translateFormIds(record::raw::REFR_DOOR rec, int modIndex) const;
   template<> record::raw::REFR_LIGH
@@ -327,6 +335,10 @@ class EspCoordinator {
   translateFormIds(record::raw::REFR_MISC rec, int modIndex) const;
   template<> record::raw::REFR_STAT
   translateFormIds(record::raw::REFR_STAT rec, int modIndex) const;
+  template<> record::raw::REFR_FLOR
+  translateFormIds(record::raw::REFR_FLOR rec, int modIndex) const;
+  template<> record::raw::REFR_FURN
+  translateFormIds(record::raw::REFR_FURN rec, int modIndex) const;
   template<> record::raw::REFR_NPC_
   translateFormIds(record::raw::REFR_NPC_ rec, int modIndex) const;
 

@@ -149,20 +149,30 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccesso
   const BaseId baseId{accessor.peekBaseId()};
 
   const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
+  const auto &contRes{oo::getResolver<record::CONT>(mBaseCtx)};
   const auto &doorRes{oo::getResolver<record::DOOR>(mBaseCtx)};
   const auto &lighRes{oo::getResolver<record::LIGH>(mBaseCtx)};
   const auto &miscRes{oo::getResolver<record::MISC>(mBaseCtx)};
   const auto &statRes{oo::getResolver<record::STAT>(mBaseCtx)};
+  const auto &florRes{oo::getResolver<record::FLOR>(mBaseCtx)};
+  const auto &furnRes{oo::getResolver<record::FURN>(mBaseCtx)};
 
   auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(mRefrCtx)};
+  auto &refrContRes{oo::getRefrResolver<record::REFR_CONT>(mRefrCtx)};
   auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(mRefrCtx)};
   auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(mRefrCtx)};
   auto &refrMiscRes{oo::getRefrResolver<record::REFR_MISC>(mRefrCtx)};
   auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(mRefrCtx)};
+  auto &refrFlorRes{oo::getRefrResolver<record::REFR_FLOR>(mRefrCtx)};
+  auto &refrFurnRes{oo::getRefrResolver<record::REFR_FURN>(mRefrCtx)};
 
   if (actiRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
     refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
+  } else if (contRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_CONT>().value};
+    refrContRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
@@ -179,6 +189,14 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccesso
   } else if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
     refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
+  } else if (florRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_FLOR>().value};
+    refrFlorRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mMeta.mReferences.emplace(ref.mFormId);
+  } else if (furnRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_FURN>().value};
+    refrFurnRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mMeta.mReferences.emplace(ref.mFormId);
   } else {
     accessor.skipRecord();
@@ -499,22 +517,30 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
 
   const auto &raceRes{oo::getResolver<record::RACE>(resolvers)};
   const auto &actiRes{oo::getResolver<record::ACTI>(resolvers)};
+  const auto &contRes{oo::getResolver<record::CONT>(resolvers)};
   const auto &doorRes{oo::getResolver<record::DOOR>(resolvers)};
   const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
   const auto &miscRes{oo::getResolver<record::MISC>(resolvers)};
   const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
+  const auto &florRes{oo::getResolver<record::FLOR>(resolvers)};
+  const auto &furnRes{oo::getResolver<record::FURN>(resolvers)};
   const auto &npc_Res{oo::getResolver<record::NPC_>(resolvers)};
 
   const auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(resolvers)};
+  const auto &refrContRes{oo::getRefrResolver<record::REFR_CONT>(resolvers)};
   const auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(resolvers)};
   const auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(resolvers)};
   const auto &refrMiscRes{oo::getRefrResolver<record::REFR_MISC>(resolvers)};
   const auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(resolvers)};
+  const auto &refrFlorRes{oo::getRefrResolver<record::REFR_FLOR>(resolvers)};
+  const auto &refrFurnRes{oo::getRefrResolver<record::REFR_FURN>(resolvers)};
   const auto &refrNpc_Res{oo::getRefrResolver<record::REFR_NPC_>(resolvers)};
 
   for (auto refId : *refs) {
     if (auto acti{refrActiRes.get(refId)}; acti) {
       cell->attach(*acti, std::forward_as_tuple(actiRes));
+    } else if (auto cont{refrContRes.get(refId)}; cont) {
+      cell->attach(*cont, std::forward_as_tuple(contRes));
     } else if (auto door{refrDoorRes.get(refId)}; door) {
       cell->attach(*door, std::forward_as_tuple(doorRes));
     } else if (auto ligh{refrLighRes.get(refId)}; ligh) {
@@ -523,6 +549,10 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
       cell->attach(*misc, std::forward_as_tuple(miscRes));
     } else if (auto stat{refrStatRes.get(refId)}; stat) {
       cell->attach(*stat, std::forward_as_tuple(statRes));
+    } else if (auto flor{refrFlorRes.get(refId)}; flor) {
+      cell->attach(*flor, std::forward_as_tuple(florRes));
+    } else if (auto furn{refrFurnRes.get(refId)}; furn) {
+      cell->attach(*furn, std::forward_as_tuple(furnRes));
     } else if (auto npc{refrNpc_Res.get(refId)}; npc) {
       cell->attach(*npc, std::forward_as_tuple(npc_Res, raceRes));
     }

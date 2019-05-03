@@ -151,7 +151,10 @@ target_sources(OpenOblivion PRIVATE
         src/persistent_reference_locator.cpp
         src/resolvers/acti_resolver.cpp
         src/resolvers/cell_resolver.cpp
+        src/resolvers/cont_resolver.cpp
         src/resolvers/door_resolver.cpp
+        src/resolvers/flor_resolver.cpp
+        src/resolvers/furn_resolver.cpp
         src/resolvers/light_resolver.cpp
         src/resolvers/misc_resolver.cpp
         src/resolvers/npc_resolver.cpp
@@ -209,7 +212,10 @@ target_sources(OpenOblivion PRIVATE
         include/persistent_reference_locator.hpp
         include/resolvers/acti_resolver.hpp
         include/resolvers/cell_resolver.hpp
+        include/resolvers/cont_resolver.hpp
         include/resolvers/door_resolver.hpp
+        include/resolvers/flor_resolver.hpp
+        include/resolvers/furn_resolver.hpp
         include/resolvers/helpers.hpp
         include/resolvers/light_resolver.hpp
         include/resolvers/misc_resolver.hpp

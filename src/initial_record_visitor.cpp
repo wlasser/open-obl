@@ -6,8 +6,11 @@
 #include "record/group.hpp"
 #include "record/records.hpp"
 #include "resolvers/acti_resolver.hpp"
-#include "resolvers/door_resolver.hpp"
+#include "resolvers/cont_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
+#include "resolvers/door_resolver.hpp"
+#include "resolvers/flor_resolver.hpp"
+#include "resolvers/furn_resolver.hpp"
 #include "resolvers/light_resolver.hpp"
 #include "resolvers/misc_resolver.hpp"
 #include "resolvers/npc_resolver.hpp"
@@ -55,20 +58,30 @@ PersistentChildrenVisitor<F>::readRecordRefr(oo::EspAccessor &accessor) {
   const oo::BaseId baseId{accessor.peekBaseId()};
 
   const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
+  const auto &contRes{oo::getResolver<record::CONT>(mBaseCtx)};
   const auto &doorRes{oo::getResolver<record::DOOR>(mBaseCtx)};
   const auto &lighRes{oo::getResolver<record::LIGH>(mBaseCtx)};
   const auto &miscRes{oo::getResolver<record::MISC>(mBaseCtx)};
   const auto &statRes{oo::getResolver<record::STAT>(mBaseCtx)};
+  const auto &florRes{oo::getResolver<record::FLOR>(mBaseCtx)};
+  const auto &furnRes{oo::getResolver<record::FURN>(mBaseCtx)};
 
   auto &refrActiRes{oo::getRefrResolver<record::REFR_ACTI>(mRefrCtx)};
+  auto &refrContRes{oo::getRefrResolver<record::REFR_CONT>(mRefrCtx)};
   auto &refrDoorRes{oo::getRefrResolver<record::REFR_DOOR>(mRefrCtx)};
   auto &refrLighRes{oo::getRefrResolver<record::REFR_LIGH>(mRefrCtx)};
   auto &refrMiscRes{oo::getRefrResolver<record::REFR_MISC>(mRefrCtx)};
   auto &refrStatRes{oo::getRefrResolver<record::REFR_STAT>(mRefrCtx)};
+  auto &refrFlorRes{oo::getRefrResolver<record::REFR_FLOR>(mRefrCtx)};
+  auto &refrFurnRes{oo::getRefrResolver<record::REFR_FURN>(mRefrCtx)};
 
   if (actiRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_ACTI>().value};
     refrActiRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefAction(ref);
+  } else if (contRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_CONT>().value};
+    refrContRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mRefAction(ref);
   } else if (doorRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_DOOR>().value};
@@ -85,6 +98,14 @@ PersistentChildrenVisitor<F>::readRecordRefr(oo::EspAccessor &accessor) {
   } else if (statRes.contains(baseId)) {
     const auto ref{accessor.readRecord<record::REFR_STAT>().value};
     refrStatRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefAction(ref);
+  } else if (florRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_FLOR>().value};
+    refrFlorRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
+    mRefAction(ref);
+  } else if (furnRes.contains(baseId)) {
+    const auto ref{accessor.readRecord<record::REFR_FURN>().value};
+    refrFurnRes.insertOrAssignEspRecord(oo::RefId{ref.mFormId}, ref);
     mRefAction(ref);
   } else {
     accessor.skipRecord();
@@ -179,6 +200,11 @@ void InitialRecordVisitor::readRecord<record::ACTI>(oo::EspAccessor &accessor) {
 }
 
 template<>
+void InitialRecordVisitor::readRecord<record::CONT>(oo::EspAccessor &accessor) {
+  oo::readRecordDefault<record::CONT>(mBaseCtx, accessor);
+}
+
+template<>
 void InitialRecordVisitor::readRecord<record::DOOR>(oo::EspAccessor &accessor) {
   oo::readRecordDefault<record::DOOR>(mBaseCtx, accessor);
 }
@@ -206,6 +232,16 @@ void InitialRecordVisitor::readRecord<record::GRAS>(oo::EspAccessor &accessor) {
 template<>
 void InitialRecordVisitor::readRecord<record::TREE>(oo::EspAccessor &accessor) {
   oo::readRecordDefault<record::TREE>(mBaseCtx, accessor);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::FLOR>(oo::EspAccessor &accessor) {
+  oo::readRecordDefault<record::FLOR>(mBaseCtx, accessor);
+}
+
+template<>
+void InitialRecordVisitor::readRecord<record::FURN>(oo::EspAccessor &accessor) {
+  oo::readRecordDefault<record::FURN>(mBaseCtx, accessor);
 }
 
 template<>

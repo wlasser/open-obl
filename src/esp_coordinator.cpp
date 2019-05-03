@@ -465,6 +465,24 @@ EspCoordinator::translateFormIds(record::raw::ACTI rec, int modIndex) const {
 }
 
 template<>
+record::raw::CONT
+EspCoordinator::translateFormIds(record::raw::CONT rec, int modIndex) const {
+  if (rec.openSound) {
+    rec.openSound->data = translateFormIds(rec.openSound->data, modIndex);
+  }
+  if (rec.closeSound) {
+    rec.closeSound->data = translateFormIds(rec.closeSound->data, modIndex);
+  }
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
+  }
+  for (auto &item : rec.items) {
+    item = translateFormIds(item, modIndex);
+  }
+  return rec;
+}
+
+template<>
 record::raw::DOOR
 EspCoordinator::translateFormIds(record::raw::DOOR rec, int modIndex) const {
   if (rec.script) {
@@ -502,6 +520,27 @@ record::raw::MISC
 EspCoordinator::translateFormIds(record::raw::MISC rec, int modIndex) const {
   if (rec.itemScript) {
     rec.itemScript->data = translateFormIds(rec.itemScript->data, modIndex);
+  }
+  return rec;
+}
+
+template<>
+record::raw::FLOR
+EspCoordinator::translateFormIds(record::raw::FLOR rec, int modIndex) const {
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
+  }
+  if (rec.ingredient) {
+    rec.ingredient->data = translateFormIds(rec.ingredient->data, modIndex);
+  }
+  return rec;
+}
+
+template<>
+record::raw::FURN
+EspCoordinator::translateFormIds(record::raw::FURN rec, int modIndex) const {
+  if (rec.script) {
+    rec.script->data = translateFormIds(rec.script->data, modIndex);
   }
   return rec;
 }
@@ -645,6 +684,31 @@ EspCoordinator::translateFormIds(record::raw::REFR_ACTI rec,
 }
 
 template<>
+record::raw::REFR_CONT
+EspCoordinator::translateFormIds(record::raw::REFR_CONT rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
+  if (rec.owner) {
+    rec.owner->data = translateFormIds(rec.owner->data, modIndex);
+  }
+  if (rec.ownershipGlobal) {
+    rec.ownershipGlobal->data =
+        translateFormIds(rec.ownershipGlobal->data, modIndex);
+  }
+  if (rec.ownershipRank) {
+    rec.ownershipRank->data =
+        translateFormIds(rec.ownershipRank->data, modIndex);
+  }
+  if (rec.lockInfo) {
+    rec.lockInfo->data = translateFormIds(rec.lockInfo->data, modIndex);
+  }
+  return rec;
+}
+
+template<>
 record::raw::REFR_DOOR
 EspCoordinator::translateFormIds(record::raw::REFR_DOOR rec,
                                  int modIndex) const {
@@ -709,6 +773,30 @@ EspCoordinator::translateFormIds(record::raw::REFR_MISC rec,
 template<>
 record::raw::REFR_STAT
 EspCoordinator::translateFormIds(record::raw::REFR_STAT rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_FLOR
+EspCoordinator::translateFormIds(record::raw::REFR_FLOR rec,
+                                 int modIndex) const {
+  if (rec.parent) {
+    rec.parent->data = translateFormIds(rec.parent->data, modIndex);
+  }
+  rec.baseId = translateFormIds(rec.baseId, modIndex);
+
+  return rec;
+}
+
+template<>
+record::raw::REFR_FURN
+EspCoordinator::translateFormIds(record::raw::REFR_FURN rec,
                                  int modIndex) const {
   if (rec.parent) {
     rec.parent->data = translateFormIds(rec.parent->data, modIndex);

@@ -124,6 +124,9 @@ using LNAM = float;
 using MAST = std::string;
 // Male faction rank name
 using MNAM = std::string;
+// Bitfield for making furniture markers active. Set bits correspond to
+// positions in the `nif::BSFurnitureMarker` belonging to the model.
+using MNAM_FURN = uint32_t;
 // Body data marker
 using MNAM_RACE = std::tuple<>;
 // Master skill text
@@ -144,10 +147,14 @@ using NAM2 = oo::BaseId;
 using NAME = oo::BaseId;
 // Open by default. Its presence implies true.
 using ONAM = std::tuple<>;
+// Ingredient produced by a plant
+using PFIG = oo::BaseId;
 // AI package formid
 using PKID = oo::BaseId;
 // Facegen main clamp
 using PNAM = float;
+// Sound to play for a container closing
+using QNAM = oo::BaseId;
 // Rank index in a faction
 using RNAM = uint32_t;
 // NPC race
@@ -158,6 +165,8 @@ using SCRI = oo::BaseId;
 using SNAM = std::string;
 // Sound to play for an activator
 using SNAM_ACTI = oo::BaseId;
+// Sound to play for a container opening
+using SNAM_CONT = oo::BaseId;
 // Sound to play for a door opening
 using SNAM_DOOR = oo::BaseId;
 // Sound to play for a light
@@ -529,6 +538,16 @@ struct DATA_CLAS {
   oo::SkillIndex skillTrained = oo::SkillIndex::None;
   uint8_t maxTrainingLevel = 0u;
   std::array<uint8_t, 2> unused{};
+};
+
+// Container data
+struct DATA_CONT {
+  struct Flag : Bitflag<8, Flag> {
+    static constexpr enum_t None{0u};
+    static constexpr enum_t Respawns{1u << 1u};
+  };
+  Flag flag{Flag::make(Flag::None)};
+  float weight{};
 };
 
 // Value of a game setting. Only one value is used at a time, but cannot use a
@@ -1059,6 +1078,14 @@ struct OFST_WRLD {
   std::vector<uint32_t> entries;
 };
 
+// Ingredient harvest percentages for different times of year.
+struct PFPC {
+  uint8_t springChance{};
+  uint8_t summerChance{};
+  uint8_t autumnChance{};
+  uint8_t winterChance{};
+};
+
 // Script effect
 struct SCIT {
   struct Flag : Bitflag<8, Flag> {
@@ -1345,8 +1372,11 @@ using NAM2 = Subrecord<raw::NAM2, "NAM2"_rec>;
 using NAME = Subrecord<raw::NAME, "NAME"_rec>;
 using OFST = Subrecord<raw::OFST, "OFST"_rec>;
 using ONAM = Subrecord<raw::ONAM, "ONAM"_rec>;
+using PFIG = Subrecord<raw::PFIG, "PFIG"_rec>;
+using PFPC = Subrecord<raw::PFPC, "PFPC"_rec>;
 using PKID = Subrecord<raw::PKID, "PKID"_rec>;
 using PNAM = Subrecord<raw::PNAM, "PNAM"_rec>;
+using QNAM = Subrecord<raw::QNAM, "QNAM"_rec>;
 using RNAM = Subrecord<raw::RNAM, "RNAM"_rec>;
 using SCIT = Subrecord<raw::SCIT, "SCIT"_rec>;
 using SCRI = Subrecord<raw::SCRI, "SCRI"_rec>;
@@ -1413,6 +1443,7 @@ using CNAM_WTHR = Subrecord<raw::CNAM_WTHR, "CNAM"_rec>;
 using DATA_ALCH = Subrecord<raw::DATA_ALCH, "DATA"_rec>;
 using DATA_CELL = Subrecord<raw::DATA_CELL, "DATA"_rec>;
 using DATA_CLAS = Subrecord<raw::DATA_CLAS, "DATA"_rec>;
+using DATA_CONT = Subrecord<raw::DATA_CONT, "DATA"_rec>;
 using DATA_EYES = Subrecord<raw::DATA_EYES, "DATA"_rec>;
 using DATA_FACT = Subrecord<raw::DATA_FACT, "DATA"_rec>;
 using DATA_GMST = Subrecord<raw::DATA_GMST, "DATA"_rec>;
@@ -1455,6 +1486,7 @@ using INDX_BODY = Subrecord<raw::INDX_BODY, "INDX"_rec>;
 using INDX_FACE = Subrecord<raw::INDX_FACE, "INDX"_rec>;
 using INDX_SKIL = Subrecord<raw::INDX_SKIL, "INDX"_rec>;
 using JNAM_SKIL = Subrecord<raw::JNAM_SKIL, "JNAM"_rec>;
+using MNAM_FURN = Subrecord<raw::MNAM_FURN, "MNAM"_rec>;
 using MNAM_RACE = Subrecord<raw::MNAM_RACE, "MNAM"_rec>;
 using MNAM_SKIL = Subrecord<raw::MNAM_SKIL, "MNAM"_rec>;
 using MNAM_WATR = Subrecord<raw::MNAM_WATR, "MNAM"_rec>;
@@ -1465,6 +1497,7 @@ using NAM9_WRLD = Subrecord<raw::NAM9_WRLD, "NAM9"_rec>;
 using OFST_WRLD = Subrecord<raw::OFST_WRLD, "OFST"_rec>;
 using RNAM_NPC_ = Subrecord<raw::RNAM_NPC_, "RNAM"_rec>;
 using SNAM_ACTI = Subrecord<raw::SNAM_ACTI, "SNAM"_rec>;
+using SNAM_CONT = Subrecord<raw::SNAM_CONT, "SNAM"_rec>;
 using SNAM_DOOR = Subrecord<raw::SNAM_DOOR, "SNAM"_rec>;
 using SNAM_LIGH = Subrecord<raw::SNAM_LIGH, "SNAM"_rec>;
 using SNAM_LTEX = Subrecord<raw::SNAM_LTEX, "SNAM"_rec>;
@@ -1481,6 +1514,7 @@ using TNAM_WATR = Subrecord<raw::TNAM_WATR, "TNAM"_rec>;
 DECLARE_SPECIALIZED_SUBRECORD(ACBS);
 DECLARE_SPECIALIZED_SUBRECORD(AIDT);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_CLAS);
+DECLARE_SPECIALIZED_SUBRECORD(DATA_CONT);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GMST);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_GRAS);
 DECLARE_SPECIALIZED_SUBRECORD(DATA_LIGH);
@@ -1500,6 +1534,7 @@ DECLARE_SPECIALIZED_SUBRECORD(MODT);
 DECLARE_SPECIALIZED_SUBRECORD(NAM0_WTHR);
 DECLARE_SPECIALIZED_SUBRECORD(OFST);
 DECLARE_SPECIALIZED_SUBRECORD(OFST_WRLD);
+DECLARE_SPECIALIZED_SUBRECORD(PFPC);
 DECLARE_SPECIALIZED_SUBRECORD(SCIT);
 DECLARE_SPECIALIZED_SUBRECORD(SNAM_TREE);
 DECLARE_SPECIALIZED_SUBRECORD(SNAM_WTHR);

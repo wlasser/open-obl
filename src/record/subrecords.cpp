@@ -126,6 +126,33 @@ read(std::istream &is, raw::DATA_CLAS &t, std::size_t size) {
 } // namespace raw
 
 //===----------------------------------------------------------------------===//
+// DATA_CONT Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t DATA_CONT::size() const {
+  return 5u;
+}
+
+namespace raw {
+
+template<> std::ostream &
+write(std::ostream &os, const raw::DATA_CONT &t, std::size_t /*size*/) {
+  raw::write(os, t.flag, 0);
+  io::writeBytes(os, t.weight);
+
+  return os;
+}
+
+template<> std::istream &
+read(std::istream &is, raw::DATA_CONT &t, std::size_t /*size*/) {
+  raw::read(is, t.flag, 0);
+  io::readBytes(is, t.weight);
+
+  return is;
+}
+
+} // namespace raw
+
+//===----------------------------------------------------------------------===//
 // DATA_GMST Specialization
 //===----------------------------------------------------------------------===//
 template<> uint16_t DATA_GMST::size() const {
@@ -817,6 +844,37 @@ template<> std::istream &
 read(std::istream &is, raw::OFST_WRLD &t, std::size_t size) {
   const std::size_t length = size / 4u;
   io::readBytes(is, t.entries, length);
+  return is;
+}
+
+} // namespace raw
+
+//===----------------------------------------------------------------------===//
+// PFPC Specialization
+//===----------------------------------------------------------------------===//
+template<> uint16_t PFPC::size() const {
+  return 4u;
+}
+
+namespace raw {
+
+template<> std::ostream &
+write(std::ostream &os, const raw::PFPC &t, std::size_t /*size*/) {
+  io::writeBytes(os, t.springChance);
+  io::writeBytes(os, t.summerChance);
+  io::writeBytes(os, t.autumnChance);
+  io::writeBytes(os, t.winterChance);
+
+  return os;
+}
+
+template<> std::istream &
+read(std::istream &is, raw::PFPC &t, std::size_t /*size*/) {
+  io::readBytes(is, t.springChance);
+  io::readBytes(is, t.summerChance);
+  io::readBytes(is, t.autumnChance);
+  io::readBytes(is, t.winterChance);
+
   return is;
 }
 

@@ -29,12 +29,15 @@ class InitialRecordVisitor {
   template<> void readRecord<record::RACE>(oo::EspAccessor &accessor);
   template<> void readRecord<record::LTEX>(oo::EspAccessor &accessor);
   template<> void readRecord<record::ACTI>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::CONT>(oo::EspAccessor &accessor);
   template<> void readRecord<record::DOOR>(oo::EspAccessor &accessor);
   template<> void readRecord<record::LIGH>(oo::EspAccessor &accessor);
   template<> void readRecord<record::MISC>(oo::EspAccessor &accessor);
   template<> void readRecord<record::STAT>(oo::EspAccessor &accessor);
   template<> void readRecord<record::GRAS>(oo::EspAccessor &accessor);
   template<> void readRecord<record::TREE>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::FLOR>(oo::EspAccessor &accessor);
+  template<> void readRecord<record::FURN>(oo::EspAccessor &accessor);
   template<> void readRecord<record::NPC_>(oo::EspAccessor &accessor);
   template<> void readRecord<record::WTHR>(oo::EspAccessor &accessor);
   template<> void readRecord<record::CLMT>(oo::EspAccessor &accessor);

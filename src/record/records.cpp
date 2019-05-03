@@ -828,6 +828,61 @@ read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
 } // namespace raw
 
 //===----------------------------------------------------------------------===//
+// CONT Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t CONT::size() const {
+  return SizeOf(editorId)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(data)
+      + SizeOf(openSound)
+      + SizeOf(closeSound)
+      + SizeOf(script)
+      + SizeOf(items);
+}
+
+namespace raw {
+
+template<> std::ostream &
+write(std::ostream &os, const raw::CONT &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  for (const auto &item : t.items) writeRecord(os, item);
+  writeRecord(os, t.data);
+  writeRecord(os, t.openSound);
+  writeRecord(os, t.closeSound);
+
+  return os;
+}
+
+template<> std::istream &
+read(std::istream &is, raw::CONT &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  while (peekRecordType(is) == "CNTO"_rec) {
+    record::CNTO r{};
+    is >> r;
+    t.items.push_back(r);
+  }
+  readRecord(is, t.data);
+  readRecord(is, t.openSound);
+  readRecord(is, t.closeSound);
+
+  return is;
+}
+
+} // namespace raw
+
+//===----------------------------------------------------------------------===//
 // DOOR Specialization
 //===----------------------------------------------------------------------===//
 template<> uint32_t DOOR::size() const {
@@ -1116,6 +1171,95 @@ read(std::istream &is, raw::TREE &t, std::size_t /*size*/) {
   readRecord(is, t.seeds);
   readRecord(is, t.data);
   readRecord(is, t.billboardDimensions);
+
+  return is;
+}
+
+} // namespace raw
+
+//===----------------------------------------------------------------------===//
+// FLOR Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t FLOR::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(script)
+      + SizeOf(ingredient)
+      + SizeOf(harvestChances);
+}
+
+namespace raw {
+
+template<> std::ostream &
+write(std::ostream &os, const raw::FLOR &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.ingredient);
+  writeRecord(os, t.harvestChances);
+
+  return os;
+}
+
+template<> std::istream &
+read(std::istream &is, raw::FLOR &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.ingredient);
+  readRecord(is, t.harvestChances);
+
+  return is;
+}
+
+} // namespace raw
+
+//===----------------------------------------------------------------------===//
+// FURN Specialization
+//===----------------------------------------------------------------------===//
+template<> uint32_t FURN::size() const {
+  return SizeOf(editorId)
+      + SizeOf(name)
+      + SizeOf(modelFilename)
+      + SizeOf(boundRadius)
+      + SizeOf(textureHash)
+      + SizeOf(script)
+      + SizeOf(activeMarkers);
+}
+
+namespace raw {
+
+template<> std::ostream &
+write(std::ostream &os, const raw::FURN &t, std::size_t /*size*/) {
+  writeRecord(os, t.editorId);
+  writeRecord(os, t.name);
+  writeRecord(os, t.modelFilename);
+  writeRecord(os, t.boundRadius);
+  writeRecord(os, t.textureHash);
+  writeRecord(os, t.script);
+  writeRecord(os, t.activeMarkers);
+
+  return os;
+}
+
+template<> std::istream &
+read(std::istream &is, raw::FURN &t, std::size_t /*size*/) {
+  readRecord(is, t.editorId);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.script);
+  readRecord(is, t.activeMarkers);
 
   return is;
 }
@@ -1718,6 +1862,16 @@ read(std::istream &is, raw::REFR_ACTI &t, std::size_t) {
 }
 
 template<> std::ostream &
+write(std::ostream &os, const raw::REFR_CONT &t, std::size_t) {
+  return t.write(os);
+}
+
+template<> std::istream &
+read(std::istream &is, raw::REFR_CONT &t, std::size_t) {
+  return t.read(is);
+}
+
+template<> std::ostream &
 write(std::ostream &os, const raw::REFR_DOOR &t, std::size_t) {
   return t.write(os);
 }
@@ -1754,6 +1908,26 @@ write(std::ostream &os, const raw::REFR_STAT &t, std::size_t) {
 
 template<> std::istream &
 read(std::istream &is, raw::REFR_STAT &t, std::size_t) {
+  return t.read(is);
+}
+
+template<> std::ostream &
+write(std::ostream &os, const raw::REFR_FLOR &t, std::size_t) {
+  return t.write(os);
+}
+
+template<> std::istream &
+read(std::istream &is, raw::REFR_FLOR &t, std::size_t) {
+  return t.read(is);
+}
+
+template<> std::ostream &
+write(std::ostream &os, const raw::REFR_FURN &t, std::size_t) {
+  return t.write(os);
+}
+
+template<> std::istream &
+read(std::istream &is, raw::REFR_FURN &t, std::size_t) {
   return t.read(is);
 }
 

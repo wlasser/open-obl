@@ -229,6 +229,8 @@ struct REFR : REFRBase, Components ..., REFRTransformation {
 // nonetheless has XACT and ONAM records, as REFRDoor.
 using REFR_ACTI = raw::REFR<"ACTI"_rec, REFRParentable, REFRScalable,
                             REFRTargetable, REFROwnable, REFRDoor, REFRLod>;
+using REFR_CONT = raw::REFR<"CONT"_rec, REFRParentable, REFRScalable,
+                            REFROwnable, REFRLockable>;
 // REFRUnused is required due to an XPCI record in the Toddland worldspace.
 using REFR_DOOR = raw::REFR<"DOOR"_rec, REFRParentable, REFRScalable,
                             REFRDoor, REFRLockable, REFROwnable,
@@ -243,6 +245,10 @@ using REFR_MISC = raw::REFR<"MISC"_rec, REFRParentable, REFRScalable,
 using REFR_STAT = raw::REFR<"STAT"_rec, REFRParentable, REFRScalable,
                             REFRTargetable, REFROwnable, REFRMarker,
                             REFRLod, REFRUnused>;
+using REFR_FLOR = raw::REFR<"FLOR"_rec, REFRParentable, REFRScalable,
+                            REFROwnable>;
+using REFR_FURN = raw::REFR<"FURN"_rec, REFRParentable, REFRScalable,
+                            REFROwnable>;
 // REFRUnused is required due to an XPCI record in the Toddland worldspace.
 using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRParentable, REFRScalable,
                             REFRRagdoll, REFRRider, REFRMerchant, REFRLod,
@@ -255,6 +261,12 @@ raw::write(std::ostream &os, const raw::REFR_ACTI &t, std::size_t);
 
 template<> std::istream &
 raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t);
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_CONT &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_CONT &t, std::size_t);
 
 template<> std::ostream &
 raw::write(std::ostream &os, const raw::REFR_DOOR &t, std::size_t);
@@ -281,16 +293,31 @@ template<> std::istream &
 raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t);
 
 template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_FLOR &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_FLOR &t, std::size_t);
+
+template<> std::ostream &
+raw::write(std::ostream &os, const raw::REFR_FURN &t, std::size_t);
+
+template<> std::istream &
+raw::read(std::istream &is, raw::REFR_FURN &t, std::size_t);
+
+template<> std::ostream &
 raw::write(std::ostream &os, const raw::REFR_NPC_ &t, std::size_t);
 
 template<> std::istream &
 raw::read(std::istream &is, raw::REFR_NPC_ &t, std::size_t);
 
 using REFR_ACTI = Record<raw::REFR_ACTI, "REFR"_rec>;
+using REFR_CONT = Record<raw::REFR_CONT, "REFR"_rec>;
 using REFR_DOOR = Record<raw::REFR_DOOR, "REFR"_rec>;
 using REFR_LIGH = Record<raw::REFR_LIGH, "REFR"_rec>;
 using REFR_MISC = Record<raw::REFR_MISC, "REFR"_rec>;
 using REFR_STAT = Record<raw::REFR_STAT, "REFR"_rec>;
+using REFR_FLOR = Record<raw::REFR_FLOR, "REFR"_rec>;
+using REFR_FURN = Record<raw::REFR_FURN, "REFR"_rec>;
 using REFR_NPC_ = Record<raw::REFR_NPC_, "ACHR"_rec>;
 
 /// This is a placeholder.

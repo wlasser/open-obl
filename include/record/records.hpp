@@ -262,6 +262,19 @@ struct ACTI {
   std::optional<record::SNAM_ACTI> sound{};
 };
 
+struct CONT {
+  record::EDID editorId{};
+  std::optional<record::FULL> name{};
+  std::optional<record::MODL> modelFilename{};
+  std::optional<record::MODB> boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::vector<record::CNTO> items{};
+  std::optional<record::DATA_CONT> data{};
+  std::optional<record::SNAM_CONT> openSound{};
+  std::optional<record::QNAM> closeSound{};
+  std::optional<record::SCRI> script{};
+};
+
 struct DOOR {
   record::EDID editorId{};
   std::optional<record::FULL> name{};
@@ -324,6 +337,27 @@ struct TREE {
   std::optional<record::SNAM_TREE> seeds{};
   std::optional<record::CNAM_TREE> data{};
   std::optional<record::BNAM_TREE> billboardDimensions{};
+};
+
+struct FLOR {
+  record::EDID editorId{};
+  std::optional<record::FULL> name{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> script{};
+  std::optional<record::PFIG> ingredient{};
+  std::optional<record::PFPC> harvestChances{};
+};
+
+struct FURN {
+  record::EDID editorId{};
+  std::optional<record::FULL> name{};
+  record::MODL modelFilename{};
+  record::MODB boundRadius{};
+  std::optional<record::MODT> textureHash{};
+  std::optional<record::SCRI> script{};
+  record::MNAM_FURN activeMarkers{};
 };
 
 struct NPC_ {
@@ -467,12 +501,15 @@ using ENCH = Record<raw::ENCH, "ENCH"_rec>;
 using SPEL = Record<raw::SPEL, "SPEL"_rec>;
 using BSGN = Record<raw::BSGN, "BSGN"_rec>;
 using ACTI = Record<raw::ACTI, "ACTI"_rec>;
+using CONT = Record<raw::CONT, "CONT"_rec>;
 using DOOR = Record<raw::DOOR, "DOOR"_rec>;
 using LIGH = Record<raw::LIGH, "LIGH"_rec>;
 using MISC = Record<raw::MISC, "MISC"_rec>;
 using STAT = Record<raw::STAT, "STAT"_rec>;
 using GRAS = Record<raw::GRAS, "GRAS"_rec>;
 using TREE = Record<raw::TREE, "TREE"_rec>;
+using FLOR = Record<raw::FLOR, "FLOR"_rec>;
+using FURN = Record<raw::FURN, "FURN"_rec>;
 using NPC_ = Record<raw::NPC_, "NPC_"_rec>;
 using ALCH = Record<raw::ALCH, "ALCH"_rec>;
 using WTHR = Record<raw::WTHR, "WTHR"_rec>;
@@ -498,12 +535,15 @@ DECLARE_SPECIALIZED_RECORD(ENCH);
 DECLARE_SPECIALIZED_RECORD(SPEL);
 DECLARE_SPECIALIZED_RECORD(BSGN);
 DECLARE_SPECIALIZED_RECORD(ACTI);
+DECLARE_SPECIALIZED_RECORD(CONT);
 DECLARE_SPECIALIZED_RECORD(DOOR);
 DECLARE_SPECIALIZED_RECORD(LIGH);
 DECLARE_SPECIALIZED_RECORD(MISC);
 DECLARE_SPECIALIZED_RECORD(STAT);
 DECLARE_SPECIALIZED_RECORD(GRAS);
 DECLARE_SPECIALIZED_RECORD(TREE);
+DECLARE_SPECIALIZED_RECORD(FLOR);
+DECLARE_SPECIALIZED_RECORD(FURN);
 DECLARE_SPECIALIZED_RECORD(NPC_);
 DECLARE_SPECIALIZED_RECORD(ALCH);
 DECLARE_SPECIALIZED_RECORD(WTHR);
