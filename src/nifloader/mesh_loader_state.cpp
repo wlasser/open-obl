@@ -904,7 +904,7 @@ bool attachAlphaProperty(const oo::BlockGraph &g,
   }
 
   pass->setTransparentSortingEnabled(!alphaBlock.disableTriangleSorting);
-  pass->setDepthWriteEnabled(false);
+  pass->setDepthWriteEnabled(true);
 
   return true;
 }
