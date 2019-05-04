@@ -138,6 +138,14 @@ struct BSBound : NiExtraData {
   explicit BSBound(Version version) : NiExtraData(version) {}
 };
 
+struct BSFurnitureMarker : NiExtraData {
+  basic::UInt numPositions{};
+  std::vector<compound::FurniturePosition> positions{};
+
+  void read(std::istream &is) override;
+  explicit BSFurnitureMarker(Version version) : NiExtraData(version) {}
+};
+
 struct NiInterpolator : NiObject {
   void read(std::istream &is) override;
   ~NiInterpolator() override = 0;

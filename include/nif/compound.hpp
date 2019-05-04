@@ -672,6 +672,15 @@ struct InterpBlendItem : Versionable {
   explicit InterpBlendItem(Version version) : Versionable(version) {}
 };
 
+struct FurniturePosition {
+  Vector3 offset{};
+  // Unknown
+  basic::UShort orientation{};
+  // Refers to a furnituremarkerxx.nif file
+  basic::Byte positionRef1{};
+  basic::Byte positionRef2{};
+};
+
 struct BallAndSocketDescriptor {
   Vector4 pivotA{};
   Vector4 pivotB{};
@@ -959,6 +968,7 @@ std::istream &operator>>(std::istream &is, KeyGroup<T> &t) {
 std::istream &operator>>(std::istream &is, ControlledBlock &t);
 std::istream &operator>>(std::istream &is, AVObject &t);
 std::istream &operator>>(std::istream &is, InterpBlendItem &t);
+std::istream &operator>>(std::istream &is, FurniturePosition &t);
 std::istream &operator>>(std::istream &is, BallAndSocketDescriptor &t);
 std::istream &operator>>(std::istream &is, HingeDescriptor &t);
 std::istream &operator>>(std::istream &is, LimitedHingeDescriptor &t);

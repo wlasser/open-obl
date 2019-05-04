@@ -501,6 +501,15 @@ std::istream &operator>>(std::istream &is, InterpBlendItem &t) {
   return is;
 }
 
+std::istream &operator>>(std::istream &is, FurniturePosition &t) {
+  is >> t.offset;
+  io::readBytes(is, t.orientation);
+  io::readBytes(is, t.positionRef1);
+  io::readBytes(is, t.positionRef2);
+
+  return is;
+}
+
 std::istream &operator>>(std::istream &is, BallAndSocketDescriptor &t) {
   is >> t.pivotA;
   is >> t.pivotB;

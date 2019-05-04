@@ -51,6 +51,7 @@ const AddVertexMap &getAddVertexMap() {
       {"NiStringExtraData", &addVertex<nif::NiStringExtraData>},
       {"NiTextKeyExtraData", &addVertex<nif::NiTextKeyExtraData>},
       {"BSBound", &addVertex<nif::BSBound>},
+      {"BSFurnitureMarker", &addVertex<nif::BSFurnitureMarker>},
       {"NiFloatInterpolator", &addVertex<nif::NiFloatInterpolator>},
       {"NiTransformInterpolator", &addVertex<nif::NiTransformInterpolator>},
       {"NiPoint3Interpolator", &addVertex<nif::NiPoint3Interpolator>},

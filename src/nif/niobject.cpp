@@ -90,6 +90,12 @@ void BSBound::read(std::istream &is) {
   is >> dimensions;
 }
 
+void BSFurnitureMarker::read(std::istream &is) {
+  NiExtraData::read(is);
+  io::readBytes(is, numPositions);
+  for (auto i = 0; i < numPositions; ++i) is >> positions.emplace_back();
+}
+
 void NiInterpolator::read(std::istream &is) {
   NiObject::read(is);
 }
