@@ -1,6 +1,7 @@
 #include "bullet/collision.hpp"
-#include "mesh/entity.hpp"
 #include "math/conversions.hpp"
+#include "mesh/entity.hpp"
+#include "mesh/subentity.hpp"
 #include "mesh/mesh_manager.hpp"
 #include "nifloader/collision_object_loader_state.hpp"
 #include "nifloader/loader.hpp"
