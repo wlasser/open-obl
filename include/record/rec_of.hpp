@@ -35,11 +35,11 @@ inline constexpr uint32_t operator "" _rec(const char *r, std::size_t size) {
 /// `uint32_t t`.
 template<uint32_t t>
 std::string_view recOf() noexcept {
-  constexpr static char r[] = {
-      static_cast<const char>(t & 0xffu),
-      static_cast<const char>((t & (0xffu << 8u)) >> 8u),
-      static_cast<const char>((t & (0xffu << 16u)) >> 16u),
-      static_cast<const char>((t & (0x0ffu << 24u)) >> 24u),
+  constexpr static char r[]{
+      static_cast<char>(t & 0xffu),
+      static_cast<char>((t & (0xffu << 8u)) >> 8u),
+      static_cast<char>((t & (0xffu << 16u)) >> 16u),
+      static_cast<char>((t & (0x0ffu << 24u)) >> 24u),
       '\0'
   };
   return std::string_view(r);
@@ -48,10 +48,10 @@ std::string_view recOf() noexcept {
 /// \overload recOf()
 inline std::string recOf(uint32_t t) noexcept {
   std::array<char, 5> r{
-      static_cast<const char>(t & 0xffu),
-      static_cast<const char>((t & (0xffu << 8u)) >> 8u),
-      static_cast<const char>((t & (0xffu << 16u)) >> 16u),
-      static_cast<const char>((t & (0x0ffu << 24u)) >> 24u),
+      static_cast<char>(t & 0xffu),
+      static_cast<char>((t & (0xffu << 8u)) >> 8u),
+      static_cast<char>((t & (0xffu << 16u)) >> 16u),
+      static_cast<char>((t & (0x0ffu << 24u)) >> 24u),
       '\0'
   };
   return std::string(r.data());
