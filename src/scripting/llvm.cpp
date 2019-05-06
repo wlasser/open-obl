@@ -5,7 +5,7 @@
 // likely candidate) which keeps resulting in a `condition is always true`
 // warning when comparing llvm::Type*. It marks subsequent code in the function
 // as unreachable, which is very annoying.
-#pragma clang diagnostic push
+#pragma GCC diagnostic push
 #pragma ide diagnostic ignored "OCDFAInspection"
 
 namespace oo {
@@ -635,4 +635,4 @@ LLVMVisitor::visitImpl<grammar::UnaryOperator>(const AstNode &node) {
 
 } // namespace oo
 
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop

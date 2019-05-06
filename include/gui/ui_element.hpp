@@ -31,8 +31,8 @@ class UiElement {
   /// These are used to set observable properties of the concrete
   /// representative, usually using values from the dynamic representative.
   ///@{
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 
   /// Position of left edge, relative to position of locus ancestor
   virtual void set_x(float x) {}
@@ -149,7 +149,7 @@ class UiElement {
   virtual void
   setOutputUserTraitSources(std::vector<TraitVariant *> traits) const {}
 
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
   /// Every UiElement is required to have a name which identifies it uniquely in
   /// the scope of the surrounding menu, or if the UiElement is a menu, then in

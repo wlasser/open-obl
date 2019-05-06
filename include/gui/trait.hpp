@@ -80,7 +80,8 @@ class UserTraitInterface {
   using get = std::remove_pointer_t<std::tuple_element_t<I, decltype(mPtrs)>>;
 
   /// Set the value of the `I`th user trait.
-  template<class T, std::size_t I> constexpr void assign(T value) {
+  template<class T, std::size_t I>
+  constexpr void assign([[maybe_unused]] T value) {
     if constexpr (std::is_same_v<get<I>, T>) {
       *std::get<I>(mPtrs) = value;
     }
@@ -88,7 +89,7 @@ class UserTraitInterface {
 
   /// Get the value of the `I`th user trait and store it in the variant.
   template<class T, std::size_t I>
-  constexpr void store(std::variant<Ts...> &v) {
+  constexpr void store([[maybe_unused]] std::variant<Ts...> &v) {
     if constexpr (std::is_same_v<get<I>, T>) {
       v.template emplace<I>(*std::get<I>(mPtrs));
     }
