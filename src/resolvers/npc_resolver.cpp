@@ -30,7 +30,7 @@ reifyRecord(const record::REFR_NPC_ &refRec,
             gsl::not_null<Ogre::SceneManager *> scnMgr,
             gsl::not_null<btDiscreteDynamicsWorld *> world,
             ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers,
-            Ogre::SceneNode *rootNode) {
+            Ogre::SceneNode */*rootNode*/) {
   return std::make_unique<oo::Character>(refRec, scnMgr, world, resolvers);
 }
 

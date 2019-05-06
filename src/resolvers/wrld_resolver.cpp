@@ -979,8 +979,6 @@ void oo::World::unloadWaterPlane(CellIndex index) {
 oo::ReifyRecordTrait<record::WRLD>::type
 oo::reifyRecord(const record::WRLD &refRec,
                 ReifyRecordTrait<record::WRLD>::resolvers resolvers) {
-  const auto &wrldRes{oo::getResolver<record::WRLD>(resolvers)};
-
   const oo::BaseId baseId{refRec.mFormId};
   std::string name{refRec.name ? refRec.name->data : ""};
 

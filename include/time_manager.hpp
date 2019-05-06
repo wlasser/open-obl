@@ -381,7 +381,11 @@ class year {
   year() = default;
   explicit constexpr year(int y) noexcept : mY(static_cast<int16_t>(y)) {}
   explicit constexpr operator int() const noexcept { return mY; }
-  constexpr bool ok() const noexcept { return -32767 <= mY && mY <= 32767; }
+  constexpr bool ok() const noexcept {
+    static_assert(std::is_same_v<decltype(mY), int16_t>,
+                  "Modify chrono::year::ok() to check mY in [-32767, 32767]");
+    return true;
+  }
 
   constexpr year &operator+=(const years &ys) noexcept {
     return (*this = *this + ys);

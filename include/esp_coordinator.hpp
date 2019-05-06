@@ -174,7 +174,7 @@ class EspCoordinator {
   /// The result of a header read operation. Contains both the read header and
   /// the position of the stream indicator one-past-the-end of the read value.
   struct ReadHeaderResult {
-    [[maybe_unused]] record::RecordHeader header{};
+    /*[[maybe_unused]]*/ record::RecordHeader header{};
     SeekPos end{};
   };
 

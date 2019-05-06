@@ -336,7 +336,7 @@ void DeferredLightRenderOperation::executeAmbientLight(Ogre::SceneManager *scnMg
 }
 
 void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
-                                           Ogre::RenderSystem *rs) {
+                                           Ogre::RenderSystem *) {
   executeAmbientLight(scnMgr);
 
   auto *dScnMgr{dynamic_cast<oo::DeferredSceneManager *>(scnMgr)};

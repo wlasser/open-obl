@@ -413,8 +413,8 @@ Application::createWindow(const std::string &windowName) {
   auto ogreWindow{Ogre::makeRenderWindow(
       Ogre::Root::getSingletonPtr(),
       windowName,
-      static_cast<const unsigned>(windowWidth),
-      static_cast<const unsigned>(windowHeight),
+      static_cast<unsigned>(windowWidth),
+      static_cast<unsigned>(windowHeight),
       &params)};
 
   return {std::move(sdlWindow), std::move(ogreWindow)};
