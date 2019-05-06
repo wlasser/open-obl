@@ -6,6 +6,7 @@
 #include "game_settings.hpp"
 #include "mesh/entity.hpp"
 #include "mesh/mesh_manager.hpp"
+#include "mesh/subentity.hpp"
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
@@ -30,10 +31,19 @@
 namespace oo {
 
 ApplicationContext::ApplicationContext()
-    : deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
+    : entityFactory{},
+      scnMgrFactory{},
+      intScnMgrFactory{},
+      deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
+      consoleEngine{},
+      scriptEngine{},
       nifLoader{std::make_unique<oo::MeshLoader>()},
       nifCollisionLoader{std::make_unique<oo::CollisionObjectLoader>()},
-      skeletonLoader{std::make_unique<oo::SkeletonLoader>()} {}
+      skeletonLoader{std::make_unique<oo::SkeletonLoader>()},
+      meshMgr{},
+      nifResourceMgr{},
+      espCoordinator{},
+      cellCache{} {}
 
 ApplicationContext::~ApplicationContext() = default;
 

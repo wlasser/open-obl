@@ -58,9 +58,9 @@ class ApplicationContext {
 
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
-  std::unique_ptr<oo::EntityFactory> entityFactory{};
-  std::unique_ptr<oo::DeferredSceneManagerFactory> scnMgrFactory{};
-  std::unique_ptr<oo::InteriorSceneManagerFactory> intScnMgrFactory{};
+  std::unique_ptr<oo::EntityFactory> entityFactory;
+  std::unique_ptr<oo::DeferredSceneManagerFactory> scnMgrFactory;
+  std::unique_ptr<oo::InteriorSceneManagerFactory> intScnMgrFactory;
 
   std::unique_ptr<Ogre::TexImageCodec> texImageCodec{};
 
@@ -80,26 +80,26 @@ class ApplicationContext {
 
   std::unique_ptr<Ogre::ImGuiManager> imguiMgr{};
 
-  std::unique_ptr<oo::DeferredLightPass> deferredLightPass{};
+  std::unique_ptr<oo::DeferredLightPass> deferredLightPass;
 
   std::unique_ptr<Ogre::SoundManager> soundMgr{};
 
   std::unique_ptr<Ogre::OverlaySystem> overlaySys{};
   std::unique_ptr<Ogre::TerrainGlobalOptions> terrainOptions{};
 
-  std::unique_ptr<oo::ConsoleEngine> consoleEngine{};
-  std::unique_ptr<oo::ScriptEngine> scriptEngine{};
+  std::unique_ptr<oo::ConsoleEngine> consoleEngine;
+  std::unique_ptr<oo::ScriptEngine> scriptEngine;
 
   oo::PersistentReferenceLocator persistentRefLocator{};
 
-  std::unique_ptr<oo::MeshLoader> nifLoader{};
-  std::unique_ptr<oo::CollisionObjectLoader> nifCollisionLoader{};
-  std::unique_ptr<oo::SkeletonLoader> skeletonLoader{};
+  std::unique_ptr<oo::MeshLoader> nifLoader;
+  std::unique_ptr<oo::CollisionObjectLoader> nifCollisionLoader;
+  std::unique_ptr<oo::SkeletonLoader> skeletonLoader;
 
   oo::FntLoader fntLoader{};
 
-  std::unique_ptr<oo::MeshManager> meshMgr{};
-  std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr{};
+  std::unique_ptr<oo::MeshManager> meshMgr;
+  std::unique_ptr<Ogre::NifResourceManager> nifResourceMgr;
   std::unique_ptr<Ogre::CollisionShapeManager> collisionObjectMgr{};
   std::unique_ptr<Ogre::TextResourceManager> textResourceMgr{};
   std::unique_ptr<Ogre::WavResourceManager> wavResourceMgr{};
@@ -107,8 +107,8 @@ class ApplicationContext {
   std::unique_ptr<oo::BaseResolvers> baseResolvers{};
   std::unique_ptr<oo::RefrResolvers> refrResolvers{};
 
-  std::unique_ptr<oo::EspCoordinator> espCoordinator{};
-  std::unique_ptr<oo::CellCache> cellCache{};
+  std::unique_ptr<oo::EspCoordinator> espCoordinator;
+  std::unique_ptr<oo::CellCache> cellCache;
 
   void setCameraAspectRatio(gsl::not_null<Ogre::Camera *> camera) const;
 

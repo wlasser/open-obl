@@ -2,6 +2,7 @@
 #define OPENOBLIVION_NIFLOADER_SCENE_HPP
 
 #include "mesh/entity.hpp"
+#include "mesh/subentity.hpp"
 #include <gsl/gsl>
 #include <OgrePrerequisites.h>
 #include <btBulletDynamicsCommon.h>

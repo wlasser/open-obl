@@ -113,18 +113,23 @@ class EssVisitor {
     accessor.skipRecord();
   }
 
-  template<> void readRecord<record::LIGH>(oo::EssAccessor &accessor) {
-    readRecordDefault<record::LIGH>(accessor);
-  }
-
-  template<> void readRecord<record::MISC>(oo::EssAccessor &accessor) {
-    readRecordDefault<record::MISC>(accessor);
-  }
-
-  template<> void readRecord<record::NPC_>(oo::EssAccessor &accessor) {
-    readRecordDefault<record::NPC_>(accessor);
-  }
 };
+
+// CWG 727
+template<> void
+EssVisitor::readRecord<record::LIGH>(oo::EssAccessor &accessor) {
+  readRecordDefault<record::LIGH>(accessor);
+}
+
+template<> void
+EssVisitor::readRecord<record::MISC>(oo::EssAccessor &accessor) {
+  readRecordDefault<record::MISC>(accessor);
+}
+
+template<> void
+EssVisitor::readRecord<record::NPC_>(oo::EssAccessor &accessor) {
+  readRecordDefault<record::NPC_>(accessor);
+}
 
 } // namespace
 

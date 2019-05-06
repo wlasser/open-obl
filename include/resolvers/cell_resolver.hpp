@@ -163,14 +163,16 @@ class Resolver<record::CELL>::CellVisitor {
         mRefrCtx(std::move(refrCtx)),
         mBaseCtx(std::move(baseCtx)) {}
 
-  template<class R>
-  void readRecord(oo::EspAccessor &accessor) {
+  template<class R> void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();
   }
-
-  template<> void readRecord<record::REFR>(oo::EspAccessor &accessor);
-  template<> void readRecord<record::ACHR>(oo::EspAccessor &accessor);
 };
+
+// CWG 727
+template<> void
+CellResolver::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor);
+template<> void
+CellResolver::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor);
 
 class Resolver<record::CELL>::CellTerrainVisitor {
  public:
@@ -188,8 +190,11 @@ class Resolver<record::CELL>::CellTerrainVisitor {
     accessor.skipRecord();
   }
 
-  template<> void readRecord<record::LAND>(oo::EspAccessor &accessor);
 };
+
+// CWG 727
+template<> void
+CellResolver::CellTerrainVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor);
 
 class Cell {
  public:

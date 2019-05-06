@@ -14,6 +14,7 @@
 #include "math/conversions.hpp"
 #include "mesh/entity.hpp"
 #include "mesh/mesh_manager.hpp"
+#include "mesh/subentity.hpp"
 #include "meta.hpp"
 #include "nifloader/collision_object_loader.hpp"
 #include "nifloader/logging.hpp"

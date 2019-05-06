@@ -144,10 +144,12 @@ class InitialWrldVisitor {
         mRefMap(refMap), mWrldId(wrldId) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor);
-
-  template<> void readRecord<record::CELL>(oo::EspAccessor &accessor);
-  // TODO: template<> void readRecord<record::ROAD>(oo::EspAccessor &accessor);
 };
+
+// CWG 727
+template<> void
+InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor);
+// TODO: template<> void readRecord<record::ROAD>(oo::EspAccessor &accessor);
 
 template<> void
 InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {

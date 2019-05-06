@@ -22,6 +22,8 @@
 
 namespace oo {
 
+using WrldResolver = Resolver<record::WRLD>;
+
 template<>
 class Resolver<record::WRLD> {
  private:
@@ -134,10 +136,12 @@ class Resolver<record::WRLD>::WrldVisitor {
   template<class R> void readRecord(oo::EspAccessor &accessor) {
     accessor.skipRecord();
   }
-
-  template<> void readRecord<record::CELL>(oo::EspAccessor &accessor);
-  // TODO: record::ROAD specialization
 };
+
+// CWG 727
+template<> void
+WrldResolver::WrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor);
+// TODO: record::ROAD specialization
 
 class World;
 

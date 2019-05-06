@@ -1,5 +1,6 @@
 #include "character_controller/character.hpp"
 #include "character_controller/animation.hpp"
+#include "mesh/subentity.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
 #include "settings.hpp"

@@ -236,119 +236,9 @@ class EspCoordinator {
   /// @{
   template<class T> T translateFormIds(T rec, int modIndex) const;
 
-  template<> BaseId translateFormIds(BaseId rec, int modIndex) const;
-  template<> RefId translateFormIds(RefId rec, int modIndex) const;
-  template<> FormId translateFormIds(FormId rec, int modIndex) const;
-
-  template<> record::raw::Effect
-  translateFormIds(record::raw::Effect rec, int modIndex) const;
-
-  template<> record::raw::ATXT
-  translateFormIds(record::raw::ATXT rec, int modIndex) const;
-  template<> record::raw::BTXT
-  translateFormIds(record::raw::BTXT rec, int modIndex) const;
-  template<> record::raw::CNTO
-  translateFormIds(record::raw::CNTO rec, int modIndex) const;
-  template<> record::raw::DATA_MGEF
-  translateFormIds(record::raw::DATA_MGEF rec, int modIndex) const;
-  template<> record::raw::DNAM
-  translateFormIds(record::raw::DNAM rec, int modIndex) const;
-  template<> record::raw::ENAM
-  translateFormIds(record::raw::ENAM rec, int modIndex) const;
-  template<> record::raw::GNAM_WATR
-  translateFormIds(record::raw::GNAM_WATR rec, int modIndex) const;
-  template<> record::raw::HNAM
-  translateFormIds(record::raw::HNAM rec, int modIndex) const;
-  template<> record::raw::SCIT
-  translateFormIds(record::raw::SCIT rec, int modIndex) const;
-  template<> record::raw::SNAM_NPC_
-  translateFormIds(record::raw::SNAM_NPC_ rec, int modIndex) const;
-  template<> record::raw::SNAM_WTHR
-  translateFormIds(record::raw::SNAM_WTHR rec, int modIndex) const;
-  template<> record::raw::VNAM
-  translateFormIds(record::raw::VNAM rec, int modIndex) const;
-  template<> record::raw::VTEX
-  translateFormIds(record::raw::VTEX rec, int modIndex) const;
-  template<> record::raw::WLST
-  translateFormIds(record::raw::WLST rec, int modIndex) const;
-  template<> record::raw::XESP
-  translateFormIds(record::raw::XESP rec, int modIndex) const;
-  template<> record::raw::XLOC
-  translateFormIds(record::raw::XLOC rec, int modIndex) const;
-  template<> record::raw::XNAM
-  translateFormIds(record::raw::XNAM rec, int modIndex) const;
-  template<> record::raw::XTEL
-  translateFormIds(record::raw::XTEL rec, int modIndex) const;
-
-  template<> record::raw::RACE
-  translateFormIds(record::raw::RACE rec, int modIndex) const;
-  template<> record::raw::MGEF
-  translateFormIds(record::raw::MGEF rec, int modIndex) const;
-  template<> record::raw::LTEX
-  translateFormIds(record::raw::LTEX rec, int modIndex) const;
-  template<> record::raw::ENCH
-  translateFormIds(record::raw::ENCH rec, int modIndex) const;
-  template<> record::raw::SPEL
-  translateFormIds(record::raw::SPEL rec, int modIndex) const;
-  template<> record::raw::BSGN
-  translateFormIds(record::raw::BSGN rec, int modIndex) const;
-  template<> record::raw::ACTI
-  translateFormIds(record::raw::ACTI rec, int modIndex) const;
-  template<> record::raw::CONT
-  translateFormIds(record::raw::CONT rec, int modIndex) const;
-  template<> record::raw::DOOR
-  translateFormIds(record::raw::DOOR rec, int modIndex) const;
-  template<> record::raw::LIGH
-  translateFormIds(record::raw::LIGH rec, int modIndex) const;
-  template<> record::raw::MISC
-  translateFormIds(record::raw::MISC rec, int modIndex) const;
-  template<> record::raw::FLOR
-  translateFormIds(record::raw::FLOR rec, int modIndex) const;
-  template<> record::raw::FURN
-  translateFormIds(record::raw::FURN rec, int modIndex) const;
-  template<> record::raw::NPC_
-  translateFormIds(record::raw::NPC_ rec, int modIndex) const;
-  template<> record::raw::ALCH
-  translateFormIds(record::raw::ALCH rec, int modIndex) const;
-  template<> record::raw::WTHR
-  translateFormIds(record::raw::WTHR rec, int modIndex) const;
-  template<> record::raw::CLMT
-  translateFormIds(record::raw::CLMT rec, int modIndex) const;
-  template<> record::raw::CELL
-  translateFormIds(record::raw::CELL rec, int modIndex) const;
-  template<> record::raw::WRLD
-  translateFormIds(record::raw::WRLD rec, int modIndex) const;
-  template<> record::raw::LAND
-  translateFormIds(record::raw::LAND rec, int modIndex) const;
-  template<> record::raw::WATR
-  translateFormIds(record::raw::WATR rec, int modIndex) const;
-
-  template<> record::raw::REFR_ACTI
-  translateFormIds(record::raw::REFR_ACTI rec, int modIndex) const;
-  template<> record::raw::REFR_CONT
-  translateFormIds(record::raw::REFR_CONT rec, int modIndex) const;
-  template<> record::raw::REFR_DOOR
-  translateFormIds(record::raw::REFR_DOOR rec, int modIndex) const;
-  template<> record::raw::REFR_LIGH
-  translateFormIds(record::raw::REFR_LIGH rec, int modIndex) const;
-  template<> record::raw::REFR_MISC
-  translateFormIds(record::raw::REFR_MISC rec, int modIndex) const;
-  template<> record::raw::REFR_STAT
-  translateFormIds(record::raw::REFR_STAT rec, int modIndex) const;
-  template<> record::raw::REFR_FLOR
-  translateFormIds(record::raw::REFR_FLOR rec, int modIndex) const;
-  template<> record::raw::REFR_FURN
-  translateFormIds(record::raw::REFR_FURN rec, int modIndex) const;
-  template<> record::raw::REFR_NPC_
-  translateFormIds(record::raw::REFR_NPC_ rec, int modIndex) const;
-
   template<class T, uint32_t c>
   record::Record<T, c>
   translateFormIds(record::Record<T, c> rec, int modIndex) const;
-
-  template<>
-  record::RecordHeader
-  translateFormIds(record::RecordHeader rec, int modIndex) const;
 
   /// @}
 };
@@ -410,6 +300,136 @@ class EspAccessor {
 /// its masters. `espFilename` should be prefixed with the data folder. The
 /// returned names will also be prefixed by the data folder.
 std::vector<oo::Path> getMasters(const oo::Path &espFilename);
+
+//===----------------------------------------------------------------------===//
+// translateFormIds specializations.
+// See GCC Bug 85282, CWG 727 DR
+//===----------------------------------------------------------------------===//
+
+template<> BaseId
+EspCoordinator::translateFormIds(BaseId rec, int modIndex) const;
+template<> RefId
+EspCoordinator::translateFormIds(RefId rec, int modIndex) const;
+template<> FormId
+EspCoordinator::translateFormIds(FormId rec, int modIndex) const;
+
+template<> record::raw::Effect
+EspCoordinator::translateFormIds(record::raw::Effect rec, int modIndex) const;
+
+template<> record::raw::ATXT
+EspCoordinator::translateFormIds(record::raw::ATXT rec, int modIndex) const;
+template<> record::raw::BTXT
+EspCoordinator::translateFormIds(record::raw::BTXT rec, int modIndex) const;
+template<> record::raw::CNTO
+EspCoordinator::translateFormIds(record::raw::CNTO rec, int modIndex) const;
+template<> record::raw::DATA_MGEF
+EspCoordinator::translateFormIds(record::raw::DATA_MGEF rec,
+                                 int modIndex) const;
+template<> record::raw::DNAM
+EspCoordinator::translateFormIds(record::raw::DNAM rec, int modIndex) const;
+template<> record::raw::ENAM
+EspCoordinator::translateFormIds(record::raw::ENAM rec, int modIndex) const;
+template<> record::raw::GNAM_WATR
+EspCoordinator::translateFormIds(record::raw::GNAM_WATR rec,
+                                 int modIndex) const;
+template<> record::raw::HNAM
+EspCoordinator::translateFormIds(record::raw::HNAM rec, int modIndex) const;
+template<> record::raw::SCIT
+EspCoordinator::translateFormIds(record::raw::SCIT rec, int modIndex) const;
+template<> record::raw::SNAM_NPC_
+EspCoordinator::translateFormIds(record::raw::SNAM_NPC_ rec,
+                                 int modIndex) const;
+template<> record::raw::SNAM_WTHR
+EspCoordinator::translateFormIds(record::raw::SNAM_WTHR rec,
+                                 int modIndex) const;
+template<> record::raw::VNAM
+EspCoordinator::translateFormIds(record::raw::VNAM rec, int modIndex) const;
+template<> record::raw::VTEX
+EspCoordinator::translateFormIds(record::raw::VTEX rec, int modIndex) const;
+template<> record::raw::WLST
+EspCoordinator::translateFormIds(record::raw::WLST rec, int modIndex) const;
+template<> record::raw::XESP
+EspCoordinator::translateFormIds(record::raw::XESP rec, int modIndex) const;
+template<> record::raw::XLOC
+EspCoordinator::translateFormIds(record::raw::XLOC rec, int modIndex) const;
+template<> record::raw::XNAM
+EspCoordinator::translateFormIds(record::raw::XNAM rec, int modIndex) const;
+template<> record::raw::XTEL
+EspCoordinator::translateFormIds(record::raw::XTEL rec, int modIndex) const;
+
+template<> record::raw::RACE
+EspCoordinator::translateFormIds(record::raw::RACE rec, int modIndex) const;
+template<> record::raw::MGEF
+EspCoordinator::translateFormIds(record::raw::MGEF rec, int modIndex) const;
+template<> record::raw::LTEX
+EspCoordinator::translateFormIds(record::raw::LTEX rec, int modIndex) const;
+template<> record::raw::ENCH
+EspCoordinator::translateFormIds(record::raw::ENCH rec, int modIndex) const;
+template<> record::raw::SPEL
+EspCoordinator::translateFormIds(record::raw::SPEL rec, int modIndex) const;
+template<> record::raw::BSGN
+EspCoordinator::translateFormIds(record::raw::BSGN rec, int modIndex) const;
+template<> record::raw::ACTI
+EspCoordinator::translateFormIds(record::raw::ACTI rec, int modIndex) const;
+template<> record::raw::CONT
+EspCoordinator::translateFormIds(record::raw::CONT rec, int modIndex) const;
+template<> record::raw::DOOR
+EspCoordinator::translateFormIds(record::raw::DOOR rec, int modIndex) const;
+template<> record::raw::LIGH
+EspCoordinator::translateFormIds(record::raw::LIGH rec, int modIndex) const;
+template<> record::raw::MISC
+EspCoordinator::translateFormIds(record::raw::MISC rec, int modIndex) const;
+template<> record::raw::FLOR
+EspCoordinator::translateFormIds(record::raw::FLOR rec, int modIndex) const;
+template<> record::raw::FURN
+EspCoordinator::translateFormIds(record::raw::FURN rec, int modIndex) const;
+template<> record::raw::NPC_
+EspCoordinator::translateFormIds(record::raw::NPC_ rec, int modIndex) const;
+template<> record::raw::ALCH
+EspCoordinator::translateFormIds(record::raw::ALCH rec, int modIndex) const;
+template<> record::raw::WTHR
+EspCoordinator::translateFormIds(record::raw::WTHR rec, int modIndex) const;
+template<> record::raw::CLMT
+EspCoordinator::translateFormIds(record::raw::CLMT rec, int modIndex) const;
+template<> record::raw::CELL
+EspCoordinator::translateFormIds(record::raw::CELL rec, int modIndex) const;
+template<> record::raw::WRLD
+EspCoordinator::translateFormIds(record::raw::WRLD rec, int modIndex) const;
+template<> record::raw::LAND
+EspCoordinator::translateFormIds(record::raw::LAND rec, int modIndex) const;
+template<> record::raw::WATR
+EspCoordinator::translateFormIds(record::raw::WATR rec, int modIndex) const;
+
+template<> record::raw::REFR_ACTI
+EspCoordinator::translateFormIds(record::raw::REFR_ACTI rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_CONT
+EspCoordinator::translateFormIds(record::raw::REFR_CONT rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_DOOR
+EspCoordinator::translateFormIds(record::raw::REFR_DOOR rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_LIGH
+EspCoordinator::translateFormIds(record::raw::REFR_LIGH rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_MISC
+EspCoordinator::translateFormIds(record::raw::REFR_MISC rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_STAT
+EspCoordinator::translateFormIds(record::raw::REFR_STAT rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_FLOR
+EspCoordinator::translateFormIds(record::raw::REFR_FLOR rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_FURN
+EspCoordinator::translateFormIds(record::raw::REFR_FURN rec,
+                                 int modIndex) const;
+template<> record::raw::REFR_NPC_
+EspCoordinator::translateFormIds(record::raw::REFR_NPC_ rec,
+                                 int modIndex) const;
+
+template<> record::RecordHeader
+EspCoordinator::translateFormIds(record::RecordHeader rec, int modIndex) const;
 
 //===----------------------------------------------------------------------===//
 // EspCoordinator template implementations
