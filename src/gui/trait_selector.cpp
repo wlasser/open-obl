@@ -153,6 +153,7 @@ std::string invokeSelector(pugi::xml_node node, const TraitSelector &selector) {
     case TraitSelector::Type::strings: {
       return gui::invokeStringsSelector();
     }
+    default: return "";
   }
 }
 

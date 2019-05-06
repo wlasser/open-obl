@@ -27,7 +27,7 @@ void gui::Image::updateUVs(const Ogre::Vector2 &dims) {
 gui::Image::Image(std::string name) : PanelMixin(name) {
   set_name(std::move(name));
 
-  if (auto *overlayMgr{Ogre::OverlayManager::getSingletonPtr()}) {
+  if (Ogre::OverlayManager::getSingletonPtr()) {
     auto *matMgr{Ogre::MaterialManager::getSingletonPtr()};
     std::string matName{std::string("__GuiMaterial:") + get_name()};
 

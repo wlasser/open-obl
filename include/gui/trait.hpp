@@ -52,6 +52,8 @@ TraitTypeId getTraitTypeId<std::string>() noexcept {
 
 /// If `name` is the name of a user trait, then return the index of that trait.
 /// For example, `getUserTraitIndex("user12") == 12`.
+/// Returns `std::nullopt` if the trait is not a user trait or if the index is
+/// negative.
 std::optional<int> getUserTraitIndex(std::string_view name);
 
 /// Simplifies the definition of the user trait interface of a ui element.

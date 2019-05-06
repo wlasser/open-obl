@@ -282,7 +282,9 @@ Traits::binUserTraits() const {
     const std::string uiElementName{name.substr(0, name.rfind('.'))};
 
     auto &vec{map[uiElementName]};
-    if (vec.size() <= *userIndex) vec.resize(*userIndex + 1u, nullptr);
+    if (vec.size() <= static_cast<std::size_t>(*userIndex)) {
+      vec.resize(static_cast<std::size_t>(*userIndex) + 1u, nullptr);
+    }
     vec[*userIndex] = trait;
   }
 
