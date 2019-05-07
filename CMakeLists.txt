@@ -256,7 +256,7 @@ target_link_libraries(OpenOblivion PRIVATE
         SDL2::SDL2
         SDL2::SDL2main
         SoLoud::SoLoud
-        OgreMain OgreGLSupport OgreOverlay OgreTerrain
+        OgreMain OgreGLSupport OgreOverlay OgreTerrain RenderSystem_GL3Plus
         spdlog::spdlog
         stdc++fs
         tloptional

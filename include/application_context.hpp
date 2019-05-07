@@ -18,6 +18,7 @@
 #include "sdl/sdl.hpp"
 #include <gsl/gsl>
 #include <OgreOverlaySystem.h>
+#include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
 #include <OgreRoot.h>
 #include <Terrain/OgreTerrain.h>
 #include <spdlog/spdlog.h>
@@ -56,6 +57,7 @@ class ApplicationContext {
  private:
   friend class Application;
 
+  std::unique_ptr<Ogre::GL3PlusPlugin> gl3PlusPlugin{};
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
   std::unique_ptr<oo::EntityFactory> entityFactory;

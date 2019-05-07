@@ -11,6 +11,7 @@
 #include "modes/main_menu_mode.hpp"
 #include "sdl/sdl.hpp"
 #include <Ogre.h>
+#include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
 #include <optional>
 #include <string>
 #include <vector>
@@ -93,7 +94,9 @@ class Application : public Ogre::FrameListener {
   /// `Ogre::OverlaySystem`.
   /// This is a member function as it registers `this` as an
   /// `Ogre::FrameListener`.
-  std::tuple<std::unique_ptr<Ogre::Root>, std::unique_ptr<Ogre::OverlaySystem>>
+  std::tuple<std::unique_ptr<Ogre::Root>,
+             std::unique_ptr<Ogre::OverlaySystem>,
+             std::unique_ptr<Ogre::GL3PlusPlugin>>
   createOgreRoot();
 
   /// Construct an SDL window and embed an Ogre::RenderWindow inside.

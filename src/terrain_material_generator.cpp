@@ -3,7 +3,7 @@
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
-#include <OgreTerrain.h>
+#include <Terrain/OgreTerrain.h>
 #include <OgreTextureManager.h>
 
 namespace oo {

@@ -69,9 +69,10 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobCounter iniCounter{1};
   oo::JobManager::runJob([]() { loadIniConfiguration(); }, &iniCounter);
 
-  auto &&[ogreRoot, overlaySys] = createOgreRoot();
+  auto &&[ogreRoot, overlaySys, gl3PlusPlugin] = createOgreRoot();
   ctx.ogreRoot = std::move(ogreRoot);
   ctx.overlaySys = std::move(overlaySys);
+  ctx.gl3PlusPlugin = std::move(gl3PlusPlugin);
 
   oo::JobManager::waitOn(&iniCounter);
   auto &gameSettings = oo::GameSettings::getSingleton();
@@ -367,14 +368,18 @@ void Application::setRenderSystem(Ogre::Root *root,
   }
 }
 
-std::tuple<std::unique_ptr<Ogre::Root>, std::unique_ptr<Ogre::OverlaySystem>>
+std::tuple<std::unique_ptr<Ogre::Root>,
+           std::unique_ptr<Ogre::OverlaySystem>,
+           std::unique_ptr<Ogre::GL3PlusPlugin>>
 Application::createOgreRoot() {
-  auto root{std::make_unique<Ogre::Root>("plugins.cfg", "", "")};
+  auto root{std::make_unique<Ogre::Root>("", "", "")};
   auto overlaySys{std::make_unique<Ogre::OverlaySystem>()};
+  auto gl3PlusPlugin{std::make_unique<Ogre::GL3PlusPlugin>()};
+  root->installPlugin(gl3PlusPlugin.get());
   setRenderSystem(root.get(), "OpenGL 3+ Rendering Subsystem");
   root->initialise(false);
   root->addFrameListener(this);
-  return {std::move(root), std::move(overlaySys)};
+  return {std::move(root), std::move(overlaySys), std::move(gl3PlusPlugin)};
 }
 
 std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
