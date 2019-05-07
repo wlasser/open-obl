@@ -326,9 +326,8 @@ void CharacterControllerImpl::applySpringForce(float displacement) noexcept {
   const auto k0{4000.0f};
   const auto k1{700.0f};
   const auto v{mRigidBody->getLinearVelocity().y()};
-
-  const auto &force{qvm::_0X0(k0 * displacement - k1 * v)};
-  mRigidBody->applyCentralForce(qvm::convert_to<btVector3>(force));
+  const auto f{k0 * displacement - k1 * v};
+  mRigidBody->applyCentralForce(qvm::convert_to<btVector3>(qvm::_0X0(f)));
 }
 
 void CharacterControllerImpl::updatePhysics(float /*elapsed*/) noexcept {

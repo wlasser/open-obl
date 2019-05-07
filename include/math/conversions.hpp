@@ -473,7 +473,7 @@ template<class Mat, typename = std::enable_if_t<
         && qvm::mat_traits<Mat>::rows == 3
         && qvm::mat_traits<Mat>::cols == 3>>
 Ogre::Matrix3 fromBSCoordinates(const Mat &m) {
-  const auto &C{qvm::rotx_mat<3>(-Ogre::Math::HALF_PI)};
+  const Ogre::Matrix3 C = qvm::rotx_mat<3>(-Ogre::Math::HALF_PI);
   const auto &CInv{qvm::transposed(C)};
   return C * m * CInv;
 }
@@ -485,7 +485,7 @@ template<class Mat, typename = std::enable_if_t<
         && qvm::mat_traits<Mat>::rows == 3
         && qvm::mat_traits<Mat>::cols == 3>>
 Ogre::Matrix3 toBSCoordinates(const Mat &m) {
-  const auto &C{qvm::rotx_mat<3>(-Ogre::Math::HALF_PI)};
+  const Ogre::Matrix3 C = qvm::rotx_mat<3>(-Ogre::Math::HALF_PI);
   const auto &CInv{qvm::transposed(C)};
   return CInv * m * C;
 }
@@ -499,10 +499,10 @@ template<class Mat, typename = std::enable_if_t<
 Ogre::Matrix4 fromBSCoordinates(const Mat &m) {
   const auto k{oo::metersPerUnit<typename qvm::mat_traits<Mat>::scalar_type>};
   const auto &S{qvm::diag_mat(qvm::XXX1(k))};
-  const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
+  const Ogre::Matrix4 C = qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S;
 
   const auto &SInv{qvm::diag_mat(qvm::XXX1(1.0 / k))};
-  const auto &CInv{qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv};
+  const Ogre::Matrix4 CInv = qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv;
 
   return C * m * CInv;
 }
@@ -516,10 +516,10 @@ template<class Mat, typename = std::enable_if_t<
 Ogre::Matrix4 toBSCoordinates(const Mat &m) {
   const auto k{oo::metersPerUnit<typename qvm::mat_traits<Mat>::scalar_type>};
   const auto &S{qvm::diag_mat(qvm::XXX1(k))};
-  const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
+  const Ogre::Matrix4 C = qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S;
 
   const auto &SInv{qvm::diag_mat(qvm::XXX1(1.0 / k))};
-  const auto &CInv{qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv};
+  const Ogre::Matrix4 CInv = qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv;
 
   return CInv * m * C;
 }
@@ -528,16 +528,16 @@ Ogre::Matrix4 toBSCoordinates(const Mat &m) {
 /// coordinates.
 template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
 Ogre::Quaternion fromBSCoordinates(const Quat &q) {
-  const auto &p{qvm::rotx_quat(-Ogre::Math::HALF_PI)};
-  const auto &pInv{qvm::rotx_quat(Ogre::Math::HALF_PI)};
+  const Ogre::Quaternion p = qvm::rotx_quat(-Ogre::Math::HALF_PI);
+  const Ogre::Quaternion pInv = qvm::rotx_quat(Ogre::Math::HALF_PI);
   return p * q * pInv;
 }
 
 /// Convert a QVM-compatible quaternion from Ogre coordinates to BS coordinates.
 template<class Quat, typename = std::enable_if_t<qvm::is_quat<Quat>::value>>
 Ogre::Quaternion toBSCoordinates(const Quat &q) {
-  const auto &p{qvm::rotx_quat(-Ogre::Math::HALF_PI)};
-  const auto &pInv{qvm::rotx_quat(Ogre::Math::HALF_PI)};
+  const Ogre::Quaternion p = qvm::rotx_quat(-Ogre::Math::HALF_PI);
+  const Ogre::Quaternion pInv = qvm::rotx_quat(Ogre::Math::HALF_PI);
   return pInv * q * p;
 }
 
@@ -578,10 +578,10 @@ Ogre::Matrix4 fromHavokCoordinates(const Mat &m) {
   const auto k{oo::metersPerUnit<scalar_type> *
       oo::unitsPerHavokUnit<scalar_type>};
   const auto &S{qvm::diag_mat(qvm::XXX1(k))};
-  const auto &C{qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S};
+  const Ogre::Matrix4 C = qvm::rotx_mat<4>(-Ogre::Math::HALF_PI) * S;
 
   const auto &SInv{qvm::diag_mat(qvm::XXX1(1.0 / k))};
-  const auto &CInv{qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv};
+  const Ogre::Matrix4 CInv = qvm::rotx_mat<4>(Ogre::Math::HALF_PI) * SInv;
 
   return C * m * CInv;
 }
