@@ -73,13 +73,13 @@ else ()
     message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
 endif ()
 
-find_package(ZLIB 1.2.11 REQUIRED)
-find_package(SDL2 2.0 REQUIRED)
-find_package(OGRE 1.11 REQUIRED)
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
 find_package(Bullet 2.85 REQUIRED)
-find_package(pugixml REQUIRED)
 find_package(LLVM 7.0.0 REQUIRED CONFIG)
+find_package(OGRE 1.11 REQUIRED)
+find_package(pugixml REQUIRED)
+find_package(SDL2 2.0 REQUIRED)
+find_package(ZLIB 1.2.11 REQUIRED)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
@@ -102,11 +102,11 @@ add_subdirectory(src/ogre)
 add_subdirectory(src/ogrebullet)
 add_subdirectory(src/ogreimgui)
 add_subdirectory(src/ogresoloud)
-add_subdirectory(src/sdl)
 add_subdirectory(src/scripting)
+add_subdirectory(src/sdl)
 
-add_subdirectory(test)
 add_subdirectory(bsatools)
+add_subdirectory(test)
 
 add_executable(OpenOblivion)
 target_compile_options(OpenOblivion PRIVATE -Wall -Wextra)
@@ -115,57 +115,6 @@ set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE
-        src/application.cpp
-        src/application_context.cpp
-        src/atmosphere.cpp
-        src/bsa_archive_factory.cpp
-        src/bullet/collision.cpp
-        src/cell_cache.cpp
-        src/character_controller/animation.cpp
-        src/character_controller/body.cpp
-        src/character_controller/character.cpp
-        src/character_controller/character_controller.cpp
-        src/character_controller/character_controller_impl.cpp
-        src/character_controller/jump_state.cpp
-        src/character_controller/movement.cpp
-        src/character_controller/run_state.cpp
-        src/character_controller/sneak_jump_state.cpp
-        src/character_controller/sneak_stand_state.cpp
-        src/character_controller/stand_state.cpp
-        src/character_controller/walk_state.cpp
-        src/console_functions.cpp
-        src/deferred_light_pass.cpp
-        src/esp_coordinator.cpp
-        src/exterior_manager.cpp
-        src/game_settings.cpp
-        src/globals.cpp
-        src/initial_record_visitor.cpp
-        src/main.cpp
-        src/modes/console_mode.cpp
-        src/modes/debug_draw_impl.cpp
-        src/modes/game_mode.cpp
-        src/modes/load_menu_mode.cpp
-        src/modes/loading_menu_mode.cpp
-        src/modes/main_menu_mode.cpp
-        src/modes/menu_mode_base.cpp
-        src/persistent_reference_locator.cpp
-        src/resolvers/acti_resolver.cpp
-        src/resolvers/cell_resolver.cpp
-        src/resolvers/cont_resolver.cpp
-        src/resolvers/door_resolver.cpp
-        src/resolvers/flor_resolver.cpp
-        src/resolvers/furn_resolver.cpp
-        src/resolvers/light_resolver.cpp
-        src/resolvers/misc_resolver.cpp
-        src/resolvers/npc_resolver.cpp
-        src/resolvers/helpers.cpp
-        src/resolvers/static_resolver.cpp
-        src/resolvers/wrld_resolver.cpp
-        src/scene_manager.cpp
-        src/save_state.cpp
-        src/script_functions.cpp
-        src/terrain_material_generator.cpp
-        src/time_manager.cpp
         include/application.hpp
         include/application_context.hpp
         include/atmosphere.hpp
@@ -229,7 +178,58 @@ target_sources(OpenOblivion PRIVATE
         include/settings.hpp
         include/terrain_material_generator.hpp
         include/time_manager.hpp
-        include/wrld.hpp)
+        include/wrld.hpp
+        src/application.cpp
+        src/application_context.cpp
+        src/atmosphere.cpp
+        src/bsa_archive_factory.cpp
+        src/bullet/collision.cpp
+        src/cell_cache.cpp
+        src/character_controller/animation.cpp
+        src/character_controller/body.cpp
+        src/character_controller/character.cpp
+        src/character_controller/character_controller.cpp
+        src/character_controller/character_controller_impl.cpp
+        src/character_controller/jump_state.cpp
+        src/character_controller/movement.cpp
+        src/character_controller/run_state.cpp
+        src/character_controller/sneak_jump_state.cpp
+        src/character_controller/sneak_stand_state.cpp
+        src/character_controller/stand_state.cpp
+        src/character_controller/walk_state.cpp
+        src/console_functions.cpp
+        src/deferred_light_pass.cpp
+        src/esp_coordinator.cpp
+        src/exterior_manager.cpp
+        src/game_settings.cpp
+        src/globals.cpp
+        src/initial_record_visitor.cpp
+        src/main.cpp
+        src/modes/console_mode.cpp
+        src/modes/debug_draw_impl.cpp
+        src/modes/game_mode.cpp
+        src/modes/load_menu_mode.cpp
+        src/modes/loading_menu_mode.cpp
+        src/modes/main_menu_mode.cpp
+        src/modes/menu_mode_base.cpp
+        src/persistent_reference_locator.cpp
+        src/resolvers/acti_resolver.cpp
+        src/resolvers/cell_resolver.cpp
+        src/resolvers/cont_resolver.cpp
+        src/resolvers/door_resolver.cpp
+        src/resolvers/flor_resolver.cpp
+        src/resolvers/furn_resolver.cpp
+        src/resolvers/helpers.cpp
+        src/resolvers/light_resolver.cpp
+        src/resolvers/misc_resolver.cpp
+        src/resolvers/npc_resolver.cpp
+        src/resolvers/static_resolver.cpp
+        src/resolvers/wrld_resolver.cpp
+        src/save_state.cpp
+        src/scene_manager.cpp
+        src/script_functions.cpp
+        src/terrain_material_generator.cpp
+        src/time_manager.cpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})
@@ -243,24 +243,28 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionMesh
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionNifloader
-        OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionOgre
         OpenOblivion::OpenOblivionOgreBullet
         OpenOblivion::OpenOblivionOgreImGui
         OpenOblivion::OpenOblivionOgreSoLoud
-        OpenOblivion::OpenOblivionSDL
+        OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionScripting
+        OpenOblivion::OpenOblivionSDL
+        absl::flat_hash_map
         Boost::boost
         Boost::fiber
-        ZLIB::ZLIB
+        GSL
+        OgreMain
+        OgreGLSupport
+        OgreOverlay
+        OgreTerrain
+        polymorphic_value
+        RenderSystem_GL3Plus
         SDL2::SDL2
         SDL2::SDL2main
         SoLoud::SoLoud
-        OgreMain OgreGLSupport OgreOverlay OgreTerrain RenderSystem_GL3Plus
         spdlog::spdlog
         stdc++fs
         tloptional
-        GSL
-        polymorphic_value
-        absl::flat_hash_map
+        ZLIB::ZLIB
         ${BULLET_LIBRARIES})
