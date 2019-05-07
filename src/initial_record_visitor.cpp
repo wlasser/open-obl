@@ -34,7 +34,7 @@ class PersistentChildrenVisitor {
  private:
   oo::BaseResolversRef mBaseCtx;
   oo::RefrResolversRef mRefrCtx;
-  F &&mRefAction;
+  F mRefAction;
 
   void readRecordRefr(oo::EspAccessor &accessor);
   void readRecordAchr(oo::EspAccessor &accessor);
@@ -42,7 +42,7 @@ class PersistentChildrenVisitor {
  public:
   explicit PersistentChildrenVisitor(oo::BaseResolversRef baseCtx,
                                      oo::RefrResolversRef refrCtx,
-                                     F &&refAction) noexcept
+                                     F refAction) noexcept
       : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
         mRefAction(std::forward<F>(refAction)) {}
 
@@ -143,14 +143,11 @@ class InitialWrldVisitor {
       : mBaseCtx(std::move(baseCtx)), mRefrCtx(std::move(refrCtx)),
         mRefMap(refMap), mWrldId(wrldId) {}
 
-  template<class R> void readRecord(oo::EspAccessor &accessor);
+  template<class R> void readRecord(oo::EspAccessor &accessor) = delete;
 };
 
 // CWG 727
-template<> void
-InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor);
 // TODO: template<> void readRecord<record::ROAD>(oo::EspAccessor &accessor);
-
 template<> void
 InitialWrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   // Only reading a dummy cell so we can skip the actual record.
