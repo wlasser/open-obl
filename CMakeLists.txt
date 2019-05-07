@@ -10,17 +10,8 @@ option(USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(FETCHCONTENT_QUIET OFF)
+set(BUILD_TESTING OFF)
 
-# As of commit a06c4a1 Abseil has a bug where GoogleTest cannot be downloaded
-# when Abseil is included as a subdirectory. Turn this option on and remove the
-# FetchContent for GoogleTest when this is fixed.
-# TODO: Let Abseil download GoogleTest
-set(ABSL_USE_GOOGLETEST_HEAD OFF CACHE BOOL "")
-set(ABSL_RUN_TESTS ON CACHE BOOL "")
-
-FetchContent_Declare(GoogleTest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG origin/master)
 FetchContent_Declare(Abseil
         GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
         GIT_TAG origin/master)
@@ -33,12 +24,6 @@ FetchContent_Declare(PEGTL
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.3.1)
-
-FetchContent_GetProperties(GoogleTest)
-if (NOT GoogleTest_populated)
-    FetchContent_Populate(GoogleTest)
-    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
-endif ()
 
 FetchContent_GetProperties(Abseil)
 if (NOT Abseil_populated)
