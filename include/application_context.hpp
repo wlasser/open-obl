@@ -19,7 +19,7 @@
 #include <gsl/gsl>
 #include <OgreOverlaySystem.h>
 #include <OgreRoot.h>
-#include <OGRE/Terrain/OgreTerrain.h>
+#include <Terrain/OgreTerrain.h>
 #include <spdlog/spdlog.h>
 #include <memory>
 
