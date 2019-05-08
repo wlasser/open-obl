@@ -32,7 +32,7 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
   /// `<id> 6 </id>`
   // TODO: Two elements with the same id, what to do?
   gui::UiElement *imgLoadPictureBackground{};
-  gui::UiElement *imgLoadPicture{};
+  //gui::UiElement *imgLoadPicture{};
 
   /// `<id> 7 </id>`
   /// This displays metadata about the currently selected save.

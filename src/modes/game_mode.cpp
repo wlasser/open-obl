@@ -162,7 +162,6 @@ RefId GameMode::getCrosshairRef() const {
 
 void GameMode::addPlayerToScene(ApplicationContext &ctx) {
   auto baseCtx{ctx.getBaseResolvers()};
-  auto refrCtx{ctx.getRefrResolvers()};
   const auto &npc_Res{oo::getResolver<record::NPC_>(baseCtx)};
 
   oo::BaseId playerNpcId{0x00'000007};

@@ -132,6 +132,7 @@ class Resolver<record::WRLD>::WrldVisitor {
       : mMeta(meta), mBaseCtx(std::move(baseCtx)) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor) {
+    (void) mMeta; // Clang bug? Fix -Wunused-private-field
     accessor.skipRecord();
   }
 };

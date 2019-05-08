@@ -162,6 +162,7 @@ class Resolver<record::CELL>::CellVisitor {
         mBaseCtx(std::move(baseCtx)) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor) {
+    (void) mMeta; // Clang bug? Fix -Wunused-private-field
     accessor.skipRecord();
   }
 };
@@ -185,6 +186,7 @@ class Resolver<record::CELL>::CellTerrainVisitor {
       : mMeta(meta), mMoreCtx(std::move(moreCtx)) {}
 
   template<class R> void readRecord(oo::EspAccessor &accessor) {
+    (void) mMeta; // Clang bug? Fix -Wunused-private-field
     accessor.skipRecord();
   }
 
