@@ -49,7 +49,8 @@ void parseCollisionObject(const oo::BlockGraph &g,
   if (!shapes.empty()) {
     if (info && info->m_mass >= 0.1f) shapes.front()->setMargin(0.01f);
     rigidBody->_setCollisionShape(std::move(shapes.front()));
-    if (shapes.erase(shapes.begin()) != shapes.end()) {
+    shapes.erase(shapes.begin());
+    if (!shapes.empty()) {
       rigidBody->_storeIndirectCollisionShapes(std::move(shapes));
     }
   }
