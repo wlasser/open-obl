@@ -354,7 +354,7 @@ parseShape(const oo::BlockGraph &g,
   const auto &childShape{oo::getBlock<nif::bhk::Shape>(g, shape.shape)};
 
   // Apply the scale and recurse into the linked shape
-  const auto &scaleMat{qvm::diag_mat(qvm::XXX1(shape.shapeScale))};
+  const Ogre::Matrix4 scaleMat = qvm::diag_mat(qvm::XXX1(shape.shapeScale));
 
   return oo::parseShape(g, rigidBody, childShape, transform * scaleMat);
 }
@@ -394,8 +394,8 @@ parseShape(const oo::BlockGraph &g,
 
   const auto &data{oo::getBlock<nif::hk::PackedNiTriStripsData>(g, shape.data)};
 
-  const auto &havokScaleMat{qvm::diag_mat(qvm::XYZ1(shape.scale))};
-  const Ogre::Matrix4 scaleMat{oo::fromHavokCoordinates(havokScaleMat)};
+  const Ogre::Matrix4 havokScaleMat = qvm::diag_mat(qvm::XYZ1(shape.scale));
+  const Ogre::Matrix4 scaleMat = oo::fromHavokCoordinates(havokScaleMat);
 
   return oo::parseNiTriStripsData(g, rigidBody, data, transform * scaleMat);
 }
