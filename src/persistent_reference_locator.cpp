@@ -7,7 +7,8 @@ tl::optional<oo::CellIndex>
 PersistentReferenceLocator::getCellIndex(oo::RefId refId) const noexcept {
   std::unique_lock lock{mMutex};
 
-  if (mLocations.contains(refId)) {
+  //C++20: if (mLocations.contains(refId)) {
+  if (mLocations.find(refId) != mLocations.end()) {
     const auto loc{mLocations.at(refId)};
     if (loc.mWrldId != oo::BaseId{0}) {
       return tl::make_optional<oo::CellIndex>(loc.mCellIndex);
@@ -21,7 +22,8 @@ tl::optional<oo::BaseId>
 PersistentReferenceLocator::getWorldspace(oo::RefId refId) const noexcept {
   std::unique_lock lock{mMutex};
 
-  if (mLocations.contains(refId)) {
+  //C++20: if (mLocations.contains(refId)) {
+  if (mLocations.find(refId) != mLocations.end()) {
     const auto loc{mLocations.at(refId)};
     if (loc.mWrldId != oo::BaseId{0}) return loc.mWrldId;
   }
@@ -33,7 +35,8 @@ tl::optional<oo::BaseId>
 PersistentReferenceLocator::getCell(oo::RefId refId) const noexcept {
   std::unique_lock lock{mMutex};
 
-  if (mLocations.contains(refId)) {
+  //C++20: if (mLocations.contains(refId)) {
+  if (mLocations.find(refId) != mLocations.end()) {
     const auto loc{mLocations.at(refId)};
     if (loc.mCellId != oo::BaseId{0}) return loc.mCellId;
   }
@@ -41,11 +44,11 @@ PersistentReferenceLocator::getCell(oo::RefId refId) const noexcept {
   return tl::nullopt;
 }
 
-absl::flat_hash_set<oo::RefId>
+std::unordered_set<oo::RefId>
 PersistentReferenceLocator::getRecordsInCell(oo::BaseId cellId) const noexcept {
   std::unique_lock lock{mMutex};
 
-  absl::flat_hash_set<oo::RefId> out{};
+  std::unordered_set<oo::RefId> out{};
   for (const auto &[k, v] : mLocations) {
     if (v.mCellId == cellId) out.insert(k);
   }
@@ -53,11 +56,11 @@ PersistentReferenceLocator::getRecordsInCell(oo::BaseId cellId) const noexcept {
   return out;
 }
 
-absl::flat_hash_set<oo::RefId>
+std::unordered_set<oo::RefId>
 PersistentReferenceLocator::getRecordsInCell(oo::CellIndex cellIndex) const noexcept {
   std::unique_lock lock{mMutex};
 
-  absl::flat_hash_set<oo::RefId> out{};
+  std::unordered_set<oo::RefId> out{};
   for (const auto &[k, v] : mLocations) {
     if (v.mCellIndex == cellIndex) out.insert(k);
   }

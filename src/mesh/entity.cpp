@@ -92,8 +92,7 @@ void Entity::buildSubEntityList(const oo::MeshPtr &mesh,
 
   for (const auto &subMesh : subMeshes) {
     // Can't use make_unique as constructor is private.
-    auto &subEntity{list.emplace_back(
-        absl::WrapUnique(new oo::SubEntity(this, subMesh.get())))};
+    auto &subEntity{list.emplace_back(new oo::SubEntity(this, subMesh.get()))};
     if (subMesh->isMatInitialised()) {
       subEntity->setMaterialName(subMesh->getMaterialName(),
                                  subMesh->getMaterialGroup());

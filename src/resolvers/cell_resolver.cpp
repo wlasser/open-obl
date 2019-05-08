@@ -120,7 +120,7 @@ void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
   }
 }
 
-tl::optional<const absl::flat_hash_set<RefId> &>
+tl::optional<const std::unordered_set<RefId> &>
 oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};

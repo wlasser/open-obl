@@ -20,7 +20,9 @@ LoadingMenuMode::getParentIdFromCache(oo::BaseId cellId,
   const auto worlds{ctx.getCellCache()->worlds()};
   auto it{std::find_if(worlds.begin(), worlds.end(), [&](const auto &p) {
     boost::this_fiber::yield();
-    return wrldRes.getCells(p->getBaseId())->contains(cellId);
+    //C++20: return wrldRes.getCells(p->getBaseId())->contains(cellId);
+    const auto cells{wrldRes.getCells(p->getBaseId())};
+    return cells->find(cellId) != cells->end();
   })};
 
   return it != worlds.end() ? std::optional{(*it)->getBaseId()} : std::nullopt;
@@ -38,7 +40,8 @@ LoadingMenuMode::getParentIdFromResolver(oo::BaseId cellId,
   auto it{std::find_if(worlds.begin(), worlds.end(), [&](auto wrldId) {
     boost::this_fiber::yield();
     auto cellOpt{wrldRes.getCells(wrldId)};
-    return cellOpt && cellOpt->contains(cellId);
+    //C++20: return cellOpt && cellOpt->contains(cellId);
+    return cellOpt && cellOpt->find(cellId) != cellOpt->end();
   })};
 
   return it != worlds.end() ? std::optional{*it} : std::nullopt;
@@ -63,7 +66,8 @@ LoadingMenuMode::getParentIdFromUnloaded(oo::BaseId cellId,
     boost::this_fiber::yield();
 
     const auto cells{wrldRes.getCells(wrldId)};
-    return cells && cells->contains(cellId);
+    //C++20: return cells && cells->contains(cellId);
+    return cells && cells->find(cellId) != cells->end();
   })};
 
   return it != worlds.end() ? std::optional{*it} : std::nullopt;

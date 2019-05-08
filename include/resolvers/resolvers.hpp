@@ -5,7 +5,6 @@
 #include "record/records_fwd.hpp"
 #include "record/reference_records.hpp"
 #include "meta.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <boost/fiber/mutex.hpp>
 #include <boost/mp11.hpp>
 #include <btBulletDynamicsCommon.h>
@@ -61,7 +60,7 @@ class Resolver {
   using RecordEntry = std::variant<std::pair<const R, tl::optional<R>>, R>;
 
   /// Record storage.
-  absl::flat_hash_map<IdType, RecordEntry> mRecords{};
+  std::unordered_map<IdType, RecordEntry> mRecords{};
 
   /// Record storage mutex.
   mutable boost::fibers::mutex mMtx{};

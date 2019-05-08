@@ -9,8 +9,6 @@
 #include "resolvers/cell_resolver.hpp"
 #include "time_manager.hpp"
 #include "wrld.hpp"
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
 #include <boost/multi_array.hpp>
 #include <OgreSceneManager.h>
@@ -31,7 +29,7 @@ class Resolver<record::WRLD> {
     /// Accessors, in load order of mods that modify the contents of the world.
     std::vector<oo::EspAccessor> mAccessors{};
     /// All cells in the world.
-    absl::flat_hash_set<oo::BaseId> mCells{};
+    std::unordered_set<oo::BaseId> mCells{};
     /// Cells in the world stored in a grid mirroring their actual layout.
     /// The array base is set such that the cell with coordinates `(X,Y)` is
     /// located at `[X][Y]`.
@@ -39,7 +37,7 @@ class Resolver<record::WRLD> {
 
     /// All the reference records in the world and the indices of the cells they
     /// are in.
-    absl::flat_hash_map<oo::RefId, oo::CellIndex> mPersistentReferences{};
+    std::unordered_map<oo::RefId, oo::CellIndex> mPersistentReferences{};
   };
 
   /// Holds a record with an immutable backup of the original.
@@ -49,7 +47,7 @@ class Resolver<record::WRLD> {
   using WrappedRecordEntry = std::pair<RecordEntry, Metadata>;
 
   /// Record storage.
-  absl::flat_hash_map<oo::BaseId, WrappedRecordEntry> mRecords{};
+  std::unordered_map<oo::BaseId, WrappedRecordEntry> mRecords{};
 
   /// Record storage mutex.
   mutable boost::fibers::mutex mMtx{};
@@ -111,13 +109,13 @@ class Resolver<record::WRLD> {
   /// Return the BaseIds of all cells in the world.
   /// \warning This will return an empty optional if the world has not been
   ///          loaded first with a call to load.
-  tl::optional<const absl::flat_hash_set<BaseId> &>
+  tl::optional<const std::unordered_set<BaseId> &>
   getCells(oo::BaseId baseId) const;
 
   /// Return the `BaseId`s of all worldspaces.
   /// This method should generally be avoided but is necessary when trying to
   /// find which worldspace contains a given cell.
-  absl::flat_hash_set<BaseId> getWorlds() const;
+  std::unordered_set<BaseId> getWorlds() const;
 };
 
 class Resolver<record::WRLD>::WrldVisitor {
@@ -280,7 +278,7 @@ class World {
   /// Map taking each LTEX id to a blend map, for a fixed quadrant.
   /// \remark Access via [] will value-initialize any id which doesn't exist,
   ///         giving a transparent QuadrantBlendMap.
-  using LayerMap = absl::flat_hash_map<oo::BaseId, QuadrantBlendMap>;
+  using LayerMap = std::unordered_map<oo::BaseId, QuadrantBlendMap>;
 
   void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
 

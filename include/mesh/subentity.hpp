@@ -52,7 +52,7 @@ class SubEntity : public Ogre::Renderable {
  private:
   friend class Entity;
 
-  explicit SubEntity(oo::Entity *parent, oo::SubMesh *subMesh);
+  explicit SubEntity(oo::Entity *parent, oo::SubMesh *subMesh) noexcept;
 
   oo::Entity *mParent{};
   oo::SubMesh *mSubMesh{};

@@ -213,7 +213,8 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
   auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
 
   if (auto cells{wrldRes.getCells(wrldId)};
-      !cells || !cells->contains(cellId)) {
+    //C++20: !cells || !cells->contains(cellId)) {
+      !cells || cells->find(cellId) == cells->end()) {
     ctx.getLogger()->error("Cell {} does not exist in worldspace {}",
                            cellId, wrldId);
     throw std::runtime_error("Cell does not exist in worldspace");

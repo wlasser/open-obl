@@ -14,8 +14,6 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/static_resolver.hpp"
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <tl/optional.hpp>
@@ -43,7 +41,7 @@ class Resolver<record::CELL> {
     std::vector<oo::EspAccessor> mAccessors{};
     /// All reference records inside the cell.
     /// This includes both esp records and ess records.
-    absl::flat_hash_set<RefId> mReferences{};
+    std::unordered_set<RefId> mReferences{};
     /// An optional base id for a LAND record describing the terrain of this
     /// cell. Should be present if `mIsExterior` is true.
     tl::optional<oo::BaseId> mLandId{};
@@ -56,7 +54,7 @@ class Resolver<record::CELL> {
   using WrappedRecordEntry = std::pair<RecordEntry, Metadata>;
 
   /// Record storage.
-  absl::flat_hash_map<oo::BaseId, WrappedRecordEntry> mRecords{};
+  std::unordered_map<oo::BaseId, WrappedRecordEntry> mRecords{};
 
   /// Record storage mutex.
   mutable boost::fibers::mutex mMtx{};
@@ -131,7 +129,7 @@ class Resolver<record::CELL> {
   /// Return the RefIds of all reference records in the cell.
   /// \warning This will return an empty optional if the cell has not been
   ///          loaded first with a call to load.
-  tl::optional<const absl::flat_hash_set<RefId> &>
+  tl::optional<const std::unordered_set<RefId> &>
   getReferences(oo::BaseId baseId) const;
 
   /// Return the BaseId of the LAND record describing the terrain geometry of

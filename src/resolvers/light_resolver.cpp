@@ -4,7 +4,7 @@
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
 #include "resolvers/light_resolver.hpp"
-#include <absl/strings/match.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <OgreColourValue.h>
 #include <OgreLight.h>
 #include <OgreSceneNode.h>
@@ -100,7 +100,7 @@ reifyRecord(const record::REFR_LIGH &refRec,
 
   auto *lightNode = [&]() {
     auto *lightNode{oo::findChild(baseNode, [](Ogre::SceneNode *child) {
-      return absl::EndsWithIgnoreCase(child->getName(), "AttachLight");
+      return boost::iends_with(child->getName(), "AttachLight");
     })};
     return lightNode ? lightNode : baseNode;
   }();

@@ -4,7 +4,6 @@
 #include "deferred_light_pass.hpp"
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
-#include <absl/container/inlined_vector.h>
 #include <boost/range/iterator_range.hpp>
 #include <gsl/gsl>
 #include <set>
@@ -95,7 +94,7 @@ class OctreeNode {
   oo::OctreeNode *mParent{};
   /// SceneNodes that are contained within this region, namely those objects
   /// that are within the region but that intersect at least two octants.
-  absl::InlinedVector<oo::OctreeSceneNode *, 2u> mSceneNodes{};
+  std::vector<oo::OctreeSceneNode *> mSceneNodes{};
 
   friend void
   buildOctreeImpl(oo::OctreeNode *parent,

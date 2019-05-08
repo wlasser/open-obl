@@ -2,7 +2,6 @@
 #define OPENOBLIVION_MESH_HPP
 
 #include "mesh/submesh.hpp"
-#include <absl/container/flat_hash_map.h>
 #include <gsl/gsl>
 #include <OgreAnimation.h>
 #include <OgreAxisAlignedBox.h>
@@ -29,7 +28,7 @@ using MeshPtr = std::shared_ptr<oo::Mesh>;
 class Mesh : public Ogre::Resource {
  public:
   using SubMeshList = std::vector<std::unique_ptr<oo::SubMesh>>;
-  using SubMeshNameMap = absl::flat_hash_map<std::string, uint16_t>;
+  using SubMeshNameMap = std::unordered_map<std::string, uint16_t>;
 
   Mesh(Ogre::ResourceManager *creator, const std::string &name,
        Ogre::ResourceHandle handle, const std::string &group,

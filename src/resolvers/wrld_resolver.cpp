@@ -168,7 +168,7 @@ oo::Resolver<record::WRLD>::getNeighbourhood(oo::BaseId wrldId,
   return grid[boost::indices[Range(X0, X1)][Range(Y0, Y1)]];
 }
 
-tl::optional<const absl::flat_hash_set<oo::BaseId> &>
+tl::optional<const std::unordered_set<oo::BaseId> &>
 oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
@@ -178,9 +178,9 @@ oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
   return cells;
 }
 
-absl::flat_hash_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
+std::unordered_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
   std::scoped_lock lock{mMtx};
-  absl::flat_hash_set<oo::BaseId> ids{};
+  std::unordered_set<oo::BaseId> ids{};
   for (const auto &[id, _] : mRecords) ids.emplace(id);
   return ids;
 }

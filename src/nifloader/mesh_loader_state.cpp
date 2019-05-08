@@ -2,7 +2,7 @@
 #include "math/conversions.hpp"
 #include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader_state.hpp"
-#include <absl/strings/match.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/copy.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreHardwareBufferManager.h>
@@ -677,7 +677,7 @@ TangentData getTangentData(const nif::NiBinaryExtraData &extraData) {
   TangentData out{};
   if (!extraData.name) return out;
   //C++20: if (!extraData.name->str()->starts_with("Tangent space")) return out;
-  if (!absl::StartsWith(extraData.name->str(), "Tangent space")) return out;
+  if (!boost::starts_with(extraData.name->str(), "Tangent space")) return out;
 
   // Format seems to be t1 t2 t3 ... b1 b2 b3 ...
   const std::size_t bytesPerList{extraData.data.dataSize / 2};
@@ -699,7 +699,7 @@ TangentData parseTangentData(const oo::BlockGraph &g,
   const auto pred = [&g](auto ref) {
     const auto &data{oo::getBlock<nif::NiExtraData>(g, ref)};
     //C++20: return data.name && data.name->str()->starts_with("Tangent space");
-    return data.name && absl::StartsWith(data.name->str(), "Tangent space");
+    return data.name && boost::starts_with(data.name->str(), "Tangent space");
   };
   const auto begin{dataArray.begin()}, end{dataArray.end()};
   const auto it{std::find_if(begin, end, pred)};
@@ -930,7 +930,7 @@ parseNiMaterialProperty(const oo::BlockGraph &g,
   auto pass{material->getTechnique(0)->getPass(0)};
   // Sometimes the original material name is needed in another part of the
   // engine. Store the relevant ones in the pass.
-  if (absl::EqualsIgnoreCase(block.name.str(), "skin")) {
+  if (boost::iequals(block.name.str(), "skin")) {
     pass->setName("skin");
   }
 

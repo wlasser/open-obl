@@ -12,9 +12,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(FETCHCONTENT_QUIET OFF)
 set(BUILD_TESTING OFF)
 
-FetchContent_Declare(Abseil
-        GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
-        GIT_TAG origin/master)
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v2.7.0)
@@ -24,12 +21,6 @@ FetchContent_Declare(PEGTL
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.3.1)
-
-FetchContent_GetProperties(Abseil)
-if (NOT Abseil_populated)
-    FetchContent_Populate(Abseil)
-    add_subdirectory(${abseil_SOURCE_DIR} ${abseil_BINARY_DIR})
-endif ()
 
 FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
@@ -235,7 +226,6 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionRecord
         OpenOblivion::OpenOblivionScripting
         OpenOblivion::OpenOblivionSDL
-        absl::flat_hash_map
         Boost::boost
         Boost::fiber
         GSL

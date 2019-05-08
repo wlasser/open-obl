@@ -10,7 +10,7 @@
 #include "nifloader/mesh_loader_state.hpp"
 #include "nifloader/scene.hpp"
 #include "ogrebullet/collision_shape_manager.hpp"
-#include <absl/strings/match.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #include <OgreMaterialManager.h>
 #include <OgreSceneManager.h>
@@ -179,7 +179,7 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
   // for sure to know if a node is skeletal or not.
   if (!mState->mIsSkeleton) {
     //C++20: if (name.starts_with("Bip01")
-    if (absl::StartsWith(blockName, "Bip01")) return;
+    if (boost::starts_with(blockName, "Bip01")) return;
   }
 
   if (blockName != "Scene Root") {
@@ -335,7 +335,7 @@ void NifVisitor::finish_vertex(const nif::NiNode &node, const Graph &) {
     // Bones were skipped for skeletons.
     // Don't go up a level for a node that wasn't added.
     //C++20: if (name.starts_with("Bip01")
-    if (absl::StartsWith(name, "Bip01")) return;
+    if (boost::starts_with(name, "Bip01")) return;
   }
 
   if (name == "Scene Root") return;

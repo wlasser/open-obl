@@ -13,7 +13,6 @@
 #include "settings.hpp"
 #include "time_manager.hpp"
 #include "sdl/sdl.hpp"
-#include <absl/container/flat_hash_set.h>
 #include <imgui/imgui.h>
 #include <OgreBone.h>
 #include <OgreSkeletonInstance.h>
@@ -165,7 +164,6 @@ void GameMode::addPlayerToScene(ApplicationContext &ctx) {
   auto baseCtx{ctx.getBaseResolvers()};
   auto refrCtx{ctx.getRefrResolvers()};
   const auto &npc_Res{oo::getResolver<record::NPC_>(baseCtx)};
-  const auto &npc_RefrRes{oo::getRefrResolver<record::REFR_NPC_>(refrCtx)};
 
   oo::BaseId playerNpcId{0x00'000007};
   oo::RefId playerId{0xff'000000};

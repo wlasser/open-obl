@@ -3,8 +3,6 @@
 
 #include "record/formid.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include <absl/container/flat_hash_map.h>
-#include <absl/container/flat_hash_set.h>
 #include <boost/fiber/mutex.hpp>
 #include <tl/optional.hpp>
 
@@ -34,7 +32,7 @@ class PersistentReferenceLocator {
     explicit Location(oo::BaseId cellId) : mCellId(cellId) {}
   };
 
-  absl::flat_hash_map<oo::RefId, Location> mLocations{};
+  std::unordered_map<oo::RefId, Location> mLocations{};
   mutable boost::fibers::mutex mMutex{};
 
  public:
@@ -54,12 +52,12 @@ class PersistentReferenceLocator {
   tl::optional<oo::BaseId> getCell(oo::RefId refId) const noexcept;
 
   /// Find all reference records which belong to the given interior cell.
-  absl::flat_hash_set<oo::RefId>
+  std::unordered_set<oo::RefId>
   getRecordsInCell(oo::BaseId cellId) const noexcept;
 
   /// Find all reference records which belong to the exterior cell with the
   /// given coordinates.
-  absl::flat_hash_set<oo::RefId>
+  std::unordered_set<oo::RefId>
   getRecordsInCell(oo::CellIndex cellIndex) const noexcept;
 
   /// Record the position of a persistent reference record that is in an

@@ -6,7 +6,7 @@
 
 namespace oo {
 
-SubEntity::SubEntity(oo::Entity *parent, oo::SubMesh *subMesh)
+SubEntity::SubEntity(oo::Entity *parent, oo::SubMesh *subMesh) noexcept
     : mParent(parent),
       mSubMesh(subMesh),
       mIsVisible(true),

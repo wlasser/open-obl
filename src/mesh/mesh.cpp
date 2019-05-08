@@ -34,7 +34,8 @@ oo::SubMesh *Mesh::createSubMesh() {
 }
 
 oo::SubMesh *Mesh::createSubMesh(const std::string &name) {
-  if (mSubMeshNameMap.contains(name)) {
+  //C++20: if (mSubMeshNameMap.contains(name)) {
+  if (mSubMeshNameMap.find(name) != mSubMeshNameMap.end()) {
     OGRE_EXCEPT(Ogre::Exception::ERR_DUPLICATE_ITEM,
                 "A SubMesh with the name " + name + " already exists.",
                 "Mesh::createSubMesh");

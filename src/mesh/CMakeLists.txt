@@ -25,7 +25,7 @@ target_sources(OpenOblivionMesh PRIVATE
 
 target_link_libraries(OpenOblivionMesh
         PRIVATE Boost::boost
-        PUBLIC absl::flat_hash_map GSL OgreMain)
+        PUBLIC GSL OgreMain)
 
 install(TARGETS OpenOblivionMesh EXPORT OpenOblivionMeshTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
