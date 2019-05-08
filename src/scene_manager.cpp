@@ -31,7 +31,6 @@ DeferredSceneManager::createMovableObject(const Ogre::String &name,
 
 void DeferredSceneManager::destroyMovableObject(const Ogre::String &name,
                                                 const Ogre::String &typeName) {
-  SceneManager::destroyMovableObject(name, typeName);
   if (typeName == Ogre::LightFactory::FACTORY_TYPE_NAME) {
     auto pred = [&name](const auto &info) {
       return info.light->getName() == name;
@@ -39,6 +38,7 @@ void DeferredSceneManager::destroyMovableObject(const Ogre::String &name,
     auto it{std::find_if(mLights.begin(), mLights.end(), pred)};
     if (it == mLights.end()) return;
 
+    SceneManager::destroyMovableObject(name, typeName);
     mLights.erase(it);
   }
 }
