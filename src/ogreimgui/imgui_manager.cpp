@@ -185,7 +185,7 @@ void ImGuiManager::removeMaterial() noexcept {
   }
 }
 
-void ImGuiManager::render(Viewport *viewport, RenderQueue *queue) {
+void ImGuiManager::render(Viewport *viewport, RenderQueue *) {
   auto *draw_data{ImGui::GetDrawData()};
   auto &texMgr{TextureManager::getSingleton()};
   // TODO: This can be passed through, it does not need to be looked up again

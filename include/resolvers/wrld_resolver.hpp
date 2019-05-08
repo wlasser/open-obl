@@ -285,8 +285,8 @@ class World {
   using LayerMaps = std::array<LayerMap, 4u>;
   using LayerOrders = std::array<LayerOrder, 4u>;
 
-  LayerMaps makeDefaultLayerMaps(const record::LAND &rec) const;
-  LayerOrders makeDefaultLayerOrders(const record::LAND &rec) const;
+  LayerMaps makeDefaultLayerMaps() const;
+  LayerOrders makeDefaultLayerOrders() const;
 
   void applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
   void applyBaseLayers(LayerOrders &layerOrders, const record::LAND &rec) const;

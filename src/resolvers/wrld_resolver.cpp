@@ -461,7 +461,7 @@ void oo::World::makeCellGrid() {
       data.layerDeclaration = matGen->getLayerDeclaration();
     }
 
-    auto layerOrders{makeDefaultLayerOrders(*landOpt)};
+    auto layerOrders{makeDefaultLayerOrders()};
     applyBaseLayers(layerOrders, *landOpt);
     applyFineLayers(layerOrders, *landOpt);
 
@@ -584,8 +584,7 @@ oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   }
 }
 
-oo::World::LayerMaps
-oo::World::makeDefaultLayerMaps(const record::LAND &rec) const {
+oo::World::LayerMaps oo::World::makeDefaultLayerMaps() const {
   LayerMaps layerMaps;
   std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
     LayerMap layers{};
@@ -596,8 +595,7 @@ oo::World::makeDefaultLayerMaps(const record::LAND &rec) const {
   return layerMaps;
 }
 
-oo::World::LayerOrders
-oo::World::makeDefaultLayerOrders(const record::LAND &rec) const {
+oo::World::LayerOrders oo::World::makeDefaultLayerOrders() const {
   LayerOrders layerOrders;
   std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
     return std::vector{oo::BaseId{0}};
@@ -780,8 +778,8 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   }
 
   // Build the base texture layer and blend layers.
-  auto layerMaps{makeDefaultLayerMaps(landRec)};
-  auto layerOrders{makeDefaultLayerOrders(landRec)};
+  auto layerMaps{makeDefaultLayerMaps()};
+  auto layerOrders{makeDefaultLayerOrders()};
 
   applyBaseLayers(layerMaps, landRec);
   applyBaseLayers(layerOrders, landRec);

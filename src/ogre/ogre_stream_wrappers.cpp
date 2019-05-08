@@ -40,7 +40,7 @@ auto OgreDataStreambuf::seekpos(pos_type pos,
 }
 
 auto OgreDataStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
-                                std::ios_base::openmode which) -> pos_type {
+                                std::ios_base::openmode /*which*/) -> pos_type {
   switch (dir) {
     case std::ios_base::beg:
       if (off < 0) ogreDataStream->seek(0u);

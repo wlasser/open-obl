@@ -139,7 +139,7 @@ std::istream &operator>>(std::istream &is, CapsuleBV &t) {
 std::istream &operator>>(std::istream &is, UnionBV &t) {
   io::readBytes(is, t.numBoundingVolumes);
   t.boundingVolumes.reserve(t.numBoundingVolumes);
-  for (auto i = 0; i < t.numBoundingVolumes; ++i) {
+  for (basic::UInt i = 0u; i < t.numBoundingVolumes; ++i) {
     t.boundingVolumes.emplace_back<BoundingVolume>({});
     is >> t.boundingVolumes.back();
   }
@@ -152,7 +152,7 @@ std::istream &operator>>(std::istream &is, HalfSpaceBV &t) {
   return is;
 }
 
-std::istream &operator>>(std::istream &is, EmptyBV &t) {
+std::istream &operator>>(std::istream &is, EmptyBV &) {
   return is;
 }
 

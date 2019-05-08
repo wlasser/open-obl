@@ -46,7 +46,7 @@ Resource *TextResourceManager::createImpl(const Ogre::String &name,
                                           const Ogre::String &group,
                                           bool isManual,
                                           Ogre::ManualResourceLoader *loader,
-                                          const Ogre::NameValuePairList *params) {
+                                          const Ogre::NameValuePairList *) {
   return OGRE_NEW TextResource(this, name, handle, group, isManual, loader);
 }
 

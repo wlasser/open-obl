@@ -81,7 +81,7 @@ void NiTextKeyExtraData::read(std::istream &is) {
   io::readBytes(is, unknownInt1);
   io::readBytes(is, numTextKeys);
   textKeys.reserve(numTextKeys);
-  for (auto i = 0; i < numTextKeys; ++i) is >> textKeys.emplace_back();
+  for (basic::UInt i = 0; i < numTextKeys; ++i) is >> textKeys.emplace_back();
 }
 
 void BSBound::read(std::istream &is) {
@@ -93,7 +93,7 @@ void BSBound::read(std::istream &is) {
 void BSFurnitureMarker::read(std::istream &is) {
   NiExtraData::read(is);
   io::readBytes(is, numPositions);
-  for (auto i = 0; i < numPositions; ++i) is >> positions.emplace_back();
+  for (basic::UInt i = 0; i < numPositions; ++i) is >> positions.emplace_back();
 }
 
 void NiInterpolator::read(std::istream &is) {
@@ -140,7 +140,7 @@ void NiBlendInterpolator::read(std::istream &is) {
     if (arrayParams) {
       auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
       unmanagedData->interpArrayItems.reserve(size);
-      for (auto i = 0; i < size; ++i) {
+      for (std::size_t i = 0; i < size; ++i) {
         is >> unmanagedData->interpArrayItems.emplace_back(version);
       }
     } else {
@@ -157,13 +157,13 @@ void NiBlendInterpolator::read(std::istream &is) {
     if (arrayParams) {
       auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
       interpArrayItems->reserve(size);
-      for (auto i = 0; i < size; ++i) {
+      for (std::size_t i = 0; i < size; ++i) {
         is >> interpArrayItems->emplace_back(version);
       }
     } else {
       auto size = arrayParams.value<false>().arraySize;
       interpArrayItems->reserve(size);
-      for (auto i = 0; i < size; ++i) {
+      for (std::size_t i = 0; i < size; ++i) {
         is >> interpArrayItems->emplace_back(version);
       }
     }
@@ -197,7 +197,7 @@ void NiSequence::read(std::istream &is) {
   io::readBytes(is, numControlledBlocks);
   io::readBytes(is, arrayGrowBy);
   controlledBlocks.reserve(numControlledBlocks);
-  for (auto i = 0; i < numControlledBlocks; ++i) {
+  for (basic::UInt i = 0; i < numControlledBlocks; ++i) {
     is >> controlledBlocks.emplace_back(version);
   }
 }
@@ -305,7 +305,7 @@ void NiObjectNet::read(std::istream &is) {
   io::readBytes(is, extraDataArrayLength);
   if (extraDataArrayLength && extraDataArray) {
     extraDataArray->reserve(extraDataArrayLength.value());
-    for (auto i = 0; i < extraDataArrayLength.value(); ++i) {
+    for (basic::UInt i = 0; i < extraDataArrayLength.value(); ++i) {
       extraDataArray->emplace_back();
       is >> extraDataArray->back();
     }
@@ -383,7 +383,7 @@ void NiTexturingProperty::read(std::istream &is) {
 
   io::readBytes(is, numShaderTextures);
   if (numShaderTextures && shaderTextures) {
-    for (auto i = 0; i < *numShaderTextures; ++i) {
+    for (basic::UInt i = 0; i < *numShaderTextures; ++i) {
       shaderTextures->emplace_back(version);
       is >> shaderTextures->back();
     }
@@ -440,7 +440,7 @@ void NiAVObject::read(std::istream &is) {
   is >> velocity;
   io::readBytes(is, numProperties);
   properties.reserve(numProperties);
-  for (auto i = 0; i < numProperties; ++i) {
+  for (basic::UInt i = 0; i < numProperties; ++i) {
     properties.emplace_back();
     is >> properties.back();
   }
@@ -459,7 +459,7 @@ void NiDynamicEffect::read(std::istream &is) {
   if (!noAffectedNodes) {
     io::readBytes(is, numAffectedNodes);
     affectedNodes.reserve(numAffectedNodes);
-    for (auto i = 0; i < numAffectedNodes; ++i) {
+    for (basic::UInt i = 0; i < numAffectedNodes; ++i) {
       affectedNodes.emplace_back();
       is >> affectedNodes.back();
     }
@@ -470,13 +470,13 @@ void NiNode::read(std::istream &is) {
   NiAVObject::read(is);
   io::readBytes(is, numChildren);
   children.reserve(numChildren);
-  for (auto i = 0; i < numChildren; ++i) {
+  for (basic::UInt i = 0; i < numChildren; ++i) {
     children.emplace_back();
     is >> children.back();
   }
   io::readBytes(is, numEffects);
   effects.reserve(numEffects);
-  for (auto i = 0; i < numEffects; ++i) {
+  for (basic::UInt i = 0; i < numEffects; ++i) {
     effects.emplace_back();
     is >> effects.back();
   }
@@ -486,7 +486,7 @@ void NiSkinPartition::read(std::istream &is) {
   NiObject::read(is);
   io::readBytes(is, numSkinPartitionBlocks);
   skinPartitionBlocks.reserve(numSkinPartitionBlocks);
-  for (auto i = 0; i < numSkinPartitionBlocks; ++i) {
+  for (basic::UInt i = 0; i < numSkinPartitionBlocks; ++i) {
     skinPartitionBlocks.emplace_back(version);
     is >> skinPartitionBlocks.back();
   }
@@ -499,7 +499,7 @@ void NiSkinData::read(std::istream &is) {
   is >> skinPartition;
   io::readBytes(is, hasVertexWeights);
   boneList.reserve(numBones);
-  for (auto i = 0; i < numBones; ++i) {
+  for (basic::UInt i = 0; i < numBones; ++i) {
     BoneData bone{};
     is >> bone.skinTransform >> bone.boundingSphereOffset;
     io::readBytes(is, bone.boundingSphereRadius);
@@ -522,7 +522,7 @@ void NiSkinInstance::read(std::istream &is) {
   is >> skeletonRoot;
   io::readBytes(is, numBones);
   bones.reserve(numBones);
-  for (auto i = 0; i < numBones; ++i) {
+  for (basic::UInt i = 0; i < numBones; ++i) {
     bones.emplace_back();
     is >> bones.back();
   }
@@ -557,7 +557,7 @@ void NiAdditionalGeometryData::read(std::istream &is) {
 
   io::readBytes(is, numBlockInfos);
   blockInfos.reserve(numBlockInfos);
-  for (auto i = 0; i < numBlockInfos; ++i) {
+  for (basic::UInt i = 0; i < numBlockInfos; ++i) {
     blockInfos.emplace_back();
     is >> blockInfos.back();
   }
@@ -757,14 +757,14 @@ void ConvexVerticesShape::read(std::istream &is) {
 
   io::readBytes(is, numVertices);
   vertices.reserve(numVertices);
-  for (auto i = 0; i < numVertices; ++i) {
+  for (basic::UInt i = 0; i < numVertices; ++i) {
     vertices.emplace_back();
     is >> vertices.back();
   }
 
   io::readBytes(is, numNormals);
   normals.reserve(numNormals);
-  for (auto i = 0; i < numNormals; ++i) {
+  for (basic::UInt i = 0; i < numNormals; ++i) {
     normals.emplace_back();
     is >> normals.back();
   }
@@ -808,7 +808,7 @@ void ListShape::read(std::istream &is) {
   bhk::ShapeCollection::read(is);
   io::readBytes(is, numSubShapes);
   subShapes.reserve(numSubShapes);
-  for (auto i = 0; i < numSubShapes; ++i) {
+  for (basic::UInt i = 0; i < numSubShapes; ++i) {
     is >> subShapes.emplace_back();
   }
   is >> material;
@@ -871,7 +871,7 @@ void Constraint::read(std::istream &is) {
   bhk::Serializable::read(is);
   io::readBytes(is, numEntities);
   entities.reserve(numEntities);
-  for (int i = 0; i < numEntities; ++i) {
+  for (basic::UInt i = 0; i < numEntities; ++i) {
     is >> entities.emplace_back();
   }
   io::readBytes(is, priority);
@@ -952,7 +952,7 @@ void RigidBody::read(std::istream &is) {
   io::readBytes(is, unknownBytes1);
   io::readBytes(is, numConstraints);
   constraints.reserve(numConstraints);
-  for (auto i = 0; i < numConstraints; ++i) {
+  for (basic::UInt i = 0; i < numConstraints; ++i) {
     constraints.emplace_back();
     is >> constraints.back();
   }

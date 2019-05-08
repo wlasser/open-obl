@@ -659,7 +659,7 @@ write(std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::LTEX &t, std::size_t size) {
+read(std::istream &is, raw::LTEX &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
   readRecord(is, t.textureFilename);
   readRecord(is, t.havokData);
@@ -1300,7 +1300,7 @@ template<> uint32_t NPC_::size() const {
 namespace raw {
 
 template<> std::ostream &
-write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
+write(std::ostream &os, const raw::NPC_ &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.skeletonFilename);
@@ -1330,7 +1330,7 @@ write(std::ostream &os, const raw::NPC_ &t, std::size_t size) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::NPC_ &t, std::size_t size) {
+read(std::istream &is, raw::NPC_ &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "MODL"_rec, "MODB"_rec, "ACBS"_rec, "SNAM"_rec, "INAM"_rec,
@@ -1572,7 +1572,7 @@ template<> uint32_t CELL::size() const {
 namespace raw {
 
 template<> std::ostream &
-write(std::ostream &os, const raw::CELL &t, std::size_t size) {
+write(std::ostream &os, const raw::CELL &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.data);
@@ -1591,7 +1591,7 @@ write(std::ostream &os, const raw::CELL &t, std::size_t size) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::CELL &t, std::size_t size) {
+read(std::istream &is, raw::CELL &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.data);
@@ -1650,7 +1650,7 @@ template<> uint32_t WRLD::size() const {
 namespace raw {
 
 template<> std::ostream &
-write(std::ostream &os, const raw::WRLD &t, std::size_t size) {
+write(std::ostream &os, const raw::WRLD &t, std::size_t /*size*/) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.parentWorldspace);
@@ -1667,7 +1667,7 @@ write(std::ostream &os, const raw::WRLD &t, std::size_t size) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::WRLD &t, std::size_t size) {
+read(std::istream &is, raw::WRLD &t, std::size_t /*size*/) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec, "CNAM"_rec,
@@ -1729,7 +1729,7 @@ template<> uint32_t LAND::size() const {
 namespace raw {
 
 template<> std::ostream &
-write(std::ostream &os, const raw::LAND &t, std::size_t size) {
+write(std::ostream &os, const raw::LAND &t, std::size_t /*size*/) {
   writeRecord(os, t.data);
   writeRecord(os, t.normals);
   writeRecord(os, t.heights);
@@ -1745,7 +1745,7 @@ write(std::ostream &os, const raw::LAND &t, std::size_t size) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::LAND &t, std::size_t size) {
+read(std::istream &is, raw::LAND &t, std::size_t /*size*/) {
   readRecord(is, t.data);
   readRecord(is, t.normals);
   readRecord(is, t.heights);

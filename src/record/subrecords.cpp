@@ -207,7 +207,7 @@ write(std::ostream &os, const raw::DATA_GRAS &t, std::size_t /*size*/) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::DATA_GRAS &t, std::size_t size) {
+read(std::istream &is, raw::DATA_GRAS &t, std::size_t /*size*/) {
   io::readBytes(is, t.density);
   io::readBytes(is, t.minSlope);
   io::readBytes(is, t.maxSlope);
@@ -692,7 +692,7 @@ write(std::ostream &os, const raw::MNAM_WRLD &t, std::size_t /*size*/) {
 }
 
 template<> std::istream &
-read(std::istream &is, raw::MNAM_WRLD &t, std::size_t size) {
+read(std::istream &is, raw::MNAM_WRLD &t, std::size_t /*size*/) {
   io::readBytes(is, t.width);
   io::readBytes(is, t.height);
   io::readBytes(is, t.topLeft.x);
@@ -1284,8 +1284,8 @@ template<> uint16_t XSED::size() const {
 namespace raw {
 
 template<> std::ostream &
-write(std::ostream &os, const raw::XSED &t, std::size_t size) {
-  for (auto i = 0; i < size; ++i) {
+write(std::ostream &os, const raw::XSED &/*t*/, std::size_t size) {
+  for (std::size_t i = 0; i < size; ++i) {
     os.put(0);
   }
   return os;

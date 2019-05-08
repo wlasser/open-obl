@@ -121,7 +121,7 @@ LLVMVisitor::promoteArithmeticOperands(llvm::Value *lhs, llvm::Value *rhs) {
 }
 
 template<> llvm::Value *
-LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &node) {
+LLVMVisitor::visitImpl<grammar::RawScriptnameStatement>(const AstNode &) {
   return nullptr;
 }
 

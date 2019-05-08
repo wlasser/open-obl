@@ -90,7 +90,7 @@ Real RigidBody::getBoundingRadius() const {
 }
 
 const AxisAlignedBox &
-RigidBody::getWorldBoundingBox(bool derive) const {
+RigidBody::getWorldBoundingBox(bool /*derive*/) const {
   btVector3 min{};
   btVector3 max{};
   mRigidBody->getAabb(min, max);
@@ -100,7 +100,7 @@ RigidBody::getWorldBoundingBox(bool derive) const {
 }
 
 const Sphere &
-RigidBody::getWorldBoundingSphere(bool derive) const {
+RigidBody::getWorldBoundingSphere(bool /*derive*/) const {
   // If we take a sphere centered at the bounding box center, then by symmetry
   // the distance from the center to any corner point is constant, and moreover
   // is the largest distance from the center to any point.
