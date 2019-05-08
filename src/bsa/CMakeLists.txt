@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OpenOblivionBsa STATIC)
 add_library(OpenOblivion::OpenOblivionBsa ALIAS OpenOblivionBsa)
 
+target_compile_options(OpenOblivionBsa PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionBsa PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionBsa PROPERTY CXX_EXTENSION OFF)
+
 target_include_directories(OpenOblivionBsa PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)

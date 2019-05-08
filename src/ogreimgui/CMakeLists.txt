@@ -4,8 +4,11 @@ project(OpenOblivionOgreImGui)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(OpenOblivionOgreImGui STATIC)
-
 add_library(OpenOblivion::OpenOblivionOgreImGui ALIAS OpenOblivionOgreImGui)
+
+target_compile_options(OpenOblivionOgreImGui PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionOgreImGui PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionOgreImGui PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionOgreImGui PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

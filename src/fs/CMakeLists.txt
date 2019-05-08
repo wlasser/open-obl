@@ -4,8 +4,11 @@ project(OpenOblivionFS)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(OpenOblivionFS STATIC)
-
 add_library(OpenOblivion::OpenOblivionFS ALIAS OpenOblivionFS)
+
+target_compile_options(OpenOblivionFS PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionFS PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionFS PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionFS PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

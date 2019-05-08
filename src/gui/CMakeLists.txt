@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionGui)
 
 add_library(OpenOblivionGui STATIC)
-target_compile_options(OpenOblivionGui PRIVATE -Wall)
+add_library(OpenOblivion::OpenOblivionGui ALIAS OpenOblivionGui)
+
+target_compile_options(OpenOblivionGui PRIVATE -Wall -Wextra)
 target_compile_features(OpenOblivionGui PUBLIC cxx_std_17)
 set_property(TARGET OpenOblivionGui PROPERTY CXX_EXTENSION OFF)
-
-add_library(OpenOblivion::OpenOblivionGui ALIAS OpenOblivionGui)
 
 target_include_directories(OpenOblivionGui PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

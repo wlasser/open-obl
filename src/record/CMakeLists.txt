@@ -4,8 +4,11 @@ project(OpenOblivionRecord)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(OpenOblivionRecord STATIC)
-
 add_library(OpenOblivion::OpenOblivionRecord ALIAS OpenOblivionRecord)
+
+target_compile_options(OpenOblivionRecord PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionRecord PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionRecord PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionRecord PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

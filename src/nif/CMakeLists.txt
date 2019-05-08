@@ -4,8 +4,11 @@ project(OpenOblivionNif)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(OpenOblivionNif STATIC)
-
 add_library(OpenOblivion::OpenOblivionNif ALIAS OpenOblivionNif)
+
+target_compile_options(OpenOblivionNif PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionNif PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionNif PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionNif PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

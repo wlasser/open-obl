@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 add_library(OpenOblivionOgreSoLoud STATIC)
 add_library(OpenOblivion::OpenOblivionOgreSoLoud ALIAS OpenOblivionOgreSoLoud)
 
+target_compile_options(OpenOblivionOgreSoLoud PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionOgreSoLoud PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionOgreSoLoud PROPERTY CXX_EXTENSION OFF)
+
 target_include_directories(OpenOblivionOgreSoLoud PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)

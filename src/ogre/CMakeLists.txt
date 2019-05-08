@@ -4,8 +4,11 @@ project(OpenOblivionOgre)
 set(CMAKE_CXX_STANDARD 17)
 
 add_library(OpenOblivionOgre STATIC)
-
 add_library(OpenOblivion::OpenOblivionOgre ALIAS OpenOblivionOgre)
+
+target_compile_options(OpenOblivionOgre PRIVATE -Wall -Wextra)
+target_compile_features(OpenOblivionOgre PUBLIC cxx_std_17)
+set_property(TARGET OpenOblivionOgre PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionOgre PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
