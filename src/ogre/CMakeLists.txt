@@ -24,7 +24,7 @@ target_sources(OpenOblivionOgre PRIVATE
         window.cpp)
 
 target_link_libraries(OpenOblivionOgre
-        PRIVATE spdlog OpenOblivion::OpenOblivionFS
+        PRIVATE spdlog::spdlog OpenOblivion::OpenOblivionFS
         PUBLIC OgreMain OgreOverlay)
 
 install(TARGETS OpenOblivionOgre EXPORT OpenOblivionOgreTargets

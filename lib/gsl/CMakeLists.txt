@@ -8,6 +8,7 @@ find_package(Git)
 
 # creates a library GSL which is an interface (header files only)
 add_library(GSL INTERFACE)
+add_library(MicrosoftGSL::GSL ALIAS GSL)
 
 # determine whether this is a standalone project or included by other projects
 set(GSL_STANDALONE_PROJECT OFF)
@@ -76,14 +77,14 @@ install(TARGETS GSL
         INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(EXPORT MicrosoftGSLTargets
-        NAMESPACE MicrosoftGSL
+        NAMESPACE MicrosoftGSL::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/MicrosoftGSL
         FILE MicrosoftGSLConfig.cmake)
 
 install(DIRECTORY include/gsl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 export(EXPORT MicrosoftGSLTargets
-       NAMESPACE MicrosoftGSL
+       NAMESPACE MicrosoftGSL::
        FILE MicrosoftGSLConfig.cmake)
 
 option(GSL_TEST "Generate tests." ${GSL_STANDALONE_PROJECT})

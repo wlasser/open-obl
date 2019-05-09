@@ -4,6 +4,7 @@ project(polymorphic_value CXX)
 set(CMAKE_CXX_STANDARD 14)
 
 add_library(polymorphic_value INTERFACE)
+add_library(jbcoe::polymorphic_value ALIAS polymorphic_value)
 
 target_include_directories(polymorphic_value INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -42,8 +42,8 @@ target_link_libraries(OpenOblivionNifloader
         OpenOblivion::OpenOblivionNif
         OpenOblivion::OpenOblivionOgreBullet
         Boost::boost
-        GSL
-        polymorphic_value
+        MicrosoftGSL::GSL
+        jbcoe::polymorphic_value
         spdlog::spdlog)
 
 install(TARGETS OpenOblivionNifloader EXPORT OpenOblivionNifloaderTargets

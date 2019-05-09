@@ -233,12 +233,12 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionSDL
         Boost::boost
         Boost::fiber
-        GSL
+        MicrosoftGSL::GSL
         OgreMain
         OgreGLSupport
         OgreOverlay
         OgreTerrain
-        polymorphic_value
+        jbcoe::polymorphic_value
         RenderSystem_GL3Plus
         SDL2::SDL2
         SDL2::SDL2main
