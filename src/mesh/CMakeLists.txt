@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionMesh)
 
-set(CMAKE_CXX_STANDARD 17)
-
 add_library(OpenOblivionMesh STATIC)
 add_library(OpenOblivion::OpenOblivionMesh ALIAS OpenOblivionMesh)
-
-target_compile_options(OpenOblivionMesh PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivionMesh PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivionMesh PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionMesh PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

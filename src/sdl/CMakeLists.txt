@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionSDL)
 
-set(CMAKE_CXX_STANDARD 17)
-
 add_library(OpenOblivionSDL STATIC)
 add_library(OpenOblivion::OpenOblivionSDL ALIAS OpenOblivionSDL)
-
-target_compile_options(OpenOblivionSDL PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivionSDL PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivionSDL PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionSDL PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

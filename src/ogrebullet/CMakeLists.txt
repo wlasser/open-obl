@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionOgreBullet)
 
-set(CMAKE_CXX_STANDARD 17)
-
 add_library(OpenOblivionOgreBullet STATIC)
 add_library(OpenOblivion::OpenOblivionOgreBullet ALIAS OpenOblivionOgreBullet)
-
-target_compile_options(OpenOblivionOgreBullet PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivionOgreBullet PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivionOgreBullet PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionOgreBullet PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

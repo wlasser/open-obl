@@ -1,14 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOblivionNifloader)
 
-set(CMAKE_CXX_STANDARD 17)
-
 add_library(OpenOblivionNifloader STATIC)
 add_library(OpenOblivion::OpenOblivionNifloader ALIAS OpenOblivionNifloader)
-
-target_compile_options(OpenOblivionNifloader PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivionNifloader PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivionNifloader PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivionNifloader PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>

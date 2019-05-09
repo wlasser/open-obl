@@ -5,13 +5,14 @@ include(CheckIPOSupported)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(OO_USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
-option(OO_USE_LTO "Use link-time optimization (LTO)" ON)
+option(OO_USE_LTO "Use link-time optimization (LTO)" OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(FETCHCONTENT_QUIET OFF)
-set(BUILD_TESTING OFF)
 
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
@@ -68,6 +69,10 @@ add_subdirectory(lib/polymorphic_value)
 add_subdirectory(lib/tl)
 add_subdirectory(lib/soloud)
 
+# Globally set warning flags for all internal dependencies.
+# External dependencies (above) can keep their own warning flags.
+add_compile_options(-Wall -Wextra)
+
 add_subdirectory(src/bsa)
 add_subdirectory(src/fs)
 add_subdirectory(src/gui)
@@ -88,9 +93,6 @@ add_subdirectory(bsatools)
 add_subdirectory(test)
 
 add_executable(OpenOblivion)
-target_compile_options(OpenOblivion PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivion PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivion PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOblivion PUBLIC include)
 target_sources(OpenOblivion PRIVATE

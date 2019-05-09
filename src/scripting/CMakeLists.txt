@@ -4,10 +4,6 @@ project(OpenOblivionScripting)
 add_library(OpenOblivionScripting STATIC)
 add_library(OpenOblivion::OpenOblivionScripting ALIAS OpenOblivionScripting)
 
-target_compile_options(OpenOblivionScripting PRIVATE -Wall -Wextra)
-target_compile_features(OpenOblivionScripting PUBLIC cxx_std_17)
-set_property(TARGET OpenOblivionScripting PROPERTY CXX_EXTENSION OFF)
-
 target_include_directories(OpenOblivionScripting PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
