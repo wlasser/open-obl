@@ -6,7 +6,8 @@ include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
 
-option(USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
+option(OO_USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
+option(OO_USE_LTO "Use link-time optimization (LTO)" ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(FETCHCONTENT_QUIET OFF)
@@ -42,11 +43,13 @@ endif ()
 
 # Link-time optimization
 cmake_policy(SET CMP0069 NEW)
-check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
-if (IPO_SUPPORTED)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION FALSE)
-else ()
-    message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
+if (OO_USE_LTO)
+    check_ipo_supported(RESULT IPO_SUPPORTED OUTPUT IPO_OUTPUT)
+    if (IPO_SUPPORTED)
+        set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${OO_USE_LTO})
+    else ()
+        message(WARNING "IPO/LTO is not supported: ${IPO_OUTPUT}")
+    endif ()
 endif ()
 
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)

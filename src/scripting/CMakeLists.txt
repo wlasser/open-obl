@@ -33,7 +33,7 @@ target_sources(OpenOblivionScripting PRIVATE
 target_include_directories(OpenOblivionScripting PRIVATE ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(OpenOblivionScripting PRIVATE ${LLVM_DEFINITIONS})
 
-if (USE_SHARED_LLVM_LIBS)
+if (OO_USE_SHARED_LLVM_LIBS)
     llvm_config(OpenOblivionScripting USE_SHARED engine)
 else ()
     llvm_config(OpenOblivionScripting engine)
