@@ -64,6 +64,7 @@ find_package(ZLIB 1.2.11 REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
 
+set(GSL_CXX_STANDARD 17 CACHE STRING "C++ standard used by GSL")
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
 add_subdirectory(lib/tl)
