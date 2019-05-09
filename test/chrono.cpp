@@ -2,9 +2,10 @@
 #include <catch2/catch.hpp>
 
 TEST_CASE("Can get the epoch date") {
+  // Note: Days are zero-based, so day 25 is the 26th.
   const oo::chrono::year_month_day epoch(oo::chrono::year(433),
                                          oo::chrono::LastSeed,
-                                         oo::chrono::day(26));
+                                         oo::chrono::day(25));
   REQUIRE(oo::chrono::GameClock::getEpochDate() == epoch);
 }
 
@@ -14,9 +15,10 @@ TEST_CASE("Clock begins at the epoch") {
   const auto epoch{oo::chrono::GameClock::now()};
   const auto clockDays{oo::chrono::time_point_cast<oo::chrono::days>(epoch)};
   const oo::chrono::year_month_day clockYmd{clockDays};
+  // Note: Days are zero-based, so day 25 is the 26th.
   const oo::chrono::year_month_day literalYmd(oo::chrono::year(433),
                                               oo::chrono::LastSeed,
-                                              oo::chrono::day(26));
+                                              oo::chrono::day(25));
   const oo::chrono::game_days literalDays{literalYmd};
 
   REQUIRE(clockYmd == literalYmd);

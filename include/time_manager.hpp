@@ -739,10 +739,10 @@ class year_month_day {
                            const chrono::day &d) noexcept
       : mY(y), mM(m), mD(d) {}
 
-  // 238 is the number of days of the epoch from the start of the year.
+  // 237 is the number of days of the epoch from the start of the year.
   /*explicit*/ constexpr year_month_day(const game_days &dp) noexcept
       : mY(dp.time_since_epoch().count() / 365 + 433), mM(0), mD(0) {
-    auto d{(dp.time_since_epoch().count() + 238) % 365};
+    auto d{(dp.time_since_epoch().count() + 237) % 365};
     if (d < 31) mM = chrono::MorningStar;
     else if ((d -= 31) < 28) mM = chrono::SunsDawn;
     else if ((d -= 28) < 31) mM = chrono::FirstSeed;
@@ -796,11 +796,11 @@ class year_month_day {
       if (mM >= chrono::LastSeed) daysIntoTheYear += 31;
       if (mM >= chrono::Heartfire) daysIntoTheYear += 31;
       if (mM >= chrono::Frostfall) daysIntoTheYear += 30;
-      if (mM >= chrono::SunsDusk) daysIntoTheYear += 30;
-      if (mM >= chrono::EveningStar) daysIntoTheYear += 31;
+      if (mM >= chrono::SunsDusk) daysIntoTheYear += 31;
+      if (mM >= chrono::EveningStar) daysIntoTheYear += 30;
 
       return chrono::game_days()
-          + chrono::days(365 * yearDiff + daysIntoTheYear - 238);
+          + chrono::days(365 * yearDiff + daysIntoTheYear - 237);
     } else if (mY.ok() && mM.ok()) {
       return chrono::game_days(year_month_day(mY, mM, chrono::day(1)))
           + (mD - chrono::day(1));
