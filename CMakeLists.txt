@@ -247,5 +247,4 @@ target_link_libraries(OpenOblivion PRIVATE
         spdlog::spdlog
         stdc++fs
         tloptional
-        ZLIB::ZLIB
         ${BULLET_LIBRARIES})

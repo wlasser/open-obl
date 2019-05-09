@@ -7,10 +7,6 @@
 #include "record/record_header.hpp"
 #include "record/rec_of.hpp"
 #include "record/size_of.hpp"
-#include <zlib.h>
-#include <string_view>
-#include <istream>
-#include <ostream>
 
 namespace record {
 
@@ -74,11 +70,8 @@ operator<<(std::ostream &os, const Record<T, c> &record) {
     raw::write(mos, static_cast<const T &>(record), uncompressedSize);
 
     // Compress the raw record into another buffer.
-    unsigned long compressedSize{compressBound(uncompressedSize)};
-    std::vector<uint8_t> compressedData(compressedSize);
-    compress(compressedData.data(), &compressedSize,
-             uncompressedData.data(), uncompressedSize);
-    compressedData.resize(compressedSize);
+    const auto compressedData{record::compressBytes(uncompressedData)};
+    const auto compressedSize{compressedData.size()};
 
     // Unsigned long may be more than 32 bits.
     const auto uncompressedSize32{static_cast<uint32_t>(uncompressedSize)};
@@ -137,7 +130,7 @@ operator>>(std::istream &is, Record<T, c> &record) {
   if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
     // The size on disk is actually the size of the compressed raw record plus
     // four bytes for the uncompressed size.
-    const unsigned long compressedSize(sizeOnDisk - 4u);
+    const unsigned long compressedSize{sizeOnDisk - 4u};
 
     // Read the size of the uncompressed raw record.
     uint32_t uncompressedSize32{};
@@ -150,9 +143,8 @@ operator>>(std::istream &is, Record<T, c> &record) {
 
     // Uncompress the raw record into another buffer and interpret it as the
     // raw record.
-    std::vector<uint8_t> uncompressedData(uncompressedSize);
-    uncompress(uncompressedData.data(), &uncompressedSize,
-               compressedData.data(), compressedSize);
+    const auto uncompressedData{record::uncompressBytes(compressedData,
+                                                        uncompressedSize)};
     io::memstream mis(uncompressedData.data(), uncompressedSize);
     raw::read(mis, static_cast<T &>(record), uncompressedSize);
   } else {

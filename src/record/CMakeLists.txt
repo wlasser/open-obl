@@ -36,10 +36,10 @@ target_sources(OpenOblivionRecord PRIVATE
 
 target_link_libraries(OpenOblivionRecord PRIVATE
         MicrosoftGSL::GSL
+        ZLIB::ZLIB
         PUBLIC
         OpenOblivion::OpenOblivionIO
-        Boost::boost
-        ZLIB::ZLIB)
+        Boost::boost)
 
 install(TARGETS OpenOblivionRecord EXPORT OpenOblivionRecordTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

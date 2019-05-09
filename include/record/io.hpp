@@ -72,6 +72,14 @@ RecordHeader skipRecord(std::istream &is);
 /// Does not check that `is` is pointing to a group.
 void skipGroup(std::istream &is);
 
+/// Compress a uncompressed array `uncomp` of bytes.
+std::vector<uint8_t> compressBytes(const std::vector<uint8_t> &uncomp);
+
+/// Uncompress a compressed array `comp` of bytes, given an upper bound
+/// `uncompSize` for the size of the uncompressed data.
+std::vector<uint8_t> uncompressBytes(const std::vector<uint8_t> &comp,
+                                     std::size_t uncompSize);
+
 namespace raw {
 
 /// Output the raw Record or raw Subrecord T in its esp binary representation.

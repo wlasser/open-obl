@@ -1,5 +1,6 @@
 #include "record/io.hpp"
 #include <gsl/gsl>
+#include <zlib.h>
 
 uint32_t record::peekRecordType(std::istream &is) noexcept {
   // Ensure that the stream is always returned to its original position.
@@ -42,4 +43,19 @@ void record::skipGroup(std::istream &is) {
 
   // Group size includes the header, unlike records and subrecords
   is.seekg(size - 8, std::istream::cur);
+}
+
+std::vector<uint8_t> record::compressBytes(const std::vector<uint8_t> &uncomp) {
+  unsigned long compSize{::compressBound(uncomp.size())};
+  std::vector<uint8_t> comp(compSize);
+  ::compress(comp.data(), &compSize, uncomp.data(), uncomp.size());
+  comp.resize(compSize);
+  return comp;
+}
+
+std::vector<uint8_t> record::uncompressBytes(const std::vector<uint8_t> &comp,
+                                             std::size_t uncompSize) {
+  std::vector<uint8_t> uncomp(uncompSize);
+  ::uncompress(uncomp.data(), &uncompSize, comp.data(), comp.size());
+  return uncomp;
 }
