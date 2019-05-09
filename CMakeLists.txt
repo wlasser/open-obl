@@ -20,6 +20,9 @@ FetchContent_Declare(Catch
 FetchContent_Declare(PEGTL
         GIT_REPOSITORY https://github.com/taocpp/PEGTL.git
         GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
+FetchContent_Declare(pugixml
+        GIT_REPOSITORY https://github.com/zeux/pugixml.git
+        GIT_TAG v1.9)
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG v1.3.1)
@@ -34,6 +37,12 @@ FetchContent_GetProperties(PEGTL)
 if (NOT PEGTL_populated)
     FetchContent_Populate(PEGTL)
     add_subdirectory(${pegtl_SOURCE_DIR} ${pegtl_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(pugixml)
+if (NOT pugixml_populated)
+    FetchContent_Populate(pugixml)
+    add_subdirectory(${pugixml_SOURCE_DIR} ${pugixml_BINARY_DIR})
 endif ()
 
 FetchContent_GetProperties(spdlog)
@@ -57,7 +66,6 @@ find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
 find_package(Bullet 2.85 REQUIRED)
 find_package(LLVM 7.0.0 REQUIRED CONFIG)
 find_package(OGRE 1.11 REQUIRED)
-find_package(pugixml REQUIRED)
 find_package(SDL2 2.0 REQUIRED)
 find_package(ZLIB 1.2.11 REQUIRED)
 
