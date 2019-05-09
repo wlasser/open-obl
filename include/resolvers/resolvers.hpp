@@ -117,6 +117,9 @@ class Resolver {
   bool insert(IdType baseId, const R &rec);
 };
 
+template<> class Resolver<record::CELL, oo::BaseId>;
+template<> class Resolver<record::WRLD, oo::BaseId>;
+
 /// Used for specializing the return type of citeRecord.
 /// This should be specialized for each type that citeRecord is specialized for
 /// in order to specify the return type of that specialization. Every

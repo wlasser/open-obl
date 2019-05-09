@@ -20,10 +20,10 @@
 
 namespace oo {
 
-using WrldResolver = Resolver<record::WRLD>;
+using WrldResolver = Resolver<record::WRLD, oo::BaseId>;
 
 template<>
-class Resolver<record::WRLD> {
+class Resolver<record::WRLD, oo::BaseId> {
  private:
   struct Metadata {
     /// Accessors, in load order of mods that modify the contents of the world.
@@ -118,10 +118,10 @@ class Resolver<record::WRLD> {
   std::unordered_set<BaseId> getWorlds() const;
 };
 
-class Resolver<record::WRLD>::WrldVisitor {
+class WrldResolver::WrldVisitor {
  public:
-  using Metadata = Resolver<record::WRLD>::Metadata;
-  using BaseContext = Resolver<record::WRLD>::BaseResolverContext;
+  using Metadata = WrldResolver::Metadata;
+  using BaseContext = WrldResolver::BaseResolverContext;
 
  private:
   Metadata &mMeta;

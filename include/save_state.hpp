@@ -5,6 +5,8 @@
 #include "esp.hpp"
 #include "io/io.hpp"
 #include "record/formid.hpp"
+#include "resolvers/resolvers.hpp"
+#include "resolvers/cell_resolver.hpp"
 #include <OgreImage.h>
 #include <cctype>
 #include <filesystem>
@@ -12,7 +14,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
-#include <resolvers/resolvers.hpp>
 
 namespace oo {
 

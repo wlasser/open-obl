@@ -10,13 +10,14 @@
 
 namespace oo {
 
-Resolver<record::CELL>::Resolver(Resolver &&other) noexcept
+Resolver<record::CELL, oo::BaseId>::Resolver(Resolver &&other) noexcept
     : mBulletConf(other.mBulletConf) {
   std::scoped_lock lock{other.mMtx};
   mRecords = std::move(other.mRecords);
 }
 
-Resolver<record::CELL> &Resolver<record::CELL>::operator=(Resolver &&other) noexcept {
+CellResolver &
+Resolver<record::CELL, oo::BaseId>::operator=(Resolver &&other) noexcept {
   if (this != &other) {
     assert(&other.mBulletConf == &mBulletConf);
     std::scoped_lock lock{mMtx, other.mMtx};
@@ -27,11 +28,11 @@ Resolver<record::CELL> &Resolver<record::CELL>::operator=(Resolver &&other) noex
   return *this;
 }
 
-std::pair<oo::Resolver<record::CELL>::RecordIterator, bool>
-oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
-                                           const record::CELL &rec,
-                                           oo::EspAccessor accessor,
-                                           bool isExterior) {
+std::pair<CellResolver::RecordIterator, bool>
+CellResolver::insertOrAppend(oo::BaseId baseId,
+                             const record::CELL &rec,
+                             oo::EspAccessor accessor,
+                             bool isExterior) {
   std::scoped_lock lock{mMtx};
   RecordEntry entry{std::make_pair(rec, tl::nullopt)};
   Metadata meta{0, isExterior, {accessor}, {}, tl::nullopt};
@@ -45,13 +46,11 @@ oo::Resolver<record::CELL>::insertOrAppend(oo::BaseId baseId,
   return {it, inserted};
 }
 
-const bullet::Configuration &
-oo::Resolver<record::CELL>::getBulletConfiguration() const {
+const bullet::Configuration &CellResolver::getBulletConfiguration() const {
   return mBulletConf;
 }
 
-tl::optional<const record::CELL &>
-oo::Resolver<record::CELL>::get(oo::BaseId baseId) const {
+tl::optional<const record::CELL &> CellResolver::get(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -60,8 +59,7 @@ oo::Resolver<record::CELL>::get(oo::BaseId baseId) const {
   return entry.second ? *entry.second : entry.first;
 }
 
-tl::optional<record::CELL &>
-oo::Resolver<record::CELL>::get(oo::BaseId baseId) {
+tl::optional<record::CELL &> CellResolver::get(oo::BaseId baseId) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -71,29 +69,28 @@ oo::Resolver<record::CELL>::get(oo::BaseId baseId) {
   return *entry.second;
 }
 
-void
-oo::Resolver<record::CELL>::setDetachTime(oo::BaseId baseId, int detachTime) {
+void CellResolver::setDetachTime(oo::BaseId baseId, int detachTime) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
   it->second.second.mDetachTime = detachTime;
 }
 
-int oo::Resolver<record::CELL>::getDetachTime(oo::BaseId baseId) const {
+int CellResolver::getDetachTime(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return 0;
   return it->second.second.mDetachTime;
 }
 
-bool oo::Resolver<record::CELL>::contains(oo::BaseId baseId) const {
+bool CellResolver::contains(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   return mRecords.find(baseId) != mRecords.end();
 }
 
-void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
-                                      RefrResolverContext refrCtx,
-                                      BaseResolverContext baseCtx) {
+void CellResolver::load(oo::BaseId baseId,
+                        RefrResolverContext refrCtx,
+                        BaseResolverContext baseCtx) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
@@ -107,8 +104,7 @@ void oo::Resolver<record::CELL>::load(oo::BaseId baseId,
   }
 }
 
-void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
-                                             MoreResolverContext moreCtx) {
+void CellResolver::loadTerrain(oo::BaseId baseId, MoreResolverContext moreCtx) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
@@ -121,23 +117,21 @@ void oo::Resolver<record::CELL>::loadTerrain(oo::BaseId baseId,
 }
 
 tl::optional<const std::unordered_set<RefId> &>
-oo::Resolver<record::CELL>::getReferences(oo::BaseId baseId) const {
+CellResolver::getReferences(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mReferences;
 }
 
-tl::optional<oo::BaseId>
-oo::Resolver<record::CELL>::getLandId(oo::BaseId baseId) const {
+tl::optional<oo::BaseId> CellResolver::getLandId(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
   return it->second.second.mLandId;
 }
 
-void oo::Resolver<record::CELL>::insertReferenceRecord(oo::BaseId cellId,
-                                                       oo::RefId refId) {
+void CellResolver::insertReferenceRecord(oo::BaseId cellId, oo::RefId refId) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(cellId)};
   if (it == mRecords.end()) return;
@@ -145,7 +139,7 @@ void oo::Resolver<record::CELL>::insertReferenceRecord(oo::BaseId cellId,
 }
 
 template<> void
-oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
+CellResolver::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
   const auto &actiRes{oo::getResolver<record::ACTI>(mBaseCtx)};
@@ -204,7 +198,7 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::REFR>(oo::EspAccesso
 }
 
 template<> void
-oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
+CellResolver::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor) {
   const BaseId baseId{accessor.peekBaseId()};
 
   const auto &npc_Res{oo::getResolver<record::NPC_>(mBaseCtx)};
@@ -221,7 +215,7 @@ oo::Resolver<record::CELL>::CellVisitor::readRecord<record::ACHR>(oo::EspAccesso
 }
 
 template<> void
-oo::Resolver<record::CELL>::CellTerrainVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor) {
+CellResolver::CellTerrainVisitor::readRecord<record::LAND>(oo::EspAccessor &accessor) {
   const auto rec{accessor.readRecord<record::LAND>().value};
   const oo::BaseId baseId{rec.mFormId};
   oo::getResolver<record::LAND>(mMoreCtx).insertOrAssignEspRecord(baseId, rec);

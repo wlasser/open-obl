@@ -18,17 +18,19 @@
 #include <spdlog/spdlog.h>
 #include <Terrain/OgreTerrainGroup.h>
 
+namespace oo {
+
 //===----------------------------------------------------------------------===//
 // WRLD resolver definitions
 //===----------------------------------------------------------------------===//
 
-oo::Resolver<record::WRLD>::Resolver(Resolver &&other) noexcept {
+Resolver<record::WRLD, oo::BaseId>::Resolver(Resolver &&other) noexcept {
   std::scoped_lock lock{other.mMtx};
   mRecords = std::move(other.mRecords);
 }
 
-oo::Resolver<record::WRLD> &
-oo::Resolver<record::WRLD>::operator=(Resolver &&other) noexcept {
+WrldResolver &
+Resolver<record::WRLD, oo::BaseId>::operator=(Resolver &&other) noexcept {
   if (this != &other) {
     std::scoped_lock lock{mMtx, other.mMtx};
     using std::swap;
@@ -38,10 +40,10 @@ oo::Resolver<record::WRLD>::operator=(Resolver &&other) noexcept {
   return *this;
 }
 
-std::pair<oo::Resolver<record::WRLD>::RecordIterator, bool>
-oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
-                                           const record::WRLD &rec,
-                                           oo::EspAccessor accessor) {
+std::pair<WrldResolver::RecordIterator, bool>
+WrldResolver::insertOrAppend(oo::BaseId baseId,
+                             const record::WRLD &rec,
+                             oo::EspAccessor accessor) {
   std::scoped_lock lock{mMtx};
   spdlog::get(oo::LOG)->info("Inserting WRLD {}, {}", baseId,
                              rec.editorId.data);
@@ -58,8 +60,7 @@ oo::Resolver<record::WRLD>::insertOrAppend(oo::BaseId baseId,
   return {it, inserted};
 }
 
-tl::optional<const record::WRLD &>
-oo::Resolver<record::WRLD>::get(oo::BaseId baseId) const {
+tl::optional<const record::WRLD &> WrldResolver::get(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   const auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -69,8 +70,7 @@ oo::Resolver<record::WRLD>::get(oo::BaseId baseId) const {
 }
 
 /// \overload get(oo::BaseId)
-tl::optional<record::WRLD &>
-oo::Resolver<record::WRLD>::get(oo::BaseId baseId) {
+tl::optional<record::WRLD &> WrldResolver::get(oo::BaseId baseId) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -81,13 +81,12 @@ oo::Resolver<record::WRLD>::get(oo::BaseId baseId) {
 }
 
 /// Check if there is a world with the baseId.
-bool oo::Resolver<record::WRLD>::contains(oo::BaseId baseId) const {
+bool WrldResolver::contains(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   return mRecords.find(baseId) != mRecords.end();
 }
 
-void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
-                                      BaseResolverContext baseCtx) {
+void WrldResolver::load(oo::BaseId baseId, BaseResolverContext baseCtx) {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return;
@@ -118,8 +117,7 @@ void oo::Resolver<record::WRLD>::load(oo::BaseId baseId,
 }
 
 tl::optional<oo::BaseId>
-oo::Resolver<record::WRLD>::getCell(oo::BaseId baseId,
-                                    oo::CellIndex index) const {
+WrldResolver::getCell(oo::BaseId baseId, oo::CellIndex index) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -139,9 +137,9 @@ oo::Resolver<record::WRLD>::getCell(oo::BaseId baseId,
 }
 
 oo::CellGridView
-oo::Resolver<record::WRLD>::getNeighbourhood(oo::BaseId wrldId,
-                                             CellIndex cell,
-                                             int diameter) const {
+WrldResolver::getNeighbourhood(oo::BaseId wrldId,
+                               CellIndex cell,
+                               int diameter) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(wrldId)};
   // We are allowed to UB if the set of cells is empty, so this is fine.
@@ -169,7 +167,7 @@ oo::Resolver<record::WRLD>::getNeighbourhood(oo::BaseId wrldId,
 }
 
 tl::optional<const std::unordered_set<oo::BaseId> &>
-oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
+WrldResolver::getCells(oo::BaseId baseId) const {
   std::scoped_lock lock{mMtx};
   auto it{mRecords.find(baseId)};
   if (it == mRecords.end()) return tl::nullopt;
@@ -178,7 +176,7 @@ oo::Resolver<record::WRLD>::getCells(oo::BaseId baseId) const {
   return cells;
 }
 
-std::unordered_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
+std::unordered_set<oo::BaseId> WrldResolver::getWorlds() const {
   std::scoped_lock lock{mMtx};
   std::unordered_set<oo::BaseId> ids{};
   for (const auto &[id, _] : mRecords) ids.emplace(id);
@@ -186,7 +184,7 @@ std::unordered_set<oo::BaseId> oo::Resolver<record::WRLD>::getWorlds() const {
 }
 
 template<> void
-oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
+WrldResolver::WrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor) {
   auto &cellRes{oo::getResolver<record::CELL>(mBaseCtx)};
   const auto rec{accessor.readRecord<record::CELL>().value};
   const oo::BaseId baseId{rec.mFormId};
@@ -208,27 +206,27 @@ oo::Resolver<record::WRLD>::WrldVisitor::readRecord<record::CELL>(oo::EspAccesso
 // World definitions
 //===----------------------------------------------------------------------===//
 
-oo::BaseId oo::World::getBaseId() const {
+oo::BaseId World::getBaseId() const {
   return mBaseId;
 }
 
-std::string oo::World::getName() const {
+std::string World::getName() const {
   return mName;
 }
 
-void oo::World::setName(std::string name) {
+void World::setName(std::string name) {
   mName = std::move(name);
 }
 
-gsl::not_null<Ogre::SceneManager *> oo::World::getSceneManager() const {
+gsl::not_null<Ogre::SceneManager *> World::getSceneManager() const {
   return gsl::make_not_null(mScnMgr.get());
 }
 
-gsl::not_null<oo::World::PhysicsWorld *> oo::World::getPhysicsWorld() const {
+gsl::not_null<World::PhysicsWorld *> World::getPhysicsWorld() const {
   return gsl::make_not_null(mPhysicsWorld.get());
 }
 
-void oo::World::setDefaultImportData() {
+void World::setDefaultImportData() {
   auto &importData{mTerrainGroup.getDefaultImportSettings()};
   importData.constantHeight = 0.0f;
   importData.inputFloat = nullptr;
@@ -242,7 +240,7 @@ void oo::World::setDefaultImportData() {
       oo::verticesPerQuad<uint16_t> / 2u + 1u);
 }
 
-oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
+World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
     : mBaseId(baseId), mName(std::move(name)),
       mScnMgr(Ogre::Root::getSingleton().createSceneManager(
           "oo::DeferredSceneManager"),
@@ -324,16 +322,16 @@ oo::World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
   boost::this_fiber::yield();
 }
 
-oo::World::~World() {
+World::~World() {
   mTerrainGroup.removeAllTerrains();
 }
 
-tl::optional<oo::BaseId> oo::World::getLandId(oo::BaseId cellId) {
+tl::optional<oo::BaseId> World::getLandId(oo::BaseId cellId) {
   return getLandId(cellId, mBaseId);
 }
 
 tl::optional<oo::BaseId>
-oo::World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
+World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
@@ -401,12 +399,12 @@ oo::World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
   }
 }
 
-tl::optional<oo::BaseId> oo::World::getWatrId() {
+tl::optional<oo::BaseId> World::getWatrId() {
   return getWatrId(mBaseId);
 }
 
 tl::optional<oo::BaseId>
-oo::World::getWatrId(oo::BaseId wrldId) {
+World::getWatrId(oo::BaseId wrldId) {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
   const record::WRLD &wrldRec{*wrldRes.get(wrldId)};
@@ -421,7 +419,7 @@ oo::World::getWatrId(oo::BaseId wrldId) {
   return tl::nullopt;
 }
 
-void oo::World::makeCellGrid() {
+void World::makeCellGrid() {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
   // Number of cells to load before yielding this fiber. We have a *lot* of
@@ -501,18 +499,18 @@ void oo::World::makeCellGrid() {
   }
 }
 
-void oo::World::makePhysicsWorld() {
+void World::makePhysicsWorld() {
   const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
   mPhysicsWorld = bulletConf.makeDynamicsWorld();
 }
 
-void oo::World::updateAtmosphere(const oo::chrono::minutes &time) {
+void World::updateAtmosphere(const oo::chrono::minutes &time) {
   mAtmosphere.update(time);
 }
 
-void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
-                                  ImportDataArray &importData) const {
+void World::setTerrainHeights(const record::raw::VHGT &rec,
+                              ImportDataArray &importData) const {
   constexpr auto vpc{oo::verticesPerCell<std::size_t>};
   constexpr auto vpq{oo::verticesPerQuad<std::size_t>};
 
@@ -571,7 +569,7 @@ void oo::World::setTerrainHeights(const record::raw::VHGT &rec,
 }
 
 void
-oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
+World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   std::string fullName{"textures/landscape/" + std::move(texName)};
   list.emplace_back(fullName);
   std::string normalName{oo::makeNormalPath(fullName)};
@@ -584,7 +582,7 @@ oo::World::emplaceTexture(Ogre::StringVector &list, std::string texName) const {
   }
 }
 
-oo::World::LayerMaps oo::World::makeDefaultLayerMaps() const {
+World::LayerMaps World::makeDefaultLayerMaps() const {
   LayerMaps layerMaps;
   std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
     LayerMap layers{};
@@ -595,7 +593,7 @@ oo::World::LayerMaps oo::World::makeDefaultLayerMaps() const {
   return layerMaps;
 }
 
-oo::World::LayerOrders oo::World::makeDefaultLayerOrders() const {
+World::LayerOrders World::makeDefaultLayerOrders() const {
   LayerOrders layerOrders;
   std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
     return std::vector{oo::BaseId{0}};
@@ -604,8 +602,8 @@ oo::World::LayerOrders oo::World::makeDefaultLayerOrders() const {
   return layerOrders;
 }
 
-void oo::World::applyBaseLayers(LayerMaps &layerMaps,
-                                const record::LAND &rec) const {
+void
+World::applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec) const {
   // Find all the quadrant base textures, overwriting the default layer.
   for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
     const int quadrant{quadrantTexture.data.quadrant};
@@ -615,8 +613,8 @@ void oo::World::applyBaseLayers(LayerMaps &layerMaps,
   }
 }
 
-void oo::World::applyBaseLayers(LayerOrders &layerOrders,
-                                const record::LAND &rec) const {
+void World::applyBaseLayers(LayerOrders &layerOrders,
+                            const record::LAND &rec) const {
   // Find all the quadrant base textures, overwriting the default layer.
   for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
     const int quadrant{quadrantTexture.data.quadrant};
@@ -625,8 +623,8 @@ void oo::World::applyBaseLayers(LayerOrders &layerOrders,
   }
 }
 
-void oo::World::applyFineLayers(LayerMaps &layerMaps,
-                                const record::LAND &rec) const {
+void
+World::applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec) const {
   // Find all the quadrant layer textures
   for (const auto &[atxt, vtxt] : rec.fineTextures) {
     const oo::BaseId id{atxt.data.id};
@@ -640,8 +638,8 @@ void oo::World::applyFineLayers(LayerMaps &layerMaps,
   }
 }
 
-void oo::World::applyFineLayers(LayerOrders &layerOrders,
-                                const record::LAND &rec) const {
+void World::applyFineLayers(LayerOrders &layerOrders,
+                            const record::LAND &rec) const {
   // Find all the quadrant layer textures
   for (const auto &[atxt, vtxt] : rec.fineTextures) {
     const oo::BaseId id{atxt.data.id};
@@ -657,7 +655,7 @@ void oo::World::applyFineLayers(LayerOrders &layerOrders,
 }
 
 std::shared_ptr<oo::JobCounter>
-oo::World::loadTerrain(CellIndex index, bool async) {
+World::loadTerrain(CellIndex index, bool async) {
   auto x{qvm::X(index)};
   auto y{qvm::Y(index)};
   if (async) {
@@ -693,7 +691,7 @@ oo::World::loadTerrain(CellIndex index, bool async) {
   return std::shared_ptr<oo::JobCounter>();
 }
 
-void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
+void World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   auto logger{spdlog::get(oo::LOG)};
   logger->info("[{}]: loadTerrainOnly({})",
                boost::this_fiber::get_id(), cellId);
@@ -888,7 +886,7 @@ void oo::World::loadTerrainOnly(oo::BaseId cellId, bool async) {
   logger->info("[{}]: Created water instance.", boost::this_fiber::get_id());
 }
 
-void oo::World::loadTerrain(oo::ExteriorCell &cell) {
+void World::loadTerrain(oo::ExteriorCell &cell) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   loadTerrainOnly(cell.getBaseId(), false);
 
@@ -907,7 +905,7 @@ void oo::World::loadTerrain(oo::ExteriorCell &cell) {
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
 }
 
-void oo::World::unloadTerrain(oo::ExteriorCell &cell) {
+void World::unloadTerrain(oo::ExteriorCell &cell) {
   getPhysicsWorld()->removeCollisionObject(cell.getCollisionObject());
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
 
@@ -918,7 +916,7 @@ void oo::World::unloadTerrain(oo::ExteriorCell &cell) {
   unloadTerrain(pos);
 }
 
-void oo::World::unloadTerrain(oo::BaseId cellId) {
+void World::unloadTerrain(oo::BaseId cellId) {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
 
   const auto cellRec{cellRes.get(cellId)};
@@ -932,7 +930,7 @@ void oo::World::unloadTerrain(oo::BaseId cellId) {
   unloadDone.wait();
 }
 
-void oo::World::unloadTerrain(CellIndex index) {
+void World::unloadTerrain(CellIndex index) {
   auto x{qvm::X(index)};
   auto y{qvm::Y(index)};
   mTerrainGroup.unloadTerrain(2 * x + 0, 2 * y + 0);
@@ -942,7 +940,7 @@ void oo::World::unloadTerrain(CellIndex index) {
   unloadWaterPlane(index);
 }
 
-void oo::World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
+void World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
   if (auto it{mWaterPlanes.find(index)}; it != mWaterPlanes.end()) return;
 
   const float height{cellRec.waterHeight ? cellRec.waterHeight->data : 0.0f};
@@ -966,7 +964,7 @@ void oo::World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
   waterEntry.node->attachObject(waterEntry.entity);
 }
 
-void oo::World::unloadWaterPlane(CellIndex index) {
+void World::unloadWaterPlane(CellIndex index) {
   auto it{mWaterPlanes.find(index)};
   if (it == mWaterPlanes.end()) return;
   mScnMgr->destroyInstancedEntity(it->second.entity);
@@ -975,8 +973,8 @@ void oo::World::unloadWaterPlane(CellIndex index) {
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type
-oo::reifyRecord(const record::WRLD &refRec,
-                ReifyRecordTrait<record::WRLD>::resolvers resolvers) {
+reifyRecord(const record::WRLD &refRec,
+            ReifyRecordTrait<record::WRLD>::resolvers resolvers) {
   const oo::BaseId baseId{refRec.mFormId};
   std::string name{refRec.name ? refRec.name->data : ""};
 
@@ -984,3 +982,5 @@ oo::reifyRecord(const record::WRLD &refRec,
 
   return world;
 }
+
+} // namespace oo

@@ -25,10 +25,10 @@
 
 namespace oo {
 
-using CellResolver = Resolver<record::CELL>;
+using CellResolver = Resolver<record::CELL, oo::BaseId>;
 
 template<>
-class Resolver<record::CELL> {
+class Resolver<record::CELL, oo::BaseId> {
  private:
   struct Metadata {
     /// Time that the player most recently left the cell, in in-game hours.
@@ -85,7 +85,8 @@ class Resolver<record::CELL> {
 
   /// The bullet::Configuration is necessary to construct cells.
   /// bulletConf should live for at least as long as this object.
-  explicit Resolver<record::CELL>(const bullet::Configuration &bulletConf)
+  explicit
+  Resolver<record::CELL, oo::BaseId>(const bullet::Configuration &bulletConf)
       : mBulletConf(bulletConf) {}
 
   /// Get the underlying bullet configuration used for creating physics worlds.
@@ -145,11 +146,11 @@ class Resolver<record::CELL> {
   void insertReferenceRecord(oo::BaseId cellId, oo::RefId refId);
 };
 
-class Resolver<record::CELL>::CellVisitor {
+class CellResolver::CellVisitor {
  public:
-  using Metadata = Resolver<record::CELL>::Metadata;
-  using RefrContext = Resolver<record::CELL>::RefrResolverContext;
-  using BaseContext = Resolver<record::CELL>::BaseResolverContext;
+  using Metadata = CellResolver::Metadata;
+  using RefrContext = CellResolver::RefrResolverContext;
+  using BaseContext = CellResolver::BaseResolverContext;
  private:
   Metadata &mMeta;
   RefrContext mRefrCtx;
@@ -173,10 +174,10 @@ CellResolver::CellVisitor::readRecord<record::REFR>(oo::EspAccessor &accessor);
 template<> void
 CellResolver::CellVisitor::readRecord<record::ACHR>(oo::EspAccessor &accessor);
 
-class Resolver<record::CELL>::CellTerrainVisitor {
+class CellResolver::CellTerrainVisitor {
  public:
-  using Metadata = Resolver<record::CELL>::Metadata;
-  using MoreContext = Resolver<record::CELL>::MoreResolverContext;
+  using Metadata = CellResolver::Metadata;
+  using MoreContext = CellResolver::MoreResolverContext;
  private:
   Metadata &mMeta;
   MoreContext mMoreCtx;
