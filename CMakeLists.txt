@@ -239,11 +239,9 @@ target_link_libraries(OpenOblivion PRIVATE
         OgreGLSupport
         OgreOverlay
         OgreTerrain
-        jbcoe::polymorphic_value
         RenderSystem_GL3Plus
         SDL2::SDL2
         SDL2::SDL2main
-        SoLoud::SoLoud
         spdlog::spdlog
         stdc++fs
         tloptional
