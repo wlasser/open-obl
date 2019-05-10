@@ -1,3 +1,4 @@
+#include "audio.hpp"
 #include "cell_cache.hpp"
 #include "game_settings.hpp"
 #include "job/job.hpp"
@@ -112,6 +113,11 @@ void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
   ctx.getLogger()->info("Reifying WRLD {}", wrldId);
   const auto wrldRec{*wrldRes.get(wrldId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
+  if (wrldRec.music) {
+    ctx.getMusicManager().setMusicType(*wrldRec.music, true);
+  } else {
+    ctx.getMusicManager().setMusicType(oo::MusicType::Default, true);
+  }
   ctx.getCellCache()->push_back(mWrld);
 }
 
@@ -143,6 +149,9 @@ LoadingMenuMode::reifyInteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   ctx.getLogger()->info("Reifying interior CELL {}", cellId);
   mInteriorCell = reifyInteriorCell(cellRec, ctx);
 
+  if (cellRec.music) {
+    ctx.getMusicManager().setMusicType(*cellRec.music, true);
+  }
   ctx.getLogger()->info("Loaded interior CELL {}", cellId);
 }
 
