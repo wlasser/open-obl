@@ -11,7 +11,7 @@
 #include "resolvers/wrld_resolver.hpp"
 #include "scene_manager.hpp"
 #include "settings.hpp"
-#include "time_manager.hpp"
+#include "chrono.hpp"
 #include "sdl/sdl.hpp"
 #include <imgui/imgui.h>
 #include <OgreBone.h>

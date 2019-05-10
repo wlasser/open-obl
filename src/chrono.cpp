@@ -1,17 +1,8 @@
+#include "chrono.hpp"
 #include "globals.hpp"
-#include "time_manager.hpp"
 #include <memory>
 
-namespace oo {
-
-TimeManager &TimeManager::getSingleton() {
-  // Cannot std::make_unique on a private constructor
-  // TODO: Abseil TOTW #134
-  static std::unique_ptr<TimeManager> instance{new TimeManager()};
-  return *instance;
-}
-
-namespace chrono {
+namespace oo::chrono {
 
 uint64_t GameClock::ticks = 0;
 
@@ -62,6 +53,4 @@ void GameClock::updateFromGlobals() {
   GameClock::advance(chrono::milliseconds(milliseconds));
 }
 
-} // namespace chrono
-
-} // namespace oo
+} // namespace oo::chrono

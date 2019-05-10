@@ -127,6 +127,7 @@ target_sources(OpenOblivion PRIVATE
         include/character_controller/sneak_stand_state.hpp
         include/character_controller/stand_state.hpp
         include/character_controller/walk_state.hpp
+        include/chrono.hpp
         include/console_functions.hpp
         include/controls.hpp
         include/deferred_light_pass.hpp
@@ -167,7 +168,6 @@ target_sources(OpenOblivion PRIVATE
         include/script_functions.hpp
         include/settings.hpp
         include/terrain_material_generator.hpp
-        include/time_manager.hpp
         include/wrld.hpp
         src/application.cpp
         src/application_context.cpp
@@ -187,6 +187,7 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/sneak_stand_state.cpp
         src/character_controller/stand_state.cpp
         src/character_controller/walk_state.cpp
+        src/chrono.cpp
         src/console_functions.cpp
         src/deferred_light_pass.cpp
         src/esp_coordinator.cpp
@@ -218,8 +219,7 @@ target_sources(OpenOblivion PRIVATE
         src/save_state.cpp
         src/scene_manager.cpp
         src/script_functions.cpp
-        src/terrain_material_generator.cpp
-        src/time_manager.cpp)
+        src/terrain_material_generator.cpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

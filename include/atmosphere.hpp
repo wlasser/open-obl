@@ -1,8 +1,8 @@
 #ifndef OPENOBLIVION_ATMOSPHERE_HPP
 #define OPENOBLIVION_ATMOSPHERE_HPP
 
+#include "chrono.hpp"
 #include "resolvers/resolvers.hpp"
-#include "time_manager.hpp"
 #include <OgreSceneManager.h>
 #include <array>
 #include <random>

@@ -1,4 +1,4 @@
-#include "time_manager.hpp"
+#include "chrono.hpp"
 #include <catch2/catch.hpp>
 
 TEST_CASE("Can get the epoch date") {

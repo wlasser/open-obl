@@ -2,12 +2,12 @@
 #define OPENOBLIVION_WRLD_RESOLVER_HPP
 
 #include "atmosphere.hpp"
+#include "chrono.hpp"
 #include "esp_coordinator.hpp"
 #include "job/job.hpp"
 #include "math/conversions.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/cell_resolver.hpp"
-#include "time_manager.hpp"
 #include "wrld.hpp"
 #include <boost/fiber/mutex.hpp>
 #include <boost/multi_array.hpp>

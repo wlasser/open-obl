@@ -16,7 +16,7 @@ add_subdirectory(scripting)
 target_sources(OpenOblivionTest PRIVATE chrono.cpp meta.cpp
         ${CMAKE_SOURCE_DIR}/src/game_settings.cpp
         ${CMAKE_SOURCE_DIR}/src/globals.cpp
-        ${CMAKE_SOURCE_DIR}/src/time_manager.cpp)
+        ${CMAKE_SOURCE_DIR}/src/chrono.cpp)
 
 target_link_libraries(OpenOblivionTest PRIVATE
         OpenOblivion::OpenOblivionFS

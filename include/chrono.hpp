@@ -1,18 +1,10 @@
-#ifndef OPENOBLIVION_TIME_MANAGER_HPP
-#define OPENOBLIVION_TIME_MANAGER_HPP
+#ifndef OPENOBLIVION_CHRONO_HPP
+#define OPENOBLIVION_CHRONO_HPP
 
 #include <chrono>
 #include "game_settings.hpp"
 
 namespace oo {
-
-class TimeManager {
- private:
-  TimeManager() = default;
-
- public:
-  static TimeManager &getSingleton();
-};
 
 /// \defgroup OpenOblivionChrono Chrono
 /// Provides in-universe date and time functionality similar to `std::chrono`.
@@ -886,4 +878,4 @@ constexpr year_month_day operator-(const chrono::year_month_day &ymd,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_TIME_MANAGER_HPP
+#endif // OPENOBLIVION_CHRONO_HPP
