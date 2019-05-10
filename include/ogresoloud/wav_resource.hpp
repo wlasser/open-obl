@@ -26,6 +26,9 @@ class WavResource : public Ogre::Resource {
   /// The default volume for all new instances of this sound.
   float getVolume() const noexcept;
 
+  /// The length of the sound, in seconds.
+  float getLength() noexcept;
+
   /// Set whether the sound will loop.
   void setLoopingEnabled(bool looping) noexcept;
 

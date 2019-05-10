@@ -52,10 +52,12 @@ SoundManager::SoundManager() {
   }
 
   mMasterBus = std::make_unique<MixingBus>();
-  mMasterBus->second = SoundHandle{mSoloud->play(mMasterBus->first)};
+  mMasterBus->second = SoundHandle(mSoloud->play(mMasterBus->first),
+                                   -1.0f);
 
   mMusicBus = std::make_unique<MixingBus>();
-  mMusicBus->second = SoundHandle{mMasterBus->first.play(mMusicBus->first)};
+  mMusicBus->second = SoundHandle(mMasterBus->first.play(mMusicBus->first),
+                                  -1.0f);
 
   mSoloud->setVolume(mMasterBus->second->mHandle, 1.0f);
   mSoloud->setVolume(mMusicBus->second->mHandle, 1.0f);
@@ -76,7 +78,8 @@ SoundHandle SoundManager::playMusic(const String &name,
   wavResPtr->load();
   auto &src{wavResPtr->_getAudioSource()};
 
-  SoundHandle handle{mMusicBus->first.play(src, volume)};
+  SoundHandle handle(mMusicBus->first.play(src, volume),
+                     wavResPtr->getLength());
   mSoloud->setPanAbsolute(handle.mHandle, 1.0f, 1.0f);
 
   return handle;
@@ -104,7 +107,7 @@ SoundHandle SoundManager::playSound(const String &name, const String &group,
   wavResPtr->load();
   auto &src{wavResPtr->_getAudioSource()};
 
-  return SoundHandle{bus.first.play(src, volume)};
+  return SoundHandle(bus.first.play(src, volume), wavResPtr->getLength());
 }
 
 SoundHandle SoundManager::createMixingBus(const String &name) {
@@ -115,7 +118,7 @@ SoundHandle SoundManager::createMixingBus(const String &name) {
                 "SoundManager::createMixingBus");
   }
   auto &bus{it->second};
-  bus.second = SoundHandle{mMasterBus->first.play(bus.first)};
+  bus.second = SoundHandle(mMasterBus->first.play(bus.first), -1.0f);
   return *bus.second;
 }
 
@@ -163,6 +166,10 @@ void SoundHandle::setVolume(float volume) {
 
 void SoundHandle::stop() {
   mgr()._stop(*this);
+}
+
+double SoundHandle::getLength() const {
+  return mLength;
 }
 
 } // namespace Ogre

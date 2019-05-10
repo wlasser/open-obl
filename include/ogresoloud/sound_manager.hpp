@@ -78,10 +78,12 @@ class SoundHandle {
   friend class SoundManager;
 
   SoLoud::handle mHandle{};
+  float mLength{};
 
   SoundManager &mgr() const;
 
-  explicit SoundHandle(SoLoud::handle handle) : mHandle(handle) {}
+  explicit SoundHandle(SoLoud::handle handle, float length)
+      : mHandle(handle), mLength(length) {}
 
  public:
   /// Get the volume setting of this sound.
@@ -94,6 +96,9 @@ class SoundHandle {
 
   /// Stop playing this sound.
   void stop();
+
+  /// Get the length of the sound, in seconds.
+  double getLength() const;
 };
 
 } // namespace Ogre

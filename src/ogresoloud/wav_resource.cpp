@@ -20,6 +20,10 @@ float WavResource::getVolume() const noexcept {
   return mWav.mVolume;
 }
 
+float WavResource::getLength() noexcept {
+  return mWav.getLength();
+}
+
 void WavResource::setLoopingEnabled(bool looping) noexcept {
   mIsLooping = looping;
   mWav.setLooping(looping);
