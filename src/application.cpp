@@ -1,4 +1,5 @@
 #include "application.hpp"
+#include "audio.hpp"
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "console_functions.hpp"
@@ -107,6 +108,7 @@ Application::Application(std::string windowName) : FrameListener() {
   // Start the sound engine
   ctx.soundMgr = std::make_unique<Ogre::SoundManager>();
   setSoundSettings();
+  ctx.musicMgr = std::make_unique<oo::MusicManager>();
 
   // Start the developer console backend
   oo::JobManager::runJob([this]() {
@@ -704,6 +706,8 @@ bool Application::frameStarted(const Ogre::FrameEvent &event) {
   using fSecond = chrono::duration<float, chrono::seconds::period>;
 
   auto startTime{Clock::now()};
+
+  ctx.getMusicManager().update(event.timeSinceLastFrame);
 
   pollEvents();
   if (modeStack.empty()) {

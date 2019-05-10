@@ -40,6 +40,7 @@ class ScriptEngine;
 class SkeletonLoader;
 class CellCache;
 class MeshManager;
+class MusicManager;
 class EntityFactory;
 class DeferredLightPass;
 class DeferredSceneManager;
@@ -85,6 +86,7 @@ class ApplicationContext {
   std::unique_ptr<oo::DeferredLightPass> deferredLightPass;
 
   std::unique_ptr<Ogre::SoundManager> soundMgr{};
+  std::unique_ptr<oo::MusicManager> musicMgr;
 
   std::unique_ptr<Ogre::OverlaySystem> overlaySys{};
   std::unique_ptr<Ogre::TerrainGlobalOptions> terrainOptions{};
@@ -141,6 +143,8 @@ class ApplicationContext {
 
   oo::ConsoleEngine &getConsoleEngine();
   oo::ScriptEngine &getScriptEngine();
+
+  oo::MusicManager &getMusicManager();
 
   Ogre::OverlaySystem *getOverlaySystem();
 

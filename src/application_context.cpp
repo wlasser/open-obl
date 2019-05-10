@@ -1,4 +1,5 @@
 #include "application_context.hpp"
+#include "audio.hpp"
 #include "cell_cache.hpp"
 #include "controls.hpp"
 #include "deferred_light_pass.hpp"
@@ -35,6 +36,7 @@ ApplicationContext::ApplicationContext()
       scnMgrFactory{},
       intScnMgrFactory{},
       deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
+      musicMgr{},
       consoleEngine{},
       scriptEngine{},
       nifLoader{std::make_unique<oo::MeshLoader>()},
@@ -111,6 +113,10 @@ oo::ConsoleEngine &ApplicationContext::getConsoleEngine() {
 
 oo::ScriptEngine &ApplicationContext::getScriptEngine() {
   return *scriptEngine;
+}
+
+oo::MusicManager &ApplicationContext::getMusicManager() {
+  return *musicMgr;
 }
 
 Ogre::OverlaySystem *ApplicationContext::getOverlaySystem() {

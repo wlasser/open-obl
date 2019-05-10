@@ -1,3 +1,4 @@
+#include "audio.hpp"
 #include "modes/load_menu_mode.hpp"
 #include "modes/loading_menu_mode.hpp"
 #include "modes/main_menu_mode.hpp"
@@ -18,19 +19,7 @@ MenuMode<gui::MenuType::MainMenu>::MenuMode(ApplicationContext &ctx) :
   mScnMgr->addRenderQueueListener(ctx.getOverlaySystem());
 
   ctx.setCamera(gsl::make_not_null(mCamera));
-
-  const auto &gameSettings{oo::GameSettings::getSingleton()};
-  auto &sndMgr{Ogre::SoundManager::getSingleton()};
-
-  oo::Path musicBasePath{"music"};
-  oo::Path musicFilename{gameSettings.get("General.SMainMenuMusic",
-                                          "special/tes4title.mp3")};
-  oo::Path musicPath{musicBasePath / musicFilename};
-
-  mBackgroundMusic.emplace(sndMgr.playMusic(musicPath.c_str(),
-                                            oo::RESOURCE_GROUP));
-  float musicVolume{gameSettings.get("Audio.fMainMenuMusicVolume", 1.0f)};
-  mBackgroundMusic->setVolume(musicVolume);
+  ctx.getMusicManager().playTitleMusic();
 }
 
 MenuMode<gui::MenuType::MainMenu>::~MenuMode() {
@@ -42,7 +31,6 @@ MenuMode<gui::MenuType::MainMenu>::MenuMode(MenuMode &&other) noexcept
     : MenuModeBase<MainMenuMode>(std::move(other)),
       mScnMgr(other.mScnMgr),
       mCamera(other.mCamera),
-      mBackgroundMusic(other.mBackgroundMusic),
       btnContinue(other.btnContinue),
       btnNew(other.btnNew),
       btnLoad(other.btnLoad),
@@ -99,7 +87,6 @@ MainMenuMode::handleEventImpl(ApplicationContext &ctx,
       }();
 
       getMenuCtx()->getOverlay()->hide();
-      mBackgroundMusic->stop();
       return {false, oo::LoadingMenuMode(ctx, std::move(request))};
     } catch (const std::exception &) {
       return {false, std::nullopt};

@@ -34,8 +34,6 @@ template<> class MenuMode<gui::MenuType::MainMenu>
   /// Name of the `Ogre::Camera` to use for this mode.
   constexpr static const char *CAMERA_NAME{"__MainMenuCamera"};
 
-  std::optional<Ogre::SoundHandle> mBackgroundMusic{};
-
   /// `<id> 2 </id>`
   const gui::UiElement *btnContinue{};
 
