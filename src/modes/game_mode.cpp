@@ -25,8 +25,8 @@ GameMode::GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket)
       mDebugDrawImpl(std::make_unique<oo::DebugDrawImpl>(this)) {
   mCell = std::move(cellPacket.mInteriorCell);
 
-  mPlayerStartPos = std::move(cellPacket.mPlayerPosition);
-  mPlayerStartOrientation = std::move(cellPacket.mPlayerOrientation);
+  mPlayerStartPos = cellPacket.mPlayerPosition;
+  mPlayerStartOrientation = cellPacket.mPlayerOrientation;
 
   mInInterior = mExteriorMgr.getNearCells().empty();
 }

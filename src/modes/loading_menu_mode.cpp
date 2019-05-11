@@ -395,8 +395,7 @@ LoadingMenuMode::handleEventImpl(ApplicationContext &ctx,
     getMenuCtx()->getOverlay()->hide();
     return {true, oo::GameMode(ctx, CellPacket{
         std::move(mWrld), std::move(mInteriorCell), std::move(mExteriorCells),
-        std::move(mRequest.mPlayerPosition),
-        std::move(mRequest.mPlayerOrientation)
+        mRequest.mPlayerPosition, mRequest.mPlayerOrientation
     })};
   }
 
