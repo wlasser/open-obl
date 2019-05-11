@@ -243,6 +243,7 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
                     mWrld->getSceneManager().get(),
                     mWrld->getPhysicsWorld().get(),
                     getCellResolvers(ctx))));
+    ctx.getCellCache()->push_back(mNearCells.back());
     // Note: we can't yield between reifyRecord and loadTerrain because if
     // control passes to the main render fiber then it will attempt to run
     // physics on the cell terrain, which doesn't exist yet.
@@ -252,13 +253,6 @@ void oo::ExteriorManager::reifyNearExteriorCell(oo::BaseId cellId,
     mWrld->loadTerrain(*mNearCells.back());
   }, &reifyDone);
   reifyDone.wait();
-
-  oo::JobCounter cacheAddDone{1};
-  oo::RenderJobManager::runJob([this, &ctx]() {
-    std::unique_lock lock{mNearMutex};
-    ctx.getCellCache()->push_back(mNearCells.back());
-  }, &cacheAddDone);
-  cacheAddDone.wait();
 }
 
 void oo::ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
