@@ -148,6 +148,13 @@ class Application : public Ogre::FrameListener {
   // a TextResource not a Resource).
   void declareFilesystemResources(const oo::Path &foldername);
 
+  /// Notify the music manager of the available music.
+  /// This looks for resources in the `music/explore`, `music/public`,
+  /// `music/dungeon`, and `music/battle` directories and marks the contents as
+  /// `MusicType::Default`, `MusicType::Public`, `MusicType::Dungeon`, and
+  /// `MusicType::Battle` respectively.
+  void declareMusic();
+
   /// Return all esm files in the `masterPath` sorted by decreasing modification
   /// date, followed by all esp files in the `masterPath` sorted by decreasing
   /// modification date.

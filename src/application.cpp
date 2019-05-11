@@ -252,6 +252,8 @@ Application::Application(std::string windowName) : FrameListener() {
   resGrpMgr.initialiseResourceGroup(oo::RESOURCE_GROUP, false);
   resGrpMgr.initialiseResourceGroup(oo::SHADER_GROUP, true);
 
+  declareMusic();
+
   ctx.imguiMgr = std::make_unique<Ogre::ImGuiManager>();
 
   // Need resolvers before reading esp files
@@ -565,6 +567,23 @@ void Application::declareFilesystemResources(const oo::Path &foldername) {
       return decl.resourceName == pathString;
     }) == resDecls.end()) {
       declareResource(path, oo::RESOURCE_GROUP);
+    }
+  }
+}
+
+void Application::declareMusic() {
+  auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
+  constexpr std::array<const char *, 4> musicPaths{
+      "music/explore/*",
+      "music/public/*",
+      "music/dungeon/*",
+      "music/battle/*"
+  };
+  for (uint32_t i = 0; i < musicPaths.size(); ++i) {
+    const char *path{musicPaths[i]};
+    auto fileList{resGrpMgr.findResourceNames(oo::RESOURCE_GROUP, path)};
+    for (const auto &name : *fileList) {
+      ctx.getMusicManager().addTrack(oo::MusicType{i}, name);
     }
   }
 }
