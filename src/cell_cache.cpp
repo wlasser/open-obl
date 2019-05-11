@@ -34,14 +34,14 @@ void CellCache::promoteCell(oo::BaseId id) {
   const auto isId = [id](const auto &ptr) { return ptr->getBaseId() == id; };
 
   auto intIt{std::find_if(mInteriors.begin(), mInteriors.end(), isId)};
-  if (intIt != mInteriors.end() && intIt + 1 != mInteriors.end()) {
-    std::rotate(intIt, intIt + 1, mInteriors.end());
+  if (intIt != mInteriors.end() && std::next(intIt) != mInteriors.end()) {
+    std::rotate(intIt, std::next(intIt), mInteriors.end());
     return;
   }
 
-  auto extIt{std::find_if(mExteriors.end(), mExteriors.end(), isId)};
-  if (extIt != mExteriors.end() && extIt + 1 != mExteriors.end()) {
-    std::rotate(extIt, extIt + 1, mExteriors.end());
+  auto extIt{std::find_if(mExteriors.begin(), mExteriors.end(), isId)};
+  if (extIt != mExteriors.end() && std::next(extIt) != mExteriors.end()) {
+    std::rotate(extIt, std::next(extIt), mExteriors.end());
   }
 }
 
@@ -128,8 +128,8 @@ void CellCache::promoteWorld(oo::BaseId id) {
   const auto isId = [id](const auto &w) { return w.get()->getBaseId() == id; };
 
   auto it{std::find_if(mWorlds.begin(), mWorlds.end(), isId)};
-  if (it != mWorlds.end() && it + 1 != mWorlds.end()) {
-    std::rotate(it, it + 1, mWorlds.end());
+  if (it != mWorlds.end() && std::next(it) != mWorlds.end()) {
+    std::rotate(it, std::next(it), mWorlds.end());
   }
 }
 
