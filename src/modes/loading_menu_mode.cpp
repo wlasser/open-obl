@@ -356,9 +356,9 @@ MenuMode<gui::MenuType::LoadingMenu>::MenuMode(MenuMode &&other) noexcept
     : MenuModeBase<LoadingMenuMode>(std::move(other)),
       mScnMgr(std::exchange(other.mScnMgr, nullptr)),
       mCamera(std::exchange(other.mCamera, nullptr)),
-      mWrld(std::move(other.mWrld)),
-      mInteriorCell(std::move(other.mInteriorCell)),
-      mExteriorCells(std::move(other.mExteriorCells)),
+      mWrld(std::exchange(other.mWrld, {})),
+      mInteriorCell(std::exchange(other.mInteriorCell, {})),
+      mExteriorCells(std::exchange(other.mExteriorCells, {})),
       mRequest(std::move(other.mRequest)),
       mLoadStarted(other.mLoadStarted),
       mJc(std::move(other.mJc)) {

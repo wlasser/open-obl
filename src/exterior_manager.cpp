@@ -15,10 +15,10 @@ oo::ExteriorManager::ExteriorManager(oo::CellPacket cellPacket) noexcept {
 
 oo::ExteriorManager::ExteriorManager(ExteriorManager &&other) noexcept {
   std::scoped_lock lock{other.mNearMutex, other.mFarMutex, other.mReifyMutex};
-  mWrld = std::move(other.mWrld);
-  mNearCells = std::move(other.mNearCells);
-  mNearLoaded = std::move(other.mNearLoaded);
-  mFarLoaded = std::move(other.mFarLoaded);
+  mWrld = std::exchange(other.mWrld, {});
+  mNearCells = std::exchange(other.mNearCells, {});
+  mNearLoaded = std::exchange(other.mNearLoaded, {});
+  mFarLoaded = std::exchange(other.mFarLoaded, {});
 
   // TODO: Some jobs launched capture `this`, despite how terrible an idea that
   //       is. Obviously they'll break if the ExteriorManager is moved while
@@ -32,10 +32,10 @@ oo::ExteriorManager::operator=(ExteriorManager &&other) noexcept {
   if (this != &other) {
     std::scoped_lock lock{mNearMutex, mFarMutex, mReifyMutex,
                           other.mNearMutex, other.mFarMutex, other.mReifyMutex};
-    mWrld = std::move(other.mWrld);
-    mNearCells = std::move(other.mNearCells);
-    mNearLoaded = std::move(other.mNearLoaded);
-    mFarLoaded = std::move(other.mFarLoaded);
+    mWrld = std::exchange(other.mWrld, {});
+    mNearCells = std::exchange(other.mNearCells, {});
+    mNearLoaded = std::exchange(other.mNearLoaded, {});
+    mFarLoaded = std::exchange(other.mFarLoaded, {});
   }
 
   return *this;
