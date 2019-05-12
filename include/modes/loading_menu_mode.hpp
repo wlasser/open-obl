@@ -232,15 +232,14 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
   void startLoadJob(ApplicationContext &ctx);
 
  public:
-  explicit MenuMode<gui::MenuType::LoadingMenu>(ApplicationContext &ctx,
-                                                oo::CellRequest request);
+  explicit MenuMode(ApplicationContext &ctx, oo::CellRequest request);
 
   ~MenuMode();
   MenuMode(const MenuMode &) = delete;
   LoadingMenuMode &operator=(const MenuMode &) = delete;
 
   MenuMode(MenuMode &&other) noexcept;
-  MenuMode<gui::MenuType::LoadingMenu> &operator=(MenuMode &&other) noexcept;
+  LoadingMenuMode &operator=(MenuMode &&other) noexcept;
 
   std::string getFilenameImpl() const {
     return "menus/loading_menu.xml";

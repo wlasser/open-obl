@@ -349,8 +349,8 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
   }
 }
 
-MenuMode<gui::MenuType::LoadingMenu>::MenuMode(ApplicationContext &ctx,
-                                               oo::CellRequest request)
+//@formatter:off
+LoadingMenuMode::MenuMode(ApplicationContext &ctx, oo::CellRequest request)
     : MenuModeBase<LoadingMenuMode>(ctx),
       mScnMgr{ctx.getRoot().createSceneManager(SCN_MGR_TYPE, SCN_MGR_NAME)},
       mCamera{mScnMgr->createCamera(CAMERA_NAME)},
@@ -361,12 +361,7 @@ MenuMode<gui::MenuType::LoadingMenu>::MenuMode(ApplicationContext &ctx,
   ctx.setCamera(gsl::make_not_null(mCamera));
 }
 
-MenuMode<gui::MenuType::LoadingMenu>::~MenuMode() {
-  auto *root{Ogre::Root::getSingletonPtr()};
-  if (root && mScnMgr) root->destroySceneManager(mScnMgr);
-}
-
-MenuMode<gui::MenuType::LoadingMenu>::MenuMode(MenuMode &&other) noexcept
+LoadingMenuMode::MenuMode(MenuMode &&other) noexcept
     : MenuModeBase<LoadingMenuMode>(std::move(other)),
       mScnMgr(std::exchange(other.mScnMgr, nullptr)),
       mCamera(std::exchange(other.mCamera, nullptr)),
@@ -384,8 +379,14 @@ MenuMode<gui::MenuType::LoadingMenu>::MenuMode(MenuMode &&other) noexcept
                                    "running!");
   }
 }
+//@formatter:on
 
-MenuMode<gui::MenuType::LoadingMenu> &LoadingMenuMode::operator=(MenuMode &&other) noexcept {
+LoadingMenuMode::~MenuMode() {
+  auto *root{Ogre::Root::getSingletonPtr()};
+  if (root && mScnMgr) root->destroySceneManager(mScnMgr);
+}
+
+LoadingMenuMode &LoadingMenuMode::operator=(MenuMode &&other) noexcept {
   if (this != &other) {
     auto tmp{std::move(other)};
     std::swap(*this, tmp);
