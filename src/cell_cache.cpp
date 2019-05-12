@@ -27,6 +27,17 @@ void CellCache::push_back(const InteriorPtr &interiorCell) {
 void CellCache::push_back(const ExteriorPtr &exteriorCell) {
   std::scoped_lock lock{mMutex};
   mExteriors.push_back(exteriorCell);
+
+#ifndef NDEBUG
+  std::string exteriorCache{" "};
+  std::string counts{" "};
+  for (const auto &ptr : mExteriors) {
+    exteriorCache += ptr->getBaseId().string() + ' ';
+    counts += std::to_string(ptr.use_count()) + "        ";
+  }
+  spdlog::get(oo::LOG)->trace("push_back(): Cache is   [{}]", exteriorCache);
+  spdlog::get(oo::LOG)->trace("push_back(): Counts are [{}]", counts);
+#endif
 }
 
 void CellCache::promoteCell(oo::BaseId id) {
@@ -43,6 +54,17 @@ void CellCache::promoteCell(oo::BaseId id) {
   if (extIt != mExteriors.end() && std::next(extIt) != mExteriors.end()) {
     std::rotate(extIt, std::next(extIt), mExteriors.end());
   }
+
+#ifndef NDEBUG
+  std::string exteriorCache{" "};
+  std::string counts{" "};
+  for (const auto &ptr : mExteriors) {
+    exteriorCache += ptr->getBaseId().string() + ' ';
+    counts += std::to_string(ptr.use_count()) + "        ";
+  }
+  spdlog::get(oo::LOG)->trace("promoteCell(): Cache is   [{}]", exteriorCache);
+  spdlog::get(oo::LOG)->trace("promoteCell(): Counts are [{}]", counts);
+#endif
 }
 
 const CellCache::InteriorBuffer &CellCache::interiors() const {
