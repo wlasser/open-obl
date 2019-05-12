@@ -139,14 +139,6 @@ void
 LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
 
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
-      cellPtr && !isInterior) {
-    cellPtr->setVisible(true);
-    auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(cellPtr)};
-    mExteriorCells.emplace_back(std::move(extPtr));
-    return;
-  }
-
   const record::CELL &cellRec{*cellRes.get(cellId)};
   const auto cellGrid{cellRec.grid->data};
   oo::CellIndex cellIndex{cellGrid.x, cellGrid.y};
@@ -193,14 +185,17 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
                                           nearDiameter)};
   for (const auto &row : neighbors) {
     for (auto id : row) {
-      if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(id)};
-          cellPtr && !isInterior) {
-        cellPtr->setVisible(true);
-        mExteriorCells.emplace_back(
-            std::static_pointer_cast<oo::ExteriorCell>(cellPtr));
-      } else {
-        reifyExteriorCell(id, ctx);
+      if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(id)}; cellPtr) {
+        ctx.getLogger()->info("Found CELL {} in cache", id);
+        if (!isInterior) {
+          auto extCellPtr{std::static_pointer_cast<oo::ExteriorCell>(cellPtr)};
+          cellPtr->setVisible(true);
+          mExteriorCells.emplace_back(extCellPtr);
+          continue;
+        }
+        ctx.getLogger()->info("CELL {} exists but is an interior", id);
       }
+      reifyExteriorCell(id, ctx);
 
       boost::this_fiber::yield();
     }
@@ -215,6 +210,9 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
   for (const auto &cellPtr : mExteriorCells) {
     // TODO: Improve the methods on CellCache to make this more efficient,
     //       currently this does way more searches than it needs to.
+    // TODO: The size of the exterior cache is forced to be at least as large
+    //       as the number of cells in the near neighbourhood, so does this
+    //       actually need to be checked at all?
     auto begin{exteriors.begin()}, end{exteriors.end()};
     if (std::find(begin, end, cellPtr) != end) {
       ctx.getCellCache()->promoteCell(cellPtr->getBaseId());
@@ -240,7 +238,7 @@ void LoadingMenuMode::idLoadJob(IdCellLocation loc, ApplicationContext &ctx) {
       ctx.getLogger()->info("Loaded cell {} from cache", cellId);
       return;
     } else {
-      auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(cellPtr)};
+      cellPtr.reset();
       // Exterior cell is cached, but we need the worldspace to find out its
       // near neighbours, even if they're cached too.
       const oo::BaseId wrldId{getLoadedParentId(cellId, ctx)};
@@ -254,6 +252,7 @@ void LoadingMenuMode::idLoadJob(IdCellLocation loc, ApplicationContext &ctx) {
       return;
     }
   } else {
+    ctx.getLogger()->info("Cell {} is not in cache", cellId);
     // Cell is not in cache, check if the cell resolver knows about it.
     if (cellRes.contains(cellId)) {
       // Cell is either interior or an exterior cell in a loaded worldspace.
