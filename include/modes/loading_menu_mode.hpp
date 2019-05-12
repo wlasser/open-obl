@@ -123,33 +123,112 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
   /// Reify the given worldspace, storing it in `mWrld` and caching it.
   /// If the worldspace is already cached, then no additional reification or
   /// caching takes place.
-  /// \pre The given worldspace must exist and already be loaded.
+  /// \pre The given worldspace must exist.
+  /// \pre The given worldspace must already be loaded.
   // If `getParentIdFromCache` was called to get `wrldId` then obviously we
   // don't need to check the cache again, but it wouldn't save us much anyway.
   void reifyWorldspace(oo::BaseId wrldId, ApplicationContext &ctx);
 
-  /// Reify the given interior cell, storing it in `mInteriorCell` and caching
-  /// it.
-  /// Unlike `reifyWorldspace`, this function does not expect the cell to be
-  /// loaded, and will load it if necessary.
-  /// \pre The given cell must exist, be an interior cell, and not already be
-  ///      cached.
-  /// \remark The reason for the difference in behaviour to `reifyWorldspace` is
-  ///         simply that there are fewer cases where this needs to be done, and
-  ///         when it does we already know if the cell is in cache or not.
-  void reifyUncachedInteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+  /// Load the given interior cell. This only loads the cell via the cell
+  /// resolver, no reification takes place.
+  void loadInteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
 
-  /// Reify the given exterior cell, storing it in `mExteriorCells` and caching
-  /// it.
-  /// \pre The given cell must exist, be an exterior cell, and `mWrld` must be
-  ///      a reification of its parent worldspace.
+  /// Reify the given interior cell, returning a pointer to it and caching it.
+  /// \pre The given cell must exist.
+  /// \pre The given cell must be an interior cell.
+  /// \pre The given cell must not already be cached.
+  std::shared_ptr<oo::InteriorCell>
+  reifyInteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
+
+  /// Load and reify the given interior cell, storing it in `mInteriorCell` and
+  /// caching it.
+  /// \pre The given cell must exist.
+  /// \pre The given cell must be an interior cell.
+  /// \pre The given cell must not already be cached.
+  void reifyInteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+
+  /// Load the given exterior cell. This only loads the cell via the cell
+  /// resolver, no reification takes place.
+  void loadExteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
+
+  /// Reify the given exterior cell, returning a pointer to it and caching it.
+  /// \pre The given cell must exist.
+  /// \pre The given cell must be an exterior cell.
+  /// \pre The given cell must not already be cached.
+  std::shared_ptr<oo::ExteriorCell>
+  reifyExteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
+
+  /// Load and reify the given exterior cell, storing it in `mExteriorCells` and
+  /// caching it.
+  /// \pre The given cell must exist.
+  /// \pre The given cell must be an exterior cell.
+  /// \pre The given cell must not already be cached.
+  /// \pre `mWrld` must be a reification of the given cell's parent worldspace.
   void reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
+  /// Ensure that every cell in `neighbors` is reified and stored in
+  /// `mExteriorCells`. This will not perform any reification of cached exterior
+  /// cells.
+  /// \remark It is expected that `neighbors` be the near neighborhood.
+  void
+  reifyNearNeighborhood(oo::CellGridView neighbors, ApplicationContext &ctx);
+
+  /// Ensure that as many loaded exterior cells are present in the cache as is
+  /// possible, with every cached loaded cell occurring later in the cache than
+  /// any unloaded cell.
+  /// Specifically, this iterates over every cell in `mExteriorCells` in an
+  /// unspecified order, promoting each cell to the end of the cache or adding
+  /// it to the back if not already there.
+  /// If the cache size is at least as large as the number of cells in the near
+  /// neighbourhood, then after this function every cell in `mExteriorCells`
+  /// will be in the cache.
+  void updateCellCache(oo::CellCache &cellCache);
+
+  /// Reify the near neighborhood of the given center cell and add as many of
+  /// those cells to the cell cache as possible.
+  /// Specifically, call
+  /// `reifyNearNeighborhood(oo::CellGridView, ApplicationContext &)` on the
+  /// near neighborhood of `center`, then call `updateCellCache`.
   void reifyNearNeighborhood(oo::CellIndex center, ApplicationContext &ctx);
 
+  /// Set `mInteriorCell` to the given interior cell.
+  /// \pre `std::dynamic_cast<oo::InteriorCell *>(cellPtr.get()) != nullptr`.
+  /// \remark The type of `cellPtr` was chosen to avoid a lengthy cast at the
+  ///         callsite when the type is nonetheless known, such as when
+  ///         `cellPtr` is obtained by a call to `oo::CellCache::getCell`.
+  void setInteriorCell(std::shared_ptr<oo::Cell> cellPtr,
+                       ApplicationContext &ctx);
+
+  /// Set `mExteriorCells` to the near neighborhood of the given cell.
+  /// This will load and reify all cells and the parent worldspace as needed;
+  /// of course the center cell is reified, but the neighbors need not be.
+  /// \pre `std::dynamic_cast<oo::ExteriorCell *>(cellPtr.get()) != nullptr`.
+  /// \remark The type of `cellPtr` was chosen to avoid a length cast at the
+  ///         callsite when the type is nonetheless known, such as when
+  ///         `cellPtr` is obtained by a call to `oo::CellCache::getCell`.
+  void setExteriorCells(std::shared_ptr<oo::Cell> cellPtr,
+                        ApplicationContext &ctx);
+
+  /// Implementation of a render job that deduces the type (interior/exterior)
+  /// of the cell with the given formid and loads it and its near neighbourhood,
+  /// as appropriate.
+  /// \post If `loc` refers to an interior cell, then `mInteriorCell` shall be
+  ///       a reification of that cell.
+  /// \post If `loc` refers to an exterior cell, then `mExteriorCells` shall
+  ///       be a reification of the near neighborhood of that cell, and `mWrld`
+  ///       shall be a reification of the cell's parent worldspace.
   void idLoadJob(oo::IdCellLocation loc, ApplicationContext &ctx);
+
+  /// Implementation of a render job that loads the exterior cell at the given
+  /// position and its near neighborhood.
+  /// \post `mExteriorCells` shall be a reification of the near neighborhood of
+  ///       the referred to cell, and `mWrld` shall be a reification of the
+  ///       referred cell's parent worldspace.
   void positionLoadJob(oo::PositionCellLocation loc, ApplicationContext &ctx);
 
+  /// Start a render job calling `idLoadJob` or `positionLoadJob` depending on
+  /// the held alternative of `mRequest.mLocation`.
+  /// \post `mJc` shall be zero when the launched job completes.
   void startLoadJob(ApplicationContext &ctx);
 
  public:

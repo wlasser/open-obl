@@ -115,74 +115,86 @@ void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
   ctx.getCellCache()->push_back(mWrld);
 }
 
-void LoadingMenuMode::reifyUncachedInteriorCell(oo::BaseId cellId,
-                                                ApplicationContext &ctx) {
+void LoadingMenuMode::loadInteriorCell(const record::CELL &cellRec,
+                                       ApplicationContext &ctx) {
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+  const oo::BaseId cellId{cellRec.mFormId};
+  cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
+}
+
+std::shared_ptr<oo::InteriorCell>
+LoadingMenuMode::reifyInteriorCell(const record::CELL &cellRec,
+                                   ApplicationContext &ctx) {
+  auto intPtr{std::static_pointer_cast<oo::InteriorCell>(
+      oo::reifyRecord(cellRec, nullptr, nullptr, getCellResolvers(ctx)))};
+  ctx.getCellCache()->push_back(intPtr);
+  return intPtr;
+}
+
+void
+LoadingMenuMode::reifyInteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
   const record::CELL &cellRec{*cellRes.get(cellId)};
 
   ctx.getLogger()->info("Loading interior CELL {}", cellId);
-
-  cellRes.load(cellId, getCellRefrResolvers(ctx),
-               getCellBaseResolvers(ctx));
-
+  loadInteriorCell(cellRec, ctx);
   boost::this_fiber::yield();
 
   ctx.getLogger()->info("Reifying interior CELL {}", cellId);
+  mInteriorCell = reifyInteriorCell(cellRec, ctx);
 
-  mInteriorCell = std::static_pointer_cast<oo::InteriorCell>(
-      oo::reifyRecord(cellRec, nullptr, nullptr, getCellResolvers(ctx)));
-  ctx.getCellCache()->push_back(mInteriorCell);
   ctx.getLogger()->info("Loaded interior CELL {}", cellId);
 }
 
-void
-LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
+void LoadingMenuMode::loadExteriorCell(const record::CELL &cellRec,
+                                       ApplicationContext &ctx) {
   auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
-
-  const record::CELL &cellRec{*cellRes.get(cellId)};
+  const oo::BaseId cellId{cellRec.mFormId};
   const auto cellGrid{cellRec.grid->data};
   oo::CellIndex cellIndex{cellGrid.x, cellGrid.y};
-
-  ctx.getLogger()->info("Loading exterior CELL {}", cellId);
 
   cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
   const auto &refLocator{ctx.getPersistentReferenceLocator()};
   for (auto persistentRef : refLocator.getRecordsInCell(cellIndex)) {
     cellRes.insertReferenceRecord(cellId, persistentRef);
   }
+}
 
-  boost::this_fiber::yield();
-
-  ctx.getLogger()->info("Reifying exterior CELL {}", cellId);
-
-  auto extPtr{std::dynamic_pointer_cast<oo::ExteriorCell>(
+std::shared_ptr<oo::ExteriorCell>
+LoadingMenuMode::reifyExteriorCell(const record::CELL &cellRec,
+                                   ApplicationContext &ctx) {
+  auto extPtr{std::static_pointer_cast<oo::ExteriorCell>(
       oo::reifyRecord(cellRec, mWrld->getSceneManager().get(),
                       mWrld->getPhysicsWorld().get(), getCellResolvers(ctx)))};
   ctx.getCellCache()->push_back(extPtr);
-  mExteriorCells.emplace_back(std::move(extPtr));
+  return extPtr;
+}
 
+void
+LoadingMenuMode::reifyExteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+  const record::CELL &cellRec{*cellRes.get(cellId)};
+
+  ctx.getLogger()->info("Loading exterior CELL {}", cellId);
+  loadExteriorCell(cellRec, ctx);
+  boost::this_fiber::yield();
+
+  ctx.getLogger()->info("Reifying exterior CELL {}", cellId);
+  mExteriorCells.emplace_back(reifyExteriorCell(cellRec, ctx));
   boost::this_fiber::yield();
 
   ctx.getLogger()->info("Loading terrain of exterior CELL {}", cellId);
-
   mWrld->loadTerrain(*mExteriorCells.back());
 
   ctx.getLogger()->info("Loaded exterior CELL {}", cellId);
 }
 
-void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
+void LoadingMenuMode::reifyNearNeighborhood(oo::CellGridView neighbors,
                                             ApplicationContext &ctx) {
-  const auto &gameSettings{oo::GameSettings::getSingleton()};
-  const auto nearDiameter{gameSettings.get<unsigned int>(
-      "General.uGridsToLoad", 3)};
-
   // If a near neighbour is in the cache then just copy the pointer, otherwise
   // reify the record and add it. Things are a lot simpler than in `GameMode`
   // because we don't have to worry about `mExteriorCells` already having cells
   // in it.
-  const auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
-  auto neighbors{wrldRes.getNeighbourhood(mWrld->getBaseId(), centerCell,
-                                          nearDiameter)};
   for (const auto &row : neighbors) {
     for (auto id : row) {
       if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(id)}; cellPtr) {
@@ -200,13 +212,10 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
       boost::this_fiber::yield();
     }
   }
+}
 
-  // We now need to ensure that as many of the `mExteriorCells` are cached as
-  // possible. Note that traversing `mExteriorCells` and caching each cell iff
-  // it is not already cached may displace an already cached cell, and naively
-  // adding every cell whether it was cached or not may result in duplicates.
-  // Instead, already cached cells should be promoted to the back.
-  const auto &exteriors{ctx.getCellCache()->exteriors()};
+void LoadingMenuMode::updateCellCache(oo::CellCache &cellCache) {
+  const auto &exteriors{cellCache.exteriors()};
   for (const auto &cellPtr : mExteriorCells) {
     // TODO: Improve the methods on CellCache to make this more efficient,
     //       currently this does way more searches than it needs to.
@@ -215,83 +224,89 @@ void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
     //       actually need to be checked at all?
     auto begin{exteriors.begin()}, end{exteriors.end()};
     if (std::find(begin, end, cellPtr) != end) {
-      ctx.getCellCache()->promoteCell(cellPtr->getBaseId());
+      cellCache.promoteCell(cellPtr->getBaseId());
     } else {
-      ctx.getCellCache()->push_back(cellPtr);
+      cellCache.push_back(cellPtr);
     }
   }
 }
 
+void LoadingMenuMode::reifyNearNeighborhood(oo::CellIndex centerCell,
+                                            ApplicationContext &ctx) {
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+  const auto nearDiameter{gameSettings.get<unsigned int>(
+      "General.uGridsToLoad", 3)};
+
+  const auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+  auto neighbors{wrldRes.getNeighbourhood(mWrld->getBaseId(), centerCell,
+                                          nearDiameter)};
+  reifyNearNeighborhood(neighbors, ctx);
+  updateCellCache(*ctx.getCellCache());
+}
+
+void LoadingMenuMode::setInteriorCell(std::shared_ptr<oo::Cell> cellPtr,
+                                      ApplicationContext &ctx) {
+  mInteriorCell = std::static_pointer_cast<oo::InteriorCell>(
+      std::move(cellPtr));
+  ctx.getLogger()->info("Loaded CELL {} from cache",
+                        mInteriorCell->getBaseId());
+}
+
+void LoadingMenuMode::setExteriorCells(std::shared_ptr<oo::Cell> cellPtr,
+                                       ApplicationContext &ctx) {
+  const auto cellId{cellPtr->getBaseId()};
+  cellPtr.reset();
+
+  // Exterior cell is cached, but we need the worldspace to find out its
+  // near neighbours, even if they're cached too.
+  const auto wrldId{getLoadedParentId(cellId, ctx)};
+  reifyWorldspace(wrldId, ctx);
+
+  boost::this_fiber::yield();
+
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+  const auto cellRec{*cellRes.get(cellId)};
+  const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
+  reifyNearNeighborhood(pos, ctx);
+}
+
 void LoadingMenuMode::idLoadJob(IdCellLocation loc, ApplicationContext &ctx) {
   const auto cellId{loc.mCellId};
-  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
 
   // TODO: Update detach time of cells
 
   // First check cell cache.
-  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)};
-      cellPtr) {
-    // Cell exists in cache, is it interior or exterior?
+  if (auto[cellPtr, isInterior]{ctx.getCellCache()->getCell(cellId)}; cellPtr) {
     cellPtr->setVisible(true);
-    if (isInterior) {
-      mInteriorCell = std::dynamic_pointer_cast<oo::InteriorCell>(cellPtr);
-      ctx.getLogger()->info("Loaded cell {} from cache", cellId);
-      return;
-    } else {
-      cellPtr.reset();
-      // Exterior cell is cached, but we need the worldspace to find out its
-      // near neighbours, even if they're cached too.
-      const oo::BaseId wrldId{getLoadedParentId(cellId, ctx)};
-      reifyWorldspace(wrldId, ctx);
-
-      boost::this_fiber::yield();
-
-      const auto cellRec{*cellRes.get(cellId)};
-      const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
-      reifyNearNeighborhood(pos, ctx);
-      return;
-    }
-  } else {
-    ctx.getLogger()->info("Cell {} is not in cache", cellId);
-    // Cell is not in cache, check if the cell resolver knows about it.
-    if (cellRes.contains(cellId)) {
-      // Cell is either interior or an exterior cell in a loaded worldspace.
-      const record::CELL &cellRec{*cellRes.get(cellId)};
-
-      if (cellRec.grid) {
-        // Cell is exterior and in a worldspace that is already loaded, but we
-        // need to find out which one. Most cell loads do not change the
-        // worldspace, so check the cached worldspaces first.
-        const oo::BaseId wrldId{getLoadedParentId(cellId, ctx)};
-        reifyWorldspace(wrldId, ctx);
-
-        boost::this_fiber::yield();
-
-        const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
-        reifyNearNeighborhood(pos, ctx);
-        return;
-      } else {
-        // Cell is interior, let's load it
-        reifyUncachedInteriorCell(cellId, ctx);
-        return;
-      }
-    } else {
-      // Either the cell doesn't exist or it's an exterior cell that belongs to
-      // a worldspace that hasn't been loaded yet. Load each of the worldspaces
-      // in turn and look for the cell. Note that 'loading' here just builds a
-      // list of child cells, which is pretty lightweight.
-      const oo::BaseId wrldId{getUnloadedParentId(cellId, ctx)};
-      reifyWorldspace(wrldId, ctx);
-
-      boost::this_fiber::yield();
-
-      // Cell exists and is an exterior cell.
-      const auto cellRec{*cellRes.get(cellId)};
-      const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
-      reifyNearNeighborhood(pos, ctx);
-      return;
-    }
+    return isInterior ? setInteriorCell(std::move(cellPtr), ctx)
+                      : setExteriorCells(std::move(cellPtr), ctx);
   }
+
+  ctx.getLogger()->info("Cell {} is not in cache", cellId);
+  auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+
+  // Note that an empty optional means an interior cell, this will throw if the
+  // cell doesn't exist.
+  std::optional<oo::BaseId> wrldId = [&]() -> std::optional<oo::BaseId> {
+    // If the cell resolver doesn't know about the cell then either it doesn't
+    // exist or it belongs to a worldspace that hasn't been loaded yet.
+    // Return the worldspace, if any, loading its cell list in the process.
+    if (!cellRes.contains(cellId)) return getUnloadedParentId(cellId, ctx);
+
+    // Cell is either interior or an exterior cell in a loaded worldspace.
+    const record::CELL &cellRec{*cellRes.get(cellId)};
+    return cellRec.grid ? std::optional{getLoadedParentId(cellId, ctx)}
+                        : (reifyInteriorCell(cellId, ctx), std::nullopt);
+  }();
+  if (!wrldId) return;
+
+  reifyWorldspace(*wrldId, ctx);
+  boost::this_fiber::yield();
+
+  // Cell exists and is an exterior cell.
+  const auto &cellRec{*cellRes.get(cellId)};
+  const oo::CellIndex pos{cellRec.grid->data.x, cellRec.grid->data.y};
+  reifyNearNeighborhood(pos, ctx);
 }
 
 void LoadingMenuMode::positionLoadJob(oo::PositionCellLocation loc,
