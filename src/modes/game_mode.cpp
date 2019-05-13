@@ -316,7 +316,7 @@ GameMode::handleActivate(ApplicationContext &ctx,
 
   oo::CellRequest request{
       *dstCell,
-      oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z + 128}),
+      oo::fromBSCoordinates(Ogre::Vector3{data.x, data.y, data.z}),
       oo::fromBSTaitBryan(Ogre::Radian(data.aX),
                           Ogre::Radian(data.aY),
                           Ogre::Radian(data.aZ))

@@ -292,8 +292,11 @@ void CharacterControllerImpl::setOrientation(Ogre::Radian pPitch,
 
 float CharacterControllerImpl::getSpringDisplacement() noexcept {
   const auto rayLength{10.0f};
+  // Position of Bip01 (approximately)
   auto p0{qvm::convert_to<btVector3>(mMotionState->getPosition())};
-  auto p1{qvm::convert_to<btVector3>(p0 + qvm::_0X0(-rayLength))};
+  p0 -= qvm::_0X0(getCapsuleHeight() * 0.5f);
+  // End of ray, beneath feet
+  auto p1{qvm::convert_to<btVector3>(p0 - qvm::_0X0(rayLength))};
   btCollisionWorld::AllHitsRayResultCallback callback(p0, p1);
   mWorld->rayTest(p0, p1, callback);
 
@@ -309,14 +312,13 @@ float CharacterControllerImpl::getSpringDisplacement() noexcept {
     if (distNew < dist) dist = distNew;
   }
 
-  // Natural length of the spring
-  const auto length{0.5f * mHeight + getCapsuleHeight() / 2.0f};
+  const auto naturalLength{0.5f * mHeight};
 
-  return length - dist;
+  return naturalLength - dist;
 }
 
 float CharacterControllerImpl::getMaxSpringDisplacement() noexcept {
-  return 0.5f * mHeight - getCapsuleRadius();
+  return 0.5f * mHeight;
 }
 
 void CharacterControllerImpl::applySpringForce(float displacement) noexcept {
