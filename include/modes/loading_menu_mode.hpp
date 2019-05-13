@@ -231,6 +231,16 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
   /// \post `mJc` shall be zero when the launched job completes.
   void startLoadJob(ApplicationContext &ctx);
 
+  /// Set the music type according to the loaded cell or worldspace.
+  /// If an interior cell was loaded and that cell does not have a
+  /// `record::XCMT`, then the music type will be set to `MusicType::Default`.
+  /// If an exterior cell was loaded and the parent worldspace of that cell
+  /// does not have a `record::SNAM_WRLD`, then the music type will be set to
+  /// `MusicType::Default`.
+  /// \pre `mInteriorCell` is a reification of an interior cell or
+  ///      `mWrld` is a reification of a worldspace.
+  void setMusicType(ApplicationContext &ctx);
+
  public:
   explicit MenuMode(ApplicationContext &ctx, oo::CellRequest request);
 

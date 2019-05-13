@@ -113,11 +113,6 @@ void LoadingMenuMode::reifyWorldspace(oo::BaseId wrldId,
   ctx.getLogger()->info("Reifying WRLD {}", wrldId);
   const auto wrldRec{*wrldRes.get(wrldId)};
   mWrld = oo::reifyRecord(wrldRec, std::move(resolvers));
-  if (wrldRec.music) {
-    ctx.getMusicManager().setMusicType(*wrldRec.music, true);
-  } else {
-    ctx.getMusicManager().setMusicType(oo::MusicType::Default, true);
-  }
   ctx.getCellCache()->push_back(mWrld);
 }
 
@@ -149,9 +144,6 @@ LoadingMenuMode::reifyInteriorCell(oo::BaseId cellId, ApplicationContext &ctx) {
   ctx.getLogger()->info("Reifying interior CELL {}", cellId);
   mInteriorCell = reifyInteriorCell(cellRec, ctx);
 
-  if (cellRec.music) {
-    ctx.getMusicManager().setMusicType(*cellRec.music, true);
-  }
   ctx.getLogger()->info("Loaded interior CELL {}", cellId);
 }
 
@@ -358,6 +350,26 @@ void LoadingMenuMode::startLoadJob(ApplicationContext &ctx) {
   }
 }
 
+void LoadingMenuMode::setMusicType(ApplicationContext &ctx) {
+  if (mInteriorCell) {
+    auto &cellRes{oo::getResolver<record::CELL>(ctx.getBaseResolvers())};
+    const record::CELL &cellRec{*cellRes.get(mInteriorCell->getBaseId())};
+    if (cellRec.music) {
+      ctx.getMusicManager().setMusicType(*cellRec.music, true);
+    } else {
+      ctx.getMusicManager().setMusicType(oo::MusicType::Default, true);
+    }
+  } else {
+    auto &wrldRes{oo::getResolver<record::WRLD>(ctx.getBaseResolvers())};
+    const record::WRLD &wrldRec{*wrldRes.get(mWrld->getBaseId())};
+    if (wrldRec.music) {
+      ctx.getMusicManager().setMusicType(*wrldRec.music, true);
+    } else {
+      ctx.getMusicManager().setMusicType(oo::MusicType::Default, true);
+    }
+  }
+}
+
 //@formatter:off
 LoadingMenuMode::MenuMode(ApplicationContext &ctx, oo::CellRequest request)
     : MenuModeBase<LoadingMenuMode>(ctx),
@@ -417,6 +429,8 @@ LoadingMenuMode::handleEventImpl(ApplicationContext &ctx,
   if (mJc->get() == 0) {
     ctx.getLogger()->info("Loading complete, changing state now");
     getMenuCtx()->getOverlay()->hide();
+    setMusicType(ctx);
+
     return {true, oo::GameMode(ctx, CellPacket{
         std::move(mWrld), std::move(mInteriorCell), std::move(mExteriorCells),
         mRequest.mPlayerPosition, mRequest.mPlayerOrientation
