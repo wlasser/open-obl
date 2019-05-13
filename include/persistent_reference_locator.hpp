@@ -56,9 +56,9 @@ class PersistentReferenceLocator {
   getRecordsInCell(oo::BaseId cellId) const noexcept;
 
   /// Find all reference records which belong to the exterior cell with the
-  /// given coordinates.
+  /// given coordinates, in the given worldspace.
   std::unordered_set<oo::RefId>
-  getRecordsInCell(oo::CellIndex cellIndex) const noexcept;
+  getRecordsInCell(oo::BaseId wrldId, oo::CellIndex cellIndex) const noexcept;
 
   /// Record the position of a persistent reference record that is in an
   /// interior cell. Overwrites any existing record with that `refId`, if any.

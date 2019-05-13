@@ -156,7 +156,8 @@ void LoadingMenuMode::loadExteriorCell(const record::CELL &cellRec,
 
   cellRes.load(cellId, getCellRefrResolvers(ctx), getCellBaseResolvers(ctx));
   const auto &refLocator{ctx.getPersistentReferenceLocator()};
-  for (auto persistentRef : refLocator.getRecordsInCell(cellIndex)) {
+  for (auto persistentRef : refLocator.getRecordsInCell(mWrld->getBaseId(),
+                                                        cellIndex)) {
     cellRes.insertReferenceRecord(cellId, persistentRef);
   }
 }

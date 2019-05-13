@@ -57,12 +57,13 @@ PersistentReferenceLocator::getRecordsInCell(oo::BaseId cellId) const noexcept {
 }
 
 std::unordered_set<oo::RefId>
-PersistentReferenceLocator::getRecordsInCell(oo::CellIndex cellIndex) const noexcept {
+PersistentReferenceLocator::getRecordsInCell(oo::BaseId wrldId,
+                                             oo::CellIndex cellIndex) const noexcept {
   std::unique_lock lock{mMutex};
 
   std::unordered_set<oo::RefId> out{};
   for (const auto &[k, v] : mLocations) {
-    if (v.mCellIndex == cellIndex) out.insert(k);
+    if (v.mCellIndex == cellIndex && v.mWrldId == wrldId) out.insert(k);
   }
 
   return out;
