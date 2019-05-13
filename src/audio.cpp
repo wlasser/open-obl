@@ -31,6 +31,7 @@ void MusicManager::setMusicType(MusicType type, bool force) noexcept {
   mNextType = type;
   if (mSoundHandle && !force) return;
   else if (mSoundHandle && force) {
+    if (type == mCurrentType) return;
     mSoundHandle->stop();
     mSoundHandle.reset();
   }
