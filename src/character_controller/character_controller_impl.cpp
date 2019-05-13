@@ -68,9 +68,9 @@ CharacterControllerImpl::CharacterControllerImpl(CharacterControllerImpl &&other
   mHeight = other.mHeight;
   mMass = other.mMass;
 
-  mPitch = std::move(other.mPitch);
-  mYaw = std::move(other.mYaw);
-  mLocalVelocity = std::move(other.mLocalVelocity);
+  mPitch = other.mPitch;
+  mYaw = other.mYaw;
+  mLocalVelocity = other.mLocalVelocity;
 }
 
 CharacterControllerImpl &
@@ -100,9 +100,9 @@ CharacterControllerImpl::operator=(CharacterControllerImpl &&other) noexcept {
     mHeight = other.mHeight;
     mMass = other.mMass;
 
-    mPitch = std::move(other.mPitch);
-    mYaw = std::move(other.mYaw);
-    mLocalVelocity = std::move(other.mLocalVelocity);
+    mPitch = other.mPitch;
+    mYaw = other.mYaw;
+    mLocalVelocity = other.mLocalVelocity;
   }
 
   return *this;
