@@ -93,23 +93,32 @@ class ExteriorManager {
   /// Lock this before accessing `mFarLoaded`.
   boost::fibers::mutex mFarMutex{};
 
-  /// \post `mFarLoaded =` \f$F\f$
-  void reifyFarNeighborhood(oo::CellIndex centerCell,
-                            ApplicationContext &ctx);
+  /// Return the set of cells in the given neighborhood.
+  std::set<oo::BaseId>
+  getNeighborhood(oo::CellIndex center, unsigned int diameter,
+                  ApplicationContext &ctx);
+
+  // TODO: Identical to the function of the same signature in LoadingMenuMode.
+  void loadExteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
+
+  // TODO: Identical to the function of the same signature in LoadingMenuMode.
+  std::shared_ptr<oo::ExteriorCell>
+  reifyExteriorCell(const record::CELL &cellRec, ApplicationContext &ctx);
 
   /// \post `mFarLoaded.contains(cellId)`
   void reifyFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
   /// \post `!mFarLoaded.contains(cellId)`
   void unloadFarExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
 
-  /// \post `mNearLoaded = ` \f$G\f$
-  void reifyNearNeighborhood(oo::CellIndex centerCell,
-                             ApplicationContext &ctx);
-
   /// \post `mNearLoaded.contains(cellId)`
   void reifyNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
   /// \post `!mNearLoaded.contains(cellId)`
   void unloadNearExteriorCell(oo::BaseId cellId, ApplicationContext &ctx);
+
+  /// \post `mFarLoaded =` \f$F\f$
+  void reifyFarNeighborhood(oo::CellIndex center, ApplicationContext &ctx);
+  /// \post `mNearLoaded = ` \f$G\f$
+  void reifyNearNeighborhood(oo::CellIndex center, ApplicationContext &ctx);
 
   auto getCellBaseResolvers(ApplicationContext &ctx) const {
     return oo::getResolvers<
