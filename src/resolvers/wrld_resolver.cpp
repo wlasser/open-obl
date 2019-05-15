@@ -975,7 +975,7 @@ void World::unloadWaterPlane(CellIndex index) {
 }
 
 World::DistantChunk World::makeChunk(oo::ChunkIndex chunkIndex) {
-  const std::string basePath{oo::getChunkBaseName(mBaseId, chunkIndex).c_str()};
+  const std::string basePath{oo::getChunkBaseName(mBaseId, chunkIndex)};
   const std::string meshPath{oo::getChunkMeshPath(mBaseId, chunkIndex).c_str()};
 
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
@@ -993,6 +993,11 @@ World::DistantChunk World::makeChunk(oo::ChunkIndex chunkIndex) {
     pass->removeAllTextureUnitStates();
     pass->createTextureUnitState(diffPath);
     pass->createTextureUnitState(normPath);
+
+    const auto &vsParams{pass->getVertexProgramParameters()};
+    const auto &gameSettings{oo::GameSettings::getSingleton()};
+    const auto diam{gameSettings.get<unsigned>("General.uGridDistantCount", 5)};
+    vsParams->setNamedConstant("gridDistantCount", static_cast<int>(diam));
   }
 
   auto matPtr{matMgr.getByName(matName, oo::RESOURCE_GROUP)};

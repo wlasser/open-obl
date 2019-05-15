@@ -2,6 +2,10 @@ vertex_program landscape_vs_glsl glsl {
     source landscape_vs.glsl
 }
 
+vertex_program landscape_distant_vs_glsl glsl {
+    source landscape_distant_vs.glsl
+}
+
 fragment_program landscape_fs_glsl glsl {
     source landscape_fs.glsl
 }
@@ -153,10 +157,11 @@ material __LandscapeMaterial9 {
 material __LandscapeMaterialDistant {
     technique {
         pass {
-            vertex_program_ref landscape_vs_glsl {
-                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+            vertex_program_ref landscape_distant_vs_glsl {
+                param_named_auto viewProj VIEWPROJ_MATRIX
                 param_named_auto world WORLD_MATRIX
                 param_named_auto viewPos CAMERA_POSITION
+                param_named gridDistantCount int 25
             }
 
             fragment_program_ref landscape_distant_fs_glsl {
