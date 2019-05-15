@@ -276,6 +276,9 @@ class World {
   tl::optional<oo::BaseId> getWatrId();
   tl::optional<oo::BaseId> getWatrId(oo::BaseId wrldId);
 
+  oo::BaseId getAncestorWrldId();
+  oo::BaseId getAncestorWrldId(oo::BaseId wrldId);
+
   void loadWaterPlane(CellIndex index, const record::CELL &cellRec);
   void unloadWaterPlane(CellIndex index);
 

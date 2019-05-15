@@ -421,6 +421,19 @@ World::getWatrId(oo::BaseId wrldId) {
   return tl::nullopt;
 }
 
+oo::BaseId World::getAncestorWrldId() {
+  return getAncestorWrldId(mBaseId);
+}
+
+oo::BaseId World::getAncestorWrldId(oo::BaseId wrldId) {
+  auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+  const auto &wrldRec{*wrldRes.get(wrldId)};
+  if (wrldRec.parentWorldspace) {
+    return getAncestorWrldId(wrldRec.parentWorldspace->data);
+  }
+  return wrldId;
+}
+
 void World::makeCellGrid() {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
@@ -975,19 +988,20 @@ void World::unloadWaterPlane(CellIndex index) {
 }
 
 World::DistantChunk World::makeChunk(oo::ChunkIndex chunkIndex) {
-  const std::string basePath{oo::getChunkBaseName(mBaseId, chunkIndex)};
-  const std::string meshPath{oo::getChunkMeshPath(mBaseId, chunkIndex).c_str()};
+  const auto wrldId{getAncestorWrldId()};
+  const std::string baseName{oo::getChunkBaseName(wrldId, chunkIndex)};
+  const std::string meshPath{oo::getChunkMeshPath(wrldId, chunkIndex).c_str()};
 
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  const std::string matName{CHUNK_BASE_MATERIAL + basePath};
+  const std::string matName{CHUNK_BASE_MATERIAL + baseName};
 
   if (!matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
     auto matPtr{matMgr.getByName(CHUNK_BASE_MATERIAL, oo::SHADER_GROUP)};
     auto newMatPtr{matPtr->clone(matName, /*changeGroup=*/true,
                                  oo::RESOURCE_GROUP)};
 
-    std::string diffPath{oo::getChunkDiffusePath(mBaseId, chunkIndex).c_str()};
-    std::string normPath{oo::getChunkNormalPath(mBaseId, chunkIndex).c_str()};
+    std::string diffPath{oo::getChunkDiffusePath(wrldId, chunkIndex).c_str()};
+    std::string normPath{oo::getChunkNormalPath(wrldId, chunkIndex).c_str()};
 
     auto *pass{newMatPtr->getTechnique(0)->getPass(0)};
     pass->removeAllTextureUnitStates();
@@ -1010,7 +1024,8 @@ World::DistantChunk World::makeChunk(oo::ChunkIndex chunkIndex) {
 
 void World::makeDistantCellGrid() {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
-  const auto &wrldRec{*wrldRes.get(mBaseId)};
+  const auto wrldId{getAncestorWrldId()};
+  const auto &wrldRec{*wrldRes.get(wrldId)};
   // Worldspace bounds, in units.
   const auto[x0, y0]{wrldRec.bottomLeft.data};
   const auto[x1, y1]{wrldRec.topRight.data};
