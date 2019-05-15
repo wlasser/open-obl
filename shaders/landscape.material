@@ -22,6 +22,10 @@ fragment_program landscape_bake_diffuse_fs_glsl glsl {
     source landscape_bake_diffuse_fs.glsl
 }
 
+fragment_program landscape_distant_fs_glsl glsl {
+    source landscape_distant_fs.glsl
+}
+
 //===----------------------------------------------------------------------===//
 // Landscape materials
 //===----------------------------------------------------------------------===//
@@ -139,6 +143,23 @@ material __LandscapeMaterial9 {
             }
 
             fragment_program_ref landscape_low_fs_glsl {
+                param_named diffuseMap int 0
+                param_named normalMap int 1
+            }
+        }
+    }
+}
+
+material __LandscapeMaterialDistant {
+    technique {
+        pass {
+            vertex_program_ref landscape_vs_glsl {
+                param_named_auto worldViewProj WORLDVIEWPROJ_MATRIX
+                param_named_auto world WORLD_MATRIX
+                param_named_auto viewPos CAMERA_POSITION
+            }
+
+            fragment_program_ref landscape_distant_fs_glsl {
                 param_named diffuseMap int 0
                 param_named normalMap int 1
             }

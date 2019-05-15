@@ -13,6 +13,7 @@
 #include <OgreMovableObject.h>
 #include <OgrePixelFormat.h>
 #include <OgreRoot.h>
+#include <OgreTechnique.h>
 #include <OgreTextureManager.h>
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
@@ -319,6 +320,7 @@ World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
   logger->info("WRLD {}: Making cell grid...", baseId);
   makeCellGrid();
+  makeDistantCellGrid();
   boost::this_fiber::yield();
 }
 
@@ -970,6 +972,56 @@ void World::unloadWaterPlane(CellIndex index) {
   mScnMgr->destroyInstancedEntity(it->second.entity);
   mScnMgr->destroySceneNode(it->second.node);
   mWaterPlanes.erase(it);
+}
+
+World::DistantChunk World::makeChunk(oo::ChunkIndex chunkIndex) {
+  const std::string basePath{oo::getChunkBaseName(mBaseId, chunkIndex).c_str()};
+  const std::string meshPath{oo::getChunkMeshPath(mBaseId, chunkIndex).c_str()};
+
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  const std::string matName{CHUNK_BASE_MATERIAL + basePath};
+
+  if (!matMgr.resourceExists(matName, oo::RESOURCE_GROUP)) {
+    auto matPtr{matMgr.getByName(CHUNK_BASE_MATERIAL, oo::SHADER_GROUP)};
+    auto newMatPtr{matPtr->clone(matName, /*changeGroup=*/true,
+                                 oo::RESOURCE_GROUP)};
+
+    std::string diffPath{oo::getChunkDiffusePath(mBaseId, chunkIndex).c_str()};
+    std::string normPath{oo::getChunkNormalPath(mBaseId, chunkIndex).c_str()};
+
+    auto *pass{newMatPtr->getTechnique(0)->getPass(0)};
+    pass->removeAllTextureUnitStates();
+    pass->createTextureUnitState(diffPath);
+    pass->createTextureUnitState(normPath);
+  }
+
+  auto matPtr{matMgr.getByName(matName, oo::RESOURCE_GROUP)};
+
+  auto *node{mScnMgr->getRootSceneNode()->createChildSceneNode()};
+  oo::insertRawNif(meshPath, oo::RESOURCE_GROUP, matPtr, getSceneManager(),
+                   gsl::make_not_null(node));
+  return {node, std::move(matPtr)};
+}
+
+void World::makeDistantCellGrid() {
+  auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
+  const auto &wrldRec{*wrldRes.get(mBaseId)};
+  // Worldspace bounds, in units.
+  const auto[x0, y0]{wrldRec.bottomLeft.data};
+  const auto[x1, y1]{wrldRec.topRight.data};
+
+  // Worldspace bounds, in chunks
+  const int i0 = std::floor(x0 / unitsPerChunk<float>);
+  const int i1 = std::floor(x1 / unitsPerChunk<float>);
+  const int j0 = std::floor(y0 / unitsPerChunk<float>);
+  const int j1 = std::floor(y1 / unitsPerChunk<float>);
+
+  for (int i = i0; i < i1; ++i) {
+    for (int j = j0; j < j1; ++j) {
+      oo::ChunkIndex index{i, j};
+      mDistantChunks.emplace(index, makeChunk(index));
+    }
+  }
 }
 
 oo::ReifyRecordTrait<record::WRLD>::type

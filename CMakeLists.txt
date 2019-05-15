@@ -221,7 +221,8 @@ target_sources(OpenOblivion PRIVATE
         src/save_state.cpp
         src/scene_manager.cpp
         src/script_functions.cpp
-        src/terrain_material_generator.cpp)
+        src/terrain_material_generator.cpp
+        src/wrld.cpp)
 
 target_include_directories(OpenOblivion PRIVATE
         ${BULLET_INCLUDE_DIRS})

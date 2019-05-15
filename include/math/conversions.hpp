@@ -414,6 +414,9 @@ template<class T> constexpr T verticesPerCell = T(33u);
 /// The number of vertices along the edge of an exterior cell quad, as a closed
 /// range. This could be worked out from `oo::verticesPerCell`.
 template<class T> constexpr T verticesPerQuad = T(17u);
+/// The length of an edge of a distant cell chunk in BS units.
+/// Distant cell chunks are square.
+template<class T> constexpr T unitsPerChunk = unitsPerCell<T> * T(32.0f);
 
 /// The number of Havok units in a BS unit.
 /// Havok uses units 'hu' such that `7u = 1hu`.
