@@ -203,7 +203,18 @@ generateVertexData(const nif::NiGeometryData &block,
     }
     localOffset += 3;
   } else {
-    throw std::runtime_error("NiGeometryData has no normals");
+    // If a mesh doesn't have any normals then default to up vectors.
+    // This lets distant terrain meshes work, which have their normals provided
+    // by a normal map perturbing an implicit vertical normal.
+    auto it = vertexBuffer.begin() + localOffset;
+    for (int i = 0; i < block.numVertices; ++i) {
+      *it = 0.0f;
+      *(it + 1) = 1.0f;
+      *(it + 2) = 0.0f;
+      it += offset;
+    }
+    localOffset += 3;
+    oo::nifloaderLogger()->warn("NiGeometryData has no normals");
   }
 
   // Vertex colours
