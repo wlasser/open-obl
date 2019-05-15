@@ -259,9 +259,7 @@ void NifVisitor::discover_vertex(const nif::NiTriBasedGeom &,
       {"mesh", meshPtr->getName()},
       {"resourceGroup", meshPtr->getGroup()}
   };
-  auto *entity{dynamic_cast<oo::Entity *>(
-                   mState->mScnMgr->createMovableObject("oo::Entity",
-                                                        &params))};
+  auto *entity{mState->mScnMgr->createMovableObject("oo::Entity", &params)};
   if (!entity) return;
 
   mState->mCurrentNode->attachObject(entity);
