@@ -213,18 +213,23 @@ void ExteriorManager::unloadNearExteriorCell(oo::BaseId cellId,
   // mNearCells; this won't unload the terrain since it's still in the cache.
   if (auto[cellPtr, _]{ctx.getCellCache()->getCell(cellId)}; cellPtr) {
     oo::JobCounter jc{1};
-    oo::RenderJobManager::runJob([ptr = cellPtr.get()]() {
+    oo::RenderJobManager::runJob([this, jt, ptr = cellPtr.get()]() {
       ptr->setVisible(false);
+      mNearCells.erase(jt);
     }, &jc);
     jc.wait();
-    mNearCells.erase(jt);
     ctx.getLogger()->info("Found CELL {} in cache, hiding CELL", cellId);
     return;
   }
 
   // Otherwise, removing from mNearCells will delete the only remaining pointer
-  // and unload the cell.
-  mNearCells.erase(jt);
+  // and unload the cell. This will call into Ogre via destructors so must be
+  // run on the render thread.
+  oo::JobCounter jc{1};
+  oo::RenderJobManager::runJob([this, jt]() {
+    mNearCells.erase(jt);
+  }, &jc);
+  jc.wait();
   ctx.getLogger()->info("Unloaded exterior CELL {}", cellId);
 }
 
