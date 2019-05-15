@@ -19,7 +19,7 @@ void main() {
 
     vec3 cellDelta = abs(worldPos - viewPos).xyz * CELLS_PER_METER;
     float cellDeltaLInf = max(max(cellDelta.x, cellDelta.y), cellDelta.z);
-    worldPos.y -= clamp(gridDistantCount - cellDeltaLInf, 0, 32);
+    worldPos.y -= clamp(4.0f * (gridDistantCount - cellDeltaLInf), 0, 32);
 
     gl_Position = viewProj * worldPos;
     TexCoord = uv0.xy;
