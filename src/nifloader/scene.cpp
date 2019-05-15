@@ -387,4 +387,36 @@ void attachRagdoll(const std::string &name, const std::string &group,
   boost::depth_first_search(graph, RagdollVisitor(&state), propertyMap);
 }
 
+Ogre::SceneNode *insertRawNif(const std::string &name, const std::string &group,
+                              const Ogre::MaterialPtr &matPtr,
+                              gsl::not_null<Ogre::SceneManager *> scnMgr,
+                              gsl::not_null<Ogre::SceneNode *> nifRoot) {
+  auto nifPtr{Ogre::NifResourceManager::getSingleton().getByName(name, group)};
+  if (!nifPtr) return nullptr;
+  try {
+    nifPtr->load();
+  } catch (const std::exception &e) {
+    oo::nifloaderLogger()->error("Nif load failed: {}", e.what());
+    return nullptr;
+  }
+  auto graph{nifPtr->getBlockGraph()};
+
+  auto &meshMgr{oo::MeshManager::getSingleton()};
+  const std::string meshName{name + "/0/Mesh"};
+  auto[ptr, created]{meshMgr.createOrRetrieve(meshName, group, true, nullptr)};
+  auto meshPtr{std::static_pointer_cast<oo::Mesh>(std::move(ptr))};
+  if (created) oo::createRawMesh(meshPtr.get(), matPtr, 0, graph);
+
+  Ogre::NameValuePairList params{
+      {"mesh", meshPtr->getName()},
+      {"resourceGroup", group}
+  };
+  auto *entity{scnMgr->createMovableObject("oo::Entity", &params)};
+  if (!entity) return nullptr;
+
+  nifRoot->attachObject(entity);
+
+  return nifRoot;
+}
+
 } // namespace oo

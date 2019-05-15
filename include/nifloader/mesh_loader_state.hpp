@@ -203,6 +203,10 @@ void createMesh(oo::Mesh *mesh,
                 oo::BlockGraph::vertex_descriptor start,
                 const oo::BlockGraph &g);
 
+void createRawMesh(oo::Mesh *mesh,
+                   const Ogre::MaterialPtr &matPtr,
+                   oo::BlockGraph::vertex_descriptor start,
+                   const oo::BlockGraph &g);
 /// @}
 
 } // namespace oo

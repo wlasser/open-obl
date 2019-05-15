@@ -1111,4 +1111,26 @@ void createMesh(oo::Mesh *mesh, oo::BlockGraph::vertex_descriptor start,
   }
 }
 
+void createRawMesh(oo::Mesh *mesh, const Ogre::MaterialPtr &matPtr,
+                   oo::BlockGraph::vertex_descriptor start,
+                   const oo::BlockGraph &g) {
+  const auto &rootBlock{*g[start]};
+  if (!dynamic_cast<const nif::NiTriBasedGeom *>(&rootBlock)) {
+    OGRE_EXCEPT(Ogre::Exception::ERR_INVALIDPARAMS,
+                "Cannot create a Mesh with a root node that is not an "
+                "NiTriBasedGeom",
+                "oo::createRawMesh");
+  }
+
+  oo::nifloaderLogger()->info("createRawMesh({})", mesh->getName());
+
+  // There is no root node here, just a single NiTriBasedGeom submesh.
+  const Ogre::Matrix4 transform{Ogre::Matrix4::IDENTITY};
+  const auto &geom{static_cast<const nif::NiTriBasedGeom &>(rootBlock)};
+  auto[submesh, bounds]{oo::parseNiTriBasedGeom(g, mesh, geom, transform)};
+  submesh->setMaterialName(matPtr->getName(), matPtr->getGroup());
+  mesh->_setBounds(bounds);
+  mesh->_setBoundingSphereRadius(Ogre::Math::boundingRadiusFromAABB(bounds));
+}
+
 } // namespace oo
