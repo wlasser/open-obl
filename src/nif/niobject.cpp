@@ -586,9 +586,11 @@ void NiGeometryData::read(std::istream &is) {
   io::readBytes(is, vectorFlags);
 
   io::readBytes(is, hasNormals);
-  normals.assign(numVertices, {});
-  is.read(reinterpret_cast<char *>(normals.data()),
-          numVertices * sizeof(nif::compound::Vector3));
+  if (hasNormals) {
+    normals.assign(numVertices, {});
+    is.read(reinterpret_cast<char *>(normals.data()),
+            numVertices * sizeof(nif::compound::Vector3));
+  }
 
   if (hasNormals && vectorFlags
       && static_cast<uint16_t>(*vectorFlags
