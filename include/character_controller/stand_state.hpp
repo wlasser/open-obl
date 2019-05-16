@@ -2,7 +2,7 @@
 #define OPENOBL_CHARACTER_CONTROLLER_STAND_STATE_HPP
 
 #include "character_controller/abilities.hpp"
-#include "character_controller/character_controller_impl.hpp"
+#include "character_controller/character_mediator.hpp"
 #include "character_controller/fallback_state.hpp"
 #include <optional>
 #include <variant>
@@ -23,16 +23,15 @@ class StandState : public FallbackState<StandState>,
   using FallbackState::handleEvent;
 
   std::optional<JumpState>
-  handleEvent(CharacterControllerImpl &impl, const event::Jump &event);
+  handleEvent(CharacterMediator &mediator, const event::Jump &event);
 
   std::optional<SneakStandState>
-  handleEvent(CharacterControllerImpl &impl, const event::Sneak &event);
+  handleEvent(CharacterMediator &mediator, const event::Sneak &event);
 
-  std::optional<StandState>
-  update(CharacterControllerImpl &impl, float elapsed);
+  std::optional<StandState> update(CharacterMediator &mediator, float elapsed);
 
-  void enter(CharacterControllerImpl &impl);
-  void exit(CharacterControllerImpl &) {}
+  void enter(CharacterMediator &mediator);
+  void exit(CharacterMediator &) {}
 };
 
 } // namespace oo

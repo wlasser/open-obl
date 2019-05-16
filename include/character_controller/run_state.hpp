@@ -2,7 +2,7 @@
 #define OPENOBL_CHARACTER_CONTROLLER_RUN_STATE_HPP
 
 #include "character_controller/abilities.hpp"
-#include "character_controller/character_controller_impl.hpp"
+#include "character_controller/character_mediator.hpp"
 #include "character_controller/fallback_state.hpp"
 #include <optional>
 
@@ -17,16 +17,15 @@ class RunState : public FallbackState<RunState>,
   using CollideAbility::handleCollision;
 
   std::optional<WalkState>
-  handleEvent(CharacterControllerImpl &impl, const event::Run &event);
+  handleEvent(CharacterMediator &mediator, const event::Run &event);
 
   std::optional<WalkState>
-  handleEvent(CharacterControllerImpl &impl, const event::AlwaysRun &event);
+  handleEvent(CharacterMediator &mediator, const event::AlwaysRun &event);
 
-  std::optional<RunState>
-  update(CharacterControllerImpl &impl, float elapsed);
+  std::optional<RunState> update(CharacterMediator &mediator, float elapsed);
 
-  void enter(CharacterControllerImpl &impl);
-  void exit(CharacterControllerImpl &) {}
+  void enter(CharacterMediator &mediator);
+  void exit(CharacterMediator &) {}
 };
 
 } // namespace oo

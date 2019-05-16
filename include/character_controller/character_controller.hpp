@@ -2,15 +2,7 @@
 #define OPENOBL_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP
 
 #include "character_controller/character_controller_impl.hpp"
-#include "character_controller/fallback_state.hpp"
-#include "character_controller/jump_state.hpp"
-#include "character_controller/run_state.hpp"
-#include "character_controller/sneak_jump_state.hpp"
-#include "character_controller/sneak_stand_state.hpp"
-#include "character_controller/stand_state.hpp"
-#include "character_controller/walk_state.hpp"
 #include "config/game_settings.hpp"
-#include "controls.hpp"
 #include "math/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -18,12 +10,6 @@
 #include <variant>
 
 namespace oo {
-
-using StateVariant = std::variant<StandState,
-                                  JumpState,
-                                  SneakStandState,
-                                  SneakJumpState>;
-using MovementStateVariant = std::variant<WalkState, RunState>;
 
 class CharacterController {
  public:

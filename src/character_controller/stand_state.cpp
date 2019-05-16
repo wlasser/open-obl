@@ -1,4 +1,3 @@
-#include "character_controller/character_controller_impl.hpp"
 #include "character_controller/movement.hpp"
 #include "character_controller/jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
@@ -7,31 +6,25 @@
 namespace oo {
 
 std::optional<JumpState>
-StandState::handleEvent(CharacterControllerImpl &/*impl*/,
-                        const event::Jump &event) {
+StandState::handleEvent(CharacterMediator &, const event::Jump &event) {
   return event.down ? std::make_optional<JumpState>() : std::nullopt;
 }
 
 std::optional<SneakStandState>
-StandState::handleEvent(CharacterControllerImpl &/*impl*/,
-                        const event::Sneak &event) {
-  return event.down ? std::make_optional<SneakStandState>()
-                    : std::nullopt;
+StandState::handleEvent(CharacterMediator &, const event::Sneak &event) {
+  return event.down ? std::make_optional<SneakStandState>() : std::nullopt;
 }
 
 std::optional<StandState>
-StandState::update(CharacterControllerImpl &impl, float elapsed) {
-  impl.updatePhysics(elapsed);
-  impl.applySpringForce(impl.getSpringDisplacement());
+StandState::update(CharacterMediator &mediator, float elapsed) {
+  // Apply spring force
+  mediator.updateCameraOrientation();
+
   return std::nullopt;
 }
 
-void StandState::enter(CharacterControllerImpl &impl) {
-  impl.setSpeedModifier([&impl](bool hasWeaponOut, bool isRunning) {
-    const auto athleticsSkill{impl.getSkill(SkillIndex::Athletics)};
-    return (isRunning ? oo::runModifier(athleticsSkill) : 1.0f)
-        * oo::weaponOutModifier(hasWeaponOut);
-  });
+void StandState::enter(CharacterMediator &mediator) {
+  mediator.setSpeedModifier(oo::makeSpeedModifier(mediator));
 }
 
 } // namespace oo

@@ -2,7 +2,7 @@
 #define OPENOBL_CHARACTER_CONTROLLER_SNEAK_JUMP_STATE_HPP
 
 #include "character_controller/abilities.hpp"
-#include "character_controller/character_controller_impl.hpp"
+#include "character_controller/character_mediator.hpp"
 #include "character_controller/fallback_state.hpp"
 #include <optional>
 #include <memory>
@@ -13,22 +13,19 @@ class SneakStandState;
 
 class SneakJumpState : public FallbackState<SneakJumpState>,
                        public MoveAbility<SneakJumpState>,
-                       public LookAbility<SneakJumpState> {
+                       public LookAbility<SneakJumpState>,
+                       public CollideAbility<SneakJumpState> {
  public:
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
   using FallbackState::handleEvent;
+  using CollideAbility::handleCollision;
 
   std::optional<SneakStandState>
-  update(CharacterControllerImpl &impl, float elapsed);
+  update(CharacterMediator &mediator, float elapsed);
 
-  std::optional<SneakStandState>
-  handleCollision(CharacterControllerImpl &impl,
-                  const btCollisionObject *other,
-                  const btManifoldPoint &contact);
-
-  void enter(CharacterControllerImpl &impl);
-  void exit(CharacterControllerImpl &/*impl*/) {}
+  void enter(CharacterMediator &mediator);
+  void exit(CharacterMediator &) {}
 };
 
 } // namespace oo

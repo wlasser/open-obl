@@ -2,7 +2,7 @@
 #define OPENOBL_CHARACTER_CONTROLLER_JUMP_STATE_HPP
 
 #include "character_controller/abilities.hpp"
-#include "character_controller/character_controller_impl.hpp"
+#include "character_controller/character_mediator.hpp"
 #include "character_controller/fallback_state.hpp"
 #include <memory>
 #include <variant>
@@ -13,22 +13,18 @@ class StandState;
 
 class JumpState : public FallbackState<JumpState>,
                   public MoveAbility<JumpState>,
-                  public LookAbility<JumpState> {
+                  public LookAbility<JumpState>,
+                  public CollideAbility<JumpState> {
  public:
   using FallbackState::handleEvent;
   using MoveAbility::handleEvent;
   using LookAbility::handleEvent;
+  using CollideAbility::handleCollision;
 
-  std::optional<StandState> update(CharacterControllerImpl &impl,
-                                   float elapsed);
+  std::optional<StandState> update(CharacterMediator &mediator, float elapsed);
 
-  std::optional<StandState>
-  handleCollision(CharacterControllerImpl &impl,
-                  const btCollisionObject *other,
-                  const btManifoldPoint &contact);
-
-  void enter(CharacterControllerImpl &impl);
-  void exit(CharacterControllerImpl &) {}
+  void enter(CharacterMediator &mediator);
+  void exit(CharacterMediator &) {}
 };
 
 } // namespace oo

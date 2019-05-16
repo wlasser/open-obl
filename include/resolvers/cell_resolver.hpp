@@ -351,9 +351,9 @@ void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
     if (!charPtr) return;
 
     const auto &data{ref.positionRotation.data};
-    charPtr->getController().moveTo(oo::fromBSCoordinates(
+    charPtr->setPosition(oo::fromBSCoordinates(
         Ogre::Vector3{data.x, data.y, data.z}));
-    charPtr->getController().setOrientation(oo::fromBSTaitBryan(
+    charPtr->setOrientation(oo::fromBSTaitBryan(
         Ogre::Radian(data.aX),
         Ogre::Radian(data.aY),
         Ogre::Radian(data.aZ)));
