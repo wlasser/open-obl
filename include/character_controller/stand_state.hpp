@@ -28,7 +28,7 @@ class StandState : public FallbackState<StandState>,
   std::optional<SneakStandState>
   handleEvent(CharacterMediator &mediator, const event::Sneak &event);
 
-  std::optional<StandState> update(CharacterMediator &mediator, float elapsed);
+  std::optional<JumpState> update(CharacterMediator &mediator, float elapsed);
 
   void enter(CharacterMediator &mediator);
   void exit(CharacterMediator &) {}

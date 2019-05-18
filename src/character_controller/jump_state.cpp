@@ -16,6 +16,19 @@ JumpState::update(CharacterMediator &mediator, float elapsed) {
   // Return the stand state when sufficiently near to the ground.
   mediator.updateCameraOrientation();
 
+  auto &yVel{qvm::Y(mediator.getLocalVelocity())};
+  if (yVel <= 0.01f) {
+    const auto result{mediator.raycast()};
+    auto dist{qvm::mag(result.m_hitPointWorld - result.m_rayFromWorld)};
+    dist -= mediator.getHeight() * 0.5f;
+    if (dist <= 0.1f && result.m_hasHit) {
+      // TODO: Apply separating vector (0, -dist, 0) to correct for penetration.
+      return std::make_optional<StandState>();
+    }
+  }
+
+  yVel -= 9.81f * elapsed;
+
   return std::nullopt;
 }
 

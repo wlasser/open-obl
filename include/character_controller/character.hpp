@@ -44,6 +44,7 @@ class Character {
   oo::MovementStateVariant mMovementState{};
 
   Ogre::SceneNode *mRoot{};
+  static constexpr float CAPSULE_RADIUS{0.3f};
   std::unique_ptr<btCollisionShape> mCapsuleShape{};
   std::unique_ptr<btCollisionObject> mCapsule{};
 
@@ -75,6 +76,7 @@ class Character {
   Ogre::Radian mRootYaw{0.0f};
   Ogre::Radian mYaw{0.0f};
   Ogre::Vector3 mLocalVelocity{Ogre::Vector3::ZERO};
+  Ogre::Vector3 mVelocity{Ogre::Vector3::ZERO};
 
   void setBodyPart(oo::BodyParts part, oo::Entity *entity) noexcept;
 
@@ -89,6 +91,13 @@ class Character {
 
   void updateCameraOrientation() noexcept;
 
+  constexpr static float MAX_RAYCAST_DISTANCE{1000.0f};
+  using RaycastResult = bullet::ClosestNotMeRayResultCallback;
+  RaycastResult raycast() const noexcept;
+
+//  Ogre::Vector3 getForwardSurfaceVector() const noexcept;
+  Ogre::Vector4 getSurfaceNormal() const noexcept;
+
  public:
   using resolvers = ResolverTuple<record::NPC_, record::RACE>;
 
@@ -100,6 +109,8 @@ class Character {
   void update(float elapsed);
   void handleEvent(const oo::KeyVariant &event);
   void handleEvent(const oo::MouseVariant &event);
+
+  float getMoveSpeed() const noexcept;
 
   void setPosition(const Ogre::Vector3 &position);
   Ogre::Vector3 getPosition() const;

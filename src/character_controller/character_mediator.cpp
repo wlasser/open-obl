@@ -31,6 +31,14 @@ void CharacterMediator::updateCameraOrientation() noexcept {
   mCharacter->updateCameraOrientation();
 }
 
+CharacterMediator::RaycastResult CharacterMediator::raycast() const noexcept {
+  return mCharacter->raycast();
+}
+
+float CharacterMediator::getHeight() const noexcept {
+  return mCharacter->mHeight;
+}
+
 bool CharacterMediator::getIsRunning() const noexcept {
   return mCharacter->mIsRunning;
 }

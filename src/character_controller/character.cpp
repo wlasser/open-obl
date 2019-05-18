@@ -1,3 +1,4 @@
+#include "bullet/collision.hpp"
 #include "character_controller/animation.hpp"
 #include "character_controller/body.hpp"
 #include "character_controller/character.hpp"
@@ -95,6 +96,20 @@ Character::Character(const record::REFR_NPC_ &refRec,
   mPitchNode = mCameraNode->createChildSceneNode();
   mPitchNode->attachObject(mCamera);
 
+  const float capsuleHeight{mHeight - 2.0f * CAPSULE_RADIUS};
+  mCapsuleShape = std::make_unique<btCapsuleShape>(CAPSULE_RADIUS,
+                                                   capsuleHeight);
+  mCapsule = std::make_unique<btCollisionObject>();
+  mCapsule->setCollisionShape(mCapsuleShape.get());
+  constexpr int flags{btCollisionObject::CollisionFlags::CF_KINEMATIC_OBJECT};
+  mCapsule->setCollisionFlags(flags);
+
+  constexpr auto collisionLayer{bullet::CollisionLayer::OL_BIPED};
+  // See p1481, discussed at Kona but not approved.
+  //C++23: constexpr auto[group, mask]{bullet::getCollisionFilter(collisionLayer)};
+  constexpr auto gm{bullet::getCollisionFilter(collisionLayer)};
+  world->addCollisionObject(mCapsule.get(), std::get<0>(gm), std::get<1>(gm));
+
 //  oo::attachRagdoll(getSkeleton()->getName(), oo::RESOURCE_GROUP, scnMgr, world,
 //                    gsl::make_not_null(mBodyParts[0]));
   oo::pickIdle(this);
@@ -144,6 +159,48 @@ void Character::updateCameraOrientation() noexcept {
   mRoot->yaw(mRootYaw, Ogre::SceneNode::TS_LOCAL);
 }
 
+Character::RaycastResult Character::raycast() const noexcept {
+  const Ogre::Vector3 offset{Ogre::Vector3::UNIT_Y * mHeight * 0.5f};
+  const auto p0{qvm::convert_to<btVector3>(mRoot->getPosition() + offset)};
+  const auto p1{p0 - qvm::_0X0(MAX_RAYCAST_DISTANCE)};
+  RaycastResult result(mCapsule.get(), p0, p1);
+  mPhysicsWorld->rayTest(p0, p1, result);
+  return result;
+}
+
+Ogre::Vector4 Character::getSurfaceNormal() const noexcept {
+  constexpr float halfSqrt3{0.8660254f};
+  const auto rootPos{qvm::convert_to<btVector3>(mRoot->getPosition())};
+  const float offset{mHeight * 0.5f};
+  std::array<btVector3, 3u> starts{
+      rootPos + 0.3f * btVector3{+1.0f, 0.0f, 0.0f} + qvm::_0X0(offset),
+      rootPos + 0.3f * btVector3{-0.5f, 0.0f, halfSqrt3} + qvm::_0X0(offset),
+      rootPos + 0.3f * btVector3{-0.5f, 0.0f, -halfSqrt3} + qvm::_0X0(offset)
+  };
+
+  std::vector<RaycastResult> results;
+  btVector3 midpoint{0.0f, 0.0f, 0.0f};
+
+  for (std::size_t i = 0; i < 3u; ++i) {
+    const auto end{starts[i] - qvm::_0X0(MAX_RAYCAST_DISTANCE)};
+    auto &r{results.emplace_back(mCapsule.get(), starts[i], end)};
+    mPhysicsWorld->rayTest(starts[i], end, r);
+
+    // Need at least three points to compute a normal, give up if we're clipping
+    // out of the world.
+    if (!r.m_hasHit) return {0.0f, 1.0f, 0.0f, MAX_RAYCAST_DISTANCE};
+
+    midpoint += r.m_hitPointWorld / 3.0f;
+  }
+
+  const auto r1{results[1].m_hitPointWorld - results[0].m_hitPointWorld};
+  const auto r2{results[2].m_hitPointWorld - results[0].m_hitPointWorld};
+
+  return Ogre::Vector4(qvm::convert_to<Ogre::Vector3>(
+      qvm::normalized(qvm::cross(r1, r2))),
+                       qvm::mag(midpoint - rootPos - qvm::_0X0(offset)));
+}
+
 void Character::update(float elapsed) {
   if (auto newState{std::visit([this, elapsed](auto &&s) -> StateOpt {
       return s.update(mMediator, elapsed);
@@ -156,6 +213,46 @@ void Character::update(float elapsed) {
     }, mMovementState)}; newState) {
     changeState(*newState);
   }
+
+  if (auto s = mLocalVelocity.length(); s > 0.01f) {
+    // Camera and root yaw may not be aligned currently, but they should be when
+    // the player is moving. Smooth the camera yaw to zero while keeping the
+    // absolute camera orientation and movement direction the same.
+    // twistMultiplier should be in the range [0, 1), with higher values giving
+    // slower body rotation times.
+    // TODO: Make body twist time framerate independent.
+    constexpr float twistMul{0.75f};
+    mRootYaw += mYaw * (1.0f - twistMul);
+    mYaw *= twistMul;
+    updateCameraOrientation();
+
+    auto normal4{getSurfaceNormal()};
+    const float dist{qvm::W(normal4)};
+    const auto normal{qvm::convert_to<Ogre::Vector3>(qvm::XYZ(normal4))};
+
+    const auto rootAxes{mRoot->getLocalAxes()};
+    Ogre::Vector3 tangent{-rootAxes.GetColumn(2)};
+    tangent -= qvm::dot(tangent, normal) * normal;
+    qvm::normalize(tangent);
+
+    const Ogre::Vector3 binormal = qvm::cross(tangent, normal);
+
+    Ogre::Matrix3 bnt;
+    bnt.FromAxes(binormal, normal, tangent);
+
+    const auto speed{getMoveSpeed()};
+    mVelocity = bnt * mLocalVelocity / s * speed;
+    mVelocity.y += mLocalVelocity.y;
+
+    mRoot->translate(mVelocity * elapsed);
+  }
+
+  const auto orientation{mRoot->getOrientation()};
+  auto position{mRoot->getPosition()};
+  qvm::Y(position) += 0.5f * mHeight;
+  mCapsule->setWorldTransform(btTransform(
+      qvm::convert_to<btQuaternion>(orientation),
+      qvm::convert_to<btVector3>(position)));
 }
 
 void Character::handleEvent(const oo::KeyVariant &event) {
@@ -198,6 +295,15 @@ void Character::handleEvent(const oo::MouseVariant &event) {
 
   std::visit([this](auto &&s, auto &&e) { s.handleEvent(mMediator, e); },
              mState, event);
+}
+
+float Character::getMoveSpeed() const noexcept {
+  const float speed{oo::baseSpeed(getActorValue(ActorValue::Speed))};
+  const float heightMul{mRaceHeight};
+  const float weightMul{oo::encumbranceModifier(mWornWeight, mHasWeaponOut)};
+  return speed * heightMul * weightMul
+      * (mSpeedModifier ? mSpeedModifier(mHasWeaponOut, mIsRunning) : 1.0f)
+      * oo::metersPerUnit<float>;
 }
 
 void Character::setPosition(const Ogre::Vector3 &position) {

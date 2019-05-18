@@ -15,25 +15,25 @@ template<class State>
 struct MoveAbility {
   std::optional<State>
   handleEvent(CharacterMediator &mediator, const event::Forward &event) {
-    qvm::Z(mediator.getLocalVelocity()) -= (event.down ? 1.0f : -1.0f);
-    return std::nullopt;
-  }
-
-  std::optional<State>
-  handleEvent(CharacterMediator &mediator, const event::Backward &event) {
     qvm::Z(mediator.getLocalVelocity()) += (event.down ? 1.0f : -1.0f);
     return std::nullopt;
   }
 
   std::optional<State>
+  handleEvent(CharacterMediator &mediator, const event::Backward &event) {
+    qvm::Z(mediator.getLocalVelocity()) -= (event.down ? 1.0f : -1.0f);
+    return std::nullopt;
+  }
+
+  std::optional<State>
   handleEvent(CharacterMediator &mediator, const event::SlideLeft &event) {
-    qvm::X(mediator.getLocalVelocity()) -= (event.down ? 1.0f : -1.0f);
+    qvm::X(mediator.getLocalVelocity()) += (event.down ? 1.0f : -1.0f);
     return std::nullopt;
   }
 
   std::optional<State>
   handleEvent(CharacterMediator &mediator, const event::SlideRight &event) {
-    qvm::X(mediator.getLocalVelocity()) += (event.down ? 1.0f : -1.0f);
+    qvm::X(mediator.getLocalVelocity()) -= (event.down ? 1.0f : -1.0f);
     return std::nullopt;
   }
 };

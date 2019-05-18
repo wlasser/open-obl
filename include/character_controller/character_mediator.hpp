@@ -1,6 +1,7 @@
 #ifndef OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_MEDIATOR_HPP
 #define OPENOBLIVION_CHARACTER_CONTROLLER_CHARACTER_MEDIATOR_HPP
 
+#include "bullet/collision.hpp"
 #include "character_controller/movement.hpp"
 #include "record/actor_value.hpp"
 #include <OgreVector.h>
@@ -33,6 +34,11 @@ class CharacterMediator {
   Ogre::Radian &getRootYaw() noexcept;
 
   void updateCameraOrientation() noexcept;
+  // TODO: Move this somewhere central to save duplicating the definition.
+  using RaycastResult = bullet::ClosestNotMeRayResultCallback;
+  RaycastResult raycast() const noexcept;
+
+  float getHeight() const noexcept;
 
   bool getIsRunning() const noexcept;
   void setIsRunning(bool isRunning) noexcept;
