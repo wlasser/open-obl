@@ -116,6 +116,30 @@ void reportingNearCallback(btBroadphasePair &collisionPair,
                            btCollisionDispatcher &dispatcher,
                            const btDispatcherInfo &dispatchInfo);
 
+class ClosestNotMeRayResultCallback
+    : public btCollisionWorld::ClosestRayResultCallback {
+ public:
+  ClosestNotMeRayResultCallback(const btCollisionObject *me,
+                                const btVector3 &rayFromWorld,
+                                const btVector3 &rayToWorld)
+      : btCollisionWorld::ClosestRayResultCallback(rayFromWorld, rayToWorld),
+        m_me(me) {}
+
+  // TODO: What is this supposed to return, the linear fraction in [0,1]
+  //       along the ray that the collision occurs at?
+  btScalar addSingleResult(btCollisionWorld::LocalRayResult &rayResult,
+                           bool normalInWorldSpace) override {
+    if (rayResult.m_collisionObject == m_me) return 1.0f;
+    m_hasHit = true;
+    return btCollisionWorld::ClosestRayResultCallback::addSingleResult(
+        rayResult, normalInWorldSpace);
+  }
+
+  bool m_hasHit;
+ private:
+  const btCollisionObject *m_me;
+};
+
 //===----------------------------------------------------------------------===//
 // Constexpr function definitions
 //===----------------------------------------------------------------------===//
