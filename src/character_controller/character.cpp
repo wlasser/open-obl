@@ -148,7 +148,18 @@ void Character::changeState(oo::MovementStateVariant newState) {
   enter(mMovementState);
 }
 
-void Character::updateCameraOrientation() noexcept {
+void Character::updateTwist() noexcept {
+  // Camera and root yaw may not be aligned currently, but they should be when
+  // the player is moving. Smooth the camera yaw to zero while keeping the
+  // absolute camera orientation and movement direction the same.
+  // twistMultiplier should be in the range [0, 1), with higher values giving
+  // slower body rotation times.
+  constexpr float twistMul{0.75f};
+  mRootYaw += mYaw * (1.0f - twistMul);
+  mYaw *= twistMul;
+}
+
+void Character::orientCamera() noexcept {
   const Ogre::Quaternion q0(Ogre::Radian(0.0f), Ogre::Vector3::UNIT_X);
   mRoot->setOrientation(q0);
   mCameraNode->setOrientation(q0);
@@ -157,6 +168,20 @@ void Character::updateCameraOrientation() noexcept {
   mPitchNode->pitch(mPitch, Ogre::SceneNode::TS_LOCAL);
   mCameraNode->yaw(mYaw, Ogre::SceneNode::TS_LOCAL);
   mRoot->yaw(mRootYaw, Ogre::SceneNode::TS_LOCAL);
+}
+
+void Character::updateCamera() noexcept {
+  updateTwist();
+  orientCamera();
+}
+
+void Character::updateCapsule() noexcept {
+  const auto orientation{mRoot->getOrientation()};
+  auto position{mRoot->getPosition()};
+  qvm::Y(position) += 0.5f * mHeight;
+  mCapsule->setWorldTransform(btTransform(
+      qvm::convert_to<btQuaternion>(orientation),
+      qvm::convert_to<btVector3>(position)));
 }
 
 Character::RaycastResult Character::raycast() const noexcept {
@@ -201,6 +226,35 @@ Ogre::Vector4 Character::getSurfaceNormal() const noexcept {
                        qvm::mag(midpoint - rootPos - qvm::_0X0(offset)));
 }
 
+Ogre::Matrix3 Character::getSurfaceFrame() const noexcept {
+  auto normalDist{getSurfaceNormal()};
+  const float dist{qvm::W(normalDist)};
+  const auto normal{qvm::convert_to<Ogre::Vector3>(qvm::XYZ(normalDist))};
+
+  Ogre::Vector3 tangent{-mRoot->getLocalAxes().GetColumn(2)};
+  tangent -= qvm::dot(tangent, normal) * normal;
+  qvm::normalize(tangent);
+
+  const Ogre::Vector3 binormal = qvm::cross(tangent, normal);
+  Ogre::Matrix3 frame;
+  frame.FromAxes(binormal, normal, tangent);
+
+  return frame;
+}
+
+std::optional<float> Character::getSurfaceDist() const noexcept {
+  const auto r{raycast()};
+  if (r.m_hasHit) {
+    return qvm::mag(r.m_rayFromWorld - r.m_hitPointWorld) - mHeight * 0.5f;
+  } else {
+    return {};
+  }
+}
+
+Ogre::Matrix3 Character::getDefaultFrame() const noexcept {
+  return mRoot->getLocalAxes();
+}
+
 void Character::update(float elapsed) {
   if (auto newState{std::visit([this, elapsed](auto &&s) -> StateOpt {
       return s.update(mMediator, elapsed);
@@ -213,46 +267,6 @@ void Character::update(float elapsed) {
     }, mMovementState)}; newState) {
     changeState(*newState);
   }
-
-  if (auto s = mLocalVelocity.length(); s > 0.01f) {
-    // Camera and root yaw may not be aligned currently, but they should be when
-    // the player is moving. Smooth the camera yaw to zero while keeping the
-    // absolute camera orientation and movement direction the same.
-    // twistMultiplier should be in the range [0, 1), with higher values giving
-    // slower body rotation times.
-    // TODO: Make body twist time framerate independent.
-    constexpr float twistMul{0.75f};
-    mRootYaw += mYaw * (1.0f - twistMul);
-    mYaw *= twistMul;
-    updateCameraOrientation();
-
-    auto normal4{getSurfaceNormal()};
-    const float dist{qvm::W(normal4)};
-    const auto normal{qvm::convert_to<Ogre::Vector3>(qvm::XYZ(normal4))};
-
-    const auto rootAxes{mRoot->getLocalAxes()};
-    Ogre::Vector3 tangent{-rootAxes.GetColumn(2)};
-    tangent -= qvm::dot(tangent, normal) * normal;
-    qvm::normalize(tangent);
-
-    const Ogre::Vector3 binormal = qvm::cross(tangent, normal);
-
-    Ogre::Matrix3 bnt;
-    bnt.FromAxes(binormal, normal, tangent);
-
-    const auto speed{getMoveSpeed()};
-    mVelocity = bnt * mLocalVelocity / s * speed;
-    mVelocity.y += mLocalVelocity.y;
-
-    mRoot->translate(mVelocity * elapsed);
-  }
-
-  const auto orientation{mRoot->getOrientation()};
-  auto position{mRoot->getPosition()};
-  qvm::Y(position) += 0.5f * mHeight;
-  mCapsule->setWorldTransform(btTransform(
-      qvm::convert_to<btQuaternion>(orientation),
-      qvm::convert_to<btVector3>(position)));
 }
 
 void Character::handleEvent(const oo::KeyVariant &event) {
@@ -318,7 +332,7 @@ void Character::setOrientation(const Ogre::Quaternion &orientation) {
   mPitch = orientation.getPitch();
   mRootYaw = orientation.getYaw();
   mYaw = Ogre::Radian{0.0f};
-  updateCameraOrientation();
+  orientCamera();
 }
 
 Ogre::Camera *Character::getCamera() noexcept {

@@ -19,13 +19,20 @@ StandState::handleEvent(CharacterMediator &, const event::Sneak &event) {
 
 std::optional<JumpState>
 StandState::update(CharacterMediator &mediator, float elapsed) {
-  // Apply spring force
-  mediator.updateCameraOrientation();
+  mediator.updateCamera();
 
-  const auto result{mediator.raycast()};
-  auto dist{qvm::mag(result.m_hitPointWorld - result.m_rayFromWorld)};
-  dist -= mediator.getHeight() * 0.5f;
-  if (dist > 0.1f || result.m_hasHit) {
+  const auto &localVelocity{mediator.getLocalVelocity()};
+  if (const auto localSpeed{localVelocity.length()}; localSpeed > 0.01f) {
+    const auto speed{mediator.getMoveSpeed()};
+    const Ogre::Matrix3 frame{mediator.getSurfaceFrame()};
+    Ogre::Vector3 velocity{frame * localVelocity / localSpeed * speed};
+    velocity.y += localVelocity.y;
+    mediator.translate(velocity * elapsed);
+  }
+
+  const auto dist{mediator.getSurfaceDist()};
+
+  if (!dist || dist > 0.1f) {
     return std::make_optional<JumpState>();
   }
 

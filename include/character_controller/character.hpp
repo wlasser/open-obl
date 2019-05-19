@@ -89,14 +89,30 @@ class Character {
   void changeState(oo::StateVariant newState);
   void changeState(oo::MovementStateVariant newState);
 
-  void updateCameraOrientation() noexcept;
+  /// Twist the body towards the current camera direction.
+  /// \todo Make the twist speed framerate-independent and consequently make
+  ///       this take a `float elapsed` argument.
+  void updateTwist() noexcept;
+  /// Orient the camera, root, and pitch nodes according to the current
+  /// pitch, root yaw, and yaw.
+  void orientCamera() noexcept;
+  /// Call `updateTwist` and `orientCamera`.
+  void updateCamera() noexcept;
+  /// Set the world transform of the capsule to match the world transform of
+  /// the character.
+  void updateCapsule() noexcept;
 
   constexpr static float MAX_RAYCAST_DISTANCE{1000.0f};
   using RaycastResult = bullet::ClosestNotMeRayResultCallback;
   RaycastResult raycast() const noexcept;
 
-//  Ogre::Vector3 getForwardSurfaceVector() const noexcept;
   Ogre::Vector4 getSurfaceNormal() const noexcept;
+  Ogre::Matrix3 getSurfaceFrame() const noexcept;
+  /// Return the distance from the root to the ground surface if a surface is
+  /// below the character.
+  std::optional<float> getSurfaceDist() const noexcept;
+
+  Ogre::Matrix3 getDefaultFrame() const noexcept;
 
  public:
   using resolvers = ResolverTuple<record::NPC_, record::RACE>;

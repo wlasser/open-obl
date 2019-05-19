@@ -18,7 +18,7 @@ SneakStandState::handleEvent(CharacterMediator &, const event::Sneak &event) {
 std::optional<SneakStandState>
 SneakStandState::update(CharacterMediator &mediator, float elapsed) {
   // Apply spring force
-  mediator.updateCameraOrientation();
+  mediator.updateCamera();
 
   return std::nullopt;
 }

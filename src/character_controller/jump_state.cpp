@@ -11,23 +11,30 @@ namespace oo {
 
 std::optional<StandState>
 JumpState::update(CharacterMediator &mediator, float elapsed) {
-  // Apply gravity
-  // Apply the spring force if player is sufficiently near to the ground
-  // Return the stand state when sufficiently near to the ground.
-  mediator.updateCameraOrientation();
+  mediator.updateCamera();
 
-  auto &yVel{qvm::Y(mediator.getLocalVelocity())};
-  if (yVel <= 0.01f) {
-    const auto result{mediator.raycast()};
-    auto dist{qvm::mag(result.m_hitPointWorld - result.m_rayFromWorld)};
-    dist -= mediator.getHeight() * 0.5f;
-    if (dist <= 0.1f && result.m_hasHit) {
+  const auto localVelocity{mediator.getLocalVelocity()};
+  Ogre::Vector3 &velocity{mediator.getVelocity()};
+
+  if (const auto localSpeed{localVelocity.length()}; localSpeed > 0.01f) {
+    const auto speed{mediator.getMoveSpeed()};
+    const Ogre::Matrix3 frame{mediator.getDefaultFrame()};
+    const auto yVel{qvm::Y(velocity)};
+    velocity = frame * localVelocity / localSpeed * speed;
+    velocity.y = yVel;
+  }
+
+  if (qvm::Y(velocity) <= 0.01f) {
+    const auto dist{mediator.getSurfaceDist()};
+    if (dist && dist <= 0.1f) {
       // TODO: Apply separating vector (0, -dist, 0) to correct for penetration.
       return std::make_optional<StandState>();
     }
   }
 
-  yVel -= 9.81f * elapsed;
+  qvm::Y(velocity) -= 9.81f * elapsed;
+
+  mediator.translate(velocity * elapsed);
 
   return std::nullopt;
 }
