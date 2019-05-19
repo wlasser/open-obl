@@ -97,8 +97,11 @@ bsa::BsaContext::BsaContext(std::string archiveName)
     // `folderNode` now points to correct folder in the tree, so add the files
     for (const auto &filename : folderRec.files) {
       const uint64_t fileHash{bsa::genHash(filename, bsa::HashType::File)};
-      const auto fileRec{mBsaReader.getRecord(folderHash, fileHash)};
-      folderNode->addChildFile(*fileRec);
+      auto fileRec{*mBsaReader.getRecord(folderHash, fileHash)};
+      if (fileRec.compressed) {
+        fileRec.size = mBsaReader[folderHash].getSize(fileHash);
+      }
+      folderNode->addChildFile(fileRec);
     }
   }
 }
