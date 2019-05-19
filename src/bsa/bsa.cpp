@@ -109,6 +109,25 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
   return FileData{std::move(data), uncompressedSize};
 }
 
+uint32_t BsaReader::FolderAccessor::getSize(uint64_t fileHash) const {
+  std::unique_lock lock{owner.isMutex};
+
+  const FolderRecord &folder{owner.folderRecords.at(hash)};
+  const FileRecord &file{folder.files.at(fileHash)};
+
+  if (!file.compressed) return file.size;
+
+  // Unset bits higher than the toggle compression bit
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
+  // Jump to the data
+  owner.is.seekg(file.offset);
+  uint32_t uncompressedSize{compressedSize};
+  io::readBytes(owner.is, uncompressedSize);
+
+  return uncompressedSize;
+}
+
 bool BsaReader::readHeader() {
   std::string fileId{};
   io::readBytes(is, fileId);

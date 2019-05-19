@@ -112,6 +112,7 @@ class BsaReader {
    public:
     FileData operator[](uint64_t) const;
     FileData operator[](std::string file) const;
+    uint32_t getSize(uint64_t) const;
   };
 
  public:
