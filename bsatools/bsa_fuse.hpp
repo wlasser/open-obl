@@ -175,10 +175,10 @@ class BsaContext {
   std::map<BsaHashPair, bsa::FileData> mOpenFiles{};
 
  public:
-  /// Open the bsa file with the given `filename` and build a filesystem tree of
-  /// its entries.
+  /// Open the bsa file with the given `archiveName` and build a filesystem tree
+  /// of its entries.
   /// \see `bsa::BsaReader(std::string)`
-  explicit BsaContext(std::string filename);
+  explicit BsaContext(std::string archiveName);
 
   /// Get a pointer to the root folder of the filesystem tree.
   [[nodiscard]] FolderNode *getRoot() const noexcept {

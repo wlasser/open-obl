@@ -51,11 +51,11 @@ inline int optParse(Args *args, void *data, const Opt opts[], OptProc proc) {
 
 template<class T, class = std::enable_if_t<
     std::is_enum_v<T> && std::is_same_v<std::underlying_type_t<T>, int>>>
-constexpr Opt makeOptKey(const char *templ, T key) {
+constexpr Opt makeOptKey(const char *templ, T key) noexcept {
   return FUSE_OPT_KEY(templ, static_cast<int>(key));
 }
 
-inline constexpr Opt makeOptEnd() {
+inline constexpr Opt makeOptEnd() noexcept {
   return FUSE_OPT_END;
 }
 

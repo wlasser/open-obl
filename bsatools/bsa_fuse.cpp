@@ -70,8 +70,8 @@ std::vector<bsa::Node *> bsa::FolderNode::getChildren() const {
   return out;
 }
 
-bsa::BsaContext::BsaContext(std::string filename)
-    : mBsaReader(std::move(filename)),
+bsa::BsaContext::BsaContext(std::string archiveName)
+    : mBsaReader(std::move(archiveName)),
       mRoot(std::make_unique<bsa::FolderNode>("/", nullptr)) {
 
   for (const auto &folderRec : mBsaReader) {
@@ -131,15 +131,14 @@ bsa::Node *bsa::BsaContext::findEntry(std::string filename) const {
   auto &&[base, last]{bsa::splitPath(std::move(filename))};
 
   FolderNode *baseNode{findFolder(base)};
-  if (!baseNode) return nullptr;
-  return baseNode->findChildFile(last);
+  return baseNode ? baseNode->findChildFile(last) : nullptr;
 }
 
 int bsa::BsaContext::open(std::string folder, std::string file) {
   BsaHashPair hashPair(std::move(folder), std::move(file));
   try {
-    mOpenFiles
-        .try_emplace(hashPair, getReader()[hashPair.first][hashPair.second]);
+    mOpenFiles.try_emplace(hashPair,
+                           getReader()[hashPair.first][hashPair.second]);
   } catch (const std::exception &e) {
     return -ENOENT;
   }

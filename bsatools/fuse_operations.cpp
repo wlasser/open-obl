@@ -8,10 +8,8 @@ int bsa::getAttr(const char *path, Posix::stat *stbuf) {
   // Clear stbuf
   *stbuf = {};
 
-  Node *entry = [&]() -> Node * {
-    if (path == std::string{"/"}) return bsa::getBsaContext().getRoot();
-    else return bsa::getBsaContext().findEntry(path);
-  }();
+  Node *entry{path == std::string{'/'} ? bsa::getBsaContext().getRoot()
+                                       : bsa::getBsaContext().findEntry(path)};
   if (!entry) return -ENOENT;
 
   if (entry->isFolder()) {
@@ -33,7 +31,7 @@ int bsa::getAttr(const char *path, Posix::stat *stbuf) {
 }
 
 int bsa::readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
-                 Posix::off_t /*offset*/, fuser::FileInfo * /*info*/) {
+                 Posix::off_t /*offset*/, fuser::FileInfo */*info*/) {
   FolderNode *folder{bsa::getBsaContext().findFolder(path)};
   if (!folder) return -ENOENT;
 

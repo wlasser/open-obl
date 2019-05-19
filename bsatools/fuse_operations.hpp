@@ -24,7 +24,7 @@ int release(const char *path, fuser::FileInfo *info);
 
 /// Filesystem operations
 /// \ingroup OpenOblivionBsaFuse
-constexpr inline fuser::Operations fuseOps = []() {
+constexpr inline fuser::Operations fuseOps = []() noexcept {
   fuser::Operations ops{};
   ops.getattr = bsa::getAttr;
   ops.readdir = bsa::readDir;
