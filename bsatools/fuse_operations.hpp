@@ -6,17 +6,17 @@
 namespace bsa {
 
 /// \ingroup OpenOblivionBsaFuse
-int getAttr(const char *path, posix::stat *stbuf);
+int getAttr(const char *path, Posix::stat *stbuf);
 
 /// \ingroup OpenOblivionBsaFuse
 int readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
-            posix::off_t offset, fuser::FileInfo *info);
+            Posix::off_t offset, fuser::FileInfo *info);
 
 /// \ingroup OpenOblivionBsaFuse
 int open(const char *path, fuser::FileInfo *info);
 
 /// \ingroup OpenOblivionBsaFuse
-int read(const char *path, char *buf, std::size_t size, posix::off_t offset,
+int read(const char *path, char *buf, std::size_t size, Posix::off_t offset,
          fuser::FileInfo *info);
 
 /// \ingroup OpenOblivionBsaFuse

@@ -8,22 +8,24 @@
 #include <type_traits>
 
 /// Very thin wrapper around some things we need in the POSIX C library.
-/// The hope is that for example, `posix::stat` is much clearer than
+/// The hope is that for example, `Posix::stat` is much clearer than
 /// `struct stat` when the reader has little familiarity with posix, and just as
 /// clear for someone more experienced.
+/// \remark The `posix` namespace is reserved for future use by standard, so
+///         use `Posix` instead.
 /// \ingroup OpenOblivionBsaFuse
-namespace posix {
+namespace Posix {
 
 using stat = struct ::stat;
 using off_t = ::off_t;
 
-} // namespace posix
+} // namespace Posix
 
 /// Wrappers around the C libfuse API.
 /// If a function/struct etc. is needed from libfuse, then prefer writing and
-/// using a thing wrapper here. The arguments for the `posix` namespace don't
+/// using a thin wrapper here. The arguments for the `Posix` namespace don't
 /// really apply because libfuse is nicely namespaced already by the `fuse_`
-/// prefix, mostly I'm just picky about aesthetics.
+/// prefix; mostly I'm just picky about aesthetics.
 /// \ingroup OpenOblivionBsaFuse
 namespace fuser {
 

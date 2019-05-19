@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cerrno>
 
-int bsa::getAttr(const char *path, posix::stat *stbuf) {
+int bsa::getAttr(const char *path, Posix::stat *stbuf) {
   // Clear stbuf
   *stbuf = {};
 
@@ -33,7 +33,7 @@ int bsa::getAttr(const char *path, posix::stat *stbuf) {
 }
 
 int bsa::readDir(const char *path, void *buf, fuser::FillDirFun fillerFun,
-                 posix::off_t /*offset*/, fuser::FileInfo * /*info*/) {
+                 Posix::off_t /*offset*/, fuser::FileInfo * /*info*/) {
   FolderNode *folder{bsa::getBsaContext().findFolder(path)};
   if (!folder) return -ENOENT;
 
@@ -57,7 +57,7 @@ int bsa::open(const char *path, fuser::FileInfo */*info*/) {
 }
 
 int bsa::read(const char *path, char *buf, std::size_t size,
-              posix::off_t offset, fuser::FileInfo */*info*/) {
+              Posix::off_t offset, fuser::FileInfo */*info*/) {
   auto &bsaContext{bsa::getBsaContext()};
   auto[folder, filename]{bsa::splitPath(path)};
 
