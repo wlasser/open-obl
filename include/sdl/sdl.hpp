@@ -1,9 +1,9 @@
 #ifndef OPENOBLIVION_SDL_SDL_HPP
 #define OPENOBLIVION_SDL_SDL_HPP
 
-#include <boost/format.hpp>
 #include "SDL.h"
 #include "SDL_syswm.h"
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -25,9 +25,7 @@ namespace sdl {
 /// \todo Use boost::exception to store the error code and propagate it up.
 class SDLException : public std::runtime_error {
  public:
-  explicit SDLException(const std::string &functionName)
-      : std::runtime_error(boost::str(
-      boost::format("%s failed: %s") % functionName % SDL_GetError())) {}
+  explicit SDLException(const std::string &functionName);
 };
 
 /// RAII wrapper for SDL, calls `SDL_Init()` on construction and `SDL_Quit()` on

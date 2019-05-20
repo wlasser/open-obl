@@ -12,8 +12,7 @@ target_sources(OpenOblivionSDL PRIVATE
         ${CMAKE_SOURCE_DIR}/include/sdl/sdl.hpp
         sdl.cpp)
 
-target_link_libraries(OpenOblivionSDL PRIVATE Boost::boost
-        PUBLIC SDL2::SDL2)
+target_link_libraries(OpenOblivionSDL PUBLIC SDL2::SDL2)
 
 install(TARGETS OpenOblivionSDL EXPORT OpenOblivionSDLTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

@@ -1,8 +1,9 @@
 #include "sdl/sdl.hpp"
-#include <boost/format.hpp>
-#include "SDL.h"
 
 namespace sdl {
+
+SDLException::SDLException(const std::string &functionName)
+    : std::runtime_error(functionName + " failed: " + SDL_GetError()) {}
 
 WindowPtr makeWindow(const std::string &windowName, int width, int height,
                      WindowFlags flags) {
