@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace record::raw {
-union Color;
+using Color = uint32_t;
 } // namespace record::raw
 
 namespace oo {

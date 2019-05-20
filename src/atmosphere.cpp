@@ -188,7 +188,7 @@ oo::BaseId oo::Weather::getBaseId() const noexcept {
 
 Ogre::ColourValue oo::Weather::makeColor(record::raw::Color c) const noexcept {
   Ogre::ColourValue cv;
-  cv.setAsABGR(c.v);
+  cv.setAsABGR(c);
   return cv;
 }
 

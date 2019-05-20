@@ -487,7 +487,7 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
 
   if (auto lighting{refRec.lighting}; lighting) {
     Ogre::ColourValue ambient{};
-    ambient.setAsABGR(lighting->data.ambient.v);
+    ambient.setAsABGR(lighting->data.ambient);
     cell->getSceneManager()->setAmbientLight(ambient);
 
     // Shaders expect fog, so if fog no fog then we just set it to be far away.
@@ -497,7 +497,7 @@ populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
       return Ogre::Math::RealEqual(f, 0.0f, 0.1f) ? 10'000.0f : f;
     }();
     Ogre::ColourValue fog{};
-    fog.setAsABGR(lighting->data.fogColor.v);
+    fog.setAsABGR(lighting->data.fogColor);
     cell->getSceneManager()->setFog(Ogre::FogMode::FOG_LINEAR, fog, 0,
                                     fogNear, fogFar);
 

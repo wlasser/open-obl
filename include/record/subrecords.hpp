@@ -23,15 +23,7 @@ namespace record {
 // records with an appropriate wrapper.
 namespace raw {
 
-union Color {
-  uint32_t v;
-  struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-    uint8_t unused;
-  };
-};
+using Color = uint32_t;
 
 // Sound to play for a door closing
 using ANAM_DOOR = oo::BaseId;

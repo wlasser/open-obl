@@ -54,7 +54,7 @@ reifyRecord(const record::REFR_LIGH &refRec,
   auto *const light{scnMgr->createLight()};
   const Ogre::ColourValue lightColor = [&data]() -> Ogre::ColourValue {
     Ogre::ColourValue col{};
-    col.setAsABGR(data.color.v);
+    col.setAsABGR(data.color);
     return col;
   }();
   light->setDiffuseColour(lightColor);
