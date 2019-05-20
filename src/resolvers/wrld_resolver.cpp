@@ -813,7 +813,7 @@ void World::loadTerrainOnly(oo::BaseId cellId, bool async) {
       mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
   };
   if (std::any_of(terrain.begin(), terrain.end(), std::logical_not<>{})) {
-    spdlog::error("Terrain is nullptr at ({}, {})", qvm::X(pos), qvm::Y(pos));
+    logger->error("Terrain is nullptr at ({}, {})", qvm::X(pos), qvm::Y(pos));
     throw std::runtime_error("Terrain is nullptr");
   }
 
