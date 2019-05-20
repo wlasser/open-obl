@@ -65,7 +65,7 @@ endif ()
 
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
 find_package(Bullet 2.85 REQUIRED)
-find_package(LLVM 7.0.0 REQUIRED CONFIG)
+find_package(LLVM 7.1.0 REQUIRED CONFIG)
 find_package(OGRE 1.11 REQUIRED)
 find_package(SDL2 2.0 REQUIRED)
 find_package(ZLIB 1.2.11 REQUIRED)
