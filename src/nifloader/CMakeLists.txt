@@ -53,3 +53,6 @@ install(EXPORT OpenOblivionNifloaderTargets
         FILE OpenOblivionNifTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/nifloader/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/nifloader)

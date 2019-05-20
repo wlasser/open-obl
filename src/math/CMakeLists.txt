@@ -16,12 +16,12 @@ target_link_libraries(OpenOblivionMath INTERFACE
         OgreMain)
 
 install(TARGETS OpenOblivionMath EXPORT OpenOblivionMathTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 install(EXPORT OpenOblivionMathTargets
         FILE OpenOblivionMathTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
 
-install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/include/
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/math/
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/math)

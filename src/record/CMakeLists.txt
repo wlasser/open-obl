@@ -48,3 +48,6 @@ install(EXPORT OpenOblivionRecordTargets
         FILE OpenOblivionRecordTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/record/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/record)

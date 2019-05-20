@@ -22,3 +22,6 @@ install(EXPORT OpenOblivionSDLTargets
         FILE OpenOblivionSDLTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/sdl/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/sdl)

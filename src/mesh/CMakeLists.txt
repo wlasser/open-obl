@@ -30,4 +30,7 @@ install(TARGETS OpenOblivionMesh EXPORT OpenOblivionMeshTargets
 install(EXPORT OpenOblivionMeshTargets
         FILE OpenOblivionMeshTargets.cmake
         NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDDIR}/cmake/OpenOblivion)
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/mesh/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/mesh)

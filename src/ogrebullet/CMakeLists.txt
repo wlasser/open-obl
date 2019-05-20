@@ -36,3 +36,6 @@ install(EXPORT OpenOblivionOgreBulletTargets
         FILE OpenOblivionOgreBulletTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogrebullet/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogrebullet)

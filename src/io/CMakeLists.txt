@@ -24,3 +24,6 @@ install(EXPORT OpenOblivionIOTargets
         FILE OpenOblivionIOTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/io/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/io)

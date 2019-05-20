@@ -45,3 +45,9 @@ install(EXPORT OpenOblivionOgreImGuiTargets
         FILE OpenOblivionOgreImGuiTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogreimgui/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogreimgui)
+
+install(FILES ${IMGUI_SOURCE_DIR}/imgui/imgui.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/imgui/)

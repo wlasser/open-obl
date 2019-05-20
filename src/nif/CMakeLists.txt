@@ -29,3 +29,6 @@ install(EXPORT OpenOblivionNifTargets
         FILE OpenOblivionNifTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/nif/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/nif)

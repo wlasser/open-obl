@@ -22,3 +22,6 @@ install(EXPORT OpenOblivionBsaTargets
         FILE OpenOblivionBsaTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/bsa/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/bsa)

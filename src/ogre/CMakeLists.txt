@@ -34,3 +34,6 @@ install(EXPORT OpenOblivionOgreTargets
         FILE OpenOblivionOgreTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogre/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogre)

@@ -66,7 +66,11 @@ target_link_libraries(OpenOblivionGui PRIVATE
 
 install(TARGETS OpenOblivionGui EXPORT OpenOblivionGuiTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 install(EXPORT OpenOblivionGuiTargets
         FILE OpenOblivionGuiTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/gui/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/gui)

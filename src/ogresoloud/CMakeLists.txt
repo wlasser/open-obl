@@ -27,3 +27,6 @@ install(EXPORT OpenOblivionOgreSoLoudTargets
         FILE OpenOblivionOgreSoLoudTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogresoloud/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogresoloud)

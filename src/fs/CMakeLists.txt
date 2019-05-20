@@ -22,3 +22,6 @@ install(EXPORT OpenOblivionFSTargets
         FILE OpenOblivionFSTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/fs/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/fs)

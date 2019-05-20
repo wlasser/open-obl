@@ -50,3 +50,6 @@ install(EXPORT OpenOblivionScriptingTargets
         FILE OpenOblivionScriptingTargets.cmake
         NAMESPACE OpenOblivion::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/scripting/
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/scripting)
