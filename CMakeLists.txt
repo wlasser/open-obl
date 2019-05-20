@@ -81,7 +81,7 @@ add_subdirectory(lib/soloud)
 
 # Globally set warning flags for all internal dependencies.
 # External dependencies (above) can keep their own warning flags.
-add_compile_options(-Wall -Wextra)
+add_compile_options(-Wall -Wextra -Wshadow)
 
 add_subdirectory(src/bsa)
 add_subdirectory(src/fs)

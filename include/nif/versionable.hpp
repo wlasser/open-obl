@@ -119,24 +119,24 @@ class Versionable {
   template<class T, Version ver1, Version ver2>
   class VersionOptional {
    private:
-    /*const*/ Version version;
-    std::optional<T> opt;
-    /*const*/ std::optional<Version> lowerBound =
+    /*const*/ Version mVersion;
+    std::optional<T> mOpt;
+    /*const*/ std::optional<Version> mLowerBound =
         (ver1 == Unbounded ? std::nullopt : std::make_optional(ver1));
-    /*const*/ std::optional<Version> upperBound =
+    /*const*/ std::optional<Version> mUpperBound =
         (ver2 == Unbounded ? std::nullopt : std::make_optional(ver2));
 
-    constexpr bool verify(Version version) const {
-      return (ver1 ? (ver1 <= version) : true)
-          && (ver2 ? (version <= ver2) : true);
+    constexpr bool verify(Version ver) const {
+      return (ver1 ? (ver1 <= ver) : true)
+          && (ver2 ? (ver <= ver2) : true);
     }
 
    public:
 
     explicit constexpr VersionOptional(Version version) noexcept :
-        version(version) {
-      if (verify(version)) opt.template emplace<T>({});
-      else opt = std::nullopt;
+        mVersion(version) {
+      if (verify(version)) mOpt.template emplace<T>({});
+      else mOpt = std::nullopt;
     }
 
     constexpr VersionOptional(const VersionOptional &other) = default;
@@ -145,68 +145,68 @@ class Versionable {
     constexpr VersionOptional &operator=(VersionOptional &&other) noexcept = default;
 
     constexpr VersionOptional(Version version, T &&value) :
-        version(version) {
-      if (verify(version)) opt = std::make_optional(value);
-      else opt = std::nullopt;
+        mVersion(version) {
+      if (verify(version)) mOpt = std::make_optional(value);
+      else mOpt = std::nullopt;
     }
 
     // TODO: Converting constructors
 
     VersionOptional &operator=(T &&value) {
-      if (verify(version)) opt = value;
+      if (verify(mVersion)) mOpt = value;
       return *this;
     }
 
     constexpr T &value() &{
-      if (verify(version)) return opt.value();
+      if (verify(mVersion)) return mOpt.value();
       else throw std::bad_optional_access();
     }
 
     constexpr const T &value() const &{
-      if (verify(version)) return opt.value();
+      if (verify(mVersion)) return mOpt.value();
       else throw std::bad_optional_access();
     }
 
     constexpr T &&value() &&{
-      if (verify(version)) return opt.value();
+      if (verify(mVersion)) return mOpt.value();
       else throw std::bad_optional_access();
     }
 
     constexpr const T &&value() const &&{
-      if (verify(version)) return opt.value();
+      if (verify(mVersion)) return mOpt.value();
       else throw std::bad_optional_access();
     }
 
     constexpr explicit operator bool() const noexcept {
-      return verify(version);
+      return verify(mVersion);
     }
 
     constexpr bool has_value() const noexcept {
-      return verify(version);
+      return verify(mVersion);
     }
 
     constexpr const T *operator->() const {
-      return opt.operator->();
+      return mOpt.operator->();
     }
 
     constexpr T *operator->() {
-      return opt.operator->();
+      return mOpt.operator->();
     }
 
     constexpr const T &operator*() const &{
-      return opt.operator*();
+      return mOpt.operator*();
     }
 
     constexpr T &operator*() &{
-      return opt.operator*();
+      return mOpt.operator*();
     }
 
     constexpr const T &&operator*() const &&{
-      return opt.operator*();
+      return mOpt.operator*();
     }
 
     constexpr T &&operator*() &&{
-      return opt.operator*();
+      return mOpt.operator*();
     }
 
     friend std::istream &operator>>(std::istream &is,
@@ -222,23 +222,23 @@ class Versionable {
   template<class L, class R, Version ver1, Version ver2>
   class VersionEither {
    private:
-    /*const*/ Version version;
-    std::variant<L, R> var;
-    /*const*/ std::optional<Version> lowerBound =
+    /*const*/ Version mVersion;
+    std::variant<L, R> mVar;
+    /*const*/ std::optional<Version> mLowerBound =
         (ver1 == Unbounded ? std::nullopt : std::make_optional(ver1));
-    /*const*/ std::optional<Version> upperBound =
+    /*const*/ std::optional<Version> mUpperBound =
         (ver2 == Unbounded ? std::nullopt : std::make_optional(ver2));
 
-    constexpr bool verify(Version version) const {
-      return (ver1 ? (ver1 <= version) : true)
-          && (ver2 ? (version <= ver2) : true);
+    constexpr bool verify(Version ver) const {
+      return (ver1 ? (ver1 <= ver) : true)
+          && (ver2 ? (ver <= ver2) : true);
     }
 
    public:
     explicit constexpr VersionEither(Version version) :
-        version(version), var(L()) {
-      if (verify(version)) var.template emplace<R>();
-      else var.template emplace<L>();
+        mVersion(version), mVar(L()) {
+      if (verify(version)) mVar.template emplace<R>();
+      else mVar.template emplace<L>();
     }
 
     constexpr VersionEither(const VersionEither &other) = default;
@@ -246,58 +246,58 @@ class Versionable {
     constexpr VersionEither(VersionEither &&other) noexcept = default;
     constexpr VersionEither &operator=(VersionEither &&other) noexcept = default;
 
-    constexpr VersionEither(Version version, L &&value) : version(version) {
-      if (!verify(version)) var = value;
+    constexpr VersionEither(Version version, L &&value) : mVersion(version) {
+      if (!verify(version)) mVar = value;
     }
 
-    constexpr VersionEither(Version version, R &&value) : version(version) {
-      if (verify(version)) var = value;
+    constexpr VersionEither(Version version, R &&value) : mVersion(version) {
+      if (verify(version)) mVar = value;
     }
 
     template<class T>
     VersionEither &operator=(T &&value) {
-      if (verify(version)) std::get<R>(var) = std::forward<T>(value);
-      else std::get<L>(var) = std::forward<T>(value);
+      if (verify(mVersion)) std::get<R>(mVar) = std::forward<T>(value);
+      else std::get<L>(mVar) = std::forward<T>(value);
       return *this;
     }
 
     constexpr explicit operator bool() const noexcept {
-      return verify(version);
+      return verify(mVersion);
     }
 
     template<bool b>
     constexpr auto &value() &{
-      return std::get<static_cast<std::size_t>(b)>(var);
+      return std::get<static_cast<std::size_t>(b)>(mVar);
     }
 
     template<bool b>
     constexpr const auto &value() const &{
-      return std::get<static_cast<std::size_t>(b)>(var);
+      return std::get<static_cast<std::size_t>(b)>(mVar);
     }
 
     template<bool b>
     constexpr auto &&value() &&{
-      return std::get<static_cast<std::size_t>(b)>(var);
+      return std::get<static_cast<std::size_t>(b)>(mVar);
     }
 
     template<bool b>
     constexpr const auto &&value() const &&{
-      return std::get<static_cast<std::size_t>(b)>(var);
+      return std::get<static_cast<std::size_t>(b)>(mVar);
     }
 
     template<class T, class FL, class FR>
     constexpr T fold(FL &&fl, FR &&fr) {
-      if (verify(version)) {
-        return std::invoke(std::forward<FR>(fr), std::get<R>(var));
+      if (verify(mVersion)) {
+        return std::invoke(std::forward<FR>(fr), std::get<R>(mVar));
       } else {
-        return std::invoke(std::forward<FL>(fl), std::get<L>(var));
+        return std::invoke(std::forward<FL>(fl), std::get<L>(mVar));
       }
     }
 
     friend std::istream &operator>>(std::istream &is,
                                     VersionEither<L, R, ver1, ver2> &t) {
-      if (t) is >> std::get<R>(t.var);
-      else is >> std::get<L>(t.var);
+      if (t) is >> std::get<R>(t.mVar);
+      else is >> std::get<L>(t.mVar);
       return is;
     }
   }; // class VersionEither
@@ -311,8 +311,6 @@ class Versionable {
 
   template<class T, Version ver1, Version ver2>
   friend std::istream &operator>>(std::istream &, T &);
-
- public:
 };
 
 // Convert a version string into its integer representation.
