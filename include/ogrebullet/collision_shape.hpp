@@ -86,6 +86,7 @@ class CollisionShape : public Ogre::Resource {
 
   void _setRigidBodyInfo(std::unique_ptr<RigidBodyInfo> info) noexcept;
   void _setCollisionShape(BulletCollisionShapePtr shape) noexcept;
+  btCollisionShape *_getCollisionShape() const noexcept;
   void _storeIndirectCollisionShapes(std::vector<BulletCollisionShapePtr> shapes) noexcept;
   void _setMeshInterface(std::unique_ptr<btStridingMeshInterface> mesh) noexcept;
 

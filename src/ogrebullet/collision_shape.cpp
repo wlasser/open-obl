@@ -80,6 +80,10 @@ void CollisionShape::_setCollisionShape(
   mCollisionShape = std::move(shape);
 }
 
+btCollisionShape *CollisionShape::_getCollisionShape() const noexcept {
+  return mCollisionShape.get();
+}
+
 void CollisionShape::_storeIndirectCollisionShapes(
     std::vector<BulletCollisionShapePtr> shapes) noexcept {
   mIndirectShapes = std::move(shapes);

@@ -195,10 +195,12 @@ void RigidBody::setScale(const Vector3 &scale) {
     return;
   }
 
-  const btCollisionShape *base{mCollisionShape->getCollisionShape()};
+  btCollisionShape *base{mCollisionShape->_getCollisionShape()};
 
   // We can't copy the base in general
-  if (auto *triMesh{dynamic_cast<const btBvhTriangleMeshShape *>(base)}) {
+  if (auto *triMesh{dynamic_cast<btBvhTriangleMeshShape *>(base)}) {
+    // Bullet Bug(?): btScaledBvhTriangleMeshShape stores a non-const pointer
+    //                though it only needs a const one.
     mCollisionShapeOverride =
         std::make_unique<btScaledBvhTriangleMeshShape>(triMesh, localScale);
   } else if (auto *convexHull{dynamic_cast<const btConvexHullShape *>(base)}) {
