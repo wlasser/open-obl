@@ -24,9 +24,12 @@ FetchContent_Declare(PEGTL
 FetchContent_Declare(pugixml
         GIT_REPOSITORY https://github.com/zeux/pugixml.git
         GIT_TAG v1.9)
+# Fixed to latest commit as of writing to get rid of -Wshadow warnings under
+# g++.
+# TODO: Update to v1.3.2 when it is released.
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG v1.3.1)
+        GIT_TAG 74dbf4cf702b49c98642c9afe74d114a238a6a07)
 
 FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
@@ -46,6 +49,7 @@ if (NOT pugixml_populated)
     add_subdirectory(${pugixml_SOURCE_DIR} ${pugixml_BINARY_DIR})
 endif ()
 
+set(SPDLOG_INSTALL ON CACHE STRING "Generate the spdlog install target")
 FetchContent_GetProperties(spdlog)
 if (NOT spdlog_populated)
     FetchContent_Populate(spdlog)
