@@ -142,11 +142,11 @@ void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
 void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
                          chrono::QualitativeTimeOfDay tod,
                          float t) const {
-  auto getNear = [this](chrono::QualitativeTimeOfDay tod) {
-    return mFogDistances[unsigned(tod)].near;
+  auto getNear = [this](chrono::QualitativeTimeOfDay pTod) {
+    return mFogDistances[unsigned(pTod)].near;
   };
-  auto getFar = [this](chrono::QualitativeTimeOfDay tod) {
-    return mFogDistances[unsigned(tod)].far;
+  auto getFar = [this](chrono::QualitativeTimeOfDay pTod) {
+    return mFogDistances[unsigned(pTod)].far;
   };
 
   const float fogNear{interp<float>(tod, t, getNear)};

@@ -966,7 +966,7 @@ read(std::istream &is, raw::SNAM_WTHR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 template<> uint16_t SNDD::size() const {
   return 4u * 1u + 4u;
-};
+}
 
 namespace raw {
 

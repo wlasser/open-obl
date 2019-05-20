@@ -141,13 +141,13 @@ void NiBlendInterpolator::read(std::istream &is) {
       auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
       unmanagedData->interpArrayItems.reserve(size);
       for (std::size_t i = 0; i < size; ++i) {
-        is >> unmanagedData->interpArrayItems.emplace_back(version);
+        is >> unmanagedData->interpArrayItems.emplace_back(mVersion);
       }
     } else {
       auto size = arrayParams.value<false>().arraySize;
       unmanagedData->interpArrayItems.reserve(size);
       for (auto i = 0; i < size; ++i) {
-        is >> unmanagedData->interpArrayItems.emplace_back(version);
+        is >> unmanagedData->interpArrayItems.emplace_back(mVersion);
       }
     }
   }
@@ -158,13 +158,13 @@ void NiBlendInterpolator::read(std::istream &is) {
       auto size = static_cast<std::size_t>(arrayParams.value<true>().arraySize);
       interpArrayItems->reserve(size);
       for (std::size_t i = 0; i < size; ++i) {
-        is >> interpArrayItems->emplace_back(version);
+        is >> interpArrayItems->emplace_back(mVersion);
       }
     } else {
       auto size = arrayParams.value<false>().arraySize;
       interpArrayItems->reserve(size);
       for (std::size_t i = 0; i < size; ++i) {
-        is >> interpArrayItems->emplace_back(version);
+        is >> interpArrayItems->emplace_back(mVersion);
       }
     }
   }
@@ -198,7 +198,7 @@ void NiSequence::read(std::istream &is) {
   io::readBytes(is, arrayGrowBy);
   controlledBlocks.reserve(numControlledBlocks);
   for (basic::UInt i = 0; i < numControlledBlocks; ++i) {
-    is >> controlledBlocks.emplace_back(version);
+    is >> controlledBlocks.emplace_back(mVersion);
   }
 }
 
@@ -352,7 +352,7 @@ void NiTexturingProperty::read(std::istream &is) {
   if (textureCount > 5) {
     io::readBytes(is, hasBumpTexture);
     if (hasBumpTexture && *hasBumpTexture) {
-      BumpInfo bumpInfo{version};
+      BumpInfo bumpInfo{mVersion};
       is >> bumpInfo.bumpTexture;
       io::readBytes(is, bumpInfo.lumaScale);
       io::readBytes(is, bumpInfo.lumaOffset);
@@ -384,7 +384,7 @@ void NiTexturingProperty::read(std::istream &is) {
   io::readBytes(is, numShaderTextures);
   if (numShaderTextures && shaderTextures) {
     for (basic::UInt i = 0; i < *numShaderTextures; ++i) {
-      shaderTextures->emplace_back(version);
+      shaderTextures->emplace_back(mVersion);
       is >> shaderTextures->back();
     }
   }
@@ -487,7 +487,7 @@ void NiSkinPartition::read(std::istream &is) {
   io::readBytes(is, numSkinPartitionBlocks);
   skinPartitionBlocks.reserve(numSkinPartitionBlocks);
   for (basic::UInt i = 0; i < numSkinPartitionBlocks; ++i) {
-    skinPartitionBlocks.emplace_back(version);
+    skinPartitionBlocks.emplace_back(mVersion);
     is >> skinPartitionBlocks.back();
   }
 }
@@ -687,12 +687,12 @@ void NiSourceTexture::read(std::istream &is) {
 
   if (useExternal) {
     ExternalTextureFile &texFile =
-        textureFileData.emplace<ExternalTextureFile>(version);
+        textureFileData.emplace<ExternalTextureFile>(mVersion);
     is >> texFile.filename;
     is >> texFile.unknownRef;
   } else {
     InternalTextureFile &texFile =
-        textureFileData.emplace<InternalTextureFile>(version);
+        textureFileData.emplace<InternalTextureFile>(mVersion);
     io::readBytes(is, texFile.unknownByte);
     is >> texFile.filename;
   }
@@ -825,7 +825,7 @@ void PackedNiTriStripsShape::read(std::istream &is) {
   io::readBytes(is, numSubShapes);
   subShapes.reserve(numSubShapes);
   for (auto i = 0; i < numSubShapes; ++i) {
-    subShapes.emplace_back(version);
+    subShapes.emplace_back(mVersion);
     is >> subShapes.back();
   }
 

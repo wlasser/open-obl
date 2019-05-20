@@ -68,11 +68,11 @@ class EspCoordinator {
     ~EspEntry() = default;
 
     template<class InputIt>
-    EspEntry(oo::Path name, Streams::iterator it,
-             InputIt loadOrderBegin, InputIt loadOrderEnd)
-        : filename(std::move(name)),
-          localLoadOrder(loadOrderBegin, loadOrderEnd),
-          it(it) {}
+    EspEntry(oo::Path pFilename, Streams::iterator pIt,
+             InputIt pLoadOrderBegin, InputIt pLoadOrderEnd)
+        : filename(std::move(pFilename)),
+          localLoadOrder(pLoadOrderBegin, pLoadOrderEnd),
+          it(pIt) {}
 
     EspEntry(const EspEntry &) = delete;
     EspEntry &operator=(const EspEntry &) = delete;
@@ -491,7 +491,7 @@ EspCoordinator::readRecord(int modIndex, SeekPos seekPos) {
   }
   return {translateFormIds(record::readRecord<T>(it->stream), modIndex),
           it->stream.tellg()};
-};
+}
 
 template<class T>
 EspAccessor::ReadResult<T> EspAccessor::readRecord() {

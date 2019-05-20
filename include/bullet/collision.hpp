@@ -132,7 +132,7 @@ constexpr uint64_t getCollisionMask(CollisionLayer layer) noexcept {
       Layer::OL_STATIC, Layer::OL_ANIM_STATIC, Layer::OL_WEAPON,
       Layer::OL_PROJECTILE>()};
 
-  constexpr std::array<uint64_t, 64u> masks{
+  constexpr std::array<uint64_t, 64u> collisionMasks{
       0u, // OL_UNIDENTIFIED
       bullet::getCollisionMaskImpl< // OL_STATIC
           Layer::OL_CLUTTER, Layer::OL_WEAPON, Layer::OL_PROJECTILE,
@@ -283,10 +283,11 @@ constexpr uint64_t getCollisionMask(CollisionLayer layer) noexcept {
     }
     return 0ull;
   };
-  static_assert(isSymmetric(masks) == 0ull);
-//  spdlog::get(oo::LOG)->info("isSymmetric(masks) == {}", isSymmetric(masks));
+  static_assert(isSymmetric(collisionMasks) == 0ull);
+//  spdlog::get(oo::LOG)->info("isSymmetric(collisionMasks) == {}",
+//                             isSymmetric(collisionMasks));
 
-  return masks[static_cast<std::size_t>(layer)];
+  return collisionMasks[static_cast<std::size_t>(layer)];
 }
 
 } // namespace bullet

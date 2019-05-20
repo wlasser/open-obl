@@ -82,8 +82,8 @@ bool Traits::addAndBindUserTrait(pugi::xml_node node, UiElement *uiElement) {
   if (!indexOpt) return false;
   const int index{*indexOpt};
 
-  auto setter = [index](UiElement *uiElement, auto &&value) {
-    uiElement->set_user(index, value);
+  auto setter = [index](UiElement *elem, auto &&value) {
+    elem->set_user(index, value);
   };
 
   switch (uiElement->userTraitType(index)) {

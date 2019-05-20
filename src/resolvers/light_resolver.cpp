@@ -99,10 +99,10 @@ reifyRecord(const record::REFR_LIGH &refRec,
   }
 
   auto *lightNode = [&]() {
-    auto *lightNode{oo::findChild(baseNode, [](Ogre::SceneNode *child) {
+    auto *attachNode{oo::findChild(baseNode, [](Ogre::SceneNode *child) {
       return boost::iends_with(child->getName(), "AttachLight");
     })};
-    return lightNode ? lightNode : baseNode;
+    return attachNode ? attachNode : baseNode;
   }();
 
   lightNode->attachObject(light);

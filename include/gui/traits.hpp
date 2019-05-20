@@ -56,11 +56,11 @@ class Traits {
     std::string name{};
     gui::stack::Program program{};
     gui::TraitTypeId returnType{};
-    DeferredTrait(std::string name,
-                  gui::stack::Program program,
-                  gui::TraitTypeId returnType) : name(std::move(name)),
-                                                 program(std::move(program)),
-                                                 returnType(returnType) {}
+    DeferredTrait(std::string pName,
+                  gui::stack::Program pProgram,
+                  gui::TraitTypeId pReturnType) : name(std::move(pName)),
+                                                  program(std::move(pProgram)),
+                                                  returnType(pReturnType) {}
     DeferredTrait() = default;
     DeferredTrait(const DeferredTrait &) = default;
     DeferredTrait &operator=(const DeferredTrait &) = default;

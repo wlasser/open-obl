@@ -26,7 +26,7 @@ namespace Ogre {
 // TODO: Support output in OgreDataStreambuf
 class OgreDataStreambuf : public std::streambuf {
  private:
-  std::shared_ptr<Ogre::DataStream> ogreDataStream{};
+  std::shared_ptr<Ogre::DataStream> mOgreStream{};
 
  protected:
   int_type underflow() override;
@@ -53,7 +53,7 @@ class OgreStandardStream : public Ogre::DataStream {
  private:
   // std::istream::tellg() is not const as it modifies the state bits, but
   // tell() is required to be const, so this is mutable.
-  mutable T stream;
+  mutable T mStream;
 
  public:
   OgreStandardStream(const Ogre::String &name, T &&stream);
@@ -79,33 +79,33 @@ class OgreStandardStream : public Ogre::DataStream {
 
 template<class T>
 OgreStandardStream<T>::OgreStandardStream(const Ogre::String &name, T &&stream)
-    : Ogre::DataStream(name), stream(std::move(stream)) {}
+    : Ogre::DataStream(name), mStream(std::move(stream)) {}
 
 template<class T>
 bool OgreStandardStream<T>::eof() const {
-  return stream.eof();
+  return mStream.eof();
 }
 
 template<class T>
 std::size_t OgreStandardStream<T>::read(void *buf, std::size_t count) {
-  stream.read(static_cast<char *>(buf), count);
+  mStream.read(static_cast<char *>(buf), count);
   // The standard library guarantees that std::streamsize is non-negative here
-  return static_cast<std::size_t>(stream.gcount());
+  return static_cast<std::size_t>(mStream.gcount());
 }
 
 template<class T>
 void OgreStandardStream<T>::seek(std::size_t pos) {
-  stream.seekg(static_cast<typename T::pos_type>(pos));
+  mStream.seekg(static_cast<typename T::pos_type>(pos));
 }
 
 template<class T>
 void OgreStandardStream<T>::skip(long count) {
-  stream.seekg(static_cast<typename T::off_type>(count), std::ios_base::cur);
+  mStream.seekg(static_cast<typename T::off_type>(count), std::ios_base::cur);
 }
 
 template<class T>
 std::size_t OgreStandardStream<T>::tell() const {
-  return static_cast<std::size_t>(stream.tellg());
+  return static_cast<std::size_t>(mStream.tellg());
 }
 
 template<>

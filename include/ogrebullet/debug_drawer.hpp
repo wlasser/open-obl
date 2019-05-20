@@ -46,7 +46,7 @@ class DebugDrawer : public btIDebugDraw {
   struct Vertex {
     Vector3 pos{};
     ColourValue col{};
-    explicit Vertex(Vector3 pos, ColourValue col) : pos(pos), col(col) {}
+    explicit Vertex(Vector3 pPos, ColourValue pCol) : pos(pPos), col(pCol) {}
   };
   ManualObject *mObject{};
   std::vector<Vertex> mVertices{};

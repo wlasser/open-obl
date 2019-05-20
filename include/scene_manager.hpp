@@ -40,7 +40,8 @@ class DeferredSceneManager : public Ogre::SceneManager {
   struct LightInfo {
     Ogre::Light *light{};
     std::unique_ptr<oo::DeferredLight> geometry{};
-    LightInfo(Ogre::Light *light, std::unique_ptr<oo::DeferredLight> geometry);
+    LightInfo(Ogre::Light *pLight,
+              std::unique_ptr<oo::DeferredLight> pGeometry);
   };
   std::vector<LightInfo> mLights{};
 

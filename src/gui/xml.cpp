@@ -54,10 +54,10 @@ void processIncludes(pugi::xml_document &doc) {
     const std::string filename{srcAttr.value()};
 
     // Load included document
-    pugi::xml_document doc;
+    pugi::xml_document subDoc;
     try {
       auto path{oo::Path{"menus/prefabs"} / oo::Path{filename}};
-      doc = gui::readXmlDocument(path.c_str());
+      subDoc = gui::readXmlDocument(path.c_str());
     } catch (const std::runtime_error &e) {
       gui::guiLogger()->error("<include> tag with src {} failed to load",
                               filename);
@@ -67,7 +67,7 @@ void processIncludes(pugi::xml_document &doc) {
     // Add children of node documents, since can't add xml_document directly
     pugi::xml_node parent{node.parent()};
     pugi::xml_node lastAdded{node};
-    for (auto childNode : doc.children()) {
+    for (auto childNode : subDoc.children()) {
       lastAdded = parent.insert_copy_after(childNode, lastAdded);
     }
 

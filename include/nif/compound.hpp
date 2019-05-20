@@ -84,11 +84,11 @@ struct FilePath : Versionable {
 template<class NiObject>
 struct Footer : Versionable {
   // Number of root references
-  VersionOptional<basic::UInt, "3.3.0.13"_ver, Unbounded> numRoots{version};
+  VersionOptional<basic::UInt, "3.3.0.13"_ver, Unbounded> numRoots{mVersion};
   // List of root nif objects. If there is a camera for 1st person view then it
   // is included in this list even if it is not a root object.
   VersionOptional<std::vector<NiObject>, "3.3.0.13"_ver, Unbounded>
-      roots{version};
+      roots{mVersion};
   explicit Footer(uint32_t version) : Versionable(version) {}
 };
 
@@ -264,18 +264,19 @@ struct Header : Versionable {
   basic::HeaderString headerString{};
 
   VersionOptional<std::array<basic::LineString, 3>, Unbounded, "3.1.0.0"_ver>
-      copyright{version};
+      copyright{mVersion};
 
-  VersionOptional<basic::FileVersion, "3.1.0.1"_ver, Unbounded> ver{version};
+  VersionOptional<basic::FileVersion, "3.1.0.1"_ver, Unbounded> ver{mVersion};
 
   VersionOptional<Enum::EndianType, "20.0.0.3"_ver, Unbounded>
-      endianType{version, Enum::EndianType::ENDIAN_LITTLE};
+      endianType{mVersion, Enum::EndianType::ENDIAN_LITTLE};
 
-  VersionOptional<basic::ULittle32, "10.0.1.8"_ver, Unbounded> userVer{version};
+  VersionOptional<basic::ULittle32, "10.0.1.8"_ver, Unbounded>
+      userVer{mVersion};
 
   // Number of file objects
   VersionOptional<basic::ULittle32, "3.1.0.1"_ver, Unbounded>
-      numBlocks{version};
+      numBlocks{mVersion};
 
   struct BSStreamHeader {
     // ver == 10.0.1.2 ||
@@ -293,36 +294,36 @@ struct Header : Versionable {
   };
   BSStreamHeader bsStreamHeader{};
 
-  VersionOptional<ByteArray, "30.0.0.0"_ver, Unbounded> metadata{version};
+  VersionOptional<ByteArray, "30.0.0.0"_ver, Unbounded> metadata{mVersion};
 
   // Number of object types
   VersionOptional<basic::UShort, "5.0.0.1"_ver, Unbounded>
-      numBlockTypes{version};
+      numBlockTypes{mVersion};
 
   // List of object types
   VersionOptional<std::vector<SizedString>, "5.0.0.1"_ver, Unbounded>
-      blockTypes{version};
+      blockTypes{mVersion};
 
   // Map of objects into object types; i-th entry is the index in blockTypes
   // corresponding to the type of the i-th object.
   VersionOptional<std::vector<basic::BlockTypeIndex>, "5.0.0.1"_ver, Unbounded>
-      blockTypeIndices{version};
+      blockTypeIndices{mVersion};
 
   VersionOptional<std::vector<basic::UInt>, "20.2.0.5"_ver, Unbounded>
-      blockSizes{version};
+      blockSizes{mVersion};
 
-  VersionOptional<basic::UInt, "20.1.0.1"_ver, Unbounded> numStrings{version};
+  VersionOptional<basic::UInt, "20.1.0.1"_ver, Unbounded> numStrings{mVersion};
 
   VersionOptional<basic::UInt, "20.1.0.1"_ver, Unbounded>
-      maxStringLength{version};
+      maxStringLength{mVersion};
 
   VersionOptional<std::vector<SizedString>, "20.1.0.1"_ver, Unbounded>
-      strings{version};
+      strings{mVersion};
 
-  VersionOptional<basic::UInt, "5.0.0.6"_ver, Unbounded> numGroups{version};
+  VersionOptional<basic::UInt, "5.0.0.6"_ver, Unbounded> numGroups{mVersion};
 
   VersionOptional<std::vector<basic::UInt>, "5.0.0.6"_ver, Unbounded>
-      groups{version};
+      groups{mVersion};
 
   explicit Header(uint32_t version) : Versionable(version) {}
 };
@@ -353,13 +354,14 @@ struct SkinPartition : Versionable {
   basic::UShort numWeightsPerVertex{};
   std::vector<basic::UShort> bones{};
 
-  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasVertexMap{version};
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
+      hasVertexMap{mVersion};
   // Maps the weight/influence lists in this submesh to the vertices in the
   // shape being skinned. Vertex map was compulsory before 10.1.0.0.
   std::vector<basic::UShort> vertexMap{};
 
   VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
-      hasVertexWeights{version};
+      hasVertexWeights{mVersion};
   // arr1 = numVertices, arr2 = numWeightsPerVertex
   // Vertex weights were compulsory before 10.1.0.0.
   std::vector<std::vector<basic::Float>> vertexWeights{};
@@ -367,7 +369,7 @@ struct SkinPartition : Versionable {
   std::vector<basic::UShort> stripLengths{};
 
   // Do we have strips/triangles data?
-  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasFaces{version};
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasFaces{mVersion};
   // arr1 = numStrips, arr2 = stripLengths for the corresponding strip
   // Strips were compulsory before 10.1.0.0, provided numStrips != 0
   std::vector<std::vector<basic::UShort>> strips{};
@@ -398,7 +400,7 @@ struct NiQuatTransform : Versionable {
   Quaternion rotation{};
   basic::Float scale{1.0f};
   VersionOptional<std::array<basic::Bool, 3>, Unbounded, "10.1.0.109"_ver>
-      trsValid{version};
+      trsValid{mVersion};
 
   explicit NiQuatTransform(Version version) : Versionable(version) {}
 };
@@ -451,7 +453,7 @@ struct HavokFilter {
 };
 
 struct HavokMaterial : Versionable {
-  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknown{version};
+  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknown{mVersion};
   Enum::OblivionHavokMaterial material{};
 
   explicit HavokMaterial(Version version) : Versionable(version) {}
@@ -471,13 +473,13 @@ struct TexDesc : Versionable {
   basic::UInt uvSet{0};
 
   // Mipmap modifiers?
-  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2L{version};
-  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2K{version};
+  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2L{mVersion};
+  VersionOptional<basic::Short, Unbounded, "10.4.0.1"_ver> ps2K{mVersion};
 
-  VersionOptional<basic::UShort, Unbounded, "4.0.1.12"_ver> unknown{version};
+  VersionOptional<basic::UShort, Unbounded, "4.0.1.12"_ver> unknown{mVersion};
 
   VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
-      hasTextureTransform{version, false};
+      hasTextureTransform{mVersion, false};
   struct NiTextureTransform {
     TexCoord translation{};
     TexCoord scale{1.0f, 1.0f};
@@ -493,11 +495,11 @@ struct TexDesc : Versionable {
 struct ShaderTexDesc : Versionable {
   basic::Bool hasMap{};
   struct Map : Versionable {
-    TexDesc map{version};
+    TexDesc map{mVersion};
     basic::UInt mapID{};
     explicit Map(Version version) : Versionable(version) {}
   };
-  std::optional<Map> map{version};
+  std::optional<Map> map{mVersion};
   explicit ShaderTexDesc(Version version) : Versionable(version) {}
 };
 
@@ -543,7 +545,7 @@ static_assert(sizeof(TriangleData) == sizeof(Triangle) + 2 + sizeof(Vector3),
 struct OblivionSubShape : Versionable {
   HavokFilter havokFilter{};
   basic::UInt numVertices{};
-  HavokMaterial havokMaterial{version};
+  HavokMaterial havokMaterial{mVersion};
   explicit OblivionSubShape(Version version) : Versionable(version) {}
 };
 
@@ -612,22 +614,22 @@ struct KeyGroup {
 
 struct ControlledBlock : Versionable {
   VersionOptional<compound::SizedString, Unbounded, "10.1.0.103"_ver>
-      targetName{version};
+      targetName{mVersion};
 
   VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.106"_ver, Unbounded>
-      interpolator{version};
+      interpolator{mVersion};
 
   basic::Ref<NiTimeController> controller{};
 
   VersionOptional<basic::Ref<NiBlendInterpolator>, "10.1.0.104"_ver,
                                                    "10.1.0.110"_ver>
-      blendInterpolator{version};
+      blendInterpolator{mVersion};
 
   VersionOptional<basic::UShort, "10.1.0.104"_ver, "10.1.0.110"_ver>
-      blendIndex{version};
+      blendIndex{mVersion};
 
   // userVer2 > 0
-  VersionOptional<basic::Byte, "10.1.0.106"_ver, Unbounded> priority{version};
+  VersionOptional<basic::Byte, "10.1.0.106"_ver, Unbounded> priority{mVersion};
 
   struct IDTag {
     // Name of animated NiAVObject
@@ -638,7 +640,7 @@ struct ControlledBlock : Versionable {
     compound::SizedString interpolatorID{};
     IDTag() = default;
   };
-  VersionOptional<IDTag, "10.1.0.104"_ver, "10.1.0.113"_ver> idTag{version};
+  VersionOptional<IDTag, "10.1.0.104"_ver, "10.1.0.113"_ver> idTag{mVersion};
 
   struct Palette {
     basic::Ref<NiStringPalette> stringPalette{};
@@ -649,7 +651,7 @@ struct ControlledBlock : Versionable {
     basic::StringOffset interpolatorIDOffset{};
     Palette() = default;
   };
-  VersionOptional<Palette, "10.2.0.0"_ver, "20.1.0.0"_ver> palette{version};
+  VersionOptional<Palette, "10.2.0.0"_ver, "20.1.0.0"_ver> palette{mVersion};
 
   explicit ControlledBlock(Version version) : Versionable(version) {}
 };
@@ -665,7 +667,7 @@ struct InterpBlendItem : Versionable {
   basic::Float normalizedWeight{};
 
   VersionEither<basic::Int, basic::Byte, "10.1.0.110"_ver, Unbounded>
-      priority{version};
+      priority{mVersion};
 
   basic::Float easeSpinner{};
 

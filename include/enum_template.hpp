@@ -28,7 +28,7 @@ using index_variant = std::variant<T<I>...>;
 template<typename index_t, template<index_t> typename T, std::size_t ...I>
 auto make_sequential_variant_impl(std::index_sequence<I...>) {
   return index_variant<index_t, T, static_cast<index_t>(I)...>{};
-};
+}
 
 template<typename index_t, template<index_t> typename T, index_t N>
 auto make_sequential_variant() {

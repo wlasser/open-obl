@@ -162,8 +162,8 @@ TraitTypeId userTraitType(int index) const override { \
   return (interface).userTraitType((index)); \
 } \
 void set_user(int index, gui::UiElement::UserValue value) override { \
-  return std::visit([this, index](auto value) { \
-    (interface).set_user(index, value); }, value); \
+  return std::visit([this, index](auto v) { \
+    (interface).set_user(index, v); }, value); \
 } \
 gui::UiElement::UserValue get_user(int index) override { \
   return (interface).get_user(index); \
@@ -250,7 +250,7 @@ class Trait {
   template<class Tuple, std::size_t ... Is> bool
   setSourceImpl(int i, const Tuple &tuple, std::index_sequence<Is...>) {
     return ((i == Is ? setTrait(std::get<Is>(tuple)) : false) || ... || false);
-  };
+  }
 
  public:
   explicit Trait(std::string name, T &&t) : mName(std::move(name)),
@@ -287,7 +287,7 @@ class Trait {
     if (!setSourceImpl(idx, userInterface, std::index_sequence_for<Ts...>{})) {
       throw std::runtime_error("Incompatible interface");
     }
-  };
+  }
 
   /// Calculate the actual value of this trait. This does not update the
   /// concrete representative, use `update()` for that.

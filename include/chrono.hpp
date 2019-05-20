@@ -101,9 +101,9 @@ class GameClock {
   /// Advance the internal tick count by the given duration of game time.
   /// If `t_0` is the value of `now()` before this call and `t_1` is the value
   /// of `now()` immediately after, then `t_1 - t_0 = duration.`
-  template<class Duration> static void advance(Duration duration) noexcept
-  /*C++20: [[expects : duration >= Duration::zero()]]*/ {
-    ticks += chrono::duration_cast<GameClock::duration>(duration).count();
+  template<class Duration> static void advance(Duration dur) noexcept
+  /*C++20: [[expects : dur >= Duration::zero()]]*/ {
+    ticks += chrono::duration_cast<GameClock::duration>(dur).count();
   }
 
   /// Get the calendar date of the epoch.

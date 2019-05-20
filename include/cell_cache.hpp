@@ -25,8 +25,8 @@ class CellCache {
   struct GetResult {
     CellPtr cell;
     bool isInterior;
-    explicit GetResult(CellPtr cell, bool isInterior)
-        : cell(std::move(cell)), isInterior(isInterior) {}
+    explicit GetResult(CellPtr pCell, bool pIsInterior)
+        : cell(std::move(pCell)), isInterior(pIsInterior) {}
   };
 
  private:

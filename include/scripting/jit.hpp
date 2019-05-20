@@ -58,7 +58,7 @@ class Jit {
         session, legacyLookup, [](llvm::Error error) {
           llvm::cantFail(std::move(error), "lookupFlags failed");
         });
-  };
+  }
 
   using ObjectLayer = llvm::orc::RTDyldObjectLinkingLayer;
   using CompileLayer = llvm::orc::IRCompileLayer<ObjectLayer,

@@ -130,7 +130,7 @@ void CharacterController::enter(MovementStateVariant &state) {
   std::visit([this](auto &&s) {
     s.enter(this->mImpl);
   }, state);
-};
+}
 
 void CharacterController::exit(StateVariant &state) {
   std::visit([this](auto &&s) { s.exit(this->mImpl); }, state);

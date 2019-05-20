@@ -193,9 +193,9 @@ std::istream &operator>>(std::istream &is, Header &t) {
   io::readBytes(is, t.userVer);
   io::readBytes(is, t.numBlocks);
 
-  if (t.version == "10.0.1.2"_ver ||
-      (t.version == "20.2.0.7"_ver || t.version == "20.0.0.5"_ver ||
-          ("10.1.0.0"_ver <= t.version && t.version <= "20.0.0.4"_ver
+  if (t.mVersion == "10.0.1.2"_ver ||
+      (t.mVersion == "20.2.0.7"_ver || t.mVersion == "20.0.0.5"_ver ||
+          ("10.1.0.0"_ver <= t.mVersion && t.mVersion <= "20.0.0.4"_ver
               && t.userVer && t.userVer.value() <= 11))) {
     io::readBytes(is, t.bsStreamHeader.userVersion2);
     is >> t.bsStreamHeader.exportInfo;
@@ -383,7 +383,7 @@ std::istream &operator>>(std::istream &is, TexDesc &t) {
 std::istream &operator>>(std::istream &is, ShaderTexDesc &t) {
   io::readBytes(is, t.hasMap);
   if (t.hasMap) {
-    ShaderTexDesc::Map map{t.version};
+    ShaderTexDesc::Map map{t.mVersion};
     is >> map.map;
     io::readBytes(is, map.mapID);
     t.map.emplace(map);

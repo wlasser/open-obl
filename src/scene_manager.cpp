@@ -64,9 +64,9 @@ oo::DeferredFogListener *DeferredSceneManager::getFogListener() noexcept {
   return &mFogListener;
 }
 
-DeferredSceneManager::LightInfo::LightInfo(Ogre::Light *light,
-                                           std::unique_ptr<oo::DeferredLight> geometry)
-    : light(light), geometry(std::move(geometry)) {}
+DeferredSceneManager::LightInfo::LightInfo(Ogre::Light *pLight,
+                                           std::unique_ptr<oo::DeferredLight> pGeometry)
+    : light(pLight), geometry(std::move(pGeometry)) {}
 
 //===----------------------------------------------------------------------===//
 // Interior Scene Manager

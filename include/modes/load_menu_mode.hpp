@@ -47,10 +47,12 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
     gui::UiElement *element;
     SaveState state;
     SaveEntry entry;
-    explicit SaveGame(gui::UiElement *element,
-                      SaveState state,
-                      SaveEntry entry)
-        : element(element), state(std::move(state)), entry(std::move(entry)) {}
+    explicit SaveGame(gui::UiElement *pElement,
+                      SaveState pState,
+                      SaveEntry pEntry)
+        : element(pElement),
+          state(std::move(pState)),
+          entry(std::move(pEntry)) {}
   };
 
   std::vector<SaveGame> mSaveGames{};

@@ -79,40 +79,40 @@ BsaReader::FolderAccessor::operator[](std::string file) const {
 
 FileData
 BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
-  std::unique_lock lock{owner.isMutex};
+  std::unique_lock lock{mOwner.isMutex};
 
-  const FolderRecord &folder{owner.folderRecords.at(hash)};
+  const FolderRecord &folder{mOwner.folderRecords.at(mHash)};
   const FileRecord &file{folder.files.at(fileHash)};
 
   // Unset bits higher than the toggle compression bit
   const uint32_t compressedSize{file.size & ~(3u << 30u)};
 
   // Jump to the data
-  owner.is.seekg(file.offset);
+  mOwner.is.seekg(file.offset);
 
   // Get size of uncompressed data if compressed, otherwise they're the same.
   uint32_t uncompressedSize{compressedSize};
   if (file.compressed) {
-    io::readBytes(owner.is, uncompressedSize);
+    io::readBytes(mOwner.is, uncompressedSize);
   }
 
   // Read data and uncompress if necessary
   std::vector<uint8_t> data(uncompressedSize);
   if (file.compressed) {
     std::vector<unsigned char> compressedData;
-    io::readBytes(owner.is, compressedData, compressedSize);
+    io::readBytes(mOwner.is, compressedData, compressedSize);
     unsigned long zlibSize{uncompressedSize};
     uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
   } else {
-    io::readBytes(owner.is, data, uncompressedSize);
+    io::readBytes(mOwner.is, data, uncompressedSize);
   }
   return FileData{std::move(data), uncompressedSize};
 }
 
 uint32_t BsaReader::FolderAccessor::getSize(uint64_t fileHash) const {
-  std::unique_lock lock{owner.isMutex};
+  std::unique_lock lock{mOwner.isMutex};
 
-  const FolderRecord &folder{owner.folderRecords.at(hash)};
+  const FolderRecord &folder{mOwner.folderRecords.at(mHash)};
   const FileRecord &file{folder.files.at(fileHash)};
 
   if (!file.compressed) return file.size;
@@ -121,9 +121,9 @@ uint32_t BsaReader::FolderAccessor::getSize(uint64_t fileHash) const {
   const uint32_t compressedSize{file.size & ~(3u << 30u)};
 
   // Jump to the data
-  owner.is.seekg(file.offset);
+  mOwner.is.seekg(file.offset);
   uint32_t uncompressedSize{compressedSize};
-  io::readBytes(owner.is, uncompressedSize);
+  io::readBytes(mOwner.is, uncompressedSize);
 
   return uncompressedSize;
 }
@@ -284,48 +284,48 @@ BsaReader::iterator BsaReader::end() const {
 namespace impl {
 
 BsaIterator::reference BsaIterator::updateCurrentPublicRecord() const {
-  currentPublicRecord.name = currentRecord->second.name;
-  currentPublicRecord.files.clear();
-  for (const auto&[hash, record] : currentRecord->second.files) {
-    currentPublicRecord.files.push_back(record.name);
+  mCurrentPublicRec.name = mCurrentRec->second.name;
+  mCurrentPublicRec.files.clear();
+  for (const auto&[hash, record] : mCurrentRec->second.files) {
+    mCurrentPublicRec.files.push_back(record.name);
   }
-  return currentPublicRecord;
+  return mCurrentPublicRec;
 }
 
 BsaIterator::reference BsaIterator::operator*() const {
   updateCurrentPublicRecord();
-  return currentPublicRecord;
+  return mCurrentPublicRec;
 }
 
 BsaIterator::pointer BsaIterator::operator->() const {
   updateCurrentPublicRecord();
-  return &currentPublicRecord;
+  return &mCurrentPublicRec;
 }
 
 BsaIterator &BsaIterator::operator++() {
-  ++currentRecord;
+  ++mCurrentRec;
   return *this;
 }
 
 const BsaIterator BsaIterator::operator++(int) {
   auto tmp = *this;
-  ++currentRecord;
+  ++mCurrentRec;
   return tmp;
 }
 
 BsaIterator &BsaIterator::operator--() {
-  --currentRecord;
+  --mCurrentRec;
   return *this;
 }
 
 const BsaIterator BsaIterator::operator--(int) {
   auto tmp = *this;
-  --currentRecord;
+  --mCurrentRec;
   return tmp;
 }
 
 bool BsaIterator::operator==(const BsaIterator &other) {
-  return currentRecord == other.currentRecord;
+  return mCurrentRec == other.mCurrentRec;
 }
 
 } // namespace impl

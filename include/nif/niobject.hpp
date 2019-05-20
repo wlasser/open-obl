@@ -51,7 +51,7 @@ struct NiKeyframeData : NiObject, Versionable {
   }
 
   // if (rotationType == 4)
-  VersionOptional<basic::Float, Unbounded, "10.1.0.0"_ver> order{version};
+  VersionOptional<basic::Float, Unbounded, "10.1.0.0"_ver> order{mVersion};
 
   // if (rotationType == 4)
   std::array<compound::KeyGroup<basic::Float>, 3> xyzRotations{};
@@ -83,10 +83,10 @@ struct NiStringPalette : NiObject {
 
 struct NiExtraData : NiObject, Versionable {
   VersionOptional<compound::SizedString, "10.0.1.0"_ver, Unbounded>
-      name{version};
+      name{mVersion};
 
   VersionOptional<basic::Ref<NiExtraData>, Unbounded, "4.2.2.0"_ver>
-      next{version};
+      next{mVersion};
 
   void read(std::istream &is) override;
   explicit NiExtraData(Version version) : Versionable(version) {}
@@ -110,7 +110,7 @@ struct NiIntegerExtraData : NiExtraData {
 struct NiStringExtraData : NiExtraData {
   // Length of following string + 4
   VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver>
-      bytesRemaining{version};
+      bytesRemaining{mVersion};
 
   compound::SizedString data{};
 
@@ -119,7 +119,7 @@ struct NiStringExtraData : NiExtraData {
 };
 
 struct NiTextKeyExtraData : NiExtraData {
-  VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver> unknownInt1{version};
+  VersionOptional<basic::UInt, Unbounded, "4.2.2.0"_ver> unknownInt1{mVersion};
 
   basic::UInt numTextKeys{};
 
@@ -166,7 +166,7 @@ struct NiFloatInterpolator : NiKeyBasedInterpolator {
 };
 
 struct NiTransformInterpolator : NiKeyBasedInterpolator, Versionable {
-  compound::NiQuatTransform transform{version};
+  compound::NiQuatTransform transform{mVersion};
   basic::Ref<NiTransformData> data{};
 
   void read(std::istream &is) override;
@@ -189,7 +189,7 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
   basic::Float weightThreshold{};
 
   VersionOptional<Enum::InterpBlendFlags, "10.1.0.112"_ver, Unbounded>
-      flags{version};
+      flags{mVersion};
 
   struct ArrayParamsL {
     basic::UShort arraySize{};
@@ -208,11 +208,11 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
     }
   };
   VersionEither<ArrayParamsL, ArrayParamsR, "10.1.0.110"_ver, Unbounded>
-      arrayParams{version};
+      arrayParams{mVersion};
 
  protected:
   VersionOptional<basic::Float *, "10.1.0.112"_ver, Unbounded>
-      weightThresholdR{version, &weightThreshold};
+      weightThresholdR{mVersion, &weightThreshold};
  public:
 
   struct UnmanagedData {
@@ -229,69 +229,69 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
   };
   // if (flags & 1) == 0
   VersionOptional<UnmanagedData, "10.1.0.112"_ver, Unbounded>
-      unmanagedData{version};
+      unmanagedData{mVersion};
 
   VersionOptional<std::vector<compound::InterpBlendItem>,
       Unbounded, "10.1.0.111"_ver>
-      interpArrayItems{version};
+      interpArrayItems{mVersion};
 
   VersionOptional<basic::Bool, Unbounded, "10.1.0.111"_ver>
-      managerControlled{version};
+      managerControlled{mVersion};
 
  protected:
   VersionOptional<basic::Float *, Unbounded, "10.1.0.111"_ver>
-      weightThresholdL{version, &weightThreshold};
+      weightThresholdL{mVersion, &weightThreshold};
  public:
 
   VersionOptional<basic::Bool, Unbounded, "10.1.0.111"_ver>
-      onlyUseHeighestWeight{version};
+      onlyUseHeighestWeight{mVersion};
 
   VersionOptional<VersionEither<basic::UShort,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
                                 Unbounded>, Unbounded, "10.1.0.111"_ver>
-      interpCount{version,
+      interpCount{mVersion,
                   VersionEither<basic::UShort,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
-                                Unbounded>(version)};
+                                Unbounded>(mVersion)};
 
   VersionOptional<VersionEither<basic::UShort,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
                                 Unbounded>, Unbounded, "10.1.0.111"_ver>
-      singleIndex{version,
+      singleIndex{mVersion,
                   VersionEither<basic::UShort,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
-                                Unbounded>(version)};
+                                Unbounded>(mVersion)};
 
   VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.108"_ver,
                                               "10.1.0.111"_ver>
-      singleInterpolator{version};
+      singleInterpolator{mVersion};
 
   VersionOptional<basic::Float, "10.1.0.108"_ver, "10.1.0.111"_ver>
-      singleTime{version};
+      singleTime{mVersion};
 
   VersionOptional<VersionEither<basic::Int,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
                                 Unbounded>, Unbounded, "10.1.0.111"_ver>
-      highPriority{version,
+      highPriority{mVersion,
                    VersionEither<basic::Int,
                                  basic::Byte,
                                  "10.1.0.110"_ver,
-                                 Unbounded>(version)};
+                                 Unbounded>(mVersion)};
 
   VersionOptional<VersionEither<basic::Int,
                                 basic::Byte,
                                 "10.1.0.110"_ver,
                                 Unbounded>, Unbounded, "10.1.0.111"_ver>
-      nextHighPriority{version,
+      nextHighPriority{mVersion,
                        VersionEither<basic::Int,
                                      basic::Byte,
                                      "10.1.0.110"_ver,
-                                     Unbounded>(version)};
+                                     Unbounded>(mVersion)};
 
   void read(std::istream &is) override;
   explicit NiBlendInterpolator(Version version) : Versionable(version) {}
@@ -344,15 +344,15 @@ struct NiSequence : NiObject, Versionable {
   compound::SizedString name{};
 
   VersionOptional<compound::SizedString, Unbounded, "10.1.0.103"_ver>
-      accumRootName{version};
+      accumRootName{mVersion};
 
   VersionOptional<basic::Ref<NiTextKeyExtraData>, Unbounded, "10.1.0.103"_ver>
-      textKeys{version};
+      textKeys{mVersion};
 
   basic::UInt numControlledBlocks{};
 
   VersionOptional<basic::UInt, "10.1.0.106"_ver, Unbounded>
-      arrayGrowBy{version};
+      arrayGrowBy{mVersion};
 
   std::vector<compound::ControlledBlock> controlledBlocks{};
 
@@ -364,37 +364,37 @@ struct NiControllerManager;
 
 struct NiControllerSequence : NiSequence {
   VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
-      weight{version, 1.0f};
+      weight{mVersion, 1.0f};
 
   VersionOptional<basic::Ref<NiTextKeyExtraData>, "10.1.0.106"_ver, Unbounded>
-      textKeys{version};
+      textKeys{mVersion};
 
   VersionOptional<Enum::CycleType, "10.1.0.106"_ver, Unbounded>
-      cycleType{version};
+      cycleType{mVersion};
 
   VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
-      frequency{version, 1.0f};
+      frequency{mVersion, 1.0f};
 
   VersionOptional<basic::Float, "10.1.0.106"_ver, "10.4.0.1"_ver>
-      phase{version};
+      phase{mVersion};
 
   VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
-      startTime{version, std::numeric_limits<float>::max()};
+      startTime{mVersion, std::numeric_limits<float>::max()};
 
   VersionOptional<basic::Float, "10.1.0.106"_ver, Unbounded>
-      stopTime{version, std::numeric_limits<float>::lowest()};
+      stopTime{mVersion, std::numeric_limits<float>::lowest()};
 
   VersionOptional<basic::Bool, "10.1.0.106"_ver, "10.1.0.106"_ver>
-      playBackwards{version};
+      playBackwards{mVersion};
 
   VersionOptional<basic::Ptr<NiControllerManager>, "10.1.0.106"_ver, Unbounded>
-      manager{version};
+      manager{mVersion};
 
   VersionOptional<compound::SizedString, "10.1.0.106"_ver, Unbounded>
-      accumRootName{version};
+      accumRootName{mVersion};
 
   VersionOptional<basic::Ref<NiStringPalette>, "10.1.0.113"_ver, "20.1.0.0"_ver>
-      stringPalette{version};
+      stringPalette{mVersion};
 
   void read(std::istream &is) override;
   explicit NiControllerSequence(Version version) : NiSequence(version) {}
@@ -448,7 +448,7 @@ inline NiTimeController::~NiTimeController() = default;
 
 struct NiInterpController : NiTimeController, Versionable {
   VersionOptional<basic::Bool, "10.1.0.104"_ver, "10.1.0.108"_ver>
-      managerControlled{version};
+      managerControlled{mVersion};
 
   void read(std::istream &is) override;
   explicit NiInterpController(Version version) : Versionable(version) {}
@@ -467,7 +467,7 @@ struct NiMultiTargetTransformController : NiInterpController {
 
 struct NiSingleInterpController : NiInterpController {
   VersionOptional<basic::Ref<NiInterpolator>, "10.1.0.104"_ver, Unbounded>
-      interpolator{version};
+      interpolator{mVersion};
 
   void read(std::istream &is) override;
   explicit NiSingleInterpController(Version version)
@@ -486,10 +486,10 @@ inline NiPoint3InterpController::~NiPoint3InterpController() = default;
 
 struct NiMaterialColorController : NiPoint3InterpController {
   VersionOptional<Enum::MaterialColor, "10.1.0.0"_ver, Unbounded>
-      targetColor{version};
+      targetColor{mVersion};
 
   VersionOptional<basic::Ref<NiPosData>, Unbounded, "10.1.0.103"_ver>
-      data{version};
+      data{mVersion};
 
   void read(std::istream &is) override;
   explicit NiMaterialColorController(Version version)
@@ -498,7 +498,7 @@ struct NiMaterialColorController : NiPoint3InterpController {
 
 struct NiKeyframeController : NiSingleInterpController {
   VersionOptional<basic::Ref<NiKeyframeData>, Unbounded, "10.1.0.103"_ver>
-      keyframeData{version};
+      keyframeData{mVersion};
 
   void read(std::istream &is) override;
   explicit NiKeyframeController(Version version)
@@ -529,17 +529,17 @@ struct NiObjectNet : NiObject, Versionable {
   // Here, extraData entry has a link to another extraData entry,
   // i.e. extraData is as linked list.
   VersionOptional<basic::Ref<NiExtraData>, "3.0.0.0"_ver, "4.2.2.0"_ver>
-      extraData{version};
+      extraData{mVersion};
 
   // Here, extraData is an array instead of a linked list
   VersionOptional<basic::UInt, "10.0.1.0"_ver, Unbounded>
-      extraDataArrayLength{version};
+      extraDataArrayLength{mVersion};
 
   VersionOptional<NiExtraDataArray, "10.0.1.0"_ver, Unbounded>
-      extraDataArray{version};
+      extraDataArray{mVersion};
 
   VersionOptional<basic::Ref<NiTimeController>, "3.0.0.0"_ver, Unbounded>
-      controller{version};
+      controller{mVersion};
 
   void read(std::istream &is) override;
   explicit NiObjectNet(Version version) : Versionable(version) {}
@@ -555,7 +555,7 @@ struct NiProperty : NiObjectNet {
 inline NiProperty::~NiProperty() = default;
 
 struct NiMaterialProperty : NiProperty {
-  VersionOptional<basic::Flags, "3.0.0.0"_ver, "10.0.1.2"_ver> flags{version};
+  VersionOptional<basic::Flags, "3.0.0.0"_ver, "10.0.1.2"_ver> flags{mVersion};
 
   // userVer < 26
   compound::Color3 ambientColor{1.0f, 1.0f, 1.0f};
@@ -574,67 +574,67 @@ struct NiMaterialProperty : NiProperty {
 };
 
 struct NiTexturingProperty : NiProperty {
-  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{version};
+  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{mVersion};
 
   VersionOptional<Enum::ApplyMode, "3.3.0.13"_ver, "20.1.0.1"_ver>
-      applyMode{version};
+      applyMode{mVersion};
 
   basic::UInt textureCount{};
 
   basic::Bool hasBaseTexture{};
-  compound::TexDesc baseTexture{version};
+  compound::TexDesc baseTexture{mVersion};
 
   basic::Bool hasDarkTexture{};
-  compound::TexDesc darkTexture{version};
+  compound::TexDesc darkTexture{mVersion};
 
   basic::Bool hasDetailTexture{};
-  compound::TexDesc detailTexture{version};
+  compound::TexDesc detailTexture{mVersion};
 
   basic::Bool hasGlossTexture{};
-  compound::TexDesc glossTexture{version};
+  compound::TexDesc glossTexture{mVersion};
 
   basic::Bool hasGlowTexture{};
-  compound::TexDesc glowTexture{version};
+  compound::TexDesc glowTexture{mVersion};
 
   // textureCount > 5
   VersionOptional<basic::Bool, "3.3.0.13"_ver, Unbounded>
-      hasBumpTexture{version};
+      hasBumpTexture{mVersion};
   struct BumpInfo : Versionable {
-    compound::TexDesc bumpTexture{version};
+    compound::TexDesc bumpTexture{mVersion};
     basic::Float lumaScale{};
     basic::Float lumaOffset{};
     compound::Matrix22 matrix{};
     explicit BumpInfo(Version version) : Versionable(version) {}
   };
-  std::optional<BumpInfo> bumpTextureData{version};
+  std::optional<BumpInfo> bumpTextureData{mVersion};
 
   // textureCount > 6
   basic::Bool hasDecal0Texture{};
-  compound::TexDesc decal0Texture{version};
+  compound::TexDesc decal0Texture{mVersion};
 
   // textureCount > 7
   basic::Bool hasDecal1Texture{};
-  compound::TexDesc decal1Texture{version};
+  compound::TexDesc decal1Texture{mVersion};
 
   // textureCount > 8
   basic::Bool hasDecal2Texture{};
-  compound::TexDesc decal2Texture{version};
+  compound::TexDesc decal2Texture{mVersion};
 
   // textureCount > 9
   basic::Bool hasDecal3Texture{};
-  compound::TexDesc decal3Texture{version};
+  compound::TexDesc decal3Texture{mVersion};
 
   VersionOptional<basic::UInt, "10.0.1.0"_ver, Unbounded>
-      numShaderTextures{version};
+      numShaderTextures{mVersion};
   VersionOptional<std::vector<compound::ShaderTexDesc>, "10.0.1.0"_ver, Unbounded>
-      shaderTextures{version};
+      shaderTextures{mVersion};
 
   void read(std::istream &is) override;
   explicit NiTexturingProperty(Version version) : NiProperty(version) {}
 };
 
 struct NiStencilProperty : NiProperty {
-  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{version};
+  VersionOptional<basic::Flags, Unbounded, "10.0.1.2"_ver> flags{mVersion};
   basic::Bool stencilEnabled{};
   Enum::StencilCompareMode stencilFunction{};
   basic::UInt stencilRef{};
@@ -725,20 +725,20 @@ struct NiAVObject : NiObjectNet {
   basic::Float scale = 1.0f;
 
   VersionOptional<compound::Vector3, Unbounded, "4.2.2.0"_ver>
-      velocity{version};
+      velocity{mVersion};
 
   // userVer2 <= 34
   basic::UInt numProperties = 0;
   NiPropertyArray properties{};
 
   VersionOptional<basic::Bool, "3.0.0.0"_ver, "4.2.2.0"_ver>
-      hasBoundingVolume{version};
+      hasBoundingVolume{mVersion};
 
   VersionOptional<compound::BoundingVolume, "3.0.0.0"_ver, "4.2.2.0"_ver>
-      boundingVolume{version};
+      boundingVolume{mVersion};
 
   VersionOptional<basic::Ref<NiCollisionObject>, "10.0.1.0"_ver, Unbounded>
-      collisionObject{version};
+      collisionObject{mVersion};
 
   void read(std::istream &is) override;
   explicit NiAVObject(Version version) : NiObjectNet(version) {}
@@ -757,7 +757,7 @@ struct NiDynamicEffect : NiAVObject {
   // userVer2 < 130
   // If true, effect is applied to affected nodes during rendering
   VersionOptional<basic::Bool, "10.1.0.106"_ver, Unbounded>
-      switchState{version, true};
+      switchState{mVersion, true};
 
   // The versioning is weird here. For our purposes, we can assume that
   // numAffectedNodes and affectedNodes both exist iff
@@ -766,9 +766,9 @@ struct NiDynamicEffect : NiAVObject {
   // different names, but we can support the complement of the requirement,
   // implemented using the empty member noAffectedNodes.
   VersionOptional<std::tuple<>, "3.3.0.14"_ver, "10.0.255.255"_ver>
-      noAffectedNodes{version};
-  basic::UInt numAffectedNodes{version};
-  std::vector<basic::Ptr<NiNode>> affectedNodes{version};
+      noAffectedNodes{mVersion};
+  basic::UInt numAffectedNodes{mVersion};
+  std::vector<basic::Ptr<NiNode>> affectedNodes{mVersion};
 
   void read(std::istream &is) override;
   explicit NiDynamicEffect(Version version) : NiAVObject(version) {}
@@ -807,22 +807,22 @@ struct NiAdditionalGeometryData : AbstractAdditionalGeometryData {
 };
 
 struct NiGeometryData : NiObject, Versionable {
-  VersionOptional<basic::Int, "10.1.0.114"_ver, Unbounded> groupID{version};
+  VersionOptional<basic::Int, "10.1.0.114"_ver, Unbounded> groupID{mVersion};
 
   basic::UShort numVertices{};
 
   // Used with NiCollision objects with OBB or TRI is set
-  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> keepFlags{version};
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> keepFlags{mVersion};
 
   VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded>
-      compressFlags{version};
+      compressFlags{mVersion};
 
   basic::Bool hasVertices = true;
   std::vector<compound::Vector3> vertices{};
 
   // Lower 5 bits replace numUVSets
   VersionOptional<Enum::VectorFlags, "10.0.1.0"_ver, Unbounded>
-      vectorFlags{version};
+      vectorFlags{mVersion};
 
   basic::Bool hasNormals{};
   std::vector<compound::Vector3> normals{};
@@ -838,19 +838,19 @@ struct NiGeometryData : NiObject, Versionable {
   basic::Bool hasVertexColors{};
   std::vector<compound::Color4> vertexColors{};
 
-  VersionOptional<basic::UShort, Unbounded, "4.2.2.0"_ver> numUVSets{version};
+  VersionOptional<basic::UShort, Unbounded, "4.2.2.0"_ver> numUVSets{mVersion};
 
-  VersionOptional<basic::Bool, Unbounded, "4.0.0.2"_ver> hasUV{version};
+  VersionOptional<basic::Bool, Unbounded, "4.0.0.2"_ver> hasUV{mVersion};
 
   // Texture coordinates with OpenGL convention
   // arr1 = (numUVSets & 63) | (vectorFlags & 63), arr2 = numVertices
   std::vector<std::vector<compound::TexCoord>> uvSets{};
 
   VersionOptional<Enum::ConsistencyType, "10.0.1.0"_ver, Unbounded>
-      consistencyFlags{version, Enum::ConsistencyType::CT_MUTABLE};
+      consistencyFlags{mVersion, Enum::ConsistencyType::CT_MUTABLE};
 
   VersionOptional<basic::Ref<AbstractAdditionalGeometryData>, "20.0.0.4"_ver, Unbounded>
-      additionalData{version};
+      additionalData{mVersion};
 
   void read(std::istream &is) override;
   explicit NiGeometryData(Version version) : Versionable(version) {}
@@ -868,7 +868,8 @@ inline NiTriBasedGeomData::~NiTriBasedGeomData() = default;
 struct NiTriShapeData : NiTriBasedGeomData {
   basic::UInt numTrianglePoints{};
 
-  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded> hasTriangles{version};
+  VersionOptional<basic::Bool, "10.1.0.0"_ver, Unbounded>
+      hasTriangles{mVersion};
   std::vector<compound::Triangle> triangles{};
 
   // Number of shared normal groups
@@ -883,7 +884,7 @@ struct NiTriStripsData : NiTriBasedGeomData {
   basic::UShort numStrips{};
   std::vector<basic::UShort> stripLengths{};
 
-  VersionOptional<basic::Bool, "10.0.1.3"_ver, Unbounded> hasPoints{version};
+  VersionOptional<basic::Bool, "10.0.1.3"_ver, Unbounded> hasPoints{mVersion};
   // arr1 = numStrips, arr2 = stripLengths
   std::vector<std::vector<basic::UShort>> points{};
 
@@ -905,10 +906,10 @@ struct NiSkinData : NiObject, Versionable {
 
   // Optionally link an NiSkinPartition for hardware-acceleration info
   VersionOptional<basic::Ref<NiSkinPartition>, "4.0.0.2"_ver, "10.1.0.0"_ver>
-      skinPartition{version};
+      skinPartition{mVersion};
 
   VersionOptional<basic::Bool, "4.2.1.0"_ver, Unbounded>
-      hasVertexWeights{version, true};
+      hasVertexWeights{mVersion, true};
 
   struct BoneData {
     // Offset of the skin from this bone in the bind position
@@ -931,7 +932,7 @@ struct NiSkinInstance : NiObject, Versionable {
   basic::Ref<NiSkinData> data{};
 
   VersionOptional<basic::Ref<NiSkinPartition>, "10.1.0.101"_ver, Unbounded>
-      skinPartition{version};
+      skinPartition{mVersion};
 
   basic::Ptr<NiNode> skeletonRoot{};
   basic::UInt numBones{};
@@ -945,10 +946,10 @@ struct NiGeometry : NiAVObject {
   basic::Ref<NiGeometryData> data{};
 
   VersionOptional<basic::Ref<NiSkinInstance>, "3.3.0.13"_ver, Unbounded>
-      skinInstance{version};
+      skinInstance{mVersion};
 
   VersionOptional<compound::MaterialData, "10.0.1.0"_ver, Unbounded>
-      materialData{version};
+      materialData{mVersion};
 
   void read(std::istream &is) override;
   explicit NiGeometry(Version version) : NiAVObject(version) {}
@@ -980,20 +981,20 @@ inline NiTexture::~NiTexture() = default;
 
 struct NiSourceTexture : NiTexture {
   struct ExternalTextureFile : Versionable {
-    compound::FilePath filename{version};
+    compound::FilePath filename{mVersion};
 
     VersionOptional<basic::Ref<NiObject>, "10.1.0.0"_ver, Unbounded>
-        unknownRef{version};
+        unknownRef{mVersion};
 
     explicit ExternalTextureFile(Version version) : Versionable(version) {}
   };
 
   struct InternalTextureFile : Versionable {
     VersionOptional<basic::Byte, Unbounded, "10.0.1.0"_ver>
-        unknownByte{version};
+        unknownByte{mVersion};
 
     VersionOptional<compound::FilePath, "10.1.0.0"_ver, Unbounded>
-        filename{version, compound::FilePath{version}};
+        filename{mVersion, compound::FilePath{mVersion}};
 
     // TODO: Support NiPixelFormat. I think it might never be used?
     // basic::Ref<NiPixelFormat> pixelData{};
@@ -1004,14 +1005,14 @@ struct NiSourceTexture : NiTexture {
   basic::Bool useExternal{true};
 
   std::variant<ExternalTextureFile, InternalTextureFile>
-      textureFileData{ExternalTextureFile{version}};
+      textureFileData{ExternalTextureFile{mVersion}};
 
   compound::FormatPrefs formatPrefs{};
 
   basic::Bool isStatic{true};
 
   VersionOptional<basic::Bool, "10.1.0.103"_ver, Unbounded>
-      directRender{version};
+      directRender{mVersion};
 
   void read(std::istream &is) override;
   explicit NiSourceTexture(Version version) : NiTexture(version) {}
@@ -1062,7 +1063,7 @@ inline Shape::~Shape() = default;
 
 struct TransformShape : bhk::Shape, Versionable {
   basic::Ref<bhk::Shape> shape{};
-  compound::HavokMaterial material{version};
+  compound::HavokMaterial material{mVersion};
   basic::Float radius{};
   std::array<basic::Byte, 8> unused{};
   compound::Matrix44 transform{};
@@ -1072,7 +1073,7 @@ struct TransformShape : bhk::Shape, Versionable {
 };
 
 struct SphereRepShape : bhk::Shape, Versionable {
-  compound::HavokMaterial material{version};
+  compound::HavokMaterial material{mVersion};
   basic::Float radius{};
 
   void read(std::istream &is) override;
@@ -1138,7 +1139,7 @@ struct ConvexTransformShape : bhk::TransformShape {
 
 struct ConvexSweepShape : bhk::Shape, Versionable {
   basic::Ref<bhk::Shape> shape{};
-  compound::HavokMaterial material{version};
+  compound::HavokMaterial material{mVersion};
   basic::Float radius{};
   compound::Vector3 unknown{};
 
@@ -1155,18 +1156,19 @@ inline BvTreeShape::~BvTreeShape() = default;
 // MOPP = Memory Optimized Partial Polytope
 struct MoppBvTreeShape : bhk::BvTreeShape, Versionable {
   basic::Ref<bhk::Shape> shape{};
-  compound::HavokMaterial material{version};
+  compound::HavokMaterial material{mVersion};
   std::array<basic::UInt, 2> unused{};
   basic::Float shapeScale{1.0f};
   // Calculated
   basic::UInt moppDataSize{};
 
   // Minimum of all vertices in the packed shape along each axis, minus 0.1
-  VersionOptional<compound::Vector3, "10.1.0.0"_ver, Unbounded> origin{version};
+  VersionOptional<compound::Vector3, "10.1.0.0"_ver, Unbounded>
+      origin{mVersion};
 
   // Quantization factor is 2^16 / scale. Should be 2^16 * 254 / (size + 0.2),
   // with size the largest dimension of the bbox of the packed shape.
-  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded> scale{version};
+  VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded> scale{mVersion};
 
   std::vector<basic::Byte> moppData{};
 
@@ -1183,7 +1185,7 @@ inline ShapeCollection::~ShapeCollection() = default;
 struct ListShape : bhk::ShapeCollection, Versionable {
   basic::UInt numSubShapes{};
   std::vector<basic::Ref<bhk::Shape>> subShapes{};
-  compound::HavokMaterial material{version};
+  compound::HavokMaterial material{mVersion};
   compound::hk::WorldObjCinfoProperty childShapeProperty{};
   compound::hk::WorldObjCinfoProperty childFilterProperty{};
   basic::UInt numUnknownInts{};
@@ -1213,7 +1215,7 @@ struct PackedNiTriStripsShape : bhk::ShapeCollection, Versionable {
 
 struct WorldObject : bhk::Serializable, Versionable {
   basic::Ref<bhk::Shape> shape{};
-  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknownInt{version};
+  VersionOptional<basic::UInt, Unbounded, "10.0.1.2"_ver> unknownInt{mVersion};
   compound::HavokFilter havokFilter{};
   std::array<basic::Byte, 4> unused1{};
   Enum::BroadPhaseType broadPhaseType{Enum::BroadPhaseType::BROAD_PHASE_ENTITY};
@@ -1324,22 +1326,22 @@ struct RigidBody : bhk::Entity {
   // Callback is raised every processContactCallbackDelay frames
   basic::UShort processContactCallbackDelay{0xffff};
 
-  VersionOptional<basic::UInt, "10.1.0.0"_ver, Unbounded> unknownInt1{version};
+  VersionOptional<basic::UInt, "10.1.0.0"_ver, Unbounded> unknownInt1{mVersion};
 
   VersionOptional<compound::HavokFilter, "10.1.0.0"_ver, Unbounded>
-      havokFilterCopy{version};
+      havokFilterCopy{mVersion};
 
   VersionOptional<std::array<basic::Byte, 4>, "10.1.0.0"_ver, Unbounded>
-      unused2{version};
+      unused2{mVersion};
 
   VersionOptional<Enum::hk::ResponseType, "10.1.0.0"_ver, Unbounded>
       collisionResponse2
-      {version, Enum::hk::ResponseType::RESPONSE_SIMPLE_CONTACT};
+      {mVersion, Enum::hk::ResponseType::RESPONSE_SIMPLE_CONTACT};
 
-  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> unusedByte2{version};
+  VersionOptional<basic::Byte, "10.1.0.0"_ver, Unbounded> unusedByte2{mVersion};
 
   VersionOptional<basic::UShort, "10.1.0.0"_ver, Unbounded>
-      processContactCallbackDelay2{version, 0xffff};
+      processContactCallbackDelay2{mVersion, 0xffff};
 
   // userVer2 <= 34
   basic::UInt unknownInt2{};
@@ -1360,14 +1362,14 @@ struct RigidBody : bhk::Entity {
   basic::Float restitution{0.4f};
 
   VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
-      maxLinearVelocity{version, 104.4f};
+      maxLinearVelocity{mVersion, 104.4f};
 
   VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
-      maxAngularVelocity{version, 31.57f};
+      maxAngularVelocity{mVersion, 31.57f};
 
   // userVer2 != 130
   VersionOptional<basic::Float, "10.1.0.0"_ver, Unbounded>
-      penetrationDepth{version, 0.15f};
+      penetrationDepth{mVersion, 0.15f};
 
   Enum::hk::MotionType motionSystem{Enum::hk::MotionType::MO_SYS_DYNAMIC};
   // userVer2 <= 34

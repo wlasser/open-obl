@@ -102,7 +102,7 @@ class Versionable {
   // is missing.
   static const Version Unbounded = 0xffffffffu;
   // TODO: compound::Header is preventing this from being protected with complicated versioning
-  /*const*/ Version version;
+  /*const*/ Version mVersion;
 
  protected:
   // Every versioned component should be wrapped in a VersionOptional, which has
@@ -302,7 +302,7 @@ class Versionable {
     }
   }; // class VersionEither
 
-  explicit Versionable(Version version) : version(version) {}
+  explicit Versionable(Version version) : mVersion(version) {}
 
   constexpr Versionable(const Versionable &other) = default;
   Versionable &operator=(const Versionable &other) = default;

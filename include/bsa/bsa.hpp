@@ -105,10 +105,10 @@ class BsaReader {
   class FolderAccessor {
     friend BsaReader;
    private:
-    uint64_t hash;
-    const BsaReader &owner;
+    uint64_t mHash;
+    const BsaReader &mOwner;
     FolderAccessor(uint64_t hash, const BsaReader &owner) :
-        hash(hash), owner(owner) {}
+        mHash(hash), mOwner(owner) {}
    public:
     FileData operator[](uint64_t) const;
     FileData operator[](std::string file) const;
@@ -183,7 +183,7 @@ class BsaIterator {
   using iterator_category = std::bidirectional_iterator_tag;
 
   explicit BsaIterator(BsaReader::RecordMap::const_iterator currentRecord,
-                       bool isEnd = false) : currentRecord(currentRecord) {
+                       bool isEnd = false) : mCurrentRec(currentRecord) {
     if (!isEnd) updateCurrentPublicRecord();
   }
 
@@ -201,8 +201,8 @@ class BsaIterator {
   }
 
  private:
-  BsaReader::RecordMap::const_iterator currentRecord{};
-  mutable bsa::FolderRecord currentPublicRecord{};
+  BsaReader::RecordMap::const_iterator mCurrentRec{};
+  mutable bsa::FolderRecord mCurrentPublicRec{};
 
   reference updateCurrentPublicRecord() const;
 };

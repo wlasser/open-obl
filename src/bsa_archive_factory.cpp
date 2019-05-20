@@ -17,8 +17,8 @@ class BsaArchive : public Ogre::Archive {
   // BsaReader loads on construction, but we want to defer reading the archive
   // until the load function is called, then support unloading the resource by
   // deleting the reader.
-  std::string name{};
-  std::optional<bsa::BsaReader> reader{};
+  std::string mBsaName{};
+  std::optional<bsa::BsaReader> mReader{};
 
   template<class T>
   std::shared_ptr<std::vector<T>>
@@ -68,7 +68,7 @@ std::shared_ptr<std::vector<T>>
 BsaArchive::find(const Ogre::String &pattern,
                  bool dirs,
                  const std::function<T(oo::Path)> &f) const {
-  if (!reader) throw std::runtime_error("Archive is not loaded");
+  if (!mReader) throw std::runtime_error("Archive is not loaded");
 
   // If the pattern involves a folder, then we match both the folder and the
   // filename, otherwise we match only the filename in any folder.
@@ -77,7 +77,7 @@ BsaArchive::find(const Ogre::String &pattern,
 
   auto ret{std::make_shared<std::vector<T>>()};
 
-  for (const auto &folder : *reader) {
+  for (const auto &folder : *mReader) {
     oo::Path folderPath{folder.name};
     if (dirs) {
       // Only want to check directories, not files
@@ -100,7 +100,7 @@ BsaArchive::find(const Ogre::String &pattern,
 }
 
 Ogre::FileInfo BsaArchive::getFileInfo(const oo::Path &path) const {
-  if (!reader) throw std::runtime_error("Archive is not loaded");
+  if (!mReader) throw std::runtime_error("Archive is not loaded");
 
   Ogre::FileInfo info;
   info.archive = this;
@@ -111,7 +111,7 @@ Ogre::FileInfo BsaArchive::getFileInfo(const oo::Path &path) const {
   if (path.has_filename()) {
     // BsaReader transparently decompresses data, so it will appear to the user
     // that all the data is uncompressed.
-    info.uncompressedSize = (*reader)[info.path][info.basename].size();
+    info.uncompressedSize = (*mReader)[info.path][info.basename].size();
     info.compressedSize = info.uncompressedSize;
   } else {
     // BSA archives do not have directory sizes. We could compute the total size
@@ -124,7 +124,7 @@ Ogre::FileInfo BsaArchive::getFileInfo(const oo::Path &path) const {
 
 BsaArchive::BsaArchive(const Ogre::String &name,
                        const Ogre::String &archType) :
-    Ogre::Archive(name, archType), name(name) {}
+    Ogre::Archive(name, archType), mBsaName(name) {}
 
 [[noreturn]] Ogre::DataStreamPtr
 BsaArchive::create(const Ogre::String &/*filename*/) {
@@ -136,11 +136,11 @@ BsaArchive::create(const Ogre::String &/*filename*/) {
 }
 
 bool BsaArchive::exists(const Ogre::String &filename) const {
-  if (!reader) throw std::runtime_error("Archive is not loaded");
+  if (!mReader) throw std::runtime_error("Archive is not loaded");
   oo::Path path{filename};
   const auto file{path.filename()};
   const auto folder{path.folder()};
-  return reader->contains(std::string{folder}, std::string{file});
+  return mReader->contains(std::string{folder}, std::string{file});
 }
 
 Ogre::StringVectorPtr BsaArchive::find(const Ogre::String &pattern,
@@ -168,11 +168,11 @@ BsaArchive::listFileInfo(bool recursive, bool dirs) const {
 }
 
 void BsaArchive::load() {
-  reader.emplace(name);
+  mReader.emplace(mBsaName);
 }
 
 void BsaArchive::unload() {
-  reader.reset();
+  mReader.reset();
 }
 
 Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
@@ -182,7 +182,7 @@ Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
   const auto file{path.filename()};
   const auto folder{path.folder()};
   return std::make_shared<BsaArchiveStream>(
-      filename, (*reader)[std::string{folder}][std::string{file}]);
+      filename, (*mReader)[std::string{folder}][std::string{file}]);
 }
 
 std::time_t

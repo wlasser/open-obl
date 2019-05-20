@@ -261,7 +261,7 @@ void Cell::destroyMovableObjects(Ogre::SceneNode *root) {
   for (auto *node : root->getChildren()) {
     destroyMovableObjects(dynamic_cast<Ogre::SceneNode *>(node));
   }
-};
+}
 
 void Cell::showNode(gsl::not_null<Ogre::SceneNode *> root) {
   root->setVisible(true, /*cascade=*/false);
@@ -569,14 +569,14 @@ void Cell::setNodeTransform(gsl::not_null<Ogre::SceneNode *> node,
                                           Ogre::Radian(data.aZ))};
   node->rotate(rotation, Ogre::SceneNode::TS_WORLD);
 
-  std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *node) {
-    for (Ogre::Node *child : node->getChildren()) {
+  std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *parent) {
+    for (Ogre::Node *child : parent->getChildren()) {
       if (auto *sceneChild{dynamic_cast<Ogre::SceneNode *>(child)}) {
         notify(sceneChild);
       }
     }
 
-    for (Ogre::MovableObject *obj : node->getAttachedObjects()) {
+    for (Ogre::MovableObject *obj : parent->getAttachedObjects()) {
       if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
         rigidBody->notify();
       }
@@ -592,14 +592,15 @@ void Cell::setNodeScale(gsl::not_null<Ogre::SceneNode *> node,
     const float scale{scalable.scale->data};
     node->setScale(scale, scale, scale);
 
-    std::function<void(Ogre::SceneNode *)> notify = [&](Ogre::SceneNode *node) {
-      for (Ogre::Node *child : node->getChildren()) {
+    using Visitor = std::function<void(Ogre::SceneNode *)>;
+    Visitor notify = [&](Ogre::SceneNode *parent) {
+      for (Ogre::Node *child : parent->getChildren()) {
         if (auto *sceneChild{dynamic_cast<Ogre::SceneNode *>(child)}) {
           notify(sceneChild);
         }
       }
 
-      for (Ogre::MovableObject *obj : node->getAttachedObjects()) {
+      for (Ogre::MovableObject *obj : parent->getAttachedObjects()) {
         if (auto *rigidBody{dynamic_cast<Ogre::RigidBody *>(obj)}) {
           rigidBody->setScale({scale, scale, scale});
         }

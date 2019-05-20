@@ -267,14 +267,14 @@ class GameSettings {
 template<class T>
 class GameSetting {
  private:
-  mutable T value;
-  mutable bool loaded{false};
-  mutable std::mutex mutables{};
-  /*const*/ std::string path;
+  mutable T mValue;
+  mutable bool mLoaded{false};
+  mutable std::mutex mMutables{};
+  /*const*/ std::string mPath;
 
  public:
   explicit GameSetting(std::string path, const T &defaultValue = {})
-      : value(defaultValue), path(std::move(path)) {}
+      : mValue(defaultValue), mPath(std::move(path)) {}
 
   GameSetting(const GameSetting &other) = default;
   GameSetting &operator=(const GameSetting &other) = default;
@@ -287,16 +287,16 @@ class GameSetting {
   // value is cached and any subsequent calls will return that value without a
   // load.
   T get() const noexcept {
-    if (!loaded) {
-      std::unique_lock lock{mutables};
-      auto opt = GameSettings::getSingleton().get<T>(path);
+    if (!mLoaded) {
+      std::unique_lock lock{mMutables};
+      auto opt = GameSettings::getSingleton().get<T>(mPath);
       if (opt) {
-        value = *opt;
-        loaded = true;
+        mValue = *opt;
+        mLoaded = true;
       }
-      loaded = true;
+      mLoaded = true;
     }
-    return value;
+    return mValue;
   }
 
   T operator*() const noexcept {

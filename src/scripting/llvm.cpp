@@ -420,9 +420,9 @@ LLVMVisitor::visitImpl<grammar::IfStatement>(const AstNode &node) {
   llvm::Value *cond{convertToBool(arg)};
   if (!cond) return nullptr;
 
-  const auto isElse = [](const std::unique_ptr<AstNode> &node) {
-    return node->is<grammar::ElseifStatement>()
-        || node->is<grammar::ElseStatement>();
+  const auto isElse = [](const std::unique_ptr<AstNode> &pNode) {
+    return pNode->is<grammar::ElseifStatement>()
+        || pNode->is<grammar::ElseStatement>();
   };
 
   // Iterator to start of the if body
