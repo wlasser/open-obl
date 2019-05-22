@@ -1,15 +1,6 @@
-#include "character_controller/animation.hpp"
-#include "character_controller/body.hpp"
-#include "fs/path.hpp"
-#include "mesh/entity.hpp"
-#include "mesh/subentity.hpp"
-#include "nifloader/animation.hpp"
 #include "record/records.hpp"
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/helpers.hpp"
-#include "settings.hpp"
-#include <OgreSkeletonManager.h>
-#include <OgreSkeletonInstance.h>
 
 namespace oo {
 

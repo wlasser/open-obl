@@ -2,7 +2,6 @@
 #define OPENOBLIVION_LIGHT_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
-#include "ogrebullet/rigid_body.hpp"
 
 namespace oo {
 
