@@ -12,7 +12,7 @@ target_include_directories(OpenOblivionMath INTERFACE
 target_link_libraries(OpenOblivionMath INTERFACE
         OpenOblivion::OpenOblivionNif
         Boost::boost
-        ${BULLET_LIBRARY}
+        Bullet::LinearMath
         OgreMain)
 
 install(TARGETS OpenOblivionMath EXPORT OpenOblivionMathTargets

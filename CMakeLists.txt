@@ -5,6 +5,8 @@ include(CheckIPOSupported)
 include(FetchContent)
 include(GNUInstallDirs)
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -69,7 +71,7 @@ if (OO_USE_LTO)
 endif ()
 
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
-find_package(Bullet 2.85 REQUIRED)
+find_package(Bullet 2.88 REQUIRED MODULE)
 find_package(LLVM 7.1.0 REQUIRED CONFIG)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Overlay Paging Terrain)
 find_package(SDL2 2.0 REQUIRED)
@@ -230,9 +232,6 @@ target_sources(OpenOblivion PRIVATE
         src/terrain_material_generator.cpp
         src/wrld.cpp)
 
-target_include_directories(OpenOblivion PRIVATE
-        ${BULLET_INCLUDE_DIRS})
-
 target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionBsa
         OpenOblivion::OpenOblivionFS
@@ -251,6 +250,8 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionSDL
         Boost::boost
         Boost::fiber
+        Bullet::BulletCollision
+        Bullet::BulletDynamics
         MicrosoftGSL::GSL
         OgreMain
         OgreGLSupport
@@ -261,5 +262,4 @@ target_link_libraries(OpenOblivion PRIVATE
         SDL2::SDL2main
         spdlog::spdlog
         stdc++fs
-        tloptional
-        ${BULLET_LIBRARIES})
+        tloptional)
