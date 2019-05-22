@@ -2,10 +2,8 @@
 #include "gui/strings.hpp"
 #include "gui/trait.hpp"
 #include "gui/xml.hpp"
-#include "settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <pugixml.hpp>
-#include <string>
 #include <unordered_map>
 
 namespace gui {

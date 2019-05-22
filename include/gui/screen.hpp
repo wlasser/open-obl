@@ -2,7 +2,6 @@
 #define OPENOBLIVION_GUI_SCREEN_HPP
 
 #include "gui/trait.hpp"
-#include "settings.hpp"
 #include <OgreRenderTarget.h>
 #include <OgreRoot.h>
 #include <OgreVector.h>

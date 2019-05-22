@@ -3,6 +3,7 @@
 #include "gui/elements/text.hpp"
 #include "gui/logging.hpp"
 #include "gui/screen.hpp"
+#include "settings.hpp"
 #include <OgreMaterialManager.h>
 #include <OgreOverlay.h>
 #include <OgreOverlayManager.h>
