@@ -193,14 +193,9 @@ class BsaReader {
   const uint32_t VERSION{0x67};
   const uint32_t OFFSET{0x24};
   /// @}
-  ArchiveFlag archiveFlags{ArchiveFlag::None};
-  uint32_t folderCount{};
-  uint32_t fileCount{};
-  // Total length of all folder names, including null-terminators but not
-  // including prefixed length bytes.
-  uint32_t totalFolderNameLength{};
-  uint32_t totalFileNameLength{};
-  FileType fileFlags{};
+
+  ArchiveFlag getArchiveFlags() const noexcept;
+  FileType getFileType() const noexcept;
 
  private:
   struct FolderRecord {
@@ -209,9 +204,19 @@ class BsaReader {
   };
 
   using RecordMap = std::map<HashResult, FolderRecord>;
-  RecordMap folderRecords;
-  mutable std::ifstream is;
-  mutable std::mutex isMutex{};
+  RecordMap mFolderRecords;
+  mutable std::ifstream mIs;
+  mutable std::mutex mMutex{};
+
+  ArchiveFlag mArchiveFlags{ArchiveFlag::None};
+  FileType mFileType{FileType::None};
+  uint32_t mNumFolders{};
+  uint32_t mNumFiles{};
+  // Total length of all folder names, including null-terminators but not
+  // including prefixed length bytes.
+  uint32_t mTotalFolderNameLength{};
+  uint32_t mTotalFileNameLength{};
+
   bool readHeader();
   std::pair<HashResult, BsaReader::FileRecord> readFileRecord();
   std::ifstream::pos_type readFolderRecord();
