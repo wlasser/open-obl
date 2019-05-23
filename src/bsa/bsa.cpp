@@ -1,67 +1,49 @@
 #include "bsa/bsa.hpp"
 #include "io/io.hpp"
 #include "io/string.hpp"
-#include <boost/format.hpp>
 #include <algorithm>
 #include <cctype>
-#include <cstring>
-#include <fstream>
-#include <memory>
-#include <string>
 #include <zlib.h>
 
 namespace bsa {
 
-// TODO: Use std::filesystem::path
-uint64_t genHash(std::string path, HashType hashType) {
-  uint64_t hash{0u};
-  uint32_t hash2{0u};
-
+HashResult genHash(std::string path, HashType type) noexcept {
   // Transform to a lowercase win path
-  std::string str{path};
-  std::transform(path.begin(), path.end(), str.begin(),
-                 [](unsigned char c) {
-                   return static_cast<unsigned char>(std::tolower(
-                       c == '/' ? '\\' : c));
-                 });
+  std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) {
+    return static_cast<unsigned char>(c == '/' ? '\\' : std::tolower(c));
+  });
 
-  // Presence of a . does not imply a file e.g. /foo.bar/baz is a
-  // valid folder. Moreover folders should not have a trailing slash, if they do
-  // then we ignore it.
-  if (hashType == HashType::Folder && str.back() == '\\') str.pop_back();
-  const auto begin{str.begin()};
-  auto end{str.end()};
-
-  // Empty string hashes to zero
-  if (str.begin() == str.end()) return 0u;
-
-  const auto extPos =
-      (hashType == HashType::Folder ? end : begin + str.find_last_of('.'));
-
-  // Hash 1
-  // Hash the file extension (if it exists) then strip it
-  for (auto c = extPos; c < end; ++c) {
-    hash = (hash * 0x1003f) + static_cast<uint8_t>(*c);
+  // Strip trailing slashes from folders and find the file extension of files.
+  std::string::iterator extPos;
+  if (type == HashType::Folder) {
+    while (!path.empty() && path.back() == '\\') path.pop_back();
+    extPos = path.end();
+  } else {
+    const auto dotPos{path.find_last_of('.')};
+    extPos = dotPos == std::string::npos ? path.end() : path.begin() + dotPos;
   }
-  end = extPos;
-  for (auto c = begin + 1; c < end - 2; ++c) {
-    hash2 = (hash2 * 0x1003f) + static_cast<uint8_t>(*c);
-  }
-  hash += hash2;
-  hash <<= 32u;
+  if (path.empty()) return 0u;
 
-  // Hash 2
-  hash2 = static_cast<uint32_t>(*(end - 1));
-  hash2 |= (end - begin > 2) ? static_cast<uint8_t>(*(end - 2)) << 8u : 0;
-  hash2 |= static_cast<uint8_t>(end - begin) << 16u;
-  hash2 |= static_cast<uint8_t>(*begin) << 24u;
+  // Hash the file extension and most of the filename, add the two together,
+  // then shift it to the upper four bytes.
+  uint64_t h1{impl::sdbmHash(extPos, path.end())};
+  uint64_t h2{impl::sdbmHash(path.begin() + 1, extPos - 2)};
+  uint64_t hash{(h1 + h2) << 32u};
 
-  if (extPos != str.end()) {
-    std::string ext(extPos, str.end());
-    if (ext == ".kf") hash2 |= 0x80;
-    else if (ext == ".nif") hash2 |= 0x8000;
-    else if (ext == ".dds") hash2 |= 0x8080;
-    else if (ext == ".wav") hash2 |= 0x80000000;
+  // Apply the second part of the hash, ignoring the file extension.
+  const auto begin{path.begin()}, end{extPos};
+  uint32_t hash2{begin == end ? 0u : static_cast<uint32_t>(*(end - 1))};
+  hash2 |= (end - begin <= 2) ? 0u : static_cast<uint32_t>(*(end - 2)) << 8u;
+  hash2 |= static_cast<uint32_t>(end - begin) << 16u;
+  hash2 |= static_cast<uint32_t>(*begin) << 24u;
+
+  // Modify the hash based on the file extension, if any.
+  if (extPos != path.end()) {
+    std::string ext(extPos, path.end());
+    if (ext == ".kf") hash2 |= 0x80u;
+    else if (ext == ".nif") hash2 |= 0x8000u;
+    else if (ext == ".dds") hash2 |= 0x8080u;
+    else if (ext == ".wav") hash2 |= 0x80000000u;
   }
 
   return hash + hash2;
@@ -69,20 +51,21 @@ uint64_t genHash(std::string path, HashType hashType) {
 
 BsaReader::FolderAccessor
 BsaReader::operator[](std::string folder) const {
-  return FolderAccessor(genHash(std::move(folder), HashType::Folder), *this);
+  return FolderAccessor(bsa::genHash(std::move(folder), HashType::Folder),
+                        *this);
 }
 
 FileData
 BsaReader::FolderAccessor::operator[](std::string file) const {
-  return (*this)[genHash(std::move(file), HashType::File)];
+  return (*this)[bsa::genHash(std::move(file), HashType::File)];
 }
 
 FileData
-BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
+BsaReader::FolderAccessor::operator[](HashResult fileHash) const {
   std::unique_lock lock{mOwner.isMutex};
 
-  const FolderRecord &folder{mOwner.folderRecords.at(mHash)};
-  const FileRecord &file{folder.files.at(fileHash)};
+  const BsaReader::FolderRecord &folder{mOwner.folderRecords.at(mHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
 
   // Unset bits higher than the toggle compression bit
   const uint32_t compressedSize{file.size & ~(3u << 30u)};
@@ -92,9 +75,7 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
 
   // Get size of uncompressed data if compressed, otherwise they're the same.
   uint32_t uncompressedSize{compressedSize};
-  if (file.compressed) {
-    io::readBytes(mOwner.is, uncompressedSize);
-  }
+  if (file.compressed) io::readBytes(mOwner.is, uncompressedSize);
 
   // Read data and uncompress if necessary
   std::vector<uint8_t> data(uncompressedSize);
@@ -109,11 +90,11 @@ BsaReader::FolderAccessor::operator[](uint64_t fileHash) const {
   return FileData{std::move(data), uncompressedSize};
 }
 
-uint32_t BsaReader::FolderAccessor::getSize(uint64_t fileHash) const {
+uint32_t BsaReader::FolderAccessor::getSize(HashResult fileHash) const {
   std::unique_lock lock{mOwner.isMutex};
 
-  const FolderRecord &folder{mOwner.folderRecords.at(mHash)};
-  const FileRecord &file{folder.files.at(fileHash)};
+  const BsaReader::FolderRecord &folder{mOwner.folderRecords.at(mHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
 
   if (!file.compressed) return file.size;
 
@@ -153,6 +134,60 @@ bool BsaReader::readHeader() {
   return true;
 }
 
+std::pair<uint64_t, BsaReader::FileRecord> BsaReader::readFileRecord() {
+  HashResult fileHash{};
+  uint32_t fileSize{};
+  uint32_t fileOffset{};
+  io::readBytes(is, fileHash);
+  io::readBytes(is, fileSize);
+  io::readBytes(is, fileOffset);
+  // (1<<30) bit toggles compression of the file from default
+  bool compressed{(fileSize & (1u << 30u)) != 0};
+  compressed ^= !!(archiveFlags & ArchiveFlag::Compressed);
+  // TODO: RetainFileNames?
+  return {fileHash, FileRecord{fileSize, fileOffset, "", compressed}};
+}
+
+std::ifstream::pos_type BsaReader::readFolderRecord() {
+  // Read folder record.
+  // The offset includes totalFileNameLength for some reason.
+  HashResult folderHash{};
+  uint32_t numFiles{};
+  uint32_t folderOffset{};
+  io::readBytes(is, folderHash);
+  io::readBytes(is, numFiles);
+  io::readBytes(is, folderOffset);
+
+  // Record the current position to return to later then jump to the file block.
+  const auto pos{is.tellg()};
+  is.seekg(folderOffset - totalFileNameLength);
+
+  BsaReader::FolderRecord folderRecord{};
+
+  // Read the folder name if available.
+  if (!!(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
+    std::string path{io::readBzString(is)};
+    // Transform Win path to *nix path
+    std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) {
+      return c == '\\' ? '/' : c;
+    });
+    folderRecord.name = path;
+  }
+
+  for (uint32_t j = 0; j < numFiles; ++j) {
+    folderRecord.files.emplace(readFileRecord());
+  }
+
+  folderRecords.emplace(folderHash, std::move(folderRecord));
+
+  // Record the offset to the end of the file block then jump back to the
+  // folder block.
+  const auto finalOffset{is.tellg()};
+  is.seekg(pos);
+
+  return finalOffset;
+}
+
 bool BsaReader::readRecords() {
   // The file record blocks are read during the folder record parse and not
   // after, so we have to jump over them again at the end. To do that we keep
@@ -160,55 +195,7 @@ bool BsaReader::readRecords() {
   auto largestOffset{is.tellg()};
 
   for (uint32_t i = 0; i < folderCount; ++i) {
-    // Read folder record
-    uint64_t hash{};
-    uint32_t count{};
-    // This includes totalFileNameLength for some reason
-    uint32_t offset{};
-    io::readBytes(is, hash);
-    io::readBytes(is, count);
-    io::readBytes(is, offset);
-
-    // Jump to file record block
-    FolderRecord folderRecord{};
-    const auto pos{is.tellg()};
-
-    // Correct the offset
-    is.seekg(offset - totalFileNameLength);
-
-    // Read folder name if available
-    if (!!(archiveFlags & ArchiveFlag::HasDirectoryNames)) {
-      auto path{io::readBzString(is)};
-      folderRecord.name = path;
-      // Transform Win path to *nix path
-      std::transform(path.begin(), path.end(), folderRecord.name.begin(),
-                     [](unsigned char c) { return c == '\\' ? '/' : c; });
-    }
-
-    for (uint32_t j = 0; j < count; ++j) {
-      // Read file record
-      uint64_t fileHash{};
-      uint32_t fileSize{};
-      uint32_t fileOffset{};
-      io::readBytes(is, fileHash);
-      io::readBytes(is, fileSize);
-      io::readBytes(is, fileOffset);
-      // (1<<30) bit toggles compression of the file from default
-      bool compressed{(fileSize & (1u << 30u)) != 0};
-      compressed ^= !!(archiveFlags & ArchiveFlag::Compressed);
-      // TODO: RetainFileNames?
-      folderRecord.files.emplace(fileHash, FileRecord{
-          fileSize, fileOffset, "", compressed});
-    }
-
-    // Add the folder
-    folderRecords.emplace(hash, std::move(folderRecord));
-
-    // Record offset
-    if (is.tellg() > largestOffset) largestOffset = is.tellg();
-
-    // Jump back to file record block
-    is.seekg(pos);
+    largestOffset = std::max(largestOffset, readFolderRecord());
   }
 
   // Jump past all the file records
@@ -229,14 +216,12 @@ bool BsaReader::readFileNames() {
   return true;
 }
 
-BsaReader::BsaReader(std::string filename) : is(filename) {
+BsaReader::BsaReader(const std::string &filename) : is(filename) {
   if (!is.good()) {
-    throw std::runtime_error(boost::str(
-        boost::format("Failed to open archive '%s'") % filename));
+    throw std::runtime_error("Failed to open archive '" + filename + "'");
   }
   if (!readHeader()) {
-    throw std::runtime_error(boost::str(
-        boost::format("Archive '%s' has invalid header") % filename));
+    throw std::runtime_error("Archive '" + filename + "' has invalid header");
   }
   readRecords();
   if (!!(archiveFlags & ArchiveFlag::HasFileNames)) {
@@ -245,24 +230,24 @@ BsaReader::BsaReader(std::string filename) : is(filename) {
 }
 
 bool BsaReader::contains(std::string folder, std::string file) const {
-  const auto folderHash{genHash(std::move(folder), HashType::Folder)};
+  const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
   const auto folderRecord{folderRecords.find(folderHash)};
   if (folderRecord == folderRecords.end()) return false;
 
-  const auto fileHash{genHash(std::move(file), HashType::File)};
+  const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
   const auto &files{folderRecord->second.files};
   return files.find(fileHash) != files.end();
 }
 
 std::optional<BsaReader::FileRecord>
 BsaReader::getRecord(std::string folder, std::string file) const {
-  const auto folderHash{genHash(std::move(folder), HashType::Folder)};
-  const auto fileHash{genHash(std::move(file), HashType::File)};
+  const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
+  const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
   return getRecord(folderHash, fileHash);
 }
 
 std::optional<BsaReader::FileRecord>
-BsaReader::getRecord(uint64_t folderHash, uint64_t fileHash) const {
+BsaReader::getRecord(HashResult folderHash, HashResult fileHash) const {
   const auto folderRecord{folderRecords.find(folderHash)};
   if (folderRecord == folderRecords.end()) return std::nullopt;
 

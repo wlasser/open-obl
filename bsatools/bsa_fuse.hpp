@@ -2,8 +2,8 @@
 #define OPENOBLIVION_BSATOOLS_BSA_FUSE_HPP
 
 #include "bsa/bsa.hpp"
+#include <memory>
 #include <optional>
-#include <string>
 #include <utility>
 
 /// \file bsa_fuse.hpp
@@ -13,9 +13,9 @@
 /// A very simple filesystem using FUSE that allows read-only mounting of BSA
 /// files. Mounted BSA files can be traversed and accessed as if they were a
 /// normal folder, even if the BSA is compressed; decompression occurs only
-/// when a file is read. The program uses OpenOblivionBsa internally, so only
-/// BSA files (namely those from TES4) supported by OpenOblivionBsa can be
-/// mounted.
+/// when a file is read. The program uses \ref OpenOblivionBsa internally, so
+/// only BSA files (namely those from TES4) supported by \ref OpenOblivionBsa
+/// can be mounted.
 namespace bsa {
 
 class FolderNode;

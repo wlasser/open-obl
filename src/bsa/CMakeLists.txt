@@ -12,7 +12,7 @@ target_sources(OpenOblivionBsa PRIVATE
         ${CMAKE_SOURCE_DIR}/include/bsa/bsa.hpp
         bsa.cpp)
 
-target_link_libraries(OpenOblivionBsa PRIVATE Boost::boost ZLIB::ZLIB
+target_link_libraries(OpenOblivionBsa PRIVATE ZLIB::ZLIB
         PUBLIC OpenOblivion::OpenOblivionIO)
 
 install(TARGETS OpenOblivionBsa EXPORT OpenOblivionBsaTargets
