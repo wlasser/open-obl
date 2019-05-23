@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.13)
 project(OpenOblivion)
 
 include(CheckIPOSupported)
@@ -13,10 +13,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(OO_USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
 option(OO_USE_LTO "Use link-time optimization (LTO)" OFF)
+option(OO_USE_EXTERNAL_BULLET "Find Bullet using find_package instead of FetchContent" OFF)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(FETCHCONTENT_QUIET OFF)
 
+FetchContent_Declare(Bullet
+        GIT_REPOSITORY https://github.com/bulletphysics/bullet3.git
+        GIT_TAG 2.88)
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v2.7.0)
@@ -32,6 +37,66 @@ FetchContent_Declare(pugixml
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG 74dbf4cf702b49c98642c9afe74d114a238a6a07)
+
+if (OO_USE_EXTERNAL_BULLET)
+    find_package(Bullet 2.88 REQUIRED MODULE)
+else ()
+    FetchContent_GetProperties(Bullet)
+    if (NOT Bullet_populated)
+        FetchContent_Populate(Bullet)
+        set(USE_GRAPHICAL_BENCHMARK OFF CACHE STRING "Use Bullet Graphical Benchmark")
+        set(BUILD_CPU_DEMOS OFF CACHE STRING "Build Bullet CPU examples")
+        set(USE_GLUT OFF CACHE STRING "Use Glut")
+        set(BUILD_BULLET3 OFF CACHE STRING "Whether to build Bullet 3")
+        set(BUILD_PYBULLET OFF CACHE STRING "Whether to build pybullet")
+        set(BUILD_ENET OFF CACHE STRING "Build Bullet with enet UDP networking support")
+        set(BUILD_CLSOCKET OFF CACHE STRING "Build Bullet with enet TCP networking support")
+        set(BUILD_EGL OFF CACHE STRING "Build OpenGL/EGL for Bullet")
+        set(BUILD_BULLET2_DEMOS OFF CACHE STRING "Build Bullet 2 demos")
+        set(BUILD_EXTRAS OFF CACHE STRING "Build Bullet extras")
+        set(INSTALL_LIBS ON CACHE STRING "Whether to install the Bullet libraries")
+        set(BUILD_UNIT_TESTS OFF CACHE STRING "Build Bullet unit tests")
+        add_subdirectory(${bullet_SOURCE_DIR} ${bullet_BINARY_DIR})
+
+        add_library(Bullet::LinearMath ALIAS LinearMath)
+        target_include_directories(LinearMath PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
+                $<INSTALL_INTERFACE:include>)
+        install(TARGETS LinearMath
+                EXPORT Bullet_LinearMathTargets
+                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        install(EXPORT Bullet_LinearMathTargets
+                FILE Bullet_LinearMathTargets.cmake
+                NAMESPACE Bullet::
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+        add_library(Bullet::BulletCollision ALIAS BulletCollision)
+        target_include_directories(BulletCollision PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
+                $<INSTALL_INTERFACE:include>)
+        target_link_libraries(BulletCollision PUBLIC LinearMath)
+        install(TARGETS BulletCollision
+                EXPORT Bullet_BulletCollisionTargets
+                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        install(EXPORT Bullet_BulletCollisionTargets
+                FILE Bullet_BulletCollisionTargets.cmake
+                NAMESPACE Bullet::
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+
+        add_library(Bullet::BulletDynamics ALIAS BulletDynamics)
+        target_include_directories(BulletDynamics PUBLIC
+                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
+                $<INSTALL_INTERFACE:include>)
+        target_link_libraries(BulletDynamics PUBLIC LinearMath BulletCollision)
+        install(TARGETS BulletDynamics
+                EXPORT Bullet_BulletDynamicsTargets
+                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+        install(EXPORT Bullet_BulletDynamicsTargets
+                FILE Bullet_BulletDynamicsTargets.cmake
+                NAMESPACE Bullet::
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+    endif ()
+endif ()
 
 FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
@@ -71,7 +136,6 @@ if (OO_USE_LTO)
 endif ()
 
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
-find_package(Bullet 2.88 REQUIRED MODULE)
 find_package(LLVM 7.1.0 REQUIRED CONFIG)
 find_package(OGRE 1.11 REQUIRED COMPONENTS Overlay Paging Terrain)
 find_package(SDL2 2.0 REQUIRED)
@@ -233,6 +297,8 @@ target_sources(OpenOblivion PRIVATE
         src/wrld.cpp)
 
 target_link_libraries(OpenOblivion PRIVATE
+        Bullet::BulletCollision
+        Bullet::BulletDynamics
         OpenOblivion::OpenOblivionBsa
         OpenOblivion::OpenOblivionFS
         OpenOblivion::OpenOblivionGui
@@ -250,8 +316,6 @@ target_link_libraries(OpenOblivion PRIVATE
         OpenOblivion::OpenOblivionSDL
         Boost::boost
         Boost::fiber
-        Bullet::BulletCollision
-        Bullet::BulletDynamics
         MicrosoftGSL::GSL
         OgreMain
         OgreGLSupport

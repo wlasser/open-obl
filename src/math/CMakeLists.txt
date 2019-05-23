@@ -6,8 +6,7 @@ add_library(OpenOblivion::OpenOblivionMath ALIAS OpenOblivionMath)
 
 target_include_directories(OpenOblivionMath INTERFACE
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        ${BULLET_INCLUDE_DIRS})
+        $<INSTALL_INTERFACE:include>)
 
 target_link_libraries(OpenOblivionMath INTERFACE
         OpenOblivion::OpenOblivionNif
