@@ -1,6 +1,6 @@
 #include "bsa/bsa.hpp"
-#include "bsa_archive_factory.hpp"
 #include "fs/path.hpp"
+#include "ogre/bsa_archive_factory.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
 #include <gsl/gsl>
 #include <ctime>

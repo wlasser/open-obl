@@ -182,7 +182,6 @@ target_sources(OpenOblivion PRIVATE
         include/atmosphere.hpp
         include/audio.hpp
         include/bitflag.hpp
-        include/bsa_archive_factory.hpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
         include/cell_cache.hpp
@@ -246,7 +245,6 @@ target_sources(OpenOblivion PRIVATE
         src/application_context.cpp
         src/atmosphere.cpp
         src/audio.cpp
-        src/bsa_archive_factory.cpp
         src/bullet/collision.cpp
         src/cell_cache.cpp
         src/character_controller/animation.cpp
