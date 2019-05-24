@@ -4,8 +4,9 @@
 
 namespace oo {
 
-template<> oo::CiteRecordTrait<record::STAT>::type
-citeRecord(const record::STAT &baseRec, tl::optional<RefId> refId) {
+auto
+CiteRecordImpl<record::STAT>::operator()(const record::STAT &baseRec,
+                                         tl::optional<RefId> refId) -> type {
   record::REFR_STAT::Raw rawRefRec{};
   rawRefRec.baseId = record::NAME(oo::BaseId{baseRec.mFormId});
   const record::REFR_STAT refRec(rawRefRec,
@@ -17,17 +18,18 @@ citeRecord(const record::STAT &baseRec, tl::optional<RefId> refId) {
   return refRec;
 }
 
-template<> oo::ReifyRecordTrait<record::REFR_STAT>::type
-reifyRecord(const record::REFR_STAT &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            oo::ReifyRecordTrait<record::REFR_STAT>::resolvers resolvers,
-            Ogre::SceneNode *rootNode) {
-  const auto &statRes{oo::getResolver<record::STAT>(resolvers)};
+auto ReifyRecordImpl<record::REFR_STAT>::operator()(
+    const record::REFR_STAT &refRec,
+    Ogre::SceneManager *scnMgr,
+    btDiscreteDynamicsWorld *world,
+    resolvers res,
+    Ogre::SceneNode *rootNode) -> type {
+  const auto &statRes{oo::getResolver<record::STAT>(res)};
   auto baseRec{statRes.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
 
-  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world,
+  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId},
+                       gsl::make_not_null(scnMgr), gsl::make_not_null(world),
                        rootNode);
 }
 

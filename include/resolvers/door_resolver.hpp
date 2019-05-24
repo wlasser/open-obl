@@ -8,28 +8,20 @@ namespace oo {
 using DoorResolver = Resolver<record::DOOR>;
 using RefrDoorResolver = Resolver<record::REFR_DOOR, RefId>;
 
-template<>
-struct CiteRecordTrait<record::DOOR> {
+template<> struct CiteRecordImpl<record::DOOR> {
   using type = record::REFR_DOOR;
+  type operator()(const record::DOOR &baseRec, tl::optional<RefId> refId);
 };
 
-template<>
-struct ReifyRecordTrait<record::REFR_DOOR> {
+template<> struct ReifyRecordImpl<record::REFR_DOOR> {
   using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::DOOR>;
+  type operator()(const record::REFR_DOOR &refRec,
+                  Ogre::SceneManager *scnMgr,
+                  btDiscreteDynamicsWorld *world,
+                  resolvers res,
+                  Ogre::SceneNode *rootNode);
 };
-
-template<>
-CiteRecordTrait<record::DOOR>::type
-citeRecord(const record::DOOR &baseRec, tl::optional<RefId> refId);
-
-template<>
-ReifyRecordTrait<record::REFR_DOOR>::type
-reifyRecord(const record::REFR_DOOR &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_DOOR>::resolvers resolvers,
-            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

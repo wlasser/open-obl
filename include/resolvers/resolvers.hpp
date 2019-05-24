@@ -117,18 +117,19 @@ class Resolver {
   bool insert(IdType baseId, const R &rec);
 };
 
-template<> class Resolver<record::CELL, oo::BaseId>;
-template<> class Resolver<record::WRLD, oo::BaseId>;
-
 /// Used for specializing the return type of citeRecord.
-/// This should be specialized for each type that citeRecord is specialized for
-/// in order to specify the return type of that specialization. Every
-/// specialization of CiteRecordTrait should define a public typedef or type
-/// alias called `type` for a reference record type, namely
-/// record::ACHR, record::ACRE, or any of the record::REFR_xxxx types.
+/// Provides the implementation of `oo::citeRecord<R>` as well as specifying its
+/// return type. This should be specialized for each record type for which
+/// citation is possible in order to provide the mechanism for citation and
+/// provide details about the signature of `oo::citeRecord` for that record
+/// type. In particular, every specialization of `CiteRecordImpl` should define
+/// - a public typedef or type alias called `type` for a referencce record type,
+///   namely `record::ACHR`, `record::ACRE`, or any of the `record::REFR_xxxx`
+///   types.
+/// - an `operator()` taking the same arguments as `oo::citeRecord` instantiated
+///   with the record type and returning `type` that performs the citation.
 /// \see reference_records.hpp
-template<class R>
-struct CiteRecordTrait {};
+template<class R> struct CiteRecordImpl {};
 
 /// Construct a reference record representing a concrete realization of a base
 /// record.
@@ -146,29 +147,33 @@ struct CiteRecordTrait {};
 ///         where it makes sense.
 /// \remark By a 'reference record' it is meant a record::ACHR, record::ACRE, or
 ///         any of the record::REFR_xxxx types. \see reference_records.hpp
-template<class R>
-typename CiteRecordTrait<R>::type
-citeRecord(const R &baseRec, tl::optional<RefId> refId);
+template<class R> typename CiteRecordImpl<R>::type
+citeRecord(const R &baseRec, tl::optional<RefId> refId) {
+  return oo::CiteRecordImpl<R>{}(baseRec, refId);
+}
 
-/// Used for specializing the return type of reifyRecord and the resolvers that
-/// must be supplied.
-/// This should be specialized for each type that reifyRecord is specialized for
-/// in order to specify the return type of that specialization. Every
-/// specialization of ReifyRecordTrait should define
+/// Provides the implementation of `oo::reifyRecord<R>` as well as specifying
+/// its return type and the resolvers that must be supplied.
+/// This should be specialized for each record type for which reification is
+/// possible, in order to provide the mechanism for that reification and provide
+/// details about the signature of `oo::reifyRecord` for that record type.
+/// In particular, every specialization of `ReifyRecordImpl` should define
 /// - a public typedef or type alias called `type` equal to the desired return
-///   type
+///   type.
 /// - a public typedef or type alias called `resolvers` equal to a tuple of
-///   const lvalue references to instantiations of Resolver<>. The tuple shall
+///   const lvalue references to instantiations of `Resolver<>`. The tuple shall
 ///   not have more than one element of the same type.
-template<class R>
-struct ReifyRecordTrait {};
+/// - an `operator()` taking the same arguments as `oo::reifyRecord`
+///   instantiated with the record type and returning `type` that performs the
+///   reification.
+template<class R> struct ReifyRecordImpl {};
 
 /// Construct a concrete realization of a reference record within the scope of
 /// the rendering engine.
 /// \tparam R A reference record.
 /// \param refRec The reference record to reify.
 /// \param scnMgr The reified object is constructed in and owned by the
-///               Ogre::SceneManager; it is not the caller's responsibility to
+///               `Ogre::SceneManager`; it is not the caller's responsibility to
 ///               known how to link the possible components of the type together
 ///               in a scene.
 /// \param world The physics world is notified of any added rigid bodies; it is
@@ -177,12 +182,13 @@ struct ReifyRecordTrait {};
 ///                  `ReifyRecordTrait<R>`.
 /// \param rootNode An optional root node to the attach the object too. If this
 ///                 is left as `nullptr` then the root of the `scnMgr` is used.
-template<class R>
-typename ReifyRecordTrait<R>::type
-reifyRecord(const R &refRec, gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            typename ReifyRecordTrait<R>::resolvers resolvers,
-            Ogre::SceneNode *rootNode = nullptr);
+template<class R> typename ReifyRecordImpl<R>::type
+reifyRecord(const R &refRec, Ogre::SceneManager *scnMgr,
+            btDiscreteDynamicsWorld *world,
+            typename ReifyRecordImpl<R>::resolvers resolvers,
+            Ogre::SceneNode *rootNode = nullptr) {
+  return oo::ReifyRecordImpl<R>{}(refRec, scnMgr, world, resolvers, rootNode);
+}
 
 /// Metafunction mapping `Record` to `oo::Resolver<Record>`.
 /// An optional `Id` can be specified to change the backing id from `oo::BaseId`

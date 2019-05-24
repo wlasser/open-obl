@@ -1044,15 +1044,24 @@ void World::makeDistantCellGrid() {
   }
 }
 
-oo::ReifyRecordTrait<record::WRLD>::type
-reifyRecord(const record::WRLD &refRec,
-            ReifyRecordTrait<record::WRLD>::resolvers resolvers) {
+auto ReifyRecordImpl<record::WRLD>::operator()(
+    const record::WRLD &refRec,
+    Ogre::SceneManager *,
+    btDiscreteDynamicsWorld *,
+    resolvers res,
+    Ogre::SceneNode *) -> type {
   const oo::BaseId baseId{refRec.mFormId};
   std::string name{refRec.name ? refRec.name->data : ""};
 
-  auto world{std::make_shared<oo::World>(baseId, name, resolvers)};
+  auto world{std::make_shared<oo::World>(baseId, name, res)};
 
   return world;
+}
+
+ReifyRecordImpl<record::WRLD>::type
+reifyRecord(const record::WRLD &refRec,
+            ReifyRecordImpl<record::WRLD>::resolvers res) {
+  return oo::reifyRecord(refRec, nullptr, nullptr, res, nullptr);
 }
 
 } // namespace oo

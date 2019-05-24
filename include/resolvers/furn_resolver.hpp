@@ -8,24 +8,20 @@ namespace oo {
 using FurnResolver = Resolver<record::FURN>;
 using RefrFurnResolver = Resolver<record::REFR_FURN, RefId>;
 
-template<> struct CiteRecordTrait<record::FURN> {
+template<> struct CiteRecordImpl<record::FURN> {
   using type = record::REFR_FURN;
+  type operator()(const record::FURN &baseRec, tl::optional<RefId> refId);
 };
 
-template<> struct ReifyRecordTrait<record::REFR_FURN> {
+template<> struct ReifyRecordImpl<record::REFR_FURN> {
   using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::FURN>;
+  type operator()(const record::REFR_FURN &refRec,
+                  Ogre::SceneManager *scnMgr,
+                  btDiscreteDynamicsWorld *world,
+                  resolvers res,
+                  Ogre::SceneNode *rootNode);
 };
-
-template<> CiteRecordTrait<record::FURN>::type
-citeRecord(const record::FURN &baseRec, tl::optional<RefId> refId);
-
-template<> ReifyRecordTrait<record::REFR_FURN>::type
-reifyRecord(const record::REFR_FURN &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_FURN>::resolvers resolvers,
-            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

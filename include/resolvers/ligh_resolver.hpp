@@ -8,28 +8,21 @@ namespace oo {
 using LighResolver = Resolver<record::LIGH>;
 using RefrLighResolver = Resolver<record::REFR_LIGH, RefId>;
 
-template<>
-struct CiteRecordTrait<record::LIGH> {
+template<> struct CiteRecordImpl<record::LIGH> {
   using type = record::REFR_LIGH;
+  type operator()(const record::LIGH &baseRec, tl::optional<RefId> refId);
 };
 
 template<>
-struct ReifyRecordTrait<record::REFR_LIGH> {
+struct ReifyRecordImpl<record::REFR_LIGH> {
   using type = Ogre::SceneNode *;
   using resolvers = ResolverTuple<record::LIGH>;
+  type operator()(const record::REFR_LIGH &refRec,
+                  Ogre::SceneManager *scnMgr,
+                  btDiscreteDynamicsWorld *world,
+                  resolvers res,
+                  Ogre::SceneNode *rootNode);
 };
-
-template<>
-CiteRecordTrait<record::LIGH>::type
-citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId);
-
-template<>
-ReifyRecordTrait<record::REFR_LIGH>::type
-reifyRecord(const record::REFR_LIGH &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers,
-            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

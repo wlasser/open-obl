@@ -453,23 +453,23 @@ void ExteriorCell::setTerrain(std::array<Ogre::Terrain *, 4> terrain) {
   mTerrainCollisionObject->setWorldTransform(trans);
 }
 
-oo::ReifyRecordTrait<record::CELL>::type
-reifyRecord(const record::CELL &refRec,
-            Ogre::SceneManager *scnMgr,
-            btDiscreteDynamicsWorld *physicsWorld,
-            oo::ReifyRecordTrait<record::CELL>::resolvers resolvers) {
-  const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
+auto ReifyRecordImpl<record::CELL>::operator()(const record::CELL &refRec,
+                                               Ogre::SceneManager *scnMgr,
+                                               btDiscreteDynamicsWorld *world,
+                                               resolvers res,
+                                               Ogre::SceneNode *) -> type {
+  const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(res)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
 
   const oo::BaseId baseId{refRec.mFormId};
   std::string name{refRec.name ? refRec.name->data : ""};
 
   auto cell = [&]() -> std::shared_ptr<oo::Cell> {
-    if (scnMgr && physicsWorld) {
+    if (scnMgr && world) {
       return std::make_shared<oo::ExteriorCell>(
           baseId, name,
           gsl::make_not_null(scnMgr),
-          gsl::make_not_null(physicsWorld));
+          gsl::make_not_null(world));
     } else {
       return std::make_shared<oo::InteriorCell>(
           baseId, name,
@@ -477,12 +477,19 @@ reifyRecord(const record::CELL &refRec,
     }
   }();
 
-  return oo::populateCell(std::move(cell), refRec, std::move(resolvers));
+  return oo::populateCell(std::move(cell), refRec, std::move(res));
 }
 
-ReifyRecordTrait<record::CELL>::type
+ReifyRecordImpl<record::CELL>::type
+reifyRecord(const record::CELL &refRec, Ogre::SceneManager *scnMgr,
+            btDiscreteDynamicsWorld *world,
+            ReifyRecordImpl<record::CELL>::resolvers res) {
+  return oo::reifyRecord(refRec, scnMgr, world, res, nullptr);
+}
+
+ReifyRecordImpl<record::CELL>::type
 populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
-             ReifyRecordTrait<record::CELL>::resolvers resolvers) {
+             ReifyRecordImpl<record::CELL>::resolvers resolvers) {
   const auto &cellRes{std::get<const oo::Resolver<record::CELL> &>(resolvers)};
 
   if (auto lighting{refRec.lighting}; lighting) {

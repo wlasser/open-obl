@@ -144,8 +144,7 @@ WrldResolver::WrldVisitor::readRecord<record::CELL>(oo::EspAccessor &accessor);
 
 class World;
 
-template<>
-struct ReifyRecordTrait<record::WRLD> {
+template<> struct ReifyRecordImpl<record::WRLD> {
   using type = std::shared_ptr<World>;
   // WRLD resolver must be nonconst as World may need to load() a parent
   // worldspace.
@@ -157,17 +156,20 @@ struct ReifyRecordTrait<record::WRLD> {
                               const oo::Resolver<record::CLMT> &,
                               oo::Resolver<record::LAND> &,
                               const oo::Resolver<record::WATR> &>>()));
+  type operator()(const record::WRLD &refRec,
+                  Ogre::SceneManager *,
+                  btDiscreteDynamicsWorld *,
+                  resolvers res,
+                  Ogre::SceneNode *);
 };
 
-/// Not a specialization because passing an Ogre::SceneManager doesn't make
-/// sense.
-ReifyRecordTrait<record::WRLD>::type
+ReifyRecordImpl<record::WRLD>::type
 reifyRecord(const record::WRLD &refRec,
-            ReifyRecordTrait<record::WRLD>::resolvers resolvers);
+            ReifyRecordImpl<record::WRLD>::resolvers res);
 
 class World {
  public:
-  using Resolvers = ReifyRecordTrait<record::WRLD>::resolvers;
+  using Resolvers = ReifyRecordImpl<record::WRLD>::resolvers;
   using PhysicsWorld = btDiscreteDynamicsWorld;
 
   gsl::not_null<Ogre::SceneManager *> getSceneManager() const;

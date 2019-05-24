@@ -10,8 +10,9 @@
 
 namespace oo {
 
-template<> oo::CiteRecordTrait<record::LIGH>::type
-citeRecord(const record::LIGH &baseRec, tl::optional<RefId> refId) {
+auto
+CiteRecordImpl<record::LIGH>::operator()(const record::LIGH &baseRec,
+                                         tl::optional<RefId> refId) -> type {
   record::REFR_LIGH::Raw rawRefRec{};
   rawRefRec.baseId = record::NAME(oo::BaseId{baseRec.mFormId});
   const record::REFR_LIGH refRec(rawRefRec,
@@ -38,13 +39,13 @@ template<class F> Ogre::SceneNode *findChild(Ogre::SceneNode *parent, F &&f) {
 
 } // namespace oo
 
-template<> oo::ReifyRecordTrait<record::REFR_LIGH>::type
-reifyRecord(const record::REFR_LIGH &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            oo::ReifyRecordTrait<record::REFR_LIGH>::resolvers resolvers,
-            Ogre::SceneNode *rootNode) {
-  const auto &lighRes{oo::getResolver<record::LIGH>(resolvers)};
+auto ReifyRecordImpl<record::REFR_LIGH>::operator()(
+    const record::REFR_LIGH &refRec,
+    Ogre::SceneManager *scnMgr,
+    btDiscreteDynamicsWorld *world,
+    resolvers res,
+    Ogre::SceneNode *rootNode) -> type {
+  const auto &lighRes{oo::getResolver<record::LIGH>(res)};
   auto baseRec{lighRes.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
 
@@ -91,7 +92,9 @@ reifyRecord(const record::REFR_LIGH &refRec,
   }
 
   auto *baseNode{oo::insertNif(*baseRec, oo::RefId{refRec.mFormId},
-                               scnMgr, world, rootNode)};
+                               gsl::make_not_null(scnMgr),
+                               gsl::make_not_null(world),
+                               rootNode)};
   if (!baseNode) {
     baseNode = rootNode ? rootNode->createChildSceneNode()
                         : scnMgr->getRootSceneNode()->createChildSceneNode();

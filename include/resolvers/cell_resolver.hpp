@@ -316,29 +316,30 @@ class ExteriorCell : public Cell {
   void setVisibleImpl(bool visible) override;
 };
 
-template<>
-struct ReifyRecordTrait<record::CELL> {
+template<> struct ReifyRecordImpl<record::CELL> {
   using type = std::shared_ptr<Cell>;
   using resolvers = decltype(std::tuple_cat(
       std::declval<Resolver<record::CELL>::BaseResolverContext>(),
       std::declval<Resolver<record::CELL>::RefrResolverContext>(),
       std::declval<std::tuple<const oo::Resolver<record::CELL> &>>()));
+  /// \remark Pass nullptr for the Ogre::SceneManager and btDiscreteDynamicsWorld
+  ///         to create a SceneManager and physics world for the cell.
+  type operator()(const record::CELL &refRec,
+                  Ogre::SceneManager *scnMgr,
+                  btDiscreteDynamicsWorld *world,
+                  resolvers res,
+                  Ogre::SceneNode *);
 };
 
-/// Not a specialization because passing an Ogre::SceneManager is only necessary
-/// for exterior cells.
-/// \remark Pass nullptr for the Ogre::SceneManager and btDiscreteDynamicsWorld
-///         to create a SceneManager and physics world for the cell.
-ReifyRecordTrait<record::CELL>::type
-reifyRecord(const record::CELL &refRec,
-            Ogre::SceneManager *scnMgr,
-            btDiscreteDynamicsWorld *physicsWorld,
-            ReifyRecordTrait<record::CELL>::resolvers resolvers);
+ReifyRecordImpl<record::CELL>::type
+reifyRecord(const record::CELL &refRec, Ogre::SceneManager *scnMgr,
+            btDiscreteDynamicsWorld *world,
+            ReifyRecordImpl<record::CELL>::resolvers res);
 
 /// Parts of reifyRecord common to interior and exterior cells.
-ReifyRecordTrait<record::CELL>::type
+ReifyRecordImpl<record::CELL>::type
 populateCell(std::shared_ptr<oo::Cell> cell, const record::CELL &refRec,
-             ReifyRecordTrait<record::CELL>::resolvers resolvers);
+             ReifyRecordImpl<record::CELL>::resolvers resolvers);
 
 template<class Refr, class ...Res>
 void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {

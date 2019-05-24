@@ -9,24 +9,20 @@ namespace oo {
 using Npc_Resolver = Resolver<record::NPC_>;
 using RefrNpc_Resolver = Resolver<record::REFR_NPC_, RefId>;
 
-template<> struct CiteRecordTrait<record::NPC_> {
+template<> struct CiteRecordImpl<record::NPC_> {
   using type = record::REFR_NPC_;
+  type operator()(const record::NPC_ &baseRec, tl::optional<RefId> refId);
 };
 
-template<> struct ReifyRecordTrait<record::REFR_NPC_> {
+template<> struct ReifyRecordImpl<record::REFR_NPC_> {
   using type = std::unique_ptr<oo::Character>;
   using resolvers = ResolverTuple<record::NPC_, record::RACE>;
+  type operator()(const record::REFR_NPC_ &refRec,
+                  Ogre::SceneManager *scnMgr,
+                  btDiscreteDynamicsWorld *world,
+                  resolvers res,
+                  Ogre::SceneNode *);
 };
-
-template<> CiteRecordTrait<record::NPC_>::type
-citeRecord(const record::NPC_ &baseRec, tl::optional<RefId> refId);
-
-template<> ReifyRecordTrait<record::REFR_NPC_>::type
-reifyRecord(const record::REFR_NPC_ &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            ReifyRecordTrait<record::REFR_NPC_>::resolvers resolvers,
-            Ogre::SceneNode *rootNode);
 
 } // namespace oo
 

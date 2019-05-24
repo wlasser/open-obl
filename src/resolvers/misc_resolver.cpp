@@ -4,8 +4,9 @@
 
 namespace oo {
 
-template<> CiteRecordTrait<record::MISC>::type
-citeRecord(const record::MISC &baseRec, tl::optional<RefId> refId) {
+auto
+CiteRecordImpl<record::MISC>::operator()(const record::MISC &baseRec,
+                                         tl::optional<RefId> refId) -> type {
   record::REFR_MISC rawRefRec{};
   rawRefRec.baseId = record::NAME(oo::BaseId{baseRec.mFormId});
   const record::REFR_MISC refRec(rawRefRec,
@@ -17,17 +18,18 @@ citeRecord(const record::MISC &baseRec, tl::optional<RefId> refId) {
   return refRec;
 }
 
-template<> ReifyRecordTrait<record::REFR_MISC>::type
-reifyRecord(const record::REFR_MISC &refRec,
-            gsl::not_null<Ogre::SceneManager *> scnMgr,
-            gsl::not_null<btDiscreteDynamicsWorld *> world,
-            oo::ReifyRecordTrait<record::REFR_MISC>::resolvers resolvers,
-            Ogre::SceneNode *rootNode) {
-  const auto &miscRes{oo::getResolver<record::MISC>(resolvers)};
+auto ReifyRecordImpl<record::REFR_MISC>::operator()(
+    const record::REFR_MISC &refRec,
+    Ogre::SceneManager *scnMgr,
+    btDiscreteDynamicsWorld *world,
+    resolvers res,
+    Ogre::SceneNode *rootNode) -> type {
+  const auto &miscRes{oo::getResolver<record::MISC>(res)};
   auto baseRec{miscRes.get(refRec.baseId.data)};
   if (!baseRec) return nullptr;
 
-  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId}, scnMgr, world,
+  return oo::insertNif(*baseRec, oo::RefId{refRec.mFormId},
+                       gsl::make_not_null(scnMgr), gsl::make_not_null(world),
                        rootNode);
 }
 
