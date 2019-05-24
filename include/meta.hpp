@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_META_HPP
-#define OPENOBLIVION_META_HPP
+#ifndef OPENOBL_META_HPP
+#define OPENOBL_META_HPP
 
 #include <functional>
 #include <optional>
@@ -139,4 +139,4 @@ std::optional<bool> {
   return std::nullopt;
 }
 
-#endif // OPENOBLIVION_META_HPP
+#endif // OPENOBL_META_HPP

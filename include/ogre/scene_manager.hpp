@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_SCENE_MANAGER_HPP
-#define OPENOBLIVION_OGRE_SCENE_MANAGER_HPP
+#ifndef OPENOBL_OGRE_SCENE_MANAGER_HPP
+#define OPENOBL_OGRE_SCENE_MANAGER_HPP
 
 #include "ogre/deferred_light_pass.hpp"
 #include <OgreSceneManager.h>
@@ -66,4 +66,4 @@ class DeferredSceneManagerFactory : public Ogre::SceneManagerFactory {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_OGRE_SCENE_MANAGER_HPP
+#endif // OPENOBL_OGRE_SCENE_MANAGER_HPP

@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_CHRONO_HPP
-#define OPENOBLIVION_CHRONO_HPP
+#ifndef OPENOBL_CHRONO_HPP
+#define OPENOBL_CHRONO_HPP
 
 #include <chrono>
 #include "game_settings.hpp"
 
 namespace oo {
 
-/// \defgroup OpenOblivionChrono Chrono
+/// \defgroup OpenOBLChrono Chrono
 /// Provides in-universe date and time functionality similar to `std::chrono`.
 /// The `<chrono>` header provides a nice interface for dealing with time as
 /// measured in the 'real world', but beyond a few predefined constants the only
@@ -16,7 +16,7 @@ namespace oo {
 /// we can represent game time with the same API, but completely independently
 /// of, the real world `system_clock`.
 
-/// \ingroup OpenOblivionChrono
+/// \ingroup OpenOBLChrono
 /// Aliases C++17 `<chrono>` functionality and implements some C++20 features.
 ///
 /// This namespace aliases the core functionality of `<chrono>` as of C++17,
@@ -878,4 +878,4 @@ constexpr year_month_day operator-(const chrono::year_month_day &ymd,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CHRONO_HPP
+#endif // OPENOBL_CHRONO_HPP

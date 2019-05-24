@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GAME_MODE_HPP
-#define OPENOBLIVION_GAME_MODE_HPP
+#ifndef OPENOBL_GAME_MODE_HPP
+#define OPENOBL_GAME_MODE_HPP
 
 #include "application_context.hpp"
 #include "bullet/collision.hpp"
@@ -20,7 +20,7 @@ class DebugDrawImpl;
 class ConsoleMode;
 
 /// Mode active while the player is exploring the game world.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 class GameMode {
  public:
   using transition_t = oo::ModeTransition<oo::ConsoleMode, oo::LoadingMenuMode>;
@@ -123,4 +123,4 @@ class GameMode {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_GAME_MODE_HPP
+#endif // OPENOBL_GAME_MODE_HPP

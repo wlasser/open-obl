@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ESP_COORDINATOR_HPP
-#define OPENOBLIVION_ESP_COORDINATOR_HPP
+#ifndef OPENOBL_ESP_COORDINATOR_HPP
+#define OPENOBL_ESP_COORDINATOR_HPP
 
 #include "fs/path.hpp"
 #include "record/group.hpp"
@@ -517,4 +517,4 @@ EspCoordinator::translateFormIds(record::Record<T, c> rec, int modIndex) const {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ESP_COORDINATOR_HPP
+#endif // OPENOBL_ESP_COORDINATOR_HPP

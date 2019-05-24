@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionNif)
+project(OpenOBLNif)
 
-add_library(OpenOblivionNif STATIC)
-add_library(OpenOblivion::OpenOblivionNif ALIAS OpenOblivionNif)
+add_library(OpenOBLNif STATIC)
+add_library(OpenOBL::OpenOBLNif ALIAS OpenOBLNif)
 
-target_include_directories(OpenOblivionNif PUBLIC
+target_include_directories(OpenOBLNif PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionNif PRIVATE
+target_sources(OpenOBLNif PRIVATE
         ${CMAKE_SOURCE_DIR}/include/nif/basic.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/compound.hpp
         ${CMAKE_SOURCE_DIR}/include/nif/enum.hpp
@@ -18,17 +18,17 @@ target_sources(OpenOblivionNif PRIVATE
         compound.cpp
         niobject.cpp)
 
-target_link_libraries(OpenOblivionNif PRIVATE
+target_link_libraries(OpenOBLNif PRIVATE
         Boost::boost
-        OpenOblivion::OpenOblivionIO)
+        OpenOBL::OpenOBLIO)
 
-install(TARGETS OpenOblivionNif EXPORT OpenOblivionNifTargets
+install(TARGETS OpenOBLNif EXPORT OpenOBLNifTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionNifTargets
-        FILE OpenOblivionNifTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLNifTargets
+        FILE OpenOBLNifTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/nif/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/nif)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/nif)

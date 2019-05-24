@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_MAIN_MENU_HPP
-#define OPENOBLIVION_GUI_MAIN_MENU_HPP
+#ifndef OPENOBL_GUI_MAIN_MENU_HPP
+#define OPENOBL_GUI_MAIN_MENU_HPP
 
 #include "gui/menu.hpp"
 
@@ -63,4 +63,4 @@ using MainMenu = Menu<MenuType::MainMenu>;
 
 } // namespace gui
 
-#endif //OPENOBLIVION_GUI_MAIN_MENU_HPP
+#endif //OPENOBL_GUI_MAIN_MENU_HPP

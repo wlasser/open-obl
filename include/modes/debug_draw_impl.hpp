@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_DEBUG_DRAW_IMPL_HPP
-#define OPENOBLIVION_DEBUG_DRAW_IMPL_HPP
+#ifndef OPENOBL_DEBUG_DRAW_IMPL_HPP
+#define OPENOBL_DEBUG_DRAW_IMPL_HPP
 
 #include "bitflag.hpp"
 #include "ogrebullet/debug_drawer.hpp"
@@ -80,4 +80,4 @@ class DebugDrawImpl {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_DEBUG_DRAW_IMPL_HPP
+#endif // OPENOBL_DEBUG_DRAW_IMPL_HPP

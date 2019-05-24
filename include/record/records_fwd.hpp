@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORDS_FWD_HPP
-#define OPENOBLIVION_RECORDS_FWD_HPP
+#ifndef OPENOBL_RECORDS_FWD_HPP
+#define OPENOBL_RECORDS_FWD_HPP
 
 #include <cstdint>
 #include "record/rec_of.hpp"
@@ -83,4 +83,4 @@ using WATR = Record<raw::WATR, "WATR"_rec>;
 
 } // namespace record
 
-#endif // OPENOBLIVION_RECORDS_FWD_HPP
+#endif // OPENOBL_RECORDS_FWD_HPP

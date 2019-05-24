@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_RECT_HPP
-#define OPENOBLIVION_GUI_RECT_HPP
+#ifndef OPENOBL_GUI_RECT_HPP
+#define OPENOBL_GUI_RECT_HPP
 
 #include "gui/elements/interactable_mixin.hpp"
 #include "gui/elements/panel_mixin.hpp"
@@ -23,4 +23,4 @@ class Rect : public InteractableMixin, public PanelMixin {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_RECT_HPP
+#endif // OPENOBL_GUI_RECT_HPP

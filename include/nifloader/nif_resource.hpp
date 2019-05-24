@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_RESOURCE_HPP
-#define OPENOBLIVION_NIF_RESOURCE_HPP
+#ifndef OPENOBL_NIF_RESOURCE_HPP
+#define OPENOBL_NIF_RESOURCE_HPP
 
 #include "nifloader/loader.hpp"
 #include <OgreResource.h>
@@ -7,7 +7,7 @@
 
 namespace Ogre {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 class NifResource : public Ogre::Resource {
@@ -41,4 +41,4 @@ using NifResourcePtr = std::shared_ptr<NifResource>;
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_NIF_RESOURCE_HPP
+#endif // OPENOBL_NIF_RESOURCE_HPP

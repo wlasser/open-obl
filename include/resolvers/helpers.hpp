@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RESOLVERS_HELPERS_HPP
-#define OPENOBLIVION_RESOLVERS_HELPERS_HPP
+#ifndef OPENOBL_RESOLVERS_HELPERS_HPP
+#define OPENOBL_RESOLVERS_HELPERS_HPP
 
 #include "fs/path.hpp"
 #include "meta.hpp"
@@ -54,4 +54,4 @@ insertNif(const T &baseRec, RefId refId,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_RESOLVERS_HELPERS_HPP
+#endif // OPENOBL_RESOLVERS_HELPERS_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_IO_STRING_HPP
-#define OPENOBLIVION_IO_STRING_HPP
+#ifndef OPENOBL_IO_STRING_HPP
+#define OPENOBL_IO_STRING_HPP
 
 #include <string>
 #include <istream>
@@ -32,4 +32,4 @@ std::ostream &writeBString(std::ostream &, const std::string &);
 
 } // namespace io
 
-#endif //OPENOBLIVION_IO_STRING_HPP
+#endif //OPENOBL_IO_STRING_HPP

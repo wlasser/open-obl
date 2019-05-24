@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SDL_SDL_HPP
-#define OPENOBLIVION_SDL_SDL_HPP
+#ifndef OPENOBL_SDL_SDL_HPP
+#define OPENOBL_SDL_SDL_HPP
 
 #include "SDL.h"
 #include "SDL_syswm.h"
@@ -18,7 +18,7 @@
 #undef Status
 
 /// Wrappers around the SDL2 C API.
-/// \ingroup OpenOblivionSdl
+/// \ingroup OpenOBLSdl
 namespace sdl {
 
 /// Convert an SDL error into an exception.
@@ -503,4 +503,4 @@ bool isMouseEvent(const sdl::Event &e) noexcept;
 
 } // namespace sdl
 
-#endif // OPENOBLIVION_SDL_SDL_HPP
+#endif // OPENOBL_SDL_SDL_HPP

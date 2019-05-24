@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIFLOADER_ANIMATION_HPP
-#define OPENOBLIVION_NIFLOADER_ANIMATION_HPP
+#ifndef OPENOBL_NIFLOADER_ANIMATION_HPP
+#define OPENOBL_NIFLOADER_ANIMATION_HPP
 
 #include "nifloader/nif_resource.hpp"
 #include <OgreAnimation.h>
@@ -7,7 +7,7 @@
 #include <string>
 
 /// \file animation.hpp
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 ///
 /// ### Animation
 ///
@@ -187,7 +187,7 @@
 ///         `Ogre::Bone`s.
 /// \remark In GLSL this is an array of `mat4x3`, not an array of `mat3x4`.
 ///
-/// #### Skeletal Animation in OpenOblivion
+/// #### Skeletal Animation in OpenOBL
 ///
 /// With OGRE's process and assumptions described, we can discuss where our
 /// requirements differ. Firstly, the skinning information of each `Ogre::Mesh`
@@ -275,7 +275,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 /// Load an animation from the given `nif` resource and attach it to the
@@ -293,4 +293,4 @@ Ogre::Animation *createAnimation(Ogre::Skeleton *skeleton,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_ANIMATION_HPP
+#endif // OPENOBL_NIFLOADER_ANIMATION_HPP

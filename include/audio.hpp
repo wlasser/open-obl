@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_AUDIO_HPP
-#define OPENOBLIVION_AUDIO_HPP
+#ifndef OPENOBL_AUDIO_HPP
+#define OPENOBL_AUDIO_HPP
 
 #include "ogresoloud/sound_manager.hpp"
 #include "record/subrecords.hpp"
@@ -122,4 +122,4 @@ class MusicManager {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_AUDIO_HPP
+#endif // OPENOBL_AUDIO_HPP

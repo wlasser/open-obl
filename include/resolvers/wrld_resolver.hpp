@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_WRLD_RESOLVER_HPP
-#define OPENOBLIVION_WRLD_RESOLVER_HPP
+#ifndef OPENOBL_WRLD_RESOLVER_HPP
+#define OPENOBL_WRLD_RESOLVER_HPP
 
 #include "atmosphere.hpp"
 #include "chrono.hpp"
@@ -323,4 +323,4 @@ class World {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_WRLD_RESOLVER_HPP
+#endif // OPENOBL_WRLD_RESOLVER_HPP

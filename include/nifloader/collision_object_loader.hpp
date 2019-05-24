@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
-#define OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
+#ifndef OPENOBL_NIF_COLLISION_OBJECT_LOADER_HPP
+#define OPENOBL_NIF_COLLISION_OBJECT_LOADER_HPP
 
 #include <OgreResource.h>
 
 namespace oo {
 
 /// Loader for `Ogre::CollisionShape`s defined in NIF files.
-/// \ingroup OpenOblivionNifloader
+/// \ingroup OpenOBLNifloader
 class CollisionObjectLoader : public Ogre::ManualResourceLoader {
  private:
   friend class CollisionObjectLoaderState;
@@ -17,4 +17,4 @@ class CollisionObjectLoader : public Ogre::ManualResourceLoader {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_HPP
+#endif // OPENOBL_NIF_COLLISION_OBJECT_LOADER_HPP

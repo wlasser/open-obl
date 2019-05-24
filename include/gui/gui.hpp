@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_GUI_HPP
-#define OPENOBLIVION_GUI_GUI_HPP
+#ifndef OPENOBL_GUI_GUI_HPP
+#define OPENOBL_GUI_GUI_HPP
 
 #include "enum_template.hpp"
 #include "gui/menus/load_menu.hpp"
@@ -8,7 +8,7 @@
 #include <experimental/propagate_const>
 
 /// \file gui.hpp
-/// \defgroup OpenOblivionGui Gui Library
+/// \defgroup OpenOBLGui Gui Library
 /// XML-based user interface.
 ///
 /// ## UI Elements
@@ -126,7 +126,7 @@
 /// since they do not correspond to ui state, they do not call any methods on
 /// a concrete node (indeed they do not even have a concrete representative).
 
-/// \ingroup OpenOblivionGui
+/// \ingroup OpenOBLGui
 namespace gui {
 
 class Traits;
@@ -211,4 +211,4 @@ loadMenu(const std::string &filename, const std::string &stringsFilename);
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_GUI_HPP
+#endif // OPENOBL_GUI_GUI_HPP

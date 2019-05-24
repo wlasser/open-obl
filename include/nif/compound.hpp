@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_COMPOUND_HPP
-#define OPENOBLIVION_NIF_COMPOUND_HPP
+#ifndef OPENOBL_NIF_COMPOUND_HPP
+#define OPENOBL_NIF_COMPOUND_HPP
 
 #include "io/io.hpp"
 #include "nif/basic.hpp"
@@ -991,4 +991,4 @@ std::istream &operator>>(std::istream &is, WorldObjCinfoProperty &t);
 } // namespace compound
 } // namespace nif
 
-#endif // OPENOBLIVION_NIF_COMPOUND_HPP
+#endif // OPENOBL_NIF_COMPOUND_HPP

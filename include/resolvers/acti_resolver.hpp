@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ACTI_RESOLVER_HPP
-#define OPENOBLIVION_ACTI_RESOLVER_HPP
+#ifndef OPENOBL_ACTI_RESOLVER_HPP
+#define OPENOBL_ACTI_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -29,4 +29,4 @@ reifyRecord(const record::REFR_ACTI &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ACTI_RESOLVER_HPP
+#endif // OPENOBL_ACTI_RESOLVER_HPP

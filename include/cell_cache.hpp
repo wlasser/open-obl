@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CELL_CACHE_HPP
-#define OPENOBLIVION_CELL_CACHE_HPP
+#ifndef OPENOBL_CELL_CACHE_HPP
+#define OPENOBL_CELL_CACHE_HPP
 
 #include "wrld.hpp"
 #include <boost/circular_buffer.hpp>
@@ -177,4 +177,4 @@ struct CellPacket {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CELL_CACHE_HPP
+#endif // OPENOBL_CELL_CACHE_HPP

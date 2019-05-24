@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
-#define OPENOBLIVION_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
+#ifndef OPENOBL_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
+#define OPENOBL_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
 
 #include "settings.hpp"
 #include <OgreMaterialManager.h>
@@ -91,4 +91,4 @@ class TerrainMaterialGenerator : public Ogre::TerrainMaterialGenerator {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
+#endif // OPENOBL_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP

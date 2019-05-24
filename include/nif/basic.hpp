@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_BASIC_HPP
-#define OPENOBLIVION_NIF_BASIC_HPP
+#ifndef OPENOBL_NIF_BASIC_HPP
+#define OPENOBL_NIF_BASIC_HPP
 
 #include "io/io.hpp"
 #include "nif/versionable.hpp"
@@ -88,4 +88,4 @@ std::istream &operator>>(std::istream &is, LineString &t);
 } // namespace basic
 } // namespace nif
 
-#endif // OPENOBLIVION_NIF_BASIC_HPP
+#endif // OPENOBL_NIF_BASIC_HPP

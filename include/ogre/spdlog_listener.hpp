@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP
-#define OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP
+#ifndef OPENOBL_OGRE_SPDLOG_LISTENER_HPP
+#define OPENOBL_OGRE_SPDLOG_LISTENER_HPP
 
 #include <OgreLogManager.h>
 #include <spdlog/spdlog.h>
@@ -40,4 +40,4 @@ class SpdlogListener : public LogListener {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_SPDLOG_LISTENER_HPP
+#endif // OPENOBL_OGRE_SPDLOG_LISTENER_HPP

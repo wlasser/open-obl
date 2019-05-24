@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_EXCEPTIONS_HPP
-#define OPENOBLIVION_RECORD_EXCEPTIONS_HPP
+#ifndef OPENOBL_RECORD_EXCEPTIONS_HPP
+#define OPENOBL_RECORD_EXCEPTIONS_HPP
 
 #include <boost/format.hpp>
 #include <stdexcept>
@@ -21,4 +21,4 @@ struct RecordNotFoundError : virtual std::runtime_error {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_EXCEPTIONS_HPP
+#endif //OPENOBL_RECORD_EXCEPTIONS_HPP

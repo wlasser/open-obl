@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ATMOSPHERE_HPP
-#define OPENOBLIVION_ATMOSPHERE_HPP
+#ifndef OPENOBL_ATMOSPHERE_HPP
+#define OPENOBL_ATMOSPHERE_HPP
 
 #include "chrono.hpp"
 #include "resolvers/resolvers.hpp"
@@ -306,4 +306,4 @@ oo::Weather::getColor(chrono::QualitativeTimeOfDay tod, float t,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ATMOSPHERE_HPP
+#endif // OPENOBL_ATMOSPHERE_HPP

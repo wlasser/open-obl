@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionMesh)
+project(OpenOBLMesh)
 
-add_library(OpenOblivionMesh STATIC)
-add_library(OpenOblivion::OpenOblivionMesh ALIAS OpenOblivionMesh)
+add_library(OpenOBLMesh STATIC)
+add_library(OpenOBL::OpenOBLMesh ALIAS OpenOBLMesh)
 
-target_include_directories(OpenOblivionMesh PUBLIC
+target_include_directories(OpenOBLMesh PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionMesh PRIVATE
+target_sources(OpenOBLMesh PRIVATE
         ${CMAKE_SOURCE_DIR}/include/mesh/entity.hpp
         ${CMAKE_SOURCE_DIR}/include/mesh/mesh.hpp
         ${CMAKE_SOURCE_DIR}/include/mesh/mesh_manager.hpp
@@ -20,17 +20,17 @@ target_sources(OpenOblivionMesh PRIVATE
         subentity.cpp
         submesh.cpp)
 
-target_link_libraries(OpenOblivionMesh
+target_link_libraries(OpenOBLMesh
         PRIVATE Boost::boost
         PUBLIC MicrosoftGSL::GSL OgreMain)
 
-install(TARGETS OpenOblivionMesh EXPORT OpenOblivionMeshTargets
+install(TARGETS OpenOBLMesh EXPORT OpenOBLMeshTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionMeshTargets
-        FILE OpenOblivionMeshTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLMeshTargets
+        FILE OpenOBLMeshTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/mesh/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/mesh)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/mesh)

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_TRAIT_HPP
-#define OPENOBLIVION_GUI_TRAIT_HPP
+#ifndef OPENOBL_GUI_TRAIT_HPP
+#define OPENOBL_GUI_TRAIT_HPP
 
 #include "meta.hpp"
 #include <functional>
@@ -315,4 +315,4 @@ class Trait {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_TRAIT_HPP
+#endif // OPENOBL_GUI_TRAIT_HPP

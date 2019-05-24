@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_STACK_TYPES_HPP
-#define OPENOBLIVION_GUI_STACK_TYPES_HPP
+#ifndef OPENOBL_GUI_STACK_TYPES_HPP
+#define OPENOBL_GUI_STACK_TYPES_HPP
 
 #include "meta.hpp"
 #include <string>
@@ -66,4 +66,4 @@ template<class Hint = void>
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_STACK_TYPES_HPP
+#endif // OPENOBL_GUI_STACK_TYPES_HPP

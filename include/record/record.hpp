@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_RECORD_HPP
-#define OPENOBLIVION_RECORD_RECORD_HPP
+#ifndef OPENOBL_RECORD_RECORD_HPP
+#define OPENOBL_RECORD_RECORD_HPP
 
 #include "io/memstream.hpp"
 #include "record/exceptions.hpp"
@@ -157,4 +157,4 @@ operator>>(std::istream &is, Record<T, c> &record) {
 
 } // namespace record
 
-#endif // OPENOBLIVION_RECORD_RECORD_HPP
+#endif // OPENOBL_RECORD_RECORD_HPP

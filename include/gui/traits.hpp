@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_TRAITS_HPP
-#define OPENOBLIVION_GUI_TRAITS_HPP
+#ifndef OPENOBL_GUI_TRAITS_HPP
+#define OPENOBL_GUI_TRAITS_HPP
 
 #include "gui/screen.hpp"
 #include "gui/stack/program.hpp"
@@ -376,4 +376,4 @@ auto Traits::makeDeferredTraitGraph(InputIt first, InputIt last) {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_TRAITS_HPP
+#endif // OPENOBL_GUI_TRAITS_HPP

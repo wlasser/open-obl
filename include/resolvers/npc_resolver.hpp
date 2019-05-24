@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NPC_RESOLVER_HPP
-#define OPENOBLIVION_NPC_RESOLVER_HPP
+#ifndef OPENOBL_NPC_RESOLVER_HPP
+#define OPENOBL_NPC_RESOLVER_HPP
 
 #include "character_controller/character.hpp"
 #include "resolvers/resolvers.hpp"
@@ -30,4 +30,4 @@ reifyRecord(const record::REFR_NPC_ &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NPC_RESOLVER_HPP
+#endif // OPENOBL_NPC_RESOLVER_HPP

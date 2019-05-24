@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_IO_MEMSTREAM_HPP
-#define OPENOBLIVION_IO_MEMSTREAM_HPP
+#ifndef OPENOBL_IO_MEMSTREAM_HPP
+#define OPENOBL_IO_MEMSTREAM_HPP
 
 #include <iostream>
 
@@ -46,4 +46,4 @@ class memstream : public std::iostream {
 
 } // namespace io
 
-#endif //OPENOBLIVION_IO_MEMSTREAM_HPP
+#endif //OPENOBL_IO_MEMSTREAM_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_LOGGING_HPP
-#define OPENOBLIVION_GUI_LOGGING_HPP
+#ifndef OPENOBL_GUI_LOGGING_HPP
+#define OPENOBL_GUI_LOGGING_HPP
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
@@ -21,4 +21,4 @@ guiLogger(std::optional<std::string> loggerName = std::nullopt) {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_LOGGING_HPP
+#endif // OPENOBL_GUI_LOGGING_HPP

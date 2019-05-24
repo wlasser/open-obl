@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionOgre)
+project(OpenOBLOgre)
 
-add_library(OpenOblivionOgre STATIC)
-add_library(OpenOblivion::OpenOblivionOgre ALIAS OpenOblivionOgre)
+add_library(OpenOBLOgre STATIC)
+add_library(OpenOBL::OpenOBLOgre ALIAS OpenOBLOgre)
 
-target_include_directories(OpenOblivionOgre PUBLIC
+target_include_directories(OpenOBLOgre PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionOgre PRIVATE
+target_sources(OpenOBLOgre PRIVATE
         ${CMAKE_SOURCE_DIR}/include/ogre/bsa_archive_factory.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/deferred_light_pass.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/fnt_loader.hpp
@@ -33,24 +33,24 @@ target_sources(OpenOblivionOgre PRIVATE
         text_resource_manager.cpp
         window.cpp)
 
-target_link_libraries(OpenOblivionOgre PRIVATE
+target_link_libraries(OpenOBLOgre PRIVATE
         spdlog::spdlog
-        OpenOblivion::OpenOblivionBsa
-        OpenOblivion::OpenOblivionFS
-        OpenOblivion::OpenOblivionMath
+        OpenOBL::OpenOBLBsa
+        OpenOBL::OpenOBLFS
+        OpenOBL::OpenOBLMath
         PUBLIC
         Boost::boost
         MicrosoftGSL::GSL
         OgreMain
         OgreOverlay)
 
-install(TARGETS OpenOblivionOgre EXPORT OpenOblivionOgreTargets
+install(TARGETS OpenOBLOgre EXPORT OpenOBLOgreTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionOgreTargets
-        FILE OpenOblivionOgreTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLOgreTargets
+        FILE OpenOBLOgreTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogre/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogre)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/ogre)

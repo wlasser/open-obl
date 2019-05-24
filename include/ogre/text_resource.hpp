@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_TEXT_RESOURCE_HPP
-#define OPENOBLIVION_OGRE_TEXT_RESOURCE_HPP
+#ifndef OPENOBL_OGRE_TEXT_RESOURCE_HPP
+#define OPENOBL_OGRE_TEXT_RESOURCE_HPP
 
 #include <OgreResource.h>
 
@@ -31,4 +31,4 @@ using TextResourcePtr = std::shared_ptr<TextResource>;
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_TEXT_RESOURCE_HPP
+#endif // OPENOBL_OGRE_TEXT_RESOURCE_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_BUTTON_HPP
-#define OPENOBLIVION_GUI_BUTTON_HPP
+#ifndef OPENOBL_GUI_BUTTON_HPP
+#define OPENOBL_GUI_BUTTON_HPP
 
 #include "gui/elements/image.hpp"
 #include "gui/trait.hpp"
@@ -56,4 +56,4 @@ class Button : public Image {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_BUTTON_HPP
+#endif // OPENOBL_GUI_BUTTON_HPP

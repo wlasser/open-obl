@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_SUBRECORD_HPP
-#define OPENOBLIVION_RECORD_SUBRECORD_HPP
+#ifndef OPENOBL_RECORD_SUBRECORD_HPP
+#define OPENOBL_RECORD_SUBRECORD_HPP
 
 #include "io/io.hpp"
 #include "record/exceptions.hpp"
@@ -88,4 +88,4 @@ std::size_t SizeOf(const Subrecord<T, c> &t) {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_SUBRECORD_HPP
+#endif //OPENOBL_RECORD_SUBRECORD_HPP

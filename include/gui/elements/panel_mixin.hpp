@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_UI_PANEL_MIXIN_HPP
-#define OPENOBLIVION_UI_PANEL_MIXIN_HPP
+#ifndef OPENOBL_UI_PANEL_MIXIN_HPP
+#define OPENOBL_UI_PANEL_MIXIN_HPP
 
 #include "gui/ui_element.hpp"
 #include <OgrePanelOverlayElement.h>
@@ -30,4 +30,4 @@ class PanelMixin : public virtual UiElement {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_UI_PANEL_MIXIN_HPP
+#endif // OPENOBL_UI_PANEL_MIXIN_HPP

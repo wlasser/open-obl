@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SCRIPTING_LLVM_HPP
-#define OPENOBLIVION_SCRIPTING_LLVM_HPP
+#ifndef OPENOBL_SCRIPTING_LLVM_HPP
+#define OPENOBL_SCRIPTING_LLVM_HPP
 
 #include "meta.hpp"
 #include "scripting/ast.hpp"
@@ -105,4 +105,4 @@ LLVMVisitor::visitImpl<grammar::BinaryOperator>(const AstNode &node);
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SCRIPTING_LLVM_HPP
+#endif // OPENOBL_SCRIPTING_LLVM_HPP

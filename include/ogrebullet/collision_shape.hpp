@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREBULLET_COLLISION_SHAPE_HPP
-#define OPENOBLIVION_OGREBULLET_COLLISION_SHAPE_HPP
+#ifndef OPENOBL_OGREBULLET_COLLISION_SHAPE_HPP
+#define OPENOBL_OGREBULLET_COLLISION_SHAPE_HPP
 
 #include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -133,4 +133,4 @@ using CollisionShapePtr = std::shared_ptr<CollisionShape>;
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGREBULLET_COLLISION_SHAPE_HPP
+#endif // OPENOBL_OGREBULLET_COLLISION_SHAPE_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_STRINGS_HPP
-#define OPENOBLIVION_GUI_STRINGS_HPP
+#ifndef OPENOBL_GUI_STRINGS_HPP
+#define OPENOBL_GUI_STRINGS_HPP
 
 #include "gui/trait.hpp"
 #include <pugixml.hpp>
@@ -79,4 +79,4 @@ class StringsElement {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_STRINGS_HPP
+#endif // OPENOBL_GUI_STRINGS_HPP

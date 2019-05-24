@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_LOADER_HPP
-#define OPENOBLIVION_NIF_LOADER_HPP
+#ifndef OPENOBL_NIF_LOADER_HPP
+#define OPENOBL_NIF_LOADER_HPP
 
 #include "nif/niobject.hpp"
 #include <boost/graph/adjacency_list.hpp>
@@ -11,7 +11,7 @@
 #include <string>
 #include <type_traits>
 
-/// \defgroup OpenOblivionNifloader NIF Loader
+/// \defgroup OpenOBLNifloader NIF Loader
 /// Parsers for NIF files into different OGRE resources.
 ///
 /// ### Overview
@@ -165,7 +165,7 @@
 ///    physics world passed to `oo::insertNif`.
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 /// Read the first line of the Nif header, grab the version, then jump back so
@@ -283,11 +283,11 @@ template<class T> auto getBlockIndex(const BlockGraph &g, const T &block) {
 
 /// Convert the translation, rotation, and scale parameters into Ogre
 /// coordinates and return a combined transformation matrix.
-/// \ingroup OpenOblivionNifloader
+/// \ingroup OpenOBLNifloader
 Ogre::Matrix4 getTransform(const nif::NiAVObject &block);
 
 ///@}
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIF_LOADER_HPP
+#endif // OPENOBL_NIF_LOADER_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_XML_HPP
-#define OPENOBLIVION_GUI_XML_HPP
+#ifndef OPENOBL_GUI_XML_HPP
+#define OPENOBL_GUI_XML_HPP
 
 #include <boost/optional.hpp>
 #include <pugixml.hpp>
@@ -128,4 +128,4 @@ void preOrderDFS(pugi::xml_node &node, F &&visitor) {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_ENGINE_GUI_XML_HPP
+#endif // OPENOBL_ENGINE_GUI_XML_HPP

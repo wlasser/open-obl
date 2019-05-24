@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RESOLVERS_HPP
-#define OPENOBLIVION_RESOLVERS_HPP
+#ifndef OPENOBL_RESOLVERS_HPP
+#define OPENOBL_RESOLVERS_HPP
 
 #include "record/formid.hpp"
 #include "record/records_fwd.hpp"
@@ -432,4 +432,4 @@ bool Resolver<R, IdType>::insert(IdType baseId, const R &rec) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_RESOLVERS_HPP
+#endif // OPENOBL_RESOLVERS_HPP

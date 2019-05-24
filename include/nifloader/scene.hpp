@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIFLOADER_SCENE_HPP
-#define OPENOBLIVION_NIFLOADER_SCENE_HPP
+#ifndef OPENOBL_NIFLOADER_SCENE_HPP
+#define OPENOBL_NIFLOADER_SCENE_HPP
 
 #include "mesh/entity.hpp"
 #include "mesh/subentity.hpp"
@@ -9,7 +9,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 /// Load the given NIF file and insert it into the scene, using `nifRoot` as
@@ -43,4 +43,4 @@ Ogre::SceneNode *insertRawNif(const std::string &name, const std::string &group,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_SCENE_HPP
+#endif // OPENOBL_NIFLOADER_SCENE_HPP

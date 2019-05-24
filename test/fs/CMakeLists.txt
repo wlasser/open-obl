@@ -1,1 +1,1 @@
-target_sources(OpenOblivionTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/path.cpp)
+target_sources(OpenOBLTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/path.cpp)

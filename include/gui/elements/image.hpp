@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_IMAGE_HPP
-#define OPENOBLIVION_GUI_IMAGE_HPP
+#ifndef OPENOBL_GUI_IMAGE_HPP
+#define OPENOBL_GUI_IMAGE_HPP
 
 #include "gui/elements/interactable_mixin.hpp"
 #include "gui/elements/panel_mixin.hpp"
@@ -42,4 +42,4 @@ class Image : public InteractableMixin, public PanelMixin {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_IMAGE_HPP
+#endif // OPENOBL_GUI_IMAGE_HPP

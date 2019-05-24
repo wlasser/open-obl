@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_STAND_STATE_HPP
-#define OPENOBLIVION_CHARACTER_CONTROLLER_STAND_STATE_HPP
+#ifndef OPENOBL_CHARACTER_CONTROLLER_STAND_STATE_HPP
+#define OPENOBL_CHARACTER_CONTROLLER_STAND_STATE_HPP
 
 #include "character_controller/abilities.hpp"
 #include "character_controller/character_controller_impl.hpp"
@@ -37,4 +37,4 @@ class StandState : public FallbackState<StandState>,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CHARACTER_CONTROLLER_STAND_STATE_HPP
+#endif // OPENOBL_CHARACTER_CONTROLLER_STAND_STATE_HPP

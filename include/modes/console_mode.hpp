@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CONSOLE_MODE_HPP
-#define OPENOBLIVION_CONSOLE_MODE_HPP
+#ifndef OPENOBL_CONSOLE_MODE_HPP
+#define OPENOBL_CONSOLE_MODE_HPP
 
 #include "application_context.hpp"
 #include "game_settings.hpp"
@@ -13,7 +13,7 @@
 namespace oo {
 
 /// Mode active while the player is using the developer console.
-/// \ingroup OpenOblivionMode
+/// \ingroup OpenOBLMode
 class ConsoleMode {
  private:
   int handleInputCompletion(gsl::not_null<ImGuiInputTextCallbackData *> data);
@@ -75,4 +75,4 @@ class ConsoleMode {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CONSOLE_MODE_HPP
+#endif // OPENOBL_CONSOLE_MODE_HPP

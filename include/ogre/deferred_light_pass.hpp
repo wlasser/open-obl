@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_DEFERRED_LIGHT_PASS_HPP
-#define OPENOBLIVION_OGRE_DEFERRED_LIGHT_PASS_HPP
+#ifndef OPENOBL_OGRE_DEFERRED_LIGHT_PASS_HPP
+#define OPENOBL_OGRE_DEFERRED_LIGHT_PASS_HPP
 
 #include <OgreCompositorInstance.h>
 #include <OgreCustomCompositionPass.h>
@@ -118,4 +118,4 @@ class DeferredFogListener : public Ogre::CompositorInstance::Listener {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_OGRE_DEFERRED_LIGHT_PASS_HPP
+#endif // OPENOBL_OGRE_DEFERRED_LIGHT_PASS_HPP

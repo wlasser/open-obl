@@ -1,27 +1,27 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionFS)
+project(OpenOBLFS)
 
-add_library(OpenOblivionFS STATIC)
-add_library(OpenOblivion::OpenOblivionFS ALIAS OpenOblivionFS)
+add_library(OpenOBLFS STATIC)
+add_library(OpenOBL::OpenOBLFS ALIAS OpenOBLFS)
 
-target_include_directories(OpenOblivionFS PUBLIC
+target_include_directories(OpenOBLFS PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionFS PRIVATE
+target_sources(OpenOBLFS PRIVATE
         ${CMAKE_SOURCE_DIR}/include/fs/path.hpp
         path.cpp)
 
-target_link_libraries(OpenOblivionFS PRIVATE Boost::boost
+target_link_libraries(OpenOBLFS PRIVATE Boost::boost
         INTERFACE stdc++fs)
 
-install(TARGETS OpenOblivionFS EXPORT OpenOblivionFSTargets
+install(TARGETS OpenOBLFS EXPORT OpenOBLFSTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionFSTargets
-        FILE OpenOblivionFSTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLFSTargets
+        FILE OpenOBLFSTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/fs/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/fs)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/fs)

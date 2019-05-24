@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
-#define OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
+#ifndef OPENOBL_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
+#define OPENOBL_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
 
 #include "nifloader/loader.hpp"
 #include "ogrebullet/collision_shape.hpp"
@@ -7,7 +7,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 void parseCollisionObject(const oo::BlockGraph &g,
@@ -134,4 +134,4 @@ void createCollisionObject(Ogre::CollisionShape *rigidBody,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIF_COLLISION_OBJECT_LOADER_STATE_HPP
+#endif // OPENOBL_NIF_COLLISION_OBJECT_LOADER_STATE_HPP

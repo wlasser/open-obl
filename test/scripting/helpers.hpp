@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_TEST_SCRIPTING_HELPERS_HPP
-#define OPENOBLIVION_TEST_SCRIPTING_HELPERS_HPP
+#ifndef OPENOBL_TEST_SCRIPTING_HELPERS_HPP
+#define OPENOBL_TEST_SCRIPTING_HELPERS_HPP
 
 #include "record/formid.hpp"
 #include "scripting/ast.hpp"
@@ -50,4 +50,4 @@ template<class T>
 
 } // namespace oo
 
-#endif // OPENOBLIVION_TEST_SCRIPTING_HELPERS_HPP
+#endif // OPENOBL_TEST_SCRIPTING_HELPERS_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_LOADING_MENU_HPP
-#define OPENOBLIVION_GUI_LOADING_MENU_HPP
+#ifndef OPENOBL_GUI_LOADING_MENU_HPP
+#define OPENOBL_GUI_LOADING_MENU_HPP
 
 #include "gui/menu.hpp"
 
@@ -64,4 +64,4 @@ using LoadingMenu = Menu<MenuType::LoadingMenu>;
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_LOADING_MENU_HPP
+#endif // OPENOBL_GUI_LOADING_MENU_HPP

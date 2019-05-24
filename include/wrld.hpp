@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_WRLD_HPP
-#define OPENOBLIVION_WRLD_HPP
+#ifndef OPENOBL_WRLD_HPP
+#define OPENOBL_WRLD_HPP
 
 #include "fs/path.hpp"
 #include "math/conversions.hpp"
@@ -35,4 +35,4 @@ oo::Path getChunkNormalPath(oo::BaseId wrldId, oo::ChunkIndex chunkIndex);
 
 } // namespace oo
 
-#endif //OPENOBLIVION_WRLD_HPP
+#endif //OPENOBL_WRLD_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
-#define OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
+#ifndef OPENOBL_OGRE_OGRE_DATA_STREAMBUF_HPP
+#define OPENOBL_OGRE_OGRE_DATA_STREAMBUF_HPP
 
 #include <OgreDataStream.h>
 #include <cstddef>
@@ -113,5 +113,5 @@ void OgreStandardStream<std::ifstream>::close();
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_OGRE_DATA_STREAMBUF_HPP
+#endif // OPENOBL_OGRE_OGRE_DATA_STREAMBUF_HPP
 

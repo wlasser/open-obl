@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BSATOOLS_FUSE_HPP
-#define OPENOBLIVION_BSATOOLS_FUSE_HPP
+#ifndef OPENOBL_BSATOOLS_FUSE_HPP
+#define OPENOBL_BSATOOLS_FUSE_HPP
 
 #define _FILE_OFFSET_BITS 64
 #define FUSE_USE_VERSION 29
@@ -13,7 +13,7 @@
 /// clear for someone more experienced.
 /// \remark The `posix` namespace is reserved for future use by standard, so
 ///         use `Posix` instead.
-/// \ingroup OpenOblivionBsaFuse
+/// \ingroup OpenOBLBsaFuse
 namespace Posix {
 
 using stat = struct ::stat;
@@ -26,7 +26,7 @@ using off_t = ::off_t;
 /// using a thin wrapper here. The arguments for the `Posix` namespace don't
 /// really apply because libfuse is nicely namespaced already by the `fuse_`
 /// prefix; mostly I'm just picky about aesthetics.
-/// \ingroup OpenOblivionBsaFuse
+/// \ingroup OpenOBLBsaFuse
 namespace fuser {
 
 using Operations = struct ::fuse_operations;
@@ -61,4 +61,4 @@ inline constexpr Opt makeOptEnd() noexcept {
 
 } // namespace fuser
 
-#endif // OPENOBLIVION_BSATOOLS_FUSE_HPP
+#endif // OPENOBL_BSATOOLS_FUSE_HPP

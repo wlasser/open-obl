@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MENU_MODE_BASE_HPP
-#define OPENOBLIVION_MENU_MODE_BASE_HPP
+#ifndef OPENOBL_MENU_MODE_BASE_HPP
+#define OPENOBL_MENU_MODE_BASE_HPP
 
 #include "application_context.hpp"
 #include "controls.hpp"
@@ -20,11 +20,11 @@ template<gui::MenuType Type> class MenuMode;
 /// incomplete type.
 /// This should be specialized for each specialization `T` of `MenuMode`,
 /// providing a member typedef `type` equal to `T::transition_t`.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<class T> struct MenuModeTransition;
 
 /// Helper type for `oo::MenuModeTransition`.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<class T>
 using MenuModeTransition_t = typename MenuModeTransition<T>::type;
 
@@ -39,7 +39,7 @@ using MenuModeTransition_t = typename MenuModeTransition<T>::type;
 /// should also implement a `getFilenameImpl()` method that returns the filepath
 /// of the XML file describing the menu. The named file is opened and processed
 /// automatically during the construction of the base class.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<class Self> class MenuModeBase {
  private:
   std::optional<gui::MenuContext> mMenuCtx{};
@@ -74,7 +74,7 @@ template<class Self> class MenuModeBase {
   /// ancestors in decreasing order of generation.
   template<class F> void notifyElementAtCursor(F &&f);
 
-  /// Get a pointer to the \ref OpenOblivionGui layer underlying the menu.
+  /// Get a pointer to the \ref OpenOBLGui layer underlying the menu.
   gui::MenuContext *getMenuCtx() {
     // mMenuCtx.has_value() is guaranteed since the constructor would have
     // thrown an exception otherwise.
@@ -112,12 +112,12 @@ template<class Self> class MenuModeBase {
     sdl::setRelativeMouseMode(false);
   }
 
-  /// Handle transfer of user input to the underlying \ref OpenOblivionGui layer
+  /// Handle transfer of user input to the underlying \ref OpenOBLGui layer
   /// and calls `Self::handleEventImpl()`.
   /// \see Mode::handleEvent()
   transition_t handleEvent(ApplicationContext &ctx, const sdl::Event &event);
 
-  /// Update the underlying \ref OpenOblivionGui layer and call
+  /// Update the underlying \ref OpenOBLGui layer and call
   /// `Self::updateImpl()`.
   /// \see Mode::update()
   void update(ApplicationContext &ctx, float delta);
@@ -192,4 +192,4 @@ MenuModeBase<Self>::update(ApplicationContext &ctx, float delta) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MENU_MODE_BASE_HPP
+#endif // OPENOBL_MENU_MODE_BASE_HPP

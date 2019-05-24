@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_REFERENCE_RECORDS_HPP
-#define OPENOBLIVION_REFERENCE_RECORDS_HPP
+#ifndef OPENOBL_REFERENCE_RECORDS_HPP
+#define OPENOBL_REFERENCE_RECORDS_HPP
 
 #include "record/io.hpp"
 #include "record/record.hpp"
@@ -329,4 +329,4 @@ oo::BaseId peekBaseOfReference(std::istream &is);
 
 } // namespace record
 
-#endif // OPENOBLIVION_REFERENCE_RECORDS_HPP
+#endif // OPENOBL_REFERENCE_RECORDS_HPP

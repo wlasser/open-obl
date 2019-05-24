@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREBULLET_DEBUG_DRAWER_HPP
-#define OPENOBLIVION_OGREBULLET_DEBUG_DRAWER_HPP
+#ifndef OPENOBL_OGREBULLET_DEBUG_DRAWER_HPP
+#define OPENOBL_OGREBULLET_DEBUG_DRAWER_HPP
 
 #include <btBulletDynamicsCommon.h>
 #include <OgreColourValue.h>
@@ -56,4 +56,4 @@ class DebugDrawer : public btIDebugDraw {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_BULLET_DEBUG_DRAWER_HPP
+#endif // OPENOBL_OGRE_BULLET_DEBUG_DRAWER_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SCRIPTING_JIT_HPP
-#define OPENOBLIVION_SCRIPTING_JIT_HPP
+#ifndef OPENOBL_SCRIPTING_JIT_HPP
+#define OPENOBL_SCRIPTING_JIT_HPP
 
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/Orc/CompileUtils.h>
@@ -111,4 +111,4 @@ class Jit {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SCRIPTING_JIT_HPP
+#endif // OPENOBL_SCRIPTING_JIT_HPP

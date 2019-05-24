@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_APPLICATION_CONTEXT_HPP
-#define OPENOBLIVION_APPLICATION_CONTEXT_HPP
+#ifndef OPENOBL_APPLICATION_CONTEXT_HPP
+#define OPENOBL_APPLICATION_CONTEXT_HPP
 
 #include "bullet/collision.hpp"
 #include "bullet/configuration.hpp"
@@ -154,4 +154,4 @@ class ApplicationContext {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_APPLICATION_CONTEXT_HPP
+#endif // OPENOBL_APPLICATION_CONTEXT_HPP

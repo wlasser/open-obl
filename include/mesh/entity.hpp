@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_ENTITY_HPP
-#define OPENOBLIVION_ENTITY_HPP
+#ifndef OPENOBL_ENTITY_HPP
+#define OPENOBL_ENTITY_HPP
 
 #include "mesh/mesh.hpp"
 #include <OgreMovableObject.h>
 
 namespace oo {
 
-/// \addtogroup OpenOblivionMesh
+/// \addtogroup OpenOBLMesh
 /// @{
 
 using Affine3Allocator = Ogre::AlignedAllocator<Ogre::Affine3,
@@ -153,4 +153,4 @@ class EntityFactory : public Ogre::MovableObjectFactory {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ENTITY_HPP
+#endif // OPENOBL_ENTITY_HPP

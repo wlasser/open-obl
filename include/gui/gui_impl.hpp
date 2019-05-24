@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_IMPL_HPP
-#define OPENOBLIVION_GUI_IMPL_HPP
+#ifndef OPENOBL_GUI_IMPL_HPP
+#define OPENOBL_GUI_IMPL_HPP
 
 #include "gui/gui.hpp"
 #include "gui/menu.hpp"
@@ -144,4 +144,4 @@ class MenuContext::Impl {
 
 } // namespace gui
 
-#endif //OPENOBLIVION_GUI_IMPL_HPP
+#endif //OPENOBL_GUI_IMPL_HPP

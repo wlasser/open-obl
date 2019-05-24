@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_FLOR_RESOLVER_HPP
-#define OPENOBLIVION_FLOR_RESOLVER_HPP
+#ifndef OPENOBL_FLOR_RESOLVER_HPP
+#define OPENOBL_FLOR_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -29,4 +29,4 @@ reifyRecord(const record::REFR_FLOR &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_FLOR_RESOLVER_HPP
+#endif // OPENOBL_FLOR_RESOLVER_HPP

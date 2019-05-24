@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(OpenOblivion)
+project(OpenOBL)
 
 include(CheckIPOSupported)
 include(FetchContent)
@@ -68,7 +68,7 @@ else ()
         install(EXPORT Bullet_LinearMathTargets
                 FILE Bullet_LinearMathTargets.cmake
                 NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
         add_library(Bullet::BulletCollision ALIAS BulletCollision)
         target_include_directories(BulletCollision PUBLIC
@@ -81,7 +81,7 @@ else ()
         install(EXPORT Bullet_BulletCollisionTargets
                 FILE Bullet_BulletCollisionTargets.cmake
                 NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
         add_library(Bullet::BulletDynamics ALIAS BulletDynamics)
         target_include_directories(BulletDynamics PUBLIC
@@ -94,7 +94,7 @@ else ()
         install(EXPORT Bullet_BulletDynamicsTargets
                 FILE Bullet_BulletDynamicsTargets.cmake
                 NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
     endif ()
 endif ()
 
@@ -173,10 +173,10 @@ add_subdirectory(src/sdl)
 add_subdirectory(bsatools)
 add_subdirectory(test)
 
-add_executable(OpenOblivion)
+add_executable(OpenOBL)
 
-target_include_directories(OpenOblivion PUBLIC include)
-target_sources(OpenOblivion PRIVATE
+target_include_directories(OpenOBL PUBLIC include)
+target_sources(OpenOBL PRIVATE
         include/application.hpp
         include/application_context.hpp
         include/atmosphere.hpp
@@ -288,24 +288,24 @@ target_sources(OpenOblivion PRIVATE
         src/script_functions.cpp
         src/wrld.cpp)
 
-target_link_libraries(OpenOblivion PRIVATE
+target_link_libraries(OpenOBL PRIVATE
         Bullet::BulletCollision
         Bullet::BulletDynamics
-        OpenOblivion::OpenOblivionBsa
-        OpenOblivion::OpenOblivionFS
-        OpenOblivion::OpenOblivionGui
-        OpenOblivion::OpenOblivionIO
-        OpenOblivion::OpenOblivionMath
-        OpenOblivion::OpenOblivionMesh
-        OpenOblivion::OpenOblivionNif
-        OpenOblivion::OpenOblivionNifloader
-        OpenOblivion::OpenOblivionOgre
-        OpenOblivion::OpenOblivionOgreBullet
-        OpenOblivion::OpenOblivionOgreImGui
-        OpenOblivion::OpenOblivionOgreSoLoud
-        OpenOblivion::OpenOblivionRecord
-        OpenOblivion::OpenOblivionScripting
-        OpenOblivion::OpenOblivionSDL
+        OpenOBL::OpenOBLBsa
+        OpenOBL::OpenOBLFS
+        OpenOBL::OpenOBLGui
+        OpenOBL::OpenOBLIO
+        OpenOBL::OpenOBLMath
+        OpenOBL::OpenOBLMesh
+        OpenOBL::OpenOBLNif
+        OpenOBL::OpenOBLNifloader
+        OpenOBL::OpenOBLOgre
+        OpenOBL::OpenOBLOgreBullet
+        OpenOBL::OpenOBLOgreImGui
+        OpenOBL::OpenOBLOgreSoLoud
+        OpenOBL::OpenOBLRecord
+        OpenOBL::OpenOBLScripting
+        OpenOBL::OpenOBLSDL
         Boost::boost
         Boost::fiber
         MicrosoftGSL::GSL

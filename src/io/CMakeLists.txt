@@ -1,29 +1,29 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionIO)
+project(OpenOBLIO)
 
-add_library(OpenOblivionIO STATIC)
-add_library(OpenOblivion::OpenOblivionIO ALIAS OpenOblivionIO)
+add_library(OpenOBLIO STATIC)
+add_library(OpenOBL::OpenOBLIO ALIAS OpenOBLIO)
 
-target_include_directories(OpenOblivionIO PUBLIC
+target_include_directories(OpenOBLIO PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionIO PRIVATE
+target_sources(OpenOBLIO PRIVATE
         ${CMAKE_SOURCE_DIR}/include/io/io.hpp
         ${CMAKE_SOURCE_DIR}/include/io/memstream.hpp
         ${CMAKE_SOURCE_DIR}/include/io/string.hpp
         io.cpp
         string.cpp)
 
-target_link_libraries(OpenOblivionIO PRIVATE Boost::boost)
+target_link_libraries(OpenOBLIO PRIVATE Boost::boost)
 
-install(TARGETS OpenOblivionIO EXPORT OpenOblivionIOTargets
+install(TARGETS OpenOBLIO EXPORT OpenOBLIOTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionIOTargets
-        FILE OpenOblivionIOTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLIOTargets
+        FILE OpenOBLIOTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/io/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/io)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/io)

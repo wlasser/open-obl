@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIFLOADER_SKELETON_LOADER_STATE_HPP
-#define OPENOBLIVION_NIFLOADER_SKELETON_LOADER_STATE_HPP
+#ifndef OPENOBL_NIFLOADER_SKELETON_LOADER_STATE_HPP
+#define OPENOBL_NIFLOADER_SKELETON_LOADER_STATE_HPP
 
 #include "nifloader/loader.hpp"
 #include <OgreMatrix4.h>
@@ -7,7 +7,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 
 class SkeletonLoaderState {
  public:
@@ -49,4 +49,4 @@ class SkeletonLoaderState {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_SKELETON_LOADER_STATE_HPP
+#endif // OPENOBL_NIFLOADER_SKELETON_LOADER_STATE_HPP

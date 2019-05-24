@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_TEX_IMAGE_CODEC_HPP
-#define OPENOBLIVION_OGRE_TEX_IMAGE_CODEC_HPP
+#ifndef OPENOBL_OGRE_TEX_IMAGE_CODEC_HPP
+#define OPENOBL_OGRE_TEX_IMAGE_CODEC_HPP
 
 #include <OgreImageCodec.h>
 
@@ -49,4 +49,4 @@ class TexImageCodec : public ImageCodec {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_TEX_IMAGE_CODEC_HPP
+#endif // OPENOBL_OGRE_TEX_IMAGE_CODEC_HPP

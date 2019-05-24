@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_ENUM_HPP
-#define OPENOBLIVION_NIF_ENUM_HPP
+#ifndef OPENOBL_NIF_ENUM_HPP
+#define OPENOBL_NIF_ENUM_HPP
 
 #include <cstdint>
 
@@ -399,4 +399,4 @@ inline constexpr COFlags operator&(COFlags a, COFlags b) {
 
 } // namespace nif::Enum
 
-#endif // OPENOBLIVION_NIF_ENUM_HPP
+#endif // OPENOBL_NIF_ENUM_HPP

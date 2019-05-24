@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionOgreBullet)
+project(OpenOBLOgreBullet)
 
-add_library(OpenOblivionOgreBullet STATIC)
-add_library(OpenOblivion::OpenOblivionOgreBullet ALIAS OpenOblivionOgreBullet)
+add_library(OpenOBLOgreBullet STATIC)
+add_library(OpenOBL::OpenOBLOgreBullet ALIAS OpenOBLOgreBullet)
 
-target_include_directories(OpenOblivionOgreBullet PUBLIC
+target_include_directories(OpenOBLOgreBullet PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionOgreBullet PRIVATE
+target_sources(OpenOBLOgreBullet PRIVATE
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_shape.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/collision_shape_manager.hpp
         ${CMAKE_SOURCE_DIR}/include/ogrebullet/conversions.hpp
@@ -21,9 +21,9 @@ target_sources(OpenOblivionOgreBullet PRIVATE
         motion_state.cpp
         rigid_body.cpp)
 
-target_link_libraries(OpenOblivionOgreBullet PRIVATE
-        OpenOblivion::OpenOblivionNif
-        OpenOblivion::OpenOblivionOgre
+target_link_libraries(OpenOBLOgreBullet PRIVATE
+        OpenOBL::OpenOBLNif
+        OpenOBL::OpenOBLOgre
         spdlog::spdlog
         PUBLIC
         Bullet::BulletCollision
@@ -31,13 +31,13 @@ target_link_libraries(OpenOblivionOgreBullet PRIVATE
         MicrosoftGSL::GSL
         OgreMain)
 
-install(TARGETS OpenOblivionOgreBullet EXPORT OpenOblivionOgreBulletTargets
+install(TARGETS OpenOBLOgreBullet EXPORT OpenOBLOgreBulletTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionOgreBulletTargets
-        FILE OpenOblivionOgreBulletTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLOgreBulletTargets
+        FILE OpenOBLOgreBulletTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ogrebullet/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/ogrebullet)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/ogrebullet)

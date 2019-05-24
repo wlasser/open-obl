@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_MENU_HPP
-#define OPENOBLIVION_GUI_MENU_HPP
+#ifndef OPENOBL_GUI_MENU_HPP
+#define OPENOBL_GUI_MENU_HPP
 
 #include "gui/ui_element.hpp"
 #include <OgreOverlay.h>
@@ -85,4 +85,4 @@ class Menu : public UiElement {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_MENU_HPP
+#endif // OPENOBL_GUI_MENU_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CONSOLE_ENGINE_HPP
-#define OPENOBLIVION_CONSOLE_ENGINE_HPP
+#ifndef OPENOBL_CONSOLE_ENGINE_HPP
+#define OPENOBL_CONSOLE_ENGINE_HPP
 
 #include "scripting/logging.hpp"
 #include "scripting/script_engine_base.hpp"
@@ -29,4 +29,4 @@ void ConsoleEngine::registerFunction(const std::string &funName) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CONSOLE_ENGINE_HPP
+#endif // OPENOBL_CONSOLE_ENGINE_HPP

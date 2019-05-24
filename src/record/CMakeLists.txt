@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionRecord)
+project(OpenOBLRecord)
 
-add_library(OpenOblivionRecord STATIC)
-add_library(OpenOblivion::OpenOblivionRecord ALIAS OpenOblivionRecord)
+add_library(OpenOBLRecord STATIC)
+add_library(OpenOBL::OpenOBLRecord ALIAS OpenOBLRecord)
 
-target_include_directories(OpenOblivionRecord PUBLIC
+target_include_directories(OpenOBLRecord PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionRecord PRIVATE
+target_sources(OpenOBLRecord PRIVATE
         ${CMAKE_SOURCE_DIR}/include/record/actor_value.hpp
         ${CMAKE_SOURCE_DIR}/include/record/attribute.hpp
         ${CMAKE_SOURCE_DIR}/include/record/change_record.hpp
@@ -34,20 +34,20 @@ target_sources(OpenOblivionRecord PRIVATE
         records.cpp
         subrecords.cpp)
 
-target_link_libraries(OpenOblivionRecord PRIVATE
+target_link_libraries(OpenOBLRecord PRIVATE
         MicrosoftGSL::GSL
         ZLIB::ZLIB
         PUBLIC
-        OpenOblivion::OpenOblivionIO
+        OpenOBL::OpenOBLIO
         Boost::boost)
 
-install(TARGETS OpenOblivionRecord EXPORT OpenOblivionRecordTargets
+install(TARGETS OpenOBLRecord EXPORT OpenOBLRecordTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionRecordTargets
-        FILE OpenOblivionRecordTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLRecordTargets
+        FILE OpenOBLRecordTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/record/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/record)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/record)

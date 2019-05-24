@@ -1,9 +1,9 @@
-#ifndef OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
-#define OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
+#ifndef OPENOBL_SCRIPTING_GRAMMAR_HPP
+#define OPENOBL_SCRIPTING_GRAMMAR_HPP
 
 #include "scripting/pegtl.hpp"
 
-/// \addtogroup OpenOblivionScripting Scripting
+/// \addtogroup OpenOBLScripting Scripting
 /// Parser for the built-in default scripting language.
 /// This document describes the parsing and execution method for user-defined
 /// scripts. For information on the scripting language itself, see scripting.md.
@@ -557,4 +557,4 @@ struct Grammar : pegtl::must<Spacing,
 
 /// @}
 
-#endif // OPENOBLIVION_SCRIPTING_GRAMMAR_HPP
+#endif // OPENOBL_SCRIPTING_GRAMMAR_HPP

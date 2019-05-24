@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BULLET_CONFIGURATION_HPP
-#define OPENOBLIVION_BULLET_CONFIGURATION_HPP
+#ifndef OPENOBL_BULLET_CONFIGURATION_HPP
+#define OPENOBL_BULLET_CONFIGURATION_HPP
 
 #include "bullet/collision.hpp"
 #include <btBulletDynamicsCommon.h>
@@ -45,4 +45,4 @@ class Configuration {
 
 } // namespace bullet
 
-#endif // OPENOBLIVION_BULLET_CONFIGURATION_HPP
+#endif // OPENOBL_BULLET_CONFIGURATION_HPP

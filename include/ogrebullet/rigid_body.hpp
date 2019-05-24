@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
-#define OPENOBLIVION_OGREBULLET_RIGID_BODY_HPP
+#ifndef OPENOBL_OGREBULLET_RIGID_BODY_HPP
+#define OPENOBL_OGREBULLET_RIGID_BODY_HPP
 
 #include "ogrebullet/collision_shape.hpp"
 #include "ogrebullet/motion_state.hpp"
@@ -129,4 +129,4 @@ struct PartialCollisionObjectException : virtual std::runtime_error {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_RIGID_BODY_HPP
+#endif // OPENOBL_OGRE_RIGID_BODY_HPP

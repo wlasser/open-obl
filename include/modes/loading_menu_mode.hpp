@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_LOADING_MENU_MODE_HPP
-#define OPENOBLIVION_LOADING_MENU_MODE_HPP
+#ifndef OPENOBL_LOADING_MENU_MODE_HPP
+#define OPENOBL_LOADING_MENU_MODE_HPP
 
 #include "cell_cache.hpp"
 #include "job/job.hpp"
@@ -17,12 +17,12 @@ class World;
 class InteriorCell;
 class ExteriorCell;
 
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<> struct MenuModeTransition<LoadingMenuMode> {
   using type = ModeTransition<LoadingMenuMode, GameMode>;
 };
 
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<> struct HideOverlayOnTransition<LoadingMenuMode> : std::true_type {};
 
 /// Specialization of `oo::MenuMode` for the Loading Menu.
@@ -33,7 +33,7 @@ template<> struct HideOverlayOnTransition<LoadingMenuMode> : std::true_type {};
 /// request by just the id of the cell to load. From that, we must work out
 /// whether it is an interior or exterior cell, and if it is an exterior cell,
 /// whether we also need to load the parent worldspace.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<> class MenuMode<gui::MenuType::LoadingMenu>
     : public MenuModeBase<LoadingMenuMode> {
  private:
@@ -263,4 +263,4 @@ template<> class MenuMode<gui::MenuType::LoadingMenu>
 
 } // namespace oo
 
-#endif // OPENOBLIVION_LOADING_MENU_MODE_HPP
+#endif // OPENOBL_LOADING_MENU_MODE_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_VERTICAL_SCROLL_HPP
-#define OPENOBLIVION_GUI_VERTICAL_SCROLL_HPP
+#ifndef OPENOBL_GUI_VERTICAL_SCROLL_HPP
+#define OPENOBL_GUI_VERTICAL_SCROLL_HPP
 
 #include "gui/elements/image.hpp"
 #include "gui/trait.hpp"
@@ -87,4 +87,4 @@ class VerticalScrollMarker : public Image {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_VERTICAL_SCROLL_HPP
+#endif // OPENOBL_GUI_VERTICAL_SCROLL_HPP

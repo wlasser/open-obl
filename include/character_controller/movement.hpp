@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MOVEMENT_HPP
-#define OPENOBLIVION_MOVEMENT_HPP
+#ifndef OPENOBL_MOVEMENT_HPP
+#define OPENOBL_MOVEMENT_HPP
 
 namespace oo {
 
@@ -60,4 +60,4 @@ float jumpHeight(float acrobaticsSkill) noexcept;
 
 } // namespace oo
 
-#endif //OPENOBLIVION_MOVEMENT_HPP
+#endif //OPENOBL_MOVEMENT_HPP

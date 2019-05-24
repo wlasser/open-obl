@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ACTOR_VALUE_HPP
-#define OPENOBLIVION_ACTOR_VALUE_HPP
+#ifndef OPENOBL_ACTOR_VALUE_HPP
+#define OPENOBL_ACTOR_VALUE_HPP
 
 #include <cstdint>
 
@@ -116,4 +116,4 @@ enum class SkillIndex : int8_t {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ACTOR_VALUE_HPP
+#endif // OPENOBL_ACTOR_VALUE_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ESP_HPP
-#define OPENOBLIVION_ESP_HPP
+#ifndef OPENOBL_ESP_HPP
+#define OPENOBL_ESP_HPP
 
 #include "esp_coordinator.hpp"
 #include "io/io.hpp"
@@ -384,4 +384,4 @@ void readRecord(EsxAccessor &accessor,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ESP_HPP
+#endif // OPENOBL_ESP_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_IO_IO_HPP
-#define OPENOBLIVION_IO_IO_HPP
+#ifndef OPENOBL_IO_IO_HPP
+#define OPENOBL_IO_IO_HPP
 
 #include "bitflag.hpp"
 #include <array>
@@ -12,7 +12,7 @@
 #include <tuple>
 #include <vector>
 
-/// \defgroup OpenOblivionIo Io Library
+/// \defgroup OpenOBLIo Io Library
 /// Provides generic functions for binary io which do The Right Thing on common
 /// types.
 /// Example usage:
@@ -44,7 +44,7 @@
 /// supported by default, with customization of other types supported by
 /// specializing the BinaryIo class template.
 
-/// \addtogroup OpenOblivionIo
+/// \addtogroup OpenOBLIo
 /// @{
 namespace io {
 
@@ -265,4 +265,4 @@ struct BinaryIo<Bitflag<N, T>> {
 } // namespace io
 /// @}
 
-#endif //OPENOBLIVION_IO_IO_HPP
+#endif //OPENOBL_IO_IO_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MISC_RESOLVER_HPP
-#define OPENOBLIVION_MISC_RESOLVER_HPP
+#ifndef OPENOBL_MISC_RESOLVER_HPP
+#define OPENOBL_MISC_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -31,4 +31,4 @@ reifyRecord(const record::REFR_MISC &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MISC_RESOLVER_HPP
+#endif // OPENOBL_MISC_RESOLVER_HPP

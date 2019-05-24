@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_NIOBJECT_HPP
-#define OPENOBLIVION_NIF_NIOBJECT_HPP
+#ifndef OPENOBL_NIF_NIOBJECT_HPP
+#define OPENOBL_NIF_NIOBJECT_HPP
 
 #include "nif/compound.hpp"
 #include <limits>
@@ -1439,4 +1439,4 @@ struct PackedNiTriStripsData : bhk::ShapeCollection {
 
 } // namespace nif
 
-#endif // OPENOBLIVION_NIF_NIOBJECT_HPP
+#endif // OPENOBL_NIF_NIOBJECT_HPP

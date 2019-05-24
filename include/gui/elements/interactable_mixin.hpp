@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_INTERACTABLE_MIXIN_HPP
-#define OPENOBLIVION_GUI_INTERACTABLE_MIXIN_HPP
+#ifndef OPENOBL_GUI_INTERACTABLE_MIXIN_HPP
+#define OPENOBL_GUI_INTERACTABLE_MIXIN_HPP
 
 #include "gui/ui_element.hpp"
 
@@ -51,4 +51,4 @@ class InteractableMixin : public virtual UiElement {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_INTERACTABLE_MIXIN_HPP
+#endif // OPENOBL_GUI_INTERACTABLE_MIXIN_HPP

@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_NIFLOADER_MESH_LOADER_HPP
-#define OPENOBLIVION_NIFLOADER_MESH_LOADER_HPP
+#ifndef OPENOBL_NIFLOADER_MESH_LOADER_HPP
+#define OPENOBL_NIFLOADER_MESH_LOADER_HPP
 
 #include <OgreResource.h>
 
 namespace oo {
 
 /// Loader for `oo::Mesh`es defined in NIF files.
-/// \ingroup OpenOblivionNifloader
+/// \ingroup OpenOBLNifloader
 class MeshLoader : public Ogre::ManualResourceLoader {
  private:
   friend class MeshLoaderState;
@@ -17,4 +17,4 @@ class MeshLoader : public Ogre::ManualResourceLoader {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_MESH_LOADER_HPP
+#endif // OPENOBL_NIFLOADER_MESH_LOADER_HPP

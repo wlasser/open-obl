@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_FORMID_HPP
-#define OPENOBLIVION_FORMID_HPP
+#ifndef OPENOBL_FORMID_HPP
+#define OPENOBL_FORMID_HPP
 
 #include "io/io.hpp"
 #include <cstdint>
@@ -188,4 +188,4 @@ struct hash<oo::RefId> {
 
 } // namespace std
 
-#endif // OPENOBLIVION_FORMID_HPP
+#endif // OPENOBL_FORMID_HPP

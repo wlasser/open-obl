@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_RECORD_HEADER_HPP
-#define OPENOBLIVION_RECORD_RECORD_HEADER_HPP
+#ifndef OPENOBL_RECORD_RECORD_HEADER_HPP
+#define OPENOBL_RECORD_RECORD_HEADER_HPP
 
 #include "record/formid.hpp"
 #include <cstdint>
@@ -40,4 +40,4 @@ struct RecordHeader {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_RECORD_HEADER_HPP
+#endif //OPENOBL_RECORD_RECORD_HEADER_HPP

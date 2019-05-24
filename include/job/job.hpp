@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_JOB_JOB_HPP
-#define OPENOBLIVION_JOB_JOB_HPP
+#ifndef OPENOBL_JOB_JOB_HPP
+#define OPENOBL_JOB_JOB_HPP
 
 #include <boost/fiber/all.hpp>
 #include <atomic>
@@ -214,4 +214,4 @@ class RenderJobManager {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_JOB_JOB_HPP
+#endif // OPENOBL_JOB_JOB_HPP

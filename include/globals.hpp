@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GLOBALS_HPP
-#define OPENOBLIVION_GLOBALS_HPP
+#ifndef OPENOBL_GLOBALS_HPP
+#define OPENOBL_GLOBALS_HPP
 
 #include "record/records_fwd.hpp"
 #include <tl/optional.hpp>
@@ -88,4 +88,4 @@ template<class T> tl::optional<T &> Globals::get(const std::string &edid) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_GLOBALS_HPP
+#endif // OPENOBL_GLOBALS_HPP

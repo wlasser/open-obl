@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SUBRECORDS_HPP
-#define OPENOBLIVION_SUBRECORDS_HPP
+#ifndef OPENOBL_SUBRECORDS_HPP
+#define OPENOBL_SUBRECORDS_HPP
 
 #include "bitflag.hpp"
 #include "record/actor_value.hpp"
@@ -1544,4 +1544,4 @@ DECLARE_SPECIALIZED_SUBRECORD(XSED);
 
 } // namespace record
 
-#endif // OPENOBLIVION_SUBRECORDS_HPP
+#endif // OPENOBL_SUBRECORDS_HPP

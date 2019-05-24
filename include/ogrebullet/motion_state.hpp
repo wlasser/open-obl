@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREBULLET_MOTION_STATE_HPP
-#define OPENOBLIVION_OGREBULLET_MOTION_STATE_HPP
+#ifndef OPENOBL_OGREBULLET_MOTION_STATE_HPP
+#define OPENOBL_OGREBULLET_MOTION_STATE_HPP
 
 #include <btBulletDynamicsCommon.h>
 #include <OgreNode.h>
@@ -53,4 +53,4 @@ class MotionState : public btMotionState {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGREBULLET_MOTION_STATE_HPP
+#endif // OPENOBL_OGREBULLET_MOTION_STATE_HPP

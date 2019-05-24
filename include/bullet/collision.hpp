@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BULLET_COLLISION_HPP
-#define OPENOBLIVION_BULLET_COLLISION_HPP
+#ifndef OPENOBL_BULLET_COLLISION_HPP
+#define OPENOBL_BULLET_COLLISION_HPP
 
 #include "nif/enum.hpp"
 #include "ogrebullet/collision_shape.hpp"
@@ -292,4 +292,4 @@ constexpr uint64_t getCollisionMask(CollisionLayer layer) noexcept {
 
 } // namespace bullet
 
-#endif // OPENOBLIVION_BULLET_COLLISION_HPP
+#endif // OPENOBL_BULLET_COLLISION_HPP

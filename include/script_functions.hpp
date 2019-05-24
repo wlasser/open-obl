@@ -1,10 +1,10 @@
-#ifndef OPENOBLIVION_SCRIPT_FUNCTIONS_HPP
-#define OPENOBLIVION_SCRIPT_FUNCTIONS_HPP
+#ifndef OPENOBL_SCRIPT_FUNCTIONS_HPP
+#define OPENOBL_SCRIPT_FUNCTIONS_HPP
 
-/// \ingroup OpenOblivionScripting
+/// \ingroup OpenOBLScripting
 /// Scripting commands that can be run inside user-defined scripts.
 /// The same requirement on return values applies as for the functions in
-/// OpenOblivionConsole.
+/// OpenOBLConsole.
 ///@{
 namespace script {
 
@@ -12,8 +12,8 @@ namespace script {
 /// \remark The decimal part of the number is not the number of minutes but
 ///         the fraction of the hour, so `3.5` is `03:30am`.
 /// \returns the value of the `record::GLOB` `GameHour`.
-/// \ingroup OpenOblivionConsole
+/// \ingroup OpenOBLConsole
 extern "C" float GetCurrentTime();
 }
 
-#endif // OPENOBLIVION_SCRIPT_FUNCTIONS_HPP
+#endif // OPENOBL_SCRIPT_FUNCTIONS_HPP

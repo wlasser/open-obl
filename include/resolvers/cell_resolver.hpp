@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CELL_RESOLVER_HPP
-#define OPENOBLIVION_CELL_RESOLVER_HPP
+#ifndef OPENOBL_CELL_RESOLVER_HPP
+#define OPENOBL_CELL_RESOLVER_HPP
 
 #include "bullet/configuration.hpp"
 #include "esp_coordinator.hpp"
@@ -369,4 +369,4 @@ void Cell::attach(Refr ref, std::tuple<const Res &...> resolvers) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CELL_RESOLVER_HPP
+#endif // OPENOBL_CELL_RESOLVER_HPP

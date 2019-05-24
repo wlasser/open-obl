@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_TRAIT_SELECTOR_HPP
-#define OPENOBLIVION_GUI_TRAIT_SELECTOR_HPP
+#ifndef OPENOBL_GUI_TRAIT_SELECTOR_HPP
+#define OPENOBL_GUI_TRAIT_SELECTOR_HPP
 
 #include <pugixml.hpp>
 #include <optional>
@@ -97,4 +97,4 @@ std::optional<std::string> resolveTrait(pugi::xml_node node);
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_TRAIT_SELECTOR_HPP
+#endif // OPENOBL_GUI_TRAIT_SELECTOR_HPP

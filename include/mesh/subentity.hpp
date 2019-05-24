@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_SUBENTITY_HPP
-#define OPENOBLIVION_SUBENTITY_HPP
+#ifndef OPENOBL_SUBENTITY_HPP
+#define OPENOBL_SUBENTITY_HPP
 
 #include <OgreRenderable.h>
 #include <OgreMaterial.h>
 
 namespace oo {
 
-/// \addtogroup OpenOblivionMesh
+/// \addtogroup OpenOBLMesh
 /// @{
 
 class Entity;
@@ -83,4 +83,4 @@ class SubEntity : public Ogre::Renderable {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SUBENTITY_HPP
+#endif // OPENOBL_SUBENTITY_HPP

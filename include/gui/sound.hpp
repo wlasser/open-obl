@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_SOUND_HPP
-#define OPENOBLIVION_GUI_SOUND_HPP
+#ifndef OPENOBL_GUI_SOUND_HPP
+#define OPENOBL_GUI_SOUND_HPP
 
 #include <string>
 
@@ -11,4 +11,4 @@ std::string getClicksound(int index);
 
 } // namespace gui
 
-#endif // OPENOBLIVION_SOUND_HPP
+#endif // OPENOBL_SOUND_HPP

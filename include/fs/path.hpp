@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_FS_PATH_HPP
-#define OPENOBLIVION_FS_PATH_HPP
+#ifndef OPENOBL_FS_PATH_HPP
+#define OPENOBL_FS_PATH_HPP
 
 #include <algorithm>
 #include <filesystem>
@@ -152,4 +152,4 @@ oo::Path makeNormalPath(const oo::Path &diffusePath);
 std::string makeNormalPath(const std::string &diffusePath);
 } // namespace oo
 
-#endif // OPENOBLIVION_FS_PATH_HPP
+#endif // OPENOBL_FS_PATH_HPP

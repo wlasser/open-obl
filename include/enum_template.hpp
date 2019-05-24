@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ENUM_TEMPLATE_HPP
-#define OPENOBLIVION_ENUM_TEMPLATE_HPP
+#ifndef OPENOBL_ENUM_TEMPLATE_HPP
+#define OPENOBL_ENUM_TEMPLATE_HPP
 
 #include <cctype>
 #include <functional>
@@ -91,4 +91,4 @@ constexpr void apply(index_t i, F &&f, index_variant<index_t, U, J ...> x) {
 
 } // namespace enumvar
 
-#endif // OPENOBLIVION_ENUM_TEMPLATE_HPP
+#endif // OPENOBL_ENUM_TEMPLATE_HPP

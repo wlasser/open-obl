@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_EXTERIOR_MANAGER_HPP
-#define OPENOBLIVION_EXTERIOR_MANAGER_HPP
+#ifndef OPENOBL_EXTERIOR_MANAGER_HPP
+#define OPENOBL_EXTERIOR_MANAGER_HPP
 
 #include "record/formid.hpp"
 #include "resolvers/cell_resolver.hpp"
@@ -169,4 +169,4 @@ class ExteriorManager {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_EXTERIOR_MANAGER_HPP
+#endif // OPENOBL_EXTERIOR_MANAGER_HPP

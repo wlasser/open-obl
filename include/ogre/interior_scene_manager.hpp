@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_OCTREE_SCENE_MANAGER_HPP
-#define OPENOBLIVION_OGRE_OCTREE_SCENE_MANAGER_HPP
+#ifndef OPENOBL_OGRE_OCTREE_SCENE_MANAGER_HPP
+#define OPENOBL_OGRE_OCTREE_SCENE_MANAGER_HPP
 
 #include "ogre/scene_manager.hpp"
 #include <OgreSceneManager.h>
@@ -157,4 +157,4 @@ template<class F> void preOrderDFS(oo::OctreeNode *node, F &&visitor) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_OGRE_OCTREE_SCENE_MANAGER_HPP
+#endif // OPENOBL_OGRE_OCTREE_SCENE_MANAGER_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_TEXT_RESOURCE_MANAGER_HPP
-#define OPENOBLIVION_OGRE_TEXT_RESOURCE_MANAGER_HPP
+#ifndef OPENOBL_OGRE_TEXT_RESOURCE_MANAGER_HPP
+#define OPENOBL_OGRE_TEXT_RESOURCE_MANAGER_HPP
 
 #include "ogre/text_resource.hpp"
 #include <OgrePrerequisites.h>
@@ -38,4 +38,4 @@ class TextResourceManager : public ResourceManager,
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_TEXT_RESOURCE_MANAGER_HPP
+#endif // OPENOBL_OGRE_TEXT_RESOURCE_MANAGER_HPP

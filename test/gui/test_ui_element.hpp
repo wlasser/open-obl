@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_TEST_UI_ELEMENT_HPP
-#define OPENOBLIVION_TEST_UI_ELEMENT_HPP
+#ifndef OPENOBL_TEST_UI_ELEMENT_HPP
+#define OPENOBL_TEST_UI_ELEMENT_HPP
 
 #include "gui/trait.hpp"
 #include "gui/ui_element.hpp"
@@ -40,4 +40,4 @@ class TestUiElement : public gui::UiElement {
 
 }
 
-#endif // OPENOBLIVION_TEST_UI_ELEMENT_HPP
+#endif // OPENOBL_TEST_UI_ELEMENT_HPP

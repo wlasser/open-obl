@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BSA_BSA_HPP
-#define OPENOBLIVION_BSA_BSA_HPP
+#ifndef OPENOBL_BSA_BSA_HPP
+#define OPENOBL_BSA_BSA_HPP
 
 #include "io/memstream.hpp"
 #include <fstream>
@@ -11,7 +11,7 @@
 #include <vector>
 
 /// \file bsa.hpp
-/// \defgroup OpenOblivionBsa Bsa
+/// \defgroup OpenOBLBsa Bsa
 /// Provides read-only access to BSA files.
 
 namespace bsa {
@@ -23,7 +23,7 @@ class BsaIterator;
 } // namespace impl
 
 /// `std::istream` interface to the uncompressed data of a file in a BSA.
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 class FileData : public io::memstream {
  private:
   std::vector<uint8_t> mData;
@@ -48,7 +48,7 @@ class FileData : public io::memstream {
 /// Signifies whether a path to an entry in a BSA file is to a file or a folder.
 /// This information must be known when hashing the path, because the hashing
 /// algorithm differs in each case.
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 enum class HashType : int {
   File = 0,
   Folder
@@ -58,13 +58,13 @@ enum class HashType : int {
 // This is just to provide semantic information in the interface, in the
 // implementation where bit manipulation is involved it is probably clearer to
 // use `uint64_t` directly.
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 using HashResult = uint64_t;
 
 /// Hash the given file or folder name as determined by the `HashType`.
 /// \remark Uses the algorithm described in
 ///         https://en.uesp.net/wiki/Tes4Mod:Hash_Calculation
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 HashResult genHash(std::string path, HashType type) noexcept;
 
 /// Flags describing the structure of a BSA file.
@@ -90,7 +90,7 @@ HashResult genHash(std::string path, HashType type) noexcept;
 /// <tr><td>`BigEndian`</td>
 ///     <td>Unused. All archives are assumed to be little endian.</td></tr>
 /// </table>
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 enum class ArchiveFlag : uint32_t {
   None = 0u,
   HasDirectoryNames = 1u << 0u,
@@ -101,17 +101,17 @@ enum class ArchiveFlag : uint32_t {
   RetainOffsets = 1u << 5u,
   BigEndian = 1u << 6u
 };
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 constexpr inline ArchiveFlag operator|(ArchiveFlag a, ArchiveFlag b) noexcept {
   return static_cast<ArchiveFlag>(static_cast<uint32_t>(a)
       | static_cast<uint32_t>(b));
 }
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 constexpr inline ArchiveFlag operator&(ArchiveFlag a, ArchiveFlag b) noexcept {
   return static_cast<ArchiveFlag>(static_cast<uint32_t>(a)
       & static_cast<uint32_t>(b));
 }
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 constexpr inline bool operator!(ArchiveFlag a) noexcept {
   return static_cast<uint32_t>(a) == 0;
 }
@@ -120,7 +120,7 @@ constexpr inline bool operator!(ArchiveFlag a) noexcept {
 /// It is intended that all the files in a BSA file be semantically related,
 /// though this is not necessary and nothing is said about the file extensions
 /// of the stored files.
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 enum class FileType : uint32_t {
   None = 0u,
   Meshes = 1u << 0u,
@@ -135,7 +135,7 @@ enum class FileType : uint32_t {
 };
 
 /// Provides read-only access to a BSA file.
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 class BsaReader {
  public:
   using iterator = impl::BsaIterator;
@@ -228,7 +228,7 @@ class BsaReader {
 /// \todo I am unsatisfied with how the filenames are duplicated in memory
 ///       between these records and the existing private ones. Can we get away
 ///       with storing `std::string_view`s here?
-/// \ingroup OpenOblivionBsa
+/// \ingroup OpenOBLBsa
 struct FolderRecord {
   std::string name;
   std::vector<std::string> files;
@@ -294,4 +294,4 @@ constexpr HashResult sdbmHash(InputIt first, InputIt last) noexcept {
 } // namespace impl
 } // namespace bsa
 
-#endif // OPENOBLIVION_BSA_BSA_HPP
+#endif // OPENOBL_BSA_BSA_HPP

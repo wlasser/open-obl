@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREIMGUI_IMGUI_MANAGER_HPP
-#define OPENOBLIVION_OGREIMGUI_IMGUI_MANAGER_HPP
+#ifndef OPENOBL_OGREIMGUI_IMGUI_MANAGER_HPP
+#define OPENOBL_OGREIMGUI_IMGUI_MANAGER_HPP
 
 #include "ogreimgui/imgui_renderable.hpp"
 #include "sdl/sdl.hpp"
@@ -53,4 +53,4 @@ class ImGuiManager : public RenderQueueListener,
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGREIMGUI_IMGUI_MANAGER_HPP
+#endif // OPENOBL_OGREIMGUI_IMGUI_MANAGER_HPP

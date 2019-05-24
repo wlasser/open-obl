@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_IO_HPP
-#define OPENOBLIVION_RECORD_IO_HPP
+#ifndef OPENOBL_RECORD_IO_HPP
+#define OPENOBL_RECORD_IO_HPP
 
 #include "io/io.hpp"
 #include "record/tuplifiable.hpp"
@@ -139,4 +139,4 @@ std::istream &read(std::istream &is,
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_IO_HPP
+#endif //OPENOBL_RECORD_IO_HPP

@@ -303,7 +303,7 @@ void Application::createLoggers() {
   consoleSink->set_level(spdlog::level::info);
 
   // The log file gets everything
-  auto fileSink{std::make_shared<basic_file_sink_mt>("OpenOblivion.log", true)};
+  auto fileSink{std::make_shared<basic_file_sink_mt>("OpenOBL.log", true)};
   fileSink->set_level(spdlog::level::trace);
 
   // Every log will write to both the console and the log file

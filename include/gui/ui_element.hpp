@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_UI_ELEMENT_HPP
-#define OPENOBLIVION_GUI_UI_ELEMENT_HPP
+#ifndef OPENOBL_GUI_UI_ELEMENT_HPP
+#define OPENOBL_GUI_UI_ELEMENT_HPP
 
 #include "gui/trait.hpp"
 #include <OgreOverlayElement.h>
@@ -313,4 +313,4 @@ inline UiElement::~UiElement() = default;
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_UI_ELEMENT_HPP
+#endif // OPENOBL_GUI_UI_ELEMENT_HPP

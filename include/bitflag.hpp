@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_BITFLAG_HPP
-#define OPENOBLIVION_BITFLAG_HPP
+#ifndef OPENOBL_BITFLAG_HPP
+#define OPENOBL_BITFLAG_HPP
 
 #include <bitset>
 #include <type_traits>
@@ -123,4 +123,4 @@ class Bitflag : public BitflagMarker {
   }
 };
 
-#endif // OPENOBLIVION_BITFLAG_HPP
+#endif // OPENOBL_BITFLAG_HPP

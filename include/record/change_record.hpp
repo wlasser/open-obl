@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CHANGE_RECORD_HPP
-#define OPENOBLIVION_CHANGE_RECORD_HPP
+#ifndef OPENOBL_CHANGE_RECORD_HPP
+#define OPENOBL_CHANGE_RECORD_HPP
 
 #include "io/io.hpp"
 #include "record/exceptions.hpp"
@@ -152,4 +152,4 @@ void writeRecord(std::ostream &os, const Rec &chrRec) {
 
 } // namespace record
 
-#endif // OPENOBLIVION_CHANGE_RECORD_HPP
+#endif // OPENOBL_CHANGE_RECORD_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SCRIPTING_LOGGING_HPP
-#define OPENOBLIVION_SCRIPTING_LOGGING_HPP
+#ifndef OPENOBL_SCRIPTING_LOGGING_HPP
+#define OPENOBL_SCRIPTING_LOGGING_HPP
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
@@ -25,4 +25,4 @@ inline scriptingLogger(std::optional<std::string> loggerName = std::nullopt) {
 
 }
 
-#endif // OPENOBLIVION_SCRIPTING_LOGGING_HPP
+#endif // OPENOBL_SCRIPTING_LOGGING_HPP

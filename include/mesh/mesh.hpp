@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MESH_HPP
-#define OPENOBLIVION_MESH_HPP
+#ifndef OPENOBL_MESH_HPP
+#define OPENOBL_MESH_HPP
 
 #include "mesh/submesh.hpp"
 #include <gsl/gsl>
@@ -7,7 +7,7 @@
 #include <OgreAxisAlignedBox.h>
 #include <OgreResource.h>
 
-/// \defgroup OpenOblivionMesh OGRE Mesh Replacement Library
+/// \defgroup OpenOBLMesh OGRE Mesh Replacement Library
 /// Provides similar but API-incompatible alternatives to mesh-related
 /// functionality in OGRE.
 ///
@@ -20,7 +20,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionMesh
+/// \addtogroup OpenOBLMesh
 /// @{
 
 using MeshPtr = std::shared_ptr<oo::Mesh>;
@@ -80,4 +80,4 @@ class Mesh : public Ogre::Resource {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MESH_HPP
+#endif // OPENOBL_MESH_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_GROUP_HPP
-#define OPENOBLIVION_RECORD_GROUP_HPP
+#ifndef OPENOBL_RECORD_GROUP_HPP
+#define OPENOBL_RECORD_GROUP_HPP
 
 #include "record/formid.hpp"
 #include <cstdint>
@@ -70,4 +70,4 @@ peekGroupType(std::istream &is) noexcept;
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_GROUP_HPP
+#endif //OPENOBL_RECORD_GROUP_HPP

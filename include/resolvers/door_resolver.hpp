@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_DOOR_RESOLVER_HPP
-#define OPENOBLIVION_DOOR_RESOLVER_HPP
+#ifndef OPENOBL_DOOR_RESOLVER_HPP
+#define OPENOBL_DOOR_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -33,4 +33,4 @@ reifyRecord(const record::REFR_DOOR &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_DOOR_RESOLVER_HPP
+#endif // OPENOBL_DOOR_RESOLVER_HPP

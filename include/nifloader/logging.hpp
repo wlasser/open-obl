@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIFLOADER_LOGGING_HPP
-#define OPENOBLIVION_NIFLOADER_LOGGING_HPP
+#ifndef OPENOBL_NIFLOADER_LOGGING_HPP
+#define OPENOBL_NIFLOADER_LOGGING_HPP
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
@@ -24,4 +24,4 @@ inline nifloaderLogger(std::optional<std::string> loggerName = std::nullopt) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_LOGGING_HPP
+#endif // OPENOBL_NIFLOADER_LOGGING_HPP

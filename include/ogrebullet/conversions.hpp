@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGREBULLET_CONVERSIONS_HPP
-#define OPENOBLIVION_OGREBULLET_CONVERSIONS_HPP
+#ifndef OPENOBL_OGREBULLET_CONVERSIONS_HPP
+#define OPENOBL_OGREBULLET_CONVERSIONS_HPP
 
 #include <btBulletDynamicsCommon.h>
 #include <OgreMatrix3.h>
@@ -32,4 +32,4 @@ inline Ogre::Quaternion fromBullet(const btQuaternion &q) {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGREBULLET_CONVERSIONS_HPP
+#endif // OPENOBL_OGREBULLET_CONVERSIONS_HPP

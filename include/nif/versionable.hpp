@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIF_VERSIONABLE_HPP
-#define OPENOBLIVION_NIF_VERSIONABLE_HPP
+#ifndef OPENOBL_NIF_VERSIONABLE_HPP
+#define OPENOBL_NIF_VERSIONABLE_HPP
 
 #include "io/io.hpp"
 #include <array>
@@ -407,4 +407,4 @@ struct BinaryIo<VersionableHelper::VersionOptionalType<T, ver1, ver2>> {
 
 } // namespace io
 
-#endif // OPENOBLIVION_NIF_VERSIONABLE_HPP
+#endif // OPENOBL_NIF_VERSIONABLE_HPP

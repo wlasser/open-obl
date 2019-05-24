@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CONTROLS_HPP
-#define OPENOBLIVION_CONTROLS_HPP
+#ifndef OPENOBL_CONTROLS_HPP
+#define OPENOBL_CONTROLS_HPP
 
 #include "sdl/sdl.hpp"
 #include "game_settings.hpp"
@@ -389,4 +389,4 @@ class KeyMap {
 
 } // namespace oo::event
 
-#endif // OPENOBLIVION_CONTROLS_HPP
+#endif // OPENOBL_CONTROLS_HPP

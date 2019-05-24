@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_TEXT_HPP
-#define OPENOBLIVION_GUI_TEXT_HPP
+#ifndef OPENOBL_GUI_TEXT_HPP
+#define OPENOBL_GUI_TEXT_HPP
 
 #include "gui/elements/interactable_mixin.hpp"
 #include "gui/trait.hpp"
@@ -45,4 +45,4 @@ class Text : public InteractableMixin {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_TEXT_HPP
+#endif // OPENOBL_GUI_TEXT_HPP

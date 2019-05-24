@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SCRIPT_ENGINE_HPP
-#define OPENOBLIVION_SCRIPT_ENGINE_HPP
+#ifndef OPENOBL_SCRIPT_ENGINE_HPP
+#define OPENOBL_SCRIPT_ENGINE_HPP
 
 #include "scripting/logging.hpp"
 #include "scripting/script_engine_base.hpp"
@@ -70,4 +70,4 @@ void ScriptEngine::registerFunction(const std::string &funName) {
 
 } // namespace oo
 
-#endif //OPENOBLIVION_SCRIPT_ENGINE_HPP
+#endif //OPENOBL_SCRIPT_ENGINE_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_LOAD_MENU_MODE_HPP
-#define OPENOBLIVION_LOAD_MENU_MODE_HPP
+#ifndef OPENOBL_LOAD_MENU_MODE_HPP
+#define OPENOBL_LOAD_MENU_MODE_HPP
 
 #include "modes/menu_mode.hpp"
 #include "modes/menu_mode_base.hpp"
@@ -7,13 +7,13 @@
 
 namespace oo {
 
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<> struct MenuModeTransition<LoadMenuMode> {
   using type = ModeTransition<LoadMenuMode, LoadingMenuMode>;
 };
 
 /// Specialization of `oo::MenuMode` for the Load Game Menu.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<> class MenuMode<gui::MenuType::LoadMenu>
     : public MenuModeBase<LoadMenuMode> {
  private:
@@ -81,4 +81,4 @@ template<> class MenuMode<gui::MenuType::LoadMenu>
 
 } // namespace oo
 
-#endif // OPENOBLIVION_LOAD_MENU_MODE_HPP
+#endif // OPENOBL_LOAD_MENU_MODE_HPP

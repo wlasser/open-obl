@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CONVERSIONS_HPP
-#define OPENOBLIVION_CONVERSIONS_HPP
+#ifndef OPENOBL_CONVERSIONS_HPP
+#define OPENOBL_CONVERSIONS_HPP
 
 #include "nif/compound.hpp"
 #include <boost/qvm/all.hpp>
@@ -9,12 +9,12 @@
 #include <OgreMatrix4.h>
 #include <OgreVector.h>
 
-/// \defgroup OpenOblivionMath Math Compatibility Library
+/// \defgroup OpenOBLMath Math Compatibility Library
 /// Provides additional math functions and conversions between different
 /// components' linear algebra types.
 
 /// \file
-/// \ingroup OpenOblivionMath
+/// \ingroup OpenOBLMath
 /// Functions to convert between different coordinate systems and linear
 /// algebra types.
 ///
@@ -615,4 +615,4 @@ fromBSTaitBryan(Ogre::Radian aX, Ogre::Radian aY, Ogre::Radian aZ) {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CONVERSIONS_HPP
+#endif // OPENOBL_CONVERSIONS_HPP

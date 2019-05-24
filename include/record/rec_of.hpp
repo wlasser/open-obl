@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_REC_OF_HPP
-#define OPENOBLIVION_RECORD_REC_OF_HPP
+#ifndef OPENOBL_RECORD_REC_OF_HPP
+#define OPENOBL_RECORD_REC_OF_HPP
 
 #include <array>
 #include <cstdint>
@@ -59,4 +59,4 @@ inline std::string recOf(uint32_t t) noexcept {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_REC_OF_HPP
+#endif //OPENOBL_RECORD_REC_OF_HPP

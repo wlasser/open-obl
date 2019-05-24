@@ -1,4 +1,4 @@
-target_sources(OpenOblivionTest PRIVATE
+target_sources(OpenOBLTest PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/gui.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/stack.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/test_ui_element.hpp

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_CHARACTER_CONTROLLER_BODY_HPP
-#define OPENOBLIVION_CHARACTER_CONTROLLER_BODY_HPP
+#ifndef OPENOBL_CHARACTER_CONTROLLER_BODY_HPP
+#define OPENOBL_CHARACTER_CONTROLLER_BODY_HPP
 
 #include "fs/path.hpp"
 #include "mesh/entity.hpp"
@@ -32,4 +32,4 @@ void setSkinTextures(oo::Entity *bodyPart, oo::BaseId raceId,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_CHARACTER_CONTROLLER_BODY_HPP
+#endif // OPENOBL_CHARACTER_CONTROLLER_BODY_HPP

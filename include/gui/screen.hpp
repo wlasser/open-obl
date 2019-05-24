@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_SCREEN_HPP
-#define OPENOBLIVION_GUI_SCREEN_HPP
+#ifndef OPENOBL_GUI_SCREEN_HPP
+#define OPENOBL_GUI_SCREEN_HPP
 
 #include "gui/trait.hpp"
 #include <OgreRenderTarget.h>
@@ -80,4 +80,4 @@ class ScreenElement {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_SCREEN_HPP
+#endif // OPENOBL_GUI_SCREEN_HPP

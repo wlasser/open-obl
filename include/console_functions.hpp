@@ -1,7 +1,7 @@
-#ifndef OPENOBLIVION_CONSOLE_FUNCTIONS_HPP
-#define OPENOBLIVION_CONSOLE_FUNCTIONS_HPP
+#ifndef OPENOBL_CONSOLE_FUNCTIONS_HPP
+#define OPENOBL_CONSOLE_FUNCTIONS_HPP
 
-/// \defgroup OpenOblivionConsole Developer Console
+/// \defgroup OpenOBLConsole Developer Console
 /// Scripting commands that can be run exclusively inside the developer console.
 /// Because the scripting engine does not understand `void`, every function must
 /// return a value. The convention used is that if the function does not have an
@@ -66,4 +66,4 @@ extern "C" int print(float value);
 } // namespace console
 ///@}
 
-#endif // OPENOBLIVION_CONSOLE_FUNCTIONS_HPP
+#endif // OPENOBL_CONSOLE_FUNCTIONS_HPP

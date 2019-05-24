@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_STACK_PROGRAM_HPP
-#define OPENOBLIVION_GUI_STACK_PROGRAM_HPP
+#ifndef OPENOBL_GUI_STACK_PROGRAM_HPP
+#define OPENOBL_GUI_STACK_PROGRAM_HPP
 
 #include "gui/stack/instructions.hpp"
 #include "gui/stack/types.hpp"
@@ -13,7 +13,7 @@
 #include <vector>
 
 /// \file program.hpp
-/// \defgroup OpenOblivionGuiStack Gui Stack Machine
+/// \defgroup OpenOBLGuiStack Gui Stack Machine
 /// Stack machine for evaluating trait functions defined in xml.
 ///
 /// Traits in the xml may directly store values, in which case their TraitFun is
@@ -92,7 +92,7 @@ namespace gui {
 
 class Traits;
 
-/// \addtogroup OpenOblivionGuiStack
+/// \addtogroup OpenOBLGuiStack
 namespace stack {
 
 class Program {
@@ -135,4 +135,4 @@ Program compile(pugi::xml_node node, const gui::Traits *traits = nullptr);
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_STACK_PROGRAM_HPP
+#endif // OPENOBL_GUI_STACK_PROGRAM_HPP

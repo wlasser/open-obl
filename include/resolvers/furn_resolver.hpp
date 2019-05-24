@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_FURN_RESOLVER_HPP
-#define OPENOBLIVION_FURN_RESOLVER_HPP
+#ifndef OPENOBL_FURN_RESOLVER_HPP
+#define OPENOBL_FURN_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -29,4 +29,4 @@ reifyRecord(const record::REFR_FURN &refRec,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_FURN_RESOLVER_HPP
+#endif // OPENOBL_FURN_RESOLVER_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SAVE_STATE_HPP
-#define OPENOBLIVION_SAVE_STATE_HPP
+#ifndef OPENOBL_SAVE_STATE_HPP
+#define OPENOBL_SAVE_STATE_HPP
 
 #include "cell_cache.hpp"
 #include "esp.hpp"
@@ -251,4 +251,4 @@ std::istream &readSaveHeader(std::istream &is, SaveState &sv);
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SAVE_STATE_HPP
+#endif // OPENOBL_SAVE_STATE_HPP

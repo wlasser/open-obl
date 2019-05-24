@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_SIZE_OF_HPP
-#define OPENOBLIVION_RECORD_SIZE_OF_HPP
+#ifndef OPENOBL_RECORD_SIZE_OF_HPP
+#define OPENOBL_RECORD_SIZE_OF_HPP
 
 #include "bitflag.hpp"
 #include "record/tuplifiable.hpp"
@@ -82,4 +82,4 @@ std::enable_if_t<std::is_base_of_v<Bitflag<T::num_bits, T>, T>, std::size_t> {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_SIZE_OF_HPP
+#endif //OPENOBL_RECORD_SIZE_OF_HPP

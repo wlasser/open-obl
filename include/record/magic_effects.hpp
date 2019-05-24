@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MAGIC_EFFECTS_HPP
-#define OPENOBLIVION_MAGIC_EFFECTS_HPP
+#ifndef OPENOBL_MAGIC_EFFECTS_HPP
+#define OPENOBL_MAGIC_EFFECTS_HPP
 
 #include <array>
 #include <cstdint>
@@ -19,4 +19,4 @@ enum class MagicSchool : uint32_t {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MAGIC_EFFECTS_HPP
+#endif // OPENOBL_MAGIC_EFFECTS_HPP

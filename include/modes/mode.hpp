@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_MODE_HPP
-#define OPENOBLIVION_MODE_HPP
+#ifndef OPENOBL_MODE_HPP
+#define OPENOBL_MODE_HPP
 
 #include <optional>
 #include <tuple>
 #include <variant>
 
 /// \file mode.hpp
-/// \defgroup OpenOblivionModes Game Modes
+/// \defgroup OpenOBLModes Game Modes
 /// State machine for the game state handling menu changes etc.
 ///
 /// The game state is split into three distinct state groups; oo::GameMode,
@@ -16,7 +16,7 @@
 ///
 /// The oo::MenuMode state is split further into many closely-related states,
 /// with each substate representing a particular menu. Each menu shares a common
-/// backend engine provided by \ref OpenOblivionGui, but differs in the meaning
+/// backend engine provided by \ref OpenOBLGui, but differs in the meaning
 /// of each interactable uiElement.
 ///
 /// We will refer to oo::GameMode, oo::ConsoleMode, and all the substates of
@@ -67,7 +67,7 @@ namespace oo {
 /// `Mode` should be popped from the mode stack during the transition.
 /// The second argument represents an optional `Mode` to push on top of the
 /// stack during the transition.
-/// \ingroup OpenOblivionModes
+/// \ingroup OpenOBLModes
 template<class ...States>
 using ModeTransition = std::tuple<bool, std::optional<std::variant<States...>>>;
 
@@ -90,4 +90,4 @@ struct HideOverlayOnTransition : std::false_type {};
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MODE_HPP
+#endif // OPENOBL_MODE_HPP

@@ -1,12 +1,12 @@
-#ifndef OPENOBLIVION_NIF_RESOURCE_MANAGER_HPP
-#define OPENOBLIVION_NIF_RESOURCE_MANAGER_HPP
+#ifndef OPENOBL_NIF_RESOURCE_MANAGER_HPP
+#define OPENOBL_NIF_RESOURCE_MANAGER_HPP
 
 #include "nifloader/nif_resource.hpp"
 #include <OgreResourceManager.h>
 
 namespace Ogre {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 class NifResourceManager : public ResourceManager,
@@ -41,4 +41,4 @@ class NifResourceManager : public ResourceManager,
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_NIF_RESOURCE_MANAGER_HPP
+#endif // OPENOBL_NIF_RESOURCE_MANAGER_HPP

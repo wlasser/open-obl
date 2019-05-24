@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
-#define OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
+#ifndef OPENOBL_NIFLOADER_MESH_LOADER_STATE_HPP
+#define OPENOBL_NIFLOADER_MESH_LOADER_STATE_HPP
 
 #include "mesh/mesh.hpp"
 #include "mesh/submesh.hpp"
@@ -11,7 +11,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionNifloader
+/// \addtogroup OpenOBLNifloader
 /// @{
 
 /// `oo::SubMesh`es do not store bounding box information, only `oo::Mesh`es
@@ -211,4 +211,4 @@ void createRawMesh(oo::Mesh *mesh,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_NIFLOADER_MESH_LOADER_STATE_HPP
+#endif // OPENOBL_NIFLOADER_MESH_LOADER_STATE_HPP

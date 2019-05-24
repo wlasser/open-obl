@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_APPLICATION_HPP
-#define OPENOBLIVION_APPLICATION_HPP
+#ifndef OPENOBL_APPLICATION_HPP
+#define OPENOBL_APPLICATION_HPP
 
 #include "application_context.hpp"
 #include "controls.hpp"
@@ -19,7 +19,7 @@
 namespace oo {
 
 /// All possible `Mode`s that the oo::Application can be in.
-/// \ingroup OpenOblivionModess
+/// \ingroup OpenOBLModes
 using ModeVariant = std::variant<oo::GameMode,
                                  oo::ConsoleMode,
                                  oo::LoadMenuMode,
@@ -259,4 +259,4 @@ template<gui::MenuType Type> void Application::openMenu() {
 }
 } // namespace oo
 
-#endif // OPENOBLIVION_APPLICATION_HPP
+#endif // OPENOBL_APPLICATION_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_SOLOUD_WAV_RESOURCE_HPP
-#define OPENOBLIVION_OGRE_SOLOUD_WAV_RESOURCE_HPP
+#ifndef OPENOBL_OGRE_SOLOUD_WAV_RESOURCE_HPP
+#define OPENOBL_OGRE_SOLOUD_WAV_RESOURCE_HPP
 
 #include <OgreResource.h>
 #include <soloud/soloud_wav.h>
@@ -57,4 +57,4 @@ using WavResourcePtr = std::shared_ptr<WavResource>;
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_SOLOUD_WAV_RESOURCE_HPP
+#endif // OPENOBL_OGRE_SOLOUD_WAV_RESOURCE_HPP

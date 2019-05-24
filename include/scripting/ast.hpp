@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SCRIPTING_AST_HPP
-#define OPENOBLIVION_SCRIPTING_AST_HPP
+#ifndef OPENOBL_SCRIPTING_AST_HPP
+#define OPENOBL_SCRIPTING_AST_HPP
 
 #include "meta.hpp"
 #include "scripting/grammar.hpp"
@@ -313,4 +313,4 @@ template<class T> [[nodiscard]] std::unique_ptr<AstNode> parseStatement(T &&in) 
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SCRIPTING_AST_HPP
+#endif // OPENOBL_SCRIPTING_AST_HPP

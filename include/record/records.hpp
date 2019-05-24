@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORDS_HPP
-#define OPENOBLIVION_RECORDS_HPP
+#ifndef OPENOBL_RECORDS_HPP
+#define OPENOBL_RECORDS_HPP
 
 #include "record/definition_helpers.hpp"
 #include "record/record.hpp"
@@ -555,4 +555,4 @@ DECLARE_SPECIALIZED_RECORD(WATR);
 
 } // namespace Record
 
-#endif // OPENOBLIVION_RECORDS_HPP
+#endif // OPENOBL_RECORDS_HPP

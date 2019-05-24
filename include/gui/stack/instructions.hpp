@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_STACK_INSTRUCTIONS_HPP
-#define OPENOBLIVION_GUI_STACK_INSTRUCTIONS_HPP
+#ifndef OPENOBL_GUI_STACK_INSTRUCTIONS_HPP
+#define OPENOBL_GUI_STACK_INSTRUCTIONS_HPP
 
 #include "gui/stack/types.hpp"
 #include "meta.hpp"
@@ -515,4 +515,4 @@ using Instruction = std::variant<nop_t,
 
 } // namespace gui::stack
 
-#endif // OPENOBLIVION_GUI_STACK_INSTRUCTIONS_HPP
+#endif // OPENOBL_GUI_STACK_INSTRUCTIONS_HPP

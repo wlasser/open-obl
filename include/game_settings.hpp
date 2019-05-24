@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GAME_SETTINGS_HPP
-#define OPENOBLIVION_GAME_SETTINGS_HPP
+#ifndef OPENOBL_GAME_SETTINGS_HPP
+#define OPENOBL_GAME_SETTINGS_HPP
 
 #include "fs/path.hpp"
 #include "record/records_fwd.hpp"
@@ -310,4 +310,4 @@ class GameSetting {
 
 } // namespace oo
 
-#endif //OPENOBLIVION_GAME_SETTINGS_HPP
+#endif //OPENOBL_GAME_SETTINGS_HPP

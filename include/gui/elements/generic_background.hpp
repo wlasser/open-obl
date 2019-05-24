@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_GENERIC_BACKGROUND_HPP
-#define OPENOBLIVION_GUI_GENERIC_BACKGROUND_HPP
+#ifndef OPENOBL_GUI_GENERIC_BACKGROUND_HPP
+#define OPENOBL_GUI_GENERIC_BACKGROUND_HPP
 
 #include "gui/elements/rect.hpp"
 #include "gui/trait.hpp"
@@ -28,4 +28,4 @@ class GenericBackground : public Rect {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_GENERIC_BACKGROUND_HPP
+#endif // OPENOBL_GUI_GENERIC_BACKGROUND_HPP

@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_ATTRIBUTES_HPP
-#define OPENOBLIVION_ATTRIBUTES_HPP
+#ifndef OPENOBL_ATTRIBUTES_HPP
+#define OPENOBL_ATTRIBUTES_HPP
 
 #include <cstdint>
 
@@ -18,4 +18,4 @@ enum class Attribute : uint32_t {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_ATTRIBUTES_HPP
+#endif // OPENOBL_ATTRIBUTES_HPP

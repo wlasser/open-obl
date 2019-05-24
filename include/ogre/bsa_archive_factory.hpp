@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_OGRE_ARCHIVE_FACTORY_HPP
-#define OPENOBLIVION_OGRE_ARCHIVE_FACTORY_HPP
+#ifndef OPENOBL_OGRE_ARCHIVE_FACTORY_HPP
+#define OPENOBL_OGRE_ARCHIVE_FACTORY_HPP
 
 #include <gsl/gsl>
 #include <OgreArchive.h>
@@ -20,4 +20,4 @@ class BsaArchiveFactory : public Ogre::ArchiveFactory {
 
 } // namespace Ogre
 
-#endif // OPENOBLIVION_OGRE_BSA_ARCHIVE_FACTORY_HPP
+#endif // OPENOBL_OGRE_BSA_ARCHIVE_FACTORY_HPP

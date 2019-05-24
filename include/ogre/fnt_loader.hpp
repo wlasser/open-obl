@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_FNT_LOADER_HPP
-#define OPENOBLIVION_FNT_LOADER_HPP
+#ifndef OPENOBL_FNT_LOADER_HPP
+#define OPENOBL_FNT_LOADER_HPP
 
 #include <OgreFont.h>
 #include <OgreImage.h>
@@ -135,4 +135,4 @@ class FntLoaderImpl : public Ogre::ManualResourceLoader {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_FNT_LOADER_HPP
+#endif // OPENOBL_FNT_LOADER_HPP

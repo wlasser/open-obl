@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
-project(OpenOblivionGui)
+project(OpenOBLGui)
 
-add_library(OpenOblivionGui STATIC)
-add_library(OpenOblivion::OpenOblivionGui ALIAS OpenOblivionGui)
+add_library(OpenOBLGui STATIC)
+add_library(OpenOBL::OpenOBLGui ALIAS OpenOBLGui)
 
-target_include_directories(OpenOblivionGui PUBLIC
+target_include_directories(OpenOBLGui PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
 
-target_sources(OpenOblivionGui PRIVATE
+target_sources(OpenOBLGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/elements/button.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/generic_background.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/image.hpp
@@ -55,22 +55,22 @@ target_sources(OpenOblivionGui PRIVATE
         traits.cpp
         xml.cpp)
 
-target_link_libraries(OpenOblivionGui PRIVATE
-        OpenOblivion::OpenOblivionFS
-        OpenOblivion::OpenOblivionOgre
+target_link_libraries(OpenOBLGui PRIVATE
+        OpenOBL::OpenOBLFS
+        OpenOBL::OpenOBLOgre
         Boost::boost
         spdlog::spdlog
         PUBLIC
         OgreOverlay
         pugixml)
 
-install(TARGETS OpenOblivionGui EXPORT OpenOblivionGuiTargets
+install(TARGETS OpenOBLGui EXPORT OpenOBLGuiTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(EXPORT OpenOblivionGuiTargets
-        FILE OpenOblivionGuiTargets.cmake
-        NAMESPACE OpenOblivion::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOblivion)
+install(EXPORT OpenOBLGuiTargets
+        FILE OpenOBLGuiTargets.cmake
+        NAMESPACE OpenOBL::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/gui/
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOblivion/gui)
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/OpenOBL/gui)

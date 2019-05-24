@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_SUBMESH_HPP
-#define OPENOBLIVION_SUBMESH_HPP
+#ifndef OPENOBL_SUBMESH_HPP
+#define OPENOBL_SUBMESH_HPP
 
 #include <OgreIteratorWrapper.h>
 #include <OgrePrerequisites.h>
@@ -9,7 +9,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionMesh
+/// \addtogroup OpenOBLMesh
 /// @{
 
 class Mesh;
@@ -65,4 +65,4 @@ class SubMesh {
 
 } // namespace oo
 
-#endif // OPENOBLIVION_SUBMESH_HPP
+#endif // OPENOBL_SUBMESH_HPP

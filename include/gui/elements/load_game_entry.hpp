@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_GUI_LOAD_GAME_ENTRY_HPP
-#define OPENOBLIVION_GUI_LOAD_GAME_ENTRY_HPP
+#ifndef OPENOBL_GUI_LOAD_GAME_ENTRY_HPP
+#define OPENOBL_GUI_LOAD_GAME_ENTRY_HPP
 
 #include "gui/elements/rect.hpp"
 #include "gui/traits.hpp"
@@ -44,4 +44,4 @@ class LoadGameEntry : public Rect {
 
 } // namespace gui
 
-#endif // OPENOBLIVION_GUI_LOAD_GAME_ENTRY_HPP
+#endif // OPENOBL_GUI_LOAD_GAME_ENTRY_HPP

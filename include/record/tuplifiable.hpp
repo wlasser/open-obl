@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_RECORD_TUPLIFIABLE_HPP
-#define OPENOBLIVION_RECORD_TUPLIFIABLE_HPP
+#ifndef OPENOBL_RECORD_TUPLIFIABLE_HPP
+#define OPENOBL_RECORD_TUPLIFIABLE_HPP
 
 #include <tuple>
 
@@ -23,4 +23,4 @@ struct Tuplifiable : TuplifiableMarker {
 
 } // namespace record
 
-#endif //OPENOBLIVION_RECORD_TUPLIFIABLE_HPP
+#endif //OPENOBL_RECORD_TUPLIFIABLE_HPP

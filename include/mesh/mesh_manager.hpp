@@ -1,5 +1,5 @@
-#ifndef OPENOBLIVION_MESH_MANAGER_HPP
-#define OPENOBLIVION_MESH_MANAGER_HPP
+#ifndef OPENOBL_MESH_MANAGER_HPP
+#define OPENOBL_MESH_MANAGER_HPP
 
 #include "mesh/mesh.hpp"
 #include <OgreResourceManager.h>
@@ -7,7 +7,7 @@
 
 namespace oo {
 
-/// \addtogroup OpenOblivionMesh
+/// \addtogroup OpenOBLMesh
 /// @{
 
 class MeshManager : public Ogre::ResourceManager,
@@ -65,4 +65,4 @@ class MeshManager : public Ogre::ResourceManager,
 
 } // namespace oo
 
-#endif // OPENOBLIVION_MESH_MANAGER_HPP
+#endif // OPENOBL_MESH_MANAGER_HPP
