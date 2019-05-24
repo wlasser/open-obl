@@ -1,8 +1,6 @@
 #ifndef OPENOBLIVION_SETTINGS_HPP
 #define OPENOBLIVION_SETTINGS_HPP
 
-#include <string_view>
-
 /// \file
 /// I don't like that this file exists; it's only purpose is to hold some
 /// essentially unrelated constants which are needed throughout the codebase,
