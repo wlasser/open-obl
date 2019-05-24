@@ -9,11 +9,11 @@
 #include "resolvers/flor_resolver.hpp"
 #include "resolvers/furn_resolver.hpp"
 #include "resolvers/helpers.hpp"
-#include "resolvers/light_resolver.hpp"
+#include "resolvers/ligh_resolver.hpp"
 #include "resolvers/misc_resolver.hpp"
-#include "resolvers/npc_resolver.hpp"
+#include "resolvers/npc__resolver.hpp"
 #include "resolvers/resolvers.hpp"
-#include "resolvers/static_resolver.hpp"
+#include "resolvers/stat_resolver.hpp"
 #include <boost/fiber/mutex.hpp>
 #include <BulletCollision/CollisionShapes/btHeightfieldTerrainShape.h>
 #include <tl/optional.hpp>

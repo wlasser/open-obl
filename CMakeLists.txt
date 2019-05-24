@@ -228,11 +228,11 @@ target_sources(OpenOBL PRIVATE
         include/resolvers/flor_resolver.hpp
         include/resolvers/furn_resolver.hpp
         include/resolvers/helpers.hpp
-        include/resolvers/light_resolver.hpp
+        include/resolvers/ligh_resolver.hpp
         include/resolvers/misc_resolver.hpp
-        include/resolvers/npc_resolver.hpp
+        include/resolvers/npc__resolver.hpp
         include/resolvers/resolvers.hpp
-        include/resolvers/static_resolver.hpp
+        include/resolvers/stat_resolver.hpp
         include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
         include/script_functions.hpp
@@ -279,10 +279,10 @@ target_sources(OpenOBL PRIVATE
         src/resolvers/flor_resolver.cpp
         src/resolvers/furn_resolver.cpp
         src/resolvers/helpers.cpp
-        src/resolvers/light_resolver.cpp
+        src/resolvers/ligh_resolver.cpp
         src/resolvers/misc_resolver.cpp
-        src/resolvers/npc_resolver.cpp
-        src/resolvers/static_resolver.cpp
+        src/resolvers/npc__resolver.cpp
+        src/resolvers/stat_resolver.cpp
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
         src/script_functions.cpp

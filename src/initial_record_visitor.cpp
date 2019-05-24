@@ -11,10 +11,10 @@
 #include "resolvers/door_resolver.hpp"
 #include "resolvers/flor_resolver.hpp"
 #include "resolvers/furn_resolver.hpp"
-#include "resolvers/light_resolver.hpp"
+#include "resolvers/ligh_resolver.hpp"
 #include "resolvers/misc_resolver.hpp"
-#include "resolvers/npc_resolver.hpp"
-#include "resolvers/static_resolver.hpp"
+#include "resolvers/npc__resolver.hpp"
+#include "resolvers/stat_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include <cctype>
 

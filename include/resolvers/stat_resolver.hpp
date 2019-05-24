@@ -1,5 +1,5 @@
-#ifndef OPENOBL_STATIC_RESOLVER_HPP
-#define OPENOBL_STATIC_RESOLVER_HPP
+#ifndef OPENOBL_STAT_RESOLVER_HPP
+#define OPENOBL_STAT_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -33,4 +33,4 @@ reifyRecord(const record::REFR_STAT &refRec,
 
 } // namespace oo
 
-#endif // OPENOBL_STATIC_RESOLVER_HPP
+#endif //OPENOBL_STAT_RESOLVER_HPP

@@ -2,7 +2,7 @@
 #include "math/conversions.hpp"
 #include "record/records.hpp"
 #include "resolvers/helpers.hpp"
-#include "resolvers/light_resolver.hpp"
+#include "resolvers/ligh_resolver.hpp"
 #include <boost/algorithm/string/predicate.hpp>
 #include <OgreColourValue.h>
 #include <OgreLight.h>

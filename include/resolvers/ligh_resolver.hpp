@@ -1,5 +1,5 @@
-#ifndef OPENOBL_LIGHT_RESOLVER_HPP
-#define OPENOBL_LIGHT_RESOLVER_HPP
+#ifndef OPENOBL_LIGH_RESOLVER_HPP
+#define OPENOBL_LIGH_RESOLVER_HPP
 
 #include "resolvers/resolvers.hpp"
 
@@ -33,4 +33,4 @@ reifyRecord(const record::REFR_LIGH &refRec,
 
 } // namespace oo
 
-#endif // OPENOBL_LIGHT_RESOLVER_HPP
+#endif //OPENOBL_LIGH_RESOLVER_HPP

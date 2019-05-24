@@ -1,5 +1,5 @@
 #include "record/records.hpp"
-#include "resolvers/npc_resolver.hpp"
+#include "resolvers/npc__resolver.hpp"
 #include "resolvers/helpers.hpp"
 
 namespace oo {
