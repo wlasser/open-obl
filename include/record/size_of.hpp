@@ -1,9 +1,9 @@
 #ifndef OPENOBL_RECORD_SIZE_OF_HPP
 #define OPENOBL_RECORD_SIZE_OF_HPP
 
-#include "bitflag.hpp"
 #include "record/tuplifiable.hpp"
 #include "record/formid.hpp"
+#include "util/bitflag.hpp"
 #include <numeric>
 #include <array>
 #include <optional>

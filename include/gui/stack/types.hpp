@@ -1,7 +1,7 @@
 #ifndef OPENOBL_GUI_STACK_TYPES_HPP
 #define OPENOBL_GUI_STACK_TYPES_HPP
 
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include <string>
 #include <variant>
 #include <vector>

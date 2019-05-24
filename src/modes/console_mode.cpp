@@ -1,7 +1,7 @@
 #include "controls.hpp"
 #include "modes/console_mode.hpp"
 #include "scripting/console_engine.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {

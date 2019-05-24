@@ -1,9 +1,9 @@
 #ifndef OPENOBL_SCRIPTING_AST_HPP
 #define OPENOBL_SCRIPTING_AST_HPP
 
-#include "meta.hpp"
 #include "scripting/grammar.hpp"
 #include "scripting/pegtl.hpp"
+#include "util/meta.hpp"
 #include <memory>
 #include <string>
 #include <tuple>

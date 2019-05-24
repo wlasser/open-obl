@@ -2,7 +2,7 @@
 #include "gui/logging.hpp"
 #include "gui/xml.hpp"
 #include "ogre/text_resource_manager.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/convert.hpp>
 #include <pugixml.hpp>

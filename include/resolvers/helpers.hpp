@@ -2,12 +2,12 @@
 #define OPENOBL_RESOLVERS_HELPERS_HPP
 
 #include "fs/path.hpp"
-#include "meta.hpp"
 #include "nifloader/scene.hpp"
 #include "ogrebullet/rigid_body.hpp"
 #include "record/formid.hpp"
 #include "record/records.hpp"
-#include "settings.hpp"
+#include "util/meta.hpp"
+#include "util/settings.hpp"
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
 #include <gsl/gsl>

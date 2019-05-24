@@ -1,7 +1,7 @@
+#include "chrono.hpp"
 #include "game_settings.hpp"
 #include "globals.hpp"
 #include "gui/menu.hpp"
-#include "meta.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/debug_draw_impl.hpp"
 #include "modes/game_mode.hpp"
@@ -10,9 +10,9 @@
 #include "ogre/scene_manager.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "settings.hpp"
-#include "chrono.hpp"
 #include "sdl/sdl.hpp"
+#include "util/meta.hpp"
+#include "util/settings.hpp"
 #include <imgui/imgui.h>
 #include <OgreBone.h>
 #include <OgreSkeletonInstance.h>

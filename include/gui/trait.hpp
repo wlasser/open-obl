@@ -1,7 +1,7 @@
 #ifndef OPENOBL_GUI_TRAIT_HPP
 #define OPENOBL_GUI_TRAIT_HPP
 
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include <functional>
 #include <string>
 #include <string_view>

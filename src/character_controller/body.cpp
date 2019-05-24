@@ -1,6 +1,6 @@
 #include "character_controller/body.hpp"
 #include "mesh/subentity.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>

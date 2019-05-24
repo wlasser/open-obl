@@ -1,6 +1,6 @@
 #include "application.hpp"
 #include "job/job.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 
 int main() {
   oo::JobManager::start();

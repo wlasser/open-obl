@@ -169,6 +169,7 @@ add_subdirectory(src/ogreimgui)
 add_subdirectory(src/ogresoloud)
 add_subdirectory(src/scripting)
 add_subdirectory(src/sdl)
+add_subdirectory(src/util)
 
 add_subdirectory(bsatools)
 add_subdirectory(test)
@@ -181,7 +182,6 @@ target_sources(OpenOBL PRIVATE
         include/application_context.hpp
         include/atmosphere.hpp
         include/audio.hpp
-        include/bitflag.hpp
         include/bullet/collision.hpp
         include/bullet/configuration.hpp
         include/cell_cache.hpp
@@ -202,7 +202,6 @@ target_sources(OpenOBL PRIVATE
         include/chrono.hpp
         include/console_functions.hpp
         include/controls.hpp
-        include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
         include/exterior_manager.hpp
@@ -210,7 +209,6 @@ target_sources(OpenOBL PRIVATE
         include/globals.hpp
         include/initial_record_visitor.hpp
         include/job/job.hpp
-        include/meta.hpp
         include/modes/console_mode.hpp
         include/modes/debug_draw_impl.hpp
         include/modes/game_mode.hpp
@@ -236,7 +234,6 @@ target_sources(OpenOBL PRIVATE
         include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
         include/script_functions.hpp
-        include/settings.hpp
         include/wrld.hpp
         src/application.cpp
         src/application_context.cpp
@@ -306,6 +303,7 @@ target_link_libraries(OpenOBL PRIVATE
         OpenOBL::OpenOBLRecord
         OpenOBL::OpenOBLScripting
         OpenOBL::OpenOBLSDL
+        OpenOBL::OpenOBLUtil
         Boost::boost
         Boost::fiber
         MicrosoftGSL::GSL

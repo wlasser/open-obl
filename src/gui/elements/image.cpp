@@ -2,7 +2,7 @@
 #include "gui/elements/image.hpp"
 #include "gui/logging.hpp"
 #include "gui/screen.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreMaterial.h>
 #include <OgreMaterialManager.h>
 #include <OgreOverlayManager.h>

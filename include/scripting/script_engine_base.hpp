@@ -1,10 +1,10 @@
 #ifndef OPENOBL_SCRIPTING_SCRIPT_ENGINE_BASE_HPP
 #define OPENOBL_SCRIPTING_SCRIPT_ENGINE_BASE_HPP
 
-#include "meta.hpp"
 #include "scripting/ast.hpp"
 #include "scripting/jit.hpp"
 #include "scripting/llvm.hpp"
+#include "util/meta.hpp"
 #include <llvm/IR/LLVMContext.h>
 #include <memory>
 

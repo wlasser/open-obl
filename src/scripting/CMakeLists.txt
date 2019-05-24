@@ -37,7 +37,7 @@ endif ()
 
 target_link_libraries(OpenOBLScripting
         PRIVATE taocpp::pegtl MicrosoftGSL::GSL
-        PUBLIC ${llvm_libs} spdlog::spdlog)
+        PUBLIC OpenOBL::OpenOBLUtil ${llvm_libs} spdlog::spdlog)
 
 set_target_properties(OpenOBLScripting PROPERTIES
         CXX_VISIBILITY_PRESET hidden)

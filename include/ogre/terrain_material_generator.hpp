@@ -1,7 +1,7 @@
 #ifndef OPENOBL_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
 #define OPENOBL_OGRE_TERRAIN_MATERIAL_GENERATOR_HPP
 
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreMaterialManager.h>
 #include <OgreTextureManager.h>
 #include <Terrain/OgreTerrainMaterialGenerator.h>

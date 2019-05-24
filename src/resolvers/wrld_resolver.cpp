@@ -3,7 +3,7 @@
 #include "mesh/mesh_manager.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreHardwarePixelBuffer.h>
 #include <OgreInstanceBatch.h>
 #include <OgreInstanceManager.h>

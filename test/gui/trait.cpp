@@ -3,8 +3,8 @@
 #include "gui/trait.hpp"
 #include "gui/traits.hpp"
 #include "gui/trait_selector.hpp"
-#include "settings.hpp"
 #include "test_ui_element.hpp"
+#include "util/settings.hpp"
 #include <catch2/catch.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>

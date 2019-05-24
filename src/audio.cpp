@@ -1,7 +1,7 @@
 #include "audio.hpp"
-#include "game_settings.hpp"
 #include "fs/path.hpp"
-#include "settings.hpp"
+#include "game_settings.hpp"
+#include "util/settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {

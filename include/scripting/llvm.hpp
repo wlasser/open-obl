@@ -1,10 +1,10 @@
 #ifndef OPENOBL_SCRIPTING_LLVM_HPP
 #define OPENOBL_SCRIPTING_LLVM_HPP
 
-#include "meta.hpp"
 #include "scripting/ast.hpp"
 #include "scripting/grammar.hpp"
 #include "scripting/jit.hpp"
+#include "util/meta.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>

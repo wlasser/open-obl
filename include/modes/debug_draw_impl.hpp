@@ -1,8 +1,8 @@
 #ifndef OPENOBL_DEBUG_DRAW_IMPL_HPP
 #define OPENOBL_DEBUG_DRAW_IMPL_HPP
 
-#include "bitflag.hpp"
 #include "ogrebullet/debug_drawer.hpp"
+#include "util/bitflag.hpp"
 #include <boost/circular_buffer.hpp>
 #include <gsl/gsl>
 #include <OgreMatrix4.h>

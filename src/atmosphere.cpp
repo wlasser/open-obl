@@ -1,7 +1,7 @@
 #include "atmosphere.hpp"
 #include "record/records.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreBillboard.h>
 #include <OgreBillboardSet.h>
 #include <OgreMaterialManager.h>

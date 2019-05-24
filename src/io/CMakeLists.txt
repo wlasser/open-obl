@@ -15,7 +15,9 @@ target_sources(OpenOBLIO PRIVATE
         io.cpp
         string.cpp)
 
-target_link_libraries(OpenOBLIO PRIVATE Boost::boost)
+target_link_libraries(OpenOBLIO
+        PUBLIC OpenOBL::OpenOBLUtil
+        PRIVATE Boost::boost)
 
 install(TARGETS OpenOBLIO EXPORT OpenOBLIOTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

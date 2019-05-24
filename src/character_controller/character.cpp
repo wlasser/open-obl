@@ -2,7 +2,7 @@
 #include "character_controller/body.hpp"
 #include "character_controller/character.hpp"
 #include "resolvers/helpers.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreSkeletonInstance.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>

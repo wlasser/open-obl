@@ -1,7 +1,7 @@
 #include "bullet/collision.hpp"
 #include "character_controller/character_controller_impl.hpp"
 #include "character_controller/movement.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {

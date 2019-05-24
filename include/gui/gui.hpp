@@ -1,10 +1,10 @@
 #ifndef OPENOBL_GUI_GUI_HPP
 #define OPENOBL_GUI_GUI_HPP
 
-#include "enum_template.hpp"
 #include "gui/menus/load_menu.hpp"
 #include "gui/menus/loading_menu.hpp"
 #include "gui/menus/main_menu.hpp"
+#include "util/enum_template.hpp"
 #include <experimental/propagate_const>
 
 /// \file gui.hpp

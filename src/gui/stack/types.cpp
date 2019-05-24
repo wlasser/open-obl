@@ -1,4 +1,4 @@
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include "gui/stack/types.hpp"
 #include "gui/xml.hpp"
 #include <boost/convert.hpp>

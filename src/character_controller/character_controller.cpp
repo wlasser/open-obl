@@ -1,5 +1,5 @@
 #include "character_controller/character_controller.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <gsl/gsl>
 #include <OgreMath.h>
 #include <OgreSceneNode.h>

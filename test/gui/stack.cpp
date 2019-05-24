@@ -1,7 +1,7 @@
 #include "gui/stack/instructions.hpp"
-#include "meta.hpp"
 #include "gui/stack/program.hpp"
 #include "gui/stack/types.hpp"
+#include "util/meta.hpp"
 #include <catch2/catch.hpp>
 #include <pugixml.hpp>
 #include <cmath>

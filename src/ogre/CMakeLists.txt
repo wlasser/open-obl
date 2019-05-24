@@ -38,6 +38,7 @@ target_link_libraries(OpenOBLOgre PRIVATE
         OpenOBL::OpenOBLBsa
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLMath
+        OpenOBL::OpenOBLUtil
         PUBLIC
         Boost::boost
         MicrosoftGSL::GSL

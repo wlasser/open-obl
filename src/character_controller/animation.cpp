@@ -3,7 +3,7 @@
 #include "mesh/subentity.hpp"
 #include "nifloader/animation.hpp"
 #include "record/records.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreSkeletonManager.h>
 #include <OgreSkeletonInstance.h>
 

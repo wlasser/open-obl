@@ -1,7 +1,7 @@
 #ifndef OPENOBL_IO_IO_HPP
 #define OPENOBL_IO_IO_HPP
 
-#include "bitflag.hpp"
+#include "util/bitflag.hpp"
 #include <array>
 #include <cstddef>
 #include <istream>

@@ -1,5 +1,5 @@
 #include "ogre/terrain_material_generator.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>

@@ -15,7 +15,6 @@
 #include "mesh/entity.hpp"
 #include "mesh/mesh_manager.hpp"
 #include "mesh/subentity.hpp"
-#include "meta.hpp"
 #include "nifloader/collision_object_loader.hpp"
 #include "nifloader/logging.hpp"
 #include "nifloader/mesh_loader.hpp"
@@ -43,7 +42,8 @@
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
 #include "sdl/sdl.hpp"
-#include "settings.hpp"
+#include "util/meta.hpp"
+#include "util/settings.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>

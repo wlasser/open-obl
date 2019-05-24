@@ -2,7 +2,7 @@
 #define OPENOBL_GUI_STACK_INSTRUCTIONS_HPP
 
 #include "gui/stack/types.hpp"
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include <cmath>
 #include <numeric>
 #include <random>

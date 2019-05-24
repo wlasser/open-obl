@@ -1,7 +1,6 @@
 #ifndef OPENOBL_SUBRECORDS_HPP
 #define OPENOBL_SUBRECORDS_HPP
 
-#include "bitflag.hpp"
 #include "record/actor_value.hpp"
 #include "record/attribute.hpp"
 #include "record/definition_helpers.hpp"
@@ -9,6 +8,7 @@
 #include "record/magic_effects.hpp"
 #include "record/subrecord.hpp"
 #include "record/tuplifiable.hpp"
+#include "util/bitflag.hpp"
 #include <array>
 #include <iosfwd>
 #include <optional>

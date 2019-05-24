@@ -4,7 +4,7 @@
 #include "record/formid.hpp"
 #include "record/records_fwd.hpp"
 #include "record/reference_records.hpp"
-#include "meta.hpp"
+#include "util/meta.hpp"
 #include <boost/fiber/mutex.hpp>
 #include <boost/mp11.hpp>
 #include <btBulletDynamicsCommon.h>

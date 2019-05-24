@@ -58,6 +58,7 @@ target_sources(OpenOBLGui PRIVATE
 target_link_libraries(OpenOBLGui PRIVATE
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLOgre
+        OpenOBL::OpenOBLUtil
         Boost::boost
         spdlog::spdlog
         PUBLIC

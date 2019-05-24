@@ -1,8 +1,8 @@
-#include "settings.hpp"
+#include "gui/screen.hpp"
+#include "util/settings.hpp"
 #include <OgreRenderTarget.h>
 #include <OgreRoot.h>
 #include <OgreVector.h>
-#include "gui/screen.hpp"
 
 Ogre::Vector2 gui::getNormalizedDimensions() {
   auto *target{Ogre::Root::getSingleton().getRenderTarget(oo::RENDER_TARGET)};

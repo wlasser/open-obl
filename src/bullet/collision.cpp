@@ -1,6 +1,6 @@
 #include "bullet/collision.hpp"
 #include "record/formid.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <spdlog/fmt/ostr.h>
 #include <spdlog/spdlog.h>
 

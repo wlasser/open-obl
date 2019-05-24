@@ -2,7 +2,7 @@
 #include "character_controller/movement.hpp"
 #include "character_controller/sneak_jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <btBulletDynamicsCommon.h>
 #include <spdlog/spdlog.h>
 #include <cmath>

@@ -24,8 +24,9 @@ target_link_libraries(OpenOBLTest PRIVATE
         OpenOBL::OpenOBLIO
         OpenOBL::OpenOBLOgre
         OpenOBL::OpenOBLScripting
+        OpenOBL::OpenOBLUtil
         Catch2::Catch2
-        GSL
+        MicrosoftGSL::GSL
         taocpp::pegtl
         tloptional)
 

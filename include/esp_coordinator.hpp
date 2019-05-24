@@ -7,7 +7,7 @@
 #include "record/records_fwd.hpp"
 #include "record/reference_records.hpp"
 #include "record/subrecords.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <boost/fiber/mutex.hpp>
 #include <gsl/gsl>
 #include <spdlog/spdlog.h>
