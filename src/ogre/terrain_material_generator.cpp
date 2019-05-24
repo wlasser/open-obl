@@ -1,10 +1,10 @@
+#include "ogre/terrain_material_generator.hpp"
 #include "settings.hpp"
-#include "terrain_material_generator.hpp"
 #include <OgreMaterialManager.h>
 #include <OgrePass.h>
 #include <OgreTechnique.h>
-#include <Terrain/OgreTerrain.h>
 #include <OgreTextureManager.h>
+#include <Terrain/OgreTerrain.h>
 
 namespace oo {
 

@@ -2,7 +2,8 @@
 #include "mesh/entity.hpp"
 #include "modes/debug_draw_impl.hpp"
 #include "modes/game_mode.hpp"
-#include "scene_manager.hpp"
+#include "ogre/interior_scene_manager.hpp"
+#include "ogre/scene_manager.hpp"
 #include <imgui/imgui.h>
 #include <OgreBone.h>
 #include <OgreSceneNode.h>

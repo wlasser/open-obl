@@ -202,7 +202,6 @@ target_sources(OpenOblivion PRIVATE
         include/chrono.hpp
         include/console_functions.hpp
         include/controls.hpp
-        include/deferred_light_pass.hpp
         include/enum_template.hpp
         include/esp.hpp
         include/esp_coordinator.hpp
@@ -236,10 +235,8 @@ target_sources(OpenOblivion PRIVATE
         include/resolvers/static_resolver.hpp
         include/resolvers/wrld_resolver.hpp
         include/save_state.hpp
-        include/scene_manager.hpp
         include/script_functions.hpp
         include/settings.hpp
-        include/terrain_material_generator.hpp
         include/wrld.hpp
         src/application.cpp
         src/application_context.cpp
@@ -261,7 +258,6 @@ target_sources(OpenOblivion PRIVATE
         src/character_controller/walk_state.cpp
         src/chrono.cpp
         src/console_functions.cpp
-        src/deferred_light_pass.cpp
         src/esp_coordinator.cpp
         src/exterior_manager.cpp
         src/game_settings.cpp
@@ -289,9 +285,7 @@ target_sources(OpenOblivion PRIVATE
         src/resolvers/static_resolver.cpp
         src/resolvers/wrld_resolver.cpp
         src/save_state.cpp
-        src/scene_manager.cpp
         src/script_functions.cpp
-        src/terrain_material_generator.cpp
         src/wrld.cpp)
 
 target_link_libraries(OpenOblivion PRIVATE

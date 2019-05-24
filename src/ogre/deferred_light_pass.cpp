@@ -1,6 +1,6 @@
-#include "deferred_light_pass.hpp"
 #include "math/conversions.hpp"
-#include "scene_manager.hpp"
+#include "ogre/deferred_light_pass.hpp"
+#include "ogre/scene_manager.hpp"
 #include "settings.hpp"
 
 #include <OgreCamera.h>

@@ -3,7 +3,6 @@
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
 #include "console_functions.hpp"
-#include "deferred_light_pass.hpp"
 #include "esp.hpp"
 #include "esp_coordinator.hpp"
 #include "fs/path.hpp"
@@ -22,8 +21,11 @@
 #include "nifloader/mesh_loader.hpp"
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/skeleton_loader.hpp"
+#include "ogre/deferred_light_pass.hpp"
 #include "ogre/ogre_stream_wrappers.hpp"
+#include "ogre/scene_manager.hpp"
 #include "ogre/spdlog_listener.hpp"
+#include "ogre/terrain_material_generator.hpp"
 #include "ogre/window.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogreimgui/imgui_manager.hpp"
@@ -37,13 +39,11 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "scene_manager.hpp"
 #include "script_functions.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
 #include "sdl/sdl.hpp"
 #include "settings.hpp"
-#include "terrain_material_generator.hpp"
 #include <boost/algorithm/string.hpp>
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>
@@ -142,9 +142,6 @@ Application::Application(std::string windowName) : FrameListener() {
 
     ctx.scnMgrFactory = std::make_unique<oo::DeferredSceneManagerFactory>();
     ctx.ogreRoot->addSceneManagerFactory(ctx.scnMgrFactory.get());
-
-    ctx.intScnMgrFactory = std::make_unique<oo::InteriorSceneManagerFactory>();
-    ctx.ogreRoot->addSceneManagerFactory(ctx.intScnMgrFactory.get());
 
     boost::this_fiber::yield();
 

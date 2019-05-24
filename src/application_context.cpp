@@ -2,7 +2,6 @@
 #include "audio.hpp"
 #include "cell_cache.hpp"
 #include "controls.hpp"
-#include "deferred_light_pass.hpp"
 #include "esp_coordinator.hpp"
 #include "game_settings.hpp"
 #include "mesh/entity.hpp"
@@ -12,6 +11,8 @@
 #include "nifloader/nif_resource_manager.hpp"
 #include "nifloader/collision_object_loader.hpp"
 #include "nifloader/skeleton_loader.hpp"
+#include "ogre/deferred_light_pass.hpp"
+#include "ogre/scene_manager.hpp"
 #include "resolvers/acti_resolver.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/cont_resolver.hpp"
@@ -22,7 +23,6 @@
 #include "resolvers/npc_resolver.hpp"
 #include "resolvers/static_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
-#include "scene_manager.hpp"
 #include "scripting/console_engine.hpp"
 #include "scripting/script_engine.hpp"
 #include <OgreCamera.h>
@@ -34,7 +34,6 @@ namespace oo {
 ApplicationContext::ApplicationContext()
     : entityFactory{},
       scnMgrFactory{},
-      intScnMgrFactory{},
       deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
       musicMgr{},
       consoleEngine{},
