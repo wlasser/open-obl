@@ -24,11 +24,11 @@ namespace oo {
 /// Times are not passed to the methods of this class directly because the
 /// sunrise/sunset times of the climate are required to convert qualitative
 /// times of day into actual times. Instead, times are represented by a
-/// `chrono::QualitativeTimeOfDay` and `float` pair `(tod, t)` where
-/// `t ∈ [0, 1]` represents how far *towards* `tod` the time is from the
-/// previous qualitative time of day. That is, `(tod, 0.0f)` represents the
-/// time of day before `tod`, `(tod, 1.0f)` represents `tod`, and `(tod, t)`
-/// for `t ∈ (0.0f, 1.0f)` linearly interpolates between those two times.
+/// `chrono::TimeOfDay` and `float` pair `(tod, t)` where `t ∈ [0, 1]`
+/// represents how far *towards* `tod` the time is from the previous time of
+/// day. That is, `(tod, 0.0f)` represents the time of day before `tod`,
+/// `(tod, 1.0f)` represents `tod`, and `(tod, t)` for `t ∈ (0.0f, 1.0f)`
+/// linearly interpolates between those two times.
 ///
 /// For example, `oo::chrono::Sunrise, 1.0f` represents the *middle* of
 /// sunrise---halfway between the climate's sunrise begin and sunrise end
@@ -43,21 +43,21 @@ class Weather {
   /// Colour getters
   /// @{
   Ogre::ColourValue
-  getAmbientColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getAmbientColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getSunlightColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getSunlightColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getLowerSkyColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getLowerSkyColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getUpperSkyColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getUpperSkyColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getLowerCloudColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getLowerCloudColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getUpperCloudColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getUpperCloudColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getSunColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getSunColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   Ogre::ColourValue
-  getHorizonColor(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  getHorizonColor(chrono::TimeOfDay tod, float t = 1.0f) const;
   /// @}
 
   /// Set `Ogre::SceneManager'`s sky dome to use this weather's material and
@@ -67,10 +67,11 @@ class Weather {
 
   /// Set the fog colour and visibility distances based on the time of day.
   void setFog(Ogre::SceneManager *scnMgr,
-              chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+              chrono::TimeOfDay tod,
+              float t = 1.0f) const;
 
   /// Set the shader uniforms of the sky dome material based on the time of day.
-  void setSkyMaterial(chrono::QualitativeTimeOfDay tod, float t = 1.0f) const;
+  void setSkyMaterial(chrono::TimeOfDay tod, float t = 1.0f) const;
 
   /// Weather-related constants
   /// These are needed by both `oo::World` and `oo::Weather`; putting them here
@@ -111,11 +112,10 @@ class Weather {
   /// Interpolate a quantity returned by the `getter`.
   /// \tparam T is anything allowed by `lerp()`.
   /// \tparam Getter is a function object taking a
-  ///                `chrono::QualitativeTimeOfDay` and returning an object of
+  ///                `chrono::TimeOfDay` and returning an object of
   ///                type `T`.
   template<class T, class Getter>
-  T interp(chrono::QualitativeTimeOfDay tod, float t,
-           Getter &&getter) const noexcept;
+  T interp(chrono::TimeOfDay tod, float t, Getter &&getter) const noexcept;
 
   /// Interpolate a colour returned by the `getter`.
   /// This is a shorthand to avoid wrapping `mColors` when interpolating sky
@@ -123,8 +123,7 @@ class Weather {
   /// \tparam Getter is a function object taking an `oo::Weather::Colors` and
   ///                returning an `Ogre::Colourvalue`.
   template<class Getter> Ogre::ColourValue
-  getColor(chrono::QualitativeTimeOfDay tod, float t,
-           Getter &&getter) const noexcept;
+  getColor(chrono::TimeOfDay tod, float t, Getter &&getter) const noexcept;
 
   /// Convert a `record::raw::Color` to an `Ogre::ColourValue`.
   // TODO: Move this to conversions.hpp
@@ -258,7 +257,7 @@ class Atmosphere {
 
   /// Split a time in minutes from 12:00 am into a `(time of day, t)` pair
   /// required by `oo::Weather`.
-  std::pair<chrono::QualitativeTimeOfDay, float>
+  std::pair<chrono::TimeOfDay, float>
   splitTime(const chrono::minutes &time) const noexcept;
 
  public:
@@ -279,7 +278,7 @@ class Atmosphere {
 //===----------------------------------------------------------------------===//
 
 template<class T, class Getter>
-T oo::Weather::interp(chrono::QualitativeTimeOfDay tod, float t,
+T oo::Weather::interp(chrono::TimeOfDay tod, float t,
                       Getter &&getter) const noexcept {
   if (tod == chrono::Sunrise) {
     // Blending into middle of sunrise from nighttime
@@ -297,7 +296,7 @@ T oo::Weather::interp(chrono::QualitativeTimeOfDay tod, float t,
 }
 
 template<class Getter> Ogre::ColourValue
-oo::Weather::getColor(chrono::QualitativeTimeOfDay tod, float t,
+oo::Weather::getColor(chrono::TimeOfDay tod, float t,
                       Getter &&getter) const noexcept {
   return interp<Ogre::ColourValue>(tod, t, [&](auto x) {
     return getter(mColors[unsigned(x)]);

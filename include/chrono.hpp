@@ -53,26 +53,26 @@ class month_day;
 class year_month;
 class year_month_day;
 
-class QualitativeTimeOfDay {
+class TimeOfDay {
  private:
   uint8_t mTime;
  public:
-  explicit constexpr QualitativeTimeOfDay(unsigned t) noexcept
+  explicit constexpr TimeOfDay(unsigned t) noexcept
       : mTime(static_cast<uint8_t>(t)) {}
   explicit constexpr operator unsigned() const noexcept { return mTime; }
 };
 
-inline constexpr chrono::QualitativeTimeOfDay Sunrise{0};
-inline constexpr chrono::QualitativeTimeOfDay Daytime{1};
-inline constexpr chrono::QualitativeTimeOfDay Sunset{2};
-inline constexpr chrono::QualitativeTimeOfDay Nighttime{3};
+inline constexpr chrono::TimeOfDay Sunrise{0};
+inline constexpr chrono::TimeOfDay Daytime{1};
+inline constexpr chrono::TimeOfDay Sunset{2};
+inline constexpr chrono::TimeOfDay Nighttime{3};
 
-constexpr bool operator==(const chrono::QualitativeTimeOfDay &x,
-                          const chrono::QualitativeTimeOfDay &y) noexcept {
+constexpr bool
+operator==(const chrono::TimeOfDay &x, const chrono::TimeOfDay &y) noexcept {
   return unsigned(x) == unsigned(y);
 }
-constexpr bool operator!=(const chrono::QualitativeTimeOfDay &x,
-                          const chrono::QualitativeTimeOfDay &y) noexcept {
+constexpr bool
+operator!=(const chrono::TimeOfDay &x, const chrono::TimeOfDay &y) noexcept {
   return unsigned(x) != unsigned(y);
 }
 

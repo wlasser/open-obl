@@ -140,12 +140,12 @@ void oo::Weather::setSkyDome(Ogre::SceneManager *scnMgr) {
 }
 
 void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
-                         chrono::QualitativeTimeOfDay tod,
+                         chrono::TimeOfDay tod,
                          float t) const {
-  auto getNear = [this](chrono::QualitativeTimeOfDay pTod) {
+  auto getNear = [this](chrono::TimeOfDay pTod) {
     return mFogDistances[unsigned(pTod)].near;
   };
-  auto getFar = [this](chrono::QualitativeTimeOfDay pTod) {
+  auto getFar = [this](chrono::TimeOfDay pTod) {
     return mFogDistances[unsigned(pTod)].far;
   };
 
@@ -156,8 +156,7 @@ void oo::Weather::setFog(Ogre::SceneManager *scnMgr,
   scnMgr->setFog(Ogre::FogMode::FOG_LINEAR, fogColor, 0, fogNear, fogFar);
 }
 
-void oo::Weather::setSkyMaterial(oo::chrono::QualitativeTimeOfDay tod,
-                                 float t) const {
+void oo::Weather::setSkyMaterial(oo::chrono::TimeOfDay tod, float t) const {
   if (!mSkyMaterial) return;
   auto skyPass{mSkyMaterial->getTechnique(0)->getPass(0)};
   auto skyParams = [&skyPass]() -> Ogre::GpuProgramParametersSharedPtr {
@@ -193,49 +192,42 @@ Ogre::ColourValue oo::Weather::makeColor(record::raw::Color c) const noexcept {
 }
 
 Ogre::ColourValue
-oo::Weather::getAmbientColor(oo::chrono::QualitativeTimeOfDay tod,
-                             float t) const {
+oo::Weather::getAmbientColor(oo::chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.ambient; });
 }
 
 Ogre::ColourValue
-oo::Weather::getSunlightColor(oo::chrono::QualitativeTimeOfDay tod,
-                              float t) const {
+oo::Weather::getSunlightColor(oo::chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.sunlight; });
 }
 
 Ogre::ColourValue
-oo::Weather::getLowerSkyColor(chrono::QualitativeTimeOfDay tod,
-                              float t) const {
+oo::Weather::getLowerSkyColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.lowerSky; });
 }
 
 Ogre::ColourValue
-oo::Weather::getUpperSkyColor(chrono::QualitativeTimeOfDay tod,
-                              float t) const {
+oo::Weather::getUpperSkyColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.upperSky; });
 }
 
 Ogre::ColourValue
-oo::Weather::getLowerCloudColor(chrono::QualitativeTimeOfDay tod,
-                                float t) const {
+oo::Weather::getLowerCloudColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.lowerClouds; });
 }
 
 Ogre::ColourValue
-oo::Weather::getUpperCloudColor(chrono::QualitativeTimeOfDay tod,
-                                float t) const {
+oo::Weather::getUpperCloudColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.upperClouds; });
 }
 
 Ogre::ColourValue
-oo::Weather::getSunColor(chrono::QualitativeTimeOfDay tod, float t) const {
+oo::Weather::getSunColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.sun; });
 }
 
 Ogre::ColourValue
-oo::Weather::getHorizonColor(chrono::QualitativeTimeOfDay tod,
-                             float t) const {
+oo::Weather::getHorizonColor(chrono::TimeOfDay tod, float t) const {
   return getColor(tod, t, [](const Colors &c) { return c.horizon; });
 }
 
@@ -349,7 +341,7 @@ void Atmosphere::makeSun(const record::CLMT &rec) {
   sunBillboards->setRenderQueueGroup(Ogre::RENDER_QUEUE_SKIES_LATE);
 }
 
-std::pair<oo::chrono::QualitativeTimeOfDay, float>
+std::pair<oo::chrono::TimeOfDay, float>
 Atmosphere::splitTime(const chrono::minutes &time) const noexcept {
   // I know the formatting is weird, I spent a while trying to make it readable
 
