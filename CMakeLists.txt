@@ -58,43 +58,27 @@ else ()
         set(BUILD_UNIT_TESTS OFF CACHE STRING "Build Bullet unit tests")
         add_subdirectory(${bullet_SOURCE_DIR} ${bullet_BINARY_DIR})
 
-        add_library(Bullet::LinearMath ALIAS LinearMath)
-        target_include_directories(LinearMath PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
-                $<INSTALL_INTERFACE:include>)
-        install(TARGETS LinearMath
-                EXPORT Bullet_LinearMathTargets
-                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install(EXPORT Bullet_LinearMathTargets
-                FILE Bullet_LinearMathTargets.cmake
-                NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
+        function(oo_add_bullet_target TargetName)
+            add_library("Bullet::${TargetName}" ALIAS ${TargetName})
+            target_include_directories(${TargetName} PUBLIC
+                    $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
+                    $<INSTALL_INTERFACE:include>)
+            install(TARGETS ${TargetName}
+                    EXPORT Bullet_${TargetName}Targets
+                    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+            install(EXPORT Bullet_${TargetName}Targets
+                    FILE Bullet_${TargetName}Targets.cmake
+                    NAMESPACE Bullet::
+                    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
+        endfunction()
 
-        add_library(Bullet::BulletCollision ALIAS BulletCollision)
-        target_include_directories(BulletCollision PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
-                $<INSTALL_INTERFACE:include>)
+        oo_add_bullet_target(LinearMath)
+
+        oo_add_bullet_target(BulletCollision)
         target_link_libraries(BulletCollision PUBLIC LinearMath)
-        install(TARGETS BulletCollision
-                EXPORT Bullet_BulletCollisionTargets
-                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install(EXPORT Bullet_BulletCollisionTargets
-                FILE Bullet_BulletCollisionTargets.cmake
-                NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
 
-        add_library(Bullet::BulletDynamics ALIAS BulletDynamics)
-        target_include_directories(BulletDynamics PUBLIC
-                $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/_deps/bullet-src/src>
-                $<INSTALL_INTERFACE:include>)
+        oo_add_bullet_target(BulletDynamics)
         target_link_libraries(BulletDynamics PUBLIC LinearMath BulletCollision)
-        install(TARGETS BulletDynamics
-                EXPORT Bullet_BulletDynamicsTargets
-                INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-        install(EXPORT Bullet_BulletDynamicsTargets
-                FILE Bullet_BulletDynamicsTargets.cmake
-                NAMESPACE Bullet::
-                DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/OpenOBL)
     endif ()
 endif ()
 
