@@ -2,7 +2,7 @@
 #define OPENOBL_CONSOLE_MODE_HPP
 
 #include "application_context.hpp"
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "modes/mode.hpp"
 #include <gsl/gsl>
 #include <imgui/imgui.h>

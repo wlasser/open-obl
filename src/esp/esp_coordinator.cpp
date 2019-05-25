@@ -1,5 +1,5 @@
-#include "esp_coordinator.hpp"
-#include "game_settings.hpp"
+#include "esp/esp_coordinator.hpp"
+#include "config/game_settings.hpp"
 #include "record/records.hpp"
 #include <fstream>
 

@@ -1,8 +1,8 @@
 #ifndef OPENOBL_CHRONO_HPP
 #define OPENOBL_CHRONO_HPP
 
+#include "config/game_settings.hpp"
 #include <chrono>
-#include "game_settings.hpp"
 
 namespace oo {
 

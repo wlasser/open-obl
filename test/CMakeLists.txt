@@ -14,11 +14,10 @@ add_subdirectory(io)
 add_subdirectory(scripting)
 
 target_sources(OpenOBLTest PRIVATE chrono.cpp meta.cpp
-        ${CMAKE_SOURCE_DIR}/src/game_settings.cpp
-        ${CMAKE_SOURCE_DIR}/src/globals.cpp
         ${CMAKE_SOURCE_DIR}/src/chrono.cpp)
 
 target_link_libraries(OpenOBLTest PRIVATE
+        OpenOBL::OpenOBLConfig
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLGui
         OpenOBL::OpenOBLIO

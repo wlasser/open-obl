@@ -1,7 +1,7 @@
 #ifndef OPENOBL_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_IMPL_HPP
 #define OPENOBL_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_IMPL_HPP
 
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "math/conversions.hpp"
 #include "ogrebullet/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"

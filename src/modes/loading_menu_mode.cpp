@@ -1,6 +1,6 @@
 #include "audio.hpp"
 #include "cell_cache.hpp"
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "job/job.hpp"
 #include "modes/game_mode.hpp"
 #include "modes/loading_menu_mode.hpp"

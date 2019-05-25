@@ -2,7 +2,7 @@
 #define OPENOBL_CELL_RESOLVER_HPP
 
 #include "bullet/configuration.hpp"
-#include "esp_coordinator.hpp"
+#include "esp/esp_coordinator.hpp"
 #include "resolvers/acti_resolver.hpp"
 #include "resolvers/cont_resolver.hpp"
 #include "resolvers/door_resolver.hpp"

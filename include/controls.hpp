@@ -1,8 +1,8 @@
 #ifndef OPENOBL_CONTROLS_HPP
 #define OPENOBL_CONTROLS_HPP
 
+#include "config/game_settings.hpp"
 #include "sdl/sdl.hpp"
-#include "game_settings.hpp"
 #include <string_view>
 #include <variant>
 

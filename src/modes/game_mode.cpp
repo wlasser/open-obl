@@ -1,6 +1,6 @@
 #include "chrono.hpp"
-#include "game_settings.hpp"
-#include "globals.hpp"
+#include "config/game_settings.hpp"
+#include "config/globals.hpp"
 #include "gui/menu.hpp"
 #include "modes/console_mode.hpp"
 #include "modes/debug_draw_impl.hpp"

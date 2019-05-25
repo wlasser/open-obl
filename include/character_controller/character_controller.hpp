@@ -1,7 +1,6 @@
 #ifndef OPENOBL_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP
 #define OPENOBL_CHARACTER_CONTROLLER_CHARACTER_CONTROLLER_HPP
 
-#include "controls.hpp"
 #include "character_controller/character_controller_impl.hpp"
 #include "character_controller/fallback_state.hpp"
 #include "character_controller/jump_state.hpp"
@@ -10,7 +9,8 @@
 #include "character_controller/sneak_stand_state.hpp"
 #include "character_controller/stand_state.hpp"
 #include "character_controller/walk_state.hpp"
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
+#include "controls.hpp"
 #include "math/conversions.hpp"
 #include "ogrebullet/motion_state.hpp"
 #include <btBulletDynamicsCommon.h>

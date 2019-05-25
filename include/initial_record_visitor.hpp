@@ -1,7 +1,7 @@
 #ifndef OPENOBL_INITIAL_RECORD_VISITOR_HPP
 #define OPENOBL_INITIAL_RECORD_VISITOR_HPP
 
-#include "esp_coordinator.hpp"
+#include "esp/esp_coordinator.hpp"
 #include "persistent_reference_locator.hpp"
 #include "record/io.hpp"
 #include "record/records.hpp"

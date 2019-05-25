@@ -1,5 +1,5 @@
 #include "fs/path.hpp"
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "gui/elements/text.hpp"
 #include "gui/logging.hpp"
 #include "gui/screen.hpp"

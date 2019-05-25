@@ -1,4 +1,4 @@
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "io/io.hpp"
 #include "io/memstream.hpp"
 #include "io/string.hpp"

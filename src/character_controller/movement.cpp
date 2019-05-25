@@ -1,5 +1,5 @@
 #include "character_controller/movement.hpp"
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "math/conversions.hpp"
 
 namespace oo {

@@ -56,6 +56,7 @@ target_sources(OpenOBLGui PRIVATE
         xml.cpp)
 
 target_link_libraries(OpenOBLGui PRIVATE
+        OpenOBL::OpenOBLConfig
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLOgre
         OpenOBL::OpenOBLUtil

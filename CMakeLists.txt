@@ -155,6 +155,8 @@ add_subdirectory(lib/soloud)
 add_compile_options(-Wall -Wextra -Wshadow -Wpedantic)
 
 add_subdirectory(src/bsa)
+add_subdirectory(src/config)
+add_subdirectory(src/esp)
 add_subdirectory(src/fs)
 add_subdirectory(src/gui)
 add_subdirectory(src/io)
@@ -202,11 +204,7 @@ target_sources(OpenOBL PRIVATE
         include/chrono.hpp
         include/console_functions.hpp
         include/controls.hpp
-        include/esp.hpp
-        include/esp_coordinator.hpp
         include/exterior_manager.hpp
-        include/game_settings.hpp
-        include/globals.hpp
         include/initial_record_visitor.hpp
         include/job/job.hpp
         include/modes/console_mode.hpp
@@ -255,10 +253,7 @@ target_sources(OpenOBL PRIVATE
         src/character_controller/walk_state.cpp
         src/chrono.cpp
         src/console_functions.cpp
-        src/esp_coordinator.cpp
         src/exterior_manager.cpp
-        src/game_settings.cpp
-        src/globals.cpp
         src/initial_record_visitor.cpp
         src/main.cpp
         src/modes/console_mode.cpp
@@ -289,6 +284,8 @@ target_link_libraries(OpenOBL PRIVATE
         Bullet::BulletCollision
         Bullet::BulletDynamics
         OpenOBL::OpenOBLBsa
+        OpenOBL::OpenOBLConfig
+        OpenOBL::OpenOBLEsp
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLGui
         OpenOBL::OpenOBLIO

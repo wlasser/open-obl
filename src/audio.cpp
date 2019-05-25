@@ -1,6 +1,6 @@
 #include "audio.hpp"
+#include "config/game_settings.hpp"
 #include "fs/path.hpp"
-#include "game_settings.hpp"
 #include "util/settings.hpp"
 #include <spdlog/spdlog.h>
 

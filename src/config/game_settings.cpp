@@ -1,4 +1,4 @@
-#include "game_settings.hpp"
+#include "config/game_settings.hpp"
 #include "record/records.hpp"
 
 namespace oo {
