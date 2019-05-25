@@ -3,12 +3,18 @@ cmake_minimum_required(VERSION 3.1)
 
 project(tloptional)
 
+include(GNUInstallDirs)
+
 option(TLOPTIONAL_ENABLE_TESTS "Enable tests." OFF)
 option(TLOPTIONAL_ENABLE_DOCS "Enable documentation." OFF)
 
 add_library(tloptional INTERFACE)
-target_sources(tloptional INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include/tl/optional.hpp)
-target_include_directories(tloptional INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(tl::tloptional ALIAS tloptional)
+target_sources(tloptional INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/tl/optional.hpp>)
+target_include_directories(tloptional INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>)
 
 if(TLOPTIONAL_ENABLE_TESTS)
   # Prepare "Catch" library for other executables
@@ -51,3 +57,14 @@ if(TLOPTIONAL_ENABLE_DOCS)
                          INPUT tl/optional.hpp)
   endif()
 endif()
+
+install(TARGETS tloptional
+        EXPORT tloptionalTargets
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+install(EXPORT tloptionalTargets
+        FILE tloptionalTargets.cmake
+        NAMESPACE tl::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/tl)
+
+install(DIRECTORY include/tl DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

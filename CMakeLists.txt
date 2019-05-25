@@ -316,4 +316,4 @@ target_link_libraries(OpenOBL PRIVATE
         SDL2::SDL2main
         spdlog::spdlog
         stdc++fs
-        tloptional)
+        tl::tloptional)
