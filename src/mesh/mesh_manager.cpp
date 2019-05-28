@@ -135,7 +135,7 @@ MeshPtr MeshManager::createPlane(const std::string &name,
   rot.SetColumn(1, normal);
   rot.SetColumn(2, right);
 
-  Ogre::Affine3 trans(rot);
+  Ogre::Affine3 trans(Ogre::Matrix4{rot});
   trans.setTrans(normal * -plane.d);
 
   std::vector<float> vertexBuffer(offset * numVertices);
