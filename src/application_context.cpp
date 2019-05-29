@@ -33,6 +33,7 @@ namespace oo {
 
 ApplicationContext::ApplicationContext()
     : entityFactory{},
+      lightFactory{},
       scnMgrFactory{},
       deferredLightPass{std::make_unique<oo::DeferredLightPass>()},
       musicMgr{},

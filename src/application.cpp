@@ -140,6 +140,9 @@ Application::Application(std::string windowName) : FrameListener() {
     ctx.entityFactory = std::make_unique<oo::EntityFactory>();
     ctx.ogreRoot->addMovableObjectFactory(ctx.entityFactory.get());
 
+    ctx.lightFactory = std::make_unique<oo::DeferredLightFactory>();
+    ctx.ogreRoot->addMovableObjectFactory(ctx.lightFactory.get());
+
     ctx.scnMgrFactory = std::make_unique<oo::DeferredSceneManagerFactory>();
     ctx.ogreRoot->addSceneManagerFactory(ctx.scnMgrFactory.get());
 

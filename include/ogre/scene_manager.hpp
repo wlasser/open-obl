@@ -18,30 +18,15 @@ class DeferredSceneManager : public Ogre::SceneManager {
 
   const Ogre::String &getTypeName() const override;
 
-  // Instead of overriding the Light methods to construct the DeferredLights,
-  // override the MovableObject methods and check for Lights. Otherwise, someone
-  // could call createMovableObject on a Light and bypass the DeferredLight
-  // construction, for example.
-  Ogre::MovableObject *
-  createMovableObject(const Ogre::String &name,
-                      const Ogre::String &typeName,
-                      const Ogre::NameValuePairList *params = nullptr) override;
-  void destroyMovableObject(const Ogre::String &name,
-                            const Ogre::String &typeName) override;
-  void destroyAllMovableObjectsByType(const Ogre::String &typeName) override;
-  void destroyAllMovableObjects() override;
+  oo::DeferredLight *createLight(const Ogre::String &name) override;
+  oo::DeferredLight *getLight(const Ogre::String &name) const override;
+  bool hasLight(const Ogre::String &name) const override;
+  void destroyLight(const Ogre::String &name) override;
+  void destroyAllLights() override;
 
-  std::vector<oo::DeferredLight *> getLights() const;
+  void findLightsAffectingFrustum(const Ogre::Camera *camera) override;
+
   DeferredFogListener *getFogListener() noexcept;
-
- private:
-  struct LightInfo {
-    Ogre::Light *light{};
-    std::unique_ptr<oo::DeferredLight> geometry{};
-    LightInfo(Ogre::Light *pLight,
-              std::unique_ptr<oo::DeferredLight> pGeometry);
-  };
-  std::vector<LightInfo> mLights{};
 
   DeferredFogListener mFogListener;
 };

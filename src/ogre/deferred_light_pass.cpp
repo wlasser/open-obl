@@ -13,7 +13,7 @@
 
 namespace oo {
 
-DeferredLight::DeferredLight(Ogre::Light *parent)
+DeferredLightRenderable::DeferredLightRenderable(Ogre::Light *parent)
     : mParent(parent),
       mLightType(parent->getType()),
       mRadius(parent->getAttenuationRange()),
@@ -24,31 +24,31 @@ DeferredLight::DeferredLight(Ogre::Light *parent)
   mRenderOp.indexData = nullptr;
 }
 
-DeferredLight::~DeferredLight() {
+DeferredLightRenderable::~DeferredLightRenderable() {
   OGRE_DELETE mRenderOp.vertexData;
   OGRE_DELETE mRenderOp.indexData;
 }
 
-Ogre::Real DeferredLight::getBoundingRadius() const {
+Ogre::Real DeferredLightRenderable::getBoundingRadius() const {
   return mRadius;
 }
 
-Ogre::Real DeferredLight::getSquaredViewDepth(const Ogre::Camera *camera) const {
+Ogre::Real DeferredLightRenderable::getSquaredViewDepth(const Ogre::Camera *camera) const {
   auto vec{camera->getDerivedPosition()
                - mParent->getParentSceneNode()->_getDerivedPosition()};
   return vec.squaredLength();
 }
 
-void DeferredLight::getWorldTransforms(Ogre::Matrix4 *xform) const {
+void DeferredLightRenderable::getWorldTransforms(Ogre::Matrix4 *xform) const {
   xform->makeTransform(mParent->getDerivedPosition(), Ogre::Vector3::UNIT_SCALE,
                        Ogre::Quaternion::IDENTITY);
 }
 
-Ogre::Light *DeferredLight::getParent() const {
+Ogre::Light *DeferredLightRenderable::getParent() const {
   return mParent;
 }
 
-bool DeferredLight::isInsideLight(Ogre::Camera *camera) const {
+bool DeferredLightRenderable::isInsideLight(Ogre::Camera *camera) const {
   switch (mParent->getType()) {
     case LightTypes::LT_POINT: {
       const auto &p1{camera->getDerivedPosition()};
@@ -61,7 +61,7 @@ bool DeferredLight::isInsideLight(Ogre::Camera *camera) const {
   }
 }
 
-void DeferredLight::rebuildLightGeometry() {
+void DeferredLightRenderable::rebuildLightGeometry() {
   const auto lightType{mParent->getType()};
   const auto radius{mParent->getAttenuationRange()};
 
@@ -98,7 +98,7 @@ void DeferredLight::rebuildLightGeometry() {
 }
 
 const Ogre::AxisAlignedBox &
-DeferredLight::getWorldBoundingBox(bool derive) const {
+DeferredLightRenderable::getWorldBoundingBox(bool derive) const {
   if (derive) {
     mWorldAABB = getBoundingBox();
     mWorldAABB.transform(mParent->_getParentNodeFullTransform());
@@ -108,7 +108,7 @@ DeferredLight::getWorldBoundingBox(bool derive) const {
 }
 
 const Ogre::Sphere &
-DeferredLight::getWorldBoundingSphere(bool derive) const {
+DeferredLightRenderable::getWorldBoundingSphere(bool derive) const {
   if (derive) {
     auto scale{mParent->getParentNode()->_getDerivedScale()};
     auto max{std::max(qvm::X(scale), std::max(qvm::Y(scale), qvm::Z(scale)))};
@@ -120,7 +120,7 @@ DeferredLight::getWorldBoundingSphere(bool derive) const {
   return mWorldBoundingSphere;
 }
 
-void DeferredLight::createPointLight() {
+void DeferredLightRenderable::createPointLight() {
   const float phi{(1.0f + Ogre::Math::Sqrt(5)) / 2.0f};
   std::array<float, 12u * 3u> vertices{
       1.0f, 0.0f, phi,
@@ -191,7 +191,7 @@ void DeferredLight::createPointLight() {
   idxBuf->writeData(0u, indices.size() * 2u, indices.data(), true);
 }
 
-void DeferredLight::createDirectionalLight() {
+void DeferredLightRenderable::createDirectionalLight() {
   mRenderOp.vertexData = OGRE_NEW Ogre::VertexData();
   mRenderOp.vertexData->vertexCount = 4u;
   mRenderOp.vertexData->vertexStart = 0u;
@@ -218,7 +218,7 @@ void DeferredLight::createDirectionalLight() {
   mRenderOp.useIndexes = false;
 }
 
-void DeferredLight::setPointLightMaterial() {
+void DeferredLightRenderable::setPointLightMaterial() {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   mMaterial = matMgr.getByName("DeferredPointLight");
   mMaterial->load();
@@ -240,7 +240,7 @@ void DeferredLight::setPointLightMaterial() {
                                AutoConst::ACT_LIGHT_ATTENUATION);
 }
 
-void DeferredLight::setDirectionalLightMaterial() {
+void DeferredLightRenderable::setDirectionalLightMaterial() {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   mMaterial = matMgr.getByName("DeferredDirectionalLight");
   mMaterial->load();
@@ -343,14 +343,13 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
   if (!dScnMgr) return;
 
   Ogre::Camera *camera{mViewport->getCamera()};
-  const auto dLights{dScnMgr->getLights()};
   const Ogre::LightList &lights{dScnMgr->_getLightsAffectingFrustum()};
 
-  for (auto *light : lights) {
-    auto pred = [light](auto *l) { return l->getParent() == light; };
-    auto it{std::find_if(dLights.begin(), dLights.end(), pred)};
-    if (it == dLights.end()) continue;
-    auto *dLight{*it};
+  std::size_t lightCount{0u};
+  for (Ogre::Light *baseLight : lights) {
+    auto *light{dynamic_cast<oo::DeferredLight *>(baseLight)};
+    if (!light) continue;
+    auto *dLight{light->getRenderable()};
 
     if (light->getType() == Ogre::Light::LightTypes::LT_SPOTLIGHT) continue;
 
@@ -375,9 +374,9 @@ void DeferredLightRenderOperation::execute(Ogre::SceneManager *scnMgr,
 
       // LightList does not support construction from std::initializer_list :(
       Ogre::LightList dLightList(1, light);
-      dScnMgr->_injectRenderWithPass(pass, *it, false, false, &dLightList);
+      dScnMgr->_injectRenderWithPass(pass, dLight, false, false, &dLightList);
     }
-
+    ++lightCount;
   }
 }
 
@@ -395,6 +394,39 @@ DeferredFogListener::notifyMaterialRender(uint32_t, Ogre::MaterialPtr &matPtr) {
       mScnMgr->getFogEnd(),
       1.0f / (mScnMgr->getFogEnd() - mScnMgr->getFogStart())
   });
+}
+
+DeferredLight::DeferredLight()
+    : Ogre::Light(),
+      mRenderable(std::make_unique<oo::DeferredLightRenderable>(this)) {}
+
+DeferredLight::DeferredLight(const Ogre::String &name)
+    : Ogre::Light(name),
+      mRenderable(std::make_unique<oo::DeferredLightRenderable>(this)) {}
+
+const Ogre::String &DeferredLight::getMovableType() const {
+  const static Ogre::String typeName{DeferredLightFactory::FACTORY_TYPE_NAME};
+  return typeName;
+}
+
+DeferredLightRenderable *DeferredLight::getRenderable() {
+  return mRenderable.get();
+}
+
+const Ogre::String &DeferredLightFactory::getType() const {
+  const static Ogre::String typeName{FACTORY_TYPE_NAME};
+  return typeName;
+}
+
+void
+DeferredLightFactory::destroyInstance(gsl::owner<Ogre::MovableObject *> obj) {
+  OGRE_DELETE obj;
+}
+
+gsl::owner<Ogre::MovableObject *>
+DeferredLightFactory::createInstanceImpl(const Ogre::String &name,
+                                         const Ogre::NameValuePairList *) {
+  return OGRE_NEW oo::DeferredLight(name);
 }
 
 } // namespace oo

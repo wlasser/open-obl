@@ -1,6 +1,7 @@
 #ifndef OPENOBL_OGRE_DEFERRED_LIGHT_PASS_HPP
 #define OPENOBL_OGRE_DEFERRED_LIGHT_PASS_HPP
 
+#include <gsl/gsl>
 #include <OgreCompositorInstance.h>
 #include <OgreCustomCompositionPass.h>
 #include <OgreLight.h>
@@ -10,10 +11,12 @@ namespace oo {
 
 using RenderOperation = Ogre::CompositorInstance::RenderSystemOperation;
 
-class DeferredLight : public Ogre::SimpleRenderable {
+class DeferredLight;
+
+class DeferredLightRenderable : public Ogre::SimpleRenderable {
  public:
-  explicit DeferredLight(Ogre::Light *parent);
-  ~DeferredLight() override;
+  explicit DeferredLightRenderable(Ogre::Light *parent);
+  ~DeferredLightRenderable() override;
 
   Ogre::Real getBoundingRadius() const override;
   Ogre::Real getSquaredViewDepth(const Ogre::Camera *camera) const override;
@@ -58,6 +61,35 @@ class DeferredLight : public Ogre::SimpleRenderable {
   Ogre::Real mAttenLinear;
   Ogre::Real mAttenQuadratic;
   /// @}
+};
+
+class DeferredLight : public Ogre::Light {
+ private:
+  std::unique_ptr<oo::DeferredLightRenderable> mRenderable{};
+
+ public:
+  DeferredLight();
+  explicit DeferredLight(const Ogre::String &name);
+  ~DeferredLight() override = default;
+
+  const Ogre::String &getMovableType() const override;
+  DeferredLightRenderable *getRenderable();
+};
+
+class DeferredLightFactory : public Ogre::MovableObjectFactory {
+ public:
+  constexpr static const char *FACTORY_TYPE_NAME{"oo::DeferredLight"};
+
+  DeferredLightFactory() = default;
+  ~DeferredLightFactory() override = default;
+
+  const Ogre::String &getType() const override;
+  void destroyInstance(gsl::owner<Ogre::MovableObject *> obj) override;
+
+ protected:
+  gsl::owner<Ogre::MovableObject *>
+  createInstanceImpl(const Ogre::String &name,
+                     const Ogre::NameValuePairList *params) override;
 };
 
 class AmbientLight : public Ogre::SimpleRenderable {

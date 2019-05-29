@@ -42,6 +42,7 @@ class CellCache;
 class MeshManager;
 class MusicManager;
 class EntityFactory;
+class DeferredLightFactory;
 class DeferredLightPass;
 class DeferredSceneManager;
 class DeferredSceneManagerFactory;
@@ -61,6 +62,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::BsaArchiveFactory> bsaArchiveFactory{};
   std::unique_ptr<Ogre::RigidBodyFactory> rigidBodyFactory{};
   std::unique_ptr<oo::EntityFactory> entityFactory;
+  std::unique_ptr<oo::DeferredLightFactory> lightFactory;
   std::unique_ptr<oo::DeferredSceneManagerFactory> scnMgrFactory;
 
   std::unique_ptr<Ogre::TexImageCodec> texImageCodec{};
