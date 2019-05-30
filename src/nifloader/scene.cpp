@@ -183,8 +183,31 @@ void NifVisitor::discover_vertex(const nif::NiNode &node, const Graph &) {
   }
 
   if (blockName != "Scene Root") {
-    const std::string nodeName{mState->mCurrentNode->getName()
-                                   + '/' + blockName};
+    std::string nodeName{mState->mCurrentNode->getName() + '/' + blockName};
+    // Sometimes multiple blocks in the same NIF have the same name. Issue a
+    // warning if this happens since we'd rather not have to deal with it, then
+    // increment a number at the end until we find one that doesn't exist yet
+    // since this still needs to be allowed.
+    // Can't just use getChild() since that throws.
+    const auto children{mState->mCurrentNode->getChildren()};
+    auto childExists = [&](const std::string &name) {
+      auto begin{children.begin()}, end{children.end()};
+      return end != std::find_if(begin, end, [&](const auto *node) {
+        return node->getName() == name;
+      });
+    };
+    if (childExists(nodeName)) {
+      const std::string baseNodeName{nodeName};
+      std::size_t i{0u};
+      do {
+        // Start at 1 so in particular FlameNode0 -> FlameNode01
+        nodeName = baseNodeName + std::to_string(++i);
+      } while (childExists(nodeName));
+
+      oo::nifloaderLogger()->warn("A scene node with the name {} already "
+                                  "exists, renaming to {}.",
+                                  baseNodeName, nodeName);
+    }
     auto *newNode{mState->mCurrentNode->createChildSceneNode(nodeName)};
     mState->mCurrentNode = gsl::make_not_null(newNode);
   }
