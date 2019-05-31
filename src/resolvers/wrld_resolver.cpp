@@ -266,59 +266,15 @@ World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
   mTerrainGroup.setResourceGroup(oo::RESOURCE_GROUP);
   setDefaultImportData();
 
-  auto logger{spdlog::get(oo::LOG)};
+  makeWaterPlane();
+  makeWaterMaterial();
+  makeWaterInstanceManager();
 
-  auto &meshMgr{Ogre::MeshManager::getSingleton()};
-  if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
-    meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
-                        Ogre::Plane(Ogre::Vector3::UNIT_Y, /*height*/0.0f),
-                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
-                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
-                        1, 1, true, 1u, 1.0f, 1.0f,
-                        Ogre::Vector3::UNIT_Z);
-  }
-  auto &matMgr{Ogre::MaterialManager::getSingleton()};
-  const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};
-  if (!matMgr.resourceExists(waterMatName, oo::RESOURCE_GROUP)) {
-    auto matPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
-    auto newMatPtr{matPtr->clone(waterMatName, /*changeGroup=*/true,
-                                 oo::RESOURCE_GROUP)};
-
-    if (const auto watrIdOpt{getWatrId()}) {
-      auto &watrRes{oo::getResolver<record::WATR>(mResolvers)};
-      if (const auto watrOpt{watrRes.get(*watrIdOpt)}) {
-        const auto &texFile{watrOpt->textureFilename};
-        oo::Path watrBasePath{texFile && !texFile->data.empty()
-                              ? texFile->data : "water/water00.dds"};
-        oo::Path watrPath{oo::Path{"textures"} / std::move(watrBasePath)};
-        Ogre::AliasTextureNamePairList layers{
-            {"diffuse", watrPath.c_str()}
-        };
-        newMatPtr->applyTextureAliases(layers, true);
-      } else {
-        logger->warn("WRLD {}: WATR record {} does not exist",
-                     mBaseId, *watrIdOpt);
-      }
-    } else {
-      logger->warn("WRLD {}: No NAM2 record in this or any ancestors", mBaseId);
-    }
-
-    newMatPtr->load();
-  }
-
-  auto *instMgr{mScnMgr->createInstanceManager(
-      WATER_MANAGER_BASE_NAME + mBaseId.string(),
-      WATER_MESH_NAME, oo::RESOURCE_GROUP,
-      Ogre::InstanceManager::InstancingTechnique::HWInstancingBasic,
-      /*instancesPerBatch*/32)};
-  instMgr->setSetting(Ogre::InstanceManager::BatchSettingId::CAST_SHADOWS,
-                      false);
-
-  logger->info("WRLD {}: Making physics world...", baseId);
+  spdlog::get(oo::LOG)->info("WRLD {}: Making physics world...", baseId);
   makePhysicsWorld();
   boost::this_fiber::yield();
 
-  logger->info("WRLD {}: Making cell grid...", baseId);
+  spdlog::get(oo::LOG)->info("WRLD {}: Making cell grid...", baseId);
   makeCellGrid();
   makeDistantCellGrid();
   boost::this_fiber::yield();
@@ -953,6 +909,64 @@ void World::unloadTerrain(CellIndex index) {
   mTerrainGroup.unloadTerrain(2 * x + 0, 2 * y + 1);
   mTerrainGroup.unloadTerrain(2 * x + 1, 2 * y + 1);
   unloadWaterPlane(index);
+}
+
+void World::makeWaterPlane() {
+  auto &meshMgr{Ogre::MeshManager::getSingleton()};
+  if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
+    meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
+                        Ogre::Plane(Ogre::Vector3::UNIT_Y, /*height*/0.0f),
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
+                        oo::unitsPerCell<float> * oo::metersPerUnit<float>,
+                        1, 1, true, 1u, 1.0f, 1.0f,
+                        Ogre::Vector3::UNIT_Z);
+  }
+}
+
+Ogre::MaterialPtr World::makeWaterMaterial() {
+  auto &matMgr{Ogre::MaterialManager::getSingleton()};
+  const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};
+
+  if (!matMgr.resourceExists(waterMatName, oo::RESOURCE_GROUP)) {
+    auto matPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
+    auto newMatPtr{matPtr->clone(waterMatName, /*changeGroup=*/true,
+                                 oo::RESOURCE_GROUP)};
+
+    if (const auto watrIdOpt{getWatrId()}) {
+      auto &watrRes{oo::getResolver<record::WATR>(mResolvers)};
+      if (const auto watrOpt{watrRes.get(*watrIdOpt)}) {
+        const auto &texFile{watrOpt->textureFilename};
+        oo::Path watrBasePath{texFile && !texFile->data.empty()
+                              ? texFile->data : "water/water00.dds"};
+        oo::Path watrPath{oo::Path{"textures"} / std::move(watrBasePath)};
+        Ogre::AliasTextureNamePairList layers{
+            {"diffuse", watrPath.c_str()}
+        };
+        newMatPtr->applyTextureAliases(layers, true);
+      } else {
+        spdlog::get(oo::LOG)->warn("WRLD {}: WATR record {} does not exist",
+                                   mBaseId, *watrIdOpt);
+      }
+    } else {
+      spdlog::get(oo::LOG)->warn("WRLD {}: No NAM2 record in this or any "
+                                 "ancestors", mBaseId);
+    }
+
+    newMatPtr->load();
+    return newMatPtr;
+  }
+
+  return matMgr.getByName(waterMatName, oo::RESOURCE_GROUP);
+}
+
+void World::makeWaterInstanceManager() {
+  auto *instMgr{mScnMgr->createInstanceManager(
+      WATER_MANAGER_BASE_NAME + mBaseId.string(),
+      WATER_MESH_NAME, oo::RESOURCE_GROUP,
+      Ogre::InstanceManager::InstancingTechnique::HWInstancingBasic,
+      /*instancesPerBatch*/32)};
+  instMgr->setSetting(Ogre::InstanceManager::BatchSettingId::CAST_SHADOWS,
+                      false);
 }
 
 void World::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
