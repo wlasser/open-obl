@@ -213,7 +213,7 @@ using add_refr_resolver_t = typename add_refr_resolver<Record>::type;
 template<class ... Records, class Tuple>
 constexpr auto getResolvers(Tuple &&resolvers) {
   using Types = boost::mp11::mp_transform<std::decay_t,
-                                          std::remove_reference_t<Tuple>>;
+                                          std::decay_t<Tuple>>;
   return std::tie(std::get<
       boost::mp11::mp_find<Types, add_resolver_t<Records>>::value>(
       std::forward<Tuple>(resolvers))...);
@@ -224,7 +224,7 @@ constexpr auto getResolvers(Tuple &&resolvers) {
 template<class ... Records, class Tuple>
 constexpr auto getRefrResolvers(Tuple &&resolvers) {
   using Types = boost::mp11::mp_transform<std::decay_t,
-                                          std::remove_reference_t<Tuple>>;
+                                          std::decay_t<Tuple>>;
   return std::tie(std::get<
       boost::mp11::mp_find<Types, add_resolver_t<Records, oo::RefId>>::value>(
       std::forward<Tuple>(resolvers))...);
