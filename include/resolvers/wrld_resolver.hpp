@@ -270,18 +270,19 @@ class World {
   /// `Ogre::Terrain::ImportData` and populating it manually.
   void setDefaultImportData();
 
-  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId);
-  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId, oo::BaseId wrldId);
+  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId) const noexcept;
+  tl::optional<oo::BaseId> getLandId(oo::BaseId cellId,
+                                     oo::BaseId wrldId) const noexcept;
 
-  tl::optional<oo::BaseId> getWatrId();
-  tl::optional<oo::BaseId> getWatrId(oo::BaseId wrldId);
+  tl::optional<oo::BaseId> getWatrId() const noexcept;
+  tl::optional<oo::BaseId> getWatrId(oo::BaseId wrldId) const noexcept;
 
-  oo::BaseId getAncestorWrldId();
-  oo::BaseId getAncestorWrldId(oo::BaseId wrldId);
+  oo::BaseId getAncestorWrldId() const noexcept;
+  oo::BaseId getAncestorWrldId(oo::BaseId wrldId) const noexcept;
 
-  void makeWaterPlane();
-  Ogre::MaterialPtr makeWaterMaterial();
-  void makeWaterInstanceManager();
+  void makeWaterPlane() const;
+  Ogre::MaterialPtr makeWaterMaterial() const;
+  void makeWaterInstanceManager() const;
 
   void loadWaterPlane(CellIndex index, const record::CELL &cellRec);
   void unloadWaterPlane(CellIndex index);

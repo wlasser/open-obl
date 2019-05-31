@@ -284,12 +284,12 @@ World::~World() {
   mTerrainGroup.removeAllTerrains();
 }
 
-tl::optional<oo::BaseId> World::getLandId(oo::BaseId cellId) {
+tl::optional<oo::BaseId> World::getLandId(oo::BaseId cellId) const noexcept {
   return getLandId(cellId, mBaseId);
 }
 
 tl::optional<oo::BaseId>
-World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
+World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) const noexcept {
   auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
 
@@ -357,31 +357,27 @@ World::getLandId(oo::BaseId cellId, oo::BaseId wrldId) {
   }
 }
 
-tl::optional<oo::BaseId> World::getWatrId() {
+tl::optional<oo::BaseId> World::getWatrId() const noexcept {
   return getWatrId(mBaseId);
 }
 
-tl::optional<oo::BaseId>
-World::getWatrId(oo::BaseId wrldId) {
+tl::optional<oo::BaseId> World::getWatrId(oo::BaseId wrldId) const noexcept {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
-
   const record::WRLD &wrldRec{*wrldRes.get(wrldId)};
 
   if (!wrldRec.parentWorldspace) {
     // TODO: Use tl::optional everywhere.
     return wrldRec.water ? tl::optional{wrldRec.water->data} : tl::nullopt;
-  } else {
-    return getWatrId(wrldRec.parentWorldspace->data);
   }
 
-  return tl::nullopt;
+  return getWatrId(wrldRec.parentWorldspace->data);
 }
 
-oo::BaseId World::getAncestorWrldId() {
+oo::BaseId World::getAncestorWrldId() const noexcept {
   return getAncestorWrldId(mBaseId);
 }
 
-oo::BaseId World::getAncestorWrldId(oo::BaseId wrldId) {
+oo::BaseId World::getAncestorWrldId(oo::BaseId wrldId) const noexcept {
   auto &wrldRes{oo::getResolver<record::WRLD>(mResolvers)};
   const auto &wrldRec{*wrldRes.get(wrldId)};
   if (wrldRec.parentWorldspace) {
@@ -911,7 +907,7 @@ void World::unloadTerrain(CellIndex index) {
   unloadWaterPlane(index);
 }
 
-void World::makeWaterPlane() {
+void World::makeWaterPlane() const {
   auto &meshMgr{Ogre::MeshManager::getSingleton()};
   if (!meshMgr.resourceExists(WATER_MESH_NAME, oo::RESOURCE_GROUP)) {
     meshMgr.createPlane(WATER_MESH_NAME, oo::RESOURCE_GROUP,
@@ -923,43 +919,43 @@ void World::makeWaterPlane() {
   }
 }
 
-Ogre::MaterialPtr World::makeWaterMaterial() {
+Ogre::MaterialPtr World::makeWaterMaterial() const {
   auto &matMgr{Ogre::MaterialManager::getSingleton()};
   const auto waterMatName{WATER_BASE_MATERIAL + getBaseId().string()};
 
-  if (!matMgr.resourceExists(waterMatName, oo::RESOURCE_GROUP)) {
-    auto matPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
-    auto newMatPtr{matPtr->clone(waterMatName, /*changeGroup=*/true,
-                                 oo::RESOURCE_GROUP)};
-
-    if (const auto watrIdOpt{getWatrId()}) {
-      auto &watrRes{oo::getResolver<record::WATR>(mResolvers)};
-      if (const auto watrOpt{watrRes.get(*watrIdOpt)}) {
-        const auto &texFile{watrOpt->textureFilename};
-        oo::Path watrBasePath{texFile && !texFile->data.empty()
-                              ? texFile->data : "water/water00.dds"};
-        oo::Path watrPath{oo::Path{"textures"} / std::move(watrBasePath)};
-        Ogre::AliasTextureNamePairList layers{
-            {"diffuse", watrPath.c_str()}
-        };
-        newMatPtr->applyTextureAliases(layers, true);
-      } else {
-        spdlog::get(oo::LOG)->warn("WRLD {}: WATR record {} does not exist",
-                                   mBaseId, *watrIdOpt);
-      }
-    } else {
-      spdlog::get(oo::LOG)->warn("WRLD {}: No NAM2 record in this or any "
-                                 "ancestors", mBaseId);
-    }
-
-    newMatPtr->load();
-    return newMatPtr;
+  if (matMgr.resourceExists(waterMatName, oo::RESOURCE_GROUP)) {
+    return matMgr.getByName(waterMatName, oo::RESOURCE_GROUP);
   }
 
-  return matMgr.getByName(waterMatName, oo::RESOURCE_GROUP);
+  auto baseMatPtr{matMgr.getByName(WATER_BASE_MATERIAL, oo::SHADER_GROUP)};
+  auto matPtr{baseMatPtr->clone(waterMatName, /*changeGroup=*/true,
+                                oo::RESOURCE_GROUP)};
+
+  if (const auto watrIdOpt{getWatrId()}) {
+    const auto &watrRes{oo::getResolver<record::WATR>(mResolvers)};
+    if (const auto watrOpt{watrRes.get(*watrIdOpt)}) {
+      const auto &texFile{watrOpt->textureFilename};
+      oo::Path watrBasePath{texFile && !texFile->data.empty()
+                            ? texFile->data : "water/water00.dds"};
+      oo::Path watrPath{oo::Path{"textures"} / std::move(watrBasePath)};
+      Ogre::AliasTextureNamePairList layers{
+          {"diffuse", watrPath.c_str()}
+      };
+      matPtr->applyTextureAliases(layers, true);
+    } else {
+      spdlog::get(oo::LOG)->warn("WRLD {}: WATR record {} does not exist",
+                                 getBaseId(), *watrIdOpt);
+    }
+  } else {
+    spdlog::get(oo::LOG)->warn("WRLD {}: No NAM2 record in this or any "
+                               "ancestors", getBaseId());
+  }
+
+  matPtr->load();
+  return matPtr;
 }
 
-void World::makeWaterInstanceManager() {
+void World::makeWaterInstanceManager() const {
   auto *instMgr{mScnMgr->createInstanceManager(
       WATER_MANAGER_BASE_NAME + mBaseId.string(),
       WATER_MESH_NAME, oo::RESOURCE_GROUP,
