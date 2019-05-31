@@ -70,10 +70,15 @@ auto ReifyRecordImpl<record::REFR_LIGH>::operator()(
     const float c2{gs.get("bLightAttenuation.fQuadraticValue", 16.0f)};
 
     const auto r{std::max(gsl::narrow_cast<float>(data.radius) * s, 0.01f)};
+    // Target attenuation value at a distance r from the light.
+    const float e{0.01f};
+    // Solve for k in atten(rk) = e
+    float k{c1 + Ogre::Math::Sqrt(c1 * c1 - 4.0f * c0 * c2 + 1.0f / e)};
+    k /= 2.0f * c2 * r;
 
     light->setAttenuation(r, c0,
-                          c1 / (s1 * r),
-                          c2 / (s2 * r * s2 * r));
+                          c1 * k * s1,
+                          c2 * k * k * s2);
     light->setPowerScale(baseRec->fadeValue ? baseRec->fadeValue->data : 1.0f);
   }
 
