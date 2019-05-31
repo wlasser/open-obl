@@ -36,6 +36,8 @@ class DeferredLightRenderable : public Ogre::SimpleRenderable {
   void rebuildLightGeometry();
 
  private:
+  void createIcoPointLight();
+  void createUvPointLight();
   void createPointLight();
   void createDirectionalLight();
 

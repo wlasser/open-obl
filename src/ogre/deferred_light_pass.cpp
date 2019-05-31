@@ -53,7 +53,8 @@ bool DeferredLightRenderable::isInsideLight(Ogre::Camera *camera) const {
     case LightTypes::LT_POINT: {
       const auto &p1{camera->getDerivedPosition()};
       const auto &p2{mParent->getDerivedPosition()};
-      return p1.squaredDistance(p2) <= mRadius * mRadius;
+      const auto nearClip{camera->getNearClipDistance()};
+      return p1.distance(p2) <= mRadius + nearClip;
     }
     case LightTypes::LT_DIRECTIONAL:return false;
     case LightTypes::LT_SPOTLIGHT:return false;
@@ -120,7 +121,86 @@ DeferredLightRenderable::getWorldBoundingSphere(bool derive) const {
   return mWorldBoundingSphere;
 }
 
-void DeferredLightRenderable::createPointLight() {
+void DeferredLightRenderable::createUvPointLight() {
+  constexpr int numRings{16};
+  constexpr int numSegments{16};
+  const float dPhi{Ogre::Math::PI / numRings};
+  const float dTheta{Ogre::Math::TWO_PI / numSegments};
+
+  constexpr int numVertices{(numRings + 1) * numSegments};
+  std::array<float, numVertices * 3u> vertices;
+
+  constexpr int numIndices{(numRings + 1) * numSegments * 6};
+  std::array<uint16_t, numIndices> indices;
+
+  auto *vtx{vertices.begin()};
+  auto *idx{indices.begin()};
+
+  uint16_t i{0};
+
+  for (int phiStep = 0; phiStep <= numRings; ++phiStep) {
+    const float phi{phiStep * dPhi};
+    for (int thetaStep = 0; thetaStep < numSegments; ++thetaStep) {
+      const float theta{thetaStep * dTheta};
+      const float x{mRadius * Ogre::Math::Sin(phi) * Ogre::Math::Cos(theta)};
+      const float y{mRadius * Ogre::Math::Cos(phi)};
+      const float z{mRadius * Ogre::Math::Sin(phi) * Ogre::Math::Sin(theta)};
+
+      *vtx++ = x;
+      *vtx++ = y;
+      *vtx++ = z;
+
+      if (thetaStep + 1 < numSegments) {
+        *idx++ = i;
+        *idx++ = i + 1;
+        *idx++ = i + numSegments + 1;
+
+        *idx++ = i;
+        *idx++ = i + numSegments + 1;
+        *idx++ = i + numSegments;
+      } else {
+        *idx++ = i;
+        *idx++ = i + 1 - numSegments;
+        *idx++ = i + 1;
+
+        *idx++ = i;
+        *idx++ = i + 1;
+        *idx++ = i + numSegments;
+      }
+
+      ++i;
+    }
+  }
+
+  mRenderOp.vertexData = OGRE_NEW Ogre::VertexData();
+  mRenderOp.vertexData->vertexCount = numVertices;
+  mRenderOp.vertexData->vertexStart = 0u;
+  mRenderOp.indexData = OGRE_NEW Ogre::IndexData();
+  mRenderOp.useIndexes = true;
+  mRenderOp.operationType = Ogre::RenderOperation::OT_TRIANGLE_LIST;
+
+  auto &hwBufMgr{Ogre::HardwareBufferManager::getSingleton()};
+
+  auto *vertDecl{mRenderOp.vertexData->vertexDeclaration};
+  auto *vertBind{mRenderOp.vertexData->vertexBufferBinding};
+
+  vertDecl->addElement(0, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+  auto vertBuf{hwBufMgr.createVertexBuffer(vertDecl->getVertexSize(0),
+                                           numVertices,
+                                           Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY)};
+  vertBind->setBinding(0, vertBuf);
+  vertBuf->writeData(0u, vertices.size() * 4u, vertices.data(), true);
+
+  mRenderOp.indexData->indexCount = numIndices;
+  mRenderOp.indexData->indexBuffer = hwBufMgr.createIndexBuffer(
+      Ogre::HardwareIndexBuffer::IT_16BIT,
+      mRenderOp.indexData->indexCount,
+      Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
+  auto &idxBuf{mRenderOp.indexData->indexBuffer};
+  idxBuf->writeData(0u, indices.size() * 2u, indices.data(), true);
+}
+
+void DeferredLightRenderable::createIcoPointLight() {
   const float phi{(1.0f + Ogre::Math::Sqrt(5)) / 2.0f};
   std::array<float, 12u * 3u> vertices{
       1.0f, 0.0f, phi,
@@ -189,6 +269,10 @@ void DeferredLightRenderable::createPointLight() {
       Ogre::HardwareBuffer::HBU_STATIC_WRITE_ONLY);
   auto &idxBuf{mRenderOp.indexData->indexBuffer};
   idxBuf->writeData(0u, indices.size() * 2u, indices.data(), true);
+}
+
+void DeferredLightRenderable::createPointLight() {
+  return createUvPointLight();
 }
 
 void DeferredLightRenderable::createDirectionalLight() {
