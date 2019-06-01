@@ -297,6 +297,14 @@ class World::WorldImpl {
   using LayerMaps = std::array<LayerMap, 4u>;
   using LayerOrders = std::array<LayerOrder, 4u>;
 
+  std::shared_ptr<oo::JobCounter> loadTerrainAsyncImpl(CellIndex index);
+  std::shared_ptr<oo::JobCounter> loadTerrainSyncImpl(CellIndex index);
+
+  std::array<Ogre::Terrain *, 4u> getTerrainQuads(CellIndex index) const;
+
+  // \pre Called on render thread
+  bool isTerrainLoaded(CellIndex index) const noexcept;
+
   /// Set up the default `Ogre::Terrain::ImportData` for our
   /// `Ogre::TerrainGroup`.
   /// `Ogre::TerrainGroup` provides a convenient `getDefaultImportSettings()`
@@ -333,6 +341,9 @@ class World::WorldImpl {
 
   void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
 
+  void writeNormals(Ogre::PixelBox dst, const record::LAND &rec) const;
+  void writeVertexColors(Ogre::PixelBox dst, const record::LAND &rec) const;
+
   LayerMaps makeDefaultLayerMaps() const;
   LayerOrders makeDefaultLayerOrders() const;
 
@@ -341,6 +352,26 @@ class World::WorldImpl {
 
   void applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
   void applyFineLayers(LayerOrders &layerOrders, const record::LAND &rec) const;
+
+  /// \remark `layerMap` is taken by nonconst ref so `[]` can be used to create
+  ///         an empty quadrant blend map if one doesn't exist.
+  void applyLayerMap(Ogre::Terrain *quad,
+                     LayerMap &layerMap,
+                     const LayerOrder &layerOrder) const;
+
+  void blitNormals(const std::string &matName,
+                   Ogre::PixelBox src,
+                   Ogre::Box region) const;
+  void blitVertexColors(const std::string &matName,
+                        Ogre::PixelBox src,
+                        Ogre::Box region) const;
+
+  void blit(Ogre::Terrain *quad,
+            LayerMap &layerMap,
+            const LayerOrder &layerOrder,
+            Ogre::PixelBox normals,
+            Ogre::PixelBox vertexColors,
+            Ogre::Box region) const;
 
   oo::BaseId mBaseId{};
   std::string mName{};
@@ -419,93 +450,44 @@ gsl::not_null<World::PhysicsWorld *> World::WorldImpl::getPhysicsWorld() const {
 
 std::shared_ptr<oo::JobCounter>
 World::WorldImpl::loadTerrain(CellIndex index, bool async) {
-  auto x{qvm::X(index)};
-  auto y{qvm::Y(index)};
-  if (async) {
-    auto jc{std::make_shared<oo::JobCounter>(4)};
-    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
-      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 0",
-                                 boost::this_fiber::get_id());
-      group.loadTerrain(2 * x + 0, 2 * y + 0, true);
-    }, jc.get());
-    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
-      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 1",
-                                 boost::this_fiber::get_id());
-      group.loadTerrain(2 * x + 1, 2 * y + 0, true);
-    }, jc.get());
-    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
-      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 2",
-                                 boost::this_fiber::get_id());
-      group.loadTerrain(2 * x + 0, 2 * y + 1, true);
-    }, jc.get());
-    oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y]() {
-      spdlog::get(oo::LOG)->info("[{}]: Loading terrain 3",
-                                 boost::this_fiber::get_id());
-      group.loadTerrain(2 * x + 1, 2 * y + 1, true);
-    }, jc.get());
-
-    return jc;
-  }
-
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, true);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, true);
-  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, true);
-  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, true);
-  return std::shared_ptr<oo::JobCounter>();
+  return async ? loadTerrainAsyncImpl(index) : loadTerrainSyncImpl(index);
 }
 
 void World::WorldImpl::loadTerrain(oo::ExteriorCell &cell) {
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   loadTerrainOnly(cell.getBaseId(), false);
 
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto cellRec{cellRes.get(cell.getBaseId())};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  std::array<Ogre::Terrain *, 4u> terrain{
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 1),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
-  };
-
+  std::array<Ogre::Terrain *, 4u> terrain{getTerrainQuads(pos)};
   cell.setTerrain(terrain);
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
 }
 
 void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
   auto logger{spdlog::get(oo::LOG)};
-  logger->info("[{}]: loadTerrainOnly({})",
-               boost::this_fiber::get_id(), cellId);
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  const auto fiberId{boost::this_fiber::get_id()};
 
+  logger->info("[{}]: loadTerrainOnly({})", fiberId, cellId);
+
+  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto cellRec{cellRes.get(cellId)};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
 
-  // Check if terrain is already loaded first, if so do nothing.
-  if (auto *terrain{mTerrainGroup.getTerrain(2 * qvm::X(pos), 2 * qvm::Y(pos))};
-      terrain && terrain->isLoaded()) {
-    logger->info("[{}]: Terrain is already loaded",
-                 boost::this_fiber::get_id());
+  if (isTerrainLoaded(pos)) {
+    logger->info("[{}]: Terrain is already loaded", fiberId);
     return;
   }
 
-  // Begin loading the terrain itself
   auto terrainCounter{loadTerrain(pos, async)};
-  logger->info("[{}]: Started loadTerrain() jobs", boost::this_fiber::get_id());
+  if (terrainCounter) logger->info("[{}]: Started loadTerrain() jobs", fiberId);
 
   constexpr auto vpc{oo::verticesPerCell<uint32_t>};
   constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
-
-  // Normal data can be generated implicitly by the terrain but instead of
-  // being passed as vertex data the normals are saved in a texture. We have
-  // explicit normal data in the LAND record so will just generate it ourselves.
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  std::array<uint8_t, vpc * vpc * 3u> normalMapData{};
-  Ogre::PixelBox normalMapBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
-                              normalMapData.data());
 
   const auto landIdOpt{getLandId(cellId)};
   if (!landIdOpt) {
@@ -513,49 +495,26 @@ void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
     // to finish loading then delete it and return.
     if (terrainCounter) terrainCounter->wait();
     unloadTerrain(pos);
-    logger->warn("[{}]: No LAND record for this terrain",
-                 boost::this_fiber::get_id());
+    logger->warn("[{}]: No LAND record for this terrain", fiberId);
     return;
   }
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
-  record::LAND &landRec{*landRes.get(*landIdOpt)};
+  const record::LAND &landRec{*landRes.get(*landIdOpt)};
 
-  if (landRec.normals) {
-    for (std::size_t y = 0; y < vpc; ++y) {
-      for (std::size_t x = 0; x < vpc; ++x) {
-        auto[nx, ny, nz]{landRec.normals->data[y * vpc + x]};
-        auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
-        n.normalise();
-        normalMapBox.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
-      }
-    }
-  } else {
-    // No normal data, use vertical normals
-    for (std::size_t y = 0; y < vpc; ++y) {
-      for (std::size_t x = 0; x < vpc; ++x) {
-        normalMapBox.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
-      }
-    }
-  }
+  // Normal data can be generated implicitly by the terrain but instead of
+  // being passed as vertex data the normals are saved in a texture. We have
+  // explicit normal data in the LAND record so will just generate it ourselves.
+  std::array<uint8_t, vpc * vpc * 3u> normalMapData{};
+  Ogre::PixelBox normalMapBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                              normalMapData.data());
+  writeNormals(normalMapBox, landRec);
 
   // Vertex colours are also stored in a texture instead of being passed as
   // vertex data.
   std::array<uint8_t, vpc * vpc * 3u> vertexColorData{};
   Ogre::PixelBox vertexColorBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                                 vertexColorData.data());
-
-  if (landRec.colors) {
-    for (std::size_t y = 0; y < vpc; ++y) {
-      for (std::size_t x = 0; x < vpc; ++x) {
-        auto[r, g, b]{landRec.colors->data[y * vpc + x]};
-        Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
-        vertexColorBox.setColourAt(col, x, y, 0);
-      }
-    }
-  } else {
-    // No vertex colours, use white so textures actually shows up.
-    vertexColorData.fill(255u);
-  }
+  writeVertexColors(vertexColorBox, landRec);
 
   // Build the base texture layer and blend layers.
   auto layerMaps{makeDefaultLayerMaps()};
@@ -567,105 +526,45 @@ void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
   applyFineLayers(layerMaps, landRec);
   applyFineLayers(layerOrders, landRec);
 
-  logger->info("[{}]: Waiting on terrainLoad jobs...",
-               boost::this_fiber::get_id());
-  if (terrainCounter) oo::RenderJobManager::waitOn(terrainCounter.get());
-  logger->info("[{}]: terrainLoad jobs complete!",
-               boost::this_fiber::get_id());
+  if (terrainCounter) {
+    logger->info("[{}]: Waiting on terrainLoad jobs...", fiberId);
+    oo::RenderJobManager::waitOn(terrainCounter.get());
+    logger->info("[{}]: terrainLoad jobs complete!", fiberId);
+  }
 
-  std::array<Ogre::Terrain *, 4u> terrain{
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 0),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 0, 2 * qvm::Y(pos) + 1),
-      mTerrainGroup.getTerrain(2 * qvm::X(pos) + 1, 2 * qvm::Y(pos) + 1)
-  };
+  std::array<Ogre::Terrain *, 4u> terrain{getTerrainQuads(pos)};
   if (std::any_of(terrain.begin(), terrain.end(), std::logical_not<>{})) {
     logger->error("Terrain is nullptr at ({}, {})", qvm::X(pos), qvm::Y(pos));
     throw std::runtime_error("Terrain is nullptr");
   }
 
-  auto blitBoxes = [&](const std::string &matName, const Ogre::Box &box) {
-    auto np{texMgr.getByName(matName + "normal", oo::RESOURCE_GROUP)};
-    np->getBuffer()->blitFromMemory(normalMapBox.getSubVolume(box, true));
-
-    auto vcp{texMgr.getByName(matName + "vertexcolor", oo::RESOURCE_GROUP)};
-    vcp->getBuffer()->blitFromMemory(vertexColorBox.getSubVolume(box, true));
-  };
-
-  auto blitLayerMaps = [&](std::size_t i) {
-    for (uint8_t j = 1; j < layerOrders[i].size(); ++j) {
-      const auto id{layerOrders[i][j]};
-      const auto &srcMap{layerMaps[i][id]};
-      auto *dstMap{terrain[i]->getLayerBlendMap(j)};
-      for (std::size_t y = 0; y < vpq; ++y) {
-        for (std::size_t x = 0; x < vpq; ++x) {
-          const float opacity = srcMap[vpq * y + x] / 255.0f;
-          std::size_t s{}, t{};
-          dstMap->convertUVToImageSpace(x / (oo::verticesPerQuad<float> - 1.0f),
-                                        y / (oo::verticesPerQuad<float> - 1.0f),
-                                        &s, &t);
-          dstMap->setBlendValue(s, t, opacity);
-        }
-      }
-      dstMap->update();
-    }
+  std::array<Ogre::Box, 4u> regions{
+      Ogre::Box(0u, 0u, vpq, vpq),
+      Ogre::Box(vpq - 1u, 0u, vpc, vpq),
+      Ogre::Box(0u, vpq - 1u, vpq, vpc),
+      Ogre::Box(vpq - 1u, vpq - 1u, vpc, vpc)
   };
 
   oo::JobCounter blitCounter{1};
-  oo::RenderJobManager::runJob([terrain, &blitLayerMaps, &blitBoxes]() {
-    auto logger{spdlog::get(oo::LOG)};
-    {
-      const Ogre::Box box(0u, 0u, vpq, vpq);
-      blitBoxes(terrain[0]->getMaterialName(), box);
-      blitLayerMaps(0);
-      terrain[0]->setGlobalColourMapEnabled(true, 2u);
-      terrain[0]->setGlobalColourMapEnabled(false, 2u);
-      terrain[0]->_setCompositeMapRequired(true);
-      logger->info("[{}]: Blit layer 0", boost::this_fiber::get_id());
-    }
-
-    {
-      const Ogre::Box box(vpq - 1u, 0u, vpc, vpq);
-      blitBoxes(terrain[1]->getMaterialName(), box);
-      blitLayerMaps(1);
-      terrain[1]->setGlobalColourMapEnabled(true, 2u);
-      terrain[1]->setGlobalColourMapEnabled(false, 2u);
-      terrain[1]->_setCompositeMapRequired(true);
-      logger->info("[{}]: Blit layer 1", boost::this_fiber::get_id());
-    }
-
-    {
-      const Ogre::Box box(0u, vpq - 1u, vpq, vpc);
-      blitBoxes(terrain[2]->getMaterialName(), box);
-      blitLayerMaps(2);
-      terrain[2]->setGlobalColourMapEnabled(true, 2u);
-      terrain[2]->setGlobalColourMapEnabled(false, 2u);
-      terrain[2]->_setCompositeMapRequired(true);
-      logger->info("[{}]: Blit layer 2", boost::this_fiber::get_id());
-    }
-
-    {
-      const Ogre::Box box(vpq - 1u, vpq - 1u, vpc, vpc);
-      blitBoxes(terrain[3]->getMaterialName(), box);
-      blitLayerMaps(3);
-      terrain[3]->setGlobalColourMapEnabled(true, 2u);
-      terrain[3]->setGlobalColourMapEnabled(false, 2u);
-      terrain[3]->_setCompositeMapRequired(true);
-      logger->info("[{}]: Blit layer 3", boost::this_fiber::get_id());
+  oo::RenderJobManager::runJob([&]() {
+    for (std::size_t i = 0; i < 4; ++i) {
+      blit(terrain[i], layerMaps[i], layerOrders[i],
+           normalMapBox, vertexColorBox,
+           regions[i]);
     }
   }, &blitCounter);
 
-  logger->info("[{}]: Waiting on blitCounter...", boost::this_fiber::get_id());
+  logger->info("[{}]: Waiting on blitCounter...", fiberId);
   blitCounter.wait();
-  logger->info("[{}]: blitCounter complete!", boost::this_fiber::get_id());
+  logger->info("[{}]: blitCounter complete!", fiberId);
 
-  logger->info("[{}]: Creating water instance...", boost::this_fiber::get_id());
+  logger->info("[{}]: Creating water instance...", fiberId);
   oo::JobCounter waterCounter{1};
   oo::RenderJobManager::runJob([&]() {
     this->loadWaterPlane(pos, *cellRec);
   }, &waterCounter);
   waterCounter.wait();
-  logger->info("[{}]: Created water instance.", boost::this_fiber::get_id());
+  logger->info("[{}]: Created water instance.", fiberId);
 }
 
 void World::WorldImpl::unloadTerrain(oo::ExteriorCell &cell) {
@@ -705,6 +604,63 @@ void World::WorldImpl::unloadTerrain(CellIndex index) {
 
 void World::WorldImpl::updateAtmosphere(const oo::chrono::minutes &time) {
   mAtmosphere.update(time);
+}
+
+std::shared_ptr<oo::JobCounter>
+World::WorldImpl::loadTerrainAsyncImpl(CellIndex index) {
+  auto x{qvm::X(index)}, y{qvm::Y(index)};
+  auto jc{std::make_shared<oo::JobCounter>(4)};
+  auto logger{spdlog::get(oo::LOG)};
+
+  oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
+    logger->info("[{}]: Loading terrain quad 0", boost::this_fiber::get_id());
+    group.loadTerrain(2 * x + 0, 2 * y + 0, true);
+  }, jc.get());
+
+  oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
+    logger->info("[{}]: Loading terrain quad 1", boost::this_fiber::get_id());
+    group.loadTerrain(2 * x + 1, 2 * y + 0, true);
+  }, jc.get());
+
+  oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
+    logger->info("[{}]: Loading terrain quad 2", boost::this_fiber::get_id());
+    group.loadTerrain(2 * x + 0, 2 * y + 1, true);
+  }, jc.get());
+
+  oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
+    logger->info("[{}]: Loading terrain quad 3", boost::this_fiber::get_id());
+    group.loadTerrain(2 * x + 1, 2 * y + 1, true);
+  }, jc.get());
+
+  return jc;
+}
+
+std::shared_ptr<oo::JobCounter>
+World::WorldImpl::loadTerrainSyncImpl(CellIndex index) {
+  auto x{qvm::X(index)}, y{qvm::Y(index)};
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 0, true);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 0, true);
+  mTerrainGroup.loadTerrain(2 * x + 0, 2 * y + 1, true);
+  mTerrainGroup.loadTerrain(2 * x + 1, 2 * y + 1, true);
+
+  return nullptr;
+}
+
+std::array<Ogre::Terrain *, 4u>
+World::WorldImpl::getTerrainQuads(CellIndex index) const {
+  return {
+      mTerrainGroup.getTerrain(2 * qvm::X(index) + 0, 2 * qvm::Y(index) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(index) + 1, 2 * qvm::Y(index) + 0),
+      mTerrainGroup.getTerrain(2 * qvm::X(index) + 0, 2 * qvm::Y(index) + 1),
+      mTerrainGroup.getTerrain(2 * qvm::X(index) + 1, 2 * qvm::Y(index) + 1)
+  };
+}
+
+bool World::WorldImpl::isTerrainLoaded(CellIndex index) const noexcept {
+  // Sufficient to check just one quadrant because marked as loaded before
+  // loading is complete?
+  auto *terrain{mTerrainGroup.getTerrain(2 * qvm::X(index), 2 * qvm::Y(index))};
+  return terrain && terrain->isLoaded();
 }
 
 void World::WorldImpl::setDefaultImportData() {
@@ -1135,6 +1091,49 @@ void World::WorldImpl::emplaceTexture(Ogre::StringVector &list,
   }
 }
 
+void World::WorldImpl::writeNormals(Ogre::PixelBox dst,
+                                    const record::LAND &rec) const {
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+
+  if (!rec.normals) {
+    // No normal data, use vertical normals
+    for (std::size_t y = 0; y < vpc; ++y) {
+      for (std::size_t x = 0; x < vpc; ++x) {
+        dst.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
+      }
+    }
+    return;
+  }
+
+  for (std::size_t y = 0; y < vpc; ++y) {
+    for (std::size_t x = 0; x < vpc; ++x) {
+      auto[nx, ny, nz]{rec.normals->data[y * vpc + x]};
+      auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
+      n.normalise();
+      dst.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
+    }
+  }
+}
+
+void World::WorldImpl::writeVertexColors(Ogre::PixelBox dst,
+                                         const record::LAND &rec) const {
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+
+  if (!rec.colors) {
+    // No vertex colours, use white so textures actually shows up.
+    std::fill(dst.data, dst.data + vpc * vpc * 3u, 255u);
+    return;
+  }
+
+  for (std::size_t y = 0; y < vpc; ++y) {
+    for (std::size_t x = 0; x < vpc; ++x) {
+      auto[r, g, b]{rec.colors->data[y * vpc + x]};
+      Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
+      dst.setColourAt(col, x, y, 0);
+    }
+  }
+}
+
 World::WorldImpl::LayerMaps World::WorldImpl::makeDefaultLayerMaps() const {
   LayerMaps layerMaps;
   std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
@@ -1206,6 +1205,60 @@ void World::WorldImpl::applyFineLayers(LayerOrders &layerOrders,
     order[textureLayer] = id;
   }
 }
+
+void World::WorldImpl::applyLayerMap(Ogre::Terrain *quad,
+                                     LayerMap &layerMap,
+                                     const LayerOrder &layerOrder) const {
+  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
+  constexpr auto vpqm1{oo::verticesPerQuad<float> - 1.0f};
+
+  for (uint8_t layerNum = 1; layerNum < layerOrder.size(); ++layerNum) {
+    const auto id{layerOrder[layerNum]};
+    const auto &srcMap{layerMap[id]};
+    auto *dstMap{quad->getLayerBlendMap(layerNum)};
+    for (std::size_t y = 0; y < vpq; ++y) {
+      for (std::size_t x = 0; x < vpq; ++x) {
+        const float opacity{srcMap[vpq * y + x] / 255.0f};
+        std::size_t s{}, t{};
+        dstMap->convertUVToImageSpace(x / vpqm1, y / vpqm1, &s, &t);
+        dstMap->setBlendValue(s, t, opacity);
+      }
+    }
+    dstMap->update();
+  }
+}
+
+void World::WorldImpl::blitNormals(const std::string &matName,
+                                   Ogre::PixelBox src,
+                                   Ogre::Box region) const {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto np{texMgr.getByName(matName + "normal", oo::RESOURCE_GROUP)};
+  np->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
+}
+
+void World::WorldImpl::blitVertexColors(const std::string &matName,
+                                        Ogre::PixelBox src,
+                                        Ogre::Box region) const {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto vcp{texMgr.getByName(matName + "vertexcolor", oo::RESOURCE_GROUP)};
+  vcp->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
+}
+
+void World::WorldImpl::blit(Ogre::Terrain *quad,
+                            LayerMap &layerMap,
+                            const LayerOrder &layerOrder,
+                            Ogre::PixelBox normals,
+                            Ogre::PixelBox vertexColors,
+                            Ogre::Box region) const {
+  const std::string &matName{quad->getMaterialName()};
+  blitNormals(matName, normals, region);
+  blitVertexColors(matName, vertexColors, region);
+  applyLayerMap(quad, layerMap, layerOrder);
+  quad->setGlobalColourMapEnabled(true, 2u);
+  quad->setGlobalColourMapEnabled(false, 2u);
+  quad->_setCompositeMapRequired(true);
+}
+
 
 //===----------------------------------------------------------------------===//
 // World definitions
