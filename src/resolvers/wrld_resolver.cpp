@@ -245,17 +245,21 @@ class World::WorldImpl {
   std::string getName() const;
   void setName(std::string name);
 
+  /// Load the OGRE terrain at the given coordinates.
+  /// If `async` is true then this returns immediately with an `oo::JobCounter`
+  /// which will reach zero when the terrain is loaded, otherwise the terrain is
+  /// loaded synchronously and this function returns `nullptr` when the loading
+  /// is complete.
   std::shared_ptr<oo::JobCounter>
   loadTerrain(CellIndex index, bool async = true);
 
-  void loadTerrain(oo::ExteriorCell &cell);
-
-  void loadTerrainOnly(oo::BaseId cellId, bool async = true);
-
-  void unloadTerrain(oo::ExteriorCell &cell);
-
+  /// Unload the OGRE terrain at the given coordinates.
   void unloadTerrain(CellIndex index);
 
+  void loadTerrain(oo::ExteriorCell &cell);
+  void unloadTerrain(oo::ExteriorCell &cell);
+
+  void loadTerrain(oo::BaseId cellId, bool async = true);
   void unloadTerrain(oo::BaseId cellId);
 
   void updateAtmosphere(const oo::chrono::minutes &time);
@@ -297,6 +301,8 @@ class World::WorldImpl {
   using LayerMaps = std::array<LayerMap, 4u>;
   using LayerOrders = std::array<LayerOrder, 4u>;
 
+  tl::optional<const record::CELL &> getCell(oo::BaseId cellId) const;
+
   std::shared_ptr<oo::JobCounter> loadTerrainAsyncImpl(CellIndex index);
   std::shared_ptr<oo::JobCounter> loadTerrainSyncImpl(CellIndex index);
 
@@ -336,8 +342,8 @@ class World::WorldImpl {
   void makeCellGrid();
   void makePhysicsWorld();
 
-  void setTerrainHeights(const record::raw::VHGT &rec,
-                         ImportDataArray &importData) const;
+  void setTerrainHeights(ImportDataArray &importData,
+                         const record::raw::VHGT &rec) const;
 
   void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
 
@@ -454,10 +460,9 @@ World::WorldImpl::loadTerrain(CellIndex index, bool async) {
 }
 
 void World::WorldImpl::loadTerrain(oo::ExteriorCell &cell) {
-  loadTerrainOnly(cell.getBaseId(), false);
+  loadTerrain(cell.getBaseId(), false);
 
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
-  const auto cellRec{cellRes.get(cell.getBaseId())};
+  const auto cellRec{getCell(cell.getBaseId())};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
@@ -466,28 +471,29 @@ void World::WorldImpl::loadTerrain(oo::ExteriorCell &cell) {
   getPhysicsWorld()->addCollisionObject(cell.getCollisionObject());
 }
 
-void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
+void World::WorldImpl::unloadTerrain(oo::ExteriorCell &cell) {
+  getPhysicsWorld()->removeCollisionObject(cell.getCollisionObject());
+  unloadTerrain(cell.getBaseId());
+}
+
+void World::WorldImpl::loadTerrain(oo::BaseId cellId, bool async) {
   auto logger{spdlog::get(oo::LOG)};
   const auto fiberId{boost::this_fiber::get_id()};
 
-  logger->info("[{}]: loadTerrainOnly({})", fiberId, cellId);
-
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
-  const auto cellRec{cellRes.get(cellId)};
+  const auto cellRec{getCell(cellId)};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
 
   if (isTerrainLoaded(pos)) {
-    logger->info("[{}]: Terrain is already loaded", fiberId);
+    logger->info("[{}]: CELL {} terrain is already loaded", fiberId, cellId);
     return;
   }
 
   auto terrainCounter{loadTerrain(pos, async)};
-  if (terrainCounter) logger->info("[{}]: Started loadTerrain() jobs", fiberId);
-
-  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
-  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
+  if (terrainCounter) {
+    logger->info("[{}]: CELL {} terrain load started", fiberId, cellId);
+  }
 
   const auto landIdOpt{getLandId(cellId)};
   if (!landIdOpt) {
@@ -495,26 +501,30 @@ void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
     // to finish loading then delete it and return.
     if (terrainCounter) terrainCounter->wait();
     unloadTerrain(pos);
-    logger->warn("[{}]: No LAND record for this terrain", fiberId);
+    logger->warn("[{}]: CELL {} and its ancestors have no LAND record",
+                 fiberId, cellId);
     return;
   }
   auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
   const record::LAND &landRec{*landRes.get(*landIdOpt)};
 
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
+
   // Normal data can be generated implicitly by the terrain but instead of
   // being passed as vertex data the normals are saved in a texture. We have
   // explicit normal data in the LAND record so will just generate it ourselves.
-  std::array<uint8_t, vpc * vpc * 3u> normalMapData{};
-  Ogre::PixelBox normalMapBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
-                              normalMapData.data());
-  writeNormals(normalMapBox, landRec);
+  std::array<uint8_t, vpc * vpc * 3u> normalsData{};
+  Ogre::PixelBox normals(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                         normalsData.data());
+  writeNormals(normals, landRec);
 
   // Vertex colours are also stored in a texture instead of being passed as
   // vertex data.
-  std::array<uint8_t, vpc * vpc * 3u> vertexColorData{};
-  Ogre::PixelBox vertexColorBox(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
-                                vertexColorData.data());
-  writeVertexColors(vertexColorBox, landRec);
+  std::array<uint8_t, vpc * vpc * 3u> vertexColorsData{};
+  Ogre::PixelBox vertexColors(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                              vertexColorsData.data());
+  writeVertexColors(vertexColors, landRec);
 
   // Build the base texture layer and blend layers.
   auto layerMaps{makeDefaultLayerMaps()};
@@ -527,15 +537,15 @@ void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
   applyFineLayers(layerOrders, landRec);
 
   if (terrainCounter) {
-    logger->info("[{}]: Waiting on terrainLoad jobs...", fiberId);
+    logger->info("[{}]: CELL {} terrain load waiting", fiberId, cellId);
     oo::RenderJobManager::waitOn(terrainCounter.get());
-    logger->info("[{}]: terrainLoad jobs complete!", fiberId);
+    logger->info("[{}]: CELL {} terrain load finished", fiberId, cellId);
   }
 
   std::array<Ogre::Terrain *, 4u> terrain{getTerrainQuads(pos)};
   if (std::any_of(terrain.begin(), terrain.end(), std::logical_not<>{})) {
-    logger->error("Terrain is nullptr at ({}, {})", qvm::X(pos), qvm::Y(pos));
-    throw std::runtime_error("Terrain is nullptr");
+    logger->error("Null terrain at ({}, {})", qvm::X(pos), qvm::Y(pos));
+    throw std::runtime_error("Null terrain");
   }
 
   std::array<Ogre::Box, 4u> regions{
@@ -545,43 +555,28 @@ void World::WorldImpl::loadTerrainOnly(oo::BaseId cellId, bool async) {
       Ogre::Box(vpq - 1u, vpq - 1u, vpc, vpc)
   };
 
+  logger->info("[{}]: CELL {} terrain blit started", fiberId, cellId);
   oo::JobCounter blitCounter{1};
   oo::RenderJobManager::runJob([&]() {
     for (std::size_t i = 0; i < 4; ++i) {
-      blit(terrain[i], layerMaps[i], layerOrders[i],
-           normalMapBox, vertexColorBox,
+      blit(terrain[i], layerMaps[i], layerOrders[i], normals, vertexColors,
            regions[i]);
     }
   }, &blitCounter);
-
-  logger->info("[{}]: Waiting on blitCounter...", fiberId);
   blitCounter.wait();
-  logger->info("[{}]: blitCounter complete!", fiberId);
+  logger->info("[{}]: CELL {} terrain blit finished", fiberId, cellId);
 
-  logger->info("[{}]: Creating water instance...", fiberId);
+  logger->info("[{}]: CELL {} water creation started", fiberId, cellId);
   oo::JobCounter waterCounter{1};
   oo::RenderJobManager::runJob([&]() {
     this->loadWaterPlane(pos, *cellRec);
   }, &waterCounter);
   waterCounter.wait();
-  logger->info("[{}]: Created water instance.", fiberId);
-}
-
-void World::WorldImpl::unloadTerrain(oo::ExteriorCell &cell) {
-  getPhysicsWorld()->removeCollisionObject(cell.getCollisionObject());
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
-
-  const auto cellRec{cellRes.get(cell.getBaseId())};
-  if (!cellRec) return;
-
-  CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
-  unloadTerrain(pos);
+  logger->info("[{}]: CELL {} water creation finished", fiberId, cellId);
 }
 
 void World::WorldImpl::unloadTerrain(oo::BaseId cellId) {
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
-
-  const auto cellRec{cellRes.get(cellId)};
+  const auto cellRec{getCell(cellId)};
   if (!cellRec) return;
 
   CellIndex pos{cellRec->grid->data.x, cellRec->grid->data.y};
@@ -606,6 +601,12 @@ void World::WorldImpl::updateAtmosphere(const oo::chrono::minutes &time) {
   mAtmosphere.update(time);
 }
 
+tl::optional<const record::CELL &>
+World::WorldImpl::getCell(oo::BaseId cellId) const {
+  const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  return cellRes.get(cellId);
+}
+
 std::shared_ptr<oo::JobCounter>
 World::WorldImpl::loadTerrainAsyncImpl(CellIndex index) {
   auto x{qvm::X(index)}, y{qvm::Y(index)};
@@ -613,22 +614,26 @@ World::WorldImpl::loadTerrainAsyncImpl(CellIndex index) {
   auto logger{spdlog::get(oo::LOG)};
 
   oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
-    logger->info("[{}]: Loading terrain quad 0", boost::this_fiber::get_id());
+    logger->info("[{}]: Loading ({}, {}) terrain quad 0",
+                 boost::this_fiber::get_id(), x, y);
     group.loadTerrain(2 * x + 0, 2 * y + 0, true);
   }, jc.get());
 
   oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
-    logger->info("[{}]: Loading terrain quad 1", boost::this_fiber::get_id());
+    logger->info("[{}]: Loading ({}, {}) terrain quad 1",
+                 boost::this_fiber::get_id(), x, y);
     group.loadTerrain(2 * x + 1, 2 * y + 0, true);
   }, jc.get());
 
   oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
-    logger->info("[{}]: Loading terrain quad 2", boost::this_fiber::get_id());
+    logger->info("[{}]: Loading ({}, {}) terrain quad 2",
+                 boost::this_fiber::get_id(), x, y);
     group.loadTerrain(2 * x + 0, 2 * y + 1, true);
   }, jc.get());
 
   oo::RenderJobManager::runJob([&group = mTerrainGroup, x, y, logger]() {
-    logger->info("[{}]: Loading terrain quad 3", boost::this_fiber::get_id());
+    logger->info("[{}]: Loading ({}, {}) terrain quad 3",
+                 boost::this_fiber::get_id(), x, y);
     group.loadTerrain(2 * x + 1, 2 * y + 1, true);
   }, jc.get());
 
@@ -690,66 +695,68 @@ World::WorldImpl::getLandId(oo::BaseId cellId,
 
   const record::WRLD &wrldRec{*wrldRes.get(wrldId)};
 
-  if (!wrldRec.parentWorldspace) {
-    // No parent worldspace, just load the cells' terrain and use that its
-    // LAND record.
-    cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
-    auto landId{cellRes.getLandId(cellId)};
-    if (landId) return landId;
+  // If no parent worldspace then expect this CELL to have its own LAND,
+  // otherwise lookup the CELL at the same position in the parent worldspace and
+  // use its LAND record instead.
 
-    // No LAND record but no parent worldspace to go to.
-    spdlog::get(oo::LOG)->warn("Cell {} in World {} has no LAND record and "
-                               "the World has no parent worldspace",
+  if (!wrldRec.parentWorldspace) {
+    cellRes.loadTerrain(cellId, oo::getResolvers<record::LAND>(mResolvers));
+    if (auto landId{cellRes.getLandId(cellId)}) return landId;
+
+    spdlog::get(oo::LOG)->warn("CELL {} in WRLD {} has no LAND record and "
+                               "the WRLD has no parent worldspace",
                                cellId, wrldId);
     return tl::nullopt;
-  } else {
-    // Look up the cell with the same index in the parent worldspace and use
-    // its LAND record.
-    const auto cellOpt{cellRes.get(cellId)};
-    if (!cellOpt) {
-      spdlog::get(oo::LOG)->warn("Cell {} in World {} not found",
-                                 cellId, wrldId);
-      return tl::nullopt;
-    }
-
-    const auto gridOpt{cellOpt->grid};
-    if (!gridOpt) {
-      spdlog::get(oo::LOG)->warn("Cell {} in World {} has no XCLC record",
-                                 cellId, wrldId);
-      return tl::nullopt;
-    }
-    oo::CellIndex pos{gridOpt->data.x, gridOpt->data.y};
-
-    const oo::BaseId parentWrldId{wrldRec.parentWorldspace->data};
-    if (!wrldRes.contains(parentWrldId)) {
-      spdlog::get(oo::LOG)->warn("Parent World {} of World {} not found",
-                                 parentWrldId, wrldId);
-      return tl::nullopt;
-    }
-
-    // TODO: Add a builtin function for testing if a WRLD is loaded.
-    if (!wrldRes.getCells(parentWrldId)) {
-      wrldRes.load(parentWrldId, oo::getResolvers<record::CELL>(mResolvers));
-    }
-
-    const auto parentCellIdOpt{wrldRes.getCell(parentWrldId, pos)};
-    if (!parentCellIdOpt) {
-      spdlog::get(oo::LOG)->warn("Parent of Cell {} not found", cellId);
-      return tl::nullopt;
-    }
-    const oo::BaseId parentCellId{*parentCellIdOpt};
-
-    // Try to load the LAND record of this parent cell, and if that fails keep
-    // going up through parent worldspaces until we succeed or run into an error.
-    auto landId{getLandId(parentCellId, parentWrldId)};
-    if (!landId) {
-      spdlog::get(oo::LOG)->warn("Neither Cell {} nor parent Cell {} has a "
-                                 "LAND record", cellId, parentCellId);
-      return tl::nullopt;
-    }
-
-    return landId;
   }
+
+  // TODO: Find a way to use tl::optional's monadic interface here. Though maybe
+  //       tl::expected is a better fit?
+
+  const auto cellOpt{cellRes.get(cellId)};
+  if (!cellOpt) {
+    spdlog::get(oo::LOG)->warn("CELL {} in WRLD {} not found",
+                               cellId, wrldId);
+    return tl::nullopt;
+  }
+
+  const auto gridOpt{cellOpt->grid};
+  if (!gridOpt) {
+    spdlog::get(oo::LOG)->warn("CELL {} in WRLD {} has no XCLC record",
+                               cellId, wrldId);
+    return tl::nullopt;
+  }
+  const oo::CellIndex pos{gridOpt->data.x, gridOpt->data.y};
+
+  const oo::BaseId parentWrldId{wrldRec.parentWorldspace->data};
+  if (!wrldRes.contains(parentWrldId)) {
+    spdlog::get(oo::LOG)->warn("Parent WRLD {} of WRLD {} not found",
+                               parentWrldId, wrldId);
+    return tl::nullopt;
+  }
+
+  // TODO: Add a builtin function for testing if a WRLD is loaded.
+  if (!wrldRes.getCells(parentWrldId)) {
+    wrldRes.load(parentWrldId, oo::getResolvers<record::CELL>(mResolvers));
+  }
+
+  const auto parentCellIdOpt{wrldRes.getCell(parentWrldId, pos)};
+  if (!parentCellIdOpt) {
+    spdlog::get(oo::LOG)->warn("Parent of CELL {} in WRLD {} not found",
+                               cellId, parentWrldId);
+    return tl::nullopt;
+  }
+  const oo::BaseId parentCellId{*parentCellIdOpt};
+
+  // Try to load the LAND record of this parent cell, and if that fails keep
+  // going up through parent worldspaces until we succeed or run into an error.
+  auto landId{getLandId(parentCellId, parentWrldId)};
+  if (!landId) {
+    spdlog::get(oo::LOG)->warn("Neither CELL {} nor parent CELL {} has a "
+                               "LAND record", cellId, parentCellId);
+    return tl::nullopt;
+  }
+
+  return landId;
 }
 
 tl::optional<oo::BaseId> World::WorldImpl::getWatrId() const noexcept {
@@ -843,6 +850,7 @@ void World::WorldImpl::makeWaterInstanceManager() const {
 
 void
 World::WorldImpl::loadWaterPlane(CellIndex index, const record::CELL &cellRec) {
+  //C++20: if (!mWaterPlanes.contains(index)) return;
   if (auto it{mWaterPlanes.find(index)}; it != mWaterPlanes.end()) return;
 
   const float height{cellRec.waterHeight ? cellRec.waterHeight->data : 0.0f};
@@ -941,8 +949,7 @@ void World::WorldImpl::makeCellGrid() {
   // Increment this every cell load and reset to zero once we yield.
   unsigned cellsAfterYield{0};
 
-  // Need non-const CELL and LAND for loadTerrain, then const LAND.
-  auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
+  const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto &landRes{oo::getResolver<record::LAND>(mResolvers)};
   const auto &ltexRes{oo::getResolver<record::LTEX>(mResolvers)};
 
@@ -964,7 +971,7 @@ void World::WorldImpl::makeCellGrid() {
     ImportDataArray importData;
     importData.fill(mTerrainGroup.getDefaultImportSettings());
 
-    setTerrainHeights(heightRec, importData);
+    setTerrainHeights(importData, heightRec);
 
     auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
     const auto matGen{terrainOpts.getDefaultMaterialGenerator()};
@@ -993,13 +1000,12 @@ void World::WorldImpl::makeCellGrid() {
     // Note: The success of getLandId() implies that the cell record exists.
     const auto gridOpt{cellRes.get(cellId)->grid};
     if (!gridOpt) {
-      spdlog::get(oo::LOG)->warn("Cell {} in World {} has no XCLC record",
+      spdlog::get(oo::LOG)->warn("CELL {} in WRLD {} has no XCLC record",
                                  cellId, mBaseId);
       continue;
     }
 
-    const auto x{gridOpt->data.x};
-    const auto y{gridOpt->data.y};
+    const auto x{gridOpt->data.x}, y{gridOpt->data.y};
     mTerrainGroup.defineTerrain(2 * x + 0, 2 * y + 0, &importData[0]);
     mTerrainGroup.defineTerrain(2 * x + 1, 2 * y + 0, &importData[1]);
     mTerrainGroup.defineTerrain(2 * x + 0, 2 * y + 1, &importData[2]);
@@ -1018,8 +1024,8 @@ void World::WorldImpl::makePhysicsWorld() {
   mPhysicsWorld = bulletConf.makeDynamicsWorld();
 }
 
-void World::WorldImpl::setTerrainHeights(const record::raw::VHGT &rec,
-                                         ImportDataArray &importData) const {
+void World::WorldImpl::setTerrainHeights(ImportDataArray &importData,
+                                         const record::raw::VHGT &rec) const {
   constexpr auto vpc{oo::verticesPerCell<std::size_t>};
   constexpr auto vpq{oo::verticesPerQuad<std::size_t>};
 
@@ -1035,8 +1041,8 @@ void World::WorldImpl::setTerrainHeights(const record::raw::VHGT &rec,
   const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
   float rowStartHeight{rec.offset * scale};
 
-  // Because of the offsets its much easier to treat the entire cell as a whole,
-  // then pull out the quadrants afterwards.
+  // Because of the offsets it's much easier to treat the entire cell as a
+  // whole and then pull out the quadrants afterwards.
   std::array<float, vpc * vpc> tmp{};
 
   for (std::size_t j = 0; j < vpc; ++j) {
@@ -1259,7 +1265,6 @@ void World::WorldImpl::blit(Ogre::Terrain *quad,
   quad->_setCompositeMapRequired(true);
 }
 
-
 //===----------------------------------------------------------------------===//
 // World definitions
 //===----------------------------------------------------------------------===//
@@ -1291,25 +1296,16 @@ World::World(oo::BaseId baseId, std::string name, Resolvers resolvers)
 
 World::~World() = default;
 
-std::shared_ptr<oo::JobCounter>
-World::loadTerrain(oo::CellIndex index, bool async) {
-  return mImpl->loadTerrain(index, async);
-}
-
 void World::loadTerrain(oo::ExteriorCell &cell) {
   mImpl->loadTerrain(cell);
 }
 
 void World::loadTerrainOnly(oo::BaseId cellId, bool async) {
-  mImpl->loadTerrainOnly(cellId, async);
+  mImpl->loadTerrain(cellId, async);
 }
 
 void World::unloadTerrain(oo::ExteriorCell &cell) {
   mImpl->unloadTerrain(cell);
-}
-
-void World::unloadTerrain(oo::CellIndex index) {
-  mImpl->unloadTerrain(index);
 }
 
 void World::unloadTerrain(oo::BaseId cellId) {

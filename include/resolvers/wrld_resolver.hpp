@@ -3,7 +3,6 @@
 
 #include "chrono.hpp"
 #include "esp/esp_coordinator.hpp"
-#include "job/job.hpp"
 #include "resolvers/resolvers.hpp"
 #include "resolvers/cell_resolver.hpp"
 #include "wrld.hpp"
@@ -179,26 +178,16 @@ class World {
   World(World &&) = delete;
   World &operator=(World &&) = delete;
 
-  /// Load the terrain of the cell with the given coordinates.
-  /// If `async` is true then returns immediately with a `oo::JobCounter` which
-  /// will reach zero when the terrain is loaded, otherwise loads the terrain
-  /// synchronously and returns nullptr when the terrain is loaded. If `async`
-  /// is false then this function must be called on the render thread.
-  std::shared_ptr<oo::JobCounter>
-  loadTerrain(CellIndex index, bool async = true);
-
-  /// Load the terrain of the given cell, notifying the cell of its terrain.
+  /// Load the terrain of the given cell, notifying the cell of its terrain, and
+  /// adding its collision object to the world.
   void loadTerrain(oo::ExteriorCell &cell);
-
-  /// Load the terrain of the cell with the given id.
-  void loadTerrainOnly(oo::BaseId cellId, bool async = true);
 
   /// Unload the terrain of the given cell, removing its collision object from
   /// the world.
   void unloadTerrain(oo::ExteriorCell &cell);
 
-  /// Unload the terrain of the cell with the given coordinates.
-  void unloadTerrain(CellIndex index);
+  /// Load the terrain of the cell with the given id.
+  void loadTerrainOnly(oo::BaseId cellId, bool async = true);
 
   /// Unload the terrain of the cell with the given id.
   void unloadTerrain(oo::BaseId cellId);
