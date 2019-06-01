@@ -97,6 +97,8 @@ target_sources(OpenOBL PRIVATE
         resolvers/misc_resolver.cpp
         resolvers/npc__resolver.cpp
         resolvers/stat_resolver.cpp
+        resolvers/wrld_impl.cpp
+        resolvers/wrld_impl.hpp
         resolvers/wrld_resolver.cpp
         save_state.cpp
         script_functions.cpp
