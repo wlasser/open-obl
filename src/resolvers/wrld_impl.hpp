@@ -32,6 +32,119 @@ struct WaterEntry {
       : node(pNode), entity(pEntity) {}
 };
 
+/// Alpha value of a texture layer at each point in a quadrant.
+/// Vertices in the quadrant are laid out in row-major order so that the point
+/// with local coordinates `(x, y)` is at index `vpq * y + x` where
+/// `vpq = oo::verticesPerQuad<std::size_t>`.
+using QuadrantBlendMap = std::array<uint8_t,
+                                    oo::verticesPerQuad<std::size_t>
+                                        * oo::verticesPerQuad<std::size_t>>;
+
+/// Ordering of layers in a quadrant or in a cell, depending on the context.
+/// Each `oo::BaseId` refers to the BaseId of the `record::LTEX` describing the
+/// texture layer.
+using LayerOrder = std::vector<oo::BaseId>;
+
+/// Map assigning a blend map to `record::LTEX`s describing texture layers, for
+/// a fixed quadrant.
+/// \remark Access via `[]` will value-initialize any id which doesn't already
+///         exist, giving a transparent `QuadrantBlendMap` for that layer.
+using LayerMap = std::unordered_map<oo::BaseId, QuadrantBlendMap>;
+
+/// `oo::LayerMap`s for each quadrant of a cell.
+using LayerMaps = std::array<LayerMap, 4u>;
+
+/// `oo::LayerOrder`s for each quadrant of a cell.
+using LayerOrders = std::array<LayerOrder, 4u>;
+
+/// `Ogre::Terrain::ImportData` for each quadrant of a cell.
+using ImportDataArray = std::array<Ogre::Terrain::ImportData, 4u>;
+
+/// Copy the terrain normals in the `record::VNML` of a `record::LAND` into a
+/// pixel box representing a cell. If the `record::LAND` has no normals, then
+/// vertical normals are copied into the pixel box instead.
+void writeNormals(Ogre::PixelBox dst, const record::LAND &rec);
+
+/// Copy the vertex colours in the `record::VCLR` of a `record::LAND` into a
+/// pixel box representing a cell. If the `record::LAND` has no vertex colours,
+/// then white vertex colours are copied into the pixel box instead.
+void writeVertexCols(Ogre::PixelBox dst, const record::LAND &rec);
+
+/// Construct a set of `oo::LayerMaps` for a cell, giving each quadrant a single
+/// opaque layer described by an imaginary `record::LTEX` with BaseId `0`.
+LayerMaps makeDefaultLayerMaps();
+
+/// Construct a set of `oo::LayerOrders` for a cell, giving each quadrant a
+/// single layer described by an imaginary `record::LTEX` with BaseId `0`.
+LayerOrders makeDefaultLayerOrders();
+
+/// Construct an opaque layer in the appropriate quadrant for each
+/// `record::BTXT` base texture in the `record::LAND`, overwriting any existing
+/// layers.
+/// In particular, the layer described by the imaginary `record::LTEX` with
+/// BaseId `0` created by `oo::makeDefaultLayerMaps()` is replaced in any
+/// quadrant where a `record::BTXT` is found.
+void applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec);
+
+/// Insert a base layer at the start of the layer order for the appropriate
+/// quadrant, for each `record::BTXT` base texture in the `record::LAND`.
+/// Any existing layer at the front of the order is replaced, including in
+/// particular the imaginary `record::LTEX` with BaseId `0` created by
+/// `oo::makeDefaultLayerOrders()`.
+void applyBaseLayers(LayerOrders &layerOrders, const record::LAND &rec);
+
+/// Insert a fine texture layer in the appropriate quadrant for every
+/// `record::ATXT` / `record::VTXT` pair in the `record::LAND`.
+void applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec);
+
+/// Insert each fine texture layer described by a
+/// `record::ATXT` / `record::VTXT` pair in the `record::LAND` into the
+/// `oo::LayerOrder` for the appropriate quadrant, in the order that they appear
+/// in the `record::LAND`.
+void applyFineLayers(LayerOrders &layerOrders, const record::LAND &rec);
+
+/// Copy the given texture layers into the layer blend maps of the given
+/// terrain quadrant.
+/// \remark Must be run on the render fiber.
+/// \remark `layerMap` is taken by nonconst ref so `[]` can be used to create
+///         an empty quadrant blend map if one doesn't exist.
+void applyLayerMap(Ogre::Terrain *quad,
+                   LayerMap &layerMap,
+                   const LayerOrder &layerOrder);
+
+/// Copy the vertex normals from the subvolume `region` of the `src` into the
+/// global normal map texture of the terrain material `matName`.
+/// \remark Must be run on the render fiber.
+/// \see oo::TerrainMaterialGenerator
+void blitNormals(std::string matName, Ogre::PixelBox src, Ogre::Box region);
+
+/// Copy the vertex colours from the subvolume `region` of the `src` into the
+/// global vertex colour texture of the terrain material `matName`.
+/// \remark Must be run on the render fiber.
+/// \see oo::TerrainMaterialGenerator
+void blitVertexCols(std::string matName, Ogre::PixelBox src, Ogre::Box region);
+
+/// Copy the vertex normals, vertex colours, and texture layers onto the given
+/// terrain quadrant.
+void blitTerrainTextures(Ogre::Terrain *quad,
+                         LayerMap &layerMap,
+                         const LayerOrder &layerOrder,
+                         Ogre::PixelBox normals,
+                         Ogre::PixelBox vertexColors,
+                         Ogre::Box region);
+
+/// Append the landscape texture name and its normal map to the list of texture
+/// names.
+/// Specifically, append a string equal to `"textures/landscape/" + texName` to
+/// the back of `list`. If that texture has a normal map then append that
+/// normal map too, otherwise append the flat normal map.
+void emplaceTerrainTexture(Ogre::StringVector &list, std::string texName);
+
+/// Copy the height data from the `record::VHGT` into the height data of the
+/// `importData` defining the terrain of a cell.
+void
+setTerrainHeights(ImportDataArray &importData, const record::raw::VHGT &rec);
+
 class World::WorldImpl {
  public:
   using Resolvers = World::Resolvers;
@@ -85,24 +198,6 @@ class World::WorldImpl {
   using DistantChunkMap = std::map<ChunkIndex, DistantChunk, ChunkIndexCmp>;
   using WaterEntryMap = std::map<CellIndex, WaterEntry, CellIndexCmp>;
 
-  using ImportDataArray = std::array<Ogre::Terrain::ImportData, 4u>;
-
-  /// Opacity of the layer at each point in a quadrant.
-  using QuadrantBlendMap = std::array<uint8_t,
-                                      oo::verticesPerQuad<std::size_t>
-                                          * oo::verticesPerQuad<std::size_t>>;
-
-  /// Ordering of layers in a quadrant or in a cell, depending on context.
-  using LayerOrder = std::vector<oo::BaseId>;
-
-  /// Map taking each LTEX id to a blend map, for a fixed quadrant.
-  /// \remark Access via [] will value-initialize any id which doesn't exist,
-  ///         giving a transparent QuadrantBlendMap.
-  using LayerMap = std::unordered_map<oo::BaseId, QuadrantBlendMap>;
-
-  using LayerMaps = std::array<LayerMap, 4u>;
-  using LayerOrders = std::array<LayerOrder, 4u>;
-
   tl::optional<const record::CELL &> getCell(oo::BaseId cellId) const;
 
   std::shared_ptr<oo::JobCounter> loadTerrainAsyncImpl(CellIndex index);
@@ -143,43 +238,6 @@ class World::WorldImpl {
 
   void makeCellGrid();
   void makePhysicsWorld();
-
-  void setTerrainHeights(ImportDataArray &importData,
-                         const record::raw::VHGT &rec) const;
-
-  void emplaceTexture(Ogre::StringVector &list, std::string texName) const;
-
-  void writeNormals(Ogre::PixelBox dst, const record::LAND &rec) const;
-  void writeVertexColors(Ogre::PixelBox dst, const record::LAND &rec) const;
-
-  LayerMaps makeDefaultLayerMaps() const;
-  LayerOrders makeDefaultLayerOrders() const;
-
-  void applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
-  void applyBaseLayers(LayerOrders &layerOrders, const record::LAND &rec) const;
-
-  void applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec) const;
-  void applyFineLayers(LayerOrders &layerOrders, const record::LAND &rec) const;
-
-  /// \remark `layerMap` is taken by nonconst ref so `[]` can be used to create
-  ///         an empty quadrant blend map if one doesn't exist.
-  void applyLayerMap(Ogre::Terrain *quad,
-                     LayerMap &layerMap,
-                     const LayerOrder &layerOrder) const;
-
-  void blitNormals(const std::string &matName,
-                   Ogre::PixelBox src,
-                   Ogre::Box region) const;
-  void blitVertexColors(const std::string &matName,
-                        Ogre::PixelBox src,
-                        Ogre::Box region) const;
-
-  void blit(Ogre::Terrain *quad,
-            LayerMap &layerMap,
-            const LayerOrder &layerOrder,
-            Ogre::PixelBox normals,
-            Ogre::PixelBox vertexColors,
-            Ogre::Box region) const;
 
   oo::BaseId mBaseId{};
   std::string mName{};

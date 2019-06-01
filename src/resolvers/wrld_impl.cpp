@@ -16,6 +16,235 @@
 
 namespace oo {
 
+void writeNormals(Ogre::PixelBox dst, const record::LAND &rec) {
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+
+  if (!rec.normals) {
+    // No normal data, use vertical normals
+    for (std::size_t y = 0; y < vpc; ++y) {
+      for (std::size_t x = 0; x < vpc; ++x) {
+        dst.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
+      }
+    }
+    return;
+  }
+
+  for (std::size_t y = 0; y < vpc; ++y) {
+    for (std::size_t x = 0; x < vpc; ++x) {
+      auto[nx, ny, nz]{rec.normals->data[y * vpc + x]};
+      auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
+      n.normalise();
+      dst.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
+    }
+  }
+}
+
+void writeVertexCols(Ogre::PixelBox dst, const record::LAND &rec) {
+  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
+
+  if (!rec.colors) {
+    // No vertex colours, use white so textures actually shows up.
+    std::fill(dst.data, dst.data + vpc * vpc * 3u, 255u);
+    return;
+  }
+
+  for (std::size_t y = 0; y < vpc; ++y) {
+    for (std::size_t x = 0; x < vpc; ++x) {
+      auto[r, g, b]{rec.colors->data[y * vpc + x]};
+      Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
+      dst.setColourAt(col, x, y, 0);
+    }
+  }
+}
+
+LayerMaps makeDefaultLayerMaps() {
+  LayerMaps layerMaps;
+  std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
+    LayerMap layers{};
+    layers[oo::BaseId{0}].fill(255);
+    return layers;
+  });
+
+  return layerMaps;
+}
+
+LayerOrders makeDefaultLayerOrders() {
+  LayerOrders layerOrders;
+  std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
+    return std::vector{oo::BaseId{0}};
+  });
+
+  return layerOrders;
+}
+
+void applyBaseLayers(LayerMaps &layerMaps, const record::LAND &rec) {
+  // Find all the quadrant base textures, overwriting the default layer.
+  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
+    const int quadrant{quadrantTexture.data.quadrant};
+    oo::BaseId id{quadrantTexture.data.id};
+    layerMaps[quadrant].clear();
+    layerMaps[quadrant][id].fill(255);
+  }
+}
+
+void applyBaseLayers(LayerOrders &layerOrders, const record::LAND &rec) {
+  // Find all the quadrant base textures, overwriting the default layer.
+  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
+    const int quadrant{quadrantTexture.data.quadrant};
+    oo::BaseId id{quadrantTexture.data.id};
+    layerOrders[quadrant][0] = id;
+  }
+}
+
+void applyFineLayers(LayerMaps &layerMaps, const record::LAND &rec) {
+  // Find all the quadrant layer textures
+  for (const auto &[atxt, vtxt] : rec.fineTextures) {
+    const oo::BaseId id{atxt.data.id};
+    const std::size_t quadrant{atxt.data.quadrant};
+
+    // Record the layer texture for this quadrant
+    auto &blendMap{layerMaps[quadrant][id]};
+    for (auto &point : vtxt.data.points) {
+      blendMap[point.position] = static_cast<uint8_t>(point.opacity * 255);
+    }
+  }
+}
+
+void applyFineLayers(LayerOrders &layerOrders, const record::LAND &rec) {
+  // Find all the quadrant layer textures
+  for (const auto &[atxt, vtxt] : rec.fineTextures) {
+    const oo::BaseId id{atxt.data.id};
+    const std::size_t quadrant{atxt.data.quadrant};
+    // ATXT layer index ignores the base layer, so is off by one.
+    const std::size_t textureLayer{atxt.data.textureLayer + 1u};
+
+    // Record the layer texture for this quadrant
+    auto &order{layerOrders[quadrant]};
+    if (order.size() <= textureLayer) order.resize(textureLayer + 1u);
+    order[textureLayer] = id;
+  }
+}
+
+void applyLayerMap(Ogre::Terrain *quad, LayerMap &layerMap,
+                   const LayerOrder &layerOrder) {
+  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
+  constexpr auto vpqm1{oo::verticesPerQuad<float> - 1.0f};
+
+  for (uint8_t layerNum = 1; layerNum < layerOrder.size(); ++layerNum) {
+    const auto id{layerOrder[layerNum]};
+    const auto &srcMap{layerMap[id]};
+    auto *dstMap{quad->getLayerBlendMap(layerNum)};
+    for (std::size_t y = 0; y < vpq; ++y) {
+      for (std::size_t x = 0; x < vpq; ++x) {
+        const float opacity{srcMap[vpq * y + x] / 255.0f};
+        std::size_t s{}, t{};
+        dstMap->convertUVToImageSpace(x / vpqm1, y / vpqm1, &s, &t);
+        dstMap->setBlendValue(s, t, opacity);
+      }
+    }
+    dstMap->update();
+  }
+}
+
+void blitNormals(std::string matName, Ogre::PixelBox src, Ogre::Box region) {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto np{texMgr.getByName(matName.append("normal"), oo::RESOURCE_GROUP)};
+  np->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
+}
+
+void blitVertexCols(std::string matName, Ogre::PixelBox src, Ogre::Box region) {
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  auto vcp{texMgr.getByName(matName.append("vertexcolor"), oo::RESOURCE_GROUP)};
+  vcp->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
+}
+
+void blitTerrainTextures(Ogre::Terrain *quad,
+                         LayerMap &layerMap,
+                         const LayerOrder &layerOrder,
+                         Ogre::PixelBox normals,
+                         Ogre::PixelBox vertexCols,
+                         Ogre::Box region) {
+  const std::string &matName{quad->getMaterialName()};
+  oo::blitNormals(matName, normals, region);
+  oo::blitVertexCols(matName, vertexCols, region);
+  oo::applyLayerMap(quad, layerMap, layerOrder);
+  quad->setGlobalColourMapEnabled(true, 2u);
+  quad->setGlobalColourMapEnabled(false, 2u);
+  quad->_setCompositeMapRequired(true);
+}
+
+void emplaceTerrainTexture(Ogre::StringVector &list, std::string texName) {
+  std::string fullName{"textures/landscape/" + std::move(texName)};
+  list.emplace_back(fullName);
+  std::string normalName{oo::makeNormalPath(fullName)};
+
+  auto &texMgr{Ogre::TextureManager::getSingleton()};
+  if (texMgr.resourceExists(normalName, oo::RESOURCE_GROUP)) {
+    list.emplace_back(std::move(normalName));
+  } else {
+    list.emplace_back("textures/flat_n.dds");
+  }
+}
+
+void
+setTerrainHeights(ImportDataArray &importData, const record::raw::VHGT &rec) {
+  constexpr auto vpc{oo::verticesPerCell<std::size_t>};
+  constexpr auto vpq{oo::verticesPerQuad<std::size_t>};
+
+  // Allocation method required for Ogre to manage the memory and delete it.
+  for (auto &data : importData) {
+    data.inputFloat = OGRE_ALLOC_T(float, vpq * vpq,
+                                   Ogre::MEMCATEGORY_GEOMETRY);
+  }
+
+  // The height data is given as offsets. Moving to the right increases the
+  // offset by the height value, moving to a new row resets it to the height
+  // of the first value on the row before.
+  const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
+  float rowStartHeight{rec.offset * scale};
+
+  // Because of the offsets it's much easier to treat the entire cell as a
+  // whole and then pull out the quadrants afterwards.
+  std::array<float, vpc * vpc> tmp{};
+
+  for (std::size_t j = 0; j < vpc; ++j) {
+    const std::size_t o{j * vpc};
+
+    rowStartHeight += rec.heights[o] * scale;
+    tmp[o] = rowStartHeight;
+
+    float height{rowStartHeight};
+    for (std::size_t i = 1; i < vpc; ++i) {
+      height += rec.heights[o + i] * scale;
+      tmp[o + i] = height;
+    }
+  }
+
+  for (std::size_t j = 0; j < vpq; ++j) {
+    const auto *src{&tmp[vpc * j]};
+    std::memcpy(&importData[0].inputFloat[vpq * j], src, vpq * sizeof(float));
+  }
+
+  for (std::size_t j = 0; j < vpq; ++j) {
+    const auto *src{&tmp[vpc * j + (vpq - 1u)]};
+    std::memcpy(&importData[1].inputFloat[vpq * j], src, vpq * sizeof(float));
+  }
+
+  for (std::size_t j = 0; j < vpq; ++j) {
+    const auto *src{&tmp[vpc * (j + vpq - 1u)]};
+    std::memcpy(&importData[2].inputFloat[vpq * j], src, vpq * sizeof(float));
+  }
+
+  for (std::size_t j = 0; j < vpq; ++j) {
+    const auto *src{&tmp[vpc * (j + vpq - 1u) + (vpq - 1u)]};
+    std::memcpy(&importData[3].inputFloat[vpq * j], src, vpq * sizeof(float));
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// WorldImpl definitions
+//===----------------------------------------------------------------------===//
+
 World::WorldImpl::WorldImpl(oo::BaseId baseId,
                             std::string name,
                             Resolvers resolvers)
@@ -143,24 +372,24 @@ void World::WorldImpl::loadTerrain(oo::BaseId cellId, bool async) {
   std::array<uint8_t, vpc * vpc * 3u> normalsData{};
   Ogre::PixelBox normals(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
                          normalsData.data());
-  writeNormals(normals, landRec);
+  oo::writeNormals(normals, landRec);
 
   // Vertex colours are also stored in a texture instead of being passed as
   // vertex data.
-  std::array<uint8_t, vpc * vpc * 3u> vertexColorsData{};
-  Ogre::PixelBox vertexColors(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
-                              vertexColorsData.data());
-  writeVertexColors(vertexColors, landRec);
+  std::array<uint8_t, vpc * vpc * 3u> vertexColsData{};
+  Ogre::PixelBox vertexCols(vpc, vpc, 1, Ogre::PixelFormat::PF_BYTE_RGB,
+                            vertexColsData.data());
+  oo::writeVertexCols(vertexCols, landRec);
 
   // Build the base texture layer and blend layers.
-  auto layerMaps{makeDefaultLayerMaps()};
-  auto layerOrders{makeDefaultLayerOrders()};
+  auto layerMaps{oo::makeDefaultLayerMaps()};
+  auto layerOrders{oo::makeDefaultLayerOrders()};
 
-  applyBaseLayers(layerMaps, landRec);
-  applyBaseLayers(layerOrders, landRec);
+  oo::applyBaseLayers(layerMaps, landRec);
+  oo::applyBaseLayers(layerOrders, landRec);
 
-  applyFineLayers(layerMaps, landRec);
-  applyFineLayers(layerOrders, landRec);
+  oo::applyFineLayers(layerMaps, landRec);
+  oo::applyFineLayers(layerOrders, landRec);
 
   if (terrainCounter) {
     logger->info("[{}]: CELL {} terrain load waiting", fiberId, cellId);
@@ -185,8 +414,8 @@ void World::WorldImpl::loadTerrain(oo::BaseId cellId, bool async) {
   oo::JobCounter blitCounter{1};
   oo::RenderJobManager::runJob([&]() {
     for (std::size_t i = 0; i < 4; ++i) {
-      blit(terrain[i], layerMaps[i], layerOrders[i], normals, vertexColors,
-           regions[i]);
+      oo::blitTerrainTextures(terrain[i], layerMaps[i], layerOrders[i],
+                              normals, vertexCols, regions[i]);
     }
   }, &blitCounter);
   blitCounter.wait();
@@ -597,7 +826,7 @@ void World::WorldImpl::makeCellGrid() {
     ImportDataArray importData;
     importData.fill(mTerrainGroup.getDefaultImportSettings());
 
-    setTerrainHeights(importData, heightRec);
+    oo::setTerrainHeights(importData, heightRec);
 
     auto &terrainOpts{Ogre::TerrainGlobalOptions::getSingleton()};
     const auto matGen{terrainOpts.getDefaultMaterialGenerator()};
@@ -605,9 +834,9 @@ void World::WorldImpl::makeCellGrid() {
       data.layerDeclaration = matGen->getLayerDeclaration();
     }
 
-    auto layerOrders{makeDefaultLayerOrders()};
-    applyBaseLayers(layerOrders, *landOpt);
-    applyFineLayers(layerOrders, *landOpt);
+    auto layerOrders{oo::makeDefaultLayerOrders()};
+    oo::applyBaseLayers(layerOrders, *landOpt);
+    oo::applyFineLayers(layerOrders, *landOpt);
 
     for (std::size_t i = 0; i < 4; ++i) {
       for (auto id : layerOrders[i]) {
@@ -616,9 +845,9 @@ void World::WorldImpl::makeCellGrid() {
 
         if (const auto ltexOpt{ltexRes.get(id)}) {
           const oo::Path basePath{ltexOpt->textureFilename.data};
-          emplaceTexture(layer.textureNames, basePath.c_str());
+          emplaceTerrainTexture(layer.textureNames, basePath.c_str());
         } else {
-          emplaceTexture(layer.textureNames, "terrainhddirt01.dds");
+          emplaceTerrainTexture(layer.textureNames, "terrainhddirt01.dds");
         }
       }
     }
@@ -648,247 +877,6 @@ void World::WorldImpl::makePhysicsWorld() {
   const auto &cellRes{oo::getResolver<record::CELL>(mResolvers)};
   const auto &bulletConf{cellRes.getBulletConfiguration()};
   mPhysicsWorld = bulletConf.makeDynamicsWorld();
-}
-
-void World::WorldImpl::setTerrainHeights(ImportDataArray &importData,
-                                         const record::raw::VHGT &rec) const {
-  constexpr auto vpc{oo::verticesPerCell<std::size_t>};
-  constexpr auto vpq{oo::verticesPerQuad<std::size_t>};
-
-  // Allocation method required for Ogre to manage the memory and delete it.
-  for (auto &data : importData) {
-    data.inputFloat = OGRE_ALLOC_T(float, vpq * vpq,
-                                   Ogre::MEMCATEGORY_GEOMETRY);
-  }
-
-  // The height data is given as offsets. Moving to the right increases the
-  // offset by the height value, moving to a new row resets it to the height
-  // of the first value on the row before.
-  const float scale{record::raw::VHGT::MULTIPLIER * oo::metersPerUnit<float>};
-  float rowStartHeight{rec.offset * scale};
-
-  // Because of the offsets it's much easier to treat the entire cell as a
-  // whole and then pull out the quadrants afterwards.
-  std::array<float, vpc * vpc> tmp{};
-
-  for (std::size_t j = 0; j < vpc; ++j) {
-    const std::size_t o{j * vpc};
-
-    rowStartHeight += rec.heights[o] * scale;
-    tmp[o] = rowStartHeight;
-
-    float height{rowStartHeight};
-    for (std::size_t i = 1; i < vpc; ++i) {
-      height += rec.heights[o + i] * scale;
-      tmp[o + i] = height;
-    }
-  }
-
-  for (std::size_t j = 0; j < vpq; ++j) {
-    std::memcpy(&importData[0].inputFloat[vpq * j],
-                &tmp[vpc * j],
-                vpq * sizeof(float));
-  }
-
-  for (std::size_t j = 0; j < vpq; ++j) {
-    std::memcpy(&importData[1].inputFloat[vpq * j],
-                &tmp[vpc * j + (vpq - 1u)],
-                vpq * sizeof(float));
-  }
-
-  for (std::size_t j = 0; j < vpq; ++j) {
-    std::memcpy(&importData[2].inputFloat[vpq * j],
-                &tmp[vpc * (j + vpq - 1u)],
-                vpq * sizeof(float));
-  }
-
-  for (std::size_t j = 0; j < vpq; ++j) {
-    std::memcpy(&importData[3].inputFloat[vpq * j],
-                &tmp[vpc * (j + vpq - 1u) + (vpq - 1u)],
-                vpq * sizeof(float));
-  }
-}
-
-void World::WorldImpl::emplaceTexture(Ogre::StringVector &list,
-                                      std::string texName) const {
-  std::string fullName{"textures/landscape/" + std::move(texName)};
-  list.emplace_back(fullName);
-  std::string normalName{oo::makeNormalPath(fullName)};
-
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  if (texMgr.resourceExists(normalName, oo::RESOURCE_GROUP)) {
-    list.emplace_back(std::move(normalName));
-  } else {
-    list.emplace_back("textures/flat_n.dds");
-  }
-}
-
-void World::WorldImpl::writeNormals(Ogre::PixelBox dst,
-                                    const record::LAND &rec) const {
-  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
-
-  if (!rec.normals) {
-    // No normal data, use vertical normals
-    for (std::size_t y = 0; y < vpc; ++y) {
-      for (std::size_t x = 0; x < vpc; ++x) {
-        dst.setColourAt(Ogre::ColourValue{0.0f, 1.0f, 0.0f}, x, y, 0);
-      }
-    }
-    return;
-  }
-
-  for (std::size_t y = 0; y < vpc; ++y) {
-    for (std::size_t x = 0; x < vpc; ++x) {
-      auto[nx, ny, nz]{rec.normals->data[y * vpc + x]};
-      auto n{oo::fromBSCoordinates(Ogre::Vector3(nx, ny, nz))};
-      n.normalise();
-      dst.setColourAt(Ogre::ColourValue{n.x, n.y, n.z}, x, y, 0);
-    }
-  }
-}
-
-void World::WorldImpl::writeVertexColors(Ogre::PixelBox dst,
-                                         const record::LAND &rec) const {
-  constexpr auto vpc{oo::verticesPerCell<uint32_t>};
-
-  if (!rec.colors) {
-    // No vertex colours, use white so textures actually shows up.
-    std::fill(dst.data, dst.data + vpc * vpc * 3u, 255u);
-    return;
-  }
-
-  for (std::size_t y = 0; y < vpc; ++y) {
-    for (std::size_t x = 0; x < vpc; ++x) {
-      auto[r, g, b]{rec.colors->data[y * vpc + x]};
-      Ogre::ColourValue col(r / 255.0f, g / 255.0f, b / 255.0f);
-      dst.setColourAt(col, x, y, 0);
-    }
-  }
-}
-
-World::WorldImpl::LayerMaps World::WorldImpl::makeDefaultLayerMaps() const {
-  LayerMaps layerMaps;
-  std::generate(layerMaps.begin(), layerMaps.end(), []() -> LayerMap {
-    LayerMap layers{};
-    layers[oo::BaseId{0}].fill(255);
-    return layers;
-  });
-
-  return layerMaps;
-}
-
-World::WorldImpl::LayerOrders World::WorldImpl::makeDefaultLayerOrders() const {
-  LayerOrders layerOrders;
-  std::generate(layerOrders.begin(), layerOrders.end(), []() -> LayerOrder {
-    return std::vector{oo::BaseId{0}};
-  });
-
-  return layerOrders;
-}
-
-void World::WorldImpl::applyBaseLayers(LayerMaps &layerMaps,
-                                       const record::LAND &rec) const {
-  // Find all the quadrant base textures, overwriting the default layer.
-  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
-    const int quadrant{quadrantTexture.data.quadrant};
-    oo::BaseId id{quadrantTexture.data.id};
-    layerMaps[quadrant].clear();
-    layerMaps[quadrant][id].fill(255);
-  }
-}
-
-void World::WorldImpl::applyBaseLayers(LayerOrders &layerOrders,
-                                       const record::LAND &rec) const {
-  // Find all the quadrant base textures, overwriting the default layer.
-  for (const record::BTXT &quadrantTexture : rec.quadrantTexture) {
-    const int quadrant{quadrantTexture.data.quadrant};
-    oo::BaseId id{quadrantTexture.data.id};
-    layerOrders[quadrant][0] = id;
-  }
-}
-
-void World::WorldImpl::applyFineLayers(LayerMaps &layerMaps,
-                                       const record::LAND &rec) const {
-  // Find all the quadrant layer textures
-  for (const auto &[atxt, vtxt] : rec.fineTextures) {
-    const oo::BaseId id{atxt.data.id};
-    const std::size_t quadrant{atxt.data.quadrant};
-
-    // Record the layer texture for this quadrant
-    auto &blendMap{layerMaps[quadrant][id]};
-    for (auto &point : vtxt.data.points) {
-      blendMap[point.position] = static_cast<uint8_t>(point.opacity * 255);
-    }
-  }
-}
-
-void World::WorldImpl::applyFineLayers(LayerOrders &layerOrders,
-                                       const record::LAND &rec) const {
-  // Find all the quadrant layer textures
-  for (const auto &[atxt, vtxt] : rec.fineTextures) {
-    const oo::BaseId id{atxt.data.id};
-    const std::size_t quadrant{atxt.data.quadrant};
-    // ATXT layer index ignores the base layer, so is off by one.
-    const std::size_t textureLayer{atxt.data.textureLayer + 1u};
-
-    // Record the layer texture for this quadrant
-    auto &order{layerOrders[quadrant]};
-    if (order.size() <= textureLayer) order.resize(textureLayer + 1u);
-    order[textureLayer] = id;
-  }
-}
-
-void World::WorldImpl::applyLayerMap(Ogre::Terrain *quad,
-                                     LayerMap &layerMap,
-                                     const LayerOrder &layerOrder) const {
-  constexpr auto vpq{oo::verticesPerQuad<uint32_t>};
-  constexpr auto vpqm1{oo::verticesPerQuad<float> - 1.0f};
-
-  for (uint8_t layerNum = 1; layerNum < layerOrder.size(); ++layerNum) {
-    const auto id{layerOrder[layerNum]};
-    const auto &srcMap{layerMap[id]};
-    auto *dstMap{quad->getLayerBlendMap(layerNum)};
-    for (std::size_t y = 0; y < vpq; ++y) {
-      for (std::size_t x = 0; x < vpq; ++x) {
-        const float opacity{srcMap[vpq * y + x] / 255.0f};
-        std::size_t s{}, t{};
-        dstMap->convertUVToImageSpace(x / vpqm1, y / vpqm1, &s, &t);
-        dstMap->setBlendValue(s, t, opacity);
-      }
-    }
-    dstMap->update();
-  }
-}
-
-void World::WorldImpl::blitNormals(const std::string &matName,
-                                   Ogre::PixelBox src,
-                                   Ogre::Box region) const {
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  auto np{texMgr.getByName(matName + "normal", oo::RESOURCE_GROUP)};
-  np->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
-}
-
-void World::WorldImpl::blitVertexColors(const std::string &matName,
-                                        Ogre::PixelBox src,
-                                        Ogre::Box region) const {
-  auto &texMgr{Ogre::TextureManager::getSingleton()};
-  auto vcp{texMgr.getByName(matName + "vertexcolor", oo::RESOURCE_GROUP)};
-  vcp->getBuffer()->blitFromMemory(src.getSubVolume(region, true));
-}
-
-void World::WorldImpl::blit(Ogre::Terrain *quad,
-                            LayerMap &layerMap,
-                            const LayerOrder &layerOrder,
-                            Ogre::PixelBox normals,
-                            Ogre::PixelBox vertexColors,
-                            Ogre::Box region) const {
-  const std::string &matName{quad->getMaterialName()};
-  blitNormals(matName, normals, region);
-  blitVertexColors(matName, vertexColors, region);
-  applyLayerMap(quad, layerMap, layerOrder);
-  quad->setGlobalColourMapEnabled(true, 2u);
-  quad->setGlobalColourMapEnabled(false, 2u);
-  quad->_setCompositeMapRequired(true);
 }
 
 } // namespace oo
