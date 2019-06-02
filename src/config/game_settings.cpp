@@ -1,5 +1,7 @@
 #include "config/game_settings.hpp"
 #include "record/records.hpp"
+#include "util/settings.hpp"
+#include <spdlog/spdlog.h>
 
 namespace oo {
 
@@ -42,6 +44,51 @@ void GameSettings::load(const record::GMST &gmst, bool overwrite) {
       }
       break;
     default: break;
+  }
+}
+
+bool GameSettings::bGet(const std::string &path) const {
+  try {
+    return get<bool>(path).value();
+  } catch (const boost::bad_optional_access &e) {
+    spdlog::get(oo::LOG)->error("GameSettings: bool {} does not exist", path);
+    throw;
+  }
+}
+
+float GameSettings::fGet(const std::string &path) const {
+  try {
+    return get<float>(path).value();
+  } catch (const boost::bad_optional_access &e) {
+    spdlog::get(oo::LOG)->error("GameSettings: float {} does not exist", path);
+    throw;
+  }
+}
+
+int GameSettings::iGet(const std::string &path) const {
+  try {
+    return get<int>(path).value();
+  } catch (const boost::bad_optional_access &e) {
+    spdlog::get(oo::LOG)->error("GameSettings: int {} does not exist", path);
+    throw;
+  }
+}
+
+std::string GameSettings::sGet(const std::string &path) const {
+  try {
+    return get<std::string>(path).value();
+  } catch (const boost::bad_optional_access &e) {
+    spdlog::get(oo::LOG)->error("GameSettings: string {} does not exist", path);
+    throw;
+  }
+}
+
+unsigned int GameSettings::uGet(const std::string &path) const {
+  try {
+    return get<unsigned int>(path).value();
+  } catch (const boost::bad_optional_access &e) {
+    spdlog::get(oo::LOG)->error("GameSettings: uint {} does not exist", path);
+    throw;
   }
 }
 

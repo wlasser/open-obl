@@ -238,25 +238,15 @@ class GameSettings {
     return tree.get<std::string>(path, defaultValue);
   }
 
-  bool bGet(const std::string &path) const {
-    return get<bool>(path).value();
-  }
+  bool bGet(const std::string &path) const;
 
-  float fGet(const std::string &path) const {
-    return get<float>(path).value();
-  }
+  float fGet(const std::string &path) const;
 
-  int iGet(const std::string &path) const {
-    return get<int>(path).value();
-  }
+  int iGet(const std::string &path) const;
 
-  std::string sGet(const std::string &path) const {
-    return get<std::string>(path).value();
-  }
+  std::string sGet(const std::string &path) const;
 
-  unsigned int uGet(const std::string &path) const {
-    return get<unsigned int>(path).value();
-  }
+  unsigned int uGet(const std::string &path) const;
 
   /// Convenience function to return the font with the given index.
   /// Returns the value of `Fonts.sFontFile_X` with `X` replaced by the decimal
