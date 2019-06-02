@@ -25,6 +25,13 @@ material __WaterMaterial {
                 param_named_auto farClipDist FAR_CLIP_DISTANCE
                 param_named_auto viewportSize VIEWPORT_SIZE
                 param_named_auto time TIME_0_1 40.0f
+
+                param_named shallowCol float4 0.0078f 0.082f 0.118f 0.0f
+                param_named deepCol float4 0.125f 0.180f 0.208f 0.0f
+                param_named reflectCol float4 0.122f 0.267f 0.294f 0.0f
+                param_named fresnelAmount float 0.15f
+                param_named reflectivityAmount float 0.9f
+
                 param_named diffuse int 0
                 param_named Tex0 int 1
                 param_named Tex1 int 2

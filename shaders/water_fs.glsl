@@ -15,6 +15,12 @@ uniform float farClipDist;
 uniform vec4 viewportSize;
 uniform float time;
 
+uniform vec4 shallowCol;
+uniform vec4 deepCol;
+uniform vec4 reflectCol;
+uniform float fresnelAmount;
+uniform float reflectivityAmount;
+
 uniform sampler2D diffuse;
 uniform sampler2D Tex0;
 uniform sampler2D Tex1;
@@ -28,13 +34,6 @@ void main() {
 
     vec3 lightCol = pow(sunlightColor.rgb, vec3(2.2f));
     vec3 lightDir = normalize(sunlightDirection.xyz);
-
-    vec3 shallowCol = vec3(2.0f, 21.0f, 30.0f) / 255.0f * ambientLightColor.rgb;
-    vec3 deepCol = vec3(32.0f, 46.0f, 53.0f) / 255.0f * ambientLightColor.rgb;
-    vec3 reflectCol = vec3(31.0f, 68.0f, 75.0f) / 255.0f * ambientLightColor.rgb;
-
-    float fresnelAmount = 0.15f;
-    float reflectivityAmount = 0.9f;
 
     vec2 texCoord = TexCoord + vec2(time);
 
@@ -85,12 +84,12 @@ void main() {
     float R = mix(pow(1.0f - nDotL, 5.0f), 1.0f, R0);
 
     float spec = pow(nDotH, 80.0f);
-    vec3 specCol = fresnelAmount * R * reflectCol
+    vec3 specCol = fresnelAmount * R * reflectCol.rgb * ambientLightColor.rgb;
     + 0.5f * reflectivityAmount * spec * lightCol;
 
     float distScale = clamp(2.0f / depth, 0.0f, 1.0f);
-    vec3 deepWaterCol = mix(deepCol, bedCol, distScale);
-    vec3 waterCol = mix(deepWaterCol, shallowCol, nDotL);
+    vec3 deepWaterCol = mix(deepCol.rgb * ambientLightColor.rgb, bedCol, distScale);
+    vec3 waterCol = mix(deepWaterCol, shallowCol.rgb * ambientLightColor.rgb, nDotL);
     // Adjust for depth again to get nice soft edges regardless of fresnel.
     waterCol = mix(waterCol, bedCol, distScale);
 

@@ -7,6 +7,7 @@
 #include <OgreInstancedEntity.h>
 #include <OgreMaterialManager.h>
 #include <OgreMeshManager.h>
+#include <OgrePass.h>
 #include <OgrePixelFormat.h>
 #include <OgreRoot.h>
 #include <OgreTechnique.h>
@@ -680,6 +681,33 @@ Ogre::MaterialPtr World::WorldImpl::makeWaterMaterial() const {
           {"diffuse", watrPath.c_str()}
       };
       matPtr->applyTextureAliases(layers, true);
+
+      if (const auto dataOpt{watrOpt->data}) {
+        auto *pass{matPtr->getTechnique(0)->getPass(0)};
+        auto paramsPtr{pass->getFragmentProgramParameters()};
+
+        Ogre::ColourValue shallowCol{};
+        shallowCol.setAsABGR(dataOpt->data.shallowColor);
+        paramsPtr->setNamedConstant("shallowCol", shallowCol);
+
+        Ogre::ColourValue deepCol{};
+        deepCol.setAsABGR(dataOpt->data.deepColor);
+        paramsPtr->setNamedConstant("deepCol", deepCol);
+
+        Ogre::ColourValue reflectCol{};
+        reflectCol.setAsABGR(dataOpt->data.reflectionColor);
+        paramsPtr->setNamedConstant("reflectCol", reflectCol);
+
+        const float fresnel{dataOpt->data.fresnelAmount};
+        paramsPtr->setNamedConstant("fresnelAmount", fresnel);
+
+        const float reflectivity{dataOpt->data.reflectivityAmount};
+        paramsPtr->setNamedConstant("reflectivityAmount", reflectivity);
+
+        pass->setFragmentProgramParameters(paramsPtr);
+      } else {
+        spdlog::get(oo::LOG)->warn("WATR {} has no DATA", *watrIdOpt);
+      }
     } else {
       spdlog::get(oo::LOG)->warn("WRLD {}: WATR record {} does not exist",
                                  getBaseId(), *watrIdOpt);
