@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOBLBsaTools)
 
-find_package(PkgConfig REQUIRED)
+find_package(PkgConfig)
 include(GNUInstallDirs)
 
 if (PkgConfig_FOUND)
