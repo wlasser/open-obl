@@ -18,6 +18,9 @@
 #include <OgreSkeletonInstance.h>
 #include <spdlog/fmt/ostr.h>
 
+// wtf winuser.h
+#undef LoadMenu
+
 namespace oo {
 
 GameMode::GameMode(ApplicationContext &/*ctx*/, oo::CellPacket cellPacket)

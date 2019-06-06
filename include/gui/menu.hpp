@@ -4,6 +4,9 @@
 #include "gui/ui_element.hpp"
 #include <OgreOverlay.h>
 
+// Wtf winuser.h
+#undef LoadMenu
+
 namespace gui {
 
 /// Each menu must be one of the following types, given in the XML by its

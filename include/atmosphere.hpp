@@ -8,6 +8,10 @@
 #include <random>
 #include <vector>
 
+// We're haunted by 16-bit Windows
+#undef near
+#undef far
+
 namespace record::raw {
 using Color = uint32_t;
 } // namespace record::raw

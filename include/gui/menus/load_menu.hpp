@@ -3,6 +3,9 @@
 
 #include "gui/menu.hpp"
 
+// wtf winuser.h
+#undef LoadMenu
+
 namespace gui {
 
 template<>

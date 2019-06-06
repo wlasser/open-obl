@@ -7,6 +7,9 @@
 #include <optional>
 #include <string>
 
+// Wtf winuser.h
+#undef LoadMenu
+
 namespace gui {
 
 inline std::shared_ptr<spdlog::logger>
