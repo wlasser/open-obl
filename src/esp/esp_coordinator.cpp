@@ -123,7 +123,7 @@ EspCoordinator::readRecordHeader(int modIndex, SeekPos seekPos) {
   }
   return {translateFormIds(record::readRecordHeader(it->stream), modIndex),
           it->stream.tellg()};
-};
+}
 
 EspCoordinator::ReadHeaderResult
 EspCoordinator::skipRecord(int modIndex, SeekPos seekPos) {
@@ -134,7 +134,7 @@ EspCoordinator::skipRecord(int modIndex, SeekPos seekPos) {
   }
   return {translateFormIds(record::skipRecord(it->stream), modIndex),
           it->stream.tellg()};
-};
+}
 
 uint32_t EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};
@@ -143,7 +143,7 @@ uint32_t EspCoordinator::peekRecordType(int modIndex, SeekPos seekPos) {
     it->stream.seekg(seekPos, std::ifstream::beg);
   }
   return record::peekRecordType(it->stream);
-};
+}
 
 BaseId EspCoordinator::peekBaseId(int modIndex, SeekPos seekPos) {
   std::scoped_lock lock{mMutex};

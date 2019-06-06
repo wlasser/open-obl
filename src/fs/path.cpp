@@ -79,13 +79,13 @@ std::string_view Path::filename() const {
   // mPath does not end with a '/', but it might not have any at all
   const auto sep{sv.find_last_of('/')};
   return sep == std::string_view::npos ? sv : sv.substr(sep + 1);
-};
+}
 
 std::string_view Path::folder() const {
   const std::string_view sv{mPath};
   const auto sep{sv.find_last_of('/')};
   return sep == std::string_view::npos ? "" : sv.substr(0, sep);
-};
+}
 
 std::string_view Path::extension() const {
   auto sv{filename()};
@@ -95,7 +95,7 @@ std::string_view Path::extension() const {
   // extension.
   if (dot == std::string_view::npos || dot == 0) return "";
   else return sv.substr(dot + 1);
-};
+}
 
 bool Path::exists() const {
   namespace stdfs = std::filesystem;
@@ -181,7 +181,7 @@ Path operator/(const Path &lhs, const Path &rhs) {
   tmp.mPath.reserve(lhs.mPath.size() + 1u + rhs.mPath.size());
   tmp.mPath.append(lhs.mPath).append(1u, '/').append(rhs.mPath);
   return tmp;
-};
+}
 
 bool operator==(const Path &lhs, const Path &rhs) {
   return lhs.mPath == rhs.mPath;
