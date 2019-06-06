@@ -41,7 +41,7 @@ std::filesystem::path getGamesDirectory() {
       result != S_OK) {
     throw std::runtime_error("Failed to get save location");
   }
-  std::filesystem::Path docsPath{docsFolder};
+  std::filesystem::path docsPath{docsFolder};
   ::CoTaskMemFree(docsFolder);
   return docsPath / gamesFolderName;
 #else
