@@ -106,7 +106,9 @@ bool Path::exists() const {
   if (mSysPath) return true;
 
   for (const auto &entry : stdfs::recursive_directory_iterator(".")) {
-    const Path entryPath{entry.path()};
+    // Call string() instead of relying on implicit conversion, which doesn't
+    // work on Windows where wstring is the native type not string.
+    const Path entryPath{entry.path().string()};
     if (entryPath == *this) {
       mSysPath = entry.path();
       return true;

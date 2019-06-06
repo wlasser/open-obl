@@ -231,8 +231,8 @@ Application::Application(std::string windowName) : FrameListener() {
   // locations in order to guarantee thread safety.
   for (const auto &bsa : bsaFilenames) {
     const auto sysPath{bsa.sysPath()};
-    Ogre::ArchiveManager::getSingleton().load(sysPath, "BSA", true);
-    ctx.getLogger()->info("Loaded archive {}", sysPath);
+    Ogre::ArchiveManager::getSingleton().load(sysPath.string(), "BSA", true);
+    ctx.getLogger()->info("Loaded archive {}", sysPath.string());
   }
 
   // Meshes need to be declared explicitly as they use a ManualResourceLoader.
@@ -531,13 +531,13 @@ void Application::declareResource(const oo::Path &path,
 
 void Application::declareBsaArchive(const oo::Path &bsaFilename) {
   auto &resGrpMgr{Ogre::ResourceGroupManager::getSingleton()};
-  const auto sysPath{bsaFilename.sysPath()};
+  const auto sysPath{bsaFilename.sysPath().string()};
   resGrpMgr.addResourceLocation(sysPath, "BSA", oo::RESOURCE_GROUP);
 }
 
 void Application::declareBsaResources(const oo::Path &bsaFilename) {
   auto &archiveMgr{Ogre::ArchiveManager::getSingleton()};
-  const auto sysPath{bsaFilename.sysPath()};
+  const auto sysPath{bsaFilename.sysPath().string()};
   const Ogre::Archive *archive{archiveMgr.load(sysPath, "BSA", true)};
   const Ogre::StringVectorPtr files{archive->list()};
 
@@ -548,7 +548,7 @@ void Application::declareBsaResources(const oo::Path &bsaFilename) {
 
 void Application::declareFilesystemResources(const oo::Path &foldername) {
   auto &archiveMgr{Ogre::ArchiveManager::getSingleton()};
-  const auto sysPath{foldername.sysPath()};
+  const auto sysPath{foldername.sysPath().string()};
   const Ogre::Archive *archive{archiveMgr.load(sysPath, "FileSystem", true)};
   const Ogre::StringVectorPtr files{archive->list()};
 
@@ -609,7 +609,7 @@ std::vector<oo::Path> Application::getLoadOrder(const oo::Path &masterPath) {
 
   std::vector<oo::Path> out(files.size());
   std::transform(files.begin(), files.end(), out.begin(), [](const auto &e) {
-    return oo::Path{std::string{e.path()}};
+    return oo::Path{e.path().string()};
   });
 
   return out;
