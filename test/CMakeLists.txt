@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 project(OpenOBLTest)
 
 add_executable(OpenOBLTest tests.cpp)
-target_compile_options(OpenOBLTest PRIVATE -Wall)
+if (MSVC)
+    target_compile_options(OpenOBLTest PRIVATE /W4)
+else ()
+    target_compile_options(OpenOBLTest PRIVATE -Wall)
+endif ()
 target_compile_features(OpenOBLTest PUBLIC cxx_std_17)
 set_property(TARGET OpenOBLTest PROPERTY CXX_EXTENSION OFF)
 
