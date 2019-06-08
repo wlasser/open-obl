@@ -135,7 +135,7 @@ class Versionable {
 
     explicit constexpr VersionOptional(Version version) noexcept :
         mVersion(version) {
-      if (verify(version)) mOpt.template emplace<T>({});
+      if (verify(version)) mOpt.template emplace<T>(T{});
       else mOpt = std::nullopt;
     }
 
