@@ -133,8 +133,8 @@ void DeferredLightRenderable::createUvPointLight() {
   constexpr int numIndices{(numRings + 1) * numSegments * 6};
   std::array<uint16_t, numIndices> indices;
 
-  auto *vtx{vertices.begin()};
-  auto *idx{indices.begin()};
+  auto vtx{vertices.begin()};
+  auto idx{indices.begin()};
 
   uint16_t i{0};
 
