@@ -51,13 +51,13 @@ ScriptEngine::call(const std::string &scriptName, const std::string &funName)
 
   if constexpr (std::is_same_v<T, void>) {
     if (!addr) return;
-    auto addrPtr{reinterpret_cast<std::uintptr_t>(*addr)};
+    std::uintptr_t addrPtr{*addr};
     auto fun{reinterpret_cast<void (*)()>(addrPtr)};
     fun();
     return;
   } else {
     if (!addr) return std::nullopt;
-    auto addrPtr{reinterpret_cast<std::uintptr_t>(*addr)};
+    std::uintptr_t addrPtr{*addr};
     auto fun{reinterpret_cast<T (*)()>(addrPtr)};
     return fun();
   }
