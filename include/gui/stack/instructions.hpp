@@ -135,7 +135,7 @@ struct mod_t {
   constexpr int operator()(int a, int b) const noexcept {
     return a % b;
   }
-  constexpr float operator()(float a, float b) const noexcept {
+  float operator()(float a, float b) const noexcept {
     return std::fmod(a, b);
   }
   constexpr bool operator()(bool, bool) const noexcept = delete;
@@ -146,7 +146,7 @@ struct floor_t {
   constexpr int operator()(int a, int b) const noexcept {
     return a + b;
   }
-  constexpr float operator()(float a, float b) const noexcept {
+  float operator()(float a, float b) const noexcept {
     return std::floor(a + b);
   }
   constexpr bool operator()(bool, bool) const noexcept = delete;
@@ -157,7 +157,7 @@ struct ceil_t {
   constexpr int operator()(int a, int b) const noexcept {
     return a + b;
   }
-  constexpr float operator()(float a, float b) const noexcept {
+  float operator()(float a, float b) const noexcept {
     return std::ceil(a + b);
   }
   constexpr bool operator()(bool, bool) const noexcept = delete;
