@@ -66,7 +66,7 @@ void ConsoleEngine::execute(std::string_view statement) {
   }
 
   using func_t = void (*)();
-  auto addr{reinterpret_cast<std::uintptr_t>(*addrOrErr)};
+  std::uintptr_t addr{*addrOrErr};
   auto func{reinterpret_cast<func_t>(addr)};
 
   func();
