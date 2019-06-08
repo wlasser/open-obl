@@ -136,7 +136,11 @@ add_subdirectory(lib/soloud)
 
 # Globally set warning flags for all internal dependencies.
 # External dependencies (above) can keep their own warning flags.
-add_compile_options(-Wall -Wextra -Wshadow -Wpedantic)
+if (MSVC)
+    add_compile_options(/W4 /w14640)
+else ()
+    add_compile_options(-Wall -Wextra -Wshadow -Wpedantic)
+endif ()
 
 add_subdirectory(src/bsa)
 add_subdirectory(src/bullet)

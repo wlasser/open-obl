@@ -3,7 +3,11 @@ cmake_minimum_required(VERSION 3.12)
 project(SoLoud)
 
 add_library(SoLoud STATIC)
-target_compile_options(SoLoud PRIVATE -Wall -Wextra -Wno-unused-parameter)
+if (MSVC)
+    target_compile_options(SoLoud PRIVATE /W4)
+else ()
+    target_compile_options(SoLoud PRIVATE -Wall -Wextra -Wno-unused-parameter)
+endif ()
 # SoLoud compiles with fno-rtti and fno-exceptions, but we use these features
 # and mixing flags is a bad idea. SoLoud is also written in C++98, but again we
 # shouldn't mix flags.

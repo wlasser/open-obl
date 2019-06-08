@@ -32,7 +32,11 @@ target_link_libraries(OpenOBLTest PRIVATE
 find_package(Threads REQUIRED)
 
 add_executable(OpenOBLJobsTest jobs.cpp)
-target_compile_options(OpenOBLJobsTest PRIVATE -Wall)
+if (MSVC)
+    target_compile_options(OpenOBLJobsTest PRIVATE /W4)
+else ()
+    target_compile_options(OpenOBLJobsTest PRIVATE -Wall)
+endif ()
 target_compile_features(OpenOBLJobsTest PUBLIC cxx_std_17)
 set_property(TARGET OpenOBLJobsTest PROPERTY CXX_EXTENSION OFF)
 
