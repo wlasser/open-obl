@@ -6,6 +6,7 @@
 #include <cmath>
 #include <numeric>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <variant>
