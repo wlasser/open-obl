@@ -38,8 +38,14 @@ class Bitflag : public BitflagMarker {
     }
   }
 
+  // Needed for workaround on MSVC for underlying_t conversion
+#if defined(_MSC_VER)
+  template<class T>
+  struct id_wrapper { using type = T; };
+#endif
+
  public:
-  using underlying_t = std::invoke_result_t<decltype(underlying_type_helper)>;
+  using underlying_t = decltype(Bitflag::underlying_type_helper());
   static constexpr std::size_t num_bits = N;
 
  protected:
@@ -79,9 +85,17 @@ class Bitflag : public BitflagMarker {
     return mBits.any();
   }
 
-  explicit operator underlying_t() const noexcept {
+#if defined(_MSC_VER)
+  // MSVC complains about 'operator decltype' unless underlying_t is wrapped in
+  // a type to delay template instantiation.
+  explicit operator typename id_wrapper<underlying_t>::type() const noexcept {
     return static_cast<underlying_t>(mBits.to_ullong());
   }
+#else
+  explicit operator underlying_t() const noexcept {
+      return static_cast<underlying_t>(mBits.to_ullong());
+    }
+#endif
 
   friend constexpr Self operator&(const Self &lhs, const Self &rhs) noexcept {
     return enum_t{lhs.mBits & rhs.mBits};
