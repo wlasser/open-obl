@@ -5,7 +5,7 @@
 #include "gui/menus/loading_menu.hpp"
 #include "gui/menus/main_menu.hpp"
 #include "util/enum_template.hpp"
-#include <experimental/propagate_const>
+#include "util/meta.hpp"
 
 /// \file gui.hpp
 /// \defgroup OpenOBLGui Gui Library
@@ -146,7 +146,7 @@ class MenuContext {
   class Impl;
   friend MenuContextProxy;
   using UiElementPtr = std::unique_ptr<UiElement>;
-  std::experimental::propagate_const<std::unique_ptr<Impl>> mImpl;
+  propagate_const<std::unique_ptr<Impl>> mImpl;
 
   explicit MenuContext(std::unique_ptr<Impl> impl);
 
