@@ -12,8 +12,12 @@ target_sources(OpenOBLFS PRIVATE
         ${CMAKE_SOURCE_DIR}/include/fs/path.hpp
         path.cpp)
 
-target_link_libraries(OpenOBLFS PRIVATE Boost::boost
-        INTERFACE stdc++fs)
+target_link_libraries(OpenOBLFS PRIVATE Boost::boost)
+
+# TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
+if (NOT MSVC)
+    target_link_libraries(OpenOBLFS INTERFACE stdc++fs)
+endif ()
 
 install(TARGETS OpenOBLFS EXPORT OpenOBLFSTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
