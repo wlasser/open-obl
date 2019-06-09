@@ -1,3 +1,4 @@
+#include "SDL_syswm.h"
 #include "sdl/sdl.hpp"
 
 namespace sdl {
@@ -28,7 +29,11 @@ SDL_SysWMinfo getSysWMInfo(SDL_Window *window) {
 }
 
 std::string getWindowParent(const SDL_SysWMinfo &windowInfo) {
+#if defined(_WIN32) || defined(_WIN64)
+  return std::to_string(reinterpret_cast<intptr_t>(windowInfo.info.win.window));
+#else
   return std::to_string(windowInfo.info.x11.window);
+#endif
 }
 
 void setRelativeMouseMode(bool on) {

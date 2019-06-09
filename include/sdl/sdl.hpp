@@ -70,7 +70,7 @@ enum class WindowFlags : std::underlying_type_t<SDL_WindowFlags> {
   Vulkan = SDL_WINDOW_VULKAN
 };
 inline constexpr WindowFlags operator|(WindowFlags a, WindowFlags b) {
-  return WindowFlags{static_cast<uint32_t>(a) | static_cast<uint32_t>(b)};
+  return WindowFlags(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
 }
 inline constexpr WindowFlags &operator|=(WindowFlags &a, WindowFlags b) {
   a = a | b;
