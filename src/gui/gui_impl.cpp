@@ -8,7 +8,6 @@
 #include "gui/gui_impl.hpp"
 #include "gui/logging.hpp"
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/range/adaptors.hpp>
 #include <boost/convert.hpp>
 #include <OgreOverlay.h>
 #include <OgreOverlayManager.h>

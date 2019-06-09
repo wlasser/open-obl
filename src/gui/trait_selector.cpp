@@ -2,7 +2,7 @@
 #include "gui/strings.hpp"
 #include "gui/trait_selector.hpp"
 #include "gui/xml.hpp"
-#include <boost/range/adaptors.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <regex>
 
