@@ -104,7 +104,8 @@ class JobManager {
   }
 
   static void runWorker() {
-    constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
+    // MSVC demands static or explicit capture below.
+    static constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
 
     // Create pool of fibers that can be pulling jobs.
     for (int i = 0; i < 10; ++i) {
