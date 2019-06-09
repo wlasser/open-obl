@@ -12,8 +12,11 @@ endif ()
 # and mixing flags is a bad idea. SoLoud is also written in C++98, but again we
 # shouldn't mix flags.
 target_compile_features(SoLoud PUBLIC cxx_std_17)
-# Only SDL2 static linking is supported, since that's what we use
-target_compile_definitions(SoLoud PUBLIC WITH_SDL2_STATIC)
+if (MSVC)
+    target_compile_definitions(SoLoud PUBLIC WITH_SDL2)
+else ()
+    target_compile_definitions(SoLoud PUBLIC WITH_SDL2_STATIC)
+endif ()
 set_property(TARGET SoLoud PROPERTY CXX_EXTENSION OFF)
 
 add_library(SoLoud::SoLoud ALIAS SoLoud)
