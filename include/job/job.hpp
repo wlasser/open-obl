@@ -190,7 +190,7 @@ class RenderJobManager {
 
   /// Start the job system on the calling thread.
   template<class F> static void start(F &&f) noexcept {
-    constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
+    static constexpr auto CLOSED{boost::fibers::channel_op_status::closed};
 
     // Create pool of fibers that can be pulling jobs.
     for (std::size_t i = 0; i < POOL_SIZE; ++i) {
