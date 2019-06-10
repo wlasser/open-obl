@@ -56,6 +56,7 @@ else ()
         set(BUILD_EXTRAS OFF CACHE STRING "Build Bullet extras")
         set(INSTALL_LIBS ON CACHE STRING "Whether to install the Bullet libraries")
         set(BUILD_UNIT_TESTS OFF CACHE STRING "Build Bullet unit tests")
+        set(USE_MSVC_RUNTIME_LIBRARY_DLL "Use MSVC Runtime Library DLL (/MD or /MDd)" ON)
         add_subdirectory(${bullet_SOURCE_DIR} ${bullet_BINARY_DIR})
 
         function(oo_add_bullet_target TargetName)
