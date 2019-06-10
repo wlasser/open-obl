@@ -14,8 +14,14 @@ endif ()
 target_compile_features(SoLoud PUBLIC cxx_std_17)
 if (MSVC)
     target_compile_definitions(SoLoud PUBLIC WITH_SDL2)
+    target_sources(SoLoud PRIVATE
+            src/backend/sdl/soloud_sdl2.cpp
+            src/backend/sdl/soloud_sdl2_dll.c)
 else ()
     target_compile_definitions(SoLoud PUBLIC WITH_SDL2_STATIC)
+    target_sources(SoLoud PRIVATE
+            src/backend/sdl2_static/soloud_sdl2_static.cpp)
+    target_link_libraries(SoLoud PUBLIC SDL2::SDL2main)
 endif ()
 set_property(TARGET SoLoud PROPERTY CXX_EXTENSION OFF)
 
@@ -66,13 +72,9 @@ target_sources(SoLoud PRIVATE
         src/filter/soloud_flangerfilter.cpp
         src/filter/soloud_lofifilter.cpp
         src/filter/soloud_robotizefilter.cpp
-        src/filter/soloud_waveshaperfilter.cpp
-        # Only need the SDL2 Static backend, as mentioned
-        src/backend/sdl2_static/soloud_sdl2_static.cpp)
+        src/filter/soloud_waveshaperfilter.cpp)
 
-target_link_libraries(SoLoud PUBLIC
-        SDL2::SDL2
-        SDL2::SDL2main)
+target_link_libraries(SoLoud PUBLIC SDL2::SDL2)
 
 install(TARGETS SoLoud EXPORT SoLoudTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

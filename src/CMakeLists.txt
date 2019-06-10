@@ -135,10 +135,13 @@ target_link_libraries(OpenOBL PRIVATE
         OgreTerrain
         RenderSystem_GL3Plus
         SDL2::SDL2
-        SDL2::SDL2main
         spdlog::spdlog
-        stdc++fs
         tl::tloptional)
+
+# TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
+if (NOT MSVC)
+    target_link_libraries(OpenOBL PRIVATE SDL2::SDL2main INTERFACE stdc++fs)
+endif ()
 
 install(TARGETS OpenOBL
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

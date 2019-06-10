@@ -2,6 +2,8 @@
 #include "job/job.hpp"
 #include "util/settings.hpp"
 
+#undef main
+
 int main() {
   oo::JobManager::start();
 
