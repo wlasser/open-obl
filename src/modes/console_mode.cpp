@@ -75,7 +75,7 @@ void ConsoleMode::displayPrompt() {
                             | ImGuiInputTextFlags_CallbackHistory
                             | ImGuiInputTextFlags_CallbackCompletion};
   auto inputCallback = [](auto *data) {
-    auto *self{static_cast<decltype(this)>(data->UserData)};
+    auto *self{static_cast<ConsoleMode *>(data->UserData)};
     return self->textEditCallback(gsl::make_not_null(data));
   };
 
