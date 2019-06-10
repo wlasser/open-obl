@@ -3,6 +3,7 @@
 
 #include <btBulletDynamicsCommon.h>
 #include <OgreNode.h>
+#include "windows_cleanup.hpp"
 
 namespace Ogre {
 

@@ -5,6 +5,7 @@
 #include <OgreMatrix3.h>
 #include <OgreQuaternion.h>
 #include <OgreVector.h>
+#include "windows_cleanup.hpp"
 
 namespace Ogre {
 

@@ -22,6 +22,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

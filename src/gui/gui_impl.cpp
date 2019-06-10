@@ -13,6 +13,7 @@
 #include <OgreOverlayManager.h>
 #include <algorithm>
 #include <map>
+#include "windows_cleanup.hpp"
 
 namespace gui {
 

@@ -8,6 +8,7 @@
 #include "wrld.hpp"
 #include <boost/fiber/mutex.hpp>
 #include <OgrePrerequisites.h>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

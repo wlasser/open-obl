@@ -7,6 +7,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <mutex>
 #include <string>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

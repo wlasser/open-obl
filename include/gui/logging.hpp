@@ -6,9 +6,7 @@
 #include <memory>
 #include <optional>
 #include <string>
-
-// Wtf winuser.h
-#undef LoadMenu
+#include "windows_cleanup.hpp"
 
 namespace gui {
 

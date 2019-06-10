@@ -12,6 +12,7 @@
 #include <OgreSceneNode.h>
 #include <gsl/gsl>
 #include <type_traits>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

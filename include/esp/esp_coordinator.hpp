@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

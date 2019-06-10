@@ -7,6 +7,7 @@
 #include <OgreQuaternion.h>
 #include <OgreVector3.h>
 #include <memory>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

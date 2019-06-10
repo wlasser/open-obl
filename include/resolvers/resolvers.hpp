@@ -12,6 +12,7 @@
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
 #include <mutex>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

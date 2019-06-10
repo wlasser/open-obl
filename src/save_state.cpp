@@ -9,6 +9,10 @@
 #include <OgreDataStream.h>
 
 #if defined(_WIN32) || defined(_WIN64)
+#define near
+#define far
+#define NEAR near
+#define FAR far
 #include <ShlObj.h>
 #endif
 

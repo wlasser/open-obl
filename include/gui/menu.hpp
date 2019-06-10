@@ -3,9 +3,7 @@
 
 #include "gui/ui_element.hpp"
 #include <OgreOverlay.h>
-
-// Wtf winuser.h
-#undef LoadMenu
+#include "windows_cleanup.hpp"
 
 namespace gui {
 

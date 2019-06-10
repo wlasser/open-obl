@@ -15,6 +15,7 @@
 #include <OgreVector.h>
 #include <memory>
 #include <optional>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 
