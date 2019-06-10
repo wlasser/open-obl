@@ -84,7 +84,7 @@ void ConsoleMode::displayPrompt() {
 
   bool refocusInput{false};
   if (ImGui::InputText("##consoleInput",
-                       mBuffer.begin(),
+                       mBuffer.data(),
                        mBuffer.size(),
                        inputFlags,
                        inputCallback,
