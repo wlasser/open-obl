@@ -626,7 +626,8 @@ World::WorldImpl::getWatrId(oo::BaseId wrldId) const noexcept {
 
   if (!wrldRec.parentWorldspace) {
     // TODO: Use tl::optional everywhere.
-    return wrldRec.water ? tl::optional{wrldRec.water->data} : tl::nullopt;
+    return wrldRec.water ? tl::optional<oo::BaseId>{wrldRec.water->data}
+                         : tl::nullopt;
   }
 
   return getWatrId(wrldRec.parentWorldspace->data);
