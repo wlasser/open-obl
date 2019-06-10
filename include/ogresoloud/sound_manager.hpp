@@ -5,6 +5,7 @@
 #include <OgreSingleton.h>
 #include <OgreResourceGroupManager.h>
 #include <memory>
+#include <optional>
 
 namespace Ogre {
 
