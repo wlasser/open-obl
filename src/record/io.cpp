@@ -56,6 +56,7 @@ std::vector<uint8_t> record::compressBytes(const std::vector<uint8_t> &uncomp) {
 std::vector<uint8_t> record::uncompressBytes(const std::vector<uint8_t> &comp,
                                              std::size_t uncompSize) {
   std::vector<uint8_t> uncomp(uncompSize);
-  ::uncompress(uncomp.data(), &uncompSize, comp.data(), comp.size());
+  unsigned long lUncompSize{gsl::narrow_cast<unsigned long>(uncompSize)};
+  ::uncompress(uncomp.data(), &lUncompSize, comp.data(), comp.size());
   return uncomp;
 }
