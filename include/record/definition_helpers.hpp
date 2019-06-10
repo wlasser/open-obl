@@ -12,18 +12,21 @@
 // the semicolon has deliberately been left off the last statement to enforce
 // this, since otherwise g++ complains about duplicate semicolons under
 // -Wpedantic.
-#define DECLARE_SPECIALIZED_RECORD_WITH_SIZE(size_type, type) \
-  template <> \
-  size_type type::size() const; \
+#define DECLARE_SPECIALIZED_RECORD_IO(type) \
   template <> \
   std::ostream& raw::write(std::ostream&, const raw::type&, std::size_t); \
   template <> \
   std::istream& raw::read(std::istream&, raw::type&, std::size_t)
 
 #define DECLARE_SPECIALIZED_RECORD(type) \
-  DECLARE_SPECIALIZED_RECORD_WITH_SIZE(uint32_t, type)
+  template <> uint32_t type::size() const; \
+  DECLARE_SPECIALIZED_RECORD_IO(type)
 
 #define DECLARE_SPECIALIZED_SUBRECORD(type) \
-  DECLARE_SPECIALIZED_RECORD_WITH_SIZE(uint16_t, type)
+  namespace raw { \
+  template <> struct SubrecordSize<type> { \
+    uint16_t operator()(const type &) const; \
+    }; } \
+  DECLARE_SPECIALIZED_RECORD_IO(type) \
 
 #endif // OPENOBL_RECORD_DEFINITION_HELPERS_HPP

@@ -14,6 +14,19 @@
 
 namespace record {
 
+namespace raw {
+
+/// This should be specialized for each raw subrecord type for which `SizeOf`
+/// would not return the correct result.
+template<class T>
+struct SubrecordSize {
+  uint16_t operator()(const T &data) const {
+    return static_cast<uint16_t>(SizeOf(data));
+  }
+};
+
+} // namespace raw
+
 /// Wrapper class for subrecords.
 /// \tparam T The raw subrecord type to wrap. Must model the
 ///           std::DefaultConstructible concept.
@@ -24,12 +37,10 @@ struct Subrecord {
   /// The integer representation of the subrecord type.
   constexpr static inline uint32_t RecordType{c};
 
-  /// Size of the subrecord data when written to disk (which may not be the size
-  /// in memory).
-  /// \remark This should be specialized for each subrecord type whose raw type
-  ///         is of class type.
+  /// Size of the raw subrecord data when written to disk (which may not be the
+  /// size in memory).
   uint16_t size() const {
-    return static_cast<uint16_t>(SizeOf(data));
+    return raw::SubrecordSize<T>()(data);
   }
 
   /// Size of the entire subrecord when written to disk.
