@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(OO_USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" ON)
+option(OO_USE_SHARED_LLVM_LIBS "Link against LLVM shared libraries" OFF)
 option(OO_USE_LTO "Use link-time optimization (LTO)" OFF)
 option(OO_USE_EXTERNAL_BULLET "Find Bullet using find_package instead of FetchContent" OFF)
 
@@ -122,7 +122,7 @@ endif ()
 
 find_package(Boost 1.67 REQUIRED COMPONENTS fiber)
 find_package(LLVM 7.1.0 REQUIRED CONFIG)
-find_package(OGRE 1.11 REQUIRED COMPONENTS Overlay Paging Terrain)
+find_package(OGRE 1.12.1 REQUIRED COMPONENTS Overlay Paging Terrain)
 find_package(SDL2 2.0 REQUIRED)
 find_package(ZLIB 1.2.11 REQUIRED)
 
