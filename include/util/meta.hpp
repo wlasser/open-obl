@@ -103,16 +103,16 @@ class propagate_const {
 
   template<class U, std::enable_if_t<
       std::is_constructible_v<T, U &&> &&
-      !is_propagate_const_specialization_v<std::decay_t<U>> &&
-      std::is_convertible_v<U &&, T>,
+          !is_propagate_const_specialization_v<std::decay_t<U>> &&
+          std::is_convertible_v<U &&, T>,
       bool> = true>
   /*explicit(false)*/ constexpr propagate_const(U &&u)
   noexcept(std::is_nothrow_constructible_v<T, U &&>) : mT{std::forward<U>(u)} {}
 
   template<class U, std::enable_if_t<
       std::is_constructible_v<T, U &&> &&
-      !is_propagate_const_specialization_v<std::decay_t<U>> &&
-      !std::is_convertible_v<U &&, T>,
+          !is_propagate_const_specialization_v<std::decay_t<U>> &&
+          !std::is_convertible_v<U &&, T>,
       bool> = true>
   constexpr explicit propagate_const(U &&u)
   noexcept(std::is_nothrow_constructible_v<T, U &&>) : mT{std::forward<U>(u)} {}
@@ -133,8 +133,8 @@ class propagate_const {
 
   template<class U, std::enable_if_t<
       std::is_constructible_v<T, U &&> &&
-      !is_propagate_const_specialization_v<std::decay_t<U>> &&
-      std::is_convertible_v<U &&, T>,
+          !is_propagate_const_specialization_v<std::decay_t<U>> &&
+          std::is_convertible_v<U &&, T>,
       bool> = true>
   constexpr propagate_const &operator=(U &&u)
   noexcept(std::is_nothrow_assignable_v<T, U &&>) {
@@ -170,11 +170,12 @@ class propagate_const {
   constexpr element_type *operator->() { return get(); }
   constexpr const element_type *operator->() const { return get(); }
 
-  template<class = std::enable_if_t<std::is_convertible_v<T, element_type *>>>
+  template<class T_ = T,
+      class = std::enable_if_t<std::is_convertible_v<T_, element_type *>>>
   /*explicit(false)*/ constexpr operator element_type *() { return get(); }
 
-  template<class = std::enable_if_t<
-      std::is_convertible_v<T, const element_type *>>>
+  template<class T_ = T,
+      class = std::enable_if_t<std::is_convertible_v<T_, const element_type *>>>
   /*explicit(false)*/ constexpr operator const element_type *() const {
     return get();
   }
