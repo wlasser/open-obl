@@ -26,22 +26,21 @@ target_sources(OpenOBLScripting PRIVATE
         script_engine.cpp
         script_engine_base.cpp)
 
-target_include_directories(OpenOBLScripting PRIVATE ${LLVM_INCLUDE_DIRS})
-target_compile_definitions(OpenOBLScripting PRIVATE ${LLVM_DEFINITIONS})
+target_include_directories(OpenOBLScripting PUBLIC ${LLVM_INCLUDE_DIRS})
+target_compile_definitions(OpenOBLScripting PUBLIC ${LLVM_DEFINITIONS})
 
 if (OO_USE_SHARED_LLVM_LIBS)
     llvm_config(OpenOBLScripting USE_SHARED engine)
+    set_target_properties(OpenOBLScripting PROPERTIES
+            CXX_VISIBILITY_PRESET hidden)
+    target_link_libraries(OpenOBLScripting PRIVATE "-Wl,--export-dynamic")
 else ()
-    llvm_config(OpenOBLScripting engine)
+    llvm_config(OpenOBLScripting engine orcjit passes)
 endif ()
 
 target_link_libraries(OpenOBLScripting
-        PRIVATE taocpp::pegtl MicrosoftGSL::GSL
-        PUBLIC OpenOBL::OpenOBLUtil ${llvm_libs} spdlog::spdlog)
-
-set_target_properties(OpenOBLScripting PROPERTIES
-        CXX_VISIBILITY_PRESET hidden)
-target_link_libraries(OpenOBLScripting PRIVATE "-Wl,--export-dynamic")
+        PRIVATE MicrosoftGSL::GSL
+        PUBLIC OpenOBL::OpenOBLUtil spdlog::spdlog taocpp::pegtl)
 
 install(TARGETS OpenOBLScripting EXPORT OpenOBLScriptingTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
