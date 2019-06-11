@@ -226,7 +226,9 @@ struct NiBlendInterpolator : NiInterpolator, Versionable {
         nextHighWeightsSum{std::numeric_limits<basic::Float>::lowest()};
     basic::Float highEaseSpinner{std::numeric_limits<basic::Float>::lowest()};
     std::vector<compound::InterpBlendItem> interpArrayItems{};
-    explicit UnmanagedData() noexcept = default;
+    // NB: This is automatically noexcept, saying so explicitly is rejected by
+    //     Clang due to a bug (?).
+    explicit UnmanagedData() /*noexcept*/ = default;
   };
   // if (flags & 1) == 0
   VersionOptional<UnmanagedData, "10.1.0.112"_ver, Unbounded>
