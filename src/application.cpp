@@ -60,6 +60,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

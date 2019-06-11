@@ -24,3 +24,4 @@
 #undef max
 
 #undef LoadMenu
+#undef GetCurrentTime
