@@ -118,7 +118,7 @@ oo::ScriptEngine &getScriptEngine() {
     auto logger{spdlog::stderr_color_mt("scripting_test")};
     oo::scriptingLogger("scripting_test");
     return 0;
-  };
+  }();
 
   return eng;
 }

@@ -235,9 +235,6 @@ begin TestLong
 end
   )script";
 
-  auto logger{spdlog::stderr_color_mt("test")};
-  oo::scriptingLogger("test");
-
   auto &se{oo::getScriptEngine()};
 
   se.compile(script);
