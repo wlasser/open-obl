@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(OpenOBLTest)
 
-add_executable(OpenOBLTest tests.cpp)
+add_executable(OpenOBLTest)
 if (MSVC)
     target_compile_options(OpenOBLTest PRIVATE /W4)
 else ()
@@ -17,7 +17,7 @@ add_subdirectory(gui)
 add_subdirectory(io)
 add_subdirectory(scripting)
 
-target_sources(OpenOBLTest PRIVATE chrono.cpp meta.cpp
+target_sources(OpenOBLTest PRIVATE chrono.cpp meta.cpp tests.cpp
         ${CMAKE_SOURCE_DIR}/src/chrono.cpp)
 
 target_link_libraries(OpenOBLTest PRIVATE

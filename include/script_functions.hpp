@@ -5,6 +5,10 @@
 /// Scripting commands that can be run inside user-defined scripts.
 /// The same requirement on return values applies as for the functions in
 /// OpenOBLConsole.
+///
+/// Functions added here should be also be added to `symbols.list` so that they
+/// are correctly included in the symbol table of the built executable and
+/// accessible by the LLVM JIT compiler.
 ///@{
 namespace script {
 

@@ -138,8 +138,13 @@ target_link_libraries(OpenOBL PRIVATE
         spdlog::spdlog
         tl::tloptional)
 
-# TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
-if (NOT MSVC)
+if (MSVC)
+    # TODO: Export symbols properly on MSVC
+else ()
+    target_link_options(OpenOBL PRIVATE -Wl,--dynamic-list=${CMAKE_SOURCE_DIR}/symbols.list)
+    target_sources(OpenOBL PRIVATE ${CMAKE_SOURCE_DIR}/symbols.list)
+
+    # TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
     target_link_libraries(OpenOBL PRIVATE SDL2::SDL2main INTERFACE stdc++fs)
 endif ()
 

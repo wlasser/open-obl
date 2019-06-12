@@ -1,0 +1,18 @@
+{
+    QuitGame;
+    qqq;
+    ToggleCollisionGeometry;
+    tcg;
+    ToggleOcclusionGeometry;
+    tog;
+    ToggleFps;
+    tfps;
+    ShowMainMenu;
+    ShowClassMenu;
+    ShowEnchantmentMenu;
+    ShowMap;
+    ShowRaceMenu;
+    ShowSpellmaking;
+    print;
+    GetCurrentTime;
+};

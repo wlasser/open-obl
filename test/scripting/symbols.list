@@ -1,0 +1,7 @@
+{
+    Func;
+    ConsoleFunc;
+    MemberFunc;
+    NoArgFunc;
+    MemoryFunc;
+};

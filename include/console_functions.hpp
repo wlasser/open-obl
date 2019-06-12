@@ -8,6 +8,10 @@
 /// explicit meaning attached to its return value, then it shall return an error
 /// code of type `int`. A return value of zero indicates success, and any other
 /// return value (if the function even returns at all) indicates failure.
+///
+/// Functions added here should be also be added to `symbols.list` so that they
+/// are correctly included in the symbol table of the built executable and
+/// accessible by the LLVM JIT compiler.
 ///@{
 namespace console {
 

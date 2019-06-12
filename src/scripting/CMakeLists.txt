@@ -30,10 +30,7 @@ target_include_directories(OpenOBLScripting PUBLIC ${LLVM_INCLUDE_DIRS})
 target_compile_definitions(OpenOBLScripting PUBLIC ${LLVM_DEFINITIONS})
 
 if (OO_USE_SHARED_LLVM_LIBS)
-    llvm_config(OpenOBLScripting USE_SHARED engine)
-    set_target_properties(OpenOBLScripting PROPERTIES
-            CXX_VISIBILITY_PRESET hidden)
-    target_link_libraries(OpenOBLScripting PRIVATE "-Wl,--export-dynamic")
+    llvm_config(OpenOBLScripting USE_SHARED engine orcjit passes)
 else ()
     llvm_config(OpenOBLScripting engine orcjit passes)
 endif ()
