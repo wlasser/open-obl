@@ -48,9 +48,15 @@
 #include <OgreOverlaySystem.h>
 #include <OgreOverlayManager.h>
 #include <OgreRenderQueue.h>
+
 #include <spdlog/fmt/ostr.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#if defined(_WIN32) || defined(_WIN64)
+#include <spdlog/sinks/stdout_sinks.h>
+#else
+#include <spdlog/sinks/stdout_color_sinks.h>
+#endif
+
 #include <algorithm>
 #include <cctype>
 #include <chrono>
@@ -299,15 +305,19 @@ Application::Application(std::string windowName) : FrameListener() {
 }
 
 void Application::createLoggers() {
-  using spdlog::sinks::stdout_color_sink_mt;
-  using spdlog::sinks::basic_file_sink_mt;
+#if defined(_WIN32) || defined(_WIN64)
+  using ColorSink = spdlog::sinks::stdout_sink_mt;
+#else
+  using ColorSink = spdlog::sinks::stdout_color_sink_mt;
+#endif
+  using FileSink = spdlog::sinks::basic_file_sink_mt;
 
   // The console gets info and above, in particular not debug
-  auto consoleSink{std::make_shared<stdout_color_sink_mt>()};
+  auto consoleSink{std::make_shared<ColorSink>()};
   consoleSink->set_level(spdlog::level::info);
 
   // The log file gets everything
-  auto fileSink{std::make_shared<basic_file_sink_mt>("OpenOBL.log", true)};
+  auto fileSink{std::make_shared<FileSink>("OpenOBL.log", true)};
   fileSink->set_level(spdlog::level::trace);
 
   // Every log will write to both the console and the log file

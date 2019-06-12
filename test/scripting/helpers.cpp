@@ -2,7 +2,7 @@
 #include <catch2/catch.hpp>
 #include <cstdio>
 #include <iostream>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/stdout_sinks.h>
 #include <string>
 #include <string_view>
 
@@ -114,8 +114,8 @@ oo::ScriptEngine &getScriptEngine() {
     return eng;
   }();
 
-  static auto doOnce = []() {
-    auto logger{spdlog::stderr_color_mt("scripting_test")};
+  [[maybe_unused]] static auto doOnce = []() {
+    auto logger{spdlog::stderr_logger_mt("scripting_test")};
     oo::scriptingLogger("scripting_test");
     return 0;
   }();
