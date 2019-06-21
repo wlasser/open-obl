@@ -27,6 +27,8 @@ to do, so this list is necessarily incomplete.
 - Basically any gameplay whatsoever besides walking around and jumping.
   :disappointed:
 
+![](https://github.com/EmilyMansfield/open-obl/blob/master/screenshots/screenshot5.png?raw=true)
+
 ## Building
 
 Unfortunately, building is currently an involved process and most platforms are
