@@ -2,10 +2,10 @@
 #define OPENOBL_BSA_BSA_HPP
 
 #include "io/memstream.hpp"
+#include <boost/fiber/mutex.hpp>
 #include <fstream>
 #include <iterator>
 #include <map>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <vector>
@@ -206,7 +206,7 @@ class BsaReader {
   using RecordMap = std::map<HashResult, FolderRecord>;
   RecordMap mFolderRecords;
   mutable std::ifstream mIs;
-  mutable std::mutex mMutex{};
+  mutable boost::fibers::mutex mMutex{};
 
   ArchiveFlag mArchiveFlags{ArchiveFlag::None};
   FileType mFileType{FileType::None};
