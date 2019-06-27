@@ -6,10 +6,8 @@
 namespace oo {
 
 GameSettings &GameSettings::getSingleton() {
-  // Cannot std::make_unique on a private constructor
-  // TODO: Abseil TOTW #134
-  static std::unique_ptr<GameSettings> instance{new GameSettings()};
-  return *instance;
+  static GameSettings instance;
+  return instance;
 }
 
 void GameSettings::load(const char *filename, bool /*overwrite*/) {
