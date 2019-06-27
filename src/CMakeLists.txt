@@ -145,7 +145,7 @@ else ()
     target_sources(OpenOBL PRIVATE ${CMAKE_SOURCE_DIR}/symbols.list)
 
     # TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
-    target_link_libraries(OpenOBL PRIVATE SDL2::SDL2main INTERFACE stdc++fs)
+    target_link_libraries(OpenOBL PRIVATE SDL2::SDL2main stdc++fs)
 endif ()
 
 install(TARGETS OpenOBL

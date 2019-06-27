@@ -1,9 +1,9 @@
 #ifndef OPENOBL_FS_PATH_HPP
 #define OPENOBL_FS_PATH_HPP
 
+#include <boost/fiber/mutex.hpp>
 #include <algorithm>
 #include <filesystem>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -28,7 +28,7 @@ class Path {
   ///        or <tt>.\ </tt>.
   /*const*/ std::string mPath{};
   mutable std::optional<std::filesystem::path> mSysPath{};
-  mutable std::mutex mSysPathMutex{};
+  mutable boost::fibers::mutex mSysPathMutex{};
 
   /// Copy the given range, without leading and trailing characters satisfying
   /// the predicate `p`.
