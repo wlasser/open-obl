@@ -21,6 +21,7 @@ target_link_libraries(OpenOBLConfig PRIVATE
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLRecord
         Boost::boost
+        Boost::fiber
         tl::tloptional)
 
 install(TARGETS OpenOBLConfig EXPORT OpenOBLConfigTargets

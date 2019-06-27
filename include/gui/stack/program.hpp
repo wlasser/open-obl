@@ -3,9 +3,9 @@
 
 #include "gui/stack/instructions.hpp"
 #include "gui/stack/types.hpp"
+#include <boost/fiber/mutex.hpp>
 #include <pugixml.hpp>
 #include <cstdint>
-#include <mutex>
 #include <optional>
 #include <random>
 #include <string>
@@ -98,7 +98,7 @@ namespace stack {
 class Program {
  private:
   mutable std::optional<ValueType> lastReturn{};
-  mutable std::mutex lastReturnMutex{};
+  mutable boost::fibers::mutex lastReturnMutex{};
  public:
   std::vector<Instruction> instructions{};
   std::vector<std::string> dependencies{};

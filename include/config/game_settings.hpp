@@ -3,9 +3,9 @@
 
 #include "fs/path.hpp"
 #include "record/records_fwd.hpp"
+#include <boost/fiber/mutex.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <mutex>
 #include <string>
 #include "windows_cleanup.hpp"
 
@@ -260,7 +260,7 @@ class GameSetting {
  private:
   mutable T mValue;
   mutable bool mLoaded{false};
-  mutable std::mutex mMutables{};
+  mutable boost::fibers::mutex mMutables{};
   /*const*/ std::string mPath;
 
  public:
