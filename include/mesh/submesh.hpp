@@ -6,6 +6,7 @@
 #include <OgreRenderOperation.h>
 #include <OgreResourceGroupManager.h>
 #include <memory>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

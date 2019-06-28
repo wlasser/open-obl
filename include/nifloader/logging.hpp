@@ -5,6 +5,7 @@
 #include <spdlog/sinks/null_sink.h>
 #include <optional>
 #include <string>
+#include "windows_cleanup.hpp"
 
 namespace oo {
 

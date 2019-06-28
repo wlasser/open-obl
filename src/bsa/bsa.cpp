@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cctype>
 #include <zlib.h>
+#include "windows_cleanup.hpp"
 
 namespace bsa {
 
