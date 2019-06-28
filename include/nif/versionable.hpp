@@ -325,7 +325,7 @@ constexpr Version verOf(std::string_view str) {
   for (int i = 0; i <= 3; ++i) {
     uint8_t value = 0;
 
-    for (; !(str[pos] == '.' || (i == 3 && pos >= size)); ++pos) {
+    for (; !((i == 3 && pos >= size) || str[pos] == '.'); ++pos) {
       if (pos >= size) {
         throw std::out_of_range("incomplete version");
       }
