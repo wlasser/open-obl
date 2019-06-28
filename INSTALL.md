@@ -95,10 +95,18 @@ $ CC=clang CXX=clang++ cmake -DCMAKE_BUILD_TYPE=Release        \
                              -DCMAKE_INSTALL_TESTS=OFF         \
                              -DLLVM_BUILD_EXAMPLES=OFF         \
                              -DLLVM_INCLUDE_EXAMPLES=OFF       \
-                             ..
+                             ../llvm
 ```
 If you run into issues building the tests, then they can be disabled by passing
 `-DLLVM_BUILD_TESTS=OFF -DLLVM_INSTALL_TESTS=OFF` as additional options.
+
+LLVM has an [outstanding bug](https://bugs.llvm.org/show_bug.cgi?id=27669)
+which causes CMake consumers requiring the JIT functionality to incorrectly link
+against the `LLVMjit` target, which does not exist. The 'fix' this, remove the
+line [`list(APPEND link_components "jit")`]
+(https://github.com/llvm-mirror/llvm/blob/master/cmake/modules/LLVM-Config.cmake#L151)
+from `LLVM-Config.cmake`. This can alternatively be done after installation,
+on the installed copy of the file.
 
 Now build and install LLVM to the local install directory:
 ```Shell
@@ -130,6 +138,7 @@ components
  - MSVC x64/x86 build tools
  - C++ Build Tools core features
  - C++ ATL (for the selected version of the MSVC build tools).
+
 Commands beginning with `$ ` should be run in Git Bash, whereas commands
 beginning with `> ` should be run in the [appropriate Build Tools Developer
 Prompt](https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=vs-2019#developer_command_prompt_shortcuts)
@@ -162,6 +171,8 @@ set, and that a local install directory is specified.
         -DOGRE_BUILD_COMPONENT_JAVA=OFF ^
         -DOGRE_BUILD_COMPONENT_PYTHON=OFF ^
         -DOGRE_BUILD_COMPONENT_RTSHADERSYSTEM=OFF ^
+        -DOGRE_BUILD_RENDERSYSTEM_D3D9=OFF ^
+        -DOGRE_BUILD_RENDERSYSTEM_D3D11=OFF ^
         -DOGRE_BUILD_RENDERSYSTEM_GL=OFF ^
         -DOGRE_BUILD_RENDERSYSTEM_GL3PLUS=ON ^
         -DOGRE_BUILD_RENDERSYSTEM_GLES2=OFF ^
@@ -209,10 +220,18 @@ though you may choose to build shared libraries by setting
         -DCMAKE_INSTALL_TESTS=OFF ^
         -DLLVM_BUILD_EXAMPLES=OFF ^
         -DLLVM_INCLUDE_EXAMPLES=OFF ^
-        ..
+        ../llvm
 ```
 If you run into issues building the tests, then they can be disabled by passing
 `-DLLVM_BUILD_TESTS=OFF -DLLVM_INSTALL_TESTS=OFF` as additional options.
+
+LLVM has an [outstanding bug](https://bugs.llvm.org/show_bug.cgi?id=27669)
+which causes CMake consumers requiring the JIT functionality to incorrectly link
+against the `LLVMjit` target, which does not exist. The 'fix' this, remove the
+line [`list(APPEND link_components "jit")`]
+(https://github.com/llvm-mirror/llvm/blob/master/cmake/modules/LLVM-Config.cmake#L151)
+from `LLVM-Config.cmake`. This can alternatively be done after installation,
+on the installed copy of the file.
 
 Now build and install LLVM to the local install directory:
 ```Shell
