@@ -170,6 +170,7 @@ write(std::ostream &os, const raw::DATA_GRAS &t, std::size_t /*size*/) {
   io::writeBytes(os, t.unused1);
   io::writeBytes(os, t.unitsFromWater);
   io::writeBytes(os, t.unused2);
+  io::writeBytes(os, t.unitsFromWaterType);
   io::writeBytes(os, t.positionRange);
   io::writeBytes(os, t.heightRange);
   io::writeBytes(os, t.colorRange);
@@ -187,6 +188,7 @@ read(std::istream &is, raw::DATA_GRAS &t, std::size_t /*size*/) {
   io::readBytes(is, t.unused1);
   io::readBytes(is, t.unitsFromWater);
   io::readBytes(is, t.unused2);
+  io::readBytes(is, t.unitsFromWaterType);
   io::readBytes(is, t.positionRange);
   io::readBytes(is, t.heightRange);
   io::readBytes(is, t.colorRange);
