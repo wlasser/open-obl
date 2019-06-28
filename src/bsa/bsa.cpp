@@ -217,7 +217,8 @@ bool BsaReader::readFileNames() {
   return true;
 }
 
-BsaReader::BsaReader(const std::string &filename) : mIs(filename) {
+BsaReader::BsaReader(const std::string &filename)
+    : mIs(filename, std::ios_base::in | std::ios_base::binary) {
   if (!mIs.good()) {
     throw std::runtime_error("Failed to open archive '" + filename + "'");
   }
