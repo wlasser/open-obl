@@ -107,12 +107,16 @@ bool Path::exists() const {
 
   for (const auto &entry : stdfs::recursive_directory_iterator(".")) {
     // Call string() instead of relying on implicit conversion, which doesn't
-    // work on Windows where wstring is the native type not string.
-    const Path entryPath{entry.path().string()};
-    if (entryPath == *this) {
-      mSysPath = entry.path();
-      return true;
-    }
+    // work on Windows where wstring is the native type not string. This
+    // conversion may fail, in which case the file is definitely not the one we
+    // need.
+    try {
+      const Path entryPath{entry.path().string()};
+      if (entryPath == *this) {
+        mSysPath = entry.path();
+        return true;
+      }
+    } catch (const std::system_error &) {}
   }
   return false;
 }
