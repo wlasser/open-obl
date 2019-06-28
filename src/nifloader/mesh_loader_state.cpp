@@ -78,7 +78,7 @@ generateVertexData(const nif::NiGeometryData &block,
 
   // Specify the order of data in the vertex buffer. This is per vertex,
   // so the vertices, normals etc will have to be interleaved in the buffer.
-  std::size_t offset{0};
+  std::ptrdiff_t offset{0};
   std::size_t vertSize{0};
   const unsigned short source{0};
 
@@ -156,7 +156,13 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = v.x;
       *(it + 1) = v.y;
       *(it + 2) = v.z;
-      it += offset;
+      // Necessary so on the last iteration of the loop we don't overshoot the
+      // end of the buffer. Doing so is technically UB, because even though we
+      // don't explicitly dereference an out-of-bounds iterator, += acts as if
+      // we are calling ++ a bunch of times, and ++ has a precondition that the
+      // iterator is dereferencable. Clang and GCC don't notice (or they do and
+      // just don't care since they're doing pointer arithmetic) but MSVC cares.
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   } else {
@@ -172,7 +178,7 @@ generateVertexData(const nif::NiGeometryData &block,
         *(it + 1) = static_cast<float>(binding.indices[1]);
         *(it + 2) = static_cast<float>(binding.indices[2]);
         *(it + 3) = static_cast<float>(binding.indices[3]);
-        it += offset;
+        it += std::min(offset, (vertexBuffer.end() - it));
       }
       localOffset += 4;
     }
@@ -185,7 +191,7 @@ generateVertexData(const nif::NiGeometryData &block,
         *(it + 1) = binding.weights[1];
         *(it + 2) = binding.weights[2];
         *(it + 3) = binding.weights[3];
-        it += offset;
+        it += std::min(offset, (vertexBuffer.end() - it));
       }
       localOffset += 4;
     }
@@ -199,7 +205,7 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = n.x;
       *(it + 1) = n.y;
       *(it + 2) = n.z;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   } else {
@@ -211,7 +217,7 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = 0.0f;
       *(it + 1) = 1.0f;
       *(it + 2) = 0.0f;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
     oo::nifloaderLogger()->warn("NiGeometryData has no normals");
@@ -224,7 +230,7 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = col.r;
       *(it + 1) = col.g;
       *(it + 2) = col.b;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   } else {
@@ -232,7 +238,7 @@ generateVertexData(const nif::NiGeometryData &block,
     auto it = vertexBuffer.begin() + localOffset;
     for (int i = 0; i < block.numVertices; ++i) {
       std::fill(it, it + 3, 1.0f);
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   }
@@ -244,7 +250,7 @@ generateVertexData(const nif::NiGeometryData &block,
     for (const auto &uv : block.uvSets[0]) {
       *it = uv.u;
       *(it + 1) = uv.v;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 2;
   }
@@ -257,7 +263,7 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = bt.x;
       *(it + 1) = bt.y;
       *(it + 2) = bt.z;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   } else {
@@ -272,7 +278,7 @@ generateVertexData(const nif::NiGeometryData &block,
       *it = t.x;
       *(it + 1) = t.y;
       *(it + 2) = t.z;
-      it += offset;
+      it += std::min(offset, (vertexBuffer.end() - it));
     }
     localOffset += 3;
   } else {
