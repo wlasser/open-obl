@@ -62,8 +62,8 @@ DataStreamPtr TexImageCodec::encode(const MemoryDataStreamPtr &input,
     const std::size_t numPixels{width * height};
     const std::size_t numBytes{numPixels * 4u + 8u};
     auto output{std::make_shared<MemoryDataStream>(numBytes)};
-    output->write(reinterpret_cast<const char *>(width), 4u);
-    output->write(reinterpret_cast<const char *>(height), 4u);
+    output->write(reinterpret_cast<const char *>(&width), 4u);
+    output->write(reinterpret_cast<const char *>(&height), 4u);
     output->write(input->getPtr(), numPixels * 4u);
     return output;
   }
@@ -76,8 +76,8 @@ DataStreamPtr TexImageCodec::encode(const MemoryDataStreamPtr &input,
 
   const std::size_t numBytes{outPixels.getConsecutiveSize() + 8u};
   auto output{std::make_shared<MemoryDataStream>(numBytes)};
-  output->write(reinterpret_cast<const char *>(width), 4u);
-  output->write(reinterpret_cast<const char *>(height), 4u);
+  output->write(reinterpret_cast<const char *>(&width), 4u);
+  output->write(reinterpret_cast<const char *>(&height), 4u);
 
   outPixels.data = output->getPtr() + 8;
   PixelUtil::bulkPixelConversion(inPixels, outPixels);
@@ -96,8 +96,8 @@ void TexImageCodec::encodeToFileStream(const String &filename,
                 "TexImageCodec::encodeToFile");
   }
 
-  output.write(reinterpret_cast<const char *>(width), 4u);
-  output.write(reinterpret_cast<const char *>(height), 4u);
+  output.write(reinterpret_cast<const char *>(&width), 4u);
+  output.write(reinterpret_cast<const char *>(&height), 4u);
   output.write(reinterpret_cast<const char *>(data), width * height * 4u);
 }
 
