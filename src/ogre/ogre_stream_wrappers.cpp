@@ -1,4 +1,5 @@
 #include "ogre/ogre_stream_wrappers.hpp"
+#include <gsl/gsl_util>
 #include <OgreDataStream.h>
 #include <fstream>
 #include <istream>
@@ -46,7 +47,7 @@ auto OgreDataStreambuf::seekoff(off_type off, std::ios_base::seekdir dir,
       if (off < 0) mOgreStream->seek(0u);
       else mOgreStream->seek(static_cast<std::size_t>(pos_type(off)));
       break;
-    case std::ios_base::cur: mOgreStream->skip(off);
+    case std::ios_base::cur: mOgreStream->skip(gsl::narrow_cast<long>(off));
       break;
     case std::ios_base::end: mOgreStream->seek(mOgreStream->size() + off);
       break;

@@ -48,7 +48,7 @@ void GameSettings::load(const record::GMST &gmst, bool overwrite) {
 bool GameSettings::bGet(const std::string &path) const {
   try {
     return get<bool>(path).value();
-  } catch (const boost::bad_optional_access &e) {
+  } catch (const boost::bad_optional_access &) {
     spdlog::get(oo::LOG)->error("GameSettings: bool {} does not exist", path);
     throw;
   }
@@ -57,7 +57,7 @@ bool GameSettings::bGet(const std::string &path) const {
 float GameSettings::fGet(const std::string &path) const {
   try {
     return get<float>(path).value();
-  } catch (const boost::bad_optional_access &e) {
+  } catch (const boost::bad_optional_access &) {
     spdlog::get(oo::LOG)->error("GameSettings: float {} does not exist", path);
     throw;
   }
@@ -66,7 +66,7 @@ float GameSettings::fGet(const std::string &path) const {
 int GameSettings::iGet(const std::string &path) const {
   try {
     return get<int>(path).value();
-  } catch (const boost::bad_optional_access &e) {
+  } catch (const boost::bad_optional_access &) {
     spdlog::get(oo::LOG)->error("GameSettings: int {} does not exist", path);
     throw;
   }
@@ -75,7 +75,7 @@ int GameSettings::iGet(const std::string &path) const {
 std::string GameSettings::sGet(const std::string &path) const {
   try {
     return get<std::string>(path).value();
-  } catch (const boost::bad_optional_access &e) {
+  } catch (const boost::bad_optional_access &) {
     spdlog::get(oo::LOG)->error("GameSettings: string {} does not exist", path);
     throw;
   }
@@ -84,7 +84,7 @@ std::string GameSettings::sGet(const std::string &path) const {
 unsigned int GameSettings::uGet(const std::string &path) const {
   try {
     return get<unsigned int>(path).value();
-  } catch (const boost::bad_optional_access &e) {
+  } catch (const boost::bad_optional_access &) {
     spdlog::get(oo::LOG)->error("GameSettings: uint {} does not exist", path);
     throw;
   }

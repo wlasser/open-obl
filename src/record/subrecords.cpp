@@ -1,6 +1,7 @@
 #include "io/io.hpp"
 #include "record/io.hpp"
 #include "record/subrecords.hpp"
+#include <gsl/gsl_util>
 #include <istream>
 #include <ostream>
 
@@ -238,7 +239,7 @@ read(std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_MGEF Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_MGEF>::operator()(const DATA_MGEF &data) const {
+uint16_t SubrecordSize<DATA_MGEF>::operator()(const DATA_MGEF &/*data*/) const {
   return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(oo::MagicSchool)
          + sizeof(oo::ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
          + 7u * sizeof(oo::FormId);
@@ -404,7 +405,7 @@ read(std::istream &is, raw::DATA_WTHR &t, std::size_t /*size*/) {
 // DELE Specialization
 //===----------------------------------------------------------------------===//
 uint16_t SubrecordSize<DELE>::operator()(const DELE &data) const {
-  return data.size;
+  return gsl::narrow_cast<uint16_t>(data.size);
 }
 
 template<> std::ostream &

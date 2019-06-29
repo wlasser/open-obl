@@ -42,7 +42,7 @@ record::peekGroupType(std::istream &is) noexcept {
   std::array<char, 4> type{};
   try {
     io::readBytes(is, type);
-  } catch (const io::IOReadError &e) {
+  } catch (const io::IOReadError &) {
     return std::nullopt;
   }
   const std::string_view typeView(type.data(), 4);
@@ -53,7 +53,7 @@ record::peekGroupType(std::istream &is) noexcept {
   record::Group::GroupType groupType{};
   try {
     io::readBytes(is, groupType);
-  } catch (io::IOReadError &e) {
+  } catch (io::IOReadError &) {
     return std::nullopt;
   }
 

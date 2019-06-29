@@ -169,7 +169,7 @@ std::ifstream::pos_type BsaReader::readFolderRecord() {
   if (!!(mArchiveFlags & ArchiveFlag::HasDirectoryNames)) {
     std::string path{io::readBzString(mIs)};
     // Transform Win path to *nix path
-    std::transform(path.begin(), path.end(), path.begin(), [](unsigned char c) {
+    std::transform(path.begin(), path.end(), path.begin(), [](char c) -> char {
       return c == '\\' ? '/' : c;
     });
     folderRecord.name = path;

@@ -13,7 +13,7 @@ uint32_t record::peekRecordType(std::istream &is) noexcept {
   uint32_t type{};
   try {
     io::readBytes(is, type);
-  } catch (const io::IOReadError &e) {
+  } catch (const io::IOReadError &) {
     return 0;
   }
 
@@ -46,17 +46,23 @@ void record::skipGroup(std::istream &is) {
 }
 
 std::vector<uint8_t> record::compressBytes(const std::vector<uint8_t> &uncomp) {
-  unsigned long compSize{::compressBound(uncomp.size())};
+  const auto uncompSize{gsl::narrow_cast<unsigned long>(uncomp.size())};
+  unsigned long compSize{::compressBound(uncompSize)};
+
   std::vector<uint8_t> comp(compSize);
-  ::compress(comp.data(), &compSize, uncomp.data(), uncomp.size());
+  ::compress(comp.data(), &compSize, uncomp.data(), uncompSize);
   comp.resize(compSize);
+
   return comp;
 }
 
 std::vector<uint8_t> record::uncompressBytes(const std::vector<uint8_t> &comp,
                                              std::size_t uncompSize) {
   std::vector<uint8_t> uncomp(uncompSize);
-  unsigned long lUncompSize{gsl::narrow_cast<unsigned long>(uncompSize)};
-  ::uncompress(uncomp.data(), &lUncompSize, comp.data(), comp.size());
+  auto lUncompSize{gsl::narrow_cast<unsigned long>(uncompSize)};
+  const auto compSize{gsl::narrow_cast<unsigned long>(comp.size())};
+
+  ::uncompress(uncomp.data(), &lUncompSize, comp.data(), compSize);
+
   return uncomp;
 }
