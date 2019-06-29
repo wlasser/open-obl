@@ -414,15 +414,15 @@ void NiAlphaProperty::read(std::istream &is) {
   NiProperty::read(is);
   uint16_t flags{};
   io::readBytes(is, flags);
-  alphaBlendingEnabled = (flags & 0b1) != 0;
+  alphaBlendingEnabled = (flags & 0b1u) != 0;
   sourceBlendMode =
-      BlendMode(static_cast<uint8_t>((flags & 0b1111'0) >> 1));
+      BlendMode(static_cast<uint8_t>((flags & 0b1111'0u) >> 1u));
   destinationBlendMode =
-      BlendMode(static_cast<uint8_t>((flags & 0b1111'0000'0) >> 5));
-  alphaTestEnabled = (flags & 0b1'0000'0000'0) != 0;
+      BlendMode(static_cast<uint8_t>((flags & 0b1111'0000'0u) >> 5u));
+  alphaTestEnabled = (flags & 0b1'0000'0000'0u) != 0u;
   alphaTestMode =
-      TestMode(static_cast<uint8_t>((flags & 0b111'0'0000'0000'0)) >> 10);
-  disableTriangleSorting = (flags & 0b1'000'0'0000'0000'0) != 0;
+      TestMode(static_cast<uint8_t>((flags & 0b111'0'0000'0000'0u) >> 10u));
+  disableTriangleSorting = (flags & 0b1'000'0'0000'0000'0u) != 0u;
 
   io::readBytes(is, threshold);
 }
