@@ -328,8 +328,8 @@ template<> std::size_t RACE::size() const {
       + SizeOf(facegenFaceClamp)
       + SizeOf(baseAttributes)
       + SizeOf(faceMarker)
-      + std::accumulate(faceData.begin(), faceData.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(faceData.begin(), faceData.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
                           return a + SizeOf(b.type)
                               + SizeOf(b.modelFilename)
                               + SizeOf(b.boundRadius)
@@ -340,16 +340,16 @@ template<> std::size_t RACE::size() const {
       + [&t = maleTailModel]() {
         return t ? (SizeOf(t->model) + SizeOf(t->boundRadius)) : 0u;
       }()
-      + std::accumulate(maleBodyData.begin(), maleBodyData.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(maleBodyData.begin(), maleBodyData.end(),
+                        std::size_t{0u}, [](std::size_t a, const auto &b) {
                           return a + SizeOf(b.type) + SizeOf(b.textureFilename);
                         })
       + SizeOf(femaleBodyMarker)
       + [&t = femaleTailModel]() {
         return t ? (SizeOf(t->model) + SizeOf(t->boundRadius)) : 0u;
       }()
-      + std::accumulate(femaleBodyData.begin(), femaleBodyData.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(femaleBodyData.begin(), femaleBodyData.end(),
+                        std::size_t{0u}, [](std::size_t a, const auto &b) {
                           return a + SizeOf(b.type) + SizeOf(b.textureFilename);
                         })
       + SizeOf(hair)
@@ -718,8 +718,10 @@ template<> std::size_t SPEL::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(data)
-      + std::accumulate(effects.begin(), effects.end(), 0u,
-                        [](auto a, const auto &b) { return a + b.size(); });
+      + std::accumulate(effects.begin(), effects.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
+                          return a + b.size();
+                        });
 }
 
 namespace raw {
@@ -1413,8 +1415,8 @@ template<> std::size_t ALCH::size() const {
       + SizeOf(itemScript)
       + SizeOf(itemWeight)
       + SizeOf(itemValue)
-      + std::accumulate(effects.begin(), effects.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(effects.begin(), effects.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
                           return a + b.size();
                         });
 }
