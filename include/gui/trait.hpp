@@ -243,8 +243,9 @@ class Trait {
     if constexpr (std::is_same_v<U, T>) {
       mValue = TraitFun<T>{[source]() -> T { return *source; }};
       return true;
+    } else {
+      return false;
     }
-    return false;
   }
 
   template<class Tuple, std::size_t ... Is> bool
