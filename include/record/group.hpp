@@ -60,7 +60,7 @@ class Group {
 std::ostream &operator<<(std::ostream &, const Group &);
 std::istream &operator>>(std::istream &, Group &);
 
-class GroupError : std::runtime_error {
+class GroupError : public virtual std::runtime_error {
  public:
   explicit GroupError(const std::string &what) : std::runtime_error(what) {}
 };
