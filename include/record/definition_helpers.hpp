@@ -19,13 +19,13 @@
   std::istream& raw::read(std::istream&, raw::type&, std::size_t)
 
 #define DECLARE_SPECIALIZED_RECORD(type) \
-  template <> uint32_t type::size() const; \
+  template <> std::size_t type::size() const; \
   DECLARE_SPECIALIZED_RECORD_IO(type)
 
 #define DECLARE_SPECIALIZED_SUBRECORD(type) \
   namespace raw { \
   template <> struct SubrecordSize<type> { \
-    uint16_t operator()(const type &) const; \
+    std::size_t operator()(const type &) const; \
     }; } \
   DECLARE_SPECIALIZED_RECORD_IO(type) \
 

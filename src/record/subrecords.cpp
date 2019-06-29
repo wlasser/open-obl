@@ -10,7 +10,7 @@ namespace record::raw {
 //===----------------------------------------------------------------------===//
 // ACBS Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<ACBS>::operator()(const ACBS &) const { return 16u; }
+std::size_t SubrecordSize<ACBS>::operator()(const ACBS &) const { return 16u; }
 
 template<> std::ostream &
 write(std::ostream &os, const raw::ACBS &t, std::size_t /*size*/) {
@@ -41,7 +41,7 @@ read(std::istream &is, raw::ACBS &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // AIDT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<AIDT>::operator()(const AIDT &) const { return 12u; }
+std::size_t SubrecordSize<AIDT>::operator()(const AIDT &) const { return 12u; }
 
 template<> std::ostream &
 write(std::ostream &os, const raw::AIDT &t, std::size_t /*size*/) {
@@ -74,7 +74,7 @@ read(std::istream &is, raw::AIDT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // DATA_CLAS Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_CLAS>::operator()(const DATA_CLAS &data) const {
+std::size_t SubrecordSize<DATA_CLAS>::operator()(const DATA_CLAS &data) const {
   return 4u * 12u + (data.hasTrainingInfo ? 4u : 0u);
 }
 
@@ -112,7 +112,7 @@ read(std::istream &is, raw::DATA_CLAS &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_CONT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_CONT>::operator()(const DATA_CONT &) const {
+std::size_t SubrecordSize<DATA_CONT>::operator()(const DATA_CONT &) const {
   return 5u;
 }
 
@@ -135,7 +135,7 @@ read(std::istream &is, raw::DATA_CONT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // DATA_GMST Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_GMST>::operator()(const DATA_GMST &data) const {
+std::size_t SubrecordSize<DATA_GMST>::operator()(const DATA_GMST &data) const {
   return data.s.size();
 }
 
@@ -159,7 +159,7 @@ read(std::istream &is, raw::DATA_GMST &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_GRAS Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_GRAS>::operator()(const DATA_GRAS &) const {
+std::size_t SubrecordSize<DATA_GRAS>::operator()(const DATA_GRAS &) const {
   return 32u;
 }
 
@@ -202,7 +202,7 @@ read(std::istream &is, raw::DATA_GRAS &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // DATA_LIGH Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_LIGH>::operator()(const DATA_LIGH &) const {
+std::size_t SubrecordSize<DATA_LIGH>::operator()(const DATA_LIGH &) const {
   return 32u;
 }
 
@@ -239,7 +239,7 @@ read(std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_MGEF Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_MGEF>::operator()(const DATA_MGEF &/*data*/) const {
+std::size_t SubrecordSize<DATA_MGEF>::operator()(const DATA_MGEF &) const {
   return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(oo::MagicSchool)
          + sizeof(oo::ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
          + 7u * sizeof(oo::FormId);
@@ -298,7 +298,7 @@ read(std::istream &is, raw::DATA_MGEF &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_RACE Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_RACE>::operator()(const DATA_RACE &data) const {
+std::size_t SubrecordSize<DATA_RACE>::operator()(const DATA_RACE &data) const {
   return sizeof(oo::ActorValue) * 1u * data.skillModifiers.size() + 2u * 1u
          + 4u * 4u + 4u;
 }
@@ -355,7 +355,7 @@ read(std::istream &is, raw::DATA_RACE &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // DATA_WTHR Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DATA_WTHR>::operator()(const DATA_WTHR &) const {
+std::size_t SubrecordSize<DATA_WTHR>::operator()(const DATA_WTHR &) const {
   return 15u;
 }
 
@@ -404,8 +404,8 @@ read(std::istream &is, raw::DATA_WTHR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // DELE Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<DELE>::operator()(const DELE &data) const {
-  return gsl::narrow_cast<uint16_t>(data.size);
+std::size_t SubrecordSize<DELE>::operator()(const DELE &data) const {
+  return data.size;
 }
 
 template<> std::ostream &
@@ -419,14 +419,14 @@ write(std::ostream &os, const raw::DELE &/*t*/, std::size_t size) {
 template<> std::istream &
 read(std::istream &is, raw::DELE &t, std::size_t size) {
   is.seekg(size, std::istream::cur);
-  t.size = size;
+  t.size = gsl::narrow_cast<uint32_t>(size);
   return is;
 }
 
 //===----------------------------------------------------------------------===//
 // EFIT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<EFIT>::operator()(const EFIT &) const {
+std::size_t SubrecordSize<EFIT>::operator()(const EFIT &) const {
   return 5u * 4u + sizeof(oo::ActorValue);
 }
 
@@ -457,7 +457,7 @@ read(std::istream &is, raw::EFIT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ENAM Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<ENAM>::operator()(const ENAM &data) const {
+std::size_t SubrecordSize<ENAM>::operator()(const ENAM &data) const {
   return data.eyes.size() * sizeof(oo::FormId);
 }
 
@@ -479,7 +479,7 @@ read(std::istream &is, raw::ENAM &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // ENIT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<ENIT>::operator()(const ENIT &) const { return 8u; }
+std::size_t SubrecordSize<ENIT>::operator()(const ENIT &) const { return 8u; }
 
 template<> std::ostream &
 write(std::ostream &os, const raw::ENIT &t, std::size_t /*size*/) {
@@ -501,7 +501,7 @@ read(std::istream &is, raw::ENIT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ENIT_ENCH Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<ENIT_ENCH>::operator()(const ENIT_ENCH &) const {
+std::size_t SubrecordSize<ENIT_ENCH>::operator()(const ENIT_ENCH &) const {
   return 3u * 4u + 1u + 3u * 1u;
 }
 
@@ -530,7 +530,7 @@ read(std::istream &is, raw::ENIT_ENCH &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ESCE Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<ESCE>::operator()(const ESCE &data) const {
+std::size_t SubrecordSize<ESCE>::operator()(const ESCE &data) const {
   return data.effects.size() * sizeof(oo::EffectId);
 }
 
@@ -552,7 +552,7 @@ read(std::istream &is, raw::ESCE &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // HNAM Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<HNAM>::operator()(const HNAM &data) const {
+std::size_t SubrecordSize<HNAM>::operator()(const HNAM &data) const {
   return data.hair.size() * sizeof(oo::FormId);
 }
 
@@ -574,7 +574,7 @@ read(std::istream &is, raw::HNAM &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // HNAM_LTEX Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<HNAM_LTEX>::operator()(const HNAM_LTEX &) const {
+std::size_t SubrecordSize<HNAM_LTEX>::operator()(const HNAM_LTEX &) const {
   return 3u * 1u;
 }
 
@@ -597,7 +597,7 @@ read(std::istream &is, raw::HNAM_LTEX &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // MNAM_WRLD Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<MNAM_WRLD>::operator()(const MNAM_WRLD &) const {
+std::size_t SubrecordSize<MNAM_WRLD>::operator()(const MNAM_WRLD &) const {
   return 16u;
 }
 
@@ -628,7 +628,7 @@ read(std::istream &is, raw::MNAM_WRLD &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // MODT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<MODT>::operator()(const MODT &data) const {
+std::size_t SubrecordSize<MODT>::operator()(const MODT &data) const {
   return 3u * 8u * data.records.size();
 }
 
@@ -658,7 +658,7 @@ read(std::istream &is, raw::MODT &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // NAM0_WTHR Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<NAM0_WTHR>::operator()(const NAM0_WTHR &) const {
+std::size_t SubrecordSize<NAM0_WTHR>::operator()(const NAM0_WTHR &) const {
   return 10u * 4u * 4u;
 }
 
@@ -711,7 +711,7 @@ read(std::istream &is, raw::NAM0_WTHR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // OFST Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<OFST>::operator()(const OFST &data) const {
+std::size_t SubrecordSize<OFST>::operator()(const OFST &data) const {
   return 3u * 4u * data.unused.size();
 }
 
@@ -736,7 +736,7 @@ read(std::istream &is, raw::OFST &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // OFST_WRLD Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<OFST_WRLD>::operator()(const OFST_WRLD &data) const {
+std::size_t SubrecordSize<OFST_WRLD>::operator()(const OFST_WRLD &data) const {
   return data.entries.size() * 4u;
 }
 
@@ -756,7 +756,7 @@ read(std::istream &is, raw::OFST_WRLD &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // PFPC Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<PFPC>::operator()(const PFPC &) const { return 4u; }
+std::size_t SubrecordSize<PFPC>::operator()(const PFPC &) const { return 4u; }
 
 template<> std::ostream &
 write(std::ostream &os, const raw::PFPC &t, std::size_t /*size*/) {
@@ -781,7 +781,7 @@ read(std::istream &is, raw::PFPC &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SCIT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SCIT>::operator()(const SCIT &) const {
+std::size_t SubrecordSize<SCIT>::operator()(const SCIT &) const {
   return sizeof(oo::FormId) + sizeof(oo::MagicSchool) + 8u;
 }
 
@@ -810,7 +810,7 @@ read(std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SNAM_TREE Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SNAM_TREE>::operator()(const SNAM_TREE &data) const {
+std::size_t SubrecordSize<SNAM_TREE>::operator()(const SNAM_TREE &data) const {
   return 4u * data.seeds.size();
 }
 
@@ -829,7 +829,7 @@ read(std::istream &is, raw::SNAM_TREE &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // SNAM_WTHR Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SNAM_WTHR>::operator()(const SNAM_WTHR &) const {
+std::size_t SubrecordSize<SNAM_WTHR>::operator()(const SNAM_WTHR &) const {
   return 8u;
 }
 
@@ -850,7 +850,7 @@ read(std::istream &is, raw::SNAM_WTHR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SNDD Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SNDD>::operator()(const SNDD &) const {
+std::size_t SubrecordSize<SNDD>::operator()(const SNDD &) const {
   return 4u * 1u + 4u;
 }
 
@@ -877,7 +877,7 @@ read(std::istream &is, raw::SNDD &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SNDX Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SNDX>::operator()(const SNDX &data) const {
+std::size_t SubrecordSize<SNDX>::operator()(const SNDX &data) const {
   return 4u * 1u + 2u * 4u + (data.staticAttenuation ? 4u : 0u)
          + (data.startTime ? 4u : 0u) + (data.stopTime ? 4u : 0u);
 }
@@ -913,7 +913,7 @@ read(std::istream &is, raw::SNDX &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // SPIT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<SPIT>::operator()(const SPIT &) const { return 16u; }
+std::size_t SubrecordSize<SPIT>::operator()(const SPIT &) const { return 16u; }
 
 template<> std::ostream &
 write(std::ostream &os, const raw::SPIT &t, std::size_t /*size*/) {
@@ -938,7 +938,7 @@ read(std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // TNAM_CLMT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<TNAM_CLMT>::operator()(const TNAM_CLMT &) const {
+std::size_t SubrecordSize<TNAM_CLMT>::operator()(const TNAM_CLMT &) const {
   return 6u;
 }
 
@@ -977,7 +977,7 @@ read(std::istream &is, raw::TNAM_CLMT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // VTXT Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<VTXT>::operator()(const VTXT &data) const {
+std::size_t SubrecordSize<VTXT>::operator()(const VTXT &data) const {
   return data.points.size() * 8u;
 }
 
@@ -1003,7 +1003,7 @@ read(std::istream &is, raw::VTXT &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // WLST Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<WLST>::operator()(const WLST &data) const {
+std::size_t SubrecordSize<WLST>::operator()(const WLST &data) const {
   return data.weathers.size() * 8u;
 }
 
@@ -1031,7 +1031,7 @@ read(std::istream &is, raw::WLST &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // XCLR Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<XCLR>::operator()(const XCLR &data) const {
+std::size_t SubrecordSize<XCLR>::operator()(const XCLR &data) const {
   return sizeof(oo::FormId) * data.regions.size();
 }
 
@@ -1053,7 +1053,7 @@ read(std::istream &is, raw::XCLR &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // XESP Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<XESP>::operator()(const XESP &) const {
+std::size_t SubrecordSize<XESP>::operator()(const XESP &) const {
   return sizeof(oo::FormId) + sizeof(raw::XESP::Flag);
 }
 
@@ -1074,7 +1074,7 @@ read(std::istream &is, raw::XESP &t, std::size_t /*size*/) {
 //===-----------------------------------------------------------------------==//
 // XLOC Specialization
 //===-----------------------------------------------------------------------==//
-uint16_t SubrecordSize<XLOC>::operator()(const XLOC &) const {
+std::size_t SubrecordSize<XLOC>::operator()(const XLOC &) const {
   return 4u + sizeof(oo::FormId) + 4u;
 }
 
@@ -1099,7 +1099,7 @@ read(std::istream &is, raw::XLOC &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // XRGD Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<XRGD>::operator()(const XRGD &data) const {
+std::size_t SubrecordSize<XRGD>::operator()(const XRGD &data) const {
   return data.bytes.size() * 1u;
 }
 
@@ -1121,7 +1121,7 @@ read(std::istream &is, raw::XRGD &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // XSED Specialization
 //===----------------------------------------------------------------------===//
-uint16_t SubrecordSize<XSED>::operator()(const XSED &data) const {
+std::size_t SubrecordSize<XSED>::operator()(const XSED &data) const {
   return data.size;
 }
 
@@ -1135,7 +1135,7 @@ write(std::ostream &os, const raw::XSED &/*t*/, std::size_t size) {
 
 template<> std::istream &
 read(std::istream &is, raw::XSED &t, std::size_t size) {
-  t.size = size;
+  t.size = gsl::narrow_cast<uint16_t>(size);
   is.seekg(size, std::ios_base::cur);
   return is;
 }

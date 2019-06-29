@@ -20,9 +20,7 @@ namespace raw {
 /// would not return the correct result.
 template<class T>
 struct SubrecordSize {
-  uint16_t operator()(const T &data) const {
-    return static_cast<uint16_t>(SizeOf(data));
-  }
+  std::size_t operator()(const T &data) const { return SizeOf(data); }
 };
 
 } // namespace raw
@@ -39,7 +37,9 @@ struct Subrecord {
 
   /// Size of the raw subrecord data when written to disk (which may not be the
   /// size in memory).
-  uint16_t size() const {
+  /// \remark This is a wrapper around SubrecordSize and should *not* be
+  ///         specialized.
+  std::size_t size() const {
     return raw::SubrecordSize<T>()(data);
   }
 
@@ -47,7 +47,7 @@ struct Subrecord {
   /// This is needed when computing the size of records.
   /// \remark This is a wrapper around size() taking into account header
   ///         information and should *not* be specialized.
-  uint32_t entireSize() const {
+  std::size_t entireSize() const {
     return 4u + 2u + size();
   }
 
@@ -64,9 +64,10 @@ struct Subrecord {
 ///         should be specialized for `T` if necessary.
 template<class T, uint32_t c>
 std::ostream &operator<<(std::ostream &os, const Subrecord<T, c> &subrecord) {
-  auto size = subrecord.size();
+  const auto size{subrecord.size()};
+  const auto size16{static_cast<uint16_t>(size)};
   io::writeBytes(os, recOf<c>());
-  io::writeBytes(os, size);
+  io::writeBytes(os, size16);
   raw::write(os, subrecord.data, size);
 
   return os;

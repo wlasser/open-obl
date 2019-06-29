@@ -15,7 +15,7 @@ using namespace io;
 //===----------------------------------------------------------------------===//
 namespace raw {
 
-uint32_t raw::Effect::size() const {
+std::size_t raw::Effect::size() const {
   return name.entireSize() + data.entireSize()
       + (script ? (script->data.entireSize() + script->name.entireSize()) : 0u);
 }
@@ -43,14 +43,14 @@ bool raw::Effect::isNext(std::istream &is) {
 //===----------------------------------------------------------------------===//
 // TES4 Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t TES4::size() const {
+template<> std::size_t TES4::size() const {
   return SizeOf(header)
       + SizeOf(offsets)
       + SizeOf(deleted)
       + SizeOf(author)
       + SizeOf(description)
-      + std::accumulate(masters.begin(), masters.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(masters.begin(), masters.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
                           return a + SizeOf(b.master) + SizeOf(b.fileSize);
                         });
 }
@@ -92,7 +92,7 @@ read(std::istream &is, raw::TES4 &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // GMST Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t GMST::size() const {
+template<> std::size_t GMST::size() const {
   return SizeOf(editorId) + SizeOf(value);
 }
 
@@ -117,7 +117,7 @@ read(std::istream &is, raw::GMST &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // GLOB Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t GLOB::size() const {
+template<> std::size_t GLOB::size() const {
   return SizeOf(editorId) + SizeOf(type) + SizeOf(value);
 }
 
@@ -144,7 +144,7 @@ read(std::istream &is, raw::GLOB &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // CLAS Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t CLAS::size() const {
+template<> std::size_t CLAS::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(description)
@@ -179,13 +179,13 @@ read(std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // FACT Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t FACT::size() const {
+template<> std::size_t FACT::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(relations)
       + SizeOf(crimeGoldMultiplier)
-      + std::accumulate(ranks.begin(), ranks.end(), 0u,
-                        [](auto a, const auto &b) {
+      + std::accumulate(ranks.begin(), ranks.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
                           return a
                               + SizeOf(b.index)
                               + SizeOf(b.maleName)
@@ -240,7 +240,7 @@ read(std::istream &is, raw::FACT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // HAIR Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t HAIR::size() const {
+template<> std::size_t HAIR::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -283,7 +283,7 @@ read(std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // EYES Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t EYES::size() const {
+template<> std::size_t EYES::size() const {
   return SizeOf(editorId) + SizeOf(name) + SizeOf(iconFilename) + SizeOf(flags);
 }
 
@@ -314,7 +314,7 @@ read(std::istream &is, raw::EYES &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // RACE Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t RACE::size() const {
+template<> std::size_t RACE::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(description)
@@ -504,7 +504,7 @@ read(std::istream &is, raw::RACE &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SOUN Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t SOUN::size() const {
+template<> std::size_t SOUN::size() const {
   return SizeOf(editorId)
       + SizeOf(filename)
       + std::visit([](const auto &r) { return SizeOf(r); }, sound);
@@ -543,7 +543,7 @@ read(std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SKIL Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t SKIL::size() const {
+template<> std::size_t SKIL::size() const {
   return SizeOf(editorId)
       + SizeOf(index)
       + SizeOf(iconFilename)
@@ -591,7 +591,7 @@ read(std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // MGEF Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t MGEF::size() const {
+template<> std::size_t MGEF::size() const {
   return SizeOf(editorId)
       + SizeOf(effectName)
       + SizeOf(description)
@@ -637,7 +637,7 @@ read(std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // LTEX Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t LTEX::size() const {
+template<> std::size_t LTEX::size() const {
   return SizeOf(editorId)
       + SizeOf(textureFilename)
       + SizeOf(havokData)
@@ -677,12 +677,14 @@ read(std::istream &is, raw::LTEX &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ENCH Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t ENCH::size() const {
+template<> std::size_t ENCH::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(enchantmentData)
-      + std::accumulate(effects.begin(), effects.end(), 0,
-                        [](auto a, const auto &b) { return a + b.size(); });
+      + std::accumulate(effects.begin(), effects.end(), std::size_t{0u},
+                        [](std::size_t a, const auto &b) {
+                          return a + b.size();
+                        });
 }
 
 namespace raw {
@@ -712,7 +714,7 @@ read(std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // SPEL Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t SPEL::size() const {
+template<> std::size_t SPEL::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(data)
@@ -747,7 +749,7 @@ read(std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // BSGN Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t BSGN::size() const {
+template<> std::size_t BSGN::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(icon)
@@ -787,7 +789,7 @@ read(std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ACTI Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t ACTI::size() const {
+template<> std::size_t ACTI::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -830,7 +832,7 @@ read(std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // CONT Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t CONT::size() const {
+template<> std::size_t CONT::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
@@ -885,7 +887,7 @@ read(std::istream &is, raw::CONT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // DOOR Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t DOOR::size() const {
+template<> std::size_t DOOR::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -944,7 +946,7 @@ read(std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // LIGH Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t LIGH::size() const {
+template<> std::size_t LIGH::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
@@ -1012,7 +1014,7 @@ read(std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // MISC Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t MISC::size() const {
+template<> std::size_t MISC::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -1058,7 +1060,7 @@ read(std::istream &is, raw::MISC &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // STAT Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t STAT::size() const {
+template<> std::size_t STAT::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
@@ -1097,7 +1099,7 @@ read(std::istream &is, raw::STAT &t, std::size_t size) {
 //===----------------------------------------------------------------------===//
 // GRAS Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t GRAS::size() const {
+template<> std::size_t GRAS::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
@@ -1134,7 +1136,7 @@ read(std::istream &is, raw::GRAS &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // TREE Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t TREE::size() const {
+template<> std::size_t TREE::size() const {
   return SizeOf(editorId)
       + SizeOf(modelFilename)
       + SizeOf(boundRadius)
@@ -1180,7 +1182,7 @@ read(std::istream &is, raw::TREE &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // FLOR Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t FLOR::size() const {
+template<> std::size_t FLOR::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -1226,7 +1228,7 @@ read(std::istream &is, raw::FLOR &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // FURN Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t FURN::size() const {
+template<> std::size_t FURN::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(modelFilename)
@@ -1269,7 +1271,7 @@ read(std::istream &is, raw::FURN &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // NPC_ Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t NPC_::size() const {
+template<> std::size_t NPC_::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(skeletonFilename)
@@ -1401,7 +1403,7 @@ read(std::istream &is, raw::NPC_ &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // ALCH Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t ALCH::size() const {
+template<> std::size_t ALCH::size() const {
   return SizeOf(editorId)
       + SizeOf(itemName)
       + SizeOf(modelFilename)
@@ -1456,7 +1458,7 @@ read(std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // WTHR Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t WTHR::size() const {
+template<> std::size_t WTHR::size() const {
   return SizeOf(editorId)
       + SizeOf(lowerLayerFilename)
       + SizeOf(upperLayerFilename)
@@ -1510,7 +1512,7 @@ read(std::istream &is, raw::WTHR &t, const std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // CLMT Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t CLMT::size() const {
+template<> std::size_t CLMT::size() const {
   return SizeOf(editorId)
       + SizeOf(weatherList)
       + SizeOf(sunFilename)
@@ -1553,7 +1555,7 @@ read(std::istream &is, raw::CLMT &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // CELL Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t CELL::size() const {
+template<> std::size_t CELL::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(data)
@@ -1633,7 +1635,7 @@ read(std::istream &is, raw::CELL &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // WRLD Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t WRLD::size() const {
+template<> std::size_t WRLD::size() const {
   return SizeOf(editorId)
       + SizeOf(name)
       + SizeOf(parentWorldspace)
@@ -1716,7 +1718,7 @@ read(std::istream &is, raw::WRLD &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // LAND Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t LAND::size() const {
+template<> std::size_t LAND::size() const {
   return SizeOf(data)
       + SizeOf(normals)
       + SizeOf(heights)
@@ -1785,7 +1787,7 @@ read(std::istream &is, raw::LAND &t, std::size_t /*size*/) {
 //===----------------------------------------------------------------------===//
 // WATR Specialization
 //===----------------------------------------------------------------------===//
-template<> uint32_t WATR::size() const {
+template<> std::size_t WATR::size() const {
   return SizeOf(editorId)
       + SizeOf(textureFilename)
       + SizeOf(opacity)

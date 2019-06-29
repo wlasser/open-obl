@@ -24,7 +24,7 @@ struct REFRBase {
   std::optional<record::EDID> editorId{};
   record::NAME baseId{};
 
-  virtual uint32_t size() const {
+  virtual std::size_t size() const {
     return SizeOf(baseId) + SizeOf(editorId);
   }
 
@@ -46,7 +46,7 @@ struct REFRBase {
 struct REFRTransformation {
   record::DATA_REFR positionRotation{};
 
-  virtual uint32_t size() const {
+  virtual std::size_t size() const {
     return SizeOf(positionRotation);
   }
 
@@ -190,7 +190,7 @@ template<uint32_t Base, class ...Components>
 struct REFR : REFRBase, Components ..., REFRTransformation {
   constexpr static inline uint32_t RecordType = Base;
 
-  uint32_t size() const override {
+  std::size_t size() const override {
     return REFRBase::size() + (std::apply([](const auto *...x) {
       return ((*x ? (*x)->entireSize() : 0u) + ... + 0);
     }, Components::asTuple()) + ... + 0) + REFRTransformation::size();

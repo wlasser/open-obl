@@ -39,8 +39,8 @@ class Record : public T {
   /// \remark This should be specialized for each record type, and it is almost
   ///         certainly *not* `sizeof(T)`; records are saved without any
   ///         padding which may occur in the in-memory representation.
-  uint32_t size() const {
-    return static_cast<uint32_t>(T::size());
+  std::size_t size() const {
+    return T::size();
   }
 
   Record(const T &t,
@@ -64,7 +64,7 @@ template<class T, uint32_t c> std::ostream &
 operator<<(std::ostream &os, const Record<T, c> &record) {
   if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
     // Write the uncompressed raw record into a buffer.
-    const unsigned long uncompressedSize{record.size()};
+    const auto uncompressedSize{record.size()};
     std::vector<uint8_t> uncompressedData(uncompressedSize);
     io::memstream mos(uncompressedData.data(), uncompressedSize);
     raw::write(mos, static_cast<const T &>(record), uncompressedSize);
@@ -73,7 +73,6 @@ operator<<(std::ostream &os, const Record<T, c> &record) {
     const auto compressedData{record::compressBytes(uncompressedData)};
     const auto compressedSize{compressedData.size()};
 
-    // Unsigned long may be more than 32 bits.
     const auto uncompressedSize32{static_cast<uint32_t>(uncompressedSize)};
     const auto compressedSize32{static_cast<uint32_t>(compressedSize)};
 
@@ -90,7 +89,7 @@ operator<<(std::ostream &os, const Record<T, c> &record) {
     os.write(reinterpret_cast<const char *>(compressedData.data()),
              compressedSize);
   } else {
-    const uint32_t size{record.size()};
+    const auto size{static_cast<uint32_t>(record.size())};
     io::writeBytes(os, recOf<c>());
     io::writeBytes(os, size);
     io::writeBytes(os, record.mRecordFlags);
@@ -130,12 +129,11 @@ operator>>(std::istream &is, Record<T, c> &record) {
   if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
     // The size on disk is actually the size of the compressed raw record plus
     // four bytes for the uncompressed size.
-    const unsigned long compressedSize{sizeOnDisk - 4u};
+    const auto compressedSize{sizeOnDisk - 4u};
 
     // Read the size of the uncompressed raw record.
-    uint32_t uncompressedSize32{};
-    io::readBytes(is, uncompressedSize32);
-    unsigned long uncompressedSize{uncompressedSize32};
+    uint32_t uncompressedSize{};
+    io::readBytes(is, uncompressedSize);
 
     // Read the compressed raw record into a buffer.
     std::vector<uint8_t> compressedData{};

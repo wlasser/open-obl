@@ -28,7 +28,7 @@ struct Effect {
   record::EFID name{};
   record::EFIT data{};
   std::optional<ScriptEffectData> script{};
-  uint32_t size() const;
+  std::size_t size() const;
   void read(std::istream &is);
   void write(std::ostream &os) const;
   static bool isNext(std::istream &is);
