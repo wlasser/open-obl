@@ -144,7 +144,24 @@ add_subdirectory(lib/soloud)
 # Globally set warning flags for all internal dependencies.
 # External dependencies (above) can keep their own warning flags.
 if (MSVC)
-    add_compile_options(/W4 /w14640)
+    add_compile_options(
+            /W4 # Like -Wall -Wextra, enable lots but not everything
+            /w14062 # Warns on unhandled enum cases. Like -Wswitch-enum.
+
+            # Warnings to disable
+            /wd4455 # String literals must begin with _. Has false positives
+                    # when using literals in the standard, like ""s.
+            /wd4138 # */ outside of comment. Warns when annotating the name of
+                    # unused pointer arguments due to the code style.
+            /wd4146 # Unary - on unsigned is still unsigned. This warns in some
+                    # headers where the use is usually to write -1 instead of
+                    # 0xffffffff.
+            /wd4127 # Conditional expression is constant. Has false positives in
+                    # pre-constexpr library headers, and unlikely to be that
+                    # helpful when programming with constexpr in mind.
+            /wd4100 # Unreferenced function parameter. This would be nice to
+                    # have, but external library headers make too much noise.
+    )
 else ()
     add_compile_options(-Wall -Wextra -Wshadow -Wpedantic)
 endif ()
