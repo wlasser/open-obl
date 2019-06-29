@@ -23,10 +23,14 @@ inline constexpr uint32_t recOf(const std::array<char, 4> &r) noexcept {
   return recOf(std::string_view(r.data(), 4));
 }
 
+inline namespace literals {
+
 /// UDL that calls recOf on the passed string literal.
 inline constexpr uint32_t operator "" _rec(const char *r, std::size_t size) {
   return recOf(std::string_view(r, size));
 }
+
+} // namespace literals
 
 /// Interpret the bytes of a little-endian integer as a string.
 /// This overload is the inverse of the overload taking a std::string_view, in

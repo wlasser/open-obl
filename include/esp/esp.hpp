@@ -109,7 +109,7 @@ template<class RecordVisitor>
 void readEsp(EspCoordinator &coordinator,
              int modIndex,
              RecordVisitor &visitor) {
-  using record::operator ""_rec;
+  using namespace record::literals;
 
   auto accessor{coordinator.makeAccessor(modIndex)};
 
@@ -195,8 +195,8 @@ void readCellChildren(EspAccessor &accessor,
                       PersistentVisitor &persistentVisitor,
                       VisibleDistantVisitor &visibleDistantVisitor,
                       TemporaryVisitor &temporaryVisitor) {
-  using namespace record;
-  using GroupType = Group::GroupType;
+  using namespace record::literals;
+  using GroupType = record::Group::GroupType;
 
   // Expect a cell children group, though there exist empty cells,
   // like Hackdirt, so this is optional.
@@ -248,7 +248,7 @@ void readCellChildren(EspAccessor &accessor,
 
 template<class Visitor>
 void readCellTerrain(EspAccessor accessor, Visitor &visitor) {
-  using record::operator ""_rec;
+  using namespace record::literals;
   using GroupType = record::Group::GroupType;
 
   if (accessor.peekGroupType() != GroupType::CellChildren) return;
@@ -279,7 +279,7 @@ template<class OuterVisitor, class InnerVisitor>
 void readWrldChildren(EspAccessor &accessor,
                       OuterVisitor &outerVisitor,
                       InnerVisitor &innerVisitor) {
-  using record::operator ""_rec;
+  using namespace record::literals;
   using GroupType = record::Group::GroupType;
 
   // Expect a world children group
@@ -328,7 +328,7 @@ void readWrldChildren(EspAccessor &accessor,
 
 template<class RecordVisitor>
 void parseCellChildrenBlock(EspAccessor &accessor, RecordVisitor &visitor) {
-  using namespace record;
+  using namespace record::literals;
   for (;;) {
     switch (accessor.peekRecordType()) {
       case "REFR"_rec: visitor.template readRecord<record::REFR>(accessor);
@@ -346,7 +346,7 @@ template<class EsxAccessor, class RecordVisitor>
 void readRecord(EsxAccessor &accessor,
                 uint32_t recType,
                 RecordVisitor &visitor) {
-  using record::operator ""_rec;
+  using namespace record::literals;
   switch (recType) {
     case "GMST"_rec:return visitor.template readRecord<record::GMST>(accessor);
     case "GLOB"_rec:return visitor.template readRecord<record::GLOB>(accessor);
