@@ -1,9 +1,7 @@
 #ifndef OPENOBL_CONSOLE_ENGINE_HPP
 #define OPENOBL_CONSOLE_ENGINE_HPP
 
-#include "scripting/logging.hpp"
 #include "scripting/script_engine_base.hpp"
-#include <optional>
 
 namespace oo {
 

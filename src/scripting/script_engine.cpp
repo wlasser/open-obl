@@ -1,4 +1,5 @@
 #include "scripting/script_engine.hpp"
+#include "scripting/logging.hpp"
 
 namespace oo {
 
@@ -37,15 +38,15 @@ ScriptEngine::getFunctionAddr(const std::string &scriptName,
   // Find the module containing the script
   const auto keyIt{getModules().find(scriptName)};
   if (keyIt == getModules().end()) {
-    scriptingLogger()->warn("Script '{}' does not exist", scriptName);
+    oo::scriptingLogger()->warn("Script '{}' does not exist", scriptName);
     return std::nullopt;
   }
 
   // Find the function in the module
   auto entrySymbol{getJit()->findSymbolIn(funName, keyIt->second)};
   if (!entrySymbol) {
-    scriptingLogger()->warn("No function '{}' in script '{}'",
-                            funName, scriptName);
+    oo::scriptingLogger()->warn("No function '{}' in script '{}'",
+                                funName, scriptName);
     return std::nullopt;
   }
 
@@ -53,7 +54,7 @@ ScriptEngine::getFunctionAddr(const std::string &scriptName,
   auto entryOrErr{entrySymbol.getAddress()};
   if (llvm::Error err = entryOrErr.takeError()) {
     llvm::handleAllErrors(std::move(err), [](const llvm::ErrorInfoBase &e) {
-      scriptingLogger()->warn("JIT error: {}", e.message());
+      oo::scriptingLogger()->warn("JIT error: {}", e.message());
     });
     return std::nullopt;
   }

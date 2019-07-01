@@ -1,4 +1,5 @@
 #include "helpers.hpp"
+#include "scripting/logging.hpp"
 #include <catch2/catch.hpp>
 #include <cstdio>
 #include <iostream>

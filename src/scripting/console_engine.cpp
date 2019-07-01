@@ -1,4 +1,5 @@
 #include "scripting/console_engine.hpp"
+#include "scripting/logging.hpp"
 #include <gsl/gsl>
 #include <stdexcept>
 
@@ -60,7 +61,7 @@ void ConsoleEngine::execute(std::string_view statement) {
   auto addrOrErr{symbol.getAddress()};
   if (llvm::Error err = addrOrErr.takeError()) {
     llvm::handleAllErrors(std::move(err), [](const llvm::ErrorInfoBase &e) {
-      scriptingLogger()->warn("JIT error: {}", e.message());
+      oo::scriptingLogger()->warn("JIT error: {}", e.message());
     });
     throw std::runtime_error("Failed to find statement address");
   }
