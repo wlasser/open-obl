@@ -176,7 +176,7 @@ write(std::ostream &os, const raw::DATA_GRAS &t, std::size_t /*size*/) {
   io::writeBytes(os, t.heightRange);
   io::writeBytes(os, t.colorRange);
   io::writeBytes(os, t.wavePeriod);
-  io::writeBytes(os, t.flags);
+  raw::write(os, t.flags, 0);
 
   return os;
 }
@@ -194,7 +194,7 @@ read(std::istream &is, raw::DATA_GRAS &t, std::size_t /*size*/) {
   io::readBytes(is, t.heightRange);
   io::readBytes(is, t.colorRange);
   io::readBytes(is, t.wavePeriod);
-  io::readBytes(is, t.flags);
+  raw::read(is, t.flags, 0);
 
   return is;
 }
@@ -902,7 +902,7 @@ read(std::istream &is, raw::SNDX &t, std::size_t size) {
   io::readBytes(is, t.maxAttenuationDistance);
   io::readBytes(is, t.frequencyAdjustment);
   io::readBytes(is, t.unused);
-  read(is, t.flags, 0);
+  raw::read(is, t.flags, 0);
   io::readBytes(is, t.unusedWord);
   if (size > 12) io::readBytes(is, t.staticAttenuation);
   if (size > 16) io::readBytes(is, t.startTime);
