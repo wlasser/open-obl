@@ -1,1 +1,1 @@
-#include "scripting/grammar.hpp"
+#include "grammar.hpp"

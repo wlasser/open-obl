@@ -9,20 +9,20 @@ target_include_directories(OpenOBLScripting PUBLIC
         $<INSTALL_INTERFACE:include>)
 
 target_sources(OpenOBLScripting PRIVATE
-        ${CMAKE_SOURCE_DIR}/include/scripting/ast.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/console_engine.hpp
-        ${CMAKE_SOURCE_DIR}/include/scripting/grammar.hpp
-        ${CMAKE_SOURCE_DIR}/include/scripting/jit.hpp
-        ${CMAKE_SOURCE_DIR}/include/scripting/llvm.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/logging.hpp
-        ${CMAKE_SOURCE_DIR}/include/scripting/pegtl.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine.hpp
         ${CMAKE_SOURCE_DIR}/include/scripting/script_engine_base.hpp
         ast.cpp
+        ast.hpp
         console_engine.cpp
         grammar.cpp
+        grammar.hpp
         jit.cpp
+        jit.hpp
         llvm.cpp
+        llvm.hpp
+        pegtl.hpp
         script_engine.cpp
         script_engine_base.cpp)
 
@@ -36,8 +36,8 @@ else ()
 endif ()
 
 target_link_libraries(OpenOBLScripting
-        PRIVATE MicrosoftGSL::GSL
-        PUBLIC OpenOBL::OpenOBLUtil em::nostdx spdlog::spdlog taocpp::pegtl)
+        PRIVATE MicrosoftGSL::GSL taocpp::pegtl
+        PUBLIC OpenOBL::OpenOBLUtil em::nostdx spdlog::spdlog)
 
 install(TARGETS OpenOBLScripting EXPORT OpenOBLScriptingTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

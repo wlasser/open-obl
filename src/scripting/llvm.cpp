@@ -1,4 +1,4 @@
-#include "scripting/llvm.hpp"
+#include "llvm.hpp"
 #include <llvm/IR/Verifier.h>
 
 // There is a bug in CLion (https://youtrack.jetbrains.com/issue/CPP-11511 is a

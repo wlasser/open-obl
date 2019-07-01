@@ -1,8 +1,8 @@
 #ifndef OPENOBL_SCRIPTING_AST_HPP
 #define OPENOBL_SCRIPTING_AST_HPP
 
-#include "scripting/grammar.hpp"
-#include "scripting/pegtl.hpp"
+#include "grammar.hpp"
+#include "pegtl.hpp"
 #include "util/meta.hpp"
 #include <nostdx/type_traits.hpp>
 #include <memory>

@@ -1,23 +1,44 @@
+#include "ast.hpp"
 #include "scripting/console_engine.hpp"
+#include "jit.hpp"
+#include "llvm.hpp"
 #include "scripting/logging.hpp"
 #include <gsl/gsl>
 #include <stdexcept>
 
 namespace oo {
 
+class ConsoleEngine::Impl {
+ private:
+  nostdx::propagate_const<ConsoleEngine *> mParent;
+
+ public:
+  [[nodiscard]] std::unique_ptr<llvm::Module>
+  compileStatement(const AstNode &node);
+
+  explicit Impl(ConsoleEngine *parent) noexcept : mParent(parent) {}
+};
+
+ConsoleEngine::ConsoleEngine()
+    : ScriptEngineBase(), mImpl(std::make_unique<ConsoleEngine::Impl>(this)) {}
+
+ConsoleEngine::~ConsoleEngine() = default;
+ConsoleEngine::ConsoleEngine(ConsoleEngine &&) noexcept = default;
+ConsoleEngine &ConsoleEngine::operator=(ConsoleEngine &&) noexcept = default;
+
 std::unique_ptr<llvm::Module>
-ConsoleEngine::compileStatement(const AstNode &node) {
+ConsoleEngine::Impl::compileStatement(const AstNode &node) {
   if (!node.is_root() || node.children.empty()) {
     // TODO: Cannot compile a partial AST, throw
     return nullptr;
   }
 
-  auto module{makeModule("__console_statement")};
-  addExternalFunsToModule(module.get());
+  auto module{mParent->makeModule("__console_statement")};
+  mParent->addExternalFunsToModule(module.get());
 
   // The AST contains a single statement, which needs to be wrapped in an
   // anonymous function.
-  auto &ctx{getContext()};
+  auto &ctx{mParent->getContext()};
   llvm::IRBuilder irBuilder(ctx);
 
   auto *funType{llvm::FunctionType::get(llvm::Type::getVoidTy(ctx), {})};
@@ -28,7 +49,7 @@ ConsoleEngine::compileStatement(const AstNode &node) {
   auto *bb{llvm::BasicBlock::Create(ctx, "entry", fun)};
   irBuilder.SetInsertPoint(bb);
 
-  auto visitor{makeVisitor(module.get(), irBuilder)};
+  auto visitor{mParent->makeVisitor(module.get(), irBuilder)};
   visitor.visit(node);
 
   irBuilder.CreateRetVoid();
@@ -43,7 +64,7 @@ void ConsoleEngine::execute(std::string_view statement) {
     throw std::runtime_error("Syntax error: Failed to parse statement");
   }
 
-  auto module{compileStatement(*root)};
+  auto module{mImpl->compileStatement(*root)};
   if (!module) {
     throw std::runtime_error("Semantic error: Failed to compile statement");
   }

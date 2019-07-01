@@ -1,20 +1,23 @@
 #ifndef OPENOBL_SCRIPTING_SCRIPT_ENGINE_BASE_HPP
 #define OPENOBL_SCRIPTING_SCRIPT_ENGINE_BASE_HPP
 
-#include "scripting/ast.hpp"
-#include "scripting/jit.hpp"
-#include "scripting/llvm.hpp"
 #include "util/meta.hpp"
+#include <llvm/ExecutionEngine/Orc/Core.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <memory>
 
 namespace oo {
 
+class Jit;
+class LLVMVisitor;
+
 /// Common internal functionality of ScriptEngine and ConsoleEngine.
 class ScriptEngineBase {
  private:
   std::unique_ptr<llvm::LLVMContext> mCtx{};
-  std::unique_ptr<oo::Jit> mJit{};
+  std::unique_ptr<oo::Jit> mJit;
   llvm::StringMap<llvm::FunctionType *> mExternFuns{};
   llvm::StringMap<llvm::orc::VModuleKey> mModules{};
 
@@ -87,28 +90,11 @@ class ScriptEngineBase {
   ScriptEngineBase();
 
  public:
-  ~ScriptEngineBase() = default;
+  ~ScriptEngineBase();
   ScriptEngineBase(const ScriptEngineBase &) = delete;
   ScriptEngineBase &operator=(const ScriptEngineBase &) = delete;
-
-  ScriptEngineBase(ScriptEngineBase &&other) noexcept {
-    using std::swap;
-    swap(mCtx, other.mCtx);
-    swap(mJit, other.mJit);
-    swap(mExternFuns, other.mExternFuns);
-    swap(mModules, other.mModules);
-  }
-
-  ScriptEngineBase &operator=(ScriptEngineBase &&other) noexcept {
-    if (this != &other) {
-      using std::swap;
-      swap(mCtx, other.mCtx);
-      swap(mJit, other.mJit);
-      swap(mExternFuns, other.mExternFuns);
-      swap(mModules, other.mModules);
-    }
-    return *this;
-  }
+  ScriptEngineBase(ScriptEngineBase &&other) noexcept;
+  ScriptEngineBase &operator=(ScriptEngineBase &&other) noexcept;
 };
 
 template<class Fun>
@@ -125,17 +111,13 @@ ScriptEngineBase::makeProto(llvm::StringRef /*name*/, std::tuple<Args...>) {
 }
 
 template<class Type> llvm::Type *ScriptEngineBase::typeToLLVM() {
-  if constexpr (
-      std::is_same_v<Type, grammar::RawShort> || std::is_same_v<Type, short>) {
+  if constexpr (std::is_same_v<Type, short>) {
     return llvm::Type::getInt16Ty(*mCtx);
-  } else if constexpr (
-      std::is_same_v<Type, grammar::RawLong> || std::is_same_v<Type, int>) {
+  } else if constexpr (std::is_same_v<Type, int>) {
     return llvm::Type::getInt32Ty(*mCtx);
-  } else if constexpr (
-      std::is_same_v<Type, grammar::RawRef> || std::is_same_v<Type, uint32_t>) {
+  } else if constexpr (std::is_same_v<Type, uint32_t>) {
     return llvm::Type::getInt32Ty(*mCtx);
-  } else if constexpr (
-      std::is_same_v<Type, grammar::RawFloat> || std::is_same_v<Type, float>) {
+  } else if constexpr (std::is_same_v<Type, float>) {
     return llvm::Type::getFloatTy(*mCtx);
   } else {
     static_assert(false_v<Type>, "Type must be an AstType");

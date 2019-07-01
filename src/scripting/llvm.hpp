@@ -1,15 +1,12 @@
 #ifndef OPENOBL_SCRIPTING_LLVM_HPP
 #define OPENOBL_SCRIPTING_LLVM_HPP
 
-#include "scripting/ast.hpp"
-#include "scripting/grammar.hpp"
-#include "scripting/jit.hpp"
-#include "util/meta.hpp"
+#include "ast.hpp"
+#include "grammar.hpp"
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <optional>
-#include <type_traits>
 
 namespace oo {
 

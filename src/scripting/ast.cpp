@@ -1,4 +1,4 @@
-#include "scripting/ast.hpp"
+#include "ast.hpp"
 
 namespace oo {
 

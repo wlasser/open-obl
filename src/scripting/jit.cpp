@@ -1,4 +1,4 @@
-#include "scripting/jit.hpp"
+#include "jit.hpp"
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/IR/PassManager.h>
 #include <llvm/Transforms/InstCombine/InstCombine.h>

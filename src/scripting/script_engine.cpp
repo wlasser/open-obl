@@ -1,17 +1,45 @@
-#include "scripting/script_engine.hpp"
+#include "ast.hpp"
+#include "jit.hpp"
+#include "llvm.hpp"
 #include "scripting/logging.hpp"
+#include "scripting/script_engine.hpp"
 
 namespace oo {
 
-std::string ScriptEngine::getScriptname(const AstNode &node) {
+class ScriptEngine::Impl {
+ private:
+  nostdx::propagate_const<ScriptEngine *> mParent;
+
+ public:
+  /// Get the scriptname from a RawScriptnameStatement.
+  /// If `node` does not represent a RawScriptnameStatement, then an empty
+  /// string is returned.template<class T> T
+  [[nodiscard]] std::string getScriptname(const AstNode &node) const;
+
+  /// Compile an entire AST into LLVM IR.
+  /// \remark The returned module must still be JIT'd before it can be called.
+  [[nodiscard]] std::unique_ptr<llvm::Module>
+  compileAst(const AstNode &root, std::optional<uint32_t> calleeRef = {});
+
+  explicit Impl(ScriptEngine *parent) noexcept : mParent(parent) {}
+};
+
+ScriptEngine::ScriptEngine()
+    : ScriptEngineBase(), mImpl(std::make_unique<ScriptEngine::Impl>(this)) {}
+
+ScriptEngine::~ScriptEngine() = default;
+ScriptEngine::ScriptEngine(ScriptEngine &&) noexcept = default;
+ScriptEngine &ScriptEngine::operator=(ScriptEngine &&) noexcept = default;
+
+std::string ScriptEngine::Impl::getScriptname(const AstNode &node) const {
   if (!node.is<grammar::RawScriptnameStatement>()) return "";
   if (node.children.size() != 2) return "";
   return node.children[1]->content();
 }
 
 std::unique_ptr<llvm::Module>
-ScriptEngine::compileAst(const AstNode &root,
-                         std::optional<uint32_t> calleeRef) {
+ScriptEngine::Impl::compileAst(const AstNode &root,
+                               std::optional<uint32_t> calleeRef) {
   if (!root.is_root() || root.children.empty()) {
     // TODO: Cannot compile a partial AST, throw
     return nullptr;
@@ -23,10 +51,10 @@ ScriptEngine::compileAst(const AstNode &root,
     return nullptr;
   }
 
-  auto module{makeModule(moduleName)};
-  addExternalFunsToModule(module.get());
-  auto visitor{calleeRef ? makeVisitor(module.get(), *calleeRef)
-                         : makeVisitor(module.get())};
+  auto module{mParent->makeModule(moduleName)};
+  mParent->addExternalFunsToModule(module.get());
+  auto visitor{calleeRef ? mParent->makeVisitor(module.get(), *calleeRef)
+                         : mParent->makeVisitor(module.get())};
   visitor.visit(root);
 
   return module;
@@ -72,7 +100,7 @@ void ScriptEngine::compile(std::string_view script,
     return;
   }
 
-  auto module{compileAst(*root, calleeRef)};
+  auto module{mImpl->compileAst(*root, calleeRef)};
   if (!module) {
     // TODO: Failed to compile module, throw
     return;

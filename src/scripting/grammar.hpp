@@ -1,7 +1,7 @@
 #ifndef OPENOBL_SCRIPTING_GRAMMAR_HPP
 #define OPENOBL_SCRIPTING_GRAMMAR_HPP
 
-#include "scripting/pegtl.hpp"
+#include "pegtl.hpp"
 
 /// \addtogroup OpenOBLScripting Scripting
 /// Parser for the built-in default scripting language.

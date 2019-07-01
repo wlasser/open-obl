@@ -2,18 +2,23 @@
 #define OPENOBL_CONSOLE_ENGINE_HPP
 
 #include "scripting/script_engine_base.hpp"
+#include <nostdx/propagate_const.hpp>
 
 namespace oo {
 
 /// Compiles script statements entered into the developer console and runs them.
 class ConsoleEngine : public ScriptEngineBase {
  private:
-  [[nodiscard]] std::unique_ptr<llvm::Module>
-  compileStatement(const AstNode &node);
+  class Impl;
+  nostdx::propagate_const<std::unique_ptr<Impl>> mImpl;
 
  public:
-  ConsoleEngine() : ScriptEngineBase() {}
-  ~ConsoleEngine() = default;
+  ConsoleEngine();
+  ~ConsoleEngine();
+  ConsoleEngine(const ConsoleEngine &) = delete;
+  ConsoleEngine &operator=(const ConsoleEngine &) = delete;
+  ConsoleEngine(ConsoleEngine &&) noexcept;
+  ConsoleEngine &operator=(ConsoleEngine &&) noexcept;
 
   void execute(std::string_view statement);
 

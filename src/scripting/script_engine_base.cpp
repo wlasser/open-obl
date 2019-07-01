@@ -1,5 +1,6 @@
-#include "scripting/llvm.hpp"
-#include "scripting/pegtl.hpp"
+#include "jit.hpp"
+#include "llvm.hpp"
+#include "pegtl.hpp"
 #include "scripting/script_engine_base.hpp"
 #include <llvm/Support/TargetSelect.h>
 
@@ -12,6 +13,28 @@ ScriptEngineBase::ScriptEngineBase()
   llvm::InitializeNativeTargetAsmParser();
 
   mJit = std::make_unique<oo::Jit>();
+}
+
+ScriptEngineBase::~ScriptEngineBase() = default;
+
+ScriptEngineBase::ScriptEngineBase(ScriptEngineBase &&other) noexcept {
+  using std::swap;
+  swap(mCtx, other.mCtx);
+  swap(mJit, other.mJit);
+  swap(mExternFuns, other.mExternFuns);
+  swap(mModules, other.mModules);
+}
+
+ScriptEngineBase &
+ScriptEngineBase::operator=(ScriptEngineBase &&other) noexcept {
+  if (this != &other) {
+    using std::swap;
+    swap(mCtx, other.mCtx);
+    swap(mJit, other.mJit);
+    swap(mExternFuns, other.mExternFuns);
+    swap(mModules, other.mModules);
+  }
+  return *this;
 }
 
 llvm::LLVMContext &ScriptEngineBase::getContext() noexcept {

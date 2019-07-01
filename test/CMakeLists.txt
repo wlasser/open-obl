@@ -11,6 +11,7 @@ target_compile_features(OpenOBLTest PUBLIC cxx_std_17)
 set_property(TARGET OpenOBLTest PROPERTY CXX_EXTENSION OFF)
 
 target_include_directories(OpenOBLTest PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(OpenOBLTest PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 add_subdirectory(fs)
 add_subdirectory(gui)
