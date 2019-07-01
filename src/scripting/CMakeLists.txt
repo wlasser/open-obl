@@ -37,7 +37,7 @@ endif ()
 
 target_link_libraries(OpenOBLScripting
         PRIVATE MicrosoftGSL::GSL
-        PUBLIC OpenOBL::OpenOBLUtil spdlog::spdlog taocpp::pegtl)
+        PUBLIC OpenOBL::OpenOBLUtil em::nostdx spdlog::spdlog taocpp::pegtl)
 
 install(TARGETS OpenOBLScripting EXPORT OpenOBLScriptingTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

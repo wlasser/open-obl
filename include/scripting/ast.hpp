@@ -4,6 +4,7 @@
 #include "scripting/grammar.hpp"
 #include "scripting/pegtl.hpp"
 #include "util/meta.hpp"
+#include <nostdx/type_traits.hpp>
 #include <memory>
 #include <string>
 #include <tuple>
@@ -25,57 +26,57 @@ class AstNode {
   /// Should be all those types `T` for which AstSelector<T> defines the member
   /// value `value` equal to `true`.
   using type_variant_t = std::variant<
-      type_identity<std::tuple<>>,
-      type_identity<grammar::RawScriptnameStatement>,
-      type_identity<grammar::RawScriptname>,
-      type_identity<grammar::RawIdentifier>,
-      type_identity<grammar::BlockStatement>,
-      type_identity<grammar::StringLiteralContents>,
-      type_identity<grammar::IntegerLiteral>,
-      type_identity<grammar::RefLiteralContents>,
-      type_identity<grammar::FloatLiteral>,
-      type_identity<grammar::DeclarationStatement>,
-      type_identity<grammar::SetStatement>,
-      type_identity<grammar::ReturnStatement>,
-      type_identity<grammar::IfStatement>,
-      type_identity<grammar::ElseifStatement>,
-      type_identity<grammar::ElseStatement>,
-      type_identity<grammar::CallStatement>,
-      type_identity<grammar::RawShort>,
-      type_identity<grammar::RawLong>,
-      type_identity<grammar::RawFloat>,
-      type_identity<grammar::RawRef>,
-      type_identity<grammar::RawMemberAccess>,
-      type_identity<grammar::StrPlus>,
-      type_identity<grammar::StrDash>,
-      type_identity<grammar::StrStar>,
-      type_identity<grammar::StrSlash>,
-      type_identity<grammar::StrLteq>,
-      type_identity<grammar::StrGteq>,
-      type_identity<grammar::StrLt>,
-      type_identity<grammar::StrGt>,
-      type_identity<grammar::StrEqeq>,
-      type_identity<grammar::StrNeq>,
-      type_identity<grammar::StrAnd>,
-      type_identity<grammar::StrOr>,
-      type_identity<grammar::RawCall>,
-      type_identity<grammar::BinaryOperator>,
-      type_identity<grammar::UnaryOperator>,
-      type_identity<grammar::MultiplicativeBinaryOperator>,
-      type_identity<grammar::AdditiveBinaryOperator>,
-      type_identity<grammar::ConditionalBinaryOperator>,
-      type_identity<grammar::EqualityBinaryOperator>,
-      type_identity<grammar::ConjunctionBinaryOperator>,
-      type_identity<grammar::DisjunctionBinaryOperator>,
-      type_identity<grammar::PrimaryExpression>,
-      type_identity<grammar::UnaryExpression>,
-      type_identity<grammar::MulExpression>,
-      type_identity<grammar::AddExpression>,
-      type_identity<grammar::CondExpression>,
-      type_identity<grammar::EqExpression>,
-      type_identity<grammar::AndExpression>,
-      type_identity<grammar::OrExpression>,
-      type_identity<grammar::Expression>>;
+      nostdx::type_identity<std::tuple<>>,
+      nostdx::type_identity<grammar::RawScriptnameStatement>,
+      nostdx::type_identity<grammar::RawScriptname>,
+      nostdx::type_identity<grammar::RawIdentifier>,
+      nostdx::type_identity<grammar::BlockStatement>,
+      nostdx::type_identity<grammar::StringLiteralContents>,
+      nostdx::type_identity<grammar::IntegerLiteral>,
+      nostdx::type_identity<grammar::RefLiteralContents>,
+      nostdx::type_identity<grammar::FloatLiteral>,
+      nostdx::type_identity<grammar::DeclarationStatement>,
+      nostdx::type_identity<grammar::SetStatement>,
+      nostdx::type_identity<grammar::ReturnStatement>,
+      nostdx::type_identity<grammar::IfStatement>,
+      nostdx::type_identity<grammar::ElseifStatement>,
+      nostdx::type_identity<grammar::ElseStatement>,
+      nostdx::type_identity<grammar::CallStatement>,
+      nostdx::type_identity<grammar::RawShort>,
+      nostdx::type_identity<grammar::RawLong>,
+      nostdx::type_identity<grammar::RawFloat>,
+      nostdx::type_identity<grammar::RawRef>,
+      nostdx::type_identity<grammar::RawMemberAccess>,
+      nostdx::type_identity<grammar::StrPlus>,
+      nostdx::type_identity<grammar::StrDash>,
+      nostdx::type_identity<grammar::StrStar>,
+      nostdx::type_identity<grammar::StrSlash>,
+      nostdx::type_identity<grammar::StrLteq>,
+      nostdx::type_identity<grammar::StrGteq>,
+      nostdx::type_identity<grammar::StrLt>,
+      nostdx::type_identity<grammar::StrGt>,
+      nostdx::type_identity<grammar::StrEqeq>,
+      nostdx::type_identity<grammar::StrNeq>,
+      nostdx::type_identity<grammar::StrAnd>,
+      nostdx::type_identity<grammar::StrOr>,
+      nostdx::type_identity<grammar::RawCall>,
+      nostdx::type_identity<grammar::BinaryOperator>,
+      nostdx::type_identity<grammar::UnaryOperator>,
+      nostdx::type_identity<grammar::MultiplicativeBinaryOperator>,
+      nostdx::type_identity<grammar::AdditiveBinaryOperator>,
+      nostdx::type_identity<grammar::ConditionalBinaryOperator>,
+      nostdx::type_identity<grammar::EqualityBinaryOperator>,
+      nostdx::type_identity<grammar::ConjunctionBinaryOperator>,
+      nostdx::type_identity<grammar::DisjunctionBinaryOperator>,
+      nostdx::type_identity<grammar::PrimaryExpression>,
+      nostdx::type_identity<grammar::UnaryExpression>,
+      nostdx::type_identity<grammar::MulExpression>,
+      nostdx::type_identity<grammar::AddExpression>,
+      nostdx::type_identity<grammar::CondExpression>,
+      nostdx::type_identity<grammar::EqExpression>,
+      nostdx::type_identity<grammar::AndExpression>,
+      nostdx::type_identity<grammar::OrExpression>,
+      nostdx::type_identity<grammar::Expression>>;
 
  private:
   /// The current type represented by the AstNode.
@@ -92,7 +93,7 @@ class AstNode {
 
   /// Return `true` if this node represents a `T`, and `false` otherwise.
   template<class T> [[nodiscard]] constexpr bool is() const noexcept {
-    return std::holds_alternative<type_identity<T>>(mCurrentType);
+    return std::holds_alternative<nostdx::type_identity<T>>(mCurrentType);
   }
 
   /// Return `true` if this node is the root of the AST, and `false` otherwise.
@@ -159,7 +160,7 @@ class AstNode {
   }
 
   template<class T> constexpr void setType() noexcept {
-    mCurrentType.emplace<type_identity<T>>();
+    mCurrentType.emplace<nostdx::type_identity<T>>();
   }
 
   AstNode() = default;
@@ -177,7 +178,7 @@ class AstNode {
   /// Called by PEGTL to initialize the (non-root) node.
   template<class Rule, class Input>
   void start(const Input &in) {
-    mCurrentType.emplace<type_identity<Rule>>();
+    mCurrentType.emplace<nostdx::type_identity<Rule>>();
     mSource = in.source();
     mBegin = in.iterator();
   }

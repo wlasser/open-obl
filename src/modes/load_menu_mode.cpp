@@ -3,6 +3,7 @@
 #include "modes/game_mode.hpp"
 #include "save_state.hpp"
 #include <boost/range/adaptor/indexed.hpp>
+#include <nostdx/functional.hpp>
 #include <spdlog/fmt/bundled/chrono.h>
 
 namespace oo {
@@ -102,7 +103,7 @@ LoadMenuMode::handleEventImpl(ApplicationContext &ctx,
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
   if (!keyEvent) return {false, std::nullopt};
 
-  return std::visit(overloaded{
+  return std::visit(nostdx::overloaded{
       [this](oo::event::Forward e) -> transition_t {
         if (e.down) setCurrentSave(mSaveIndex - 1u);
         return {};

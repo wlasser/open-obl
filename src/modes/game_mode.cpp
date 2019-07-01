@@ -11,9 +11,9 @@
 #include "resolvers/cell_resolver.hpp"
 #include "resolvers/wrld_resolver.hpp"
 #include "sdl/sdl.hpp"
-#include "util/meta.hpp"
 #include "util/settings.hpp"
 #include <imgui/imgui.h>
+#include <nostdx/functional.hpp>
 #include <OgreBone.h>
 #include <OgreSkeletonInstance.h>
 #include <spdlog/fmt/ostr.h>
@@ -66,7 +66,7 @@ GameMode::handleEvent(ApplicationContext &ctx, const sdl::Event &event) {
   auto keyEvent{ctx.getKeyMap().translateKey(event)};
   auto &playerController{mPlayer->getController()};
   if (keyEvent) {
-    return std::visit(overloaded{
+    return std::visit(nostdx::overloaded{
         [&](oo::event::Forward e) -> transition_t {
           playerController.handleEvent(e);
           return {};

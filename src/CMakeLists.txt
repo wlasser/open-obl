@@ -128,6 +128,7 @@ target_link_libraries(OpenOBL PRIVATE
         OpenOBL::OpenOBLUtil
         Boost::boost
         Boost::fiber
+        em::nostdx
         MicrosoftGSL::GSL
         OgreMain
         OgreGLSupport

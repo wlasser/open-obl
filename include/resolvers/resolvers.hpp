@@ -9,6 +9,7 @@
 #include <boost/mp11.hpp>
 #include <btBulletDynamicsCommon.h>
 #include <gsl/gsl>
+#include <nostdx/functional.hpp>
 #include <OgreSceneManager.h>
 #include <tl/optional.hpp>
 #include <mutex>
@@ -418,7 +419,7 @@ bool Resolver<R, IdType>::insertOrAssign(IdType baseId, const R &rec) {
   std::scoped_lock lock{mMtx};
   auto[it, inserted]{mRecords.try_emplace(baseId, std::in_place_index<1>, rec)};
   if (inserted) return true;
-  return std::visit(overloaded{
+  return std::visit(nostdx::overloaded{
       [&rec](R &oldRec) {
         oldRec = rec;
         return false;

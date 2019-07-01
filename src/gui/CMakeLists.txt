@@ -64,6 +64,7 @@ target_link_libraries(OpenOBLGui PRIVATE
         PUBLIC
         Boost::boost
         Boost::fiber
+        em::nostdx
         OgreOverlay
         pugixml)
 

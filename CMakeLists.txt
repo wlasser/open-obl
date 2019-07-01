@@ -28,6 +28,9 @@ FetchContent_Declare(Bullet
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v2.7.0)
+FetchContent_Declare(nostdx
+        GIT_REPOSITORY https://github.com/emilymansfield/nostdx.git
+        GIT_TAG master)
 FetchContent_Declare(PEGTL
         GIT_REPOSITORY https://github.com/taocpp/PEGTL.git
         GIT_TAG cb86441d257dc4bfe28f6f53a8e1974496797fc3)
@@ -93,6 +96,12 @@ FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
     FetchContent_Populate(Catch)
     add_subdirectory(${catch_SOURCE_DIR} ${catch_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(nostdx)
+if (NOT Catch_populated)
+    FetchContent_Populate(nostdx)
+    add_subdirectory(${nostdx_SOURCE_DIR} ${nostdx_BINARY_DIR})
 endif ()
 
 FetchContent_GetProperties(PEGTL)

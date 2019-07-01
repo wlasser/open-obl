@@ -1,6 +1,6 @@
-#include "util/meta.hpp"
 #include "gui/stack/types.hpp"
 #include "gui/xml.hpp"
+#include <nostdx/functional.hpp>
 #include <boost/convert.hpp>
 #include <boost/convert/stream.hpp>
 
@@ -33,7 +33,7 @@ ValueType parseValueType(std::string_view str) {
 }
 
 std::string appendSwitchCase(std::string name, const ValueType &val) {
-  return std::visit(overloaded{
+  return std::visit(nostdx::overloaded{
       [&name](int i) {
         return name.append(std::to_string(i));
       },

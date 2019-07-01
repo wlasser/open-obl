@@ -1,13 +1,14 @@
 #include "gui/stack/instructions.hpp"
 #include "gui/stack/types.hpp"
 #include "gui/traits.hpp"
+#include <nostdx/functional.hpp>
 #include <string>
 #include <variant>
 
 namespace gui::stack {
 
 void push_t::operator()(Stack &stack) const {
-  std::visit(overloaded{
+  std::visit(nostdx::overloaded{
       [&stack](const TraitName &trait) {
         // Trailing underscore implies a switch statement using the working
         // value, otherwise replace the working value.
