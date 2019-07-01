@@ -38,7 +38,8 @@ not fully supported. As a summary,
   though earlier versions of Clang are likely to work too.
 - Linux with GCC 8.3+ builds successfully, but there is an outstanding unknown
   bug causing the physics engine to misbehave.
-- Windows with MSVC 19.21+ builds successfully, but currently fails to start.
+- Windows with MSVC 19.21+ builds and runs successfully, but may have graphical
+  issues.
 - Windows with MinGW is unsupported due to problems with `thread_local` storage
   that prevent `Boost::Fiber` from building on that platform.
 - No other platforms have been tested.
