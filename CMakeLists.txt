@@ -43,6 +43,9 @@ FetchContent_Declare(pugixml
 FetchContent_Declare(spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
         GIT_TAG 74dbf4cf702b49c98642c9afe74d114a238a6a07)
+FetchContent_Declare(tloptional
+        GIT_REPOSITORY https://github.com/tartanllama/optional.git
+        GIT_TAG master)
 
 if (OO_USE_EXTERNAL_BULLET)
     find_package(Bullet 2.88 REQUIRED MODULE)
@@ -124,6 +127,12 @@ if (NOT spdlog_populated)
     add_subdirectory(${spdlog_SOURCE_DIR} ${spdlog_BINARY_DIR})
 endif ()
 
+FetchContent_GetProperties(tloptional)
+if (NOT tloptional_populated)
+    FetchContent_Populate(tloptional)
+    add_subdirectory(${tloptional_SOURCE_DIR} ${tloptional_BINARY_DIR})
+endif ()
+
 # Link-time optimization
 cmake_policy(SET CMP0069 NEW)
 if (OO_USE_LTO)
@@ -147,7 +156,6 @@ message(STATUS "Using LLVMConfig.cmake in ${LLVM_DIR}")
 set(GSL_CXX_STANDARD 17 CACHE STRING "C++ standard used by GSL")
 add_subdirectory(lib/gsl)
 add_subdirectory(lib/polymorphic_value)
-add_subdirectory(lib/tl)
 add_subdirectory(lib/soloud)
 
 # Globally set warning flags for all internal dependencies.

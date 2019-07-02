@@ -22,7 +22,7 @@ target_link_libraries(OpenOBLConfig PRIVATE
         OpenOBL::OpenOBLUtil
         Boost::boost
         Boost::fiber
-        tl::tloptional)
+        optional)
 
 install(TARGETS OpenOBLConfig EXPORT OpenOBLConfigTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

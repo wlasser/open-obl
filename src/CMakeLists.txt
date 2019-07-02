@@ -137,7 +137,7 @@ target_link_libraries(OpenOBL PRIVATE
         RenderSystem_GL3Plus
         SDL2::SDL2
         spdlog::spdlog
-        tl::tloptional)
+        optional)
 
 if (MSVC)
     # TODO: Export symbols properly on MSVC
