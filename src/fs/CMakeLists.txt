@@ -12,7 +12,11 @@ target_sources(OpenOBLFS PRIVATE
         ${CMAKE_SOURCE_DIR}/include/fs/path.hpp
         path.cpp)
 
-target_link_libraries(OpenOBLFS PRIVATE Boost::boost Boost::fiber)
+target_link_libraries(OpenOBLFS PRIVATE
+        Boost::boost
+        Boost::fiber
+        PUBLIC
+        OpenOBL::OpenOBLUtil)
 
 # TODO: Support libc++, probably by providing a OO_USE_LIBC++ option.
 if (NOT MSVC)

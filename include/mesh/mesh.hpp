@@ -6,7 +6,7 @@
 #include <OgreAnimation.h>
 #include <OgreAxisAlignedBox.h>
 #include <OgreResource.h>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 /// \defgroup OpenOBLMesh OGRE Mesh Replacement Library
 /// Provides similar but API-incompatible alternatives to mesh-related

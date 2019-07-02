@@ -15,11 +15,11 @@ target_sources(OpenOBLConfig PRIVATE
         globals.cpp)
 
 target_link_libraries(OpenOBLConfig PRIVATE
-        OpenOBL::OpenOBLUtil
         spdlog::spdlog
         PUBLIC
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLRecord
+        OpenOBL::OpenOBLUtil
         Boost::boost
         Boost::fiber
         tl::tloptional)

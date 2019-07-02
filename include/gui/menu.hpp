@@ -3,7 +3,7 @@
 
 #include "gui/ui_element.hpp"
 #include <OgreOverlay.h>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 namespace gui {
 

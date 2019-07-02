@@ -12,7 +12,7 @@ target_sources(OpenOBLSDL PRIVATE
         ${CMAKE_SOURCE_DIR}/include/sdl/sdl.hpp
         sdl.cpp)
 
-target_link_libraries(OpenOBLSDL PUBLIC SDL2::SDL2)
+target_link_libraries(OpenOBLSDL PUBLIC OpenOBL::OpenOBLUtil SDL2::SDL2)
 
 install(TARGETS OpenOBLSDL EXPORT OpenOBLSDLTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

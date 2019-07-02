@@ -22,7 +22,7 @@ target_sources(OpenOBLMesh PRIVATE
 
 target_link_libraries(OpenOBLMesh
         PRIVATE Boost::boost
-        PUBLIC MicrosoftGSL::GSL OgreMain)
+        PUBLIC OpenOBL::OpenOBLUtil MicrosoftGSL::GSL OgreMain)
 
 install(TARGETS OpenOBLMesh EXPORT OpenOBLMeshTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

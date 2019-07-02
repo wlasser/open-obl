@@ -13,7 +13,11 @@ target_sources(OpenOBLBsa PRIVATE
         bsa.cpp)
 
 target_link_libraries(OpenOBLBsa PRIVATE ZLIB::ZLIB
-        PUBLIC OpenOBL::OpenOBLIO Boost::boost Boost::fiber)
+        PUBLIC
+        OpenOBL::OpenOBLIO
+        OpenOBL::OpenOBLUtil
+        Boost::boost
+        Boost::fiber)
 
 install(TARGETS OpenOBLBsa EXPORT OpenOBLBsaTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

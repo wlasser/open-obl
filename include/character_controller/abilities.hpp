@@ -7,7 +7,7 @@
 #include <btBulletDynamicsCommon.h>
 #include <OgreMath.h>
 #include <optional>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 namespace oo {
 

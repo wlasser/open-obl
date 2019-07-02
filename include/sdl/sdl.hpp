@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <type_traits>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 // WTF X.h
 #undef InputFocus

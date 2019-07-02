@@ -8,7 +8,7 @@
 #include <OgreMatrix3.h>
 #include <OgreMatrix4.h>
 #include <OgreVector.h>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 /// \defgroup OpenOBLMath Math Compatibility Library
 /// Provides additional math functions and conversions between different

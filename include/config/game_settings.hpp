@@ -7,7 +7,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <string>
-#include "windows_cleanup.hpp"
+#include "util/windows_cleanup.hpp"
 
 namespace oo {
 

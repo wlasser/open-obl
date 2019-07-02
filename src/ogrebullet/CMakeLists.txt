@@ -26,6 +26,7 @@ target_link_libraries(OpenOBLOgreBullet PRIVATE
         OpenOBL::OpenOBLOgre
         spdlog::spdlog
         PUBLIC
+        OpenOBL::OpenOBLUtil
         Bullet::BulletCollision
         Bullet::BulletDynamics
         MicrosoftGSL::GSL

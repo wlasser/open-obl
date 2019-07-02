@@ -10,6 +10,7 @@ target_include_directories(OpenOBLMath INTERFACE
 
 target_link_libraries(OpenOBLMath INTERFACE
         OpenOBL::OpenOBLNif
+        OpenOBL::OpenOBLUtil
         Boost::boost
         Bullet::LinearMath
         OgreMain)

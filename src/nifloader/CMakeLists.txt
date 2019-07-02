@@ -40,6 +40,7 @@ target_link_libraries(OpenOBLNifloader
         PUBLIC
         OpenOBL::OpenOBLMesh
         OpenOBL::OpenOBLNif
+        OpenOBL::OpenOBLUtil
         OpenOBL::OpenOBLOgreBullet
         Boost::boost
         MicrosoftGSL::GSL
