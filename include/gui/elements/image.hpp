@@ -3,7 +3,6 @@
 
 #include "gui/elements/interactable_mixin.hpp"
 #include "gui/elements/panel_mixin.hpp"
-#include "gui/screen.hpp"
 #include "gui/ui_element.hpp"
 #include <OgrePanelOverlayElement.h>
 #include <OgreMaterial.h>

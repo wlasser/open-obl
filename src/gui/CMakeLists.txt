@@ -7,6 +7,7 @@ add_library(OpenOBL::OpenOBLGui ALIAS OpenOBLGui)
 target_include_directories(OpenOBLGui PUBLIC
         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>)
+target_include_directories(OpenOBLGui PRIVATE ${CMAKE_SOURCE_DIR}/src)
 
 target_sources(OpenOBLGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/elements/button.hpp
@@ -17,23 +18,14 @@ target_sources(OpenOBLGui PRIVATE
         ${CMAKE_SOURCE_DIR}/include/gui/elements/text.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/elements/vertical_scroll.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/gui.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/gui_impl.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/logging.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/load_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/loading_menu.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/menus/main_menu.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/screen.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/sound.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/stack/instructions.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/stack/program.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/stack/types.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/strings.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/trait.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/trait_selector.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/traits.hpp
         ${CMAKE_SOURCE_DIR}/include/gui/ui_element.hpp
-        ${CMAKE_SOURCE_DIR}/include/gui/xml.hpp
         elements/image.cpp
         elements/interactable_mixin.cpp
         elements/panel_mixin.cpp
@@ -41,32 +33,41 @@ target_sources(OpenOBLGui PRIVATE
         elements/text.cpp
         gui.cpp
         gui_impl.cpp
+        gui_impl.hpp
         menus/load_menu.cpp
         menus/loading_menu.cpp
         menus/main_menu.cpp
         screen.cpp
+        screen.hpp
         sound.cpp
         stack/instructions.cpp
+        stack/instructions.hpp
         stack/program.cpp
+        stack/program.hpp
         stack/types.cpp
+        stack/types.hpp
         strings.cpp
+        strings.hpp
         trait.cpp
         trait_selector.cpp
+        trait_selector.hpp
         traits.cpp
-        xml.cpp)
+        traits.hpp
+        xml.cpp
+        xml.hpp)
 
 target_link_libraries(OpenOBLGui PRIVATE
         OpenOBL::OpenOBLConfig
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLOgre
         OpenOBL::OpenOBLUtil
-        spdlog::spdlog
+        pugixml
         PUBLIC
         Boost::boost
         Boost::fiber
         em::nostdx
         OgreOverlay
-        pugixml)
+        spdlog::spdlog)
 
 install(TARGETS OpenOBLGui EXPORT OpenOBLGuiTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})

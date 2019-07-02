@@ -2,7 +2,6 @@
 #define OPENOBL_GUI_LOAD_GAME_ENTRY_HPP
 
 #include "gui/elements/rect.hpp"
-#include "gui/traits.hpp"
 #include <array>
 
 namespace gui {
