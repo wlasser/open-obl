@@ -77,8 +77,9 @@ BsaArchive::find(const Ogre::String &pattern,
 
   auto ret{std::make_shared<std::vector<T>>()};
 
-  for (const auto &folder : *mReader) {
-    oo::Path folderPath{folder.name};
+  for (bsa::FolderView folder : *mReader) {
+    // TODO: oo::Path(std::string_view) constructor
+    oo::Path folderPath{std::string(folder.name())};
     if (dirs) {
       // Only want to check directories, not files
       if (folderPath.match(patternPath)) {
@@ -86,8 +87,9 @@ BsaArchive::find(const Ogre::String &pattern,
       }
     } else {
       // Want to check for files
-      for (const auto &file : folder.files) {
-        const oo::Path filePath{file};
+      for (bsa::FileView file : folder) {
+        // TODO: oo::Path(std::string_view) constructor
+        const oo::Path filePath{std::string(file.name())};
         const auto path{fileOnly ? filePath : (folderPath / filePath)};
         if (path.match(patternPath)) {
           ret->push_back(f(folderPath / filePath));

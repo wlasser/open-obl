@@ -19,8 +19,12 @@ namespace bsa {
 // Using a nested namespace here really confused Doxygen, which ends up putting
 // everything below in a bsa::bsa namespace.
 namespace impl {
-class BsaIterator;
+class FileIterator;
+class FolderIterator;
 } // namespace impl
+
+class FolderView;
+class FileView;
 
 /// `std::istream` interface to the uncompressed data of a file in a BSA.
 /// \ingroup OpenOBLBsa
@@ -138,8 +142,10 @@ enum class FileType : uint32_t {
 /// \ingroup OpenOBLBsa
 class BsaReader {
  public:
-  using iterator = impl::BsaIterator;
-  friend impl::BsaIterator;
+  using iterator = impl::FolderIterator;
+  using const_iterator = impl::FolderIterator;
+  using difference_type = std::ptrdiff_t;
+  using size_type = std::size_t;
 
   struct FileRecord {
     uint32_t size;
@@ -179,6 +185,8 @@ class BsaReader {
 
   iterator begin() const;
   iterator end() const;
+  const_iterator cbegin() const;
+  const_iterator cend() const;
 
   inline FolderAccessor operator[](HashResult hash) const {
     return FolderAccessor(hash, *this);
@@ -198,13 +206,21 @@ class BsaReader {
   FileType getFileType() const noexcept;
 
  private:
+  friend impl::FileIterator;
+  friend impl::FolderIterator;
+  friend FolderView;
+  friend FileView;
+
+  using FileRecordMap = std::map<HashResult, FileRecord>;
+
   struct FolderRecord {
     std::string name;
-    std::map<HashResult, FileRecord> files;
+    FileRecordMap files;
   };
 
-  using RecordMap = std::map<HashResult, FolderRecord>;
-  RecordMap mFolderRecords;
+  using FolderRecordMap = std::map<HashResult, FolderRecord>;
+
+  FolderRecordMap mFolderRecords;
   mutable std::ifstream mIs;
   mutable boost::fibers::mutex mMutex{};
 
@@ -224,51 +240,170 @@ class BsaReader {
   bool readFileNames();
 };
 
-/// Public version of `BsaReader::FolderRecord`, for iterating.
-/// \todo I am unsatisfied with how the filenames are duplicated in memory
-///       between these records and the existing private ones. Can we get away
-///       with storing `std::string_view`s here?
-/// \ingroup OpenOBLBsa
-struct FolderRecord {
-  std::string name;
-  std::vector<std::string> files;
+// A FileView is a view to a file.
+class FileView {
+ public:
+  [[nodiscard]] bool empty() const noexcept;
+
+  [[nodiscard]] std::string_view name() const noexcept;
+  [[nodiscard]] HashResult hash() const noexcept;
+  [[nodiscard]] bool compressed() const noexcept;
+  [[nodiscard]] uint32_t size() const noexcept;
+  [[nodiscard]] uint32_t offset() const noexcept;
+
+ private:
+  friend impl::FileIterator;
+  friend FolderView;
+
+  using owner_type = BsaReader::FileRecord;
+  explicit FileView(HashResult hash, const owner_type *owner) noexcept
+      : mHash(hash), mOwner(owner) {}
+
+  HashResult mHash{};
+  const owner_type *mOwner{};
+};
+
+// A FolderView is a view to a folder. It is a Container of FileViews.
+class FolderView {
+ public:
+//  using key_type = HashResult;
+//  using mapped_type = FileView;
+//  using value_type = std::pair<const HashResult, FileView>;
+  using value_type = FileView;
+  using size_type = std::size_t;
+  using difference_type = std::ptrdiff_t;
+//  using reference = const value_type &;
+//  using const_reference = const value_type &;
+  using iterator = impl::FileIterator;
+  using const_iterator = impl::FileIterator;
+
+  [[nodiscard]] iterator begin() const noexcept;
+  [[nodiscard]] iterator end() const noexcept;
+  [[nodiscard]] const_iterator cbegin() const noexcept;
+  [[nodiscard]] const_iterator cend() const noexcept;
+
+  [[nodiscard]] size_type size() const noexcept;
+  [[nodiscard]] size_type max_size() const noexcept;
+  [[nodiscard]] bool empty() const noexcept;
+
+  [[nodiscard]] FileView at(HashResult fileHash) const;
+  [[nodiscard]] FileView operator[](HashResult fileHash) const noexcept;
+
+  [[nodiscard]] iterator find(HashResult fileHash) const noexcept;
+  [[nodiscard]] bool contains(HashResult fileHash) const noexcept;
+
+  [[nodiscard]] std::string_view name() const noexcept;
+  [[nodiscard]] HashResult hash() const noexcept;
+
+ private:
+  friend BsaReader;
+  friend impl::FolderIterator;
+
+  using owner_type = BsaReader::FolderRecord;
+  explicit FolderView(HashResult hash, const owner_type *owner) noexcept
+      : mHash(hash), mOwner(owner) {}
+
+  HashResult mHash{};
+  const owner_type *mOwner{};
 };
 
 namespace impl {
 
-class BsaIterator {
+// Thanks Arthur O'Dwyer
+// https://quuxplusone.github.io/blog/2019/02/06/arrow-proxy/
+template<class Reference>
+struct ArrowProxy {
+  Reference r;
+  Reference *operator->() { return &r; }
+};
+
+struct sentinel_tag_t {};
+[[maybe_unused]] constexpr static inline sentinel_tag_t sentinel_tag{};
+
+class FileIterator {
+ private:
+  using internal_iterator = BsaReader::FileRecordMap::const_iterator;
+
  public:
-  // Iterator traits
-  using value_type = bsa::FolderRecord;
+  using value_type = FileView;
   using difference_type = std::ptrdiff_t;
-  using pointer = const value_type *;
-  using reference = const value_type &;
-  using iterator_category = std::bidirectional_iterator_tag;
+  using reference = FileView;
+  using pointer = ArrowProxy<reference>;
+  // Limited to InputIterator because we have to return FileView by value.
+  using iterator_category = std::input_iterator_tag;
 
-  explicit BsaIterator(BsaReader::RecordMap::const_iterator currentRecord,
-                       bool isEnd = false) : mCurrentRec(currentRecord) {
-    if (!isEnd) updateCurrentPublicRecord();
-  }
+  friend bool operator==(const FileIterator &a, const FileIterator &b) noexcept;
 
-  reference operator*() const;
-  pointer operator->() const;
+  reference operator*() const noexcept;
+  pointer operator->() const noexcept;
 
-  BsaIterator &operator++();
-  const BsaIterator operator++(int);
-  BsaIterator &operator--();
-  const BsaIterator operator--(int);
-
-  bool operator==(const BsaIterator &rhs);
-  bool operator!=(const BsaIterator &rhs) {
-    return !operator==(rhs);
-  }
+  FileIterator &operator++() noexcept;
+  const FileIterator operator++(int) noexcept;
 
  private:
-  BsaReader::RecordMap::const_iterator mCurrentRec{};
-  mutable bsa::FolderRecord mCurrentPublicRec{};
+  friend FolderView;
 
-  reference updateCurrentPublicRecord() const;
+  internal_iterator mIt;
+  bool mIsSentinel;
+
+  explicit FileIterator(internal_iterator it) noexcept
+      : mIt(it), mIsSentinel(false) {}
+  explicit FileIterator(sentinel_tag_t) noexcept : mIsSentinel(true) {}
 };
+
+inline bool operator==(const FileIterator &a, const FileIterator &b) noexcept {
+  if (a.mIsSentinel && b.mIsSentinel) return true;
+  if (a.mIsSentinel || b.mIsSentinel) return false;
+  return a.mIt == b.mIt;
+}
+
+inline bool operator!=(const FileIterator &a, const FileIterator &b) noexcept {
+  return !(a == b);
+}
+
+class FolderIterator {
+ private:
+  using internal_iterator = BsaReader::FolderRecordMap::const_iterator;
+
+ public:
+  using value_type = FolderView;
+  using difference_type = std::ptrdiff_t;
+  using reference = FolderView;
+  using pointer = ArrowProxy<reference>;
+  // Limited to InputIterator because we have to return FolderView by value.
+  using iterator_category = std::input_iterator_tag;
+
+  friend bool
+  operator==(const FolderIterator &a, const FolderIterator &b) noexcept;
+
+  reference operator*() const noexcept;
+  pointer operator->() const noexcept;
+
+  FolderIterator &operator++() noexcept;
+  const FolderIterator operator++(int) noexcept;
+
+ private:
+  friend BsaReader;
+
+  internal_iterator mIt;
+  bool mIsSentinel;
+
+  explicit FolderIterator(internal_iterator it) noexcept
+      : mIt(it), mIsSentinel(false) {}
+  explicit FolderIterator(sentinel_tag_t) noexcept : mIsSentinel(true) {}
+};
+
+inline bool
+operator==(const FolderIterator &a, const FolderIterator &b) noexcept {
+  if (a.mIsSentinel && b.mIsSentinel) return true;
+  if (a.mIsSentinel || b.mIsSentinel) return false;
+  return a.mIt == b.mIt;
+}
+
+inline bool
+operator!=(const FolderIterator &a, const FolderIterator &b) noexcept {
+  return !(a == b);
+}
 
 /// Compute the sdbm hash of the given range.
 /// \remark The *LessThanComparable* requirement is so that things like

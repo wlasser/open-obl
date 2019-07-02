@@ -74,10 +74,11 @@ bsa::BsaContext::BsaContext(std::string archiveName)
     : mBsaReader(std::move(archiveName)),
       mRoot(std::make_unique<bsa::FolderNode>("/", nullptr)) {
 
-  for (const auto &folderRec : mBsaReader) {
+  for (bsa::FolderView folder : mBsaReader) {
     // Precompute hash for faster lookup in files
-    const uint64_t folderHash{bsa::genHash(folderRec.name, HashType::Folder)};
-    const oo::Path folderPath{folderRec.name};
+    const uint64_t folderHash{folder.hash()};
+    // TODO: oo::Path(std::string_view) constructor
+    const oo::Path folderPath{std::string(folder.name())};
 
     bsa::FolderNode *folderNode{getRoot()};
 
@@ -95,8 +96,8 @@ bsa::BsaContext::BsaContext(std::string archiveName)
     }
 
     // `folderNode` now points to correct folder in the tree, so add the files
-    for (const auto &filename : folderRec.files) {
-      const uint64_t fileHash{bsa::genHash(filename, bsa::HashType::File)};
+    for (bsa::FileView file: folder) {
+      const uint64_t fileHash{file.hash()};
       auto fileRec{*mBsaReader.getRecord(folderHash, fileHash)};
       if (fileRec.compressed) {
         fileRec.size = mBsaReader[folderHash].getSize(fileHash);

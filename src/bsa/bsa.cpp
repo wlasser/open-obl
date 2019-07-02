@@ -260,12 +260,20 @@ BsaReader::getRecord(HashResult folderHash, HashResult fileHash) const {
   return fileRecord->second;
 }
 
-BsaReader::iterator BsaReader::begin() const {
-  return BsaReader::iterator{mFolderRecords.begin()};
+auto BsaReader::begin() const -> iterator {
+  return iterator{mFolderRecords.begin()};
 }
 
-BsaReader::iterator BsaReader::end() const {
-  return BsaReader::iterator{mFolderRecords.end(), true};
+auto BsaReader::end() const -> iterator {
+  return iterator{mFolderRecords.end()};
+}
+
+auto BsaReader::cbegin() const -> const_iterator {
+  return const_iterator{mFolderRecords.cbegin()};
+}
+
+auto BsaReader::cend() const -> const_iterator {
+  return const_iterator{mFolderRecords.cend()};
 }
 
 ArchiveFlag BsaReader::getArchiveFlags() const noexcept {
@@ -276,51 +284,136 @@ FileType BsaReader::getFileType() const noexcept {
   return mFileType;
 }
 
+//===----------------------------------------------------------------------===//
+// FileView
+//===----------------------------------------------------------------------===//
+bool FileView::empty() const noexcept { return !mOwner || size() == 0u; }
+auto FileView::name() const noexcept -> std::string_view {
+  return mOwner->name;
+}
+auto FileView::hash() const noexcept -> HashResult { return mHash; }
+bool FileView::compressed() const noexcept { return mOwner->compressed; }
+auto FileView::size() const noexcept -> uint32_t { return mOwner->size; }
+auto FileView::offset() const noexcept -> uint32_t { return mOwner->offset; }
+
+//===----------------------------------------------------------------------===//
+// FolderView
+//===----------------------------------------------------------------------===//
+
+auto FolderView::begin() const noexcept -> iterator {
+  return mOwner ? iterator{mOwner->files.begin()}
+                : iterator{impl::sentinel_tag};
+}
+
+auto FolderView::end() const noexcept -> iterator {
+  return mOwner ? iterator{mOwner->files.end()}
+                : iterator{impl::sentinel_tag};
+}
+
+auto FolderView::cbegin() const noexcept -> const_iterator {
+  return mOwner ? const_iterator{mOwner->files.cbegin()}
+                : const_iterator{impl::sentinel_tag};
+}
+
+auto FolderView::cend() const noexcept -> const_iterator {
+  return mOwner ? const_iterator{mOwner->files.end()}
+                : const_iterator{impl::sentinel_tag};
+}
+
+auto FolderView::size() const noexcept -> size_type {
+  return mOwner ? mOwner->files.size() : 0u;
+}
+
+auto FolderView::max_size() const noexcept -> size_type {
+  // Bsa folder record counts are stored as uint32_t, not size_t.
+  return std::numeric_limits<uint32_t>::max();
+}
+
+bool FolderView::empty() const noexcept {
+  return mOwner ? mOwner->files.empty() : true;
+}
+
+FileView FolderView::at(HashResult fileHash) const {
+  if (!mOwner) throw std::out_of_range("Cannot access empty bsa::FolderView");
+
+  const auto &files{mOwner->files};
+  const auto fileIt{files.find(fileHash)};
+  if (fileIt == files.end()) {
+    throw std::out_of_range("Cannot find file in bsa::FileView");
+  }
+
+  return FileView(fileHash, &fileIt->second);
+}
+
+FileView FolderView::operator[](HashResult fileHash) const noexcept {
+  return FileView(fileHash, &mOwner->files.find(fileHash)->second);
+}
+
+auto FolderView::find(HashResult fileHash) const noexcept -> iterator {
+  return mOwner ? iterator{mOwner->files.find(fileHash)}
+                : iterator{impl::sentinel_tag};
+}
+
+bool FolderView::contains(HashResult fileHash) const noexcept {
+  //C++20: return mOwner && mOwner->files.contains(fileHash);
+  if (!mOwner) return false;
+  const auto &files{mOwner->files};
+  const auto fileIt{files.find(fileHash)};
+  return fileIt != files.end();
+}
+
+std::string_view FolderView::name() const noexcept {
+  return mOwner->name;
+}
+
+HashResult FolderView::hash() const noexcept {
+  return mHash;
+}
+
 namespace impl {
 
-BsaIterator::reference BsaIterator::updateCurrentPublicRecord() const {
-  mCurrentPublicRec.name = mCurrentRec->second.name;
-  mCurrentPublicRec.files.clear();
-  for (const auto&[hash, record] : mCurrentRec->second.files) {
-    mCurrentPublicRec.files.push_back(record.name);
-  }
-  return mCurrentPublicRec;
+//===----------------------------------------------------------------------===//
+// FileIterator
+//===----------------------------------------------------------------------===//
+auto FileIterator::operator*() const noexcept -> reference {
+  return FileView(mIt->first, &mIt->second);
 }
 
-BsaIterator::reference BsaIterator::operator*() const {
-  updateCurrentPublicRecord();
-  return mCurrentPublicRec;
+auto FileIterator::operator->() const noexcept -> pointer {
+  return pointer{FileView(mIt->first, &mIt->second)};
 }
 
-BsaIterator::pointer BsaIterator::operator->() const {
-  updateCurrentPublicRecord();
-  return &mCurrentPublicRec;
-}
-
-BsaIterator &BsaIterator::operator++() {
-  ++mCurrentRec;
+FileIterator &FileIterator::operator++() noexcept {
+  ++mIt;
   return *this;
 }
 
-const BsaIterator BsaIterator::operator++(int) {
-  auto tmp = *this;
-  ++mCurrentRec;
+const FileIterator FileIterator::operator++(int) noexcept {
+  FileIterator tmp{*this};
+  ++*this;
   return tmp;
 }
 
-BsaIterator &BsaIterator::operator--() {
-  --mCurrentRec;
+//===----------------------------------------------------------------------===//
+// FolderIterator
+//===----------------------------------------------------------------------===//
+auto FolderIterator::operator*() const noexcept -> reference {
+  return FolderView(mIt->first, &mIt->second);
+}
+
+auto FolderIterator::operator->() const noexcept -> pointer {
+  return pointer{FolderView(mIt->first, &mIt->second)};
+}
+
+FolderIterator &FolderIterator::operator++() noexcept {
+  ++mIt;
   return *this;
 }
 
-const BsaIterator BsaIterator::operator--(int) {
-  auto tmp = *this;
-  --mCurrentRec;
+const FolderIterator FolderIterator::operator++(int) noexcept {
+  FolderIterator tmp{*this};
+  ++*this;
   return tmp;
-}
-
-bool BsaIterator::operator==(const BsaIterator &other) {
-  return mCurrentRec == other.mCurrentRec;
 }
 
 } // namespace impl

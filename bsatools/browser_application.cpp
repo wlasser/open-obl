@@ -56,22 +56,20 @@ void ApplicationWindow::open_file_view(const Glib::RefPtr<Gio::File> &file) {
   page.scrolledWindow->add(*page.treeView);
 
   page.reader = std::make_unique<BsaReader>(file->get_parse_name());
-  for (const FolderRecord &folder : *page.reader) {
+  for (bsa::FolderView folder : *page.reader) {
     const Gtk::TreeRow &row = *(page.treeStore->append());
-    uint64_t folderHash = genHash(folder.name, HashType::Folder);
 
-    row[mColumns.mColName] = folder.name;
-    row[mColumns.mColHash] = folderHash;
+    std::string folderName{folder.name()};
+    row[mColumns.mColName] = std::string(folder.name());
+    row[mColumns.mColHash] = folder.hash();
 
-    for (const auto &filename : folder.files) {
+    for (bsa::FileView fileRec : folder) {
       const Gtk::TreeRow &childRow = *(page.treeStore->append(row.children()));
-      uint64_t fileHash = genHash(filename, HashType::File);
-      const auto fileRecord = page.reader->getRecord(folderHash, fileHash);
-      childRow[mColumns.mColName] = filename;
-      childRow[mColumns.mColSize] = fileRecord->size;
-      childRow[mColumns.mColCompressed] = fileRecord->compressed;
-      childRow[mColumns.mColOffset] = fileRecord->offset;
-      childRow[mColumns.mColHash] = fileHash;
+      childRow[mColumns.mColName] = std::string(fileRec.name());
+      childRow[mColumns.mColSize] = fileRec.size();
+      childRow[mColumns.mColCompressed] = fileRec.compressed();
+      childRow[mColumns.mColOffset] = fileRec.offset();
+      childRow[mColumns.mColHash] = fileRec.hash();
     }
   }
 
