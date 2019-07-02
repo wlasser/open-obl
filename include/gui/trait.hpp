@@ -2,11 +2,8 @@
 #define OPENOBL_GUI_TRAIT_HPP
 
 #include "util/meta.hpp"
-#include <functional>
-#include <string>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <vector>
 
 namespace gui {

@@ -3,7 +3,6 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/null_sink.h>
-#include <memory>
 #include <optional>
 #include <string>
 #include "windows_cleanup.hpp"

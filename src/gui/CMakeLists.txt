@@ -60,11 +60,11 @@ target_link_libraries(OpenOBLGui PRIVATE
         OpenOBL::OpenOBLConfig
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLOgre
-        OpenOBL::OpenOBLUtil
-        pugixml
-        PUBLIC
         Boost::boost
         Boost::fiber
+        pugixml
+        PUBLIC
+        OpenOBL::OpenOBLUtil
         em::nostdx
         OgreOverlay
         spdlog::spdlog)
