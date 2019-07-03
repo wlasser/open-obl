@@ -139,6 +139,32 @@ enum class FileType : uint32_t {
 };
 
 /// Provides read-only access to a BSA file.
+///
+/// `bsa::BsaReader` acts as a view to a BSA file stored on disk, loading the
+/// contained files and folders on-demand. It provides access to the stored
+/// files through their hashes and---if provided by the archive---their
+/// filenames. It also provides an iterator interface for iterating over all
+/// folders and files in the archive, and is fiber-safe.
+///
+/// \remark The underlying archive is assumed to be persistent and immutable
+///         throughout the lifetime of the `bsa::BsaReader`; if the archive is
+///         modified or becomes inaccessible in any way, the behaviour is
+///         undefined.
+///
+/// `bsa::BsaReader` provides a highly restricted subset of the
+/// *AssociativeContainer* requirement. It is not strictly a *Container* from
+/// the standard's point of view because it does not provide direct access to
+/// the stored elements and instead return view types. This is similar to
+/// `std::vector<bool>`, where the underlying structure in memory does not match
+/// what is observed by the user. Additionally, the iterator type of
+/// `bsa::BsaReader` is only an *InputIterator*, not a *ForwardIterator* as
+/// required by *Container*. Nonetheless, the multipass guarantee is provided.
+///
+/// \remark Internally `bsa::BsaReader` does not use `std::unordered_map`,
+///         despite the fact that we have a hash function, because most of the
+///         time we *only* have the hash and there is no way to look up elements
+///         using precomputed hash values in C++17.
+// C++20: Use std::unordered_map with a custom Hash object, if it's faster.
 /// \ingroup OpenOBLBsa
 class BsaReader {
  public:
@@ -155,25 +181,85 @@ class BsaReader {
   BsaReader(BsaReader &&) = delete;
   BsaReader &operator=(BsaReader &&) = delete;
 
-  uint32_t uncompressedSize(HashResult folderHash, HashResult fileHash) const;
-  uint32_t uncompressedSize(std::string folder, std::string file) const;
+  /// Returns the uncompressed size in bytes of the given file.
+  /// Prefer `FileView::size()` if the file is known to be uncompressed.
+  /// \throws std::out_of_range if no such file exists.
+  [[nodiscard]] uint32_t
+  uncompressedSize(HashResult folderHash, HashResult fileHash) const;
+  /// \overload
+  [[nodiscard]] uint32_t
+  uncompressedSize(std::string folder, std::string file) const;
 
-  FileData stream(HashResult folderHash, HashResult fileHash) const;
-  FileData stream(std::string folder, std::string file) const;
+  /// Returns a `std::istream` to the decompressed data for the given file.
+  /// This function is expensive, since it performs disk IO and reads the entire
+  /// file into memory whether the file is compressed or not.
+  /// \throws std::out_of_range if no such file exists.
+  [[nodiscard]] FileData
+  stream(HashResult folderHash, HashResult fileHash) const;
+  /// \overload
+  [[nodiscard]] FileData
+  stream(std::string folder, std::string file) const;
 
-  bool contains(HashResult folderHash, HashResult fileHash) const;
-  bool contains(std::string folder, std::string file) const;
+  /// Checks whether the given file is present in the archive.
+  [[nodiscard]] bool
+  contains(HashResult folderHash, HashResult fileHash) const noexcept;
+  /// \overload
+  [[nodiscard]] bool
+  contains(std::string folder, std::string file) const noexcept;
 
-  FileView getRecord(std::string folder, std::string file) const;
-  FileView getRecord(HashResult folderHash, HashResult fileHash) const noexcept;
+  /// Returns a view to the given file if it exists, and an empty view
+  /// otherwise.
+  [[nodiscard]] FileView
+  getRecord(HashResult folderHash, HashResult fileHash) const noexcept;
+  /// \overload
+  [[nodiscard]] FileView
+  getRecord(std::string folder, std::string file) const noexcept;
 
-  iterator begin() const;
-  iterator end() const;
-  const_iterator cbegin() const;
-  const_iterator cend() const;
+  /// Returns the `ArchiveFlag`s describing the underlying archive.
+  [[nodiscard]] ArchiveFlag getArchiveFlags() const noexcept;
+  /// Returns the `FileType` of files stored in the underlying archive.
+  [[nodiscard]] FileType getFileType() const noexcept;
 
-  FolderView operator[](HashResult folderHash) const noexcept;
-  FolderView operator[](std::string folder) const;
+  /// Returns the number of folders in the underlying archive.
+  /// \remark The number of files must be queried on a per-folder basis by first
+  ///         obtaining a `FolderView` to the desired folder.
+  [[nodiscard]] size_type size() const noexcept;
+  /// Returns the maximum number of folders that could be stored in a BSA.
+  [[nodiscard]] size_type max_size() const noexcept;
+  /// Checks whether the underlying archive is empty.
+  [[nodiscard]] bool empty() const noexcept;
+
+  /// Returns an iterator the first folder in the underlying archive.
+  [[nodiscard]] iterator begin() const noexcept;
+  /// Returns an iterator to the first folder in the underlying archive.
+  [[nodiscard]] const_iterator cbegin() const noexcept;
+  /// Returns an iterator to one-past-the-end of the underlying archive.
+  [[nodiscard]] iterator end() const noexcept;
+  /// Returns an iterator to one-past-the-end of the underlying archive.
+  [[nodiscard]] const_iterator cend() const noexcept;
+
+  /// Returns a view to the given folder, if it exists.
+  /// \throws std::out_of_range if no such folder exists.
+  FolderView at(HashResult folderHash) const;
+  /// \overload
+  FolderView at(std::string folder) const;
+
+  /// Returns a view to the given folder. The behaviour is undefined it no such
+  /// folder exists.
+  [[nodiscard]] FolderView operator[](HashResult folderHash) const noexcept;
+  /// \overload
+  [[nodiscard]] FolderView operator[](std::string folder) const noexcept;
+
+  /// Checks whether the given folder exists in the archive.
+  [[nodiscard]] bool contains(HashResult folderHash) const noexcept;
+  /// \overload
+  [[nodiscard]] bool contains(std::string folder) const noexcept;
+
+  /// Returns an iterator to the given folder, or one-past-the-end if no such
+  /// folder exists.
+  [[nodiscard]] const_iterator find(HashResult folderHash) const noexcept;
+  /// \overload
+  [[nodiscard]] const_iterator find(std::string folder) const noexcept;
 
   /// \name Header information
   /// Only one format is supported, so these are all hardcoded constants, though
@@ -184,13 +270,14 @@ class BsaReader {
   const uint32_t OFFSET{0x24};
   /// @}
 
-  ArchiveFlag getArchiveFlags() const noexcept;
-  FileType getFileType() const noexcept;
-
  private:
+  // For impl::FileIterator::internal_iterator
   friend impl::FileIterator;
+  // For impl::FolderIterator::internal_iterator
   friend impl::FolderIterator;
+  // For FolderView::owner_type
   friend FolderView;
+  // For FileView::owner_type
   friend FileView;
 
   struct FileRecord {
@@ -229,15 +316,24 @@ class BsaReader {
   bool readFileNames();
 };
 
-// A FileView is a view to a file.
+/// A view to a single file in a BSA.
+/// \ingroup OpenOBLBsa
 class FileView {
  public:
+  /// Checks whether the file is empty.
   [[nodiscard]] bool empty() const noexcept;
 
+  /// Returns the name of the file, or an empty view if the underlying archive
+  /// does not contain filenames.
   [[nodiscard]] std::string_view name() const noexcept;
+  /// Returns the hash of the file.
   [[nodiscard]] HashResult hash() const noexcept;
+  /// Checks whether the file is compressed.
   [[nodiscard]] bool compressed() const noexcept;
+  /// Returns the compressed size of the file, or the uncompressed size if the
+  /// file is not compressed.
   [[nodiscard]] uint32_t size() const noexcept;
+  /// Returns the byte offset of the file in the underlying archive.
   [[nodiscard]] uint32_t offset() const noexcept;
 
   constexpr FileView() noexcept = default;
@@ -255,17 +351,17 @@ class FileView {
   const owner_type *mOwner{};
 };
 
-// A FolderView is a view to a folder. It is a Container of FileViews.
+/// A view to a single folder in a BSA.
+/// Acts as a container of `bsa::FileView`s to the files stored within the
+/// viewed folder.
+/// \remark Like `bsa::BsaReader`, this does not satisfy the *Container*
+///         requirement because it returns view types.
+/// \ingroup OpenOBLBsa
 class FolderView {
  public:
-//  using key_type = HashResult;
-//  using mapped_type = FileView;
-//  using value_type = std::pair<const HashResult, FileView>;
   using value_type = FileView;
   using size_type = std::size_t;
   using difference_type = std::ptrdiff_t;
-//  using reference = const value_type &;
-//  using const_reference = const value_type &;
   using iterator = impl::FileIterator;
   using const_iterator = impl::FileIterator;
 
@@ -274,17 +370,32 @@ class FolderView {
   [[nodiscard]] const_iterator cbegin() const noexcept;
   [[nodiscard]] const_iterator cend() const noexcept;
 
+  /// Returns the number of files in the folder.
   [[nodiscard]] size_type size() const noexcept;
+  /// Returns the maximum number of files that could be stored in a folder in
+  /// a BSA.
   [[nodiscard]] size_type max_size() const noexcept;
+  /// Checks whether the folder contains no files.
   [[nodiscard]] bool empty() const noexcept;
 
+  /// Returns a view to the given file, if it exists.
+  /// \throws std::out_of_range if no such file exists in the folder.
   [[nodiscard]] FileView at(HashResult fileHash) const;
+
+  /// Returns a view top to the given file. The behaviour is undefined if no
+  /// such file exists in the folder.
   [[nodiscard]] FileView operator[](HashResult fileHash) const noexcept;
 
+  /// Returns an iterator to the given file, or one-past-the-end if no such
+  /// file exists in the folder.
   [[nodiscard]] iterator find(HashResult fileHash) const noexcept;
+  /// Checks whether the given file is contained in the folder.
   [[nodiscard]] bool contains(HashResult fileHash) const noexcept;
 
+  /// Returns the name of the folder, or an empty view if the underlying archive
+  /// does not store foldernames.
   [[nodiscard]] std::string_view name() const noexcept;
+  /// Returns the hash of the folder.
   [[nodiscard]] HashResult hash() const noexcept;
 
   constexpr FolderView() noexcept = default;
@@ -301,19 +412,23 @@ class FolderView {
   const owner_type *mOwner{};
 };
 
+/// \ingroup OpenOBLBsa
 namespace impl {
 
-// Thanks Arthur O'Dwyer
-// https://quuxplusone.github.io/blog/2019/02/06/arrow-proxy/
+/// Proxy type for implementing `operator->` for view types.
+/// [Thanks Arthur O'Dwyer]
+/// (https://quuxplusone.github.io/blog/2019/02/06/arrow-proxy/) for the trick.
 template<class Reference>
 struct ArrowProxy {
   Reference r;
   Reference *operator->() { return &r; }
 };
 
+/// Type to signify construction of an end `FileIterator` or `FolderIterator`.
 struct sentinel_tag_t {};
 [[maybe_unused]] constexpr static inline sentinel_tag_t sentinel_tag{};
 
+/// *InputIterator* to a `FileView` in a BSA folder.
 class FileIterator {
  private:
   using internal_iterator = BsaReader::FileRecordMap::const_iterator;
@@ -355,6 +470,7 @@ inline bool operator!=(const FileIterator &a, const FileIterator &b) noexcept {
   return !(a == b);
 }
 
+/// *InputIterator* to a `FolderView` in a BSA.
 class FolderIterator {
  private:
   using internal_iterator = BsaReader::FolderRecordMap::const_iterator;

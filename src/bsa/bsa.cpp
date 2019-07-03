@@ -50,6 +50,196 @@ HashResult genHash(std::string path, HashType type) noexcept {
   return hash + hash2;
 }
 
+//===----------------------------------------------------------------------===//
+// BsaReader
+//===----------------------------------------------------------------------===//
+BsaReader::BsaReader(const std::string &filename)
+    : mIs(filename, std::ios_base::in | std::ios_base::binary) {
+  if (!mIs.good()) {
+    throw std::runtime_error("Failed to open archive '" + filename + "'");
+  }
+  if (!readHeader()) {
+    throw std::runtime_error("Archive '" + filename + "' has invalid header");
+  }
+  readRecords();
+  if (!!(mArchiveFlags & ArchiveFlag::HasFileNames)) {
+    readFileNames();
+  }
+}
+
+uint32_t
+BsaReader::uncompressedSize(HashResult folderHash, HashResult fileHash) const {
+  std::unique_lock lock{mMutex};
+
+  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
+
+  if (!file.compressed) return file.size;
+
+  // Unset bits higher than the toggle compression bit
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
+  // Jump to the data
+  mIs.seekg(file.offset);
+  uint32_t uncompressedSize{compressedSize};
+  io::readBytes(mIs, uncompressedSize);
+
+  return uncompressedSize;
+}
+
+uint32_t
+BsaReader::uncompressedSize(std::string folder, std::string file) const {
+  return uncompressedSize(bsa::genHash(std::move(folder), HashType::Folder),
+                          bsa::genHash(std::move(file), HashType::File));
+}
+
+FileData BsaReader::stream(HashResult folderHash, HashResult fileHash) const {
+  std::unique_lock lock{mMutex};
+
+  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
+
+  // Unset bits higher than the toggle compression bit
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
+  // Jump to the data
+  mIs.seekg(file.offset);
+
+  // Get size of uncompressed data if compressed, otherwise they're the same.
+  uint32_t uncompressedSize{compressedSize};
+  if (file.compressed) io::readBytes(mIs, uncompressedSize);
+
+  // Read data and uncompress if necessary
+  std::vector<uint8_t> data(uncompressedSize);
+  if (file.compressed) {
+    std::vector<unsigned char> compressedData;
+    io::readBytes(mIs, compressedData, compressedSize);
+    unsigned long zlibSize{uncompressedSize};
+    uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
+  } else {
+    io::readBytes(mIs, data, uncompressedSize);
+  }
+
+  return FileData{std::move(data), uncompressedSize};
+}
+
+FileData BsaReader::stream(std::string folder, std::string file) const {
+  return stream(bsa::genHash(std::move(folder), HashType::Folder),
+                bsa::genHash(std::move(file), HashType::File));
+}
+
+bool
+BsaReader::contains(HashResult folderHash, HashResult fileHash) const noexcept {
+  const auto folderIt{mFolderRecords.find(folderHash)};
+  if (folderIt == mFolderRecords.end()) return false;
+
+  //C++20: return folderIt->second.files.contains(fileHash)
+  const auto &files{folderIt->second.files};
+  return files.find(fileHash) != files.end();
+}
+
+bool BsaReader::contains(std::string folder, std::string file) const noexcept {
+  return contains(bsa::genHash(std::move(folder), HashType::Folder),
+                  bsa::genHash(std::move(file), HashType::File));
+}
+
+FileView
+BsaReader::getRecord(std::string folder, std::string file) const noexcept {
+  const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
+  const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
+  return getRecord(folderHash, fileHash);
+}
+
+FileView
+BsaReader::getRecord(HashResult folderHash,
+                     HashResult fileHash) const noexcept {
+  const auto folderIt{mFolderRecords.find(folderHash)};
+  if (folderIt == mFolderRecords.end()) return FileView{};
+
+  const auto &files{folderIt->second.files};
+  const auto fileIt{files.find(fileHash)};
+  if (fileIt == files.end()) return FileView{};
+
+  return FileView(fileHash, &fileIt->second);
+}
+
+ArchiveFlag BsaReader::getArchiveFlags() const noexcept {
+  return mArchiveFlags;
+}
+
+FileType BsaReader::getFileType() const noexcept {
+  return mFileType;
+}
+
+auto BsaReader::size() const noexcept -> size_type {
+  return mNumFolders;
+}
+
+auto BsaReader::max_size() const noexcept -> size_type {
+  return std::numeric_limits<uint32_t>::max();
+}
+
+bool BsaReader::empty() const noexcept {
+  return size() == 0u;
+}
+
+auto BsaReader::begin() const noexcept -> iterator {
+  return iterator{mFolderRecords.begin()};
+}
+
+auto BsaReader::end() const noexcept -> iterator {
+  return iterator{mFolderRecords.end()};
+}
+
+auto BsaReader::cbegin() const noexcept -> const_iterator {
+  return const_iterator{mFolderRecords.cbegin()};
+}
+
+auto BsaReader::cend() const noexcept -> const_iterator {
+  return const_iterator{mFolderRecords.cend()};
+}
+
+FolderView BsaReader::at(HashResult folderHash) const {
+  const auto it{mFolderRecords.find(folderHash)};
+  if (it == mFolderRecords.end()) {
+    throw std::out_of_range("Cannot find folder in bsa::BsaReader");
+  }
+  return FolderView(folderHash, &it->second);
+}
+
+FolderView BsaReader::at(std::string folder) const {
+  return at(bsa::genHash(std::move(folder), HashType::Folder));
+}
+
+FolderView BsaReader::operator[](HashResult folderHash) const noexcept {
+  const auto it{mFolderRecords.find(folderHash)};
+  return FolderView(folderHash, &it->second);
+}
+
+FolderView
+BsaReader::operator[](std::string folder) const noexcept {
+  return operator[](bsa::genHash(std::move(folder), HashType::Folder));
+}
+
+bool BsaReader::contains(HashResult folderHash) const noexcept {
+  //C++20: return mFolderRecords.contains(folderHash);
+  return mFolderRecords.find(folderHash) != mFolderRecords.end();
+}
+
+bool BsaReader::contains(std::string folder) const noexcept {
+  return contains(bsa::genHash(std::move(folder), HashType::Folder));
+}
+
+auto BsaReader::find(HashResult folderHash) const noexcept -> const_iterator {
+  const auto it{mFolderRecords.find(folderHash)};
+  return it == mFolderRecords.end() ? const_iterator(impl::sentinel_tag)
+                                    : const_iterator(it);
+}
+
+auto BsaReader::find(std::string folder) const noexcept -> const_iterator {
+  return find(bsa::genHash(std::move(folder), HashType::Folder));
+}
+
 bool BsaReader::readHeader() {
   std::string fileId{};
   io::readBytes(mIs, fileId);
@@ -155,149 +345,6 @@ bool BsaReader::readFileNames() {
     }
   }
   return true;
-}
-
-BsaReader::BsaReader(const std::string &filename)
-    : mIs(filename, std::ios_base::in | std::ios_base::binary) {
-  if (!mIs.good()) {
-    throw std::runtime_error("Failed to open archive '" + filename + "'");
-  }
-  if (!readHeader()) {
-    throw std::runtime_error("Archive '" + filename + "' has invalid header");
-  }
-  readRecords();
-  if (!!(mArchiveFlags & ArchiveFlag::HasFileNames)) {
-    readFileNames();
-  }
-}
-
-bool BsaReader::contains(HashResult folderHash, HashResult fileHash) const {
-  const auto folderIt{mFolderRecords.find(folderHash)};
-  if (folderIt == mFolderRecords.end()) return false;
-
-  //C++20: return folderIt->second.files.contains(fileHash)
-  const auto &files{folderIt->second.files};
-  return files.find(fileHash) != files.end();
-}
-
-bool BsaReader::contains(std::string folder, std::string file) const {
-  return contains(bsa::genHash(std::move(folder), HashType::Folder),
-                  bsa::genHash(std::move(file), HashType::File));
-}
-
-FileView
-BsaReader::getRecord(std::string folder, std::string file) const {
-  const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
-  const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
-  return getRecord(folderHash, fileHash);
-}
-
-FileView
-BsaReader::getRecord(HashResult folderHash,
-                     HashResult fileHash) const noexcept {
-  const auto folderIt{mFolderRecords.find(folderHash)};
-  if (folderIt == mFolderRecords.end()) return FileView{};
-
-  const auto &files{folderIt->second.files};
-  const auto fileIt{files.find(fileHash)};
-  if (fileIt == files.end()) return FileView{};
-
-  return FileView(fileHash, &fileIt->second);
-}
-
-auto BsaReader::begin() const -> iterator {
-  return iterator{mFolderRecords.begin()};
-}
-
-auto BsaReader::end() const -> iterator {
-  return iterator{mFolderRecords.end()};
-}
-
-auto BsaReader::cbegin() const -> const_iterator {
-  return const_iterator{mFolderRecords.cbegin()};
-}
-
-auto BsaReader::cend() const -> const_iterator {
-  return const_iterator{mFolderRecords.cend()};
-}
-
-ArchiveFlag BsaReader::getArchiveFlags() const noexcept {
-  return mArchiveFlags;
-}
-
-FileType BsaReader::getFileType() const noexcept {
-  return mFileType;
-}
-
-FolderView BsaReader::operator[](HashResult folderHash) const noexcept {
-  const auto it{mFolderRecords.find(folderHash)};
-  return FolderView(folderHash, &it->second);
-}
-
-FolderView
-BsaReader::operator[](std::string folder) const {
-  return operator[](bsa::genHash(std::move(folder), HashType::Folder));
-}
-
-uint32_t
-BsaReader::uncompressedSize(HashResult folderHash, HashResult fileHash) const {
-  std::unique_lock lock{mMutex};
-
-  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
-  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
-
-  if (!file.compressed) return file.size;
-
-  // Unset bits higher than the toggle compression bit
-  const uint32_t compressedSize{file.size & ~(3u << 30u)};
-
-  // Jump to the data
-  mIs.seekg(file.offset);
-  uint32_t uncompressedSize{compressedSize};
-  io::readBytes(mIs, uncompressedSize);
-
-  return uncompressedSize;
-}
-
-uint32_t
-BsaReader::uncompressedSize(std::string folder, std::string file) const {
-  return uncompressedSize(bsa::genHash(std::move(folder), HashType::Folder),
-                          bsa::genHash(std::move(file), HashType::File));
-}
-
-FileData BsaReader::stream(HashResult folderHash, HashResult fileHash) const {
-  std::unique_lock lock{mMutex};
-
-  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
-  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
-
-  // Unset bits higher than the toggle compression bit
-  const uint32_t compressedSize{file.size & ~(3u << 30u)};
-
-  // Jump to the data
-  mIs.seekg(file.offset);
-
-  // Get size of uncompressed data if compressed, otherwise they're the same.
-  uint32_t uncompressedSize{compressedSize};
-  if (file.compressed) io::readBytes(mIs, uncompressedSize);
-
-  // Read data and uncompress if necessary
-  std::vector<uint8_t> data(uncompressedSize);
-  if (file.compressed) {
-    std::vector<unsigned char> compressedData;
-    io::readBytes(mIs, compressedData, compressedSize);
-    unsigned long zlibSize{uncompressedSize};
-    uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
-  } else {
-    io::readBytes(mIs, data, uncompressedSize);
-  }
-
-  return FileData{std::move(data), uncompressedSize};
-}
-
-FileData BsaReader::stream(std::string folder, std::string file) const {
-  return stream(bsa::genHash(std::move(folder), HashType::Folder),
-                bsa::genHash(std::move(file), HashType::File));
 }
 
 //===----------------------------------------------------------------------===//
