@@ -32,7 +32,7 @@ target_link_libraries(OpenOBLTest PRIVATE
         Catch2::Catch2
         MicrosoftGSL::GSL
         taocpp::pegtl
-        tloptional)
+        optional)
 
 find_package(Threads REQUIRED)
 
