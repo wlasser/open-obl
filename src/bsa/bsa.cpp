@@ -50,66 +50,6 @@ HashResult genHash(std::string path, HashType type) noexcept {
   return hash + hash2;
 }
 
-BsaReader::FolderAccessor
-BsaReader::operator[](std::string folder) const {
-  return FolderAccessor(bsa::genHash(std::move(folder), HashType::Folder),
-                        *this);
-}
-
-FileData
-BsaReader::FolderAccessor::operator[](std::string file) const {
-  return (*this)[bsa::genHash(std::move(file), HashType::File)];
-}
-
-FileData
-BsaReader::FolderAccessor::operator[](HashResult fileHash) const {
-  std::unique_lock lock{mOwner.mMutex};
-
-  const BsaReader::FolderRecord &folder{mOwner.mFolderRecords.at(mHash)};
-  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
-
-  // Unset bits higher than the toggle compression bit
-  const uint32_t compressedSize{file.size & ~(3u << 30u)};
-
-  // Jump to the data
-  mOwner.mIs.seekg(file.offset);
-
-  // Get size of uncompressed data if compressed, otherwise they're the same.
-  uint32_t uncompressedSize{compressedSize};
-  if (file.compressed) io::readBytes(mOwner.mIs, uncompressedSize);
-
-  // Read data and uncompress if necessary
-  std::vector<uint8_t> data(uncompressedSize);
-  if (file.compressed) {
-    std::vector<unsigned char> compressedData;
-    io::readBytes(mOwner.mIs, compressedData, compressedSize);
-    unsigned long zlibSize{uncompressedSize};
-    uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
-  } else {
-    io::readBytes(mOwner.mIs, data, uncompressedSize);
-  }
-  return FileData{std::move(data), uncompressedSize};
-}
-
-uint32_t BsaReader::FolderAccessor::getSize(HashResult fileHash) const {
-  std::unique_lock lock{mOwner.mMutex};
-
-  const BsaReader::FolderRecord &folder{mOwner.mFolderRecords.at(mHash)};
-  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
-
-  if (!file.compressed) return file.size;
-
-  // Unset bits higher than the toggle compression bit
-  const uint32_t compressedSize{file.size & ~(3u << 30u)};
-
-  // Jump to the data
-  mOwner.mIs.seekg(file.offset);
-  uint32_t uncompressedSize{compressedSize};
-  io::readBytes(mOwner.mIs, uncompressedSize);
-
-  return uncompressedSize;
-}
-
 bool BsaReader::readHeader() {
   std::string fileId{};
   io::readBytes(mIs, fileId);
@@ -231,33 +171,38 @@ BsaReader::BsaReader(const std::string &filename)
   }
 }
 
-bool BsaReader::contains(std::string folder, std::string file) const {
-  const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
-  const auto folderRecord{mFolderRecords.find(folderHash)};
-  if (folderRecord == mFolderRecords.end()) return false;
+bool BsaReader::contains(HashResult folderHash, HashResult fileHash) const {
+  const auto folderIt{mFolderRecords.find(folderHash)};
+  if (folderIt == mFolderRecords.end()) return false;
 
-  const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
-  const auto &files{folderRecord->second.files};
+  //C++20: return folderIt->second.files.contains(fileHash)
+  const auto &files{folderIt->second.files};
   return files.find(fileHash) != files.end();
 }
 
-std::optional<BsaReader::FileRecord>
+bool BsaReader::contains(std::string folder, std::string file) const {
+  return contains(bsa::genHash(std::move(folder), HashType::Folder),
+                  bsa::genHash(std::move(file), HashType::File));
+}
+
+FileView
 BsaReader::getRecord(std::string folder, std::string file) const {
   const auto folderHash{bsa::genHash(std::move(folder), HashType::Folder)};
   const auto fileHash{bsa::genHash(std::move(file), HashType::File)};
   return getRecord(folderHash, fileHash);
 }
 
-std::optional<BsaReader::FileRecord>
-BsaReader::getRecord(HashResult folderHash, HashResult fileHash) const {
-  const auto folderRecord{mFolderRecords.find(folderHash)};
-  if (folderRecord == mFolderRecords.end()) return std::nullopt;
+FileView
+BsaReader::getRecord(HashResult folderHash,
+                     HashResult fileHash) const noexcept {
+  const auto folderIt{mFolderRecords.find(folderHash)};
+  if (folderIt == mFolderRecords.end()) return FileView{};
 
-  const auto &files{folderRecord->second.files};
-  const auto fileRecord{files.find(fileHash)};
-  if (fileRecord == files.end()) return std::nullopt;
+  const auto &files{folderIt->second.files};
+  const auto fileIt{files.find(fileHash)};
+  if (fileIt == files.end()) return FileView{};
 
-  return fileRecord->second;
+  return FileView(fileHash, &fileIt->second);
 }
 
 auto BsaReader::begin() const -> iterator {
@@ -284,6 +229,77 @@ FileType BsaReader::getFileType() const noexcept {
   return mFileType;
 }
 
+FolderView BsaReader::operator[](HashResult folderHash) const noexcept {
+  const auto it{mFolderRecords.find(folderHash)};
+  return FolderView(folderHash, &it->second);
+}
+
+FolderView
+BsaReader::operator[](std::string folder) const {
+  return operator[](bsa::genHash(std::move(folder), HashType::Folder));
+}
+
+uint32_t
+BsaReader::uncompressedSize(HashResult folderHash, HashResult fileHash) const {
+  std::unique_lock lock{mMutex};
+
+  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
+
+  if (!file.compressed) return file.size;
+
+  // Unset bits higher than the toggle compression bit
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
+  // Jump to the data
+  mIs.seekg(file.offset);
+  uint32_t uncompressedSize{compressedSize};
+  io::readBytes(mIs, uncompressedSize);
+
+  return uncompressedSize;
+}
+
+uint32_t
+BsaReader::uncompressedSize(std::string folder, std::string file) const {
+  return uncompressedSize(bsa::genHash(std::move(folder), HashType::Folder),
+                          bsa::genHash(std::move(file), HashType::File));
+}
+
+FileData BsaReader::stream(HashResult folderHash, HashResult fileHash) const {
+  std::unique_lock lock{mMutex};
+
+  const BsaReader::FolderRecord &folder{mFolderRecords.at(folderHash)};
+  const BsaReader::FileRecord &file{folder.files.at(fileHash)};
+
+  // Unset bits higher than the toggle compression bit
+  const uint32_t compressedSize{file.size & ~(3u << 30u)};
+
+  // Jump to the data
+  mIs.seekg(file.offset);
+
+  // Get size of uncompressed data if compressed, otherwise they're the same.
+  uint32_t uncompressedSize{compressedSize};
+  if (file.compressed) io::readBytes(mIs, uncompressedSize);
+
+  // Read data and uncompress if necessary
+  std::vector<uint8_t> data(uncompressedSize);
+  if (file.compressed) {
+    std::vector<unsigned char> compressedData;
+    io::readBytes(mIs, compressedData, compressedSize);
+    unsigned long zlibSize{uncompressedSize};
+    uncompress(data.data(), &zlibSize, compressedData.data(), compressedSize);
+  } else {
+    io::readBytes(mIs, data, uncompressedSize);
+  }
+
+  return FileData{std::move(data), uncompressedSize};
+}
+
+FileData BsaReader::stream(std::string folder, std::string file) const {
+  return stream(bsa::genHash(std::move(folder), HashType::Folder),
+                bsa::genHash(std::move(file), HashType::File));
+}
+
 //===----------------------------------------------------------------------===//
 // FileView
 //===----------------------------------------------------------------------===//
@@ -293,13 +309,14 @@ auto FileView::name() const noexcept -> std::string_view {
 }
 auto FileView::hash() const noexcept -> HashResult { return mHash; }
 bool FileView::compressed() const noexcept { return mOwner->compressed; }
-auto FileView::size() const noexcept -> uint32_t { return mOwner->size; }
+auto FileView::size() const noexcept -> uint32_t {
+  return mOwner->size & ~(3u << 30u);
+}
 auto FileView::offset() const noexcept -> uint32_t { return mOwner->offset; }
 
 //===----------------------------------------------------------------------===//
 // FolderView
 //===----------------------------------------------------------------------===//
-
 auto FolderView::begin() const noexcept -> iterator {
   return mOwner ? iterator{mOwner->files.begin()}
                 : iterator{impl::sentinel_tag};

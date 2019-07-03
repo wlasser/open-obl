@@ -92,12 +92,18 @@ class FolderNode : public Node {
   ///          if this folder already has a child folder with the given `name`.
   FolderNode *addChildFolder(std::string name);
 
-  /// Add a file representing the given file record add a child of this node, if
-  /// one with the same name as `rec` doesn't exist.
+  /// Add a file representing the given uncompressed file record as a child of
+  /// this node, if one with the same name as `rec` doesn't exist.
   /// \returns a pointer to the added file, or a pointer to the existing one if
   ///          this folder already has a child file whose name matches the name
   ///          of `rec`.
-  FileNode *addChildFile(const BsaReader::FileRecord &rec);
+  FileNode *addChildFile(bsa::FileView rec);
+
+  /// Add a file representing the given compressed file record as a child of
+  /// this node, if one with the same name as `rec` doesn't exist. The given
+  /// `uncompressedSize` overrides the stored size of `rec`, which for
+  /// compressed records is the compressed size.
+  FileNode *addChildFile(bsa::FileView rec, uint32_t uncompressedSize);
 
   /// Return a vector of non-owning pointers to the children of this folder.
   /// \todo Replace this with iterators.
@@ -116,9 +122,18 @@ class FileNode : public Node {
   FolderNode *mParent{};
 
  public:
-  FileNode(const BsaReader::FileRecord &rec, FolderNode *parent)
-      : mName(rec.name), mSize(rec.size), mCompressed(rec.compressed),
-        mParent(parent) {}
+  FileNode(bsa::FileView rec, FolderNode *parent)
+      : mName(rec.name()), mSize(rec.size()), mCompressed(rec.compressed()),
+        mParent(parent) {
+    assert(!mCompressed && "Compressed file not given uncompressed size");
+  }
+
+  FileNode(bsa::FileView rec, uint32_t uncompressedSize, FolderNode *parent)
+      : mName(rec.name()), mSize(uncompressedSize),
+        mCompressed(rec.compressed()), mParent(parent) {
+    assert((mCompressed || mSize == rec.size()) && \
+      "Uncompressed file given incorrect explicit size");
+  }
 
   [[nodiscard]] bool isFolder() const noexcept override {
     return false;

@@ -113,7 +113,7 @@ Ogre::FileInfo BsaArchive::getFileInfo(const oo::Path &path) const {
   if (path.has_filename()) {
     // BsaReader transparently decompresses data, so it will appear to the user
     // that all the data is uncompressed.
-    info.uncompressedSize = (*mReader)[info.path][info.basename].size();
+    info.uncompressedSize = mReader->uncompressedSize(info.path, info.basename);
     info.compressedSize = info.uncompressedSize;
   } else {
     // BSA archives do not have directory sizes. We could compute the total size
@@ -181,10 +181,10 @@ Ogre::DataStreamPtr BsaArchive::open(const Ogre::String &filename,
                                      bool /*readOnly*/) const {
   if (!exists(filename)) return std::shared_ptr<Ogre::DataStream>(nullptr);
   const oo::Path path{filename};
-  const auto file{path.filename()};
-  const auto folder{path.folder()};
-  return std::make_shared<BsaArchiveStream>(
-      filename, (*mReader)[std::string{folder}][std::string{file}]);
+  const std::string file{path.filename()};
+  const std::string folder{path.folder()};
+  return std::make_shared<BsaArchiveStream>(filename,
+                                            mReader->stream(folder, file));
 }
 
 std::time_t

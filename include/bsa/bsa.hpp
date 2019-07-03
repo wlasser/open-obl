@@ -147,27 +147,6 @@ class BsaReader {
   using difference_type = std::ptrdiff_t;
   using size_type = std::size_t;
 
-  struct FileRecord {
-    uint32_t size;
-    uint32_t offset;
-    std::string name;
-    bool compressed;
-  };
-
-  class FolderAccessor {
-   public:
-    FileData operator[](HashResult fileHash) const;
-    FileData operator[](std::string file) const;
-    uint32_t getSize(HashResult fileHash) const;
-
-   private:
-    friend BsaReader;
-    HashResult mHash;
-    const BsaReader &mOwner;
-    FolderAccessor(HashResult hash, const BsaReader &owner) :
-        mHash(hash), mOwner(owner) {}
-  };
-
   explicit BsaReader(const std::string &filename);
 
   BsaReader() = delete;
@@ -176,22 +155,25 @@ class BsaReader {
   BsaReader(BsaReader &&) = delete;
   BsaReader &operator=(BsaReader &&) = delete;
 
+  uint32_t uncompressedSize(HashResult folderHash, HashResult fileHash) const;
+  uint32_t uncompressedSize(std::string folder, std::string file) const;
+
+  FileData stream(HashResult folderHash, HashResult fileHash) const;
+  FileData stream(std::string folder, std::string file) const;
+
+  bool contains(HashResult folderHash, HashResult fileHash) const;
   bool contains(std::string folder, std::string file) const;
 
-  std::optional<FileRecord>
-  getRecord(std::string folder, std::string file) const;
-  std::optional<FileRecord>
-  getRecord(HashResult folderHash, HashResult fileHash) const;
+  FileView getRecord(std::string folder, std::string file) const;
+  FileView getRecord(HashResult folderHash, HashResult fileHash) const noexcept;
 
   iterator begin() const;
   iterator end() const;
   const_iterator cbegin() const;
   const_iterator cend() const;
 
-  inline FolderAccessor operator[](HashResult hash) const {
-    return FolderAccessor(hash, *this);
-  }
-  FolderAccessor operator[](std::string) const;
+  FolderView operator[](HashResult folderHash) const noexcept;
+  FolderView operator[](std::string folder) const;
 
   /// \name Header information
   /// Only one format is supported, so these are all hardcoded constants, though
@@ -210,6 +192,13 @@ class BsaReader {
   friend impl::FolderIterator;
   friend FolderView;
   friend FileView;
+
+  struct FileRecord {
+    uint32_t size;
+    uint32_t offset;
+    std::string name;
+    bool compressed;
+  };
 
   using FileRecordMap = std::map<HashResult, FileRecord>;
 
@@ -251,7 +240,10 @@ class FileView {
   [[nodiscard]] uint32_t size() const noexcept;
   [[nodiscard]] uint32_t offset() const noexcept;
 
+  constexpr FileView() noexcept = default;
+
  private:
+  friend BsaReader;
   friend impl::FileIterator;
   friend FolderView;
 
@@ -294,6 +286,8 @@ class FolderView {
 
   [[nodiscard]] std::string_view name() const noexcept;
   [[nodiscard]] HashResult hash() const noexcept;
+
+  constexpr FolderView() noexcept = default;
 
  private:
   friend BsaReader;

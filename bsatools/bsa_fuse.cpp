@@ -55,10 +55,19 @@ bsa::FolderNode *bsa::FolderNode::addChildFolder(std::string name) {
 }
 
 bsa::FileNode *
-bsa::FolderNode::addChildFile(const bsa::BsaReader::FileRecord &rec) {
-  if (auto *childNode{findChildFile(rec.name)}) return childNode;
+bsa::FolderNode::addChildFile(bsa::FileView rec) {
+  if (auto *childNode{findChildFile(std::string(rec.name()))}) return childNode;
 
   auto fileNode{std::make_unique<FileNode>(rec, this)};
+  const auto &node{mChildren.emplace_back(std::move(fileNode))};
+  return static_cast<FileNode *>(node.get());
+}
+
+bsa::FileNode *
+bsa::FolderNode::addChildFile(bsa::FileView rec, uint32_t uncompressedSize) {
+  if (auto *childNode{findChildFile(std::string(rec.name()))}) return childNode;
+
+  auto fileNode{std::make_unique<FileNode>(rec, uncompressedSize, this)};
   const auto &node{mChildren.emplace_back(std::move(fileNode))};
   return static_cast<FileNode *>(node.get());
 }
@@ -75,8 +84,6 @@ bsa::BsaContext::BsaContext(std::string archiveName)
       mRoot(std::make_unique<bsa::FolderNode>("/", nullptr)) {
 
   for (bsa::FolderView folder : mBsaReader) {
-    // Precompute hash for faster lookup in files
-    const uint64_t folderHash{folder.hash()};
     // TODO: oo::Path(std::string_view) constructor
     const oo::Path folderPath{std::string(folder.name())};
 
@@ -96,13 +103,14 @@ bsa::BsaContext::BsaContext(std::string archiveName)
     }
 
     // `folderNode` now points to correct folder in the tree, so add the files
-    for (bsa::FileView file: folder) {
-      const uint64_t fileHash{file.hash()};
-      auto fileRec{*mBsaReader.getRecord(folderHash, fileHash)};
-      if (fileRec.compressed) {
-        fileRec.size = mBsaReader[folderHash].getSize(fileHash);
+    for (bsa::FileView file : folder) {
+      bsa::FileView fileRec{mBsaReader.getRecord(folder.hash(), file.hash())};
+      if (fileRec.compressed()) {
+        uint32_t size{mBsaReader.uncompressedSize(folder.hash(), file.hash())};
+        folderNode->addChildFile(fileRec, size);
+      } else {
+        folderNode->addChildFile(fileRec);
       }
-      folderNode->addChildFile(fileRec);
     }
   }
 }
@@ -142,7 +150,7 @@ int bsa::BsaContext::open(std::string folder, std::string file) {
   BsaHashPair hashPair(std::move(folder), std::move(file));
   try {
     mOpenFiles.try_emplace(hashPair,
-                           getReader()[hashPair.first][hashPair.second]);
+                           getReader().stream(hashPair.first, hashPair.second));
   } catch (const std::exception &e) {
     return -ENOENT;
   }
