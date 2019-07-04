@@ -12,7 +12,6 @@ target_sources(OpenOBLOgre PRIVATE
         ${CMAKE_SOURCE_DIR}/include/ogre/bsa_archive_factory.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/deferred_light_pass.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/fnt_loader.hpp
-        ${CMAKE_SOURCE_DIR}/include/ogre/interior_scene_manager.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/ogre_stream_wrappers.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/scene_manager.hpp
         ${CMAKE_SOURCE_DIR}/include/ogre/spdlog_listener.hpp
@@ -24,7 +23,6 @@ target_sources(OpenOBLOgre PRIVATE
         bsa_archive_factory.cpp
         deferred_light_pass.cpp
         fnt_loader.cpp
-        interior_scene_manager.cpp
         ogre_stream_wrappers.cpp
         scene_manager.cpp
         terrain_material_generator.cpp

@@ -2,7 +2,6 @@
 #include "mesh/entity.hpp"
 #include "modes/debug_draw_impl.hpp"
 #include "modes/game_mode.hpp"
-#include "ogre/interior_scene_manager.hpp"
 #include "ogre/scene_manager.hpp"
 #include <imgui/imgui.h>
 #include <OgreBone.h>
@@ -49,15 +48,6 @@ void DebugDrawImpl::drawBoundingBox(gsl::not_null<Ogre::SceneNode *> node) {
   mDebugDrawer->drawBox(min, max, {1.0f, 0.0f, 0.0f});
 }
 
-void DebugDrawImpl::drawBoundingBox(gsl::not_null<oo::OctreeNode *> node) {
-  const auto bbox{node->getBoundingBox()};
-  const btVector3 min(bbox.min[0], bbox.min[1], bbox.min[2]);
-  const btVector3 max(bbox.max[0], bbox.max[1], bbox.max[2]);
-  mDebugDrawer->drawBox(min * oo::OctreeNode::UNIT_SIZE,
-                        max * oo::OctreeNode::UNIT_SIZE,
-                        {1.0f, 1.0f, 0.0f});
-}
-
 void DebugDrawImpl::drawFpsDisplay(float delta) {
   mFrameTimes.push_back(delta);
 
@@ -88,15 +78,6 @@ void DebugDrawImpl::drawDebug() {
   }
 
   if (getDrawOcclusionGeometryEnabled()) {
-    if (auto
-        *intScnMgr{dynamic_cast<oo::InteriorSceneManager *>(scnMgr.get())}) {
-      oo::preOrderDFS(intScnMgr->_getOctree(), [&](oo::OctreeNode *node) {
-        if (!node) return false;
-        drawBoundingBox(gsl::make_not_null(node));
-        return true;
-      });
-    }
-
     auto entities{scnMgr->getMovableObjectIterator("oo::Entity")};
     for (const auto &[_, entity] : entities) {
       drawBoundingBox(gsl::make_not_null(entity->getParentSceneNode()));
