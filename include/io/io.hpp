@@ -146,6 +146,24 @@ void readBytes(std::istream &is, std::vector<T> &data, std::size_t length) {
   }
 }
 
+/// Customization for std::vector.
+/// Only writeBytes is supported as reading requires an explicit size; use
+/// the readBytes(std::istream, std::vector<T>, std::size_t) free function
+/// template for reading instead.
+template<class T>
+struct BinaryIo<std::vector<T>> {
+  static void writeBytes(std::ostream &os, const std::vector<T> &data) {
+    if constexpr (is_byte_direct_ioable_v<T>) {
+      os.write(reinterpret_cast<const char *>(data.data()),
+               data.size() * sizeof(T));
+    } else {
+      for (const auto &elem : data) {
+        BinaryIo<T>::writeBytes(os, data);
+      }
+    }
+  }
+};
+
 /// Customization for std::string.
 /// \remark Input strings are expected to be null-terminated, and a
 ///         null-terminator is appended on output. For non-null-terminated
