@@ -6,7 +6,6 @@
 #include "record/io.hpp"
 #include "record/record_header.hpp"
 #include "record/rec_of.hpp"
-#include "record/size_of.hpp"
 
 namespace record {
 

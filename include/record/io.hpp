@@ -3,7 +3,6 @@
 
 #include "io/io.hpp"
 #include "record/record_header.hpp"
-#include "record/tuplifiable.hpp"
 
 namespace record {
 

@@ -1,15 +1,12 @@
 #ifndef OPENOBL_RECORD_SUBRECORD_HPP
 #define OPENOBL_RECORD_SUBRECORD_HPP
 
-#include "io/io.hpp"
 #include "record/exceptions.hpp"
 #include "record/io.hpp"
 #include "record/size_of.hpp"
 #include "record/rec_of.hpp"
 #include <array>
 #include <cstdint>
-#include <istream>
-#include <ostream>
 #include <string_view>
 
 namespace record {
