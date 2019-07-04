@@ -2,7 +2,7 @@
 #define OPENOBL_DEBUG_DRAW_IMPL_HPP
 
 #include "ogrebullet/debug_drawer.hpp"
-#include "util/bitflag.hpp"
+#include <bitflag/bitflag.hpp>
 #include <boost/circular_buffer.hpp>
 #include <gsl/gsl>
 #include <OgreMatrix4.h>
@@ -15,7 +15,7 @@ class GameMode;
 
 class DebugDrawImpl {
  private:
-  struct DebugDrawFlags : Bitflag<8u, DebugDrawFlags> {
+  struct DebugDrawFlags : em::Bitflag<8u, DebugDrawFlags> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Collision{1u << 0u};
     static constexpr enum_t Occlusion{1u << 1u};

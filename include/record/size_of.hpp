@@ -3,7 +3,7 @@
 
 #include "record/tuplifiable.hpp"
 #include "record/formid.hpp"
-#include "util/bitflag.hpp"
+#include <bitflag/bitflag.hpp>
 #include <numeric>
 #include <array>
 #include <optional>
@@ -76,7 +76,8 @@ template<class ...T> inline std::size_t SizeOf(const Tuplifiable<T...> &t) {
 }
 
 template<class T> inline auto SizeOf(const T &/*data*/) ->
-std::enable_if_t<std::is_base_of_v<Bitflag<T::num_bits, T>, T>, std::size_t> {
+std::enable_if_t<std::is_base_of_v<em::Bitflag<T::num_bits, T>, T>,
+                 std::size_t> {
   return sizeof(typename T::underlying_t);
 }
 

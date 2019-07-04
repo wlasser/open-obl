@@ -8,7 +8,7 @@
 #include "record/magic_effects.hpp"
 #include "record/subrecord.hpp"
 #include "record/tuplifiable.hpp"
-#include "util/bitflag.hpp"
+#include <bitflag/bitflag.hpp>
 #include <array>
 #include <iosfwd>
 #include <optional>
@@ -232,7 +232,7 @@ using XXXX = uint32_t;
 using ZNAM = oo::BaseId;
 
 // Cell flags
-struct DATA_CELL : Bitflag<8, DATA_CELL> {
+struct DATA_CELL : em::Bitflag<8, DATA_CELL> {
   static constexpr enum_t None{0u};
   static constexpr enum_t CannotTravelFromHere{1u};
   static constexpr enum_t HasWater{1u << 1u};
@@ -243,14 +243,14 @@ struct DATA_CELL : Bitflag<8, DATA_CELL> {
 };
 
 // Eye flags
-struct DATA_EYES : Bitflag<8, DATA_EYES> {
+struct DATA_EYES : em::Bitflag<8, DATA_EYES> {
   static constexpr enum_t None{0u};
   static constexpr enum_t Playable{1u};
 };
 
 // SpecialCombat means that faction members may fight each other without
 // alerting other members of the faction.
-struct DATA_FACT : Bitflag<8, DATA_FACT> {
+struct DATA_FACT : em::Bitflag<8, DATA_FACT> {
   static constexpr enum_t None{0};
   static constexpr enum_t InvisibleToPlayer{1u};
   static constexpr enum_t Evil{1u << 1u};
@@ -258,7 +258,7 @@ struct DATA_FACT : Bitflag<8, DATA_FACT> {
 };
 
 // Hair flags
-struct DATA_HAIR : Bitflag<8, DATA_HAIR> {
+struct DATA_HAIR : em::Bitflag<8, DATA_HAIR> {
   static constexpr enum_t None{0};
   static constexpr enum_t Playable{1u};
   static constexpr enum_t NotMale{1u << 1u}; // Why the negation?
@@ -267,7 +267,7 @@ struct DATA_HAIR : Bitflag<8, DATA_HAIR> {
 };
 
 // Worldspace flags
-struct DATA_WRLD : Bitflag<8, DATA_WRLD> {
+struct DATA_WRLD : em::Bitflag<8, DATA_WRLD> {
   static constexpr enum_t None{0};
   static constexpr enum_t SmallWorld{1u};
   static constexpr enum_t CannotTravelFromHere{1u << 1u};
@@ -279,7 +279,7 @@ struct DATA_WRLD : Bitflag<8, DATA_WRLD> {
 };
 
 // Door flags
-struct FNAM_DOOR : Bitflag<8, FNAM_DOOR> {
+struct FNAM_DOOR : em::Bitflag<8, FNAM_DOOR> {
   static constexpr enum_t None{0};
   static constexpr enum_t OblivionGate{1u};
   static constexpr enum_t AutomaticDoor{1u << 1u};
@@ -288,14 +288,14 @@ struct FNAM_DOOR : Bitflag<8, FNAM_DOOR> {
 };
 
 // Map marker flags
-struct FNAM_REFR : Bitflag<8, FNAM_REFR> {
+struct FNAM_REFR : em::Bitflag<8, FNAM_REFR> {
   static constexpr enum_t None{0};
   static constexpr enum_t Visible{1u};
   static constexpr enum_t CanTravelTo{1u << 1u};
 };
 
 // Water flags
-struct FNAM_WATR : Bitflag<8, FNAM_WATR> {
+struct FNAM_WATR : em::Bitflag<8, FNAM_WATR> {
   static constexpr enum_t None{0};
   static constexpr enum_t Damages{1u << 0u};
   static constexpr enum_t Reflective{1u << 1u};
@@ -348,7 +348,7 @@ enum class TNAM : uint16_t {
 };
 
 // TODO: Find the remaining values of this
-struct XACT : Bitflag<32, XACT> {
+struct XACT : em::Bitflag<32, XACT> {
   static constexpr enum_t None{0};
   static constexpr enum_t OpenByDefault{0x0du};
 };
@@ -372,7 +372,7 @@ enum class XSOL : uint8_t {
 
 // NPC base settings
 struct ACBS {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0};
     static constexpr enum_t Female{1u << 0u};
     static constexpr enum_t Essential{1u << 1u};
@@ -402,7 +402,7 @@ struct ACBS {
 
 // NPC AI data
 struct AIDT {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0};
     static constexpr enum_t Weapons{1u << 0u};
     static constexpr enum_t Armor{1u << 1u};
@@ -498,12 +498,12 @@ struct CNTO : Tuplifiable<oo::BaseId, uint32_t> {
 // Class data. Skill the NPC trains (if applicable) is given as an actual
 // skill index, but the major skills are given as actor values, for some reason.
 struct DATA_CLAS {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0}; // i.e. NPC only
     static constexpr enum_t Playable{1u};
     static constexpr enum_t Guard{2u};
   };
-  struct BarterFlag : Bitflag<32, BarterFlag> {
+  struct BarterFlag : em::Bitflag<32, BarterFlag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Weapons{1u << 0u};
     static constexpr enum_t Armor{1u << 1u};
@@ -534,7 +534,7 @@ struct DATA_CLAS {
 
 // Container data
 struct DATA_CONT {
-  struct Flag : Bitflag<8, Flag> {
+  struct Flag : em::Bitflag<8, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Respawns{1u << 1u};
   };
@@ -564,7 +564,7 @@ struct DATA_GRAS {
     EitherAtMostBelow = 7
   };
 
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t VertexLighting{1u << 0u};
     static constexpr enum_t UniformScaling{1u << 1u};
@@ -592,7 +592,7 @@ struct DATA_GRAS {
 
 // Lighting data
 struct DATA_LIGH {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Dynamic{1u};
     static constexpr enum_t CanBeCarried{1u << 1u};
@@ -627,7 +627,7 @@ struct DATA_MISC : Tuplifiable<int32_t, float> {
 };
 
 struct DATA_MGEF {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Hostile{1u};
     static constexpr enum_t Recover{1u << 1u};
@@ -698,7 +698,7 @@ struct DATA_NPC_ : Tuplifiable<std::array<uint8_t, 21>,
 };
 
 struct DATA_RACE {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Playable{1u};
   };
@@ -871,7 +871,7 @@ struct ENAM {
 
 // Potion and ingredient value
 struct ENIT {
-  struct Flag : Bitflag<8, Flag> {
+  struct Flag : em::Bitflag<8, Flag> {
     static constexpr enum_t None{0u};
     // Value is set manually and not calculated
     static constexpr enum_t NoAuto{1u << 0u};
@@ -1080,7 +1080,7 @@ struct PFPC : Tuplifiable<uint8_t, uint8_t, uint8_t, uint8_t> {
 
 // Script effect
 struct SCIT {
-  struct Flag : Bitflag<8, Flag> {
+  struct Flag : em::Bitflag<8, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t Hostile{1u};
   };
@@ -1117,7 +1117,7 @@ struct SNAM_WTHR {
 };
 
 struct SNDD {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0u};
     static constexpr enum_t RandomFrequencyShift{1u};
     static constexpr enum_t PlayAtRandom{1u << 1u};
@@ -1169,7 +1169,7 @@ struct SPIT {
     Expert = 3,
     Master = 4
   };
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0};
     static constexpr enum_t NoAuto{0x1u};
     static constexpr enum_t NoSilence{0x8u | 0x2u};
@@ -1268,7 +1268,7 @@ struct XCLR {
 };
 
 struct XESP {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0};
     static constexpr enum_t SetEnableStateToOppositeOfParent{1u};
   };
@@ -1278,7 +1278,7 @@ struct XESP {
 
 // Locked door/container information
 struct XLOC {
-  struct Flag : Bitflag<32, Flag> {
+  struct Flag : em::Bitflag<32, Flag> {
     static constexpr enum_t None{0};
     static constexpr enum_t LeveledLock{4u};
   };

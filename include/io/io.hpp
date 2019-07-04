@@ -1,7 +1,7 @@
 #ifndef OPENOBL_IO_IO_HPP
 #define OPENOBL_IO_IO_HPP
 
-#include "util/bitflag.hpp"
+#include <bitflag/bitflag.hpp>
 #include <array>
 #include <cstddef>
 #include <istream>
@@ -266,9 +266,9 @@ struct BinaryIo<std::tuple<Ts...>> {
   }
 };
 
-/// Customization for Bitflag.
+/// Customization for em::Bitflag.
 template<class T>
-struct BinaryIo<T, std::enable_if_t<std::is_base_of_v<BitflagMarker, T>>> {
+struct BinaryIo<T, std::enable_if_t<std::is_base_of_v<em::BitflagMarker, T>>> {
   static void writeBytes(std::ostream &os, const T &data) {
     BinaryIo<typename T::underlying_t>::writeBytes(
         os, static_cast<typename T::underlying_t>(data));

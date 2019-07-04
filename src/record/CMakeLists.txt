@@ -39,7 +39,7 @@ target_link_libraries(OpenOBLRecord PRIVATE
         ZLIB::ZLIB
         PUBLIC
         OpenOBL::OpenOBLIO
-        OpenOBL::OpenOBLUtil
+        em::cppbitflag
         Boost::boost)
 
 install(TARGETS OpenOBLRecord EXPORT OpenOBLRecordTargets

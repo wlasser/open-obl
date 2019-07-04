@@ -28,6 +28,9 @@ FetchContent_Declare(Bullet
 FetchContent_Declare(Catch
         GIT_REPOSITORY https://github.com/catchorg/Catch2.git
         GIT_TAG v2.7.0)
+FetchContent_Declare(cppbitflag
+        GIT_REPOSITORY https://github.com/EmilyMansfield/cpp-bitflag.git
+        GIT_TAG master)
 FetchContent_Declare(nostdx
         GIT_REPOSITORY https://github.com/emilymansfield/nostdx.git
         GIT_TAG master)
@@ -99,6 +102,12 @@ FetchContent_GetProperties(Catch)
 if (NOT Catch_populated)
     FetchContent_Populate(Catch)
     add_subdirectory(${catch_SOURCE_DIR} ${catch_BINARY_DIR})
+endif ()
+
+FetchContent_GetProperties(cppbitflag)
+if (NOT cppbitflag_populated)
+    FetchContent_Populate(cppbitflag)
+    add_subdirectory(${cppbitflag_SOURCE_DIR} ${cppbitflag_BINARY_DIR})
 endif ()
 
 FetchContent_GetProperties(nostdx)
