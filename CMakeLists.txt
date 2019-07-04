@@ -189,7 +189,7 @@ if (MSVC)
                     # have, but external library headers make too much noise.
     )
 else ()
-    add_compile_options(-Wall -Wextra -Wshadow -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
 endif ()
 
 add_subdirectory(src/bsa)
