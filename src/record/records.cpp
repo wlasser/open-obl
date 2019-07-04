@@ -85,7 +85,7 @@ void raw::SizedBinaryIo<raw::TES4>::readBytes(
     raw::TES4::Master master{};
     readRecord(is, master.master);
     readRecord(is, master.fileSize);
-    t.masters.push_back(master);
+    t.masters.emplace_back(std::move(master));
   }
 }
 
@@ -153,8 +153,8 @@ void raw::SizedBinaryIo<raw::CLAS>::readBytes(
     std::istream &is, raw::CLAS &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
-  if (peekRecordType(is) == "DESC"_rec) readRecord(is, t.description);
-  if (peekRecordType(is) == "ICON"_rec) readRecord(is, t.iconFilename);
+  readRecord(is, t.description);
+  readRecord(is, t.iconFilename);
   readRecord(is, t.data);
 }
 
@@ -180,7 +180,7 @@ void raw::SizedBinaryIo<raw::FACT>::writeBytes(
     std::ostream &os, const raw::FACT &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
-  for (const auto &r : t.relations) writeRecord(os, r);
+  writeRecord(os, t.relations);
   writeRecord(os, t.flags);
   writeRecord(os, t.crimeGoldMultiplier);
   for (const auto &r : t.ranks) {
@@ -194,21 +194,17 @@ void raw::SizedBinaryIo<raw::FACT>::writeBytes(
 void raw::SizedBinaryIo<raw::FACT>::readBytes(
     std::istream &is, raw::FACT &t, std::size_t) {
   readRecord(is, t.editorId);
-  if (peekRecordType(is) == "FULL"_rec) readRecord(is, t.name);
-  while (peekRecordType(is) == "XNAM"_rec) {
-    record::XNAM r{};
-    readRecord(is, r);
-    t.relations.push_back(r);
-  }
-  if (peekRecordType(is) == "DATA"_rec) readRecord(is, t.flags);
-  if (peekRecordType(is) == "CNAM"_rec) readRecord(is, t.crimeGoldMultiplier);
+  readRecord(is, t.name);
+  readRecord(is, t.relations);
+  readRecord(is, t.flags);
+  readRecord(is, t.crimeGoldMultiplier);
   while (peekRecordType(is) == "RNAM"_rec) {
     raw::FACT::Rank r{};
     readRecord(is, r.index);
-    if (peekRecordType(is) == "MNAM"_rec) readRecord(is, r.maleName);
-    if (peekRecordType(is) == "FNAM"_rec) readRecord(is, r.femaleName);
-    if (peekRecordType(is) == "INAM"_rec) readRecord(is, r.iconFilename);
-    t.ranks.push_back(r);
+    readRecord(is, r.maleName);
+    readRecord(is, r.femaleName);
+    readRecord(is, r.iconFilename);
+    t.ranks.emplace_back(std::move(r));
   }
 }
 
@@ -239,12 +235,12 @@ void raw::SizedBinaryIo<raw::HAIR>::writeBytes(
 void raw::SizedBinaryIo<raw::HAIR>::readBytes(
     std::istream &is, raw::HAIR &t, std::size_t) {
   readRecord(is, t.editorId);
-  if (peekRecordType(is) == "FULL"_rec) readRecord(is, t.name);
-  if (peekRecordType(is) == "MODL"_rec) readRecord(is, t.modelFilename);
-  if (peekRecordType(is) == "MODB"_rec) readRecord(is, t.boundRadius);
-  if (peekRecordType(is) == "MODT"_rec) readRecord(is, t.textureHash);
-  if (peekRecordType(is) == "ICON"_rec) readRecord(is, t.iconFilename);
-  if (peekRecordType(is) == "DATA"_rec) readRecord(is, t.flags);
+  readRecord(is, t.name);
+  readRecord(is, t.modelFilename);
+  readRecord(is, t.boundRadius);
+  readRecord(is, t.textureHash);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.flags);
 }
 
 //===----------------------------------------------------------------------===//
@@ -265,9 +261,9 @@ void raw::SizedBinaryIo<raw::EYES>::writeBytes(
 void raw::SizedBinaryIo<raw::EYES>::readBytes(
     std::istream &is, raw::EYES &t, std::size_t) {
   readRecord(is, t.editorId);
-  if (peekRecordType(is) == "FULL"_rec) readRecord(is, t.name);
-  if (peekRecordType(is) == "ICON"_rec) readRecord(is, t.iconFilename);
-  if (peekRecordType(is) == "DATA"_rec) readRecord(is, t.flags);
+  readRecord(is, t.name);
+  readRecord(is, t.iconFilename);
+  readRecord(is, t.flags);
 }
 
 //===----------------------------------------------------------------------===//
@@ -324,8 +320,8 @@ void raw::SizedBinaryIo<raw::RACE>::writeBytes(
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.description);
-  for (const auto &power : t.powers) writeRecord(os, power);
-  for (const auto &relation : t.relations) writeRecord(os, relation);
+  writeRecord(os, t.powers);
+  writeRecord(os, t.relations);
   writeRecord(os, t.data);
   writeRecord(os, t.voices);
   writeRecord(os, t.defaultHair);
@@ -377,17 +373,8 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
   readRecord(is, t.name);
   readRecord(is, t.description);
 
-  while (peekRecordType(is) == "SPLO"_rec) {
-    record::SPLO r{};
-    readRecord(is, r);
-    t.powers.push_back(r);
-  }
-
-  while (peekRecordType(is) == "XNAM"_rec) {
-    record::XNAM r{};
-    readRecord(is, r);
-    t.relations.push_back(r);
-  }
+  readRecord(is, t.powers);
+  readRecord(is, t.relations);
 
   readRecord(is, t.data);
   readRecord(is, t.voices);
@@ -404,7 +391,7 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
     readRecord(is, f.modelFilename);
     readRecord(is, f.boundRadius);
     readRecord(is, f.textureFilename);
-    t.faceData.push_back(f);
+    t.faceData.emplace_back(std::move(f));
   }
 
   readRecord(is, t.bodyMarker);
@@ -414,7 +401,7 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
     raw::RACE::TailData tail{};
     readRecord(is, tail.model);
     readRecord(is, tail.boundRadius);
-    t.maleTailModel.emplace(tail);
+    t.maleTailModel.emplace(std::move(tail));
   } else {
     t.maleTailModel = std::nullopt;
   }
@@ -423,7 +410,7 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
     raw::RACE::BodyData b{};
     readRecord(is, b.type);
     readRecord(is, b.textureFilename);
-    t.maleBodyData.push_back(b);
+    t.maleBodyData.emplace_back(std::move(b));
   }
 
   readRecord(is, t.femaleBodyMarker);
@@ -432,7 +419,7 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
     raw::RACE::TailData tail{};
     readRecord(is, tail.model);
     readRecord(is, tail.boundRadius);
-    t.femaleTailModel.emplace(tail);
+    t.femaleTailModel.emplace(std::move(tail));
   } else {
     t.femaleTailModel = std::nullopt;
   }
@@ -441,7 +428,7 @@ void raw::SizedBinaryIo<raw::RACE>::readBytes(
     raw::RACE::BodyData b{};
     readRecord(is, b.type);
     readRecord(is, b.textureFilename);
-    t.femaleBodyData.push_back(b);
+    t.femaleBodyData.emplace_back(std::move(b));
   }
 
   readRecord(is, t.hair);
@@ -474,13 +461,9 @@ void raw::SizedBinaryIo<raw::SOUN>::readBytes(
   readRecord(is, t.filename);
 
   if (peekRecordType(is) == "SNDD"_rec) {
-    record::SNDD r{};
-    readRecord(is, r);
-    t.sound.emplace<0>(r);
+    t.sound.emplace<0>(readRecord<record::SNDD>(is));
   } else if (peekRecordType(is) == "SNDX"_rec) {
-    record::SNDX r{};
-    readRecord(is, r);
-    t.sound.emplace<1>(r);
+    t.sound.emplace<1>(readRecord<record::SNDX>(is));
   }
 }
 
@@ -559,7 +542,7 @@ void raw::SizedBinaryIo<raw::MGEF>::readBytes(
   readRecord(is, t.effectModel);
   readRecord(is, t.boundRadius);
   readRecord(is, t.data);
-  if (peekRecordType(is) == "ESCE"_rec) readRecord(is, t.counterEffects);
+  readRecord(is, t.counterEffects);
 }
 
 //===----------------------------------------------------------------------===//
@@ -579,7 +562,7 @@ void raw::SizedBinaryIo<raw::LTEX>::writeBytes(
   writeRecord(os, t.textureFilename);
   writeRecord(os, t.havokData);
   writeRecord(os, t.specularExponent);
-  for (const auto &grass : t.potentialGrasses) writeRecord(os, grass);
+  writeRecord(os, t.potentialGrasses);
 }
 
 void raw::SizedBinaryIo<raw::LTEX>::readBytes(
@@ -588,11 +571,7 @@ void raw::SizedBinaryIo<raw::LTEX>::readBytes(
   readRecord(is, t.textureFilename);
   readRecord(is, t.havokData);
   readRecord(is, t.specularExponent);
-  while (peekRecordType(is) == "GNAM"_rec) {
-    record::GNAM r{};
-    readRecord(is, r);
-    t.potentialGrasses.push_back(r);
-  }
+  readRecord(is, t.potentialGrasses);
 }
 
 //===----------------------------------------------------------------------===//
@@ -670,7 +649,7 @@ void raw::SizedBinaryIo<raw::BSGN>::writeBytes(
   writeRecord(os, t.name);
   writeRecord(os, t.icon);
   writeRecord(os, t.description);
-  for (const auto &spell : t.spells) writeRecord(os, spell);
+  writeRecord(os, t.spells);
 }
 
 void raw::SizedBinaryIo<raw::BSGN>::readBytes(
@@ -679,11 +658,7 @@ void raw::SizedBinaryIo<raw::BSGN>::readBytes(
   readRecord(is, t.name);
   readRecord(is, t.icon);
   readRecord(is, t.description);
-  while (peekRecordType(is) == "SPLO"_rec) {
-    record::SPLO r{};
-    readRecord(is, r);
-    t.spells.push_back(r);
-  }
+  readRecord(is, t.spells);
 }
 
 //===----------------------------------------------------------------------===//
@@ -744,7 +719,7 @@ void raw::SizedBinaryIo<raw::CONT>::writeBytes(
   writeRecord(os, t.boundRadius);
   writeRecord(os, t.textureHash);
   writeRecord(os, t.script);
-  for (const auto &item : t.items) writeRecord(os, item);
+  writeRecord(os, t.items);
   writeRecord(os, t.data);
   writeRecord(os, t.openSound);
   writeRecord(os, t.closeSound);
@@ -758,11 +733,7 @@ void raw::SizedBinaryIo<raw::CONT>::readBytes(
   readRecord(is, t.boundRadius);
   readRecord(is, t.textureHash);
   readRecord(is, t.script);
-  while (peekRecordType(is) == "CNTO"_rec) {
-    record::CNTO r{};
-    readRecord(is, r);
-    t.items.push_back(r);
-  }
+  readRecord(is, t.items);
   readRecord(is, t.data);
   readRecord(is, t.openSound);
   readRecord(is, t.closeSound);
@@ -797,7 +768,7 @@ void raw::SizedBinaryIo<raw::DOOR>::writeBytes(
   writeRecord(os, t.closeSound);
   writeRecord(os, t.loopSound);
   writeRecord(os, t.flags);
-  for (const auto &rec : t.randomTeleports) writeRecord(os, rec);
+  writeRecord(os, t.randomTeleports);
 }
 
 void raw::SizedBinaryIo<raw::DOOR>::readBytes(
@@ -812,11 +783,7 @@ void raw::SizedBinaryIo<raw::DOOR>::readBytes(
   readRecord(is, t.closeSound);
   readRecord(is, t.loopSound);
   readRecord(is, t.flags);
-  while (peekRecordType(is) == "TNAM"_rec) {
-    record::TNAM_DOOR r{};
-    readRecord(is, r);
-    t.randomTeleports.push_back(r);
-  }
+  readRecord(is, t.randomTeleports);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1126,14 +1093,14 @@ void raw::SizedBinaryIo<raw::NPC_>::writeBytes(
   writeRecord(os, t.skeletonFilename);
   writeRecord(os, t.boundRadius);
   writeRecord(os, t.baseConfig);
-  for (const auto &faction : t.factions) writeRecord(os, faction);
+  writeRecord(os, t.factions);
   writeRecord(os, t.deathItem);
   writeRecord(os, t.race);
-  for (const auto &spell : t.spells) writeRecord(os, spell);
+  writeRecord(os, t.spells);
   writeRecord(os, t.script);
-  for (const auto &item : t.items) writeRecord(os, item);
+  writeRecord(os, t.items);
   writeRecord(os, t.aiData);
-  for (const auto &package : t.aiPackages) writeRecord(os, package);
+  writeRecord(os, t.aiPackages);
   writeRecord(os, t.clas);
   writeRecord(os, t.stats);
   writeRecord(os, t.hair);
@@ -1287,7 +1254,7 @@ void raw::SizedBinaryIo<raw::WTHR>::writeBytes(
   writeRecord(os, t.fogDistances);
   writeRecord(os, t.hdr);
   writeRecord(os, t.data);
-  for (const auto &sound : t.sounds) writeRecord(os, sound);
+  writeRecord(os, t.sounds);
 }
 
 void raw::SizedBinaryIo<raw::WTHR>::readBytes(
@@ -1301,9 +1268,7 @@ void raw::SizedBinaryIo<raw::WTHR>::readBytes(
   readRecord(is, t.fogDistances);
   readRecord(is, t.hdr);
   readRecord(is, t.data);
-  while (peekRecordType(is) == "SNAM"_rec) {
-    t.sounds.emplace_back(readRecord<record::SNAM_WTHR>(is));
-  }
+  readRecord(is, t.sounds);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1508,7 +1473,7 @@ void raw::SizedBinaryIo<raw::LAND>::writeBytes(
   writeRecord(os, t.normals);
   writeRecord(os, t.heights);
   writeRecord(os, t.colors);
-  for (const auto &tex : t.quadrantTexture) writeRecord(os, tex);
+  writeRecord(os, t.quadrantTexture);
   for (const auto &[a, v] : t.fineTextures) {
     writeRecord(os, a);
     writeRecord(os, v);

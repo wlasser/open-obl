@@ -69,25 +69,21 @@ struct GLOB {
 struct CLAS {
   record::EDID editorId{};
   record::FULL name{};
-  // TODO: Use std::optional
-  record::DESC description{};
-  // TODO: Uses std::optional
-  record::ICON iconFilename{};
+  std::optional<record::DESC> description{};
+  std::optional<record::ICON> iconFilename{};
   record::DATA_CLAS data{};
 };
 
 // Faction
-// TODO: Look at entire optional behaviour of this record
 struct FACT {
   struct Rank {
     record::RNAM index{};
-    record::MNAM maleName{};
-    record::FNAM_FACT femaleName{};
-    record::INAM iconFilename{};
+    std::optional<record::MNAM> maleName{};
+    std::optional<record::FNAM_FACT> femaleName{};
+    std::optional<record::INAM> iconFilename{};
   };
   record::EDID editorId{};
-  // TODO: Use std::optional
-  record::FULL name{};
+  std::optional<record::FULL> name{};
   std::vector<record::XNAM> relations{};
   record::DATA_FACT flags{};
   record::CNAM_FACT crimeGoldMultiplier{};
@@ -95,22 +91,20 @@ struct FACT {
 };
 
 // Hair
-// TODO: Look at entire optional structure of this record
 struct HAIR {
   record::EDID editorId{};
-  record::FULL name{};
+  std::optional<record::FULL> name{};
   record::MODL modelFilename{};
   record::MODB boundRadius{};
-  record::MODT textureHash{};
+  std::optional<record::MODT> textureHash{};
   record::ICON iconFilename{};
   record::DATA_HAIR flags{};
 };
 
 // Eyes
-// TODO: Look at entire optional structure of this record
 struct EYES {
   record::EDID editorId{};
-  record::FULL name{};
+  std::optional<record::FULL> name{};
   record::ICON iconFilename{};
   record::DATA_EYES flags{};
 };
@@ -219,7 +213,7 @@ struct MGEF {
   record::DATA_MGEF data{};
   // Editor IDs of magic effects which somehow counter this one, such as Dispel
   // or a Weakness to a Resist. The number of IDs is stored in the data entry.
-  record::ESCE counterEffects{};
+  std::optional<record::ESCE> counterEffects{};
 };
 
 struct LTEX {

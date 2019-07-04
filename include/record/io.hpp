@@ -40,6 +40,16 @@ T readRecord(std::istream &is) {
   return rec;
 }
 
+/// Read sequential records of type c.
+/// \tparam T should be a Subrecord or Record
+/// \todo Fix the SFINAE on this to actually only match Subrecord or Record
+template<class T, uint32_t recType = T::RecordType>
+void readRecord(std::istream &is, std::vector<T> &t) {
+  while (record::peekRecordType(is) == recType) {
+    t.emplace_back(readRecord<T>(is));
+  }
+}
+
 /// Wrapper around io::writeBytes
 /// \tparam T Should be a Subrecord or Record.
 /// \todo Fix the SFINAE on this to actually only match Subrecord or Record
@@ -54,6 +64,15 @@ void writeRecord(std::ostream &os, const T &t) {
 template<class T, uint32_t recType = T::RecordType>
 void writeRecord(std::ostream &os, const std::optional<T> &t) {
   io::writeBytes(os, t);
+}
+
+/// If t is nonempty then write its contents sequentially with writeRecord(),
+/// otherwise do nothing.
+/// \tparam T Should be a Subrecord or Record.
+/// \todo Fix the SFINAE on this to actually match Subrecord or Record.
+template<class T, uint32_t = T::RecordType>
+void writeRecord(std::ostream &os, const std::vector<T> &t) {
+  for (const auto &r : t) writeRecord(os, r);
 }
 
 /// Read the header of the next record and place `is` just before the body.
