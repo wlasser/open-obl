@@ -256,59 +256,15 @@ using REFR_NPC_ = raw::REFR<"NPC_"_rec, REFRParentable, REFRScalable,
 
 } // namespace raw
 
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_ACTI &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_ACTI &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_CONT &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_CONT &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_DOOR &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_DOOR &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_LIGH &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_LIGH &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_MISC &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_MISC &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_STAT &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_STAT &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_FLOR &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_FLOR &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_FURN &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_FURN &t, std::size_t);
-
-template<> std::ostream &
-raw::write(std::ostream &os, const raw::REFR_NPC_ &t, std::size_t);
-
-template<> std::istream &
-raw::read(std::istream &is, raw::REFR_NPC_ &t, std::size_t);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_ACTI);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_CONT);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_DOOR);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_LIGH);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_MISC);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_STAT);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_FLOR);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_FURN);
+DECLARE_SPECIALIZED_RECORD_IO(REFR_NPC_);
 
 using REFR_ACTI = Record<raw::REFR_ACTI, "REFR"_rec>;
 using REFR_CONT = Record<raw::REFR_CONT, "REFR"_rec>;

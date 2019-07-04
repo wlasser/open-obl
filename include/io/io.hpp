@@ -95,7 +95,8 @@ inline constexpr bool is_byte_direct_ioable_v =
 ///@}
 
 /// Customization point for writeBytes and readBytes.
-template<class T>
+/// The second template parameter is available for SFINAE.
+template<class T, class = void>
 struct BinaryIo {
   static_assert(is_byte_direct_ioable_v<T>, "Specialize for other types");
 
@@ -248,14 +249,14 @@ struct BinaryIo<std::tuple<Ts...>> {
 };
 
 /// Customization for Bitflag.
-template<std::size_t N, class T>
-struct BinaryIo<Bitflag<N, T>> {
-  static void writeBytes(std::ostream &os, const Bitflag<N, T> &data) {
+template<class T>
+struct BinaryIo<T, std::enable_if_t<std::is_base_of_v<BitflagMarker, T>>> {
+  static void writeBytes(std::ostream &os, const T &data) {
     BinaryIo<typename T::underlying_t>::writeBytes(
         os, static_cast<typename T::underlying_t>(data));
   }
 
-  static void readBytes(std::istream &is, Bitflag<N, T> &data) {
+  static void readBytes(std::istream &is, T &data) {
     typename T::underlying_t val{};
     BinaryIo<typename T::underlying_t>::readBytes(is, val);
     data = T::make(val);

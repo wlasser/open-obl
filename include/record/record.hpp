@@ -54,105 +54,101 @@ class Record : public T {
   Record() : Record(T(), RecordFlag::None, 0, 0) {}
 };
 
-/// Write the Record to the stream in the binary representation expected by esp
-/// files.
-/// \remark This should *not* be specialized for each record type, raw::write
-///         should be specialized for `T` instead.
-/// \remark The output is 'formatted' in the sense that it is not the object
-///         representation of the Record.
-template<class T, uint32_t c> std::ostream &
-operator<<(std::ostream &os, const Record<T, c> &record) {
-  if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
-    // Write the uncompressed raw record into a buffer.
-    const auto uncompressedSize{record.size()};
-    std::vector<uint8_t> uncompressedData(uncompressedSize);
-    io::memstream mos(uncompressedData.data(), uncompressedSize);
-    raw::write(mos, static_cast<const T &>(record), uncompressedSize);
-
-    // Compress the raw record into another buffer.
-    const auto compressedData{record::compressBytes(uncompressedData)};
-    const auto compressedSize{compressedData.size()};
-
-    const auto uncompressedSize32{static_cast<uint32_t>(uncompressedSize)};
-    const auto compressedSize32{static_cast<uint32_t>(compressedSize)};
-
-    // Write the record header, where the raw record size is now the size of
-    // the compressed data, plus four bytes for the uncompressed size.
-    io::writeBytes(os, recOf<c>());
-    io::writeBytes(os, compressedSize32 + 4u);
-    io::writeBytes(os, record.mRecordFlags);
-    io::writeBytes(os, record.mFormId);
-    io::writeBytes(os, record.mVersionControlInfo);
-
-    // Write the uncompressed size and compressed data.
-    io::writeBytes(os, uncompressedSize32);
-    os.write(reinterpret_cast<const char *>(compressedData.data()),
-             compressedSize);
-  } else {
-    const auto size{static_cast<uint32_t>(record.size())};
-    io::writeBytes(os, recOf<c>());
-    io::writeBytes(os, size);
-    io::writeBytes(os, record.mRecordFlags);
-    io::writeBytes(os, record.mFormId);
-    io::writeBytes(os, record.mVersionControlInfo);
-    raw::write(os, static_cast<const T &>(record), size);
-  }
-
-  return os;
-}
-
-/// Read a Record stored in its binary representation used in esp files.
-/// \remark This should *not* be specialized for each record type, raw::read
-///         should be specified for `T` instead.
-/// \remark The input is 'formatted' in the sense that it is not the object
-///         representation of the Record.
-/// \exception RecordNotFoundError Thrown if the record type read does not match
-///                                the type of the record.
-template<class T, uint32_t c> std::istream &
-operator>>(std::istream &is, Record<T, c> &record) {
-  std::array<char, 4> type{};
-  io::readBytes(is, type);
-  if (recOf(type) != c) {
-    throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
-  }
-
-  // Read the size of the record on disk, which depending on compression may or
-  // may not be the actual size of the record.
-  uint32_t sizeOnDisk{};
-  io::readBytes(is, sizeOnDisk);
-
-  // Read the rest of the record header.
-  io::readBytes(is, record.mRecordFlags);
-  io::readBytes(is, record.mFormId);
-  io::readBytes(is, record.mVersionControlInfo);
-
-  if ((record.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
-    // The size on disk is actually the size of the compressed raw record plus
-    // four bytes for the uncompressed size.
-    const auto compressedSize{sizeOnDisk - 4u};
-
-    // Read the size of the uncompressed raw record.
-    uint32_t uncompressedSize{};
-    io::readBytes(is, uncompressedSize);
-
-    // Read the compressed raw record into a buffer.
-    std::vector<uint8_t> compressedData{};
-    io::readBytes(is, compressedData, compressedSize);
-
-    // Uncompress the raw record into another buffer and interpret it as the
-    // raw record.
-    const auto uncompressedData{record::uncompressBytes(compressedData,
-                                                        uncompressedSize)};
-    io::memstream mis(uncompressedData.data(), uncompressedSize);
-    raw::read(mis, static_cast<T &>(record), uncompressedSize);
-  } else {
-    // The size on disk is actually the size of the record.
-    raw::read(is, static_cast<T &>(record), sizeOnDisk);
-  }
-
-  return is;
-}
-
 } // namespace record
+
+namespace io {
+
+template<class T, uint32_t c>
+struct BinaryIo<record::Record<T, c>> {
+  /// Write the Record to the stream in the binary representation expected by
+  /// esp files.
+  static void writeBytes(std::ostream &os, const record::Record<T, c> &data) {
+    using RecordFlag = record::RecordFlag;
+    if ((data.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
+      // Write the uncompressed raw record into a buffer.
+      const auto uncompressedSize{data.size()};
+      std::vector<uint8_t> uncompressedData(uncompressedSize);
+      io::memstream mos(uncompressedData.data(), uncompressedSize);
+      record::raw::write(mos, static_cast<const T &>(data), uncompressedSize);
+
+      // Compress the raw record into another buffer.
+      const auto compressedData{record::compressBytes(uncompressedData)};
+      const auto compressedSize{compressedData.size()};
+
+      const auto uncompressedSize32{static_cast<uint32_t>(uncompressedSize)};
+      const auto compressedSize32{static_cast<uint32_t>(compressedSize)};
+
+      // Write the record header, where the raw record size is now the size of
+      // the compressed data, plus four bytes for the uncompressed size.
+      io::writeBytes(os, record::recOf<c>());
+      io::writeBytes(os, compressedSize32 + 4u);
+      io::writeBytes(os, data.mRecordFlags);
+      io::writeBytes(os, data.mFormId);
+      io::writeBytes(os, data.mVersionControlInfo);
+
+      // Write the uncompressed size and compressed data.
+      io::writeBytes(os, uncompressedSize32);
+      os.write(reinterpret_cast<const char *>(compressedData.data()),
+               compressedSize);
+    } else {
+      const auto size{static_cast<uint32_t>(data.size())};
+      io::writeBytes(os, record::recOf<c>());
+      io::writeBytes(os, size);
+      io::writeBytes(os, data.mRecordFlags);
+      io::writeBytes(os, data.mFormId);
+      io::writeBytes(os, data.mVersionControlInfo);
+      record::raw::write(os, static_cast<const T &>(data), size);
+    }
+  }
+
+  /// Read a Record stored in its binary representation used in esp files.
+  /// \exception RecordNotFoundError Thrown if the record type read does not
+  ///                                match the type of the record.
+  static void readBytes(std::istream &is, record::Record<T, c> &data) {
+    std::array<char, 4> type{};
+    io::readBytes(is, type);
+    if (record::recOf(type) != c) {
+      throw record::RecordNotFoundError(record::recOf<c>(),
+                                        std::string_view(type.data(), 4));
+    }
+
+    // Read the size of the record on disk, which depending on compression may or
+    // may not be the actual size of the record.
+    uint32_t sizeOnDisk{};
+    io::readBytes(is, sizeOnDisk);
+
+    // Read the rest of the record header.
+    io::readBytes(is, data.mRecordFlags);
+    io::readBytes(is, data.mFormId);
+    io::readBytes(is, data.mVersionControlInfo);
+
+    using RecordFlag = record::RecordFlag;
+    if ((data.mRecordFlags & RecordFlag::Compressed) != RecordFlag::None) {
+      // The size on disk is actually the size of the compressed raw record plus
+      // four bytes for the uncompressed size.
+      const auto compressedSize{sizeOnDisk - 4u};
+
+      // Read the size of the uncompressed raw record.
+      uint32_t uncompressedSize{};
+      io::readBytes(is, uncompressedSize);
+
+      // Read the compressed raw record into a buffer.
+      std::vector<uint8_t> compressedData{};
+      io::readBytes(is, compressedData, compressedSize);
+
+      // Uncompress the raw record into another buffer and interpret it as the
+      // raw record.
+      const auto uncompressedData{record::uncompressBytes(compressedData,
+                                                          uncompressedSize)};
+      io::memstream mis(uncompressedData.data(), uncompressedSize);
+      record::raw::read(mis, static_cast<T &>(data), uncompressedSize);
+    } else {
+      // The size on disk is actually the size of the record.
+      record::raw::read(is, static_cast<T &>(data), sizeOnDisk);
+    }
+  }
+};
+
+} // namespace io
 
 #endif // OPENOBL_RECORD_RECORD_HPP

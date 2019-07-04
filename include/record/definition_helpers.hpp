@@ -13,10 +13,10 @@
 // this, since otherwise g++ complains about duplicate semicolons under
 // -Wpedantic.
 #define DECLARE_SPECIALIZED_RECORD_IO(type) \
-  template <> \
-  std::ostream& raw::write(std::ostream&, const raw::type&, std::size_t); \
-  template <> \
-  std::istream& raw::read(std::istream&, raw::type&, std::size_t)
+template<> struct raw::SizedBinaryIo<raw::type> { \
+  static void writeBytes(std::ostream &, const raw::type &, std::size_t); \
+  static void readBytes(std::istream &, raw::type &, std::size_t); \
+}
 
 #define DECLARE_SPECIALIZED_RECORD(type) \
   template <> std::size_t type::size() const; \

@@ -58,46 +58,45 @@ struct Subrecord {
   explicit Subrecord() = default;
 };
 
-/// Write the Subrecord to the stream in the binary representation expected by
-/// esp files.
-/// \remark This should *not* be specialized for each subrecord type, raw::write
-///         should be specialized for `T` if necessary.
-template<class T, uint32_t c>
-std::ostream &operator<<(std::ostream &os, const Subrecord<T, c> &subrecord) {
-  const auto size{subrecord.size()};
-  const auto size16{static_cast<uint16_t>(size)};
-  io::writeBytes(os, recOf<c>());
-  io::writeBytes(os, size16);
-  raw::write(os, subrecord.data, size);
-
-  return os;
-}
-
-/// Read a Subrecord stored in its binary representation used in esp files.
-/// \remark This should *not* be specialized for each subrecord type, raw::read
-///         should be specialized for `T` if necessary.
-/// \exception RecordNotFoundError Throw if the subrecord type read does not
-///                                match the type of the subrecord.
-template<class T, uint32_t c>
-std::istream &operator>>(std::istream &is, Subrecord<T, c> &subrecord) {
-  std::array<char, 4> type{};
-  io::readBytes(is, type);
-  if (recOf(type) != c) {
-    throw RecordNotFoundError(recOf<c>(), std::string_view(type.data(), 4));
-  }
-
-  uint16_t size{};
-  io::readBytes(is, size);
-  raw::read(is, subrecord.data, size);
-
-  return is;
-}
-
 template<class T, uint32_t c>
 std::size_t SizeOf(const Subrecord<T, c> &t) {
   return t.entireSize();
 }
 
 } // namespace record
+
+namespace io {
+
+template<class T, uint32_t c>
+struct BinaryIo<record::Subrecord<T, c>> {
+  /// Write the Subrecord to the stream in the binary representation expected by
+  /// esp files.
+  static void writeBytes(std::ostream &os,
+                         const record::Subrecord<T, c> &data) {
+    const auto size{data.size()};
+    const auto size16{static_cast<uint16_t>(size)};
+    io::writeBytes(os, record::recOf<c>());
+    io::writeBytes(os, size16);
+    record::raw::write(os, data.data, size);
+  }
+
+  /// Read a Subrecord stored in its binary representation used in esp files.
+  /// \exception RecordNotFoundError Throw if the subrecord type read does not
+  ///                                match the type of the subrecord.
+  static void readBytes(std::istream &is, record::Subrecord<T, c> &data) {
+    std::array<char, 4> type{};
+    io::readBytes(is, type);
+    if (record::recOf(type) != c) {
+      throw record::RecordNotFoundError(record::recOf<c>(),
+                                        std::string_view(type.data(), 4));
+    }
+
+    uint16_t size{};
+    io::readBytes(is, size);
+    record::raw::read(is, data.data, size);
+  }
+};
+
+} // namespace io
 
 #endif //OPENOBL_RECORD_SUBRECORD_HPP
