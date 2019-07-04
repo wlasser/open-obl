@@ -18,10 +18,7 @@ target_sources(OpenOBLNif PRIVATE
         compound.cpp
         niobject.cpp)
 
-target_link_libraries(OpenOBLNif PRIVATE
-        Boost::boost
-        PUBLIC
-        OpenOBL::OpenOBLIO)
+target_link_libraries(OpenOBLNif PUBLIC OpenOBL::OpenOBLIO)
 
 install(TARGETS OpenOBLNif EXPORT OpenOBLNifTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
