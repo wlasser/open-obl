@@ -20,6 +20,7 @@ target_sources(OpenOBLNif PRIVATE
 
 target_link_libraries(OpenOBLNif PRIVATE
         Boost::boost
+        PUBLIC
         OpenOBL::OpenOBLIO)
 
 install(TARGETS OpenOBLNif EXPORT OpenOBLNifTargets
