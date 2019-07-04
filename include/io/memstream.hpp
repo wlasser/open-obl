@@ -1,7 +1,7 @@
 #ifndef OPENOBL_IO_MEMSTREAM_HPP
 #define OPENOBL_IO_MEMSTREAM_HPP
 
-#include <iostream>
+#include <istream>
 
 namespace io {
 
