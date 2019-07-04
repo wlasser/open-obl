@@ -12,8 +12,8 @@ namespace record::raw {
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<ACBS>::operator()(const ACBS &) const { return 16u; }
 
-void SizedBinaryIo<raw::ACBS>::writeBytes(
-    std::ostream &os, const raw::ACBS &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<ACBS>::writeBytes(std::ostream &os, const ACBS &t, std::size_t) {
   io::writeBytes(os, t.flags);
   io::writeBytes(os, t.baseSpellPoints);
   io::writeBytes(os, t.baseFatigue);
@@ -23,8 +23,7 @@ void SizedBinaryIo<raw::ACBS>::writeBytes(
   io::writeBytes(os, t.calcMax);
 }
 
-void SizedBinaryIo<raw::ACBS>::readBytes(
-    std::istream &is, raw::ACBS &t, std::size_t /*size*/) {
+void SizedBinaryIo<ACBS>::readBytes(std::istream &is, ACBS &t, std::size_t) {
   io::readBytes(is, t.flags);
   io::readBytes(is, t.baseSpellPoints);
   io::readBytes(is, t.baseFatigue);
@@ -39,8 +38,8 @@ void SizedBinaryIo<raw::ACBS>::readBytes(
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<AIDT>::operator()(const AIDT &) const { return 12u; }
 
-void SizedBinaryIo<raw::AIDT>::writeBytes(
-    std::ostream &os, const raw::AIDT &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<AIDT>::writeBytes(std::ostream &os, const AIDT &t, std::size_t) {
   io::writeBytes(os, t.aggression);
   io::writeBytes(os, t.confidence);
   io::writeBytes(os, t.energyLevel);
@@ -51,8 +50,7 @@ void SizedBinaryIo<raw::AIDT>::writeBytes(
   io::writeBytes(os, t.unknown);
 }
 
-void SizedBinaryIo<raw::AIDT>::readBytes(
-    std::istream &is, raw::AIDT &t, std::size_t /*size*/) {
+void SizedBinaryIo<AIDT>::readBytes(std::istream &is, AIDT &t, std::size_t) {
   io::readBytes(is, t.aggression);
   io::readBytes(is, t.confidence);
   io::readBytes(is, t.energyLevel);
@@ -70,8 +68,8 @@ std::size_t SubrecordSize<DATA_CLAS>::operator()(const DATA_CLAS &data) const {
   return 4u * 12u + (data.hasTrainingInfo ? 4u : 0u);
 }
 
-void SizedBinaryIo<raw::DATA_CLAS>::writeBytes(
-    std::ostream &os, const raw::DATA_CLAS &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_CLAS>::writeBytes(std::ostream &os, const DATA_CLAS &t,
+                                          std::size_t) {
   io::writeBytes(os, t.primaryAttributes);
   io::writeBytes(os, t.specialization);
   io::writeBytes(os, t.majorSkills);
@@ -84,8 +82,8 @@ void SizedBinaryIo<raw::DATA_CLAS>::writeBytes(
   }
 }
 
-void SizedBinaryIo<raw::DATA_CLAS>::readBytes(
-    std::istream &is, raw::DATA_CLAS &t, std::size_t size) {
+void SizedBinaryIo<DATA_CLAS>::readBytes(std::istream &is, DATA_CLAS &t,
+                                         std::size_t size) {
   io::readBytes(is, t.primaryAttributes);
   io::readBytes(is, t.specialization);
   io::readBytes(is, t.majorSkills);
@@ -106,14 +104,14 @@ std::size_t SubrecordSize<DATA_CONT>::operator()(const DATA_CONT &) const {
   return 5u;
 }
 
-void SizedBinaryIo<raw::DATA_CONT>::writeBytes(
-    std::ostream &os, const raw::DATA_CONT &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_CONT>::writeBytes(std::ostream &os, const DATA_CONT &t,
+                                          std::size_t) {
   io::writeBytes(os, t.flag);
   io::writeBytes(os, t.weight);
 }
 
-void SizedBinaryIo<raw::DATA_CONT>::readBytes(
-    std::istream &is, raw::DATA_CONT &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_CONT>::readBytes(std::istream &is, DATA_CONT &t,
+                                         std::size_t) {
   io::readBytes(is, t.flag);
   io::readBytes(is, t.weight);
 }
@@ -125,13 +123,13 @@ std::size_t SubrecordSize<DATA_GMST>::operator()(const DATA_GMST &data) const {
   return data.s.size();
 }
 
-void SizedBinaryIo<raw::DATA_GMST>::writeBytes(
-    std::ostream &os, const raw::DATA_GMST &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_GMST>::writeBytes(std::ostream &os, const DATA_GMST &t,
+                                          std::size_t) {
   os.write(t.s.data(), t.s.size() * 1);
 }
 
-void SizedBinaryIo<raw::DATA_GMST>::readBytes(
-    std::istream &is, raw::DATA_GMST &t, std::size_t size) {
+void SizedBinaryIo<DATA_GMST>::readBytes(std::istream &is, DATA_GMST &t,
+                                         std::size_t size) {
   t.s.clear();
   io::readBytes(is, t.s, size);
   if (size == 4) {
@@ -147,8 +145,8 @@ std::size_t SubrecordSize<DATA_GRAS>::operator()(const DATA_GRAS &) const {
   return 32u;
 }
 
-void SizedBinaryIo<raw::DATA_GRAS>::writeBytes(
-    std::ostream &os, const raw::DATA_GRAS &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_GRAS>::writeBytes(std::ostream &os, const DATA_GRAS &t,
+                                          std::size_t) {
   io::writeBytes(os, t.density);
   io::writeBytes(os, t.minSlope);
   io::writeBytes(os, t.maxSlope);
@@ -163,8 +161,8 @@ void SizedBinaryIo<raw::DATA_GRAS>::writeBytes(
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::DATA_GRAS>::readBytes(
-    std::istream &is, raw::DATA_GRAS &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_GRAS>::readBytes(std::istream &is, DATA_GRAS &t,
+                                         std::size_t) {
   io::readBytes(is, t.density);
   io::readBytes(is, t.minSlope);
   io::readBytes(is, t.maxSlope);
@@ -186,8 +184,8 @@ std::size_t SubrecordSize<DATA_LIGH>::operator()(const DATA_LIGH &) const {
   return 32u;
 }
 
-void SizedBinaryIo<raw::DATA_LIGH>::writeBytes(
-    std::ostream &os, const raw::DATA_LIGH &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_LIGH>::writeBytes(std::ostream &os, const DATA_LIGH &t,
+                                          std::size_t) {
   io::writeBytes(os, t.time);
   io::writeBytes(os, t.radius);
   io::writeBytes(os, t.color);
@@ -198,8 +196,8 @@ void SizedBinaryIo<raw::DATA_LIGH>::writeBytes(
   io::writeBytes(os, t.weight);
 }
 
-void SizedBinaryIo<raw::DATA_LIGH>::readBytes(
-    std::istream &is, raw::DATA_LIGH &t, std::size_t size) {
+void SizedBinaryIo<DATA_LIGH>::readBytes(std::istream &is, DATA_LIGH &t,
+                                         std::size_t size) {
   io::readBytes(is, t.time);
   io::readBytes(is, t.radius);
   io::readBytes(is, t.color);
@@ -216,18 +214,16 @@ void SizedBinaryIo<raw::DATA_LIGH>::readBytes(
 // DATA_MGEF Specialization
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<DATA_MGEF>::operator()(const DATA_MGEF &) const {
-  return sizeof(raw::DATA_MGEF::Flag) + 4u + sizeof(oo::MagicSchool)
+  return sizeof(DATA_MGEF::Flag) + 4u + sizeof(oo::MagicSchool)
       + sizeof(oo::ActorValue) + 2u * sizeof(uint16_t) + 4u * sizeof(float)
       + 7u * sizeof(oo::FormId);
 }
 
-void SizedBinaryIo<raw::DATA_MGEF>::writeBytes(
-    std::ostream &os, const raw::DATA_MGEF &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_MGEF>::writeBytes(std::ostream &os, const DATA_MGEF &t,
+                                          std::size_t) {
   io::writeBytes(os, t.flags);
   io::writeBytes(os, t.baseCost);
-  std::visit([&os](auto &&v) {
-    io::writeBytes(os, v);
-  }, t.associatedObject);
+  std::visit([&os](auto &&v) { io::writeBytes(os, v); }, t.associatedObject);
   io::writeBytes(os, t.school);
   io::writeBytes(os, t.resist);
   io::writeBytes(os, t.esceLength);
@@ -244,13 +240,13 @@ void SizedBinaryIo<raw::DATA_MGEF>::writeBytes(
   io::writeBytes(os, t.constantEffectBarterFactor);
 }
 
-void SizedBinaryIo<raw::DATA_MGEF>::readBytes(
-    std::istream &is, raw::DATA_MGEF &t, std::size_t size) {
+void SizedBinaryIo<DATA_MGEF>::readBytes(std::istream &is, DATA_MGEF &t,
+                                         std::size_t size) {
   io::readBytes(is, t.flags);
   io::readBytes(is, t.baseCost);
-  std::visit([&is](auto &&v) {
-    io::readBytes(is, v);
-  }, t.associatedObject);
+  // TODO: This should not be a variant since we cannot deduce the argument
+  //       type, but it cannot be a union for that reason either.
+  std::visit([&is](auto &&v) { io::readBytes(is, v); }, t.associatedObject);
   io::readBytes(is, t.school);
   io::readBytes(is, t.resist);
   io::readBytes(is, t.esceLength);
@@ -277,8 +273,8 @@ std::size_t SubrecordSize<DATA_RACE>::operator()(const DATA_RACE &data) const {
       + 4u * 4u + 4u;
 }
 
-void SizedBinaryIo<raw::DATA_RACE>::writeBytes(
-    std::ostream &os, const raw::DATA_RACE &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_RACE>::writeBytes(std::ostream &os, const DATA_RACE &t,
+                                          std::size_t) {
   for (const auto &pair : t.skillModifiers) {
     // Despite being an oo::ActorValue, only the first byte is used
     auto av = static_cast<uint8_t>(pair.first);
@@ -294,13 +290,13 @@ void SizedBinaryIo<raw::DATA_RACE>::writeBytes(
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::DATA_RACE>::readBytes(
-    std::istream &is, raw::DATA_RACE &t, std::size_t size) {
+void SizedBinaryIo<DATA_RACE>::readBytes(std::istream &is, DATA_RACE &t,
+                                         std::size_t size) {
   // There can be zero to seven skill modifiers and they are not delimited, so
   // we have to compute how many there are using the total size.
   const auto allModifiersSize = size - 22u;
   const auto singleModifierSize = 2u;
-  if (allModifiersSize % singleModifierSize != 0) {
+  if (allModifiersSize % singleModifierSize != 0u) {
     throw std::range_error(
         std::string("Could not determine the number of skill modifiers: ")
             .append(std::to_string(allModifiersSize))
@@ -329,8 +325,8 @@ std::size_t SubrecordSize<DATA_WTHR>::operator()(const DATA_WTHR &) const {
   return 15u;
 }
 
-void SizedBinaryIo<raw::DATA_WTHR>::writeBytes(
-    std::ostream &os, const raw::DATA_WTHR &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_WTHR>::writeBytes(std::ostream &os, const DATA_WTHR &t,
+                                          std::size_t) {
   io::writeBytes(os, t.windSpeed);
   io::writeBytes(os, t.cloudSpeedLower);
   io::writeBytes(os, t.cloudSpeedUpper);
@@ -348,8 +344,8 @@ void SizedBinaryIo<raw::DATA_WTHR>::writeBytes(
   io::writeBytes(os, t.lightningB);
 }
 
-void SizedBinaryIo<raw::DATA_WTHR>::readBytes(
-    std::istream &is, raw::DATA_WTHR &t, std::size_t /*size*/) {
+void SizedBinaryIo<DATA_WTHR>::readBytes(std::istream &is, DATA_WTHR &t,
+                                         std::size_t) {
   io::readBytes(is, t.windSpeed);
   io::readBytes(is, t.cloudSpeedLower);
   io::readBytes(is, t.cloudSpeedUpper);
@@ -374,15 +370,13 @@ std::size_t SubrecordSize<DELE>::operator()(const DELE &data) const {
   return data.size;
 }
 
-void SizedBinaryIo<raw::DELE>::writeBytes(
-    std::ostream &os, const raw::DELE &/*t*/, std::size_t size) {
-  for (std::size_t i = 0; i < size; ++i) {
-    os.put('\0');
-  }
+void SizedBinaryIo<DELE>::writeBytes(std::ostream &os, const DELE &,
+                                     std::size_t size) {
+  for (std::size_t i = 0u; i < size; ++i) os.put('\0');
 }
 
-void SizedBinaryIo<raw::DELE>::readBytes(
-    std::istream &is, raw::DELE &t, std::size_t size) {
+void
+SizedBinaryIo<DELE>::readBytes(std::istream &is, DELE &t, std::size_t size) {
   is.seekg(size, std::istream::cur);
   t.size = gsl::narrow_cast<uint32_t>(size);
 }
@@ -394,8 +388,8 @@ std::size_t SubrecordSize<EFIT>::operator()(const EFIT &) const {
   return 5u * 4u + sizeof(oo::ActorValue);
 }
 
-void SizedBinaryIo<raw::EFIT>::writeBytes(
-    std::ostream &os, const raw::EFIT &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<EFIT>::writeBytes(std::ostream &os, const EFIT &t, std::size_t) {
   io::writeBytes(os, t.efid);
   io::writeBytes(os, t.magnitude);
   io::writeBytes(os, t.area);
@@ -404,8 +398,7 @@ void SizedBinaryIo<raw::EFIT>::writeBytes(
   io::writeBytes(os, t.avIndex);
 }
 
-void SizedBinaryIo<raw::EFIT>::readBytes(
-    std::istream &is, raw::EFIT &t, std::size_t /*size*/) {
+void SizedBinaryIo<EFIT>::readBytes(std::istream &is, EFIT &t, std::size_t) {
   io::readBytes(is, t.efid);
   io::readBytes(is, t.magnitude);
   io::readBytes(is, t.area);
@@ -421,17 +414,14 @@ std::size_t SubrecordSize<ENAM>::operator()(const ENAM &data) const {
   return data.eyes.size() * sizeof(oo::FormId);
 }
 
-void SizedBinaryIo<raw::ENAM>::writeBytes(
-    std::ostream &os, const raw::ENAM &t, std::size_t /*size*/) {
-  for (const auto eye : t.eyes) {
-    io::writeBytes(os, eye);
-  }
+void
+SizedBinaryIo<ENAM>::writeBytes(std::ostream &os, const ENAM &t, std::size_t) {
+  io::writeBytes(os, t.eyes);
 }
 
-void SizedBinaryIo<raw::ENAM>::readBytes(
-    std::istream &is, raw::ENAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(oo::FormId);
-  io::readBytes(is, t.eyes, length);
+void
+SizedBinaryIo<ENAM>::readBytes(std::istream &is, ENAM &t, std::size_t size) {
+  io::readBytes(is, t.eyes, size / sizeof(oo::FormId));
 }
 
 //===----------------------------------------------------------------------===//
@@ -439,15 +429,14 @@ void SizedBinaryIo<raw::ENAM>::readBytes(
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<ENIT>::operator()(const ENIT &) const { return 8u; }
 
-void SizedBinaryIo<raw::ENIT>::writeBytes(
-    std::ostream &os, const raw::ENIT &t, std::size_t /*size*/) {
+void SizedBinaryIo<ENIT>::writeBytes(std::ostream &os, const ENIT &t,
+                                     std::size_t) {
   io::writeBytes(os, t.value);
   io::writeBytes(os, t.flags);
   io::writeBytes(os, t.unused);
 }
 
-void SizedBinaryIo<raw::ENIT>::readBytes(
-    std::istream &is, raw::ENIT &t, std::size_t /*size*/) {
+void SizedBinaryIo<ENIT>::readBytes(std::istream &is, ENIT &t, std::size_t) {
   io::readBytes(is, t.value);
   io::readBytes(is, t.flags);
   io::readBytes(is, t.unused);
@@ -460,8 +449,8 @@ std::size_t SubrecordSize<ENIT_ENCH>::operator()(const ENIT_ENCH &) const {
   return 3u * 4u + 1u + 3u * 1u;
 }
 
-void SizedBinaryIo<raw::ENIT_ENCH>::writeBytes(
-    std::ostream &os, const raw::ENIT_ENCH &t, std::size_t /*size*/) {
+void SizedBinaryIo<ENIT_ENCH>::writeBytes(std::ostream &os, const ENIT_ENCH &t,
+                                          std::size_t) {
   io::writeBytes(os, t.type);
   io::writeBytes(os, t.chargeAmount);
   io::writeBytes(os, t.chargeCost);
@@ -469,8 +458,8 @@ void SizedBinaryIo<raw::ENIT_ENCH>::writeBytes(
   io::writeBytes(os, t.unused);
 }
 
-void SizedBinaryIo<raw::ENIT_ENCH>::readBytes(
-    std::istream &is, raw::ENIT_ENCH &t, std::size_t /*size*/) {
+void SizedBinaryIo<ENIT_ENCH>::readBytes(std::istream &is, ENIT_ENCH &t,
+                                         std::size_t) {
   io::readBytes(is, t.type);
   io::readBytes(is, t.chargeAmount);
   io::readBytes(is, t.chargeCost);
@@ -485,17 +474,14 @@ std::size_t SubrecordSize<ESCE>::operator()(const ESCE &data) const {
   return data.effects.size() * sizeof(oo::EffectId);
 }
 
-void SizedBinaryIo<raw::ESCE>::writeBytes(
-    std::ostream &os, const raw::ESCE &t, std::size_t /*size*/) {
-  for (const auto &effect : t.effects) {
-    io::writeBytes(os, effect);
-  }
+void
+SizedBinaryIo<ESCE>::writeBytes(std::ostream &os, const ESCE &t, std::size_t) {
+  io::writeBytes(os, t.effects);
 }
 
-void SizedBinaryIo<raw::ESCE>::readBytes(
-    std::istream &is, raw::ESCE &t, std::size_t size) {
-  const std::size_t length = size / sizeof(oo::EffectId);
-  io::readBytes(is, t.effects, length);
+void
+SizedBinaryIo<ESCE>::readBytes(std::istream &is, ESCE &t, std::size_t size) {
+  io::readBytes(is, t.effects, size / sizeof(oo::EffectId));
 }
 
 //===----------------------------------------------------------------------===//
@@ -505,17 +491,14 @@ std::size_t SubrecordSize<HNAM>::operator()(const HNAM &data) const {
   return data.hair.size() * sizeof(oo::FormId);
 }
 
-void SizedBinaryIo<raw::HNAM>::writeBytes(
-    std::ostream &os, const raw::HNAM &t, std::size_t /*size*/) {
-  for (const auto hair : t.hair) {
-    io::writeBytes(os, hair);
-  }
+void
+SizedBinaryIo<HNAM>::writeBytes(std::ostream &os, const HNAM &t, std::size_t) {
+  io::writeBytes(os, t.hair);
 }
 
-void SizedBinaryIo<raw::HNAM>::readBytes(
-    std::istream &is, raw::HNAM &t, std::size_t size) {
-  const std::size_t length = size / sizeof(oo::FormId);
-  io::readBytes(is, t.hair, length);
+void
+SizedBinaryIo<HNAM>::readBytes(std::istream &is, HNAM &t, std::size_t size) {
+  io::readBytes(is, t.hair, size / sizeof(oo::FormId));
 }
 
 //===----------------------------------------------------------------------===//
@@ -525,15 +508,15 @@ std::size_t SubrecordSize<HNAM_LTEX>::operator()(const HNAM_LTEX &) const {
   return 3u * 1u;
 }
 
-void SizedBinaryIo<raw::HNAM_LTEX>::writeBytes(
-    std::ostream &os, const raw::HNAM_LTEX &t, std::size_t /*size*/) {
+void SizedBinaryIo<HNAM_LTEX>::writeBytes(std::ostream &os, const HNAM_LTEX &t,
+                                          std::size_t) {
   io::writeBytes(os, t.type);
   io::writeBytes(os, t.friction);
   io::writeBytes(os, t.restitution);
 }
 
-void SizedBinaryIo<raw::HNAM_LTEX>::readBytes(
-    std::istream &is, raw::HNAM_LTEX &t, std::size_t /*size*/) {
+void SizedBinaryIo<HNAM_LTEX>::readBytes(std::istream &is, HNAM_LTEX &t,
+                                         std::size_t) {
   io::readBytes(is, t.type);
   io::readBytes(is, t.friction);
   io::readBytes(is, t.restitution);
@@ -546,8 +529,8 @@ std::size_t SubrecordSize<MNAM_WRLD>::operator()(const MNAM_WRLD &) const {
   return 16u;
 }
 
-void SizedBinaryIo<raw::MNAM_WRLD>::writeBytes(
-    std::ostream &os, const raw::MNAM_WRLD &t, std::size_t /*size*/) {
+void SizedBinaryIo<MNAM_WRLD>::writeBytes(std::ostream &os, const MNAM_WRLD &t,
+                                          std::size_t) {
   io::writeBytes(os, t.width);
   io::writeBytes(os, t.height);
   io::writeBytes(os, t.topLeft.x);
@@ -556,8 +539,8 @@ void SizedBinaryIo<raw::MNAM_WRLD>::writeBytes(
   io::writeBytes(os, t.bottomRight.y);
 }
 
-void SizedBinaryIo<raw::MNAM_WRLD>::readBytes(
-    std::istream &is, raw::MNAM_WRLD &t, std::size_t /*size*/) {
+void SizedBinaryIo<MNAM_WRLD>::readBytes(std::istream &is, MNAM_WRLD &t,
+                                         std::size_t) {
   io::readBytes(is, t.width);
   io::readBytes(is, t.height);
   io::readBytes(is, t.topLeft.x);
@@ -573,25 +556,14 @@ std::size_t SubrecordSize<MODT>::operator()(const MODT &data) const {
   return 3u * 8u * data.records.size();
 }
 
-void SizedBinaryIo<raw::MODT>::writeBytes(
-    std::ostream &os, const raw::MODT &t, std::size_t /*size*/) {
-  for (const auto &record : t.records) {
-    io::writeBytes(os, record.ddsHash);
-    io::writeBytes(os, record.ddxHash);
-    io::writeBytes(os, record.folderHash);
-  }
+void
+SizedBinaryIo<MODT>::writeBytes(std::ostream &os, const MODT &t, std::size_t) {
+  io::writeBytes(os, t.records);
 }
 
-void SizedBinaryIo<raw::MODT>::readBytes(
-    std::istream &is, raw::MODT &t, std::size_t size) {
-  t.records.reserve(size / (3 * 8));
-  for (std::size_t i = 0; i < size / (3 * 8); ++i) {
-    raw::MODT::MODTRecord record;
-    io::readBytes(is, record.ddsHash);
-    io::readBytes(is, record.ddxHash);
-    io::readBytes(is, record.folderHash);
-    t.records.emplace_back(record);
-  }
+void
+SizedBinaryIo<MODT>::readBytes(std::istream &is, MODT &t, std::size_t size) {
+  io::readBytes(is, t.records, size / sizeof(MODT::MODTRecord));
 }
 
 //===----------------------------------------------------------------------===//
@@ -601,46 +573,32 @@ std::size_t SubrecordSize<NAM0_WTHR>::operator()(const NAM0_WTHR &) const {
   return 10u * 4u * 4u;
 }
 
-void SizedBinaryIo<raw::NAM0_WTHR>::writeBytes(
-    std::ostream &os, const raw::NAM0_WTHR &t, std::size_t /*size*/) {
-  auto writeColors = [&os](const raw::NAM0_WTHR::WeatherColors &c) {
-    io::writeBytes(os, c.sunrise);
-    io::writeBytes(os, c.day);
-    io::writeBytes(os, c.sunset);
-    io::writeBytes(os, c.night);
-  };
-
-  writeColors(t.skyUpper);
-  writeColors(t.fog);
-  writeColors(t.cloudsLower);
-  writeColors(t.ambient);
-  writeColors(t.sunlight);
-  writeColors(t.sun);
-  writeColors(t.stars);
-  writeColors(t.skyLower);
-  writeColors(t.horizon);
-  writeColors(t.cloudsUpper);
+void SizedBinaryIo<NAM0_WTHR>::writeBytes(std::ostream &os, const NAM0_WTHR &t,
+                                          std::size_t) {
+  io::writeBytes(os, t.skyUpper);
+  io::writeBytes(os, t.fog);
+  io::writeBytes(os, t.cloudsLower);
+  io::writeBytes(os, t.ambient);
+  io::writeBytes(os, t.sunlight);
+  io::writeBytes(os, t.sun);
+  io::writeBytes(os, t.stars);
+  io::writeBytes(os, t.skyLower);
+  io::writeBytes(os, t.horizon);
+  io::writeBytes(os, t.cloudsUpper);
 }
 
-void SizedBinaryIo<raw::NAM0_WTHR>::readBytes(
-    std::istream &is, raw::NAM0_WTHR &t, std::size_t /*size*/) {
-  auto readColors = [&is](raw::NAM0_WTHR::WeatherColors &c) {
-    io::readBytes(is, c.sunrise);
-    io::readBytes(is, c.day);
-    io::readBytes(is, c.sunset);
-    io::readBytes(is, c.night);
-  };
-
-  readColors(t.skyUpper);
-  readColors(t.fog);
-  readColors(t.cloudsLower);
-  readColors(t.ambient);
-  readColors(t.sunlight);
-  readColors(t.sun);
-  readColors(t.stars);
-  readColors(t.skyLower);
-  readColors(t.horizon);
-  readColors(t.cloudsUpper);
+void SizedBinaryIo<NAM0_WTHR>::readBytes(std::istream &is, NAM0_WTHR &t,
+                                         std::size_t) {
+  io::readBytes(is, t.skyUpper);
+  io::readBytes(is, t.fog);
+  io::readBytes(is, t.cloudsLower);
+  io::readBytes(is, t.ambient);
+  io::readBytes(is, t.sunlight);
+  io::readBytes(is, t.sun);
+  io::readBytes(is, t.stars);
+  io::readBytes(is, t.skyLower);
+  io::readBytes(is, t.horizon);
+  io::readBytes(is, t.cloudsUpper);
 }
 
 //===----------------------------------------------------------------------===//
@@ -650,20 +608,14 @@ std::size_t SubrecordSize<OFST>::operator()(const OFST &data) const {
   return 3u * 4u * data.unused.size();
 }
 
-void SizedBinaryIo<raw::OFST>::writeBytes(
-    std::ostream &os, const raw::OFST &t, std::size_t /*size*/) {
-  for (const auto &entry : t.unused) {
-    io::writeBytes(os, entry);
-  }
+void
+SizedBinaryIo<OFST>::writeBytes(std::ostream &os, const OFST &t, std::size_t) {
+  io::writeBytes(os, t.unused);
 }
 
-void SizedBinaryIo<raw::OFST>::readBytes(
-    std::istream &is, raw::OFST &t, std::size_t size) {
-  for (std::size_t i = 0; i < size; i += 3 * 4) {
-    std::array<uint32_t, 3> entry = {};
-    is.read(reinterpret_cast<char *>(entry.data()), 3 * 4);
-    t.unused.push_back(entry);
-  }
+void
+SizedBinaryIo<OFST>::readBytes(std::istream &is, OFST &t, std::size_t size) {
+  io::readBytes(is, t.unused, size / 12u);
 }
 
 //===----------------------------------------------------------------------===//
@@ -673,36 +625,14 @@ std::size_t SubrecordSize<OFST_WRLD>::operator()(const OFST_WRLD &data) const {
   return data.entries.size() * 4u;
 }
 
-void SizedBinaryIo<raw::OFST_WRLD>::writeBytes(
-    std::ostream &os, const raw::OFST_WRLD &t, std::size_t /*size*/) {
-  for (const auto entry : t.entries) io::writeBytes(os, entry);
+void SizedBinaryIo<OFST_WRLD>::writeBytes(std::ostream &os, const OFST_WRLD &t,
+                                          std::size_t) {
+  io::writeBytes(os, t.entries);
 }
 
-void SizedBinaryIo<raw::OFST_WRLD>::readBytes(
-    std::istream &is, raw::OFST_WRLD &t, std::size_t size) {
-  const std::size_t length = size / 4u;
-  io::readBytes(is, t.entries, length);
-}
-
-//===----------------------------------------------------------------------===//
-// PFPC Specialization
-//===----------------------------------------------------------------------===//
-std::size_t SubrecordSize<PFPC>::operator()(const PFPC &) const { return 4u; }
-
-void SizedBinaryIo<raw::PFPC>::writeBytes(
-    std::ostream &os, const raw::PFPC &t, std::size_t /*size*/) {
-  io::writeBytes(os, t.springChance);
-  io::writeBytes(os, t.summerChance);
-  io::writeBytes(os, t.autumnChance);
-  io::writeBytes(os, t.winterChance);
-}
-
-void SizedBinaryIo<raw::PFPC>::readBytes(
-    std::istream &is, raw::PFPC &t, std::size_t /*size*/) {
-  io::readBytes(is, t.springChance);
-  io::readBytes(is, t.summerChance);
-  io::readBytes(is, t.autumnChance);
-  io::readBytes(is, t.winterChance);
+void SizedBinaryIo<OFST_WRLD>::readBytes(std::istream &is, OFST_WRLD &t,
+                                         std::size_t size) {
+  io::readBytes(is, t.entries, size / 4u);
 }
 
 //===----------------------------------------------------------------------===//
@@ -712,8 +642,8 @@ std::size_t SubrecordSize<SCIT>::operator()(const SCIT &) const {
   return sizeof(oo::FormId) + sizeof(oo::MagicSchool) + 8u;
 }
 
-void SizedBinaryIo<raw::SCIT>::writeBytes(
-    std::ostream &os, const raw::SCIT &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SCIT>::writeBytes(std::ostream &os, const SCIT &t, std::size_t) {
   io::writeBytes(os, t.id);
   io::writeBytes(os, t.school);
   io::writeBytes(os, t.visualEffect);
@@ -721,8 +651,7 @@ void SizedBinaryIo<raw::SCIT>::writeBytes(
   io::writeBytes(os, t.unused);
 }
 
-void SizedBinaryIo<raw::SCIT>::readBytes(
-    std::istream &is, raw::SCIT &t, std::size_t /*size*/) {
+void SizedBinaryIo<SCIT>::readBytes(std::istream &is, SCIT &t, std::size_t) {
   io::readBytes(is, t.id);
   io::readBytes(is, t.school);
   io::readBytes(is, t.visualEffect);
@@ -737,13 +666,13 @@ std::size_t SubrecordSize<SNAM_TREE>::operator()(const SNAM_TREE &data) const {
   return 4u * data.seeds.size();
 }
 
-void SizedBinaryIo<raw::SNAM_TREE>::writeBytes(
-    std::ostream &os, const raw::SNAM_TREE &t, std::size_t /*size*/) {
-  for (auto s : t.seeds) io::writeBytes(os, s);
+void SizedBinaryIo<SNAM_TREE>::writeBytes(std::ostream &os, const SNAM_TREE &t,
+                                          std::size_t) {
+  io::writeBytes(os, t.seeds);
 }
 
-void SizedBinaryIo<raw::SNAM_TREE>::readBytes(
-    std::istream &is, raw::SNAM_TREE &t, std::size_t size) {
+void SizedBinaryIo<SNAM_TREE>::readBytes(std::istream &is, SNAM_TREE &t,
+                                         std::size_t size) {
   io::readBytes(is, t.seeds, size / 4u);
 }
 
@@ -754,14 +683,14 @@ std::size_t SubrecordSize<SNAM_WTHR>::operator()(const SNAM_WTHR &) const {
   return 8u;
 }
 
-void SizedBinaryIo<raw::SNAM_WTHR>::writeBytes(
-    std::ostream &os, const raw::SNAM_WTHR &t, std::size_t /*size*/) {
+void SizedBinaryIo<SNAM_WTHR>::writeBytes(std::ostream &os, const SNAM_WTHR &t,
+                                          std::size_t) {
   io::writeBytes(os, t.soundId);
   io::writeBytes(os, t.soundType);
 }
 
-void SizedBinaryIo<raw::SNAM_WTHR>::readBytes(
-    std::istream &is, raw::SNAM_WTHR &t, std::size_t /*size*/) {
+void SizedBinaryIo<SNAM_WTHR>::readBytes(std::istream &is, SNAM_WTHR &t,
+                                         std::size_t) {
   io::readBytes(is, t.soundId);
   io::readBytes(is, t.soundType);
 }
@@ -773,8 +702,8 @@ std::size_t SubrecordSize<SNDD>::operator()(const SNDD &) const {
   return 4u * 1u + 4u;
 }
 
-void SizedBinaryIo<raw::SNDD>::writeBytes(
-    std::ostream &os, const raw::SNDD &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SNDD>::writeBytes(std::ostream &os, const SNDD &t, std::size_t) {
   io::writeBytes(os, t.minAttenuationDistance);
   io::writeBytes(os, t.maxAttenuationDistance);
   io::writeBytes(os, t.frequencyAdjustment);
@@ -782,8 +711,8 @@ void SizedBinaryIo<raw::SNDD>::writeBytes(
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::SNDD>::readBytes(
-    std::istream &is, raw::SNDD &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SNDD>::readBytes(std::istream &is, SNDD &t, std::size_t) {
   io::readBytes(is, t.minAttenuationDistance);
   io::readBytes(is, t.maxAttenuationDistance);
   io::readBytes(is, t.frequencyAdjustment);
@@ -799,8 +728,8 @@ std::size_t SubrecordSize<SNDX>::operator()(const SNDX &data) const {
       + (data.startTime ? 4u : 0u) + (data.stopTime ? 4u : 0u);
 }
 
-void SizedBinaryIo<raw::SNDX>::writeBytes(
-    std::ostream &os, const raw::SNDX &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SNDX>::writeBytes(std::ostream &os, const SNDX &t, std::size_t) {
   io::writeBytes(os, t.minAttenuationDistance);
   io::writeBytes(os, t.maxAttenuationDistance);
   io::writeBytes(os, t.frequencyAdjustment);
@@ -812,8 +741,8 @@ void SizedBinaryIo<raw::SNDX>::writeBytes(
   io::writeBytes(os, t.stopTime);
 }
 
-void SizedBinaryIo<raw::SNDX>::readBytes(
-    std::istream &is, raw::SNDX &t, std::size_t size) {
+void
+SizedBinaryIo<SNDX>::readBytes(std::istream &is, SNDX &t, std::size_t size) {
   io::readBytes(is, t.minAttenuationDistance);
   io::readBytes(is, t.maxAttenuationDistance);
   io::readBytes(is, t.frequencyAdjustment);
@@ -830,16 +759,16 @@ void SizedBinaryIo<raw::SNDX>::readBytes(
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<SPIT>::operator()(const SPIT &) const { return 16u; }
 
-void SizedBinaryIo<raw::SPIT>::writeBytes(
-    std::ostream &os, const raw::SPIT &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SPIT>::writeBytes(std::ostream &os, const SPIT &t, std::size_t) {
   io::writeBytes(os, t.type);
   io::writeBytes(os, t.cost);
   io::writeBytes(os, t.level);
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::SPIT>::readBytes(
-    std::istream &is, raw::SPIT &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<SPIT>::readBytes(std::istream &is, SPIT &t, std::size_t) {
   io::readBytes(is, t.type);
   io::readBytes(is, t.cost);
   io::readBytes(is, t.level);
@@ -853,21 +782,26 @@ std::size_t SubrecordSize<TNAM_CLMT>::operator()(const TNAM_CLMT &) const {
   return 6u;
 }
 
-void SizedBinaryIo<raw::TNAM_CLMT>::writeBytes(
-    std::ostream &os, const raw::TNAM_CLMT &t, std::size_t /*size*/) {
+void SizedBinaryIo<TNAM_CLMT>::writeBytes(std::ostream &os, const TNAM_CLMT &t,
+                                          std::size_t) {
   io::writeBytes(os, t.sunriseBegin);
   io::writeBytes(os, t.sunriseEnd);
   io::writeBytes(os, t.sunsetBegin);
   io::writeBytes(os, t.sunsetEnd);
   io::writeBytes(os, t.volatility);
 
-  auto flag{static_cast<uint8_t>(
-                (t.hasMasser << 7u) & (t.hasSecunda << 6u) & t.phaseLength)};
-  io::writeBytes(os, flag);
+  // Possibly surprising type conversions: consider
+  // static_cast<uint32_t>(t.hasMasser) << 7u
+  // static_cast<uint8_t>(t.hasMasser) << 7u
+  // The first expression is unsigned, the second is *signed*.
+  auto flag{(static_cast<uint32_t>(t.hasMasser) << 7u)
+                & (static_cast<uint32_t>(t.hasSecunda) << 6u)
+                & t.phaseLength};
+  io::writeBytes(os, static_cast<uint8_t>(flag));
 }
 
-void SizedBinaryIo<raw::TNAM_CLMT>::readBytes(
-    std::istream &is, raw::TNAM_CLMT &t, std::size_t /*size*/) {
+void SizedBinaryIo<TNAM_CLMT>::readBytes(std::istream &is, TNAM_CLMT &t,
+                                         std::size_t) {
   io::readBytes(is, t.sunriseBegin);
   io::readBytes(is, t.sunriseEnd);
   io::readBytes(is, t.sunsetBegin);
@@ -877,8 +811,8 @@ void SizedBinaryIo<raw::TNAM_CLMT>::readBytes(
   uint8_t flag;
   io::readBytes(is, flag);
   t.hasMasser = flag >> 7u;
-  t.hasSecunda = (flag & 0b01000000) >> 6u;
-  t.phaseLength = flag & 0b00111111;
+  t.hasSecunda = (flag & 0b01000000u) >> 6u;
+  t.phaseLength = flag & 0b00111111u;
 }
 
 //===----------------------------------------------------------------------===//
@@ -888,19 +822,14 @@ std::size_t SubrecordSize<VTXT>::operator()(const VTXT &data) const {
   return data.points.size() * 8u;
 }
 
-void SizedBinaryIo<raw::VTXT>::writeBytes(
-    std::ostream &os, const raw::VTXT &t, std::size_t /*size*/) {
-  for (const auto &p : t.points) {
-    io::writeBytes(os, p.position);
-    io::writeBytes(os, p.unused);
-    io::writeBytes(os, p.opacity);
-  }
+void
+SizedBinaryIo<VTXT>::writeBytes(std::ostream &os, const VTXT &t, std::size_t) {
+  io::writeBytes(os, t.points);
 }
 
-void SizedBinaryIo<raw::VTXT>::readBytes(
-    std::istream &is, raw::VTXT &t, std::size_t size) {
-  t.points.resize(size / 8u);
-  is.read(reinterpret_cast<char *>(t.points.data()), size);
+void
+SizedBinaryIo<VTXT>::readBytes(std::istream &is, VTXT &t, std::size_t size) {
+  io::readBytes(is, t.points, size / 8u);
 }
 
 //===----------------------------------------------------------------------===//
@@ -910,21 +839,14 @@ std::size_t SubrecordSize<WLST>::operator()(const WLST &data) const {
   return data.weathers.size() * 8u;
 }
 
-void SizedBinaryIo<raw::WLST>::writeBytes(
-    std::ostream &os, const raw::WLST &t, std::size_t /*size*/) {
-  for (auto weather : t.weathers) {
-    io::writeBytes(os, weather.formId);
-    io::writeBytes(os, weather.chance);
-  }
+void
+SizedBinaryIo<WLST>::writeBytes(std::ostream &os, const WLST &t, std::size_t) {
+  io::writeBytes(os, t.weathers);
 }
 
-void SizedBinaryIo<raw::WLST>::readBytes(
-    std::istream &is, raw::WLST &t, std::size_t size) {
-  t.weathers.resize(size / 8u);
-  for (std::size_t i = 0; i < size / 8u; ++i) {
-    io::readBytes(is, t.weathers[i].formId);
-    io::readBytes(is, t.weathers[i].chance);
-  }
+void
+SizedBinaryIo<WLST>::readBytes(std::istream &is, WLST &t, std::size_t size) {
+  io::readBytes(is, t.weathers, size / 8u);
 }
 
 //===----------------------------------------------------------------------===//
@@ -934,34 +856,31 @@ std::size_t SubrecordSize<XCLR>::operator()(const XCLR &data) const {
   return sizeof(oo::FormId) * data.regions.size();
 }
 
-void SizedBinaryIo<raw::XCLR>::writeBytes(
-    std::ostream &os, const raw::XCLR &t, std::size_t /*size*/) {
-  for (const auto &region : t.regions) {
-    io::writeBytes(os, region);
-  }
+void
+SizedBinaryIo<XCLR>::writeBytes(std::ostream &os, const XCLR &t, std::size_t) {
+  io::writeBytes(os, t.regions);
 }
 
-void SizedBinaryIo<raw::XCLR>::readBytes(
-    std::istream &is, raw::XCLR &t, std::size_t size) {
-  const std::size_t length = size / sizeof(oo::FormId);
-  io::readBytes(is, t.regions, length);
+void
+SizedBinaryIo<XCLR>::readBytes(std::istream &is, XCLR &t, std::size_t size) {
+  io::readBytes(is, t.regions, size / 4u);
 }
 
 //===----------------------------------------------------------------------===//
 // XESP Specialization
 //===----------------------------------------------------------------------===//
 std::size_t SubrecordSize<XESP>::operator()(const XESP &) const {
-  return sizeof(oo::FormId) + sizeof(raw::XESP::Flag);
+  return sizeof(oo::FormId) + sizeof(XESP::Flag);
 }
 
-void SizedBinaryIo<raw::XESP>::writeBytes(
-    std::ostream &os, const raw::XESP &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<XESP>::writeBytes(std::ostream &os, const XESP &t, std::size_t) {
   io::writeBytes(os, t.parent);
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::XESP>::readBytes(
-    std::istream &is, raw::XESP &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<XESP>::readBytes(std::istream &is, XESP &t, std::size_t) {
   io::readBytes(is, t.parent);
   io::readBytes(is, t.flags);
 }
@@ -973,16 +892,16 @@ std::size_t SubrecordSize<XLOC>::operator()(const XLOC &) const {
   return 4u + sizeof(oo::FormId) + 4u;
 }
 
-void SizedBinaryIo<raw::XLOC>::writeBytes(
-    std::ostream &os, const raw::XLOC &t, std::size_t /*size*/) {
+void
+SizedBinaryIo<XLOC>::writeBytes(std::ostream &os, const XLOC &t, std::size_t) {
   io::writeBytes(os, t.lockLevel);
   io::writeBytes(os, t.key);
   //io::writeBytes(os, t.unused);
   io::writeBytes(os, t.flags);
 }
 
-void SizedBinaryIo<raw::XLOC>::readBytes(
-    std::istream &is, raw::XLOC &t, std::size_t size) {
+void
+SizedBinaryIo<XLOC>::readBytes(std::istream &is, XLOC &t, std::size_t size) {
   io::readBytes(is, t.lockLevel);
   io::readBytes(is, t.key);
   if (size == 16) io::readBytes(is, t.unused);
@@ -996,17 +915,14 @@ std::size_t SubrecordSize<XRGD>::operator()(const XRGD &data) const {
   return data.bytes.size() * 1u;
 }
 
-void SizedBinaryIo<raw::XRGD>::writeBytes(
-    std::ostream &os, const raw::XRGD &t, std::size_t /*size*/) {
-  for (const auto byte : t.bytes) {
-    io::writeBytes(os, byte);
-  }
+void
+SizedBinaryIo<XRGD>::writeBytes(std::ostream &os, const XRGD &t, std::size_t) {
+  io::writeBytes(os, t.bytes);
 }
 
-void SizedBinaryIo<raw::XRGD>::readBytes(
-    std::istream &is, raw::XRGD &t, std::size_t size) {
-  const std::size_t length = size / 1u;
-  io::readBytes(is, t.bytes, length);
+void
+SizedBinaryIo<XRGD>::readBytes(std::istream &is, XRGD &t, std::size_t size) {
+  io::readBytes(is, t.bytes, size / 1u);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1016,15 +932,13 @@ std::size_t SubrecordSize<XSED>::operator()(const XSED &data) const {
   return data.size;
 }
 
-void SizedBinaryIo<raw::XSED>::writeBytes(
-    std::ostream &os, const raw::XSED &/*t*/, std::size_t size) {
-  for (std::size_t i = 0; i < size; ++i) {
-    os.put(0);
-  }
+void SizedBinaryIo<XSED>::writeBytes(std::ostream &os, const XSED &,
+                                     std::size_t size) {
+  for (std::size_t i = 0u; i < size; ++i) os.put(0);
 }
 
-void SizedBinaryIo<raw::XSED>::readBytes(
-    std::istream &is, raw::XSED &t, std::size_t size) {
+void
+SizedBinaryIo<XSED>::readBytes(std::istream &is, XSED &t, std::size_t size) {
   t.size = gsl::narrow_cast<uint16_t>(size);
   is.seekg(size, std::ios_base::cur);
 }

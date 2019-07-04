@@ -141,7 +141,7 @@ template<> std::size_t CLAS::size() const {
 }
 
 void raw::SizedBinaryIo<raw::CLAS>::writeBytes(
-    std::ostream &os, const raw::CLAS &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::CLAS &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.description);
@@ -150,7 +150,7 @@ void raw::SizedBinaryIo<raw::CLAS>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::CLAS>::readBytes(
-    std::istream &is, raw::CLAS &t, std::size_t /*size*/) {
+    std::istream &is, raw::CLAS &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   if (peekRecordType(is) == "DESC"_rec) readRecord(is, t.description);
@@ -226,7 +226,7 @@ template<> std::size_t HAIR::size() const {
 }
 
 void raw::SizedBinaryIo<raw::HAIR>::writeBytes(
-    std::ostream &os, const raw::HAIR &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::HAIR &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -237,7 +237,7 @@ void raw::SizedBinaryIo<raw::HAIR>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::HAIR>::readBytes(
-    std::istream &is, raw::HAIR &t, std::size_t /*size*/) {
+    std::istream &is, raw::HAIR &t, std::size_t) {
   readRecord(is, t.editorId);
   if (peekRecordType(is) == "FULL"_rec) readRecord(is, t.name);
   if (peekRecordType(is) == "MODL"_rec) readRecord(is, t.modelFilename);
@@ -255,7 +255,7 @@ template<> std::size_t EYES::size() const {
 }
 
 void raw::SizedBinaryIo<raw::EYES>::writeBytes(
-    std::ostream &os, const raw::EYES &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::EYES &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.iconFilename);
@@ -263,7 +263,7 @@ void raw::SizedBinaryIo<raw::EYES>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::EYES>::readBytes(
-    std::istream &is, raw::EYES &t, std::size_t /*size*/) {
+    std::istream &is, raw::EYES &t, std::size_t) {
   readRecord(is, t.editorId);
   if (peekRecordType(is) == "FULL"_rec) readRecord(is, t.name);
   if (peekRecordType(is) == "ICON"_rec) readRecord(is, t.iconFilename);
@@ -320,7 +320,7 @@ template<> std::size_t RACE::size() const {
 }
 
 void raw::SizedBinaryIo<raw::RACE>::writeBytes(
-    std::ostream &os, const raw::RACE &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::RACE &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.description);
@@ -372,7 +372,7 @@ void raw::SizedBinaryIo<raw::RACE>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::RACE>::readBytes(
-    std::istream &is, raw::RACE &t, std::size_t /*size*/) {
+    std::istream &is, raw::RACE &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.description);
@@ -462,14 +462,14 @@ template<> std::size_t SOUN::size() const {
 }
 
 void raw::SizedBinaryIo<raw::SOUN>::writeBytes(
-    std::ostream &os, const raw::SOUN &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::SOUN &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.filename);
   std::visit([&os](const auto &r) { writeRecord(os, r); }, t.sound);
 }
 
 void raw::SizedBinaryIo<raw::SOUN>::readBytes(
-    std::istream &is, raw::SOUN &t, std::size_t /*size*/) {
+    std::istream &is, raw::SOUN &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.filename);
 
@@ -499,7 +499,7 @@ template<> std::size_t SKIL::size() const {
 }
 
 void raw::SizedBinaryIo<raw::SKIL>::writeBytes(
-    std::ostream &os, const raw::SKIL &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::SKIL &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.index);
   writeRecord(os, t.description);
@@ -512,7 +512,7 @@ void raw::SizedBinaryIo<raw::SKIL>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::SKIL>::readBytes(
-    std::istream &is, raw::SKIL &t, std::size_t /*size*/) {
+    std::istream &is, raw::SKIL &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.index);
   readRecord(is, t.description);
@@ -539,7 +539,7 @@ template<> std::size_t MGEF::size() const {
 }
 
 void raw::SizedBinaryIo<raw::MGEF>::writeBytes(
-    std::ostream &os, const raw::MGEF &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::MGEF &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.effectName);
   writeRecord(os, t.description);
@@ -551,7 +551,7 @@ void raw::SizedBinaryIo<raw::MGEF>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::MGEF>::readBytes(
-    std::istream &is, raw::MGEF &t, std::size_t /*size*/) {
+    std::istream &is, raw::MGEF &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.effectName);
   readRecord(is, t.description);
@@ -574,7 +574,7 @@ template<> std::size_t LTEX::size() const {
 }
 
 void raw::SizedBinaryIo<raw::LTEX>::writeBytes(
-    std::ostream &os, const raw::LTEX &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::LTEX &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.textureFilename);
   writeRecord(os, t.havokData);
@@ -583,7 +583,7 @@ void raw::SizedBinaryIo<raw::LTEX>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::LTEX>::readBytes(
-    std::istream &is, raw::LTEX &t, std::size_t /*size*/) {
+    std::istream &is, raw::LTEX &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.textureFilename);
   readRecord(is, t.havokData);
@@ -609,7 +609,7 @@ template<> std::size_t ENCH::size() const {
 }
 
 void raw::SizedBinaryIo<raw::ENCH>::writeBytes(
-    std::ostream &os, const raw::ENCH &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::ENCH &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.enchantmentData);
@@ -617,7 +617,7 @@ void raw::SizedBinaryIo<raw::ENCH>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::ENCH>::readBytes(
-    std::istream &is, raw::ENCH &t, std::size_t /*size*/) {
+    std::istream &is, raw::ENCH &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.enchantmentData);
@@ -638,7 +638,7 @@ template<> std::size_t SPEL::size() const {
 }
 
 void raw::SizedBinaryIo<raw::SPEL>::writeBytes(
-    std::ostream &os, const raw::SPEL &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::SPEL &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.data);
@@ -646,7 +646,7 @@ void raw::SizedBinaryIo<raw::SPEL>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::SPEL>::readBytes(
-    std::istream &is, raw::SPEL &t, std::size_t /*size*/) {
+    std::istream &is, raw::SPEL &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.data);
@@ -665,7 +665,7 @@ template<> std::size_t BSGN::size() const {
 }
 
 void raw::SizedBinaryIo<raw::BSGN>::writeBytes(
-    std::ostream &os, const raw::BSGN &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::BSGN &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.icon);
@@ -674,7 +674,7 @@ void raw::SizedBinaryIo<raw::BSGN>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::BSGN>::readBytes(
-    std::istream &is, raw::BSGN &t, std::size_t /*size*/) {
+    std::istream &is, raw::BSGN &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.icon);
@@ -700,7 +700,7 @@ template<> std::size_t ACTI::size() const {
 }
 
 void raw::SizedBinaryIo<raw::ACTI>::writeBytes(
-    std::ostream &os, const raw::ACTI &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::ACTI &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -711,7 +711,7 @@ void raw::SizedBinaryIo<raw::ACTI>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::ACTI>::readBytes(
-    std::istream &is, raw::ACTI &t, std::size_t /*size*/) {
+    std::istream &is, raw::ACTI &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -737,7 +737,7 @@ template<> std::size_t CONT::size() const {
 }
 
 void raw::SizedBinaryIo<raw::CONT>::writeBytes(
-    std::ostream &os, const raw::CONT &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::CONT &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -751,7 +751,7 @@ void raw::SizedBinaryIo<raw::CONT>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::CONT>::readBytes(
-    std::istream &is, raw::CONT &t, std::size_t /*size*/) {
+    std::istream &is, raw::CONT &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -786,7 +786,7 @@ template<> std::size_t DOOR::size() const {
 }
 
 void raw::SizedBinaryIo<raw::DOOR>::writeBytes(
-    std::ostream &os, const raw::DOOR &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::DOOR &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -801,7 +801,7 @@ void raw::SizedBinaryIo<raw::DOOR>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::DOOR>::readBytes(
-    std::istream &is, raw::DOOR &t, std::size_t /*size*/) {
+    std::istream &is, raw::DOOR &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -836,7 +836,7 @@ template<> std::size_t LIGH::size() const {
 }
 
 void raw::SizedBinaryIo<raw::LIGH>::writeBytes(
-    std::ostream &os, const raw::LIGH &t, std::size_t/*size*/) {
+    std::ostream &os, const raw::LIGH &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.modelFilename);
   writeRecord(os, t.boundRadius);
@@ -850,7 +850,7 @@ void raw::SizedBinaryIo<raw::LIGH>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::LIGH>::readBytes(
-    std::istream &is, raw::LIGH &t, std::size_t /*size*/) {
+    std::istream &is, raw::LIGH &t, std::size_t) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "MODL"_rec, "MODB"_rec, "MODT"_rec, "SCRI"_rec, "FULL"_rec, "ICON"_rec
@@ -894,7 +894,7 @@ template<> std::size_t MISC::size() const {
 }
 
 void raw::SizedBinaryIo<raw::MISC>::writeBytes(
-    std::ostream &os, const raw::MISC &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::MISC &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -906,7 +906,7 @@ void raw::SizedBinaryIo<raw::MISC>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::MISC>::readBytes(
-    std::istream &is, raw::MISC &t, std::size_t /*size*/) {
+    std::istream &is, raw::MISC &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -928,7 +928,7 @@ template<> std::size_t STAT::size() const {
 }
 
 void raw::SizedBinaryIo<raw::STAT>::writeBytes(
-    std::ostream &os, const raw::STAT &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::STAT &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.modelFilename);
   writeRecord(os, t.boundRadius);
@@ -960,7 +960,7 @@ template<> std::size_t GRAS::size() const {
 }
 
 void raw::SizedBinaryIo<raw::GRAS>::writeBytes(
-    std::ostream &os, const raw::GRAS &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::GRAS &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.modelFilename);
   writeRecord(os, t.boundRadius);
@@ -969,7 +969,7 @@ void raw::SizedBinaryIo<raw::GRAS>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::GRAS>::readBytes(
-    std::istream &is, raw::GRAS &t, std::size_t /*size*/) {
+    std::istream &is, raw::GRAS &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.modelFilename);
   readRecord(is, t.boundRadius);
@@ -992,7 +992,7 @@ template<> std::size_t TREE::size() const {
 }
 
 void raw::SizedBinaryIo<raw::TREE>::writeBytes(
-    std::ostream &os, const raw::TREE &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::TREE &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.modelFilename);
   writeRecord(os, t.boundRadius);
@@ -1004,7 +1004,7 @@ void raw::SizedBinaryIo<raw::TREE>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::TREE>::readBytes(
-    std::istream &is, raw::TREE &t, std::size_t /*size*/) {
+    std::istream &is, raw::TREE &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.modelFilename);
   readRecord(is, t.boundRadius);
@@ -1030,7 +1030,7 @@ template<> std::size_t FLOR::size() const {
 }
 
 void raw::SizedBinaryIo<raw::FLOR>::writeBytes(
-    std::ostream &os, const raw::FLOR &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::FLOR &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -1042,7 +1042,7 @@ void raw::SizedBinaryIo<raw::FLOR>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::FLOR>::readBytes(
-    std::istream &is, raw::FLOR &t, std::size_t /*size*/) {
+    std::istream &is, raw::FLOR &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -1067,7 +1067,7 @@ template<> std::size_t FURN::size() const {
 }
 
 void raw::SizedBinaryIo<raw::FURN>::writeBytes(
-    std::ostream &os, const raw::FURN &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::FURN &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.modelFilename);
@@ -1078,7 +1078,7 @@ void raw::SizedBinaryIo<raw::FURN>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::FURN>::readBytes(
-    std::istream &is, raw::FURN &t, std::size_t /*size*/) {
+    std::istream &is, raw::FURN &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.modelFilename);
@@ -1120,7 +1120,7 @@ template<> std::size_t NPC_::size() const {
 }
 
 void raw::SizedBinaryIo<raw::NPC_>::writeBytes(
-    std::ostream &os, const raw::NPC_ &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::NPC_ &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.skeletonFilename);
@@ -1148,7 +1148,7 @@ void raw::SizedBinaryIo<raw::NPC_>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::NPC_>::readBytes(
-    std::istream &is, raw::NPC_ &t, std::size_t /*size*/) {
+    std::istream &is, raw::NPC_ &t, std::size_t) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "MODL"_rec, "MODB"_rec, "ACBS"_rec, "SNAM"_rec, "INAM"_rec,
@@ -1233,7 +1233,7 @@ template<> std::size_t ALCH::size() const {
 }
 
 void raw::SizedBinaryIo<raw::ALCH>::writeBytes(
-    std::ostream &os, const raw::ALCH &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::ALCH &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.itemName);
   writeRecord(os, t.modelFilename);
@@ -1247,7 +1247,7 @@ void raw::SizedBinaryIo<raw::ALCH>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::ALCH>::readBytes(
-    std::istream &is, raw::ALCH &t, std::size_t /*size*/) {
+    std::istream &is, raw::ALCH &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.itemName);
   readRecord(is, t.modelFilename);
@@ -1277,7 +1277,7 @@ template<> std::size_t WTHR::size() const {
 }
 
 void raw::SizedBinaryIo<raw::WTHR>::writeBytes(
-    std::ostream &os, const raw::WTHR &t, const std::size_t /*size*/) {
+    std::ostream &os, const raw::WTHR &t, const std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.lowerLayerFilename);
   writeRecord(os, t.upperLayerFilename);
@@ -1291,7 +1291,7 @@ void raw::SizedBinaryIo<raw::WTHR>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::WTHR>::readBytes(
-    std::istream &is, raw::WTHR &t, const std::size_t /*size*/) {
+    std::istream &is, raw::WTHR &t, const std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.lowerLayerFilename);
   readRecord(is, t.upperLayerFilename);
@@ -1320,7 +1320,7 @@ template<> std::size_t CLMT::size() const {
 }
 
 void raw::SizedBinaryIo<raw::CLMT>::writeBytes(
-    std::ostream &os, const raw::CLMT &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::CLMT &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.weatherList);
   writeRecord(os, t.sunFilename);
@@ -1331,7 +1331,7 @@ void raw::SizedBinaryIo<raw::CLMT>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::CLMT>::readBytes(
-    std::istream &is, raw::CLMT &t, std::size_t /*size*/) {
+    std::istream &is, raw::CLMT &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.weatherList);
   readRecord(is, t.sunFilename);
@@ -1361,7 +1361,7 @@ template<> std::size_t CELL::size() const {
 }
 
 void raw::SizedBinaryIo<raw::CELL>::writeBytes(
-    std::ostream &os, const raw::CELL &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::CELL &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.data);
@@ -1378,7 +1378,7 @@ void raw::SizedBinaryIo<raw::CELL>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::CELL>::readBytes(
-    std::istream &is, raw::CELL &t, std::size_t /*size*/) {
+    std::istream &is, raw::CELL &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.name);
   readRecord(is, t.data);
@@ -1432,7 +1432,7 @@ template<> std::size_t WRLD::size() const {
 }
 
 void raw::SizedBinaryIo<raw::WRLD>::writeBytes(
-    std::ostream &os, const raw::WRLD &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::WRLD &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.name);
   writeRecord(os, t.parentWorldspace);
@@ -1447,7 +1447,7 @@ void raw::SizedBinaryIo<raw::WRLD>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::WRLD>::readBytes(
-    std::istream &is, raw::WRLD &t, std::size_t /*size*/) {
+    std::istream &is, raw::WRLD &t, std::size_t) {
   readRecord(is, t.editorId);
   std::set<uint32_t> possibleSubrecords = {
       "FULL"_rec, "WNAM"_rec, "SNAM"_rec, "ICON"_rec, "CNAM"_rec,
@@ -1503,7 +1503,7 @@ template<> std::size_t LAND::size() const {
 }
 
 void raw::SizedBinaryIo<raw::LAND>::writeBytes(
-    std::ostream &os, const raw::LAND &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::LAND &t, std::size_t) {
   writeRecord(os, t.data);
   writeRecord(os, t.normals);
   writeRecord(os, t.heights);
@@ -1517,7 +1517,7 @@ void raw::SizedBinaryIo<raw::LAND>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::LAND>::readBytes(
-    std::istream &is, raw::LAND &t, std::size_t /*size*/) {
+    std::istream &is, raw::LAND &t, std::size_t) {
   readRecord(is, t.data);
   readRecord(is, t.normals);
   readRecord(is, t.heights);
@@ -1565,7 +1565,7 @@ template<> std::size_t WATR::size() const {
 }
 
 void raw::SizedBinaryIo<raw::WATR>::writeBytes(
-    std::ostream &os, const raw::WATR &t, std::size_t /*size*/) {
+    std::ostream &os, const raw::WATR &t, std::size_t) {
   writeRecord(os, t.editorId);
   writeRecord(os, t.textureFilename);
   writeRecord(os, t.opacity);
@@ -1577,7 +1577,7 @@ void raw::SizedBinaryIo<raw::WATR>::writeBytes(
 }
 
 void raw::SizedBinaryIo<raw::WATR>::readBytes(
-    std::istream &is, raw::WATR &t, std::size_t /*size*/) {
+    std::istream &is, raw::WATR &t, std::size_t) {
   readRecord(is, t.editorId);
   readRecord(is, t.textureFilename);
   readRecord(is, t.opacity);

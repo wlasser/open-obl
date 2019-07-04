@@ -654,7 +654,6 @@ struct DATA_MGEF {
   };
   // For summon spells, the oo::BaseId of the summoned weapon, armor, or
   // creature. Otherwise, the oo::ActorValue affected by the spell.
-  // TODO: std::variant
   using AssociatedObject = std::variant<oo::BaseId /*summonedBaseId*/,
                                         oo::ActorValue /*affectedActorValue*/>;
   Flag flags{Flag::make(Flag::None)};
@@ -828,7 +827,7 @@ struct DATA_WTHR {
     Rainy = 1u << 2u,
     Snow = 1u << 3u
   };
-  Classification classification;
+  Classification classification{};
 
   // No alpha component, which is strange because then the record would be
   // 16 bytes instead of 15.
@@ -1071,11 +1070,12 @@ struct OFST_WRLD {
 };
 
 // Ingredient harvest percentages for different times of year.
-struct PFPC {
+struct PFPC : Tuplifiable<uint8_t, uint8_t, uint8_t, uint8_t> {
   uint8_t springChance{};
   uint8_t summerChance{};
   uint8_t autumnChance{};
   uint8_t winterChance{};
+  MAKE_AS_TUPLE(&springChance, &summerChance, &autumnChance, &winterChance);
 };
 
 // Script effect
@@ -1526,7 +1526,6 @@ DECLARE_SPECIALIZED_SUBRECORD(MODT);
 DECLARE_SPECIALIZED_SUBRECORD(NAM0_WTHR);
 DECLARE_SPECIALIZED_SUBRECORD(OFST);
 DECLARE_SPECIALIZED_SUBRECORD(OFST_WRLD);
-DECLARE_SPECIALIZED_SUBRECORD(PFPC);
 DECLARE_SPECIALIZED_SUBRECORD(SCIT);
 DECLARE_SPECIALIZED_SUBRECORD(SNAM_TREE);
 DECLARE_SPECIALIZED_SUBRECORD(SNAM_WTHR);
