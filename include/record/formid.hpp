@@ -1,9 +1,8 @@
 #ifndef OPENOBL_FORMID_HPP
 #define OPENOBL_FORMID_HPP
 
-#include "io/io.hpp"
 #include <cstdint>
-#include <iomanip>
+#include <iosfwd>
 #include <string>
 
 namespace oo {
@@ -51,29 +50,6 @@ void *encodeFormId(FormId formId) noexcept;
 FormId decodeFormId(void *ptr) noexcept;
 /// @}
 
-class BaseId;
-class RefId;
-
-} // namespace oo
-
-namespace io {
-
-template<>
-struct BinaryIo<oo::BaseId> {
-  static void writeBytes(std::ostream &os, const oo::BaseId &data);
-  static void readBytes(std::istream &is, oo::BaseId &data);
-};
-
-template<>
-struct BinaryIo<oo::RefId> {
-  static void writeBytes(std::ostream &os, const oo::RefId &data);
-  static void readBytes(std::istream &is, oo::RefId &data);
-};
-
-} // namespace io
-
-namespace oo {
-
 class BaseId {
  public:
   constexpr BaseId() noexcept : mId{} {}
@@ -86,16 +62,11 @@ class BaseId {
     return formIdString(static_cast<FormId>(*this));
   }
 
-  friend io::BinaryIo<BaseId>;
-
-  friend std::ostream &operator<<(std::ostream &os, BaseId baseId) {
-    os << "0x" << std::hex << std::setfill('0') << std::setw(8) << baseId.mId;
-    return os;
-  }
-
  private:
   FormId mId{};
 };
+
+std::ostream &operator<<(std::ostream &os, BaseId baseId);
 
 constexpr bool operator==(const BaseId &lhs, const BaseId &rhs) noexcept {
   return static_cast<FormId>(lhs) == static_cast<FormId>(rhs);
@@ -133,16 +104,11 @@ class RefId {
     return formIdString(static_cast<FormId>(*this));
   }
 
-  friend io::BinaryIo<RefId>;
-
-  friend std::ostream &operator<<(std::ostream &os, RefId refId) {
-    os << "0x" << std::hex << std::setfill('0') << std::setw(8) << refId.mId;
-    return os;
-  }
-
  private:
   FormId mId{};
 };
+
+std::ostream &operator<<(std::ostream &os, RefId refId);
 
 constexpr bool operator==(const RefId &lhs, const RefId &rhs) noexcept {
   return static_cast<FormId>(lhs) == static_cast<FormId>(rhs);
@@ -167,6 +133,11 @@ constexpr bool operator>(const RefId &lhs, const RefId &rhs) noexcept {
 constexpr bool operator>=(const RefId &lhs, const RefId &rhs) noexcept {
   return !(lhs < rhs);
 }
+
+static_assert(std::is_trivially_copyable_v<BaseId>,
+              "oo::BaseId is not trivially copyable, io will break");
+static_assert(std::is_trivially_copyable_v<RefId>,
+              "oo::RefId is not trivially copyable, io will break");
 
 } // namespace oo
 

@@ -1,4 +1,5 @@
 #include "record/formid.hpp"
+#include <ostream>
 
 namespace oo {
 
@@ -24,25 +25,12 @@ FormId decodeFormId(void *ptr) noexcept {
   return static_cast<FormId>(bits & 0xffffffff);
 }
 
+std::ostream &operator<<(std::ostream &os, BaseId baseId) {
+  return os << "0x" << baseId.string();
+}
+
+std::ostream &operator<<(std::ostream &os, RefId refId) {
+  return os << "0x" << refId.string();
+}
+
 } // namespace oo
-
-namespace io {
-
-void BinaryIo<oo::BaseId>::writeBytes(std::ostream &os,
-                                      const oo::BaseId &data) {
-  BinaryIo<oo::FormId>::writeBytes(os, data.mId);
-}
-
-void BinaryIo<oo::BaseId>::readBytes(std::istream &is, oo::BaseId &data) {
-  BinaryIo<oo::FormId>::readBytes(is, data.mId);
-}
-
-void BinaryIo<oo::RefId>::writeBytes(std::ostream &os, const oo::RefId &data) {
-  BinaryIo<oo::FormId>::writeBytes(os, data.mId);
-}
-
-void BinaryIo<oo::RefId>::readBytes(std::istream &is, oo::RefId &data) {
-  BinaryIo<oo::FormId>::readBytes(is, data.mId);
-}
-
-} // namespace io
