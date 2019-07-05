@@ -2,7 +2,7 @@
 #include "character_controller/jump_state.hpp"
 #include "character_controller/sneak_stand_state.hpp"
 #include "character_controller/stand_state.hpp"
-#include "settings.hpp"
+#include "util/settings.hpp"
 #include <spdlog/spdlog.h>
 
 namespace oo {

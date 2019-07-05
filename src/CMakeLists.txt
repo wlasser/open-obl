@@ -14,8 +14,7 @@ target_sources(OpenOBL PRIVATE
         ${CMAKE_SOURCE_DIR}/include/character_controller/animation.hpp
         ${CMAKE_SOURCE_DIR}/include/character_controller/body.hpp
         ${CMAKE_SOURCE_DIR}/include/character_controller/character.hpp
-        ${CMAKE_SOURCE_DIR}/include/character_controller/character_controller.hpp
-        ${CMAKE_SOURCE_DIR}/include/character_controller/character_controller_impl.hpp
+        ${CMAKE_SOURCE_DIR}/include/character_controller/character_mediator.hpp
         ${CMAKE_SOURCE_DIR}/include/character_controller/fallback_state.hpp
         ${CMAKE_SOURCE_DIR}/include/character_controller/jump_state.hpp
         ${CMAKE_SOURCE_DIR}/include/character_controller/movement.hpp
@@ -64,8 +63,7 @@ target_sources(OpenOBL PRIVATE
         character_controller/animation.cpp
         character_controller/body.cpp
         character_controller/character.cpp
-        character_controller/character_controller.cpp
-        character_controller/character_controller_impl.cpp
+        character_controller/character_mediator.cpp
         character_controller/jump_state.cpp
         character_controller/movement.cpp
         character_controller/run_state.cpp
