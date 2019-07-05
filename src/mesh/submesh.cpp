@@ -42,15 +42,10 @@ SubMesh *SubMesh::clone(const std::string &newName,
   subMesh->mMaterialName = mMaterialName;
   subMesh->mGroupName = mGroupName;
 
-  // Ogre::VertexData::clone gives us a raw pointer allocated with OGRE_NEW
-  subMesh->vertexData = std::unique_ptr<Ogre::VertexData, VertexDataDeleter>(
-      vertexData->clone(true, bufMgr), [](Ogre::VertexData *ptr) {
-        OGRE_DELETE ptr;
-      });
-  subMesh->indexData = std::unique_ptr<Ogre::IndexData, IndexDataDeleter>(
-      indexData->clone(true, bufMgr), [](Ogre::IndexData *ptr) {
-        OGRE_DELETE ptr;
-      });
+  // Ogre::VertexData::clone gives us a raw pointer allocated with OGRE_NEW but
+  // we can assume that OGRE_NEW is just new.
+  subMesh->vertexData.reset(vertexData->clone(true, bufMgr));
+  subMesh->indexData.reset(indexData->clone(true, bufMgr));
 
   return subMesh;
 }
