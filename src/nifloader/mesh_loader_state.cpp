@@ -979,13 +979,11 @@ BoundedSubmesh parseNiTriBasedGeom(const oo::BlockGraph &g,
                                    const nif::NiTriBasedGeom &block,
                                    const Ogre::Matrix4 &transform) {
   // If this submesh has already been loaded, return it.
-  //if (auto *submesh{mesh->getSubMesh(block.name.str())}) {
-  // WTF Ogre, mesh->getSubMesh returns a pointer but doesn't return nullptr if
-  // the submesh doesn't exist, it throws.
+  // Can return an empty bounding box because if the submesh has already been
+  // loaded then its bbox has already been merged in; we don't need it again.
   {
     const auto &nameMap{mesh->getSubMeshNameMap()};
     if (auto it{nameMap.find(block.name.str())}; it != nameMap.end()) {
-      // TODO: How to get the bounding box once the submesh has been created?
       return {mesh->getSubMeshes()[it->second].get(), {}};
     }
   }

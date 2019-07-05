@@ -14,8 +14,11 @@ namespace oo {
 /// \addtogroup OpenOBLNifloader
 /// @{
 
-/// `oo::SubMesh`es do not store bounding box information, only `oo::Mesh`es
-/// do, but we need it to compute the overall bounding box.
+/// Carries bounding box information along with an `oo::SubMesh` until the
+/// `oo::SubMesh` can be merged and its bounding box can be merged into the
+/// main `oo::Mesh`.
+/// `oo::SubMesh` does not carry this information itself as it is not needed
+/// after the mesh creation.
 struct BoundedSubmesh {
   oo::SubMesh *submesh{};
   Ogre::AxisAlignedBox bbox{};
