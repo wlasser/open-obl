@@ -16,8 +16,7 @@
 /// streams, arguing that its simpler interface can be implemented for libraries
 /// which use io, but are incompatible with standard streams. This is good, but
 /// unfortunately means that any library that *does* use standard streams still
-/// has to write wrappers into `Ogre::DataStream`. Unfortunately, these wrappers
-/// come with *a lot* of overhead.
+/// has to write wrappers into `Ogre::DataStream`.
 ///
 /// In the future, it may be a good idea to patch OGRE so that
 /// `Ogre::DataStream` and its subclasses derive from `std::istream`; then we
@@ -45,6 +44,7 @@ class OgreDataStreambuf : public std::streambuf {
  protected:
   int_type underflow() override;
   int_type uflow() override;
+  std::streamsize xsgetn(char_type *s, std::streamsize count) override;
   int_type pbackfail(int_type) override;
   pos_type seekpos(pos_type, std::ios_base::openmode) override;
   pos_type seekoff(off_type, std::ios_base::seekdir,

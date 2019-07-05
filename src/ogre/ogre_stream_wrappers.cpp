@@ -25,6 +25,10 @@ auto OgreDataStreambuf::uflow() -> int_type {
   return traits_type::to_int_type(ch);
 }
 
+std::streamsize OgreDataStreambuf::xsgetn(char_type *s, std::streamsize count) {
+  return mOgreStream->read(s, count);
+}
+
 auto OgreDataStreambuf::pbackfail(int_type c) -> int_type {
   if (mOgreStream->tell() == 0) return traits_type::eof();
   mOgreStream->skip(-1);
