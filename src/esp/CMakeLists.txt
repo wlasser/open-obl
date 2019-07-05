@@ -13,13 +13,11 @@ target_sources(OpenOBLEsp PRIVATE
         ${CMAKE_SOURCE_DIR}/include/esp/esp_coordinator.hpp
         esp_coordinator.cpp)
 
-target_link_libraries(OpenOBLEsp PRIVATE
-        PUBLIC
+target_link_libraries(OpenOBLEsp PUBLIC
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLIO
         OpenOBL::OpenOBLRecord
         OpenOBL::OpenOBLUtil
-        Boost::boost
         Boost::fiber
         MicrosoftGSL::GSL
         spdlog::spdlog)

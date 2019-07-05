@@ -1,7 +1,7 @@
 #ifndef OPENOBL_ESP_HPP
 #define OPENOBL_ESP_HPP
 
-#include "esp_coordinator.hpp"
+#include "esp/esp_coordinator.hpp"
 #include "io/io.hpp"
 #include "record/group.hpp"
 #include "record/io.hpp"
