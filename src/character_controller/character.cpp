@@ -194,13 +194,26 @@ Character::RaycastResult Character::raycast() const noexcept {
 }
 
 Ogre::Vector4 Character::getSurfaceNormal() const noexcept {
-  constexpr float halfSqrt3{0.8660254f};
+  constexpr float twoPiBy3{2.09439510f};
   const auto rootPos{qvm::convert_to<btVector3>(mRoot->getPosition())};
+  auto rootDir = [this]() -> btVector3 {
+    const btVector3 v = qvm::X0Z(mVelocity);
+    float norm = qvm::mag(v);
+    return norm < 0.1f ? btVector3(1.0f, 0.0f, 0.0f) : v / norm;
+  }();
   const float offset{mHeight * 0.5f};
+  const btMatrix3x3 rotMat = qvm::roty_mat<3>(-twoPiBy3);
+
+  std::array<btVector3, 3u> dirs{
+      rootDir,
+      rotMat * rootDir,
+      rotMat * rotMat * rootDir,
+  };
+
   std::array<btVector3, 3u> starts{
-      rootPos + 0.3f * btVector3{+1.0f, 0.0f, 0.0f} + qvm::_0X0(offset),
-      rootPos + 0.3f * btVector3{-0.5f, 0.0f, halfSqrt3} + qvm::_0X0(offset),
-      rootPos + 0.3f * btVector3{-0.5f, 0.0f, -halfSqrt3} + qvm::_0X0(offset)
+      rootPos + 0.3f * dirs[0] + qvm::_0X0(offset),
+      rootPos + 0.3f * dirs[1] + qvm::_0X0(offset),
+      rootPos + 0.3f * dirs[2] + qvm::_0X0(offset)
   };
 
   std::vector<RaycastResult> results;
