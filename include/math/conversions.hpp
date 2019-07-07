@@ -310,6 +310,22 @@ template<> struct mat_traits<Ogre::Matrix3> {
   }
 };
 
+template<> struct mat_traits<btMatrix3x3> {
+  static const int rows{3};
+  static const int cols{3};
+  using scalar_type = btScalar;
+
+  template<int R, int C> static inline scalar_type &
+  write_element(btMatrix3x3 &m) {
+    return m[R][C];
+  }
+
+  template<int R, int C> static inline scalar_type
+  read_element(const btMatrix3x3 &m) {
+    return m[R][C];
+  }
+};
+
 template<> struct mat_traits<nif::compound::Matrix44> {
   static const int rows{4};
   static const int cols{4};
