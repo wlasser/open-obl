@@ -402,6 +402,12 @@ template<> struct mat_traits<Ogre::Matrix4> {
 
 } // namespace boost::qvm
 
+// These are necessary to make swizzling work without explicit convert_to calls.
+namespace Ogre {
+using boost::qvm::assign;
+}
+using boost::qvm::assign;
+
 namespace oo {
 
 namespace qvm = boost::qvm;
