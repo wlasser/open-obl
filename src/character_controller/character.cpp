@@ -115,6 +115,21 @@ Character::Character(const record::REFR_NPC_ &refRec,
   oo::pickIdle(this);
 }
 
+Character::~Character() {
+  if (mPhysicsWorld && mCapsule) {
+    mPhysicsWorld->removeCollisionObject(mCapsule.get());
+  }
+
+  if (mScnMgr) {
+    // Destroying a node detaches all its attached objects and removes their
+    // children, though it is not clear whether those children are deleted.
+    if (mPitchNode) mScnMgr->destroySceneNode(mPitchNode);
+    if (mCameraNode) mScnMgr->destroySceneNode(mCameraNode);
+    if (mRoot) mScnMgr->destroySceneNode(mRoot);
+    if (mCamera) mScnMgr->destroyCamera(mCamera);
+  }
+}
+
 void Character::setBodyPart(oo::BodyParts part, oo::Entity *entity) noexcept {
   auto index{static_cast<std::underlying_type_t<oo::BodyParts>>(part)};
   mBodyParts[index] = entity;
@@ -216,6 +231,8 @@ Ogre::Vector4 Character::getSurfaceNormal() const noexcept {
       rootPos + 0.3f * dirs[2] + qvm::_0X0(offset)
   };
 
+  // Can't use array, even though we know the size, because RaycastResult is not
+  // default constructible.
   std::vector<RaycastResult> results;
   btVector3 midpoint{0.0f, 0.0f, 0.0f};
 
@@ -242,7 +259,7 @@ Ogre::Vector4 Character::getSurfaceNormal() const noexcept {
 Ogre::Matrix3 Character::getSurfaceFrame() const noexcept {
   auto normalDist{getSurfaceNormal()};
   const float dist{qvm::W(normalDist)};
-  const auto normal{qvm::convert_to<Ogre::Vector3>(qvm::XYZ(normalDist))};
+  const Ogre::Vector3 normal = qvm::XYZ(normalDist);
 
   Ogre::Vector3 tangent{-mRoot->getLocalAxes().GetColumn(2)};
   tangent -= qvm::dot(tangent, normal) * normal;

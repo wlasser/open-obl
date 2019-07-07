@@ -121,6 +121,7 @@ class Character {
                      gsl::not_null<Ogre::SceneManager *> scnMgr,
                      gsl::not_null<btDiscreteDynamicsWorld *> world,
                      Character::resolvers resolvers);
+  ~Character();
 
   void update(float elapsed);
   void handleEvent(const oo::KeyVariant &event);
