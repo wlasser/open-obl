@@ -15,6 +15,7 @@ SneakJumpState::update(CharacterMediator &mediator, float elapsed) {
   // Apply the spring force if player is sufficiently near to the ground
   // Return the SneakStandState when sufficiently near to the ground.
   mediator.updateCamera();
+  mediator.updateCapsule();
 
   return std::nullopt;
 }

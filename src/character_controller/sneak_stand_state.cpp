@@ -19,6 +19,7 @@ std::optional<SneakStandState>
 SneakStandState::update(CharacterMediator &mediator, float elapsed) {
   // Apply spring force
   mediator.updateCamera();
+  mediator.updateCapsule();
 
   return std::nullopt;
 }

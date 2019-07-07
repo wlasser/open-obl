@@ -30,6 +30,8 @@ StandState::update(CharacterMediator &mediator, float elapsed) {
     mediator.translate(velocity * elapsed);
   }
 
+  mediator.updateCapsule();
+
   const auto dist{mediator.getSurfaceDist()};
 
   if (!dist || dist > 0.1f) {

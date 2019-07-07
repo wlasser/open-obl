@@ -36,6 +36,8 @@ JumpState::update(CharacterMediator &mediator, float elapsed) {
 
   mediator.translate(velocity * elapsed);
 
+  mediator.updateCapsule();
+
   return std::nullopt;
 }
 
