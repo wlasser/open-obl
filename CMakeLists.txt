@@ -213,5 +213,6 @@ add_subdirectory(src/sdl)
 add_subdirectory(src/util)
 
 add_subdirectory(bsatools)
+add_subdirectory(esptools)
 add_subdirectory(src)
 add_subdirectory(test)
