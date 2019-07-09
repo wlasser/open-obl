@@ -114,6 +114,7 @@ target_link_libraries(OpenOBL PRIVATE
         OpenOBL::OpenOBLFS
         OpenOBL::OpenOBLGui
         OpenOBL::OpenOBLIO
+        OpenOBL::OpenOBLJob
         OpenOBL::OpenOBLMath
         OpenOBL::OpenOBLMesh
         OpenOBL::OpenOBLNif
