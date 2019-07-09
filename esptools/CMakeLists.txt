@@ -14,6 +14,7 @@ target_sources(OpenOBLEspEditor PRIVATE
 
 target_link_libraries(OpenOBLEspEditor PRIVATE
         OpenOBL::OpenOBLEsp
+        OpenOBL::OpenOBLJob
         OpenOBL::OpenOBLOgre
         OpenOBL::OpenOBLOgreImGui
         OpenOBL::OpenOBLSDL
