@@ -10,16 +10,18 @@ target_include_directories(OpenOBLEspEditor PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_sources(OpenOBLEspEditor PRIVATE
         application.hpp
         application.cpp
-        esp_editor.cpp)
+        esp_editor.cpp
+        gui.hpp
+        gui.cpp)
 
 target_link_libraries(OpenOBLEspEditor PRIVATE
+        OpenOBL::OpenOBLApplicationBase
         OpenOBL::OpenOBLEsp
         OpenOBL::OpenOBLJob
         OpenOBL::OpenOBLOgre
         OpenOBL::OpenOBLOgreImGui
         OpenOBL::OpenOBLSDL
-        OpenOBL::OpenOBLUtil
-        RenderSystem_GL3Plus)
+        OpenOBL::OpenOBLUtil)
 
 install(TARGETS OpenOBLEspEditor
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

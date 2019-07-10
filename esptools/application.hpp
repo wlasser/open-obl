@@ -1,6 +1,7 @@
 #ifndef OPENOBL_ESPTOOLS_APPLICATION_HPP
 #define OPENOBL_ESPTOOLS_APPLICATION_HPP
 
+#include "application_base/application_base.hpp"
 #include "esp/esp_coordinator.hpp"
 #include "ogre/window.hpp"
 #include "ogreimgui/imgui_manager.hpp"
@@ -8,22 +9,20 @@
 #include "util/settings.hpp"
 #include <OgreCamera.h>
 #include <OgreFrameListener.h>
+#include <OgreLogManager.h>
 #include <OgreResourceGroupManager.h>
 #include <OgreRoot.h>
-#include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
 
 namespace oo {
 
 class Application : Ogre::FrameListener {
  private:
+  Ogre::LogManager mLogMgr{};
+  std::unique_ptr<Ogre::LogListener> mLogListener{};
   std::unique_ptr<Ogre::GL3PlusPlugin> mGl3PlusPlugin{};
-
   std::unique_ptr<Ogre::Root> mOgreRoot{};
   std::unique_ptr<sdl::Init> mSdlInit{};
-  std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr> mWindows{
-      std::make_tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>(
-          {nullptr, nullptr}, nullptr
-      )};
+  oo::Window mWindows{};
 
   std::unique_ptr<Ogre::ImGuiManager> mImguiMgr{};
 
@@ -31,12 +30,6 @@ class Application : Ogre::FrameListener {
 
   Ogre::SceneManager *mScnMgr{};
   Ogre::Camera *mCamera{};
-
-  std::tuple<std::unique_ptr<Ogre::Root>, std::unique_ptr<Ogre::GL3PlusPlugin>>
-  createOgreRoot();
-
-  std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
-  createWindow(const std::string &windowName);
 
   void quit() { mOgreRoot->queueEndRendering(); }
 
