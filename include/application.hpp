@@ -65,47 +65,22 @@ class Application : public Ogre::FrameListener {
   Ogre::Camera *dummyCamera{};
   ///@}
 
-  /// Set up the logger.
-  /// Ogre's logging facilities are pretty good but fall down when it comes to
-  /// formatting. Using boost::format gets pretty tedious so we use spdlog,
-  /// which has the fmt library built in. Obviously we still want Ogre's
-  /// internal log messages though, so we use a LogListener to intercept the
-  /// standard Ogre log messages and hand them over to spdlog.
-  void createLoggers();
-
   /// Read the default and user ini files and store them in GameSettings.
   /// \pre createLoggers() has been called. In particular,
   /// `spdlog::get(settings::log) != nullptr`.
   static void loadIniConfiguration();
   //C++20: [[expects: spdlog::get(oo::LOG) != nullptr]];
 
-  /// Set the Ogre render system.
-  /// systemName must be one of
-  /// - `OpenGL 3+ Rendering Subsystem`
-  /// - `OpenGL Rendering Subsystem`
-  ///
-  /// Currently only `OpenGL 3+ Rendering Subsystem` is supported, there may be
-  /// graphical errors when using other render systems.
-  /// \exception std::runtime_error Thrown if the render system is not found by
-  ///   Ogre::Root::getRenderSystemByName.
-  static void setRenderSystem(Ogre::Root *root, const std::string &systemName);
+  /// Query the dimensions of the window to open from `GameSettings`.
+  /// The width is given by `Display.iSize W` and the height is given by
+  /// `Display.iSize H`.
+  /// \throws std::runtime_error if at least one of `Display.iSize W`
+  ///                            or `Display.iSize H` are non-positive.
+  std::pair<int, int> getWindowDimensions() const;
 
-  /// Initialize Ogre, call `setRenderSystem`, and initialize the
-  /// `Ogre::OverlaySystem`.
-  /// This is a member function as it registers `this` as an
-  /// `Ogre::FrameListener`.
-  std::tuple<std::unique_ptr<Ogre::Root>,
-             std::unique_ptr<Ogre::OverlaySystem>,
-             std::unique_ptr<Ogre::GL3PlusPlugin>>
-  createOgreRoot();
-
-  /// Construct an SDL window and embed an Ogre::RenderWindow inside.
-  /// The window is created with width `Display.iSize W` and height
-  /// `Display.iSize H`, and is fullscreen iff `Display.bFull Screen` is true.
-  /// \exception std::runtime_error Thrown if at least one of `Display.iSize W`
-  ///   and `Display.iSize H` are non-positive.
-  std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
-  static createWindow(const std::string &windowName);
+  /// Query the flags of the window to open from `GameSettings`.
+  /// The window will be fullscreen iff `Display.bFull Screen` is true.
+  sdl::WindowFlags getWindowFlags() const;
 
   /// Set the global terrain options.
   void setTerrainOptions();

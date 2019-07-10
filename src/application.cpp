@@ -1,4 +1,5 @@
 #include "application.hpp"
+#include "application_base.hpp"
 #include "audio.hpp"
 #include "bullet/collision.hpp"
 #include "cell_cache.hpp"
@@ -71,16 +72,20 @@
 namespace oo {
 
 Application::Application(std::string windowName) : FrameListener() {
-  createLoggers();
+  ogreLogListener = oo::createLoggers("OpenOBL.log", ogreLogMgr);
+  gui::guiLogger(oo::LOG);
+  oo::nifloaderLogger(oo::LOG);
   ctx.logger = spdlog::get(oo::LOG);
 
   oo::JobCounter iniCounter{1};
   oo::JobManager::runJob([]() { loadIniConfiguration(); }, &iniCounter);
 
-  auto &&[ogreRoot, overlaySys, gl3PlusPlugin] = createOgreRoot();
-  ctx.ogreRoot = std::move(ogreRoot);
-  ctx.overlaySys = std::move(overlaySys);
-  ctx.gl3PlusPlugin = std::move(gl3PlusPlugin);
+  ctx.ogreRoot = std::make_unique<Ogre::Root>("", "", "");
+  ctx.overlaySys = std::make_unique<Ogre::OverlaySystem>();
+  ctx.gl3PlusPlugin = oo::startGl3Plus(ctx.ogreRoot.get());
+
+  ctx.ogreRoot->initialise(false);
+  ctx.ogreRoot->addFrameListener(this);
 
   oo::JobManager::waitOn(&iniCounter);
   auto &gameSettings = oo::GameSettings::getSingleton();
@@ -89,7 +94,10 @@ Application::Application(std::string windowName) : FrameListener() {
   // necessary to create shaders (including reading scripts), so this has to be
   // done early.
   ctx.sdlInit = std::make_unique<sdl::Init>();
-  ctx.windows = createWindow(windowName);
+  const auto[windowWidth, windowHeight]{getWindowDimensions()};
+  const auto windowFlags{getWindowFlags()};
+  ctx.windows = oo::Window(ctx.ogreRoot.get(), windowWidth, windowHeight,
+                           windowName, windowFlags);
 
   // Set the keyboard configuration
   oo::JobManager::runJob([&ctx = ctx, &gameSettings]() {
@@ -304,46 +312,6 @@ Application::Application(std::string windowName) : FrameListener() {
   oo::JobManager::waitOn(&espCounter);
 }
 
-void Application::createLoggers() {
-#if defined(_WIN32) || defined(_WIN64)
-  using ColorSink = spdlog::sinks::stdout_sink_mt;
-#else
-  using ColorSink = spdlog::sinks::stdout_color_sink_mt;
-#endif
-  using FileSink = spdlog::sinks::basic_file_sink_mt;
-
-  // The console gets info and above, in particular not debug
-  auto consoleSink{std::make_shared<ColorSink>()};
-  consoleSink->set_level(spdlog::level::info);
-
-  // The log file gets everything
-  auto fileSink{std::make_shared<FileSink>("OpenOBL.log", true)};
-  fileSink->set_level(spdlog::level::trace);
-
-  // Every log will write to both the console and the log file
-  const std::initializer_list<spdlog::sink_ptr> sinks{consoleSink, fileSink};
-
-  // Construct the default Ogre logger and register its spdlog listener
-  auto ogreLogger{std::make_shared<spdlog::logger>(oo::OGRE_LOG, sinks)};
-  spdlog::register_logger(ogreLogger);
-  auto *defaultLog{ogreLogMgr.createLog("Default", true, true, true)};
-  ogreLogListener = std::make_unique<Ogre::SpdlogListener>(oo::OGRE_LOG);
-  defaultLog->addListener(ogreLogListener.get());
-
-  // Construct our own logger
-  auto logger{std::make_shared<spdlog::logger>(oo::LOG, sinks)};
-  spdlog::register_logger(logger);
-
-  // Set the starting logger levels. These will be modified later according to
-  // user settings, if specified.
-  logger->set_level(spdlog::level::warn);
-  ogreLogger->set_level(spdlog::level::info);
-
-  // Set the library loggers
-  gui::guiLogger(oo::LOG);
-  oo::nifloaderLogger(oo::LOG);
-}
-
 void Application::loadIniConfiguration() {
   auto &gameSettings{GameSettings::getSingleton()};
   auto logger{spdlog::get(oo::LOG)};
@@ -367,42 +335,10 @@ void Application::loadIniConfiguration() {
   }
 }
 
-void Application::setRenderSystem(Ogre::Root *root,
-                                  const std::string &systemName) {
-  if (auto *renderSystem = root->getRenderSystemByName(systemName)) {
-    root->setRenderSystem(renderSystem);
-  } else {
-    // List the available render systems
-    auto logger{spdlog::get(oo::LOG)};
-    logger->error("Render system {} not found", systemName);
-    logger->info("Available render systems are:");
-    for (const auto &system : root->getAvailableRenderers()) {
-      logger->info(" * {}", system->getName());
-    }
-    throw std::runtime_error("Invalid render system");
-  }
-}
-
-std::tuple<std::unique_ptr<Ogre::Root>,
-           std::unique_ptr<Ogre::OverlaySystem>,
-           std::unique_ptr<Ogre::GL3PlusPlugin>>
-Application::createOgreRoot() {
-  auto root{std::make_unique<Ogre::Root>("", "", "")};
-  auto overlaySys{std::make_unique<Ogre::OverlaySystem>()};
-  auto gl3PlusPlugin{std::make_unique<Ogre::GL3PlusPlugin>()};
-  root->installPlugin(gl3PlusPlugin.get());
-  setRenderSystem(root.get(), "OpenGL 3+ Rendering Subsystem");
-  root->initialise(false);
-  root->addFrameListener(this);
-  return {std::move(root), std::move(overlaySys), std::move(gl3PlusPlugin)};
-}
-
-std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>
-Application::createWindow(const std::string &windowName) {
+std::pair<int, int> Application::getWindowDimensions() const {
   const auto &gameSettings{oo::GameSettings::getSingleton()};
   auto logger{spdlog::get(oo::LOG)};
 
-  // Grab the window dimensions
   const int windowWidth{gameSettings.iGet("Display.iSize W")};
   const int windowHeight{gameSettings.iGet("Display.iSize H")};
   if (windowHeight <= 0 || windowWidth <= 0) {
@@ -413,31 +349,18 @@ Application::createWindow(const std::string &windowName) {
     throw std::runtime_error("Cannot create window with negative size");
   }
 
-  // Grab the window settings
+  return {windowWidth, windowHeight};
+}
+
+sdl::WindowFlags Application::getWindowFlags() const {
+  const auto &gameSettings{oo::GameSettings::getSingleton()};
+
   sdl::WindowFlags windowFlags{};
   if (gameSettings.bGet("Display.bFull Screen")) {
     windowFlags |= sdl::WindowFlags::Fullscreen;
   }
 
-  // Make the window and find its system parent handle
-  auto sdlWindow{sdl::makeWindow(windowName, windowWidth, windowHeight,
-                                 windowFlags)};
-  const auto sdlWindowInfo{sdl::getSysWMInfo(sdlWindow.get())};
-  const auto parent{sdl::getWindowParent(sdlWindowInfo)};
-
-  // Construct a render window with the SDL window as a parent; SDL handles the
-  // window itself, Ogre manages the OpenGL context.
-  const std::map<std::string, std::string> params{
-      {"parentWindowHandle", parent}
-  };
-  auto ogreWindow{Ogre::makeRenderWindow(
-      Ogre::Root::getSingletonPtr(),
-      windowName,
-      static_cast<unsigned>(windowWidth),
-      static_cast<unsigned>(windowHeight),
-      &params)};
-
-  return {std::move(sdlWindow), std::move(ogreWindow)};
+  return windowFlags;
 }
 
 void Application::setSoundSettings() {

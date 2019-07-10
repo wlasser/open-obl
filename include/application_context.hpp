@@ -1,6 +1,7 @@
 #ifndef OPENOBL_APPLICATION_CONTEXT_HPP
 #define OPENOBL_APPLICATION_CONTEXT_HPP
 
+#include "application_base.hpp"
 #include "bullet/collision.hpp"
 #include "bullet/configuration.hpp"
 #include "ogre/bsa_archive_factory.hpp"
@@ -72,10 +73,7 @@ class ApplicationContext {
   std::unique_ptr<Ogre::Root> ogreRoot{};
   std::unique_ptr<sdl::Init> sdlInit{};
 
-  std::tuple<sdl::WindowPtr, Ogre::RenderWindowPtr> windows{
-      std::make_tuple<sdl::WindowPtr, Ogre::RenderWindowPtr>(
-          {nullptr, nullptr}, nullptr
-      )};
+  oo::Window windows{};
 
   std::unique_ptr<oo::event::KeyMap> keyMap{};
 

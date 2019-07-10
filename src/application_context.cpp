@@ -133,12 +133,11 @@ oo::CellCache *ApplicationContext::getCellCache() {
 
 void ApplicationContext::setCamera(gsl::not_null<Ogre::Camera *> camera) {
   setCameraAspectRatio(camera);
-  auto &windowPtr{std::get<Ogre::RenderWindowPtr>(windows)};
-  if (windowPtr->hasViewportWithZOrder(0)) {
-    windowPtr->removeViewport(0);
-  }
-  std::get<Ogre::RenderWindowPtr>(windows)->addViewport(camera);
+  auto *windowPtr{windows.getOgreWindow()};
+  if (windowPtr->hasViewportWithZOrder(0)) windowPtr->removeViewport(0);
+  windowPtr->addViewport(camera);
   ogreRoot->getRenderSystem()->_setViewport(camera->getViewport());
+
   auto &compMgr{Ogre::CompositorManager::getSingleton()};
   auto *gBufferInstance{compMgr.addCompositor(camera->getViewport(),
                                               "DeferredGBuffer")};
