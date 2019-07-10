@@ -6,7 +6,6 @@ add_executable(OpenOBL)
 target_include_directories(OpenOBL PUBLIC include)
 target_sources(OpenOBL PRIVATE
         ${CMAKE_SOURCE_DIR}/include/application.hpp
-        ${CMAKE_SOURCE_DIR}/include/application_base.hpp
         ${CMAKE_SOURCE_DIR}/include/application_context.hpp
         ${CMAKE_SOURCE_DIR}/include/atmosphere.hpp
         ${CMAKE_SOURCE_DIR}/include/audio.hpp
@@ -58,7 +57,6 @@ target_sources(OpenOBL PRIVATE
         ${CMAKE_SOURCE_DIR}/include/script_functions.hpp
         ${CMAKE_SOURCE_DIR}/include/wrld.hpp
         application.cpp
-        application_base.cpp
         application_context.cpp
         atmosphere.cpp
         audio.cpp
@@ -109,6 +107,7 @@ target_sources(OpenOBL PRIVATE
 target_link_libraries(OpenOBL PRIVATE
         Bullet::BulletCollision
         Bullet::BulletDynamics
+        OpenOBL::OpenOBLApplicationBase
         OpenOBL::OpenOBLBsa
         OpenOBL::OpenOBLBullet
         OpenOBL::OpenOBLConfig

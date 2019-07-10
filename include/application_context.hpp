@@ -1,7 +1,7 @@
 #ifndef OPENOBL_APPLICATION_CONTEXT_HPP
 #define OPENOBL_APPLICATION_CONTEXT_HPP
 
-#include "application_base.hpp"
+#include "application_base/application_base.hpp"
 #include "bullet/collision.hpp"
 #include "bullet/configuration.hpp"
 #include "ogre/bsa_archive_factory.hpp"

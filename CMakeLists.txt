@@ -192,6 +192,7 @@ else ()
     add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-parameter)
 endif ()
 
+add_subdirectory(src/application_base)
 add_subdirectory(src/bsa)
 add_subdirectory(src/bullet)
 add_subdirectory(src/config)
